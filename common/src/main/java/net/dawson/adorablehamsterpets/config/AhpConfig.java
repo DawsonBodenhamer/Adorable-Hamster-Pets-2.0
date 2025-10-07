@@ -404,7 +404,7 @@ public class AhpConfig extends Config {
     @Translatable.Desc("All the knobs and dials that make your hamster the majestic (or chaotic) creature it is.")
     public ConfigGroup hamsterAttributes = new ConfigGroup("hamsterAttributes", true);
 
-    @Translatable.Name("Max Health (Wild")
+    @Translatable.Name("Max Health (Wild)")
     @Translatable.Desc("How much abuse a wild hamster can take before it gives up the ghost. Vanilla animals are around 8-10. Set it to 200 (100 hearts) if you enjoy a challenge, or 1 if you're a monster.")
     public ValidatedDouble wildMaxHealth = new ValidatedDouble(8.0, 200.0, 1.0);
 
