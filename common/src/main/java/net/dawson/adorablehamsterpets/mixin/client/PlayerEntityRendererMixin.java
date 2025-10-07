@@ -10,30 +10,28 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-// Target PlayerEntityRenderer, but ONLY when on Fabric using remap=false.
 @Mixin(value = PlayerEntityRenderer.class, remap = false)
 public abstract class PlayerEntityRendererMixin {
 
     // Inject into the constructor
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(EntityRendererFactory.Context ctx, boolean slim, CallbackInfo ci) {
-        // --- Diagnostic Logging ---
         AdorableHamsterPets.LOGGER.trace("[AHP Mixin] PlayerEntityRendererMixin constructor injection is RUNNING.");
+
         // Cast 'this' (PlayerEntityRenderer) to LivingEntityRenderer first
         LivingEntityRenderer<?, ?> livingRenderer = (LivingEntityRenderer<?, ?>) (Object) this;
-        // Then cast the LivingEntityRenderer instance to our separate Invoker interface
+        // Then cast the LivingEntityRenderer instance to my separate Invoker interface
         LivingEntityRendererInvoker invoker = (LivingEntityRendererInvoker) livingRenderer;
-
         // Cast 'this' to PlayerEntityRenderer to pass to the FeatureRenderer constructor
         PlayerEntityRenderer thisRenderer = (PlayerEntityRenderer)(Object)this;
 
-        AdorableHamsterPets.LOGGER.debug("[PlayerRendererMixin] Adding HamsterShoulderFeatureRenderer via Invoker...");
+        AdorableHamsterPets.LOGGER.trace("[PlayerRendererMixin] Adding HamsterShoulderFeatureRenderer via Invoker...");
         // Call the protected method using the invoker interface
         boolean added = invoker.callAddFeature(new HamsterShoulderFeatureRenderer(thisRenderer));
-        // --- Diagnostic Logging ---
-        AdorableHamsterPets.LOGGER.debug("[AHP Mixin] Attempted to add HamsterShoulderFeatureRenderer. Success: {}", added);
+
+        AdorableHamsterPets.LOGGER.trace("[AHP Mixin] Attempted to add HamsterShoulderFeatureRenderer. Success: {}", added);
         if (!added) {
-            AdorableHamsterPets.LOGGER.debug("[AHP Mixin] FAILED to add HamsterShoulderFeatureRenderer!");
+            AdorableHamsterPets.LOGGER.trace("[AHP Mixin] FAILED to add HamsterShoulderFeatureRenderer!");
         }
     }
 }
