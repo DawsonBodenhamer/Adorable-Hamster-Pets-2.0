@@ -87,7 +87,6 @@ public class AdorableHamsterPetsClient {
         ColorHandlerRegistry.registerItemColors((stack, tintIndex) -> -1, ModItems.HAMSTER_SPAWN_EGG.get());
 
         // Announcement System
-        AnnouncementManager.INSTANCE.initialize();
         AHPClientScreenEvents.register();
         ModClientCommands.register();
 

@@ -27,6 +27,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import static org.apache.logging.log4j.core.util.ExecutorServices.ensureInitialized;
+
 public class AnnouncementManager {
     public static final AnnouncementManager INSTANCE = new AnnouncementManager();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -42,10 +44,36 @@ public class AnnouncementManager {
     private boolean manifestLoaded = false;
     private final Set<Identifier> deferredReadMarks = new HashSet<>();
     private CompletableFuture<Void> activeRefreshFuture = CompletableFuture.completedFuture(null);
+    private boolean initialized = false;
 
     private AnnouncementManager() {
         this.clientState = ClientAnnouncementState.createDefault();
         this.manifest = AnnouncementManifest.empty();
+    }
+
+    private void initialize() {
+        AdorableHamsterPets.LOGGER.trace("[Announcements] Initializing AnnouncementManager..."); // LOG 1: Start
+        this.httpClient = HttpClient.newHttpClient();
+        Path configDir = Platform.getConfigFolder().resolve(AdorableHamsterPets.MOD_ID);
+        this.stateFilePath = configDir.resolve("announcements.json");
+        this.manifestCacheFilePath = configDir.resolve("manifest.cache.json");
+        AdorableHamsterPets.LOGGER.trace("[Announcements] State file path resolved to: {}", stateFilePath.toAbsolutePath()); // LOG 2: Path
+        try {
+            Files.createDirectories(configDir);
+        } catch (IOException e) {
+            AdorableHamsterPets.LOGGER.error("[Announcements] CRITICAL: Failed to create config directory for announcements at {}", configDir.toAbsolutePath(), e);
+        }
+        loadState();
+        loadCachedManifest();
+        processExpiredSnoozes();
+        AdorableHamsterPets.LOGGER.trace("[Announcements] Initialization complete."); // LOG 3: Finish
+    }
+
+    private void ensureInitialized() {
+        if (!initialized) {
+            initialize();
+            initialized = true;
+        }
     }
 
     /**
@@ -54,6 +82,7 @@ public class AnnouncementManager {
      * @return The current ClientAnnouncementState record.
      */
     public ClientAnnouncementState getClientState() {
+        ensureInitialized();
         return this.clientState;
     }
 
@@ -66,6 +95,7 @@ public class AnnouncementManager {
      * @return The reason string (e.g., "update_available", "mandatory_message").
      */
     public String getCanonicalReasonForAnnouncement(String announcementId) {
+        ensureInitialized();
         Announcement announcement = getAnnouncementById(announcementId);
         if (announcement == null) return "unknown"; // Fallback for safety
 
@@ -105,6 +135,7 @@ public class AnnouncementManager {
      * @param entryId The Identifier of the virtual BookEntry.
      */
     public void queueDeferredReadMark(Identifier entryId) {
+        ensureInitialized();
         this.deferredReadMarks.add(entryId);
         AdorableHamsterPets.LOGGER.trace("[Announcements] Queued deferred read mark for entry: {}", entryId);
     }
@@ -114,6 +145,7 @@ public class AnnouncementManager {
      * player joins a world, ensuring Patchouli's book data is fully loaded and safe to access.
      */
     public void processDeferredReadMarks() {
+        ensureInitialized();
         if (deferredReadMarks.isEmpty()) {
             return;
         }
@@ -146,6 +178,7 @@ public class AnnouncementManager {
     }
 
     public void acknowledgeManifestLoad() {
+        ensureInitialized();
         this.manifestJustLoaded = false;
     }
 
@@ -154,6 +187,7 @@ public class AnnouncementManager {
      * This is called from the TitleScreen mixin.
      */
     public CompletableFuture<Void> refreshManifestOnce() {
+        ensureInitialized();
         if (!hasRefreshedThisSession) {
             hasRefreshedThisSession = true;
             return refreshManifest();
@@ -163,6 +197,7 @@ public class AnnouncementManager {
     }
 
     public Announcement getAnnouncementById(String id) {
+        ensureInitialized();
         return manifest.messages().stream()
                 .filter(a -> a.id().equals(id))
                 .findFirst()
@@ -170,25 +205,8 @@ public class AnnouncementManager {
     }
 
     public List<Announcement> getAllManifestMessages() {
+        ensureInitialized();
         return manifest != null ? manifest.messages() : List.of();
-    }
-
-    public void initialize() {
-        AdorableHamsterPets.LOGGER.trace("[Announcements] Initializing AnnouncementManager..."); // LOG 1: Start
-        this.httpClient = HttpClient.newHttpClient();
-        Path configDir = Platform.getConfigFolder().resolve(AdorableHamsterPets.MOD_ID);
-        this.stateFilePath = configDir.resolve("announcements.json");
-        this.manifestCacheFilePath = configDir.resolve("manifest.cache.json");
-        AdorableHamsterPets.LOGGER.trace("[Announcements] State file path resolved to: {}", stateFilePath.toAbsolutePath()); // LOG 2: Path
-        try {
-            Files.createDirectories(configDir);
-        } catch (IOException e) {
-            AdorableHamsterPets.LOGGER.error("[Announcements] CRITICAL: Failed to create config directory for announcements at {}", configDir.toAbsolutePath(), e);
-        }
-        loadState();
-        loadCachedManifest();
-        processExpiredSnoozes();
-        AdorableHamsterPets.LOGGER.trace("[Announcements] Initialization complete."); // LOG 3: Finish
     }
 
     private void processExpiredSnoozes() {
@@ -220,10 +238,12 @@ public class AnnouncementManager {
     }
 
     public void reEnableOptionalAnnouncements() {
+        ensureInitialized();
         setOptOut(false);
     }
 
     public void markAsSeen(String id) {
+        ensureInitialized();
         Set<String> newSeenIds = new HashSet<>(clientState.seen_ids());
         if (newSeenIds.add(id)) {
             clientState = new ClientAnnouncementState(
@@ -239,6 +259,7 @@ public class AnnouncementManager {
     }
 
     public void setLastAcknowledgedUpdate(String version) {
+        ensureInitialized();
         Semver currentAck = Semver.parse(clientState.last_acknowledged_update());
         Semver newAck = Semver.parse(version);
         if (newAck.compareTo(currentAck) > 0) {
@@ -255,6 +276,7 @@ public class AnnouncementManager {
     }
 
     public void setSnooze(String id, int days) {
+        ensureInitialized();
         Instant snoozeUntil = Instant.now().plus(days, ChronoUnit.DAYS);
         Map<String, Instant> newSnoozedIds = new HashMap<>(clientState.snoozed_ids());
         newSnoozedIds.put(id, snoozeUntil);
@@ -271,6 +293,7 @@ public class AnnouncementManager {
     }
 
     public void setOptOut(boolean optOut) {
+        ensureInitialized();
         if (clientState.opt_out_announcements() != optOut) {
             clientState = new ClientAnnouncementState(
                     clientState.seen_ids(),
@@ -317,6 +340,7 @@ public class AnnouncementManager {
     }
 
     public void resetClientState() {
+        ensureInitialized();
         this.clientState = ClientAnnouncementState.createDefault();
         saveState();
         PatchouliIntegration.clearAllVirtualEntriesFromHistory();
@@ -365,6 +389,8 @@ public class AnnouncementManager {
      * @return A CompletableFuture that completes when the manifest fetch is finished.
      */
     public CompletableFuture<Void> refreshManifest() {
+        ensureInitialized();
+
         // If the current future is not done, a refresh is already in progress. Return it.
         if (!activeRefreshFuture.isDone()) {
             return activeRefreshFuture;
@@ -426,6 +452,7 @@ public class AnnouncementManager {
 
     // Fetch markdown content
     public CompletableFuture<String> fetchMarkdown(String relativePath) {
+        ensureInitialized();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(GITHUB_RAW_URL + relativePath))
                 .GET()
@@ -446,6 +473,7 @@ public class AnnouncementManager {
     }
 
     public List<PendingNotification> getPendingNotifications() {
+        ensureInitialized();
         if (!this.manifestLoaded) {
             return Collections.emptyList(); // Guard against race condition
         }
