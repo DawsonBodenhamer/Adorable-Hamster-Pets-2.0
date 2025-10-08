@@ -90,6 +90,7 @@ public class AnnouncementScreen extends Screen {
     private final BookEntry virtualEntry;
     private final String reason;
     private float uiScale = 1.0f;
+    private boolean isDraggingScrollbar = false;
 
     // --- Scaled Layout Fields ---
     private int scaledBackgroundWidth;
@@ -424,17 +425,57 @@ public class AnnouncementScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
-            // Get Style from Text
+            // --- 1. Check for Scrollbar Drag ---
+            int maxScroll = Math.max(0, markdownRenderer.getTotalHeight() - this.scaledContentHeight);
+            if (maxScroll > 0) {
+                int scrollbarX = this.guiLeft + this.scaledScrollBarXOffset;
+                int scrollbarTravel = this.scaledScrollBarEndY - this.scaledScrollBarStartY;
+                double scrollPercent = this.scrollY / maxScroll;
+                int scrollbarY = this.guiTop + this.scaledScrollBarStartY + (int) (scrollPercent * scrollbarTravel);
+
+                // Check if the click is within the scrollbar handle's bounds
+                if (mouseX >= scrollbarX && mouseX < scrollbarX + 4 && mouseY >= scrollbarY && mouseY < scrollbarY + 25) {
+                    this.isDraggingScrollbar = true;
+                    return true; // Consume the click
+                }
+            }
+
+            // --- 2. Check for Text Link Click ---
             Text clickedText = this.getTextAt(mouseX, mouseY);
             if (clickedText != null) {
                 Style style = clickedText.getStyle();
-                // Let the screen's native handler process the click event
                 if (this.handleTextClick(style)) {
                     return true;
                 }
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (this.isDraggingScrollbar) {
+            int maxScroll = Math.max(0, markdownRenderer.getTotalHeight() - this.scaledContentHeight);
+            int scrollbarTravel = this.scaledScrollBarEndY - this.scaledScrollBarStartY;
+
+            // Calculate the scroll percentage based on the mouse's position relative to the scrollbar track
+            double relativeMouseY = mouseY - (this.guiTop + this.scaledScrollBarStartY);
+            double scrollPercent = relativeMouseY / scrollbarTravel;
+
+            // Set the new scrollY value and clamp it
+            this.scrollY = MathHelper.clamp(scrollPercent * maxScroll, 0, maxScroll);
+
+            return true; // Consume the drag event
+        }
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            this.isDraggingScrollbar = false;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
