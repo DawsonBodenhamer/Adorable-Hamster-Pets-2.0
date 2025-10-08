@@ -408,6 +408,25 @@ public class AnnouncementScreen extends Screen {
     }
 
     /**
+     * Handles key presses. Closes the screen if the inventory key is pressed.
+     *
+     * @param keyCode The key code of the key that was pressed.
+     * @param scanCode The scan code of the key that was pressed.
+     * @param modifiers Any modifier keys that were held down.
+     * @return {@code true} if the event was handled, {@code false} otherwise.
+     */
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // Check if the inventory key was pressed
+        if (this.client != null && this.client.options.inventoryKey.matchesKey(keyCode, scanCode)) {
+            this.close(); // Close the screen
+            return true;  // Mark the event as handled
+        }
+        // For any other key, use the default behavior (e.g., ESC key)
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    /**
      * Handles mouse scrolling to adjust the vertical position of the markdown content.
      * The scroll amount is clamped between 0 and the maximum scrollable height. The scroll speed
      * is scaled by {@code uiScale} to feel consistent at different UI sizes.
