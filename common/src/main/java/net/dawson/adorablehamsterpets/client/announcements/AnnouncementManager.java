@@ -23,6 +23,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -74,6 +75,30 @@ public class AnnouncementManager {
             initialize();
             initialized = true;
         }
+    }
+
+    /**
+     * Creates a hardcoded, in-memory Announcement to be used as a fallback when offline.
+     * @return A default Announcement object.
+     */
+    private Announcement createOfflineFallbackAnnouncement() {
+        return new Announcement(
+                "offline-fallback",
+                "No Internet Connection",
+                "announcement",
+                "0.0.0",
+                "offline-fallback.md",  // markdown
+                false,                           // mandatory
+                ZonedDateTime.now()              // published
+        );
+    }
+
+    /**
+     * Creates a manifest containing only the offline fallback announcement.
+     * @return A default AnnouncementManifest object.
+     */
+    private AnnouncementManifest createOfflineFallbackManifest() {
+        return new AnnouncementManifest("0.0.0", List.of(createOfflineFallbackAnnouncement()));
     }
 
     /**
@@ -391,12 +416,10 @@ public class AnnouncementManager {
     public CompletableFuture<Void> refreshManifest() {
         ensureInitialized();
 
-        // If the current future is not done, a refresh is already in progress. Return it.
         if (!activeRefreshFuture.isDone()) {
             return activeRefreshFuture;
         }
 
-        // Start a new refresh and store its future.
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(GITHUB_RAW_URL + "manifest.json"))
                 .GET();
@@ -404,7 +427,7 @@ public class AnnouncementManager {
         clientState.manifest_etag().ifPresent(etag -> requestBuilder.header("If-None-Match", etag));
         clientState.manifest_last_modified().ifPresent(lastModified -> requestBuilder.header("If-Modified-Since", lastModified));
 
-        return httpClient.sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofString())
+        activeRefreshFuture = httpClient.sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofString())
                 .thenAccept(response -> {
                     AdorableHamsterPets.LOGGER.trace("[Announcements] Manifest fetch completed with status code {}. Current screen: {}", response.statusCode(), MinecraftClient.getInstance().currentScreen);
                     if (response.statusCode() == 200) { // OK
@@ -413,7 +436,7 @@ public class AnnouncementManager {
                                 .resultOrPartial(AdorableHamsterPets.LOGGER::error)
                                 .ifPresent(newManifest -> {
                                     this.manifest = newManifest;
-                                    this.manifestLoaded = true; // Mark as loaded
+                                    this.manifestLoaded = true;
                                     saveManifestToCache();
 
                                     Optional<String> etag = response.headers().firstValue("ETag");
@@ -428,14 +451,12 @@ public class AnnouncementManager {
                                             lastModified
                                     );
                                     saveState();
-                                    // Set the flag instead of reloading immediately.
                                     this.manifestJustLoaded = true;
 
-                                    // If already in a world, it's safe to reload now.
                                     if (MinecraftClient.getInstance().world != null) {
                                         MinecraftClient.getInstance().execute(() -> {
                                             ClientBookRegistry.INSTANCE.reload();
-                                            acknowledgeManifestLoad(); // Acknowledge it immediately
+                                            acknowledgeManifestLoad();
                                         });
                                     }
                                 });
@@ -445,14 +466,29 @@ public class AnnouncementManager {
                         AdorableHamsterPets.LOGGER.warn("[Announcements] Failed to fetch manifest, status code: {}", response.statusCode());
                     }
                 }).exceptionally(e -> {
-                    AdorableHamsterPets.LOGGER.error("[Announcements] Exception while fetching manifest. Using cached version.", e);
+                    AdorableHamsterPets.LOGGER.error("[Announcements] Exception while fetching manifest. Using cached version or offline fallback.", e);
+                    // If the manifest is STILL empty (meaning no cache was loaded), create the fallback.
+                    if (this.manifest == null || this.manifest.messages().isEmpty()) {
+                        this.manifest = createOfflineFallbackManifest();
+                        this.manifestLoaded = true;
+                        this.manifestJustLoaded = true; // Signal that a "new" manifest is ready
+
+                        if (MinecraftClient.getInstance().world != null) {
+                            MinecraftClient.getInstance().execute(() -> {
+                                ClientBookRegistry.INSTANCE.reload();
+                                acknowledgeManifestLoad();
+                            });
+                        }
+                    }
                     return null;
                 });
+        return activeRefreshFuture;
     }
 
     // Fetch markdown content
     public CompletableFuture<String> fetchMarkdown(String relativePath) {
         ensureInitialized();
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(GITHUB_RAW_URL + relativePath))
                 .GET()
@@ -464,11 +500,25 @@ public class AnnouncementManager {
                         return response.body();
                     }
                     AdorableHamsterPets.LOGGER.warn("Failed to fetch markdown from '{}', status code: {}", relativePath, response.statusCode());
-                    return "# Fetch Failed\nCould not load announcement content.";
+                    // Return the user-friendly offline message for non-200 responses too
+                    return """
+                    # Oops! Looks like you're offline.
+                    
+                    There was supposed to be a really fancy announcement message here, but that requires a teensy bit of internet connection.
+                    
+                    You can always [join the Discord](https://discord.gg/w54mk5bqdf) to see the latest announcements there!
+                    """;
                 })
                 .exceptionally(e -> {
                     AdorableHamsterPets.LOGGER.error("Exception while fetching markdown from '" + relativePath + "'", e);
-                    return "# Network Error\nAn exception occurred while fetching content.";
+                    // Return the user-friendly offline message on network exception
+                    return """
+                    # Oops! Looks like you're offline.
+                    
+                    There was supposed to be a really fancy announcement message here, but that requires a teensy bit of internet connection.
+                    
+                    You can always [join the Discord](https://discord.gg/w54mk5bqdf) to see the latest announcements there!
+                    """;
                 });
     }
 
