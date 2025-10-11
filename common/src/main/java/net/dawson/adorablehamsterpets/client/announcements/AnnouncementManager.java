@@ -38,8 +38,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import static org.apache.logging.log4j.core.util.ExecutorServices.ensureInitialized;
-
 public class AnnouncementManager {
     public static final AnnouncementManager INSTANCE = new AnnouncementManager();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -63,21 +61,27 @@ public class AnnouncementManager {
     }
 
     private void initialize() {
-        AdorableHamsterPets.LOGGER.trace("[Announcements] Initializing AnnouncementManager..."); // LOG 1: Start
+        AdorableHamsterPets.LOGGER.trace("[Announcements] Initializing AnnouncementManager...");
         this.httpClient = HttpClient.newHttpClient();
         Path configDir = Platform.getConfigFolder().resolve(AdorableHamsterPets.MOD_ID);
         this.stateFilePath = configDir.resolve("announcements.json");
         this.manifestCacheFilePath = configDir.resolve("manifest.cache.json");
-        AdorableHamsterPets.LOGGER.trace("[Announcements] State file path resolved to: {}", stateFilePath.toAbsolutePath()); // LOG 2: Path
+        AdorableHamsterPets.LOGGER.trace("[Announcements] State file path resolved to: {}", stateFilePath.toAbsolutePath());
         try {
             Files.createDirectories(configDir);
         } catch (IOException e) {
             AdorableHamsterPets.LOGGER.error("[Announcements] CRITICAL: Failed to create config directory for announcements at {}", configDir.toAbsolutePath(), e);
         }
         loadState();
+
+        if (this.clientState.disabled_until_launch()) {
+            AdorableHamsterPets.LOGGER.info("[Announcements] Notifications were disabled for the last session. Re-enabling for this session.");
+            setDisabledUntilLaunch(false);
+        }
+
         loadCachedManifest();
         processExpiredSnoozes();
-        AdorableHamsterPets.LOGGER.trace("[Announcements] Initialization complete."); // LOG 3: Finish
+        AdorableHamsterPets.LOGGER.trace("[Announcements] Initialization complete.");
     }
 
     private void ensureInitialized() {
@@ -98,7 +102,6 @@ public class AnnouncementManager {
                 "announcement",
                 "0.0.0",
                 "offline-fallback.md",  // markdown
-                false,                           // mandatory
                 ZonedDateTime.now()              // published
         );
     }
@@ -127,7 +130,7 @@ public class AnnouncementManager {
      * This provides a stable context for the AnnouncementScreen.
      *
      * @param announcementId The ID of the announcement to check.
-     * @return The reason string (e.g., "update_available", "mandatory_message").
+     * @return The reason string.
      */
     public String getCanonicalReasonForAnnouncement(String announcementId) {
         ensureInitialized();
@@ -136,30 +139,18 @@ public class AnnouncementManager {
 
         Semver installedVersion = Semver.parse(Platform.getMod(AdorableHamsterPets.MOD_ID).getVersion().toString());
         Semver latestVersion = Semver.parse(manifest.latest_version());
-        Semver lastAckVersion = Semver.parse(clientState.last_acknowledged_update());
-        Semver messageVersion = Semver.parse(announcement.semver());
 
-        // 1. Is it the primary "Update Available" notification?
-        // This is the highest priority reason.
+        // --- 1. Check for "Update Available" ---
         if (installedVersion.compareTo(latestVersion) < 0 && announcement.semver().equals(latestVersion.toString())) {
-            return PendingNotification.UPDATE_AVAILABLE;
+            return PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT;
         }
 
-        // 2. Is it a mandatory "What's New" for a version the user has but hasn't acknowledged?
-        if (announcement.mandatory() && "update".equals(announcement.kind())) {
-            boolean versionIsRelevant = messageVersion.compareTo(installedVersion) <= 0;
-            boolean isUnacknowledged = messageVersion.compareTo(lastAckVersion) > 0;
-            if (versionIsRelevant && isUnacknowledged) {
-                return PendingNotification.MANDATORY_MESSAGE;
-            }
-        }
-
-        // 3. Is it an optional announcement?
+        // --- 2. Check for Regular Announcements ---
         if ("announcement".equals(announcement.kind())) {
-            return PendingNotification.NEW_ANNOUNCEMENT;
+            return PendingNotification.REGULAR_ANNOUNCEMENT;
         }
 
-        // 4. Fallback to its basic kind if none of the specific contexts apply.
+        // --- 3. Fallback ---
         return announcement.kind();
     }
 
@@ -231,6 +222,21 @@ public class AnnouncementManager {
         return activeRefreshFuture;
     }
 
+    public void setDisabledUntilLaunch(boolean isDisabled) {
+        ensureInitialized();
+        if (clientState.disabled_until_launch() != isDisabled) {
+            clientState = new ClientAnnouncementState(
+                    clientState.seen_ids(),
+                    clientState.snoozed_ids(),
+                    clientState.last_acknowledged_update(),
+                    isDisabled,
+                    clientState.manifest_etag(),
+                    clientState.manifest_last_modified()
+            );
+            saveState();
+        }
+    }
+
     public Announcement getAnnouncementById(String id) {
         ensureInitialized();
         return manifest.messages().stream()
@@ -264,17 +270,12 @@ public class AnnouncementManager {
                     clientState.seen_ids(),
                     newSnoozedIds,
                     clientState.last_acknowledged_update(),
-                    clientState.opt_out_announcements(),
+                    clientState.disabled_until_launch(),
                     clientState.manifest_etag(),
                     clientState.manifest_last_modified()
             );
             saveState();
         }
-    }
-
-    public void reEnableOptionalAnnouncements() {
-        ensureInitialized();
-        setOptOut(false);
     }
 
     public void markAsSeen(String id) {
@@ -285,11 +286,59 @@ public class AnnouncementManager {
                     newSeenIds,
                     clientState.snoozed_ids(),
                     clientState.last_acknowledged_update(),
-                    clientState.opt_out_announcements(),
+                    clientState.disabled_until_launch(),
                     clientState.manifest_etag(),
                     clientState.manifest_last_modified()
             );
             saveState();
+        }
+    }
+
+    public void markAllAsRead() {
+        ensureInitialized();
+
+        // Get the book instance once
+        Book book = BookRegistry.INSTANCE.books.get(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+        if (book == null) {
+            AdorableHamsterPets.LOGGER.error("[Announcements] Could not mark all as read: Hamster Tips book not found.");
+            return;
+        }
+
+        // Create a mutable copy of the seen IDs to modify
+        Set<String> newSeenIds = new HashSet<>(clientState.seen_ids());
+        boolean changed = false;
+
+        for (Announcement announcement : getAllManifestMessages()) {
+            // Add the ID to the set. The return value of add() tells us if it was a new addition.
+            if (newSeenIds.add(announcement.id())) {
+                changed = true;
+            }
+
+            // Acknowledge any update-related messages
+            if ("update".equals(announcement.kind())) {
+                setLastAcknowledgedUpdate(announcement.semver());
+            }
+
+            // Find and mark the corresponding virtual entry in Patchouli as read
+            Identifier entryId = Identifier.of(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
+            BookEntry entry = book.getContents().entries.get(entryId);
+            if (entry != null) {
+                PatchouliIntegration.setEntryAsRead(entry);
+            }
+        }
+
+        // Only save the state if something actually changed
+        if (changed) {
+            clientState = new ClientAnnouncementState(
+                    newSeenIds,
+                    clientState.snoozed_ids(),
+                    clientState.last_acknowledged_update(),
+                    clientState.disabled_until_launch(),
+                    clientState.manifest_etag(),
+                    clientState.manifest_last_modified()
+            );
+            saveState();
+            AdorableHamsterPets.LOGGER.info("Marked all announcements as read via config action.");
         }
     }
 
@@ -302,7 +351,7 @@ public class AnnouncementManager {
                     clientState.seen_ids(),
                     clientState.snoozed_ids(),
                     newAck.toString(),
-                    clientState.opt_out_announcements(),
+                    clientState.disabled_until_launch(),
                     clientState.manifest_etag(),
                     clientState.manifest_last_modified()
             );
@@ -318,28 +367,13 @@ public class AnnouncementManager {
 
         clientState = new ClientAnnouncementState(
                 clientState.seen_ids(),
-                newSnoozedIds, // Pass the NEW snoozed map
+                newSnoozedIds,
                 clientState.last_acknowledged_update(),
-                clientState.opt_out_announcements(),
+                clientState.disabled_until_launch(),
                 clientState.manifest_etag(),
                 clientState.manifest_last_modified()
         );
         saveState();
-    }
-
-    public void setOptOut(boolean optOut) {
-        ensureInitialized();
-        if (clientState.opt_out_announcements() != optOut) {
-            clientState = new ClientAnnouncementState(
-                    clientState.seen_ids(),
-                    clientState.snoozed_ids(),
-                    clientState.last_acknowledged_update(),
-                    optOut,
-                    clientState.manifest_etag(),
-                    clientState.manifest_last_modified()
-            );
-            saveState();
-        }
     }
 
     private void loadState() {
@@ -412,9 +446,9 @@ public class AnnouncementManager {
     }
 
     public record PendingNotification(String reason, Announcement announcement) {
-        public static final String UPDATE_AVAILABLE = "update_available";
-        public static final String NEW_ANNOUNCEMENT = "new_announcement";
-        public static final String MANDATORY_MESSAGE = "mandatory_message";
+        public static final String UPDATE_AVAILABLE_ANNOUNCEMENT = "update_available_announcement";
+        public static final String REGULAR_ANNOUNCEMENT = "regular_announcement";
+        public static final String WHATS_NEW_ANNOUNCEMENT = "whats_new_announcement";
     }
 
     /**
@@ -456,7 +490,7 @@ public class AnnouncementManager {
                                             clientState.seen_ids(),
                                             clientState.snoozed_ids(),
                                             clientState.last_acknowledged_update(),
-                                            clientState.opt_out_announcements(),
+                                            clientState.disabled_until_launch(),
                                             etag,
                                             lastModified
                                     );
@@ -537,6 +571,12 @@ public class AnnouncementManager {
         if (!this.manifestLoaded) {
             return Collections.emptyList(); // Guard against race condition
         }
+        // --- 1. Session Disable Check ---
+        // If the user has disabled for the session, return an empty list immediately.
+        if (clientState.disabled_until_launch()) {
+            return Collections.emptyList();
+        }
+
         AdorableHamsterPets.LOGGER.trace("[Announcements] Running getPendingNotifications check...");
         List<PendingNotification> pending = new ArrayList<>();
         if (manifest == null || manifest.messages().isEmpty()) {
@@ -550,59 +590,49 @@ public class AnnouncementManager {
         Instant now = Instant.now();
 
         AdorableHamsterPets.LOGGER.trace("[Announcements] -> Versions: Installed={}, Latest={}, LastAck={}", installedVersion, latestVersion, lastAckVersion);
-        AdorableHamsterPets.LOGGER.trace("[Announcements] -> Snooze until: {}. Opt-out: {}",  clientState.opt_out_announcements());
+        AdorableHamsterPets.LOGGER.trace("[Announcements] -> Snooze IDs: {}.", clientState.snoozed_ids());
 
-        // --- 1. Check for New Major/Minor Update ---
+        // --- 2. Check for Update Available Announcements ---
         boolean newUpdateAvailable = installedVersion.compareTo(latestVersion) < 0;
-        String latestUpdateId = "update-" + latestVersion;
-        boolean isSnoozed = clientState.snoozed_ids().getOrDefault(latestUpdateId, Instant.EPOCH).isAfter(now);
-        AdorableHamsterPets.LOGGER.trace("[Announcements] -> Update check: newUpdateAvailable={}, isSnoozed={}", newUpdateAvailable, isSnoozed);
-        if (newUpdateAvailable && !isSnoozed) {
+        if (newUpdateAvailable) {
             manifest.messages().stream()
                     .filter(a -> "update".equals(a.kind()) && latestVersion.toString().equals(a.semver()))
+                    // Check if it has been seen or snoozed
+                    .filter(a -> !clientState.seen_ids().contains(a.id()) && !clientState.snoozed_ids().getOrDefault(a.id(), Instant.EPOCH).isAfter(now))
                     .findFirst()
                     .ifPresent(announcement -> {
-                        pending.add(new PendingNotification(PendingNotification.UPDATE_AVAILABLE, announcement));
+                        pending.add(new PendingNotification(PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT, announcement));
                         AdorableHamsterPets.LOGGER.trace("[Announcements] -> ADDED (Update Available): id='{}', semver='{}'", announcement.id(), announcement.semver());
                     });
         }
 
-        // --- 2. Check for All Other Messages (Announcements and Missed Mandatory Updates) ---
-        AdorableHamsterPets.LOGGER.trace("[Announcements] -> Scanning all {} messages for mandatory/optional...", manifest.messages().size());
+        // --- 3. Check for All Other Messages (Regular Announcements and Missed "What's New") ---
+        AdorableHamsterPets.LOGGER.trace("[Announcements] -> Scanning all {} messages for other notifications...", manifest.messages().size());
         for (Announcement message : manifest.messages()) {
-            if (clientState.seen_ids().contains(message.id())) {
-                continue;
-            }
-            // Check if this specific message is snoozed
-            if (clientState.snoozed_ids().getOrDefault(message.id(), Instant.EPOCH).isAfter(now)) {
+            if (clientState.seen_ids().contains(message.id()) || clientState.snoozed_ids().getOrDefault(message.id(), Instant.EPOCH).isAfter(now)) {
                 continue;
             }
 
             Semver messageVersion = Semver.parse(message.semver());
 
-            // --- 2a. Optional Announcements ---
+            // --- 3a. Regular Announcements ---
             if ("announcement".equals(message.kind())) {
-                if (!clientState.opt_out_announcements()) {
-                    pending.add(new PendingNotification(PendingNotification.NEW_ANNOUNCEMENT, message));
-                    AdorableHamsterPets.LOGGER.trace("[Announcements] -> ADDED (Optional Announcement): id='{}'", message.id());
-                } else {
-                    AdorableHamsterPets.LOGGER.trace("[Announcements] -> SKIPPED (Opted Out): id='{}'", message.id());
-                }
-                continue; // Processed as announcement, move to next message
+                pending.add(new PendingNotification(PendingNotification.REGULAR_ANNOUNCEMENT, message));
+                AdorableHamsterPets.LOGGER.trace("[Announcements] -> ADDED (Optional Announcement): id='{}'", message.id());
+                continue;
             }
 
-            // --- 2b. Mandatory "What's New" for Current or Past Versions ---
-            // This triggers for updates the user has installed but not yet acknowledged.
-            if (message.mandatory() && "update".equals(message.kind())) {
+            // --- 3b. "What's New" Announcements for Current or Past Versions ---
+            if ("update".equals(message.kind())) {
                 boolean versionIsRelevant = messageVersion.compareTo(installedVersion) <= 0;
                 boolean isUnacknowledged = messageVersion.compareTo(lastAckVersion) > 0;
 
-                // Condition: The message version is <= the installed version AND > the last acknowledged version.
                 if (versionIsRelevant && isUnacknowledged) {
+                    // Don't add it if it's already pending as the main "update available" notification
                     boolean alreadyPendingAsUpdate = newUpdateAvailable && message.semver().equals(latestVersion.toString());
                     if (!alreadyPendingAsUpdate) {
-                        pending.add(new PendingNotification(PendingNotification.MANDATORY_MESSAGE, message));
-                        AdorableHamsterPets.LOGGER.trace("[Announcements] -> ADDED (Mandatory Message): id='{}', semver='{}'", message.id(), message.semver());
+                        pending.add(new PendingNotification(PendingNotification.WHATS_NEW_ANNOUNCEMENT, message));
+                        AdorableHamsterPets.LOGGER.trace("[Announcements] -> ADDED (What's New): id='{}', semver='{}'", message.id(), message.semver());
                     } else {
                         AdorableHamsterPets.LOGGER.trace("[Announcements] -> SKIPPED (Duplicate Update): id='{}'", message.id());
                     }
@@ -610,7 +640,7 @@ public class AnnouncementManager {
             }
         }
 
-        // --- 3. Sort by publication date, newest first ---
+        // --- 4. Sort by publication date, newest first ---
         pending.sort(Comparator.comparing((PendingNotification p) -> p.announcement().published()).reversed());
         AdorableHamsterPets.LOGGER.trace("[Announcements] -> Final pending count: {}", pending.size());
         return pending;
@@ -624,10 +654,10 @@ public class AnnouncementManager {
      */
     public static Text getTooltipTextForNotification(PendingNotification notification) {
         return switch (notification.reason()) {
-            case PendingNotification.UPDATE_AVAILABLE ->
-                    Text.translatable("tooltip.adorablehamsterpets.hud.update_available", notification.announcement().semver());
-            case PendingNotification.NEW_ANNOUNCEMENT ->
-                    Text.translatable("tooltip.adorablehamsterpets.hud.new_announcement");
+            case PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT ->
+                    Text.translatable("tooltip.adorablehamsterpets.hud.update_available_announcement", notification.announcement().semver());
+            case PendingNotification.REGULAR_ANNOUNCEMENT ->
+                    Text.translatable("tooltip.adorablehamsterpets.hud.regular_announcement");
             default -> Text.translatable("tooltip.adorablehamsterpets.hud.whats_new", notification.announcement().semver());
         };
     }

@@ -23,7 +23,6 @@ public record Announcement(
         String semver,
         String title,
         String markdown,
-        boolean mandatory,
         ZonedDateTime published
 ) {
     // Custom codec for ZonedDateTime using xmap to convert to/from String
@@ -43,7 +42,6 @@ public record Announcement(
             Codec.STRING.fieldOf("semver").forGetter(Announcement::semver),
             Codec.STRING.fieldOf("title").forGetter(Announcement::title),
             Codec.STRING.fieldOf("markdown").forGetter(Announcement::markdown),
-            Codec.BOOL.fieldOf("mandatory").forGetter(Announcement::mandatory),
             ZONED_DATE_TIME_CODEC.fieldOf("published").forGetter(Announcement::published)
     ).apply(instance, Announcement::new));
 }
