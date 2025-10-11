@@ -26,7 +26,7 @@ public class ModClientCommands {
     public static void register() {
         ClientCommandRegistrationEvent.EVENT.register((dispatcher, registryAccess) -> {
             registerResetAnnouncementsCommand(dispatcher);
-            registerReEnableAnnouncementsCommand(dispatcher);
+            registerMarkAllReadCommand(dispatcher);
         });
     }
 
@@ -48,14 +48,14 @@ public class ModClientCommands {
         dispatcher.register(command);
     }
 
-    private static void registerReEnableAnnouncementsCommand(CommandDispatcher<ClientCommandRegistrationEvent.ClientCommandSourceStack> dispatcher) {
+    private static void registerMarkAllReadCommand(CommandDispatcher<ClientCommandRegistrationEvent.ClientCommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<ClientCommandRegistrationEvent.ClientCommandSourceStack> command = LiteralArgumentBuilder.<ClientCommandRegistrationEvent.ClientCommandSourceStack>literal("ahp_client")
-                .then(LiteralArgumentBuilder.<ClientCommandRegistrationEvent.ClientCommandSourceStack>literal("reenable_announcements")
+                .then(LiteralArgumentBuilder.<ClientCommandRegistrationEvent.ClientCommandSourceStack>literal("mark_all_read")
                         .executes(context -> {
-                            AnnouncementManager.INSTANCE.reEnableOptionalAnnouncements();
+                            AnnouncementManager.INSTANCE.markAllAsRead();
                             if (MinecraftClient.getInstance().player != null) {
                                 MinecraftClient.getInstance().player.sendMessage(
-                                        Text.translatable("message.adorablehamsterpets.announcements_reenabled").formatted(Formatting.GREEN),
+                                        Text.translatable("message.adorablehamsterpets.announcements_marked_read").formatted(Formatting.GREEN),
                                         false
                                 );
                             }

@@ -136,7 +136,7 @@ public class AnnouncementIconWidget extends ButtonWidget {
                 Text mainTooltipLine = null;
                 if (this.parentScreen instanceof TitleScreen) {
                     mainTooltipLine = notifications.stream()
-                            .filter(n -> n.reason().equals(AnnouncementManager.PendingNotification.UPDATE_AVAILABLE))
+                            .filter(n -> n.reason().equals(AnnouncementManager.PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT))
                             .findFirst()
                             .map(AnnouncementManager::getTooltipTextForNotification)
                             .orElse(null);
@@ -178,7 +178,7 @@ public class AnnouncementIconWidget extends ButtonWidget {
             // Find the single LATEST "update available" notification to display. This prevents ambiguity if
             // multiple are pending and avoids opening the Patchouli book GUI, which would crash from the title screen.
             notifications.stream()
-                    .filter(n -> n.reason().equals(AnnouncementManager.PendingNotification.UPDATE_AVAILABLE))
+                    .filter(n -> n.reason().equals(AnnouncementManager.PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT))
                     .max(Comparator.comparing(n -> Semver.parse(n.announcement().semver()))) // Find the highest version
                     .ifPresent(notification -> {
                         Announcement announcement = notification.announcement();

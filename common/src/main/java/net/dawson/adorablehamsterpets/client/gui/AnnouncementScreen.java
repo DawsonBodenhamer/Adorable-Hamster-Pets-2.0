@@ -17,10 +17,9 @@ import net.dawson.adorablehamsterpets.client.announcements.ClientAnnouncementSta
 import net.dawson.adorablehamsterpets.client.announcements.PatchouliIntegration;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.mixin.accessor.ScreenWidgetAdder;
+import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
@@ -36,6 +35,8 @@ import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 import vazkii.patchouli.client.book.BookEntry;
+import vazkii.patchouli.common.book.Book;
+import vazkii.patchouli.common.book.BookRegistry;
 
 import java.net.URI;
 import java.time.Duration;
@@ -67,7 +68,7 @@ import java.util.List;
  *   <li>A scrollable content area that renders Markdown text.</li>
  *   <li>A custom scrollbar that appears when content overflows.</li>
  *   <li>A dynamically scaled title that adjusts its size to fit the header.</li>
- *   <li>A row of action buttons (e.g., "Dismiss", "Changelog") that are dynamically generated,
+ *   <li>A row of action buttons (e.g., "Mark as Read", "Changelog") that are dynamically generated,
  *       sized, and centered below the main panel.</li>
  * </ul>
  */
@@ -87,6 +88,7 @@ public class AnnouncementScreen extends Screen {
     private static final int SCROLLBAR_START_Y = 28;
     private static final int SCROLLBAR_END_Y = 221;
     private static final int EDGE_MARGIN = 7;
+    private static final int BUTTON_WIDTH = 100;
 
     // --- Fields ---
     private final Announcement announcement;
@@ -113,7 +115,6 @@ public class AnnouncementScreen extends Screen {
     private int scaledScrollBarXOffset;
     private int scaledScrollBarStartY;
     private int scaledScrollBarEndY;
-    private int scaledButtonWidth;
     private int scaledButtonHeight;
     private int scaledButtonPadding;
 
@@ -132,6 +133,7 @@ public class AnnouncementScreen extends Screen {
      * all scaled dimensions and positions, and initializes all widgets.
      */
     @Override
+    @SuppressWarnings("unchecked")
     protected void init() {
         super.init();
 
@@ -141,8 +143,10 @@ public class AnnouncementScreen extends Screen {
         int availableHeight = Math.max(0, this.height - 2 * EDGE_MARGIN);
 
         // Determine a downscaling factor so the entire UI fits, clamped to 1.0 to prevent upscaling.
+        int buttonRows = 2;
+        int unscaledTotalHeight = TOTAL_GUI_HEIGHT + (buttonRows - 1) * (20 + 7);
         float scaleX = (float) availableWidth / BACKGROUND_WIDTH;
-        float scaleY = (float) availableHeight / TOTAL_GUI_HEIGHT;
+        float scaleY = (float) availableHeight / unscaledTotalHeight;
         this.uiScale = Math.min(1.0f, Math.min(scaleX, scaleY));
 
         // Pre-calculate scaled dimensions used throughout the screen.
@@ -157,12 +161,11 @@ public class AnnouncementScreen extends Screen {
         this.scaledScrollBarEndY = Math.round(SCROLLBAR_END_Y * this.uiScale);
 
         // Scale button dimensions with sensible minimums to maintain usability.
-        this.scaledButtonWidth = Math.max(40, Math.round(100 * this.uiScale));
         this.scaledButtonHeight = Math.max(12, Math.round(20 * this.uiScale));
         this.scaledButtonPadding = Math.max(2, Math.round(7 * this.uiScale));
 
         // The total scaled height is derived from individually scaled components to respect minimums.
-        this.scaledTotalHeight = this.scaledBackgroundHeight + this.scaledButtonPadding + this.scaledButtonHeight;
+        this.scaledTotalHeight = this.scaledBackgroundHeight + buttonRows * (this.scaledButtonHeight + this.scaledButtonPadding);
 
         // Center the entire UI within the available margin area.
         this.guiLeft = EDGE_MARGIN + (availableWidth - this.scaledBackgroundWidth) / 2;
@@ -198,87 +201,126 @@ public class AnnouncementScreen extends Screen {
                 .build());
 
         // --- Dynamic Button Creation ---
-        List<ButtonWidget.Builder> buttonBuilders = new ArrayList<>();
-        // Use the scaled button dimensions computed earlier
-        int buttonWidth = this.scaledButtonWidth;
+        // Prepare two rows of buttons: primary actions on the first row and secondary actions on the second.
+        int buttonWidth = BUTTON_WIDTH;
         int buttonPadding = this.scaledButtonPadding;
 
-        // 1. "Dismiss" button: Show for "What's New" and optional announcements, but NOT for "Update Available".
-        if (!AnnouncementManager.PendingNotification.UPDATE_AVAILABLE.equals(this.reason)) {
-            buttonBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.dismiss"), button -> {
+        List<ButtonWidget.Builder> primaryBuilders = new ArrayList<>();
+        List<ButtonWidget.Builder> secondaryBuilders = new ArrayList<>();
+
+        // 1. "Mark as Read" button (primary row)
+        MutableText markAsReadTooltip = Text.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read.tooltip")
+                .append("\n\n")
+                .append(Text.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read.shift_tooltip").formatted(Formatting.GOLD));
+
+        primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read"), button -> {
+            if (Screen.hasShiftDown()) {
+                // --- Shift-Click Action: Mark ALL as read ---
+                Book book = BookRegistry.INSTANCE.books.get(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+                if (book != null) {
+                    AnnouncementManager.INSTANCE.getAllManifestMessages().forEach(msg -> {
+                        // Mark the announcement as seen in my system
+                        AnnouncementManager.INSTANCE.markAsSeen(msg.id());
+
+                        // Acknowledge any update-related messages
+                        if ("update".equals(msg.kind())) {
+                            AnnouncementManager.INSTANCE.setLastAcknowledgedUpdate(msg.semver());
+                        }
+
+                        // Find and mark the corresponding virtual entry in Patchouli as read
+                        Identifier entryId = Identifier.of(AdorableHamsterPets.MOD_ID, "announcement_" + msg.id());
+                        BookEntry entry = book.getContents().entries.get(entryId);
+                        if (entry != null) {
+                            PatchouliIntegration.setEntryAsRead(entry);
+                        }
+                    });
+                }
+            } else {
+                // --- Normal Click Action: Mark this one as read ---
                 PatchouliIntegration.setEntryAsRead(this.virtualEntry);
                 AnnouncementManager.INSTANCE.markAsSeen(announcement.id());
-                if (announcement.mandatory()) {
+                // Only acknowledge if it's an update-related message
+                if ("update".equals(announcement.kind())) {
                     AnnouncementManager.INSTANCE.setLastAcknowledgedUpdate(announcement.semver());
                 }
-                this.returnToBook();
-            }).tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.dismiss.tooltip"))));
-        }
-
-        // 2. "Disable These" button: Only show for non-mandatory (optional) announcements.
-        if (!announcement.mandatory()) {
-            buttonBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.disable"), button -> {
-                AnnouncementManager.INSTANCE.setOptOut(true);
-                this.close();
-            }).tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.disable.tooltip"))));
-        }
-
-        // 3. "Remind me Later" and "Changelog" buttons: Only for update-related announcements.
-        if ("update".equals(announcement.kind())) {
-            // "Remind me Later" = ONLY for "Update Available".
-            if (AnnouncementManager.PendingNotification.UPDATE_AVAILABLE.equals(this.reason)) {
-                // Build the tooltip dynamically based on snooze state.
-                MutableText remindLaterTooltip = Text.translatable("gui.adorablehamsterpets.announcement.button.remind_later.tooltip", Configs.AHP.snoozeUpdateReminderDays.get());
-                ClientAnnouncementState state = AnnouncementManager.INSTANCE.getClientState();
-                Instant snoozeUntil = state.snoozed_ids().get(announcement.id());
-
-                if (snoozeUntil != null && snoozeUntil.isAfter(Instant.now())) {
-                    Duration remaining = Duration.between(Instant.now(), snoozeUntil);
-                    remindLaterTooltip.append("\n\n").append(formatDuration(remaining));
-                }
-
-                buttonBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.remind_later"), button -> {
-                    // --- Primary Action (Always Safe) ---
-                    AnnouncementManager.INSTANCE.setSnooze(announcement.id(), Configs.AHP.snoozeUpdateReminderDays.get());
-
-                    // --- Context-Aware Patchouli Action (Must be deferred if on title screen) ---
-                    if (this.parentScreen instanceof TitleScreen) {
-                        AnnouncementManager.INSTANCE.queueDeferredReadMark(this.virtualEntry.getId());
-                    } else {
-                        PatchouliIntegration.setEntryAsRead(this.virtualEntry);
-                    }
-
-                    this.returnToBook();
-                }).tooltip(Tooltip.of(remindLaterTooltip)));
             }
+            this.returnToBook();
+        }).tooltip(Tooltip.of(markAsReadTooltip)));
 
-            // "Changelog" button is for ANY update note.
-            String changelogUrl = String.format("https://modrinth.com/mod/adorable-hamster-pets/version/%s-1.20.1+fabric", announcement.semver());
-            buttonBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.changelog"), button -> {
+        // 2. "Disable These" button (primary row)
+        primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.disable_icons"), button -> {
+            ((ValidatedFieldAccessor<Boolean>) Configs.AHP.enableNotificationIcons).adorablehamsterpets$set(false);
+            Configs.AHP.save();
+            this.close();
+        }).tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.disable_icons.tooltip"))));
+
+        // 3. "Snooze (Days)" button (primary row)
+        MutableText remindLaterTooltip = Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_days.tooltip", Configs.AHP.snoozeUpdateReminderDays.get());
+        ClientAnnouncementState state = AnnouncementManager.INSTANCE.getClientState();
+        Instant snoozeUntil = state.snoozed_ids().get(announcement.id());
+        if (snoozeUntil != null && snoozeUntil.isAfter(Instant.now())) {
+            Duration remaining = Duration.between(Instant.now(), snoozeUntil);
+            remindLaterTooltip.append("\n\n").append(formatDuration(remaining));
+        }
+        primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_days"), button -> {
+            AnnouncementManager.INSTANCE.setSnooze(announcement.id(), Configs.AHP.snoozeUpdateReminderDays.get());
+            if (this.parentScreen instanceof TitleScreen) {
+                AnnouncementManager.INSTANCE.queueDeferredReadMark(this.virtualEntry.getId());
+            } else {
+                PatchouliIntegration.setEntryAsRead(this.virtualEntry);
+            }
+            this.returnToBook();
+        }).tooltip(Tooltip.of(remindLaterTooltip)));
+
+        // 4. "Snooze (Session)" button (primary row)
+        primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_session"), button -> {
+            AnnouncementManager.INSTANCE.setDisabledUntilLaunch(true);
+            this.close();
+        }).tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_session.tooltip"))));
+
+        // 5. "Changelog" button (secondary row, only if this is an update note)
+        if ("update".equals(announcement.kind())) {
+            String changelogUrl = String.format("https://modrinth.com/mod/adorable-hamster-pets/version/%s-1.21.1+fabric", announcement.semver());
+            secondaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.changelog"), button -> {
                 Util.getOperatingSystem().open(URI.create(changelogUrl));
             }).tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.changelog.tooltip"))));
         }
 
-        // 4. Discord Button (always present)
-        buttonBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.discord"), button -> {
+        // 6. Discord Button (secondary row, always present)
+        secondaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.discord"), button -> {
             Util.getOperatingSystem().open(URI.create("https://discord.gg/w54mk5bqdf"));
         }).tooltip(Tooltip.of(Text.translatable("config.adorablehamsterpets.main.helpAndResources.joinDiscord.desc"))));
 
-
         // --- Button Row Layout ---
-        int totalButtonWidth = buttonBuilders.size() * buttonWidth + Math.max(0, buttonBuilders.size() - 1) * buttonPadding;
         int availableWidthButtons = Math.max(0, this.width - 2 * EDGE_MARGIN);
-        int startX = EDGE_MARGIN + (availableWidthButtons - totalButtonWidth) / 2;
-        // Position buttons just below the scaled background texture with dynamic padding.
-        int buttonY = this.guiTop + this.scaledBackgroundHeight + this.scaledButtonPadding;
+
+        // Compute starting X positions for each row by centering the row within the available width.
+        int primaryCount = primaryBuilders.size();
+        int secondaryCount = secondaryBuilders.size();
+        int totalPrimaryWidth = primaryCount * buttonWidth + Math.max(0, primaryCount - 1) * buttonPadding;
+        int totalSecondaryWidth = secondaryCount * buttonWidth + Math.max(0, secondaryCount - 1) * buttonPadding;
+        int startXRow1 = EDGE_MARGIN + (availableWidthButtons - totalPrimaryWidth) / 2;
+        int startXRow2 = EDGE_MARGIN + (availableWidthButtons - totalSecondaryWidth) / 2;
+
+        // Compute Y positions for each row.
+        int firstRowY = this.guiTop + this.scaledBackgroundHeight + this.scaledButtonPadding;
+        int secondRowY = firstRowY + this.scaledButtonHeight + this.scaledButtonPadding;
 
         // --- Build and Add Buttons ---
-        for (int i = 0; i < buttonBuilders.size(); i++) {
-            ButtonWidget.Builder builder = buttonBuilders.get(i);
-            int currentX = startX + i * (buttonWidth + buttonPadding);
-            // Use ScreenWidgetAdder accessor to add the widget for cross-loader compatibility
+        // Add primary row buttons
+        for (int i = 0; i < primaryCount; i++) {
+            ButtonWidget.Builder builder = primaryBuilders.get(i);
+            int currentX = startXRow1 + i * (buttonWidth + buttonPadding);
             ((ScreenWidgetAdder)(Object)this).adorablehamsterpets$addWidget(
-                    builder.dimensions(currentX, buttonY, buttonWidth, this.scaledButtonHeight).build()
+                    builder.dimensions(currentX, firstRowY, buttonWidth, this.scaledButtonHeight).build()
+            );
+        }
+        // Add secondary row buttons
+        for (int j = 0; j < secondaryCount; j++) {
+            ButtonWidget.Builder builder = secondaryBuilders.get(j);
+            int currentX = startXRow2 + j * (buttonWidth + buttonPadding);
+            ((ScreenWidgetAdder)(Object)this).adorablehamsterpets$addWidget(
+                    builder.dimensions(currentX, secondRowY, buttonWidth, this.scaledButtonHeight).build()
             );
         }
     }

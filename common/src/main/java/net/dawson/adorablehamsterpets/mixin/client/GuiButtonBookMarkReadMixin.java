@@ -11,6 +11,8 @@ package net.dawson.adorablehamsterpets.mixin.client;
  */
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.client.announcements.Announcement;
+import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -59,13 +61,25 @@ public abstract class GuiButtonBookMarkReadMixin {
         // Iterate over all entries in the book
         for (BookEntry entry : this.book.getContents().entries.values()) {
             Identifier entryId = entry.getId();
-            // Skip virtual announcement/update entries (namespace and prefix match)
+
+            // --- Announcement Logic: Handle Virtual Announcement Entries ---
             if (entryId.getNamespace().equals(AdorableHamsterPets.MOD_ID)
                     && entryId.getPath().startsWith("announcement_")) {
-                continue;
+
+                String announcementId = entryId.getPath().substring("announcement_".length());
+                Announcement announcement = AnnouncementManager.INSTANCE.getAnnouncementById(announcementId);
+
+                if (announcement != null) {
+                    // Mark as seen in my system
+                    AnnouncementManager.INSTANCE.markAsSeen(announcement.id());
+                    // Acknowledge in my system if it's an update-related message
+                    if ("update".equals(announcement.kind())) {
+                        AnnouncementManager.INSTANCE.setLastAcknowledgedUpdate(announcement.semver());
+                    }
+                }
             }
 
-            // Mark normal entries as read, respecting whether we’re on the main page or inside a category
+            // --- Universal Logic: Mark entry as read in Patchouli's system ---
             if (onMainPage) {
                 adorablehamsterpets$markEntry(entry);
             } else {
@@ -73,7 +87,7 @@ public abstract class GuiButtonBookMarkReadMixin {
             }
         }
 
-        // Cancel the default Patchouli logic to prevent marking announcements
+        // Cancel the default Patchouli logic
         ci.cancel();
     }
 }

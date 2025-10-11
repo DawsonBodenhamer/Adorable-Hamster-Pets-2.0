@@ -16,6 +16,7 @@ import me.fzzyhmstrs.fzzy_config.annotations.Translation;
 import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.config.ConfigAction;
 import me.fzzyhmstrs.fzzy_config.config.ConfigGroup;
+import me.fzzyhmstrs.fzzy_config.entry.EntryFlag;
 import me.fzzyhmstrs.fzzy_config.screen.widget.TextureIds;
 import me.fzzyhmstrs.fzzy_config.util.Translatable;
 import me.fzzyhmstrs.fzzy_config.validation.ValidatedField;
@@ -44,6 +45,47 @@ public class AhpConfig extends Config {
 
     public AhpConfig() {
         super(Identifier.of(AdorableHamsterPets.MOD_ID, "main"));
+
+        // --- Two-Way Binding for Announcement Icon Toggles ---
+        // This block ensures the master "Enable Announcements" toggle stays synchronized
+        // with the individual "Enable HUD Icon" and "Enable GUI Widget Icon" toggles.
+
+        // --- 1. Initial State Synchronization ---
+        // On config load, set the master toggle's state based on the children.
+        // If either the HUD icon OR the widget icon is enabled, the master toggle should show "ON".
+        enableNotificationIcons.setAndUpdate(enableHudIcon.get() || enableWidgetIcon.get());
+
+        // --- 2. Master -> Children Update Listener ---
+        // When the master "Enable Announcements" toggle is changed by the user in the GUI...
+        enableNotificationIcons.listenToEntry(ignored -> {
+            // Re-entrancy guard: Prevents an infinite loop where listeners trigger each other.
+            if (updatingAnnouncementToggles) return;
+            updatingAnnouncementToggles = true;
+            try {
+                boolean masterValue = enableNotificationIcons.get();
+                // Push the master state down to both individual toggles.
+                enableHudIcon.setAndUpdate(masterValue);
+                enableWidgetIcon.setAndUpdate(masterValue);
+            } finally {
+                updatingAnnouncementToggles = false;
+            }
+        });
+
+        // --- 3. Children -> Master Update Listener ---
+        // A single listener to handle changes from either of the individual toggles.
+        var childListener = (java.util.function.Consumer<?>) ignored -> {
+            if (updatingAnnouncementToggles) return;
+            // Recalculate what the master toggle's state *should* be.
+            boolean newMasterState = enableHudIcon.get() || enableWidgetIcon.get();
+            // Only update the master if its current state is out of sync.
+            if (enableNotificationIcons.get() != newMasterState) {
+                enableNotificationIcons.setAndUpdate(newMasterState);
+            }
+        };
+
+        // Attach the listener to both individual toggles.
+        enableHudIcon.listenToEntry(e -> childListener.accept(null));
+        enableWidgetIcon.listenToEntry(e -> childListener.accept(null));
     }
 
     // --- Help & Other Distractions ---
@@ -88,31 +130,39 @@ public class AhpConfig extends Config {
             .build(new ClickEvent(ClickEvent.Action.OPEN_URL,
                     "https://www.fortheking.design"));
 
-    // --- Announcements & Update Notifications ---
-    @Translatable.Name("Announcements & Update Notifications")
-    @Translatable.Desc("Tweak the little bell icon that appears when I have something important (or trivial) to tell you.")
+    // --- Announcements & Update Notes ---
+    @Translatable.Name("Announcements & Update Notes")
+    @Translatable.Desc("Tweak the little bell icon that appears when I have something important to tell you. Or turn if off if you hate fun.")
     public ConfigGroup announcements = new ConfigGroup("announcements", true);
 
     @NonSync
-    @Translatable.Name("Snooze Update Reminder (Days)")
-    @Translatable.Desc("For when you see the update notification and think, 'That's a problem for future me.' Future you will be so proud. This is where you select many days to hide the 'Update Available' notification when you click 'Remind Me Later'.")
-    public ValidatedInt snoozeUpdateReminderDays = new ValidatedInt(5, 14, 1);
+    @Translatable.Name("Enable Announcements")
+    @Translatable.Desc("The master switch for all announcement notifications. Turning this off is the same as clicking 'Disable All' in the announcement screen. Announcements can still be viewed in the §f§lHamster Tips§r guide book.")
+    public ValidatedBoolean enableNotificationIcons = new ValidatedBoolean(true); // plain boolean; with special functionality wired it up in the constructor
+
+    // Re-entrancy guard so the listeners don’t bounce events back and forth forever.
+    private boolean updatingAnnouncementToggles = false;
 
     @NonSync
-    @Translatable.Name("Optional Announcements")
-    public ConfigAction reEnableOptionalAnnouncements = new ConfigAction.Builder()
-            .title(Text.translatable("config.adorablehamsterpets.main.announcements.reEnableOptionalAnnouncements"))
-            .desc(Text.translatable("config.adorablehamsterpets.main.announcements.reEnableOptionalAnnouncements.desc"))
-            .decoration(TextureIds.INSTANCE.getDECO_ALERT())
-            .build(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ahp_client reenable_announcements"));
+    @Translatable.Name("Mark All as Read")
+    public ConfigAction markAllAsRead = new ConfigAction.Builder()
+            .title(Text.translatable("config.adorablehamsterpets.main.announcements.markAllAsRead"))
+            .desc(Text.translatable("config.adorablehamsterpets.main.announcements.markAllAsRead.desc"))
+            .decoration(TextureIds.INSTANCE.getADD())
+            .build(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ahp_client mark_all_read"));
 
     @NonSync
     @Translatable.Name("Announcement History")
     public ConfigAction resetAllAnnouncementDismissals = new ConfigAction.Builder()
             .title(Text.translatable("config.adorablehamsterpets.main.announcements.resetAllAnnouncementDismissals"))
             .desc(Text.translatable("config.adorablehamsterpets.main.announcements.resetAllAnnouncementDismissals.desc"))
-            .decoration(TextureIds.INSTANCE.getKEYBIND_CLEAR())
+            .decoration(TextureIds.INSTANCE.getRESTORE())
             .build(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ahp_client reset_announcements"));
+
+    @NonSync
+    @Translatable.Name("Snooze Timer (Days)")
+    @Translatable.Desc("For when you see the update notification and think, 'That's a problem for future me.' Future you will be so proud. This is where you select many days to hide the 'Update Available' notification when you click 'Remind Me Later'.")
+    public ValidatedInt snoozeUpdateReminderDays = new ValidatedInt(5, 14, 1);
 
     @NonSync
     @Translatable.Name("HUD Icon Settings")
@@ -163,7 +213,13 @@ public class AhpConfig extends Config {
     @ConfigGroup.Pop
     @Translatable.Name("HUD Icon Scale")
     @Translatable.Desc("Make it bigger. Make it smaller. Make it an affront to good taste. I'm not your art director.")
-    public ValidatedFloat hudIconScale = new ValidatedFloat(1.0f, 3.0f, 0.5f);
+    public ValidatedCondition<Float> hudIconScale =
+            new ValidatedFloat(1.0f, 3.0f, 0.5f)
+                    .toCondition(
+                            isHudIconEnabled,
+                            Text.literal("Only available when 'Enable HUD Icon' is ON."),
+                            () -> 1.0f
+                    );
 
     @NonSync
     @Translatable.Name("Widget Icon Settings")
@@ -237,23 +293,23 @@ public class AhpConfig extends Config {
     public ConfigGroup uiPreferences = new ConfigGroup("uiPreferences", true);
 
     @NonSync
-    @Translatable.Name("Enable Auto Guidebook Delivery")
+    @Translatable.Name("Auto Guidebook Delivery")
     @Translatable.Desc("Hand-delivers the sacred texts on first login. Read it—or don’t. I'm not your conscience.")
     public boolean enableAutoGuidebookDelivery = true;
 
     @NonSync
-    @Translatable.Name("Enable Mod Item Tooltips")
+    @Translatable.Name("Mod Item Tooltips")
     @Translatable.Desc("Helpful whispers on what the heck that cucumber is for.")
     public boolean enableItemTooltips = true;
 
     @NonSync
-    @Translatable.Name("Enable Shoulder Dismount Messages")
+    @Translatable.Name("Shoulder Dismount Messages")
     @Translatable.Desc("Little status mumbles when your co-pilot disembarks.")
     public boolean enableShoulderDismountMessages = true;
 
     @NonSync
     @ConfigGroup.Pop
-    @Translatable.Name("Enable Jade Hamster Debug Info")
+    @Translatable.Name("Jade Hamster Debug Info")
     @Translatable.Desc("More stats than anyone asked for. Defaults to off—mercifully.")
     public boolean enableJadeHamsterDebugInfo = false;
 
