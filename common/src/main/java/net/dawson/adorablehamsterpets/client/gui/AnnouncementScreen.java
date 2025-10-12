@@ -384,6 +384,9 @@ public class AnnouncementScreen extends Screen {
         Text textAtMouse = this.getTextAt(mouseX, mouseY);
         this.hoveredStyle = (textAtMouse != null && textAtMouse.getStyle().getClickEvent() != null) ? textAtMouse.getStyle() : null;
 
+        // Call Render Background first on 1.20.1 (this is not needed on 1.21.1)
+        this.renderBackground(context);
+
         // --- 2. Call super.render() ---
         super.render(context, mouseX, mouseY, delta);
 
@@ -486,10 +489,10 @@ public class AnnouncementScreen extends Screen {
      * @return {@code true} to indicate the event was handled.
      */
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
         int maxScroll = Math.max(0, markdownRenderer.getTotalHeight() - this.scaledContentHeight);
         double scrollStep = 10 * this.uiScale; // Scale scroll speed with UI size.
-        this.scrollY = MathHelper.clamp(this.scrollY - verticalAmount * scrollStep, 0, maxScroll);
+        this.scrollY = MathHelper.clamp(this.scrollY - amount * scrollStep, 0, maxScroll);
         return true;
     }
 
