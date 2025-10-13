@@ -28,7 +28,6 @@ import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconAnimato
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.sound.HamsterFlightSoundInstance;
 import net.dawson.adorablehamsterpets.client.sound.HamsterThrowSoundInstance;
-import net.dawson.adorablehamsterpets.command.ModClientCommands;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.DismountPressType;
@@ -98,7 +97,6 @@ public class AdorableHamsterPetsClient {
 
         // Announcement System
         AHPClientScreenEvents.register();
-        ModClientCommands.register();
 
         // --- Event Registrations ---
         ClientTickEvent.CLIENT_POST.register(AdorableHamsterPetsClient::onEndClientTick);
