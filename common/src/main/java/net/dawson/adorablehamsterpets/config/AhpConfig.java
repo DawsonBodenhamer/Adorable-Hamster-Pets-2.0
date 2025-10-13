@@ -16,7 +16,6 @@ import me.fzzyhmstrs.fzzy_config.annotations.Translation;
 import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.config.ConfigAction;
 import me.fzzyhmstrs.fzzy_config.config.ConfigGroup;
-import me.fzzyhmstrs.fzzy_config.entry.EntryFlag;
 import me.fzzyhmstrs.fzzy_config.screen.widget.TextureIds;
 import me.fzzyhmstrs.fzzy_config.util.Translatable;
 import me.fzzyhmstrs.fzzy_config.validation.ValidatedField;
@@ -28,8 +27,11 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedDouble;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedFloat;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
@@ -149,7 +151,16 @@ public class AhpConfig extends Config {
             .title(Text.translatable("config.adorablehamsterpets.main.announcements.markAllAsRead"))
             .desc(Text.translatable("config.adorablehamsterpets.main.announcements.markAllAsRead.desc"))
             .decoration(TextureIds.INSTANCE.getADD())
-            .build(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ahp_client mark_all_read"));
+            .build(() -> {
+                // Custom runnable 'pressAction'
+                AnnouncementManager.INSTANCE.markAllAsRead();
+                if (MinecraftClient.getInstance().player != null) {
+                    MinecraftClient.getInstance().player.sendMessage(
+                            Text.translatable("message.adorablehamsterpets.announcements_marked_read").formatted(Formatting.GREEN),
+                            false
+                    );
+                }
+            });
 
     @NonSync
     @Translatable.Name("Announcement History")
@@ -157,7 +168,16 @@ public class AhpConfig extends Config {
             .title(Text.translatable("config.adorablehamsterpets.main.announcements.resetAllAnnouncementDismissals"))
             .desc(Text.translatable("config.adorablehamsterpets.main.announcements.resetAllAnnouncementDismissals.desc"))
             .decoration(TextureIds.INSTANCE.getRESTORE())
-            .build(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ahp_client reset_announcements"));
+            .build(() -> {
+                // Custom runnable 'pressAction'
+                AnnouncementManager.INSTANCE.resetClientState();
+                if (MinecraftClient.getInstance().player != null) {
+                    MinecraftClient.getInstance().player.sendMessage(
+                            Text.translatable("message.adorablehamsterpets.announcements_reset").formatted(Formatting.GREEN),
+                            false
+                    );
+                }
+            });
 
     @NonSync
     @Translatable.Name("Snooze Timer (Days)")
