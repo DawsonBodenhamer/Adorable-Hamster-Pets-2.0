@@ -966,7 +966,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.autoEatCooldownTicks = nbt.getInt("AutoEatCooldown");
         this.ejectionCheckCooldown = nbt.contains("EjectionCheckCooldown", NbtElement.INT_TYPE) ? nbt.getInt("EjectionCheckCooldown") : 20;
         this.dataTracker.set(PINK_PETAL_TYPE, nbt.getInt("PinkPetalType"));
-        this.dataTracker.set(ANIMATION_PERSONALITY_ID, nbt.getInt("AnimationPersonalityId"));
+
+        // If the NBT from a command or save file doesn't specify an ID, assign one.
+        // This covers /summon and ensures the ID persists through saves.
+        if (!nbt.contains("AnimationPersonalityId", NbtElement.INT_TYPE)) {
+            int personalityId = this.random.nextBetween(1, 3);
+            this.dataTracker.set(ANIMATION_PERSONALITY_ID, personalityId);
+            AdorableHamsterPets.LOGGER.debug("[NBT READ] Hamster ID {}: NBT had no personality, assigned new ID {}", this.getId(), personalityId);
+        } else {
+            // If it does contain one (e.g., from a saved world), read it normally.
+            this.dataTracker.set(ANIMATION_PERSONALITY_ID, nbt.getInt("AnimationPersonalityId"));
+        }
 
         // --- 2. Read Sleep State Data ---
         if (nbt.contains("DozingPhase", NbtElement.INT_TYPE)) {
@@ -2847,23 +2857,29 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
         AdorableHamsterPets.LOGGER.debug("[AHP Spawn Debug] HamsterEntity.initialize called. SpawnReason: {}", spawnReason);
-        // Assign Animation Personality
-        this.dataTracker.set(ANIMATION_PERSONALITY_ID, this.random.nextBetween(1, 3));
+
+        // --- Assign Animation Personality ID ---
+        if (!world.isClient()) {
+            int personalityId = this.random.nextBetween(1, 3);
+            this.dataTracker.set(ANIMATION_PERSONALITY_ID, personalityId);
+            AdorableHamsterPets.LOGGER.trace("[INITIALIZE] Hamster ID {}: Assigned Personality ID {}", this.getId(), personalityId);
+        }
+
         // Apply biome variants for natural spawns, spawn eggs, AND chunk generation
         if (spawnReason == SpawnReason.NATURAL || spawnReason == SpawnReason.SPAWN_EGG || spawnReason == SpawnReason.CHUNK_GENERATION) {
             RegistryEntry<Biome> biomeEntry = world.getBiome(this.getBlockPos());
             String biomeKeyStr = biomeEntry.getKey().map(key -> key.getValue().toString()).orElse("UNKNOWN");
-            AdorableHamsterPets.LOGGER.debug("[HamsterInit] SpawnReason: {}, BiomeKey: {}", spawnReason, biomeKeyStr);
+            AdorableHamsterPets.LOGGER.trace("[HamsterInit] SpawnReason: {}, BiomeKey: {}", spawnReason, biomeKeyStr);
 
             HamsterVariant chosenVariant = determineVariantForBiome(biomeEntry, this.random);
             this.setVariant(chosenVariant.getId());
-            AdorableHamsterPets.LOGGER.debug("[HamsterInit] Assigned variant: {}", chosenVariant.name());
+            AdorableHamsterPets.LOGGER.trace("[HamsterInit] Assigned variant: {}", chosenVariant.name());
 
         } else {
             // Fallback for other spawns (command, breeding, structure, etc.)
             int randomVariantId = this.random.nextInt(HamsterVariant.values().length);
             this.setVariant(randomVariantId);
-            AdorableHamsterPets.LOGGER.debug("[HamsterInit] SpawnReason: {}, Assigned random variant: {}",
+            AdorableHamsterPets.LOGGER.trace("[HamsterInit] SpawnReason: {}, Assigned random variant: {}",
                     spawnReason, HamsterVariant.byId(randomVariantId).name());
         }
 
