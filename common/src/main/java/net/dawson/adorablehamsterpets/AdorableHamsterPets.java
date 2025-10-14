@@ -32,7 +32,7 @@ import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.tag.ModItemTags;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.world.ModSpawnPlacements;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
@@ -82,7 +82,7 @@ public class AdorableHamsterPets {
 			ModRegistries.registerCompostables();
 			ModEntitySpawns.parseConfig();
 			ModWorldGeneration.parseConfig();
-			ModItemTags.parseConfig();
+			ConfigDataCache.parseConfig();
 
 			// --- Networking Registration ---
 			// On the server, explicitly register the S2C payload types so it knows how to send them.

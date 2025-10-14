@@ -28,8 +28,7 @@ import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.mixin.accessor.LandPathNodeMakerInvoker;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.tag.ModBiomeTags;
-import net.dawson.adorablehamsterpets.tag.ModItemTags;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.BlockState;
@@ -67,12 +66,8 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.particle.EntityEffectParticleEffect;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.BiomeTags;
-import net.minecraft.registry.tag.TagKey;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
@@ -92,7 +87,6 @@ import net.minecraft.world.RaycastContext;
 import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeKeys;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Unique;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -227,13 +221,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     // --- "Hamster-Centric" Helper Methods for Variant Spawning ---
-    private static boolean canSpawnBlue(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isBlueBiome(biomeEntry);}
-    private static boolean canSpawnLavender(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isLavenderBiome(biomeEntry);}
-    private static boolean canSpawnWhite(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isWhiteBiome(biomeEntry);}
-    private static boolean canSpawnGray(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isGrayBiome(biomeEntry);}
-    private static boolean canSpawnBlack(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isBlackBiome(biomeEntry);}
-    private static boolean canSpawnCream(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isCreamBiome(biomeEntry);}
-    private static boolean canSpawnChocolate(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isChocolateBiome(biomeEntry);}
+    private static boolean canSpawnBlue(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isBlueBiome(biomeEntry);}
+    private static boolean canSpawnLavender(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isLavenderBiome(biomeEntry);}
+    private static boolean canSpawnWhite(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isWhiteBiome(biomeEntry);}
+    private static boolean canSpawnGray(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isGrayBiome(biomeEntry);}
+    private static boolean canSpawnBlack(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isBlackBiome(biomeEntry);}
+    private static boolean canSpawnCream(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isCreamBiome(biomeEntry);}
+    private static boolean canSpawnChocolate(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isChocolateBiome(biomeEntry);}
 
     private static HamsterVariant getRandomVariant(List<HamsterVariant> variantPool, net.minecraft.util.math.random.Random random) {
         if (variantPool == null || variantPool.isEmpty()) {
@@ -1186,7 +1180,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- 5. Taming Logic ---
         if (!this.isTamed()) {
             AdorableHamsterPets.LOGGER.trace("[InteractMob {} Tick {}] Hamster not tamed. Checking for taming attempt.", this.getId(), world.getTime());
-            if (player.isSneaking() && ModItemTags.isTamingFood(stack)) {
+            if (player.isSneaking() && ConfigDataCache.isTamingFood(stack)) {
                 AdorableHamsterPets.LOGGER.trace("[InteractMob {} Tick {}] Taming attempt detected.", this.getId(), world.getTime());
                 if (!world.isClient) { tryTame(player, stack); }
                 return ActionResult.success(world.isClient());
@@ -1324,7 +1318,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
 
             // --- Shoulder Mounting Logic ---
-            boolean isUsingItem = ModItemTags.isShoulderMountFood(stack);
+            boolean isUsingItem = ConfigDataCache.isShoulderMountFood(stack);
             boolean isUsingKeybind = !world.isClient() && Configs.AHP.enableShoulderMountKeybind && ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY.isPressed();
 
             if (isUsingItem || isUsingKeybind) {
@@ -1396,7 +1390,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
 
             // --- Feeding Logic ---
-            boolean isPotentialFood = ModItemTags.isStandardFood(stack) || ModItemTags.isBuffFood(stack) || ModItemTags.isPouchUnlockFood(stack);
+            boolean isPotentialFood = ConfigDataCache.isStandardFood(stack) || ConfigDataCache.isBuffFood(stack) || ConfigDataCache.isPouchUnlockFood(stack);
             if (!world.isClient() && !isSneaking && isPotentialFood) {
                 AdorableHamsterPets.LOGGER.trace("[InteractMob {} Tick {}] Owner not sneaking, holding potential food. Checking refusal.", this.getId(), world.getTime());
                 if (checkRepeatFoodRefusal(stack, player)) {
@@ -1421,7 +1415,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
 
             // --- Vanilla Interaction Handling ---
-            if (!isSneaking && !isPotentialFood && !ModItemTags.isShoulderMountFood(stack) && !stack.isOf(Items.PINK_PETALS)) {
+            if (!isSneaking && !isPotentialFood && !ConfigDataCache.isShoulderMountFood(stack) && !stack.isOf(Items.PINK_PETALS)) {
                 AdorableHamsterPets.LOGGER.trace("[InteractMob {} Tick {}] Not sneaking or holding handled food/petals. Calling super.interactMob.", this.getId(), world.getTime());
                 ActionResult vanillaResult = super.interactMob(player, hand);
                 AdorableHamsterPets.LOGGER.trace("[InteractMob {} Tick {}] super.interactMob returned: {}", this.getId(), world.getTime(), vanillaResult);
@@ -1618,14 +1612,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     /**
      * Checks if the given ItemStack can be used to initiate breeding.
      * This check is now driven by the user-configurable {@code standardFoods} list
-     * via the {@link ModItemTags#isStandardFood(ItemStack)} helper method.
+     * via the {@link ConfigDataCache#isStandardFood(ItemStack)} helper method.
      *
      * @param stack The ItemStack to check.
      * @return {@code true} if the item is a valid breeding food.
      */
     @Override
     public boolean isBreedingItem(ItemStack stack) {
-        return ModItemTags.isStandardFood(stack);
+        return ConfigDataCache.isStandardFood(stack);
     }
 
     // --- Tick Logic ---
@@ -2003,7 +1997,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 // Check inventory for eligible food
                 for (int i = 0; i < this.items.size(); ++i) {
                     ItemStack stack = this.items.get(i);
-                    if (!stack.isEmpty() && ModItemTags.isAutoHealFood(stack)) {
+                    if (!stack.isEmpty() && ConfigDataCache.isAutoHealFood(stack)) {
                         // Found food, start "considering" phase
                         setHamsterFlag(CONSIDERING_AUTO_EAT_FLAG, true);
                         this.preAutoEatDelayTicks = 40; // 2-second delay
@@ -2025,7 +2019,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
                 for (int i = 0; i < this.items.size(); ++i) {
                     ItemStack stack = this.items.get(i);
-                    if (!stack.isEmpty() && ModItemTags.isAutoHealFood(stack)) {
+                    if (!stack.isEmpty() && ConfigDataCache.isAutoHealFood(stack)) {
                         foodStillAvailable = true;
                         foodToEat = stack;
                         foodSlot = i;
@@ -2866,12 +2860,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         if (stack.isEmpty()) return false;
 
         // 1. Explicit ALLOW list has highest priority.
-        if (ModItemTags.isPouchAllowed(stack)) {
+        if (ConfigDataCache.isPouchAllowed(stack)) {
             return false; // It's allowed, so it's NOT disallowed.
         }
 
         // 2. Check the new DISALLOW lists from config.
-        if (ModItemTags.isPouchDisallowed(stack)) {
+        if (ConfigDataCache.isPouchDisallowed(stack)) {
             return true;
         }
 
@@ -2940,7 +2934,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * {@code anim_hamster_stationary_headshake} if it is still.
      * <p>
      * An item is exempt from this check if it is included in the user-configurable
-     * {@code repeatableFoods} list, managed by {@link ModItemTags#isRepeatableFood(ItemStack)}.
+     * {@code repeatableFoods} list, managed by {@link ConfigDataCache#isRepeatableFood(ItemStack)}.
      *
      * @param currentStack The ItemStack the player is attempting to feed.
      * @param player The player performing the action.
@@ -2948,7 +2942,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      */
     private boolean checkRepeatFoodRefusal(ItemStack currentStack, PlayerEntity player) {
         // --- 1. Check Repeat Food Refusal ---
-        if (ModItemTags.isRepeatableFood(currentStack)) return false;
+        if (ConfigDataCache.isRepeatableFood(currentStack)) return false;
 
         if (!this.lastFoodItem.isEmpty() && ItemStack.areItemsEqual(this.lastFoodItem, currentStack)) {
             this.setRefusingFood(true);
@@ -2972,7 +2966,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
     /**
      * Attempts to feed the hamster, handling healing, breeding, buffs, and pouch unlocking.
-     * This logic is driven by user-configurable item lists from {@link ModItemTags},
+     * This logic is driven by user-configurable item lists from {@link ConfigDataCache},
      * such as {@code standardFoods}, {@code buffFoods}, and {@code pouchUnlockFoods}.
      *
      * @param player The player feeding the hamster.
@@ -2981,9 +2975,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      */
     private boolean tryFeedingAsTamed(PlayerEntity player, ItemStack stack) {
         // --- 1. Initial Setup & Logging ---
-        boolean isFood = ModItemTags.isStandardFood(stack);
-        boolean isBuffItem = ModItemTags.isBuffFood(stack);
-        boolean isPouchUnlockFood = ModItemTags.isPouchUnlockFood(stack);
+        boolean isFood = ConfigDataCache.isStandardFood(stack);
+        boolean isBuffItem = ConfigDataCache.isBuffFood(stack);
+        boolean isPouchUnlockFood = ConfigDataCache.isPouchUnlockFood(stack);
         boolean canHeal = this.getHealth() < this.getMaxHealth();
         boolean readyToBreed = this.getBreedingAge() == 0 && !this.isInCustomLove(); // Check custom love timer
         World world = this.getWorld();
@@ -3069,7 +3063,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- 4. Handle Standard Food (Healing/Breeding) ---
-        else if (ModItemTags.isStandardFood(stack)) {
+        else if (ConfigDataCache.isStandardFood(stack)) {
             if (canHeal) {
                 this.heal(config.standardFoodHealing.get());
                 actionTaken = true;

@@ -14,7 +14,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.tag.ModItemTags;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.ai.FuzzyTargeting;
 import net.minecraft.entity.ai.goal.Goal;
@@ -135,7 +135,7 @@ public class HamsterStealDiamondGoal extends Goal {
         List<ItemEntity> nearbyItems = this.world.getEntitiesByClass(
                 ItemEntity.class,
                 this.hamster.getBoundingBox().expand(10.0),
-                itemEntity -> ModItemTags.isStealableItem(itemEntity.getStack()) && itemEntity.isOnGround()
+                itemEntity -> ConfigDataCache.isStealableItem(itemEntity.getStack()) && itemEntity.isOnGround()
         );
 
         Optional<ItemEntity> closestItem = nearbyItems.stream()

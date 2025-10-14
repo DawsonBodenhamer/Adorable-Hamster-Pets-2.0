@@ -40,7 +40,7 @@ import net.dawson.adorablehamsterpets.networking.payload.*;
 import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.tag.ModItemTags;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
@@ -88,7 +88,7 @@ public class AdorableHamsterPetsClient {
         RenderTypeRegistry.register(RenderLayer.getCutout(), ModBlocks.GREEN_BEANS_CROP.get(), ModBlocks.CUCUMBER_CROP.get(), ModBlocks.SUNFLOWER_BLOCK.get(), ModBlocks.WILD_CUCUMBER_BUSH.get(), ModBlocks.WILD_GREEN_BEAN_BUSH.get());
         ConfigApiJava.event().onUpdateClient((id, config) -> {
             if (id.equals(Identifier.of(AdorableHamsterPets.MOD_ID, "main"))) {
-                ModItemTags.parseConfig();
+                ConfigDataCache.parseConfig();
                 AdorableHamsterPets.LOGGER.info("Reloaded Adorable Hamster Pets item tag config on client following GUI update. *wink wink*");
             }
         });

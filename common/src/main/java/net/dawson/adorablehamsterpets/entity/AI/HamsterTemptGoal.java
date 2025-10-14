@@ -11,13 +11,11 @@ package net.dawson.adorablehamsterpets.entity.AI;
  */
 
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.dawson.adorablehamsterpets.tag.ModItemTags;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.minecraft.entity.ai.goal.TemptGoal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
-
-import java.util.function.Predicate;
 
 public class HamsterTemptGoal extends TemptGoal {
 
@@ -27,7 +25,7 @@ public class HamsterTemptGoal extends TemptGoal {
 
     // --- 2. Constructors ---
     public HamsterTemptGoal(HamsterEntity hamster, double speed, boolean canBeScared) {
-        super(hamster, speed, ModItemTags::isTamingFood, canBeScared); // Call to superclass constructor
+        super(hamster, speed, ConfigDataCache::isTamingFood, canBeScared); // Call to superclass constructor
         this.hamster = hamster;
         // setControls(EnumSet.of(Control.MOVE, Control.LOOK)) is handled by superclass.
     }
@@ -119,6 +117,6 @@ public class HamsterTemptGoal extends TemptGoal {
     private boolean isHoldingTemptItem(PlayerEntity player) {
         ItemStack mainHandStack = player.getMainHandStack();
         ItemStack offHandStack = player.getOffHandStack();
-        return ModItemTags.isTamingFood(mainHandStack) || ModItemTags.isTamingFood(offHandStack);
+        return ConfigDataCache.isTamingFood(mainHandStack) || ConfigDataCache.isTamingFood(offHandStack);
     }
 }
