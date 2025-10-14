@@ -274,12 +274,12 @@ public class AhpConfig extends Config {
         @NonSync
         @Translatable.Name("Offset X")
         @Translatable.Desc("Shove it sideways (in pixels). Increase the number to move it right, decrease to move left.")
-        public ValidatedInt offsetX = new ValidatedInt(0, 100, -100);
+        public ValidatedInt offsetX = new ValidatedInt(0, 500, -500);
 
         @NonSync
         @Translatable.Name("Offset Y")
         @Translatable.Desc("Shove it vertically (in pixels). Increase the number to move it down, decrease to move up.")
-        public ValidatedInt offsetY = new ValidatedInt(0, 100, -100);
+        public ValidatedInt offsetY = new ValidatedInt(0, 500, -500);
     }
 
     @NonSync
