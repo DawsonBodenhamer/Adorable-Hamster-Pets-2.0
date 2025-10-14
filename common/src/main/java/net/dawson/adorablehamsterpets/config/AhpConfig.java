@@ -511,8 +511,8 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Damage dealt by thrown hamster. Surprisingly effective against Creepers. How convenient.")
     public ValidatedDouble hamsterThrowDamage = new ValidatedDouble(20.0, 40.0, 0.0);
 
-    // --- Spawn Settings ---
-    @Translatable.Name("Spawn Settings")
+    // --- Hamster Spawn Settings ---
+    @Translatable.Name("Hamster Spawn Settings")
     @Translatable.Desc("How Many, Where, and How Often?  Note: Some of these settings require re-logging into your world to take effect.")
     public ConfigGroup hamsterSpawning = new ConfigGroup("hamsterSpawning", true);
 
@@ -600,10 +600,167 @@ public class AhpConfig extends Config {
             "byg:tropical_rainforest", "byg:weeping_witch_forest", "byg:white_mangrove_marshes", "byg:windswept_desert", "byg:zelkova_forest"
     ));
 
-    @ConfigGroup.Pop
     @Translatable.Name("Exclude Specific Biomes")
     @Translatable.Desc("A list of specific biome IDs to NEVER allow spawns in, even if they match a tag. This overrides all other settings. Format: 'mod_id:biome_name'. For example, 'minecraft:plains'.")
     public List<String> excludeBiomes = new ArrayList<>(List.of("mod_id:biome_name"));
+
+    @Translatable.Name("Variant Spawning by Biome")
+    @Translatable.Desc("For the aspiring digital zoologist. This is where you control exactly which hamster colors appear in which biomes. The system checks each color group below in order, from top to bottom (rarest to most common). The first base color that a biome qualifies for is the one that will spawn there. 'Why no settings for orange hamsters?' Because orange is the default fallback if no other rules match.")
+    public ConfigGroup variantSpawning = new ConfigGroup("variantSpawning", true);
+
+    @Translatable.Name("Priority 1: Blue Variants")
+    @Translatable.Desc("The icy ones. Checked before all other colors. If a biome matches these rules, it will get blue hamsters, even if it also matches rules for other colors below.")
+    public ConfigGroup blueVariant = new ConfigGroup("blueVariant", true);
+    @Translatable.Name("Included Biomes")
+    public List<String> blueBiomes = new ArrayList<>(List.of(
+            "terralith:glacial_chasm", "terralith:mirage_isles", "terralith:moonlight_valley", "biomesoplenty:enchanted_garden"
+    ));
+    @Translatable.Name("Included Tags")
+    public List<String> blueTags = new ArrayList<>(List.of(
+            "c:is_icy"
+    ));
+    @Translatable.Name("Excluded Biomes")
+    public List<String> blueExclusionBiomes = new ArrayList<>(List.of(
+            "namespace:id"
+    ));
+    @ConfigGroup.Pop
+    @Translatable.Name("Excluded Tags")
+    public List<String> blueExclusionTags = new ArrayList<>(List.of(
+            "c:tag_name"
+    ));
+
+    @Translatable.Name("Priority 2: Lavender Variants")
+    @Translatable.Desc("The magical ones. Checked after Blue, but before all others.")
+    public ConfigGroup lavenderVariant = new ConfigGroup("lavenderVariant", true);
+    @Translatable.Name("Included Biomes")
+    public List<String> lavenderBiomes = new ArrayList<>(List.of(
+            "minecraft:cherry_grove", "terralith:sakura_valley", "biomesoplenty:fungi_forest", "biomesoplenty:mystic_grove"
+    ));
+    @Translatable.Name("Included Tags")
+    public List<String> lavenderTags = new ArrayList<>(List.of(
+            "c:is_magical", "c:is_mushroom", "terralith:mystical"
+    ));
+    @Translatable.Name("Excluded Biomes")
+    public List<String> lavenderExclusionBiomes = new ArrayList<>(List.of(
+            "namespace:id"
+    ));
+    @ConfigGroup.Pop
+    @Translatable.Name("Excluded Tags")
+    public List<String> lavenderExclusionTags = new ArrayList<>(List.of(
+            "c:tag_name"
+    ));
+
+    @Translatable.Name("Priority 3: White Variants")
+    @Translatable.Desc("The snowy ones. Checked after Blue and Lavender.")
+    public ConfigGroup whiteVariant = new ConfigGroup("whiteVariant", true);
+    @Translatable.Name("Included Biomes")
+    public List<String> whiteBiomes = new ArrayList<>(List.of(
+            "terralith:snowy_maple_forest", "terralith:wintry_forest", "terralith:alpine_grove", "terralith:siberian_grove"
+    ));
+    @Translatable.Name("Included Tags")
+    public List<String> whiteTags = new ArrayList<>(List.of(
+            "c:is_cold", "c:is_snowy"
+    ));
+    @Translatable.Name("Excluded Biomes")
+    public List<String> whiteExclusionBiomes = new ArrayList<>(List.of(
+            "minecraft:deep_frozen_ocean", "minecraft:frozen_ocean", "minecraft:stony_shore", "minecraft:windswept_forest",
+            "minecraft:windswept_gravelly_hills", "minecraft:windswept_hills", "minecraft:taiga",
+            "minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga"
+    ));
+    @ConfigGroup.Pop
+    @Translatable.Name("Excluded Tags")
+    public List<String> whiteExclusionTags = new ArrayList<>(List.of(
+            "c:tag_name"
+    ));
+
+    @Translatable.Name("Priority 4: Gray Variants") // Includes both light and dark gray
+    @Translatable.Desc("The rocky ones. For mountains, cliffs, and other places you're likely to twist an ankle.")
+    public ConfigGroup grayVariant = new ConfigGroup("grayVariant", true);
+    @Translatable.Name("Included Biomes")
+    public List<String> grayBiomes = new ArrayList<>(List.of(
+            "minecraft:stony_shore", "terralith:stony_spires"
+    ));
+    @Translatable.Name("Included Tags")
+    public List<String> grayTags = new ArrayList<>(List.of(
+            "c:is_mountain", "c:is_sparse_vegetation", "terralith:cliffs"
+    ));
+    @Translatable.Name("Excluded Biomes")
+    public List<String> grayExclusionBiomes = new ArrayList<>(List.of(
+            "namespace:id"
+    ));
+    @ConfigGroup.Pop
+    @Translatable.Name("Excluded Tags")
+    public List<String> grayExclusionTags = new ArrayList<>(List.of(
+            "minecraft:is_badlands", "minecraft:is_jungle", "minecraft:is_savanna"
+    ));
+
+    @Translatable.Name("Priority 5: Black Variants")
+    @Translatable.Desc("The damp ones. Found in swamps, caves, and other places that are probably bad for your sinuses.")
+    public ConfigGroup blackVariant = new ConfigGroup("blackVariant", true);
+    @Translatable.Name("Included Biomes")
+    public List<String> blackBiomes = new ArrayList<>(List.of(
+            "minecraft:deep_dark"
+    ));
+    @Translatable.Name("Included Tags")
+    public List<String> blackTags = new ArrayList<>(List.of(
+            "c:is_wet", "c:is_cave"
+    ));
+    @Translatable.Name("Excluded Biomes")
+    public List<String> blackExclusionBiomes = new ArrayList<>(List.of(
+            "minecraft:dripstone_caves", "minecraft:lush_caves"
+    ));
+    @ConfigGroup.Pop
+    @Translatable.Name("Excluded Tags")
+    public List<String> blackExclusionTags = new ArrayList<>(List.of(
+            "minecraft:is_jungle", "minecraft:is_beach"
+    ));
+
+    @Translatable.Name("Priority 6: Cream Variants")
+    @Translatable.Desc("The sandy ones. For deserts, beaches, and birch forests. Don't ask why birch forests. They just like them.")
+    public ConfigGroup creamVariant = new ConfigGroup("creamVariant", true);
+    @Translatable.Name("Included Biomes")
+    public List<String> creamBiomes = new ArrayList<>(List.of(
+            "minecraft:old_growth_birch_forest", "minecraft:birch_forest", "terralith:ancient_sands",
+            "terralith:sandstone_valley", "biomesoplenty:wasteland"
+    ));
+    @Translatable.Name("Included Tags")
+    public List<String> creamTags = new ArrayList<>(List.of(
+            "c:is_sandy"
+    ));
+    @Translatable.Name("Excluded Biomes")
+    public List<String> creamExclusionBiomes = new ArrayList<>(List.of(
+            "terralith:gravel_beach"
+    ));
+    @ConfigGroup.Pop
+    @Translatable.Name("Excluded Tags")
+    public List<String> creamExclusionTags = new ArrayList<>(List.of(
+            "minecraft:is_badlands"
+    ));
+
+    @Translatable.Name("Priority 7: Chocolate Variants")
+    @Translatable.Desc("The forest dwellers. If it's a generic forest and doesn't fit any of the fancy categories above, you'll probably find these guys.")
+    public ConfigGroup chocolateVariant = new ConfigGroup("chocolateVariant", true);
+
+    @Translatable.Name("Included Biomes")
+    public List<String> chocolateBiomes = new ArrayList<>(List.of(
+            "terralith:cloud_forest", "biomesoplenty:redwood_forest"
+    ));
+    @Translatable.Name("Included Tags")
+    public List<String> chocolateTags = new ArrayList<>(List.of(
+            "c:is_forest", "c:is_dense_vegetation"
+    ));
+    @Translatable.Name("Excluded Biomes")
+    public List<String> chocolateExclusionBiomes = new ArrayList<>(List.of(
+            "namespace:id"
+    ));
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Excluded Tags")
+    public List<String> chocolateExclusionTags = new ArrayList<>(List.of(
+            "c:tag_name"
+    ));
 
     // --- Shoulder Hamster Settings ---
     @Translatable.Name("Shoulder Hamster Settings")
