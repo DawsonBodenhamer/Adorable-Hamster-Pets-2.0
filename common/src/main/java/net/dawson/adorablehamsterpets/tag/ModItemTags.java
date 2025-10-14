@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.tag;
 
-
 /*
  * All Rights Reserved
  * Copyright (c) 2025 Dawson Bodenhamer (www.ForTheKing.Design)
@@ -15,16 +14,28 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.Identifier;
+import net.minecraft.world.biome.Biome;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * A static cache for data parsed from the mod's configuration files.
+ * <p>
+ * This class loads user-defined lists of items and biomes from AhpConfig.java
+ * into high-performance {@code Set} collections on startup. It provides static
+ * checker methods (e.g., {@code isStandardFood()}, {@code isBlueBiome()}) for fast,
+ * O(1) lookups during gameplay, avoiding repeated config parsing.
+ */
 public class ModItemTags {
 
-    // --- Cached Sets for Performance ---
+    // --- Cached Sets for Item Performance ---
     private static final Set<Item> tamingItems = new HashSet<>();
     private static final Set<TagKey<Item>> tamingTags = new HashSet<>();
     private static final Set<Item> standardFoodItems = new HashSet<>();
@@ -46,70 +57,120 @@ public class ModItemTags {
     private static final Set<Item> pouchDisallowedItems = new HashSet<>();
     private static final Set<TagKey<Item>> pouchDisallowedTags = new HashSet<>();
 
+    // --- Cached Sets for Biome Variant Performance ---
+    private static final Set<Identifier> blueBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> blueBiomeTags = new HashSet<>();
+    private static final Set<Identifier> blueExclusionBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> blueExclusionBiomeTags = new HashSet<>();
+    private static final Set<Identifier> lavenderBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> lavenderBiomeTags = new HashSet<>();
+    private static final Set<Identifier> lavenderExclusionBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> lavenderExclusionBiomeTags = new HashSet<>();
+    private static final Set<Identifier> whiteBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> whiteBiomeTags = new HashSet<>();
+    private static final Set<Identifier> whiteExclusionBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> whiteExclusionBiomeTags = new HashSet<>();
+    private static final Set<Identifier> grayBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> grayBiomeTags = new HashSet<>();
+    private static final Set<Identifier> grayExclusionBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> grayExclusionBiomeTags = new HashSet<>();
+    private static final Set<Identifier> blackBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> blackBiomeTags = new HashSet<>();
+    private static final Set<Identifier> blackExclusionBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> blackExclusionBiomeTags = new HashSet<>();
+    private static final Set<Identifier> creamBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> creamBiomeTags = new HashSet<>();
+    private static final Set<Identifier> creamExclusionBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> creamExclusionBiomeTags = new HashSet<>();
+    private static final Set<Identifier> chocolateBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> chocolateBiomeTags = new HashSet<>();
+    private static final Set<Identifier> chocolateExclusionBiomeIds = new HashSet<>();
+    private static final Set<TagKey<Biome>> chocolateExclusionBiomeTags = new HashSet<>();
+
 
     /**
-     * Parses all item tag lists from the config file.
+     * Parses all item and biome tag lists from the config file.
      * This should be called once on startup and on config reload.
      */
     public static void parseConfig() {
-        clearAll();
-        parseList(Configs.AHP.tamingFoods, tamingItems, tamingTags, "tamingFoods");
-        parseList(Configs.AHP.standardFoods, standardFoodItems, standardFoodTags, "standardFoods");
-        parseList(Configs.AHP.stealableItems, stealableItems, stealableTags, "stealableItems");
-        parseList(Configs.AHP.buffFoods, buffFoodItems, buffFoodTags, "buffFoods");
-        parseList(Configs.AHP.shoulderMountFoods, shoulderMountItems, shoulderMountTags, "shoulderMountFoods");
-        parseList(Configs.AHP.pouchUnlockFoods, pouchUnlockItems, pouchUnlockTags, "pouchUnlockFoods");
-        parseList(Configs.AHP.repeatableFoods, repeatableFoodItems, repeatableFoodTags, "repeatableFoods");
-        parseList(Configs.AHP.pouchAllowedItems, pouchAllowedItems, pouchAllowedTags, "pouchAllowedItems");
-        parseList(Configs.AHP.pouchDisallowedItems, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedItems");
-        parseList(Configs.AHP.pouchDisallowedTags, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedTags");
-        parseList(Configs.AHP.autoHealFoods, autoHealFoodItems, autoHealFoodTags, "autoHealFoods");
-        AdorableHamsterPets.LOGGER.info("Parsed all item tag overrides from config.");
+        clearAllItemSets();
+        clearAllBiomeSets();
+
+        // --- Parse Item Lists ---
+        parseItemList(Configs.AHP.tamingFoods, tamingItems, tamingTags, "tamingFoods");
+        parseItemList(Configs.AHP.standardFoods, standardFoodItems, standardFoodTags, "standardFoods");
+        parseItemList(Configs.AHP.stealableItems, stealableItems, stealableTags, "stealableItems");
+        parseItemList(Configs.AHP.buffFoods, buffFoodItems, buffFoodTags, "buffFoods");
+        parseItemList(Configs.AHP.shoulderMountFoods, shoulderMountItems, shoulderMountTags, "shoulderMountFoods");
+        parseItemList(Configs.AHP.pouchUnlockFoods, pouchUnlockItems, pouchUnlockTags, "pouchUnlockFoods");
+        parseItemList(Configs.AHP.repeatableFoods, repeatableFoodItems, repeatableFoodTags, "repeatableFoods");
+        parseItemList(Configs.AHP.pouchAllowedItems, pouchAllowedItems, pouchAllowedTags, "pouchAllowedItems");
+        parseItemList(Configs.AHP.pouchDisallowedItems, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedItems");
+        parseItemList(Configs.AHP.pouchDisallowedTags, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedTags");
+        parseItemList(Configs.AHP.autoHealFoods, autoHealFoodItems, autoHealFoodTags, "autoHealFoods");
+
+        // --- Parse Biome Lists ---
+        parseBiomeIdList(Configs.AHP.blueBiomes, blueBiomeIds, "blueBiomes");
+        parseBiomeTagList(Configs.AHP.blueTags, blueBiomeTags, "blueTags");
+        parseBiomeIdList(Configs.AHP.blueExclusionBiomes, blueExclusionBiomeIds, "blueExclusionBiomes");
+        parseBiomeTagList(Configs.AHP.blueExclusionTags, blueExclusionBiomeTags, "blueExclusionTags");
+
+        parseBiomeIdList(Configs.AHP.lavenderBiomes, lavenderBiomeIds, "lavenderBiomes");
+        parseBiomeTagList(Configs.AHP.lavenderTags, lavenderBiomeTags, "lavenderTags");
+        parseBiomeIdList(Configs.AHP.lavenderExclusionBiomes, lavenderExclusionBiomeIds, "lavenderExclusionBiomes");
+        parseBiomeTagList(Configs.AHP.lavenderExclusionTags, lavenderExclusionBiomeTags, "lavenderExclusionTags");
+
+        parseBiomeIdList(Configs.AHP.whiteBiomes, whiteBiomeIds, "whiteBiomes");
+        parseBiomeTagList(Configs.AHP.whiteTags, whiteBiomeTags, "whiteTags");
+        parseBiomeIdList(Configs.AHP.whiteExclusionBiomes, whiteExclusionBiomeIds, "whiteExclusionBiomes");
+        parseBiomeTagList(Configs.AHP.whiteExclusionTags, whiteExclusionBiomeTags, "whiteExclusionTags");
+
+        parseBiomeIdList(Configs.AHP.grayBiomes, grayBiomeIds, "grayBiomes");
+        parseBiomeTagList(Configs.AHP.grayTags, grayBiomeTags, "grayTags");
+        parseBiomeIdList(Configs.AHP.grayExclusionBiomes, grayExclusionBiomeIds, "grayExclusionBiomes");
+        parseBiomeTagList(Configs.AHP.grayExclusionTags, grayExclusionBiomeTags, "grayExclusionTags");
+
+        parseBiomeIdList(Configs.AHP.blackBiomes, blackBiomeIds, "blackBiomes");
+        parseBiomeTagList(Configs.AHP.blackTags, blackBiomeTags, "blackTags");
+        parseBiomeIdList(Configs.AHP.blackExclusionBiomes, blackExclusionBiomeIds, "blackExclusionBiomes");
+        parseBiomeTagList(Configs.AHP.blackExclusionTags, blackExclusionBiomeTags, "blackExclusionTags");
+
+        parseBiomeIdList(Configs.AHP.creamBiomes, creamBiomeIds, "creamBiomes");
+        parseBiomeTagList(Configs.AHP.creamTags, creamBiomeTags, "creamTags");
+        parseBiomeIdList(Configs.AHP.creamExclusionBiomes, creamExclusionBiomeIds, "creamExclusionBiomes");
+        parseBiomeTagList(Configs.AHP.creamExclusionTags, creamExclusionBiomeTags, "creamExclusionTags");
+
+        parseBiomeIdList(Configs.AHP.chocolateBiomes, chocolateBiomeIds, "chocolateBiomes");
+        parseBiomeTagList(Configs.AHP.chocolateTags, chocolateBiomeTags, "chocolateTags");
+        parseBiomeIdList(Configs.AHP.chocolateExclusionBiomes, chocolateExclusionBiomeIds, "chocolateExclusionBiomes");
+        parseBiomeTagList(Configs.AHP.chocolateExclusionTags, chocolateExclusionBiomeTags, "chocolateExclusionTags");
+
+        AdorableHamsterPets.LOGGER.info("Parsed all item and biome tag overrides from config.");
     }
 
-    // --- Public Checker Methods ---
-    public static boolean isTamingFood(ItemStack stack) {
-        return matches(stack, tamingItems, tamingTags);
-    }
+    // --- Public Item Checker Methods ---
+    public static boolean isTamingFood(ItemStack stack) { return matchesItem(stack, tamingItems, tamingTags); }
+    public static boolean isStandardFood(ItemStack stack) { return matchesItem(stack, standardFoodItems, standardFoodTags); }
+    public static boolean isStealableItem(ItemStack stack) { return matchesItem(stack, stealableItems, stealableTags); }
+    public static boolean isBuffFood(ItemStack stack) { return matchesItem(stack, buffFoodItems, buffFoodTags); }
+    public static boolean isShoulderMountFood(ItemStack stack) { return matchesItem(stack, shoulderMountItems, shoulderMountTags); }
+    public static boolean isPouchUnlockFood(ItemStack stack) { return matchesItem(stack, pouchUnlockItems, pouchUnlockTags); }
+    public static boolean isRepeatableFood(ItemStack stack) { return matchesItem(stack, repeatableFoodItems, repeatableFoodTags); }
+    public static boolean isAutoHealFood(ItemStack stack) { return matchesItem(stack, autoHealFoodItems, autoHealFoodTags); }
+    public static boolean isPouchAllowed(ItemStack stack) { return matchesItem(stack, pouchAllowedItems, pouchAllowedTags); }
+    public static boolean isPouchDisallowed(ItemStack stack) { return matchesItem(stack, pouchDisallowedItems, pouchDisallowedTags); }
 
-    public static boolean isStandardFood(ItemStack stack) {
-        return matches(stack, standardFoodItems, standardFoodTags);
-    }
-
-    public static boolean isStealableItem(ItemStack stack) {
-        return matches(stack, stealableItems, stealableTags);
-    }
-
-    public static boolean isBuffFood(ItemStack stack) {
-        return matches(stack, buffFoodItems, buffFoodTags);
-    }
-
-    public static boolean isShoulderMountFood(ItemStack stack) {
-        return matches(stack, shoulderMountItems, shoulderMountTags);
-    }
-
-    public static boolean isPouchUnlockFood(ItemStack stack) {
-        return matches(stack, pouchUnlockItems, pouchUnlockTags);
-    }
-
-    public static boolean isRepeatableFood(ItemStack stack) {
-        return matches(stack, repeatableFoodItems, repeatableFoodTags);
-    }
-
-    public static boolean isAutoHealFood(ItemStack stack) {
-        return matches(stack, autoHealFoodItems, autoHealFoodTags);
-    }
-
-    public static boolean isPouchAllowed(ItemStack stack) {
-        return matches(stack, pouchAllowedItems, pouchAllowedTags);
-    }
-
-    public static boolean isPouchDisallowed(ItemStack stack) {
-        return matches(stack, pouchDisallowedItems, pouchDisallowedTags);
-    }
+    // --- Public Biome Checker Methods ---
+    public static boolean isBlueBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, blueBiomeIds, blueBiomeTags, blueExclusionBiomeIds, blueExclusionBiomeTags); }
+    public static boolean isLavenderBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, lavenderBiomeIds, lavenderBiomeTags, lavenderExclusionBiomeIds, lavenderExclusionBiomeTags); }
+    public static boolean isWhiteBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, whiteBiomeIds, whiteBiomeTags, whiteExclusionBiomeIds, whiteExclusionBiomeTags); }
+    public static boolean isGrayBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, grayBiomeIds, grayBiomeTags, grayExclusionBiomeIds, grayExclusionBiomeTags); }
+    public static boolean isBlackBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, blackBiomeIds, blackBiomeTags, blackExclusionBiomeIds, blackExclusionBiomeTags); }
+    public static boolean isCreamBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, creamBiomeIds, creamBiomeTags, creamExclusionBiomeIds, creamExclusionBiomeTags); }
+    public static boolean isChocolateBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, chocolateBiomeIds, chocolateBiomeTags, chocolateExclusionBiomeIds, chocolateExclusionBiomeTags); }
 
     // --- Private Helper Methods ---
-    private static void parseList(List<String> configList, Set<Item> itemSet, Set<TagKey<Item>> tagSet, String listName) {
+    private static void parseItemList(List<String> configList, Set<Item> itemSet, Set<TagKey<Item>> tagSet, String listName) {
         for (String entry : configList) {
             if (entry.startsWith("#")) {
                 try {
@@ -129,7 +190,30 @@ public class ModItemTags {
         }
     }
 
-    private static boolean matches(ItemStack stack, Set<Item> itemSet, Set<TagKey<Item>> tagSet) {
+    private static void parseBiomeIdList(List<String> configList, Set<Identifier> idSet, String listName) {
+        for (String entry : configList) {
+            try {
+                // On 1.20.1, use 'new Identifier(entry)'
+                idSet.add(new Identifier(entry));
+            } catch (Exception e) {
+                AdorableHamsterPets.LOGGER.warn("[BiomeTagManager] Invalid biome identifier in '{}' config list: '{}'", listName, entry);
+            }
+        }
+    }
+
+    private static void parseBiomeTagList(List<String> configList, Set<TagKey<Biome>> tagSet, String listName) {
+        for (String entry : configList) {
+            String tagName = entry.startsWith("#") ? entry.substring(1) : entry;
+            try {
+                // On 1.20.1, use 'new Identifier(tagName)'
+                tagSet.add(TagKey.of(RegistryKeys.BIOME, new Identifier(tagName)));
+            } catch (Exception e) {
+                AdorableHamsterPets.LOGGER.warn("[BiomeTagManager] Invalid biome tag in '{}' config list: '{}'", listName, entry);
+            }
+        }
+    }
+
+    private static boolean matchesItem(ItemStack stack, Set<Item> itemSet, Set<TagKey<Item>> tagSet) {
         if (stack.isEmpty()) return false;
         if (itemSet.contains(stack.getItem())) return true;
         for (TagKey<Item> tag : tagSet) {
@@ -138,7 +222,26 @@ public class ModItemTags {
         return false;
     }
 
-    private static void clearAll() {
+    private static boolean matchesBiome(RegistryEntry<Biome> biomeEntry, Set<Identifier> ids, Set<TagKey<Biome>> tags, Set<Identifier> exclusionIds, Set<TagKey<Biome>> exclusionTags) {
+        Identifier biomeId = biomeEntry.getKey().map(RegistryKey::getValue).orElse(null);
+        if (biomeId == null) return false;
+
+        // --- Exclusion Check (Highest Priority) ---
+        if (exclusionIds.contains(biomeId)) return false;
+        for (TagKey<Biome> tag : exclusionTags) {
+            if (biomeEntry.isIn(tag)) return false;
+        }
+
+        // --- Inclusion Check ---
+        if (ids.contains(biomeId)) return true;
+        for (TagKey<Biome> tag : tags) {
+            if (biomeEntry.isIn(tag)) return true;
+        }
+
+        return false;
+    }
+
+    private static void clearAllItemSets() {
         tamingItems.clear();
         tamingTags.clear();
         standardFoodItems.clear();
@@ -159,5 +262,36 @@ public class ModItemTags {
         pouchAllowedTags.clear();
         pouchDisallowedItems.clear();
         pouchDisallowedTags.clear();
+    }
+
+    private static void clearAllBiomeSets() {
+        blueBiomeIds.clear();
+        blueBiomeTags.clear();
+        blueExclusionBiomeIds.clear();
+        blueExclusionBiomeTags.clear();
+        lavenderBiomeIds.clear();
+        lavenderBiomeTags.clear();
+        lavenderExclusionBiomeIds.clear();
+        lavenderExclusionBiomeTags.clear();
+        whiteBiomeIds.clear();
+        whiteBiomeTags.clear();
+        whiteExclusionBiomeIds.clear();
+        whiteExclusionBiomeTags.clear();
+        grayBiomeIds.clear();
+        grayBiomeTags.clear();
+        grayExclusionBiomeIds.clear();
+        grayExclusionBiomeTags.clear();
+        blackBiomeIds.clear();
+        blackBiomeTags.clear();
+        blackExclusionBiomeIds.clear();
+        blackExclusionBiomeTags.clear();
+        creamBiomeIds.clear();
+        creamBiomeTags.clear();
+        creamExclusionBiomeIds.clear();
+        creamExclusionBiomeTags.clear();
+        chocolateBiomeIds.clear();
+        chocolateBiomeTags.clear();
+        chocolateExclusionBiomeIds.clear();
+        chocolateExclusionBiomeTags.clear();
     }
 }

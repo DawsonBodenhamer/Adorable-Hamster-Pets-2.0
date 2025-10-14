@@ -4,7 +4,7 @@ package net.dawson.adorablehamsterpets.entity.custom;
 /*
  * All Rights Reserved
  * Copyright (c) 2025 Dawson Bodenhamer (www.ForTheKing.Design)
- *
+ * 
  * All files and assets in this repository are the exclusive property of the copyright holder.
  * Permission is NOT granted to copy, modify, merge, publish, distribute, sublicense, or sell this material.
  * Provided "AS IS" without warranty. See LICENSE for details.
@@ -68,7 +68,6 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.RegistryWrapper;
@@ -164,11 +163,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             HamsterVariant.ORANGE_OVERLAY3, HamsterVariant.ORANGE_OVERLAY4, HamsterVariant.ORANGE_OVERLAY5,
             HamsterVariant.ORANGE_OVERLAY6, HamsterVariant.ORANGE_OVERLAY7, HamsterVariant.ORANGE_OVERLAY8
     );
-    private static final List<HamsterVariant> BLACK_VARIANTS = List.of(
-            HamsterVariant.BLACK, HamsterVariant.BLACK_OVERLAY1, HamsterVariant.BLACK_OVERLAY2,
-            HamsterVariant.BLACK_OVERLAY3, HamsterVariant.BLACK_OVERLAY4, HamsterVariant.BLACK_OVERLAY5,
-            HamsterVariant.BLACK_OVERLAY6, HamsterVariant.BLACK_OVERLAY7, HamsterVariant.BLACK_OVERLAY8
-    );
     private static final List<HamsterVariant> BLUE_VARIANTS = List.of(
             HamsterVariant.BLUE, HamsterVariant.BLUE_OVERLAY1, HamsterVariant.BLUE_OVERLAY2,
             HamsterVariant.BLUE_OVERLAY3, HamsterVariant.BLUE_OVERLAY4, HamsterVariant.BLUE_OVERLAY5,
@@ -199,9 +193,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             HamsterVariant.LIGHT_GRAY_OVERLAY3, HamsterVariant.LIGHT_GRAY_OVERLAY4, HamsterVariant.LIGHT_GRAY_OVERLAY5,
             HamsterVariant.LIGHT_GRAY_OVERLAY6, HamsterVariant.LIGHT_GRAY_OVERLAY7, HamsterVariant.LIGHT_GRAY_OVERLAY8
     );
-    private static final List<HamsterVariant> WHITE_VARIANTS = List.of(HamsterVariant.WHITE); // White has no overlays
 
-    // --- Hamster Spawning In Different Biomes ---
     /**
      * Determines the appropriate HamsterVariant for a given biome, using a prioritized, "hamster-centric" approach.
      * This method checks for variants from most specific/rare to most common, ensuring exclusive variants
@@ -212,7 +204,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * @return The chosen HamsterVariant.
      */
     private static HamsterVariant determineVariantForBiome(RegistryEntry<Biome> biomeEntry, net.minecraft.util.math.random.Random random) {
-        // --- Logging ---
         String biomeName = biomeEntry.getKey().map(k -> k.getValue().toString()).orElse("unknown");
         AdorableHamsterPets.LOGGER.debug("[AHP Spawn Debug] determineVariantForBiome called for biome: {}", biomeName);
 
@@ -229,7 +220,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         } else if (canSpawnGray(biomeEntry)) {
             result = random.nextBoolean() ? getRandomVariant(LIGHT_GRAY_VARIANTS, random) : getRandomVariant(DARK_GRAY_VARIANTS, random);
         } else if (canSpawnBlack(biomeEntry)) {
-            // Black hamsters should not spawn with overlays in the wild.
+            // Black hamsters should not spawn with overlays in the wild (breaks the camouflage effect)
             result = HamsterVariant.BLACK;
         } else if (canSpawnCream(biomeEntry)) {
             result = getRandomVariant(CREAM_VARIANTS, random);
@@ -245,119 +236,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     // --- "Hamster-Centric" Helper Methods for Variant Spawning ---
-    private static boolean canSpawnBlue(RegistryEntry<Biome> biomeEntry) {
-        // Broad: Use the 'is_icy' tag which covers Ice Spikes and Frozen Peaks.
-        return biomeEntry.isIn(ModBiomeTags.IS_ICY)
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "glacial_chasm")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "mirage_isles")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "moonlight_valley")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("biomesoplenty", "enchanted_garden")));
-    }
-
-    private static boolean canSpawnLavender(RegistryEntry<Biome> biomeEntry) {
-        // Broad: Check for mushroom, magical, and mystical tags, plus specific vanilla and modded biomes.
-        boolean isLavenderTheme = biomeEntry.isIn(ModBiomeTags.IS_MUSHROOM)
-                || biomeEntry.isIn(ModBiomeTags.IS_MAGICAL)
-                || biomeEntry.isIn(TagKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "mystical")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("biomesoplenty", "fungi_forest")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("biomesoplenty", "mystic_grove")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "sakura_valley")))
-                || biomeEntry.matchesKey(BiomeKeys.CHERRY_GROVE);
-
-        // Refine: Must not be a higher-priority Blue biome.
-        return isLavenderTheme && !canSpawnBlue(biomeEntry);
-    }
-
-    private static boolean canSpawnWhite(RegistryEntry<Biome> biomeEntry) {
-        // Broad: Catches all snowy biomes, including modded ones.
-        boolean isWhiteTheme = biomeEntry.isIn(ModBiomeTags.IS_COLD)
-                || biomeEntry.isIn(ModBiomeTags.IS_SNOWY)
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "snowy_maple_forest")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "wintry_forest")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "alpine_grove")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "siberian_grove")));
-        if (!isWhiteTheme) return false;
-
-        // Refine: Exclude biomes that are "cold" but not thematically "snowy" enough for white hamsters, and must not be a higher-priority Blue or Lavender biome.
-        return !canSpawnBlue(biomeEntry)
-                && !canSpawnLavender(biomeEntry)
-                && !biomeEntry.matchesKey(BiomeKeys.DEEP_FROZEN_OCEAN)
-                && !biomeEntry.matchesKey(BiomeKeys.FROZEN_OCEAN)
-                && !biomeEntry.matchesKey(BiomeKeys.STONY_SHORE)
-                && !biomeEntry.matchesKey(BiomeKeys.WINDSWEPT_FOREST)
-                && !biomeEntry.matchesKey(BiomeKeys.WINDSWEPT_GRAVELLY_HILLS)
-                && !biomeEntry.matchesKey(BiomeKeys.WINDSWEPT_HILLS)
-                && !biomeEntry.matchesKey(BiomeKeys.TAIGA)
-                && !biomeEntry.matchesKey(BiomeKeys.OLD_GROWTH_PINE_TAIGA)
-                && !biomeEntry.matchesKey(BiomeKeys.OLD_GROWTH_SPRUCE_TAIGA);
-    }
-
-    private static boolean canSpawnGray(RegistryEntry<Biome> biomeEntry) {
-        // Broad: Catches mountains, sparse vegetation, and cliffs.
-        boolean isGrayTheme = biomeEntry.isIn(ModBiomeTags.IS_MOUNTAIN)
-                || biomeEntry.isIn(ModBiomeTags.IS_SPARSE_VEGETATION)
-                || biomeEntry.isIn(TagKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "cliffs")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "stony_spires")));
-        if (!isGrayTheme) return false;
-
-        // Refine: Exclude biomes that fit the category but have other dedicated hamster colors.
-        return !canSpawnBlue(biomeEntry)
-                && !canSpawnLavender(biomeEntry)
-                && !canSpawnWhite(biomeEntry)
-                && !biomeEntry.isIn(BiomeTags.IS_BADLANDS)
-                && !biomeEntry.isIn(BiomeTags.IS_JUNGLE)
-                && !biomeEntry.isIn(BiomeTags.IS_SAVANNA)
-                && !biomeEntry.isIn(ModBiomeTags.IS_SANDY);
-    }
-
-    private static boolean canSpawnBlack(RegistryEntry<Biome> biomeEntry) {
-        // Broad: Catches wet biomes, caves, and the Deep Dark.
-        boolean isBlackTheme  = biomeEntry.isIn(ModBiomeTags.IS_WET)
-                || biomeEntry.isIn(ModBiomeTags.IS_CAVE)
-                || biomeEntry.matchesKey(BiomeKeys.DEEP_DARK);
-        if (!isBlackTheme) return false;
-
-        // Refine: Exclude biomes that are "wet" but don't fit the swamp/cave theme, and any biome that belongs to a different hamster color.
-        return !canSpawnBlue(biomeEntry) && !canSpawnLavender(biomeEntry) && !canSpawnWhite(biomeEntry) && !canSpawnGray(biomeEntry)
-                && !biomeEntry.isIn(BiomeTags.IS_JUNGLE)
-                && !biomeEntry.isIn(BiomeTags.IS_BEACH)
-                && !biomeEntry.matchesKey(BiomeKeys.DRIPSTONE_CAVES)
-                && !biomeEntry.matchesKey(BiomeKeys.LUSH_CAVES);
-    }
-
-    private static boolean canSpawnCream(RegistryEntry<Biome> biomeEntry) {
-        // Broad: Use the 'is_sandy' tag and specific checks for unique biomes.
-        boolean isCreamTheme = biomeEntry.isIn(ModBiomeTags.IS_SANDY)
-                || biomeEntry.matchesKey(BiomeKeys.OLD_GROWTH_BIRCH_FOREST)
-                || biomeEntry.matchesKey(BiomeKeys.BIRCH_FOREST)
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "ancient_sands")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "sandstone_valley")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("biomesoplenty", "wasteland")));
-        if (!isCreamTheme) return false;
-
-        // Refine: Exclude sandy badlands, gravel beaches, and all higher-priority categories.
-        return !canSpawnBlue(biomeEntry) && !canSpawnLavender(biomeEntry) && !canSpawnWhite(biomeEntry) && !canSpawnGray(biomeEntry) && !canSpawnBlack(biomeEntry)
-                && !biomeEntry.isIn(BiomeTags.IS_BADLANDS)
-                && !biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "gravel_beach")));
-    }
-
-    private static boolean canSpawnChocolate(RegistryEntry<Biome> biomeEntry) {
-        // Broad: Catches all forest, taiga, and dense vegetation types.
-        boolean isChocolateTheme = biomeEntry.isIn(ModBiomeTags.IS_FOREST)
-                || biomeEntry.isIn(ModBiomeTags.IS_DENSE_VEGETATION)
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("terralith", "cloud_forest")))
-                || biomeEntry.matchesKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of("biomesoplenty", "redwood_forest")));
-        if (!isChocolateTheme) return false;
-
-        // Refine: The final veto. If it's not any of the more specific types, it's a generic forest suitable for Chocolate.
-        return !canSpawnBlue(biomeEntry)
-                && !canSpawnLavender(biomeEntry)
-                && !canSpawnWhite(biomeEntry)
-                && !canSpawnGray(biomeEntry)
-                && !canSpawnBlack(biomeEntry)
-                && !canSpawnCream(biomeEntry);
-    }
-// --- End Hamster Spawning In Different Biomes ---
+    private static boolean canSpawnBlue(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isBlueBiome(biomeEntry);}
+    private static boolean canSpawnLavender(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isLavenderBiome(biomeEntry);}
+    private static boolean canSpawnWhite(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isWhiteBiome(biomeEntry);}
+    private static boolean canSpawnGray(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isGrayBiome(biomeEntry);}
+    private static boolean canSpawnBlack(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isBlackBiome(biomeEntry);}
+    private static boolean canSpawnCream(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isCreamBiome(biomeEntry);}
+    private static boolean canSpawnChocolate(RegistryEntry<Biome> biomeEntry) {return ModItemTags.isChocolateBiome(biomeEntry);}
 
     private static HamsterVariant getRandomVariant(List<HamsterVariant> variantPool, net.minecraft.util.math.random.Random random) {
         if (variantPool == null || variantPool.isEmpty()) {
