@@ -223,7 +223,6 @@ public class AnnouncementManager {
     }
 
     public void setDisabledUntilLaunch(boolean isDisabled) {
-        ensureInitialized();
         if (clientState.disabled_until_launch() != isDisabled) {
             clientState = new ClientAnnouncementState(
                     clientState.seen_ids(),
