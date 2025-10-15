@@ -54,6 +54,8 @@ public class AnnouncementManager {
     private final Set<Identifier> deferredReadMarks = new HashSet<>();
     private CompletableFuture<Void> activeRefreshFuture = CompletableFuture.completedFuture(null);
     private boolean initialized = false;
+    private final Set<String> sessionSnoozedIds = new HashSet<>();
+    private boolean patchouliStateSynced = false;
 
     private AnnouncementManager() {
         this.clientState = ClientAnnouncementState.createDefault();
@@ -73,12 +75,6 @@ public class AnnouncementManager {
             AdorableHamsterPets.LOGGER.error("[Announcements] CRITICAL: Failed to create config directory for announcements at {}", configDir.toAbsolutePath(), e);
         }
         loadState();
-
-        if (this.clientState.disabled_until_launch()) {
-            AdorableHamsterPets.LOGGER.info("[Announcements] Notifications were disabled for the last session. Re-enabling for this session.");
-            setDisabledUntilLaunch(false);
-        }
-
         loadCachedManifest();
         processExpiredSnoozes();
         AdorableHamsterPets.LOGGER.trace("[Announcements] Initialization complete.");
@@ -88,6 +84,46 @@ public class AnnouncementManager {
         if (!initialized) {
             initialize();
             initialized = true;
+        }
+    }
+
+    public boolean isPatchouliStateSynced() {
+        return this.patchouliStateSynced;
+    }
+
+    public void syncPatchouliReadState() {
+        ensureInitialized();
+
+        // --- See if Patchouli is ready ---
+        Identifier bookId = Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
+        Book book = BookRegistry.INSTANCE.books.get(bookId);
+        if (book == null) {
+            // Patchouli is not ready yet. Try again on the next tick.
+            return;
+        }
+
+        // --- Sync and stop trying ---
+        this.patchouliStateSynced = true;
+        AdorableHamsterPets.LOGGER.trace("[Announcements] Patchouli book found. Syncing read state...");
+
+        List<PendingNotification> pendingNotifications = getPendingNotifications();
+        if (pendingNotifications.isEmpty()) {
+            AdorableHamsterPets.LOGGER.trace("[Announcements] -> No pending notifications to sync.");
+            return;
+        }
+
+        AdorableHamsterPets.LOGGER.trace("[Announcements] -> Found {} pending notifications to sync.", pendingNotifications.size());
+
+        for (PendingNotification notification : pendingNotifications) {
+            Identifier entryId = Identifier.of(AdorableHamsterPets.MOD_ID, "announcement_" + notification.announcement().id());
+            AdorableHamsterPets.LOGGER.trace("[Announcements] -> Syncing entry: {}", entryId);
+            boolean success = PatchouliIntegration.setEntryAsUnread(entryId);
+            if (success) {
+                AdorableHamsterPets.LOGGER.trace("[Announcements] -> Successfully marked {} as unread.", entryId);
+            } else {
+                // This might log if the entry was already unread.
+                AdorableHamsterPets.LOGGER.error("[Announcements] -> Could not mark {} as unread (was it already unread?).", entryId);
+            }
         }
     }
 
@@ -222,20 +258,6 @@ public class AnnouncementManager {
         return activeRefreshFuture;
     }
 
-    public void setDisabledUntilLaunch(boolean isDisabled) {
-        if (clientState.disabled_until_launch() != isDisabled) {
-            clientState = new ClientAnnouncementState(
-                    clientState.seen_ids(),
-                    clientState.snoozed_ids(),
-                    clientState.last_acknowledged_update(),
-                    isDisabled,
-                    clientState.manifest_etag(),
-                    clientState.manifest_last_modified()
-            );
-            saveState();
-        }
-    }
-
     public Announcement getAnnouncementById(String id) {
         ensureInitialized();
         return manifest.messages().stream()
@@ -269,7 +291,6 @@ public class AnnouncementManager {
                     clientState.seen_ids(),
                     newSnoozedIds,
                     clientState.last_acknowledged_update(),
-                    clientState.disabled_until_launch(),
                     clientState.manifest_etag(),
                     clientState.manifest_last_modified()
             );
@@ -285,7 +306,6 @@ public class AnnouncementManager {
                     newSeenIds,
                     clientState.snoozed_ids(),
                     clientState.last_acknowledged_update(),
-                    clientState.disabled_until_launch(),
                     clientState.manifest_etag(),
                     clientState.manifest_last_modified()
             );
@@ -332,7 +352,6 @@ public class AnnouncementManager {
                     newSeenIds,
                     clientState.snoozed_ids(),
                     clientState.last_acknowledged_update(),
-                    clientState.disabled_until_launch(),
                     clientState.manifest_etag(),
                     clientState.manifest_last_modified()
             );
@@ -350,7 +369,6 @@ public class AnnouncementManager {
                     clientState.seen_ids(),
                     clientState.snoozed_ids(),
                     newAck.toString(),
-                    clientState.disabled_until_launch(),
                     clientState.manifest_etag(),
                     clientState.manifest_last_modified()
             );
@@ -368,7 +386,6 @@ public class AnnouncementManager {
                 clientState.seen_ids(),
                 newSnoozedIds,
                 clientState.last_acknowledged_update(),
-                clientState.disabled_until_launch(),
                 clientState.manifest_etag(),
                 clientState.manifest_last_modified()
         );
@@ -489,7 +506,6 @@ public class AnnouncementManager {
                                             clientState.seen_ids(),
                                             clientState.snoozed_ids(),
                                             clientState.last_acknowledged_update(),
-                                            clientState.disabled_until_launch(),
                                             etag,
                                             lastModified
                                     );
@@ -570,11 +586,6 @@ public class AnnouncementManager {
         if (!this.manifestLoaded) {
             return Collections.emptyList(); // Guard against race condition
         }
-        // --- 1. Session Disable Check ---
-        // If the user has disabled for the session, return an empty list immediately.
-        if (clientState.disabled_until_launch()) {
-            return Collections.emptyList();
-        }
 
         AdorableHamsterPets.LOGGER.trace("[Announcements] Running getPendingNotifications check...");
         List<PendingNotification> pending = new ArrayList<>();
@@ -596,8 +607,10 @@ public class AnnouncementManager {
         if (newUpdateAvailable) {
             manifest.messages().stream()
                     .filter(a -> "update".equals(a.kind()) && latestVersion.toString().equals(a.semver()))
-                    // Check if it has been seen or snoozed
-                    .filter(a -> !clientState.seen_ids().contains(a.id()) && !clientState.snoozed_ids().getOrDefault(a.id(), Instant.EPOCH).isAfter(now))
+                    // Check if it has been seen, snoozed (days), or snoozed (session)
+                    .filter(a -> !clientState.seen_ids().contains(a.id())
+                            && !clientState.snoozed_ids().getOrDefault(a.id(), Instant.EPOCH).isAfter(now)
+                            && !sessionSnoozedIds.contains(a.id()))
                     .findFirst()
                     .ifPresent(announcement -> {
                         pending.add(new PendingNotification(PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT, announcement));
@@ -608,7 +621,9 @@ public class AnnouncementManager {
         // --- 3. Check for All Other Messages (Regular Announcements and Missed "What's New") ---
         AdorableHamsterPets.LOGGER.trace("[Announcements] -> Scanning all {} messages for other notifications...", manifest.messages().size());
         for (Announcement message : manifest.messages()) {
-            if (clientState.seen_ids().contains(message.id()) || clientState.snoozed_ids().getOrDefault(message.id(), Instant.EPOCH).isAfter(now)) {
+            if (clientState.seen_ids().contains(message.id())
+                    || clientState.snoozed_ids().getOrDefault(message.id(), Instant.EPOCH).isAfter(now)
+                    || sessionSnoozedIds.contains(message.id())) {
                 continue;
             }
 
@@ -643,6 +658,11 @@ public class AnnouncementManager {
         pending.sort(Comparator.comparing((PendingNotification p) -> p.announcement().published()).reversed());
         AdorableHamsterPets.LOGGER.trace("[Announcements] -> Final pending count: {}", pending.size());
         return pending;
+    }
+
+    public void snoozeForSession(String id) {
+        ensureInitialized();
+        sessionSnoozedIds.add(id);
     }
 
     /**

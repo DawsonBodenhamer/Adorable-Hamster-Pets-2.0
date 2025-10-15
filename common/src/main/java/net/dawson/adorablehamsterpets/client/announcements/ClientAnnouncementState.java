@@ -24,7 +24,6 @@ public record ClientAnnouncementState(
         Set<String> seen_ids,
         Map<String, Instant> snoozed_ids,
         String last_acknowledged_update,
-        boolean disabled_until_launch,
         Optional<String> manifest_etag,
         Optional<String> manifest_last_modified
 ) {
@@ -36,7 +35,6 @@ public record ClientAnnouncementState(
             STRING_SET_CODEC.fieldOf("seen_ids").forGetter(ClientAnnouncementState::seen_ids),
             SNOOZE_MAP_CODEC.optionalFieldOf("snoozed_ids", Map.of()).forGetter(ClientAnnouncementState::snoozed_ids),
             Codec.STRING.fieldOf("last_acknowledged_update").forGetter(ClientAnnouncementState::last_acknowledged_update),
-            Codec.BOOL.optionalFieldOf("disabled_until_launch", false).forGetter(ClientAnnouncementState::disabled_until_launch),
             Codec.STRING.optionalFieldOf("manifest_etag").forGetter(ClientAnnouncementState::manifest_etag),
             Codec.STRING.optionalFieldOf("manifest_last_modified").forGetter(ClientAnnouncementState::manifest_last_modified)
     ).apply(instance, ClientAnnouncementState::new));
@@ -46,7 +44,6 @@ public record ClientAnnouncementState(
                 Set.of(),
                 Map.of(),
                 "0.0.0",
-                false,
                 Optional.empty(),
                 Optional.empty()
         );

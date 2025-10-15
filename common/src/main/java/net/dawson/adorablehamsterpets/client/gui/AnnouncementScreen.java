@@ -274,8 +274,16 @@ public class AnnouncementScreen extends Screen {
 
         // 4. "Snooze (Session)" button (primary row)
         primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_session"), button -> {
-            AnnouncementManager.INSTANCE.setDisabledUntilLaunch(true);
-            this.close();
+            // Snooze this specific announcement for the current session.
+            AnnouncementManager.INSTANCE.snoozeForSession(announcement.id());
+
+            // Mark the entry as read in Patchouli's data.
+            if (this.parentScreen instanceof TitleScreen) {
+                AnnouncementManager.INSTANCE.queueDeferredReadMark(this.virtualEntry.getId());
+            } else {
+                PatchouliIntegration.setEntryAsRead(this.virtualEntry);
+            }
+            this.returnToBook();
         }).tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_session.tooltip"))));
 
         // 5. "Changelog" button (secondary row, only if this is an update note)

@@ -102,7 +102,6 @@ public class AdorableHamsterPetsClient {
 
         // --- Event Registrations ---
         ClientTickEvent.CLIENT_POST.register(AdorableHamsterPetsClient::onEndClientTick);
-        ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(player -> AnnouncementManager.INSTANCE.processDeferredReadMarks());
         ClientGuiEvent.RENDER_HUD.register((context, tickCounter) -> announcementHudRenderer.render(context, tickCounter.getTickDelta(true)));
     }
 
@@ -128,6 +127,15 @@ public class AdorableHamsterPetsClient {
         // --- Announcement System Tick Logic ---
         boolean isGuiOpen = client.currentScreen != null;
         AnnouncementIconAnimator.INSTANCE.tick(isGuiOpen);
+
+        // --- Sync Patchouli State (once per session after world load) ---
+        if (client.world != null && !AnnouncementManager.INSTANCE.isPatchouliStateSynced()) {
+            AnnouncementManager.INSTANCE.syncPatchouliReadState();
+            // Once the sync is successful, also process any deferred read marks from the session.
+            if (AnnouncementManager.INSTANCE.isPatchouliStateSynced()) {
+                AnnouncementManager.INSTANCE.processDeferredReadMarks();
+            }
+        }
 
         if (client.world != null) {
             // Update the cached list of pending notifications once per tick.
