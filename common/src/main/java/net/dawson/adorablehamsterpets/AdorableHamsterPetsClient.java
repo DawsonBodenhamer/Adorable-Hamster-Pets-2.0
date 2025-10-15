@@ -4,7 +4,7 @@ package net.dawson.adorablehamsterpets;
 /*
  * All Rights Reserved
  * Copyright (c) 2025 Dawson Bodenhamer (www.ForTheKing.Design)
- * 
+ *
  * All files and assets in this repository are the exclusive property of the copyright holder.
  * Permission is NOT granted to copy, modify, merge, publish, distribute, sublicense, or sell this material.
  * Provided "AS IS" without warranty. See LICENSE for details.
@@ -100,7 +100,6 @@ public class AdorableHamsterPetsClient {
 
         // --- Event Registrations ---
         ClientTickEvent.CLIENT_POST.register(AdorableHamsterPetsClient::onEndClientTick);
-        ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(player -> AnnouncementManager.INSTANCE.processDeferredReadMarks());
         ClientGuiEvent.RENDER_HUD.register((context, tickDelta) -> announcementHudRenderer.render(context, tickDelta));
     }
 
@@ -126,6 +125,15 @@ public class AdorableHamsterPetsClient {
         // --- Announcement System Tick Logic ---
         boolean isGuiOpen = client.currentScreen != null;
         AnnouncementIconAnimator.INSTANCE.tick(isGuiOpen);
+
+        // --- Sync Patchouli State (once per session after world load) ---
+        if (client.world != null && !AnnouncementManager.INSTANCE.isPatchouliStateSynced()) {
+            AnnouncementManager.INSTANCE.syncPatchouliReadState();
+            // Once the sync is successful, also process any deferred read marks from the session.
+            if (AnnouncementManager.INSTANCE.isPatchouliStateSynced()) {
+                AnnouncementManager.INSTANCE.processDeferredReadMarks();
+            }
+        }
 
         if (client.world != null) {
             // Update the cached list of pending notifications once per tick.

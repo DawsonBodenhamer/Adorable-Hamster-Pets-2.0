@@ -35,11 +35,6 @@ public abstract class TitleScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void adorablehamsterpets$onInit(CallbackInfo ci) {
-        // Prevent Icon from Appearing if Disabled for Session
-        if (AnnouncementManager.INSTANCE.getClientState().disabled_until_launch()) {
-            return; // Simply don't do anything
-        }
-
         AdorableHamsterPets.LOGGER.trace("[AHP TitleScreen] Mixin init called. Scheduling manifest refresh.");
 
         // Asynchronously refresh the announcement manifest when the title screen loads.

@@ -46,20 +46,23 @@ public class PatchouliIntegration {
      *
      * @param entryId The full Identifier of the entry to mark as unread.
      */
-    public static void setEntryAsUnread(Identifier entryId) {
+    public static boolean setEntryAsUnread(Identifier entryId) {
         Identifier bookId = Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
         Book book = BookRegistry.INSTANCE.books.get(bookId);
-        if (book == null) return;
+        if (book == null) {
+            return false;
+        }
 
         PersistentData.BookData data = PersistentData.data.getBookData(book);
-        if (data.viewedEntries.remove(entryId.toString())) { // Use remove on the collection
+        if (data.viewedEntries.remove(entryId)) {
             BookEntry entry = book.getContents().entries.get(entryId);
             if (entry != null) {
                 entry.markReadStateDirty(); // Tell Patchouli its visual state needs an update
             }
             PersistentData.save(); // Save the changes to patchouli_data.json
-            AdorableHamsterPets.LOGGER.debug("[Announcements] Marked Patchouli entry '{}' as unread.", entryId);
+            return true; // The entry was found and removed from the 'viewed' list.
         }
+        return false; // The entry was not in the 'viewed' list to begin with.
     }
 
     /**
