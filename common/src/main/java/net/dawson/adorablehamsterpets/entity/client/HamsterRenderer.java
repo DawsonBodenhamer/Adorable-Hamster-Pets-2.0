@@ -20,7 +20,6 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterVariant;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.SnowBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -167,14 +166,14 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                     model.getBone("left_foot").ifPresent(bone -> {
                         Vector3d pos = bone.getWorldPosition();
 
-                        for (int i = 0; i < 10; ++i) {
+                        for (int i = 0; i < 8; ++i) {
                             double d = random.nextGaussian() * 0.1;
                             double e = random.nextGaussian() * 0.2;
                             double f = random.nextGaussian() * 0.1;
                             animatable.getWorld().addParticle(ParticleTypes.WHITE_SMOKE,
                                     pos.x + d, pos.y + e, pos.z + f,
                                     random.nextGaussian() * 0.05,
-                                    random.nextGaussian() * 0.05 + 0.1, // Slight upward bias
+                                    random.nextGaussian() * 0.05,
                                     random.nextGaussian() * 0.05);
                         }
                     });
