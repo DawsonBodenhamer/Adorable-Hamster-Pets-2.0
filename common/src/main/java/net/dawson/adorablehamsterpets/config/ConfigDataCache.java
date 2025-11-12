@@ -43,8 +43,10 @@ public class ConfigDataCache {
     private static final Set<TagKey<Item>> stealableTags = new HashSet<>();
     private static final Set<Item> buffFoodItems = new HashSet<>();
     private static final Set<TagKey<Item>> buffFoodTags = new HashSet<>();
-    private static final Set<Item> shoulderMountItems = new HashSet<>();
-    private static final Set<TagKey<Item>> shoulderMountTags = new HashSet<>();
+    private static final Set<Item> lureItems = new HashSet<>();
+    private static final Set<TagKey<Item>> lureItemTags = new HashSet<>();
+    private static final Set<Item> bedAvoidanceFoodItems = new HashSet<>();
+    private static final Set<TagKey<Item>> bedAvoidanceFoodTags = new HashSet<>();
     private static final Set<Item> pouchUnlockItems = new HashSet<>();
     private static final Set<TagKey<Item>> pouchUnlockTags = new HashSet<>();
     private static final Set<Item> repeatableFoodItems = new HashSet<>();
@@ -100,7 +102,8 @@ public class ConfigDataCache {
         parseItemList(Configs.AHP.standardFoods, standardFoodItems, standardFoodTags, "standardFoods");
         parseItemList(Configs.AHP.stealableItems, stealableItems, stealableTags, "stealableItems");
         parseItemList(Configs.AHP.buffFoods, buffFoodItems, buffFoodTags, "buffFoods");
-        parseItemList(Configs.AHP.shoulderMountFoods, shoulderMountItems, shoulderMountTags, "shoulderMountFoods");
+        parseItemList(Configs.AHP.lureItems, lureItems, lureItemTags, "lureItems");
+        parseItemList(Configs.AHP.bedAvoidanceFoods, bedAvoidanceFoodItems, bedAvoidanceFoodTags, "bedAvoidanceFoods");
         parseItemList(Configs.AHP.pouchUnlockFoods, pouchUnlockItems, pouchUnlockTags, "pouchUnlockFoods");
         parseItemList(Configs.AHP.repeatableFoods, repeatableFoodItems, repeatableFoodTags, "repeatableFoods");
         parseItemList(Configs.AHP.pouchAllowedItems, pouchAllowedItems, pouchAllowedTags, "pouchAllowedItems");
@@ -152,7 +155,8 @@ public class ConfigDataCache {
     public static boolean isStandardFood(ItemStack stack) { return matchesItem(stack, standardFoodItems, standardFoodTags); }
     public static boolean isStealableItem(ItemStack stack) { return matchesItem(stack, stealableItems, stealableTags); }
     public static boolean isBuffFood(ItemStack stack) { return matchesItem(stack, buffFoodItems, buffFoodTags); }
-    public static boolean isShoulderMountFood(ItemStack stack) { return matchesItem(stack, shoulderMountItems, shoulderMountTags); }
+    public static boolean isLureItem(ItemStack stack) { return matchesItem(stack, lureItems, lureItemTags); }
+    public static boolean isBedAvoidanceFood(ItemStack stack) {return matchesItem(stack, bedAvoidanceFoodItems, bedAvoidanceFoodTags);}
     public static boolean isPouchUnlockFood(ItemStack stack) { return matchesItem(stack, pouchUnlockItems, pouchUnlockTags); }
     public static boolean isRepeatableFood(ItemStack stack) { return matchesItem(stack, repeatableFoodItems, repeatableFoodTags); }
     public static boolean isAutoHealFood(ItemStack stack) { return matchesItem(stack, autoHealFoodItems, autoHealFoodTags); }
@@ -247,8 +251,10 @@ public class ConfigDataCache {
         stealableTags.clear();
         buffFoodItems.clear();
         buffFoodTags.clear();
-        shoulderMountItems.clear();
-        shoulderMountTags.clear();
+        lureItems.clear();
+        lureItemTags.clear();
+        bedAvoidanceFoodItems.clear();
+        bedAvoidanceFoodTags.clear();
         pouchUnlockItems.clear();
         pouchUnlockTags.clear();
         repeatableFoodItems.clear();

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "adorablehamsterpets:block/hamster_bed_oak"
+  }
+}

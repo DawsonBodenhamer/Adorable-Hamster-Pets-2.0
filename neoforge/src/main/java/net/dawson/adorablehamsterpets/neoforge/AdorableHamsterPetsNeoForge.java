@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.neoforge;
 
-
 /*
  * All Rights Reserved
  * Copyright (c) 2025 Dawson Bodenhamer (www.ForTheKing.Design)
@@ -20,7 +19,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
-
 
 @Mod(AdorableHamsterPets.MOD_ID)
 public final class AdorableHamsterPetsNeoForge {
@@ -46,9 +44,6 @@ public final class AdorableHamsterPetsNeoForge {
         // --- Register custom biome modifier ---
         ModBiomeModifiers.register(modEventBus);
     }
-
-
-
     /**
      * Listens for the FMLCommonSetupEvent to run logic that must occur after
      * registries are populated.

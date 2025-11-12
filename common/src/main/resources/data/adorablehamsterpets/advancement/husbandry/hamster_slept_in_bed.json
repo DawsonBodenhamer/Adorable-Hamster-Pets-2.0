@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/hamster_bed_linked",
+  "display": {
+    "icon": {
+      "id": "minecraft:red_bed"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.hamster_slept_in_bed.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.hamster_slept_in_bed.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "slept_in_bed": {
+      "trigger": "adorablehamsterpets:hamster_slept_in_bed"
+    }
+  }
+}

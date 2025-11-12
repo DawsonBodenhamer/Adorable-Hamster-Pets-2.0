@@ -1,0 +1,26 @@
+{
+  "parent": "adorablehamsterpets:husbandry/root",
+  "display": {
+    "icon": {
+      "id": "adorablehamsterpets:hamster_bedding"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.craft_hamster_bedding.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.craft_hamster_bedding.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "crafted_hamster_bedding": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "adorablehamsterpets:hamster_bedding"
+      }
+    }
+  }
+}

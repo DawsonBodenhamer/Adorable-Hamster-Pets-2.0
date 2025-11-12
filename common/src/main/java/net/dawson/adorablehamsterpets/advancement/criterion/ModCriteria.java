@@ -1,7 +1,4 @@
-// --- ModCriteria.java ---
 package net.dawson.adorablehamsterpets.advancement.criterion;
-
-
 
 /*
  * All Rights Reserved
@@ -39,6 +36,11 @@ public class ModCriteria {
     public static final RegistrySupplier<HamsterPouchFilledCriterion> HAMSTER_POUCH_FILLED = CRITERIA.register("hamster_pouch_filled", HamsterPouchFilledCriterion::new);
     public static final RegistrySupplier<HamsterLedToDiamondCriterion> HAMSTER_LED_TO_DIAMOND = CRITERIA.register("hamster_led_to_diamond", HamsterLedToDiamondCriterion::new);
     public static final RegistrySupplier<HamsterFoundGoldCriterion> HAMSTER_FOUND_GOLD = CRITERIA.register("hamster_found_gold", HamsterFoundGoldCriterion::new);
+    public static final RegistrySupplier<HamsterBedLinkedCriterion> HAMSTER_BED_LINKED = CRITERIA.register("hamster_bed_linked", HamsterBedLinkedCriterion::new);
+    public static final RegistrySupplier<HamsterSleptInBedCriterion> HAMSTER_SLEPT_IN_BED = CRITERIA.register("hamster_slept_in_bed", HamsterSleptInBedCriterion::new);
+    public static final RegistrySupplier<UsedHamsterBeddingCriterion> USED_HAMSTER_BEDDING = CRITERIA.register("used_hamster_bedding", UsedHamsterBeddingCriterion::new);
+    public static final RegistrySupplier<HamsterBedPlacedUpsideDownCriterion> HAMSTER_BED_PLACED_UPSIDE_DOWN = CRITERIA.register("hamster_bed_placed_upside_down", HamsterBedPlacedUpsideDownCriterion::new);
+    public static final RegistrySupplier<DispensedHamsterBeddingCriterion> DISPENSED_HAMSTER_BEDDING = CRITERIA.register("dispensed_hamster_bedding", DispensedHamsterBeddingCriterion::new);
 
 
     // --- 3. Main Registration Call ---

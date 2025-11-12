@@ -108,6 +108,9 @@ public class HamsterSleepGoal extends Goal {
 
             // 3. Trigger the corresponding settle animation
             this.hamster.triggerAnimOnServer("mainController", settleAnimId);
+
+            // 4. Trigger the sound effects
+            this.hamster.triggerSettleEffects(0.24f, 14, 0.27f);
         }
 
         // --- Play Sound ---
@@ -148,6 +151,11 @@ public class HamsterSleepGoal extends Goal {
 
     @Override
     public void stop() {
+        // If hamster was sleeping, trigger wake up animation and sound
+        if (this.hamster.isSleeping()) {
+            this.hamster.triggerWakeUpFromSleepAnimation(false);
+        }
+
         this.hamster.setSleeping(false);
         this.hamster.setInSittingPose(false);
         this.checkTimer = 0;

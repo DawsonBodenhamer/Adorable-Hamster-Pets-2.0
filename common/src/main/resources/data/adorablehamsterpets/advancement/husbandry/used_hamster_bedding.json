@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/craft_hamster_bedding",
+  "display": {
+    "icon": {
+      "id": "minecraft:wind_charge"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.used_hamster_bedding.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.used_hamster_bedding.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "used_bedding": {
+      "trigger": "adorablehamsterpets:used_hamster_bedding"
+    }
+  }
+}

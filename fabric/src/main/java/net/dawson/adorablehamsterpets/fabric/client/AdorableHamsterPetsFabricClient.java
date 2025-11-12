@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.fabric.client;
 
-
 /*
  * All Rights Reserved
  * Copyright (c) 2025 Dawson Bodenhamer (www.ForTheKing.Design)
@@ -11,9 +10,14 @@ package net.dawson.adorablehamsterpets.fabric.client;
  */
 
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
+import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
+import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
+import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.minecraft.particle.SimpleParticleType;
 
 public final class AdorableHamsterPetsFabricClient implements ClientModInitializer {
     @Override
@@ -21,11 +25,17 @@ public final class AdorableHamsterPetsFabricClient implements ClientModInitializ
         AdorableHamsterPetsClient.init();
         AdorableHamsterPetsClient.initScreenHandlers();
         AdorableHamsterPetsClient.initEntityRenderers();
+        AdorableHamsterPetsClient.initBlockEntityRenderers();
 
         // --- Register keybindings for Fabric ---
         ModKeyBindings.init();
         KeyMappingRegistry.register(ModKeyBindings.THROW_HAMSTER_KEY);
         KeyMappingRegistry.register(ModKeyBindings.DISMOUNT_HAMSTER_KEY);
         KeyMappingRegistry.register(ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY);
+
+        // --- Register Particle Provider for all variants ---
+        for (RegistrySupplier<SimpleParticleType> particleSupplier : ModParticles.BEDDING_PARTICLES.values()) {
+            ParticleFactoryRegistry.getInstance().register(particleSupplier.get(), HamsterBeddingParticle.Factory::new);
+        }
     }
 }

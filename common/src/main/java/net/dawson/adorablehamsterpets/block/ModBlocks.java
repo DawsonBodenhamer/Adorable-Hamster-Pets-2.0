@@ -17,6 +17,8 @@ import net.dawson.adorablehamsterpets.block.custom.*;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.MapColor;
+import net.minecraft.block.enums.NoteBlockInstrument;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.sound.BlockSoundGroup;
 
@@ -50,6 +52,9 @@ public class ModBlocks {
 
     public static final RegistrySupplier<Block> SUNFLOWER_BLOCK = registerBlock("sunflower_block",
             () -> new SunflowerBlock(AbstractBlock.Settings.copy(Blocks.SUNFLOWER).nonOpaque()));
+
+    public static final RegistrySupplier<Block> HAMSTER_BED = registerBlock("hamster_bed",
+            () -> new HamsterBedBlock(AbstractBlock.Settings.create().mapColor(MapColor.OAK_TAN).instrument(NoteBlockInstrument.BASS).strength(0.5F).sounds(BlockSoundGroup.WOOD).nonOpaque()));
 
     // --- 3. Private Helper Method for Block Registration ---
     private static RegistrySupplier<Block> registerBlock(String name, Supplier<Block> blockSupplier) {

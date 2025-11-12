@@ -31,6 +31,7 @@ public class ModPackets {
         // This is a crucial step for the server. It learns what these packets are.
         NetworkManager.registerS2CPayloadType(StartHamsterFlightSoundPayload.ID, StartHamsterFlightSoundPayload.CODEC);
         NetworkManager.registerS2CPayloadType(StartHamsterThrowSoundPayload.ID, StartHamsterThrowSoundPayload.CODEC);
+        NetworkManager.registerS2CPayloadType(SpawnBeddingParticlesPayload.ID, SpawnBeddingParticlesPayload.CODEC);
     }
 
     /**
@@ -66,6 +67,10 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, StartHamsterThrowSoundPayload.ID, StartHamsterThrowSoundPayload.CODEC,
                 (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handleStartThrowSound(payload))
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SpawnBeddingParticlesPayload.ID, SpawnBeddingParticlesPayload.CODEC,
+                (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handleSpawnBeddingParticles(payload))
         );
     }
 

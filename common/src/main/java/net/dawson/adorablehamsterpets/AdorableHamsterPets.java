@@ -18,6 +18,7 @@ import dev.architectury.registry.level.entity.EntityAttributeRegistry;
 import dev.architectury.utils.Env;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
+import net.dawson.adorablehamsterpets.block.ModBlockEntities;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.command.ModCommands;
 import net.dawson.adorablehamsterpets.component.ModDataComponentTypes;
@@ -30,6 +31,7 @@ import net.dawson.adorablehamsterpets.event.AHPCommonEvents;
 import net.dawson.adorablehamsterpets.item.ModItemGroups;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
+import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
@@ -69,6 +71,8 @@ public class AdorableHamsterPets {
 		ModItemGroups.register();
 		ModScreenHandlers.register();
 		ModCriteria.register();
+		ModBlockEntities.register();
+		ModParticles.register();
 	}
 
 	/**
@@ -80,6 +84,7 @@ public class AdorableHamsterPets {
 		// and should skip runtime-only logic to prevent crashes.
 		if (System.getProperty("fabric-api.datagen") == null) {
 			ModRegistries.registerCompostables();
+			ModRegistries.registerDispenserBehaviors();
 			ModEntitySpawns.parseConfig();
 			ModWorldGeneration.parseConfig();
 			ConfigDataCache.parseConfig();

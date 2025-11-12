@@ -41,7 +41,8 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
                 this.hamster.isKnockedOut() ||
                 this.hamster.isSulking() ||
                 this.hamster.isCelebratingDiamond() ||
-                this.hamster.isCelebratingChase()) {
+                this.hamster.isCelebratingChase() ||
+                this.hamster.isWanderModeActive()) {
             return false;
         }
 
