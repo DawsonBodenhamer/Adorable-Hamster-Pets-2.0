@@ -165,14 +165,14 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                     model.getBone("left_foot").ifPresent(bone -> {
                         Vector3d pos = bone.getWorldPosition();
 
-                        for (int i = 0; i < 3; ++i) {
+                        for (int i = 0; i < 8; ++i) {
                             double d = random.nextGaussian() * 0.1;
                             double e = random.nextGaussian() * 0.2;
                             double f = random.nextGaussian() * 0.1;
                             animatable.getWorld().addParticle(ParticleTypes.POOF,
                                     pos.x + d, pos.y + e, pos.z + f,
                                     random.nextGaussian() * 0.05,
-                                    random.nextGaussian() * 0.05 + 0.1, // Slight upward bias
+                                    random.nextGaussian() * 0.05,
                                     random.nextGaussian() * 0.05);
                         }
                     });
