@@ -4,7 +4,7 @@ package net.dawson.adorablehamsterpets.entity.AI;
 /*
  * All Rights Reserved
  * Copyright (c) 2025 Dawson Bodenhamer (www.ForTheKing.Design)
- * 
+ *
  * All files and assets in this repository are the exclusive property of the copyright holder.
  * Permission is NOT granted to copy, modify, merge, publish, distribute, sublicense, or sell this material.
  * Provided "AS IS" without warranty. See LICENSE for details.
@@ -17,6 +17,7 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.advancement.Advancement;
+import net.dawson.adorablehamsterpets.util.ParticleBreadcrumbHelper;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.block.Block;
@@ -230,44 +231,9 @@ public class HamsterSeekDiamondGoal extends Goal {
         switch (this.currentState) {
             case MOVING_TO_ORE:
 
-                // --- Particle Breadcrumb Logic ---
-                if (this.path != null && !this.world.isClient()) {
-                    int currentNodeIndex = this.path.getCurrentNodeIndex();
-                    int pathLength = this.path.getLength();
-
-                    // Iterate from the current node to the end of the path
-                    for (int i = currentNodeIndex; i < pathLength; i++) {
-                        PathNode node = this.path.getNode(i);
-                        Vec3d directionVector = Vec3d.ZERO; // Default to no direction
-
-                        // 1. Determine the direction to the next node in the path.
-                        if (i + 1 < pathLength) {
-                            PathNode nextNode = this.path.getNode(i + 1);
-                            // Create a normalized (length of 1) vector pointing from the current node to the next.
-                            directionVector = new Vec3d(nextNode.x - node.x, 0, nextNode.z - node.z).normalize();
-                        }
-                        // For the very last node, directionVector will remain (0,0,0), so particles will cluster around it.
-
-                        // Loop to spawn multiple particles with randomized origins
-                        for (int p = 0; p < 3; p++) {
-                            // 2. Calculate a random distance to spread the particle along the direction vector.
-                            double distanceAlongPath = this.world.random.nextDouble(); // Random value from 0.0 to 1.0
-                            Vec3d pathOffset = directionVector.multiply(distanceAlongPath);
-
-                            // 3. Calculate limited vertical offset.
-                            double offsetY = (this.world.random.nextDouble() - 0.5) * 0.1;
-
-                            ((ServerWorld)this.world).spawnParticles(
-                                    ParticleTypes.MYCELIUM,
-                                    node.x + 0.5 + pathOffset.x,      // Center X + directional offset X
-                                    (node.y + 0.5) - 0.38 + offsetY,     // Center Y + limited vertical offset
-                                    node.z + 0.5 + pathOffset.z,         // Center Z + directional offset Z
-                                    1,                                   // Count is 1
-                                    0.2, 0.0, 0.2,          // Vertical Spread is 0
-                                    3                                    // Speed
-                            );
-                        }
-                    }
+                // Particle Breadcrumb Logic
+                if (!this.world.isClient()) {
+                    ParticleBreadcrumbHelper.spawnBreadcrumbs((ServerWorld) this.world, this.path);
                 }
 
                 if (this.hamster.getNavigation().isIdle() || this.hamster.getBlockPos().isWithinDistance(this.targetOrePos, 1.5)) {
