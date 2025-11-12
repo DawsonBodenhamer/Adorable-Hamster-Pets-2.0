@@ -76,8 +76,8 @@ public class AnnouncementIconWidget extends ButtonWidget {
             int targetX;
             int targetY;
 
-            // NeoForge-specific horizontal offset to avoid overlap with top tabs
-            int neoForgeCreativeModeOffset = Platform.isNeoForge() ? -26 : 0;
+            // Forge-specific horizontal offset to avoid overlap with top tabs
+            int neoForgeCreativeModeOffset = Platform.isForge() ? -26 : 0;
 
             // Position slightly outside the corner, with slightly different
             // offsets for creative and survival mode to accommodate their unique shapes.
