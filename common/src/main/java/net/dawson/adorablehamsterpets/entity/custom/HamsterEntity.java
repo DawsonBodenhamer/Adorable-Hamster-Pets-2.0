@@ -280,14 +280,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         if (hamster != null) {
             // --- 1. Load Core Data ---
+            hamster.setUuid(data.entityUuid());
             hamster.setVariant(data.variantId());
             hamster.setHealth(data.health());
             hamster.setOwnerUuid(player.getUuid());
             hamster.setTamed(true, true);
             hamster.setBreedingAge(data.breedingAge());
             hamster.throwCooldownEndTick = data.throwCooldownEndTick();
-            hamster.greenBeanBuffEndTick = data.greenBeanBuffEndTick();
-            hamster.getDataTracker().set(GREEN_BEAN_BUFF_DURATION, data.greenBeanBuffDuration());
+            HamsterShoulderData.GreenBeanBuffData buffData = data.greenBeanBuffData();
+            hamster.greenBeanBuffEndTick = buffData.greenBeanBuffEndTick();
+            hamster.getDataTracker().set(GREEN_BEAN_BUFF_DURATION, buffData.greenBeanBuffDuration());
             hamster.autoEatCooldownTicks = data.autoEatCooldownTicks();
             hamster.getDataTracker().set(PINK_PETAL_TYPE, data.pinkPetalType());
             hamster.getDataTracker().set(ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
@@ -311,7 +313,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- 4. Load Status Effects ---
             // In 1.20.1, the data record holds the NbtList directly.
-            NbtList effectsList = data.activeEffectsNbt();
+            NbtList effectsList = buffData.activeEffectsNbt();
             for (NbtElement effectElement : effectsList) {
                 if (effectElement instanceof NbtCompound effectInstanceNbt) {
                     // StatusEffectInstance.fromNbt takes the compound directly.
@@ -322,20 +324,22 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // --- 5. Load Seeking/Sulking Data ---
+            // --- 5. Load Seeking Data ---
             HamsterShoulderData.SeekingBehaviorData seekingData = data.seekingBehaviorData();
             hamster.isPrimedToSeekDiamonds = seekingData.isPrimedToSeekDiamonds();
             hamster.foundOreCooldownEndTick = seekingData.foundOreCooldownEndTick();
             hamster.currentOreTarget = seekingData.currentOreTarget().orElse(null);
 
-            // --- 6. Reset Transient States ---
+            // --- 6. Load Wander Mode/Bed Data ---
+            HamsterShoulderData.WanderModeData wanderData = data.wanderModeData();
+
+            // --- 7. Reset Transient States ---
             hamster.isAutoEating = false;
             hamster.autoEatProgressTicks = 0;
 
             // Explicitly reset transient action flags to prevent stuck states.
             hamster.setHamsterFlag(CLEANING_FLAG, false);
             hamster.setDozingPhase(DozingPhase.NONE);
-            // --- End 6. Reset Transient States ---
         }
         return hamster;
     }
@@ -922,14 +926,19 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // In 1.20.1, writeNbt does not take a registry manager.
         Inventories.writeNbt(inventoryNbt, this.items);
 
-        // --- 2. Save Active Status Effects to a Compound Wrapper ---
-        NbtCompound effectsNbt = new NbtCompound();
+        // --- 2. Save Active Status Effects ---
+        // In 1.20.1, the active_effects are stored directly in the NbtList, not a wrapper compound.
         NbtList effectsList = new NbtList();
         for (StatusEffectInstance effectInstance : this.getStatusEffects()) {
-            // Corrected: In 1.20.1, writeNbt requires a compound to be passed into it.
             effectsList.add(effectInstance.writeNbt(new NbtCompound()));
         }
-        // In 1.20.1, the active_effects are stored directly in the NbtList, not a wrapper compound.
+
+        // --- Create GreenBeanBuffData ---
+        HamsterShoulderData.GreenBeanBuffData buffData = new HamsterShoulderData.GreenBeanBuffData(
+                this.greenBeanBuffEndTick,
+                this.getDataTracker().get(GREEN_BEAN_BUFF_DURATION),
+                effectsList
+        );
 
         // --- 3. Get Custom Name ---
         Optional<String> nameOptional = Optional.ofNullable(this.getCustomName()).map(Text::getString);
@@ -941,22 +950,25 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 Optional.ofNullable(this.currentOreTarget)
         );
 
-        // --- 5. Create and Return the Main Data Record ---
+        // --- 5. Create WanderModeData ---
+        HamsterShoulderData.WanderModeData wanderData = HamsterShoulderData.WanderModeData.empty();
+
+        // --- 6. Create and Return the Main Data Record ---
         return new HamsterShoulderData(
+                this.getUuid(),
                 this.getVariant(),
                 this.getHealth(),
                 inventoryNbt,
                 this.getBreedingAge(),
                 this.throwCooldownEndTick,
-                this.greenBeanBuffEndTick,
-                this.getDataTracker().get(GREEN_BEAN_BUFF_DURATION),
-                effectsList, // Pass the NbtList directly
+                buffData,
                 this.autoEatCooldownTicks,
                 nameOptional,
                 this.dataTracker.get(PINK_PETAL_TYPE),
                 this.dataTracker.get(ANIMATION_PERSONALITY_ID),
                 seekingData,
-                this.dataTracker.get(HAMSTER_FLAGS) // Pass the entire packed integer
+                wanderData,
+                this.dataTracker.get(HAMSTER_FLAGS)
         );
     }
 
