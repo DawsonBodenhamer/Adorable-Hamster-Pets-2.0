@@ -295,7 +295,21 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     public void adorablehamsterpets$dismountShoulderHamster(boolean isThrow) {
         PlayerEntity self = (PlayerEntity) (Object) this;
         World world = self.getWorld();
-        if (world.isClient || this.adorablehamsterpets$mountOrderQueue.isEmpty()) {
+        if (world.isClient) {
+            return;
+        }
+
+        // --- Self-Healing: Rebuild Queue if Desynced ---
+        if (this.adorablehamsterpets$mountOrderQueue.isEmpty() && this.hasAnyShoulderHamster()) {
+            AdorableHamsterPets.LOGGER.warn("[HamsterDismount] Player {} has shoulder hamsters but empty queue. Rebuilding...", self.getName().getString());
+            for (ShoulderLocation location : ShoulderLocation.values()) {
+                if (!this.getShoulderHamster(location).isEmpty()) {
+                    this.adorablehamsterpets$mountOrderQueue.addLast(location);
+                }
+            }
+        }
+
+        if (this.adorablehamsterpets$mountOrderQueue.isEmpty()) {
             return;
         }
 

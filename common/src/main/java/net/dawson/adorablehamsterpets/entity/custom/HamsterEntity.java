@@ -1233,15 +1233,29 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * @return An Optional containing the first safe BlockPos found, or an empty Optional if no safe spot is found within the search radius.
      */
     public Optional<BlockPos> findSafeSpawnPosition(BlockPos initialTarget, World world, int searchRadius) {
+        return findSafeSpawnPosition(initialTarget, world, searchRadius, Collections.emptySet());
+    }
+
+    /**
+     * Finds a safe, unoccupied spawn position for the hamster near an initial target position,
+     * avoiding any positions present in the provided occupied set.
+     *
+     * @param initialTarget The desired starting point for the search.
+     * @param world         The world where the search is performed.
+     * @param searchRadius  The maximum horizontal radius for the spiral search.
+     * @param occupiedPositions A set of positions that are already taken and should be avoided.
+     * @return An Optional containing the first safe and unoccupied BlockPos found, or an empty Optional.
+     */
+    public Optional<BlockPos> findSafeSpawnPosition(BlockPos initialTarget, World world, int searchRadius, Set<BlockPos> occupiedPositions) {
         // --- Stage 1: Initial Target Check ---
-        if (isSafeSpawnLocation(initialTarget, world)) {
+        if (isSafeSpawnLocation(initialTarget, world) && !occupiedPositions.contains(initialTarget)) {
             return Optional.of(initialTarget);
         }
 
         // --- Stage 2: Vertical Vicinity Check (Upwards) ---
         for (int i = 1; i <= 3; i++) {
             BlockPos abovePos = initialTarget.up(i);
-            if (isSafeSpawnLocation(abovePos, world)) {
+            if (isSafeSpawnLocation(abovePos, world) && !occupiedPositions.contains(abovePos)) {
                 return Optional.of(abovePos);
             }
         }
@@ -1255,7 +1269,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                         continue;
                     }
                     BlockPos checkPos = initialTarget.add(i, 0, j);
-                    if (isSafeSpawnLocation(checkPos, world)) {
+                    if (isSafeSpawnLocation(checkPos, world) && !occupiedPositions.contains(checkPos)) {
                         return Optional.of(checkPos);
                     }
                 }
