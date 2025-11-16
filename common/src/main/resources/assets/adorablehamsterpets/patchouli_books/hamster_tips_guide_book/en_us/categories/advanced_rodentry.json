@@ -1,6 +1,6 @@
 {
   "name": "book.adorablehamsterpets.category.advanced_rodentry",
   "description": "book.adorablehamsterpets.category.advanced_rodentry.desc",
-  "icon": "minecraft:diamond",
+  "icon": "adorablehamsterpets:hamster_bedding",
   "sortnum": 3
 }
