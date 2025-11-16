@@ -72,6 +72,7 @@ public class ModEntitySpawns {
         VALID_SPAWN_BLOCKS.add(Blocks.PODZOL);
         VALID_SPAWN_BLOCKS.add(Blocks.SNOW_BLOCK);
         VALID_SPAWN_BLOCKS.add(Blocks.MYCELIUM);
+        VALID_SPAWN_BLOCKS.add(Blocks.SCULK);
     }
 
     /**
