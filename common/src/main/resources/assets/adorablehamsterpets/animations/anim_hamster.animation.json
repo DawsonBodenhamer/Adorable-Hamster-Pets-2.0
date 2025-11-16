@@ -16412,34 +16412,42 @@
 				},
 				"left_ear": {
 					"rotation": {
-						"vector": [74.90938, -50.51076, -8.56048]
+						"vector": [74.90938, -50.51076, -8.56048],
+						"easing": "easeInOutSine"
 					},
 					"position": {
-						"vector": [0.2, -0.1, -0.3]
+						"vector": [0.2, -0.1, -0.3],
+						"easing": "easeInOutSine"
 					}
 				},
 				"right_ear": {
 					"rotation": {
-						"vector": [52.58977, 45.24358, -12.22099]
+						"vector": [52.58977, 45.24358, -12.22099],
+						"easing": "easeInOutSine"
 					},
 					"position": {
-						"vector": [-0.3, 0, -0.5]
+						"vector": [-0.3, 0, -0.5],
+						"easing": "easeInOutSine"
 					}
 				},
 				"tail": {
 					"rotation": {
-						"vector": [-37.5, 0, 0]
+						"vector": [-37.5, 0, 0],
+						"easing": "easeInOutSine"
 					},
 					"position": {
-						"vector": [0, -0.9, 0.2]
+						"vector": [0, -0.9, 0.2],
+						"easing": "easeInOutSine"
 					}
 				},
 				"right_hand": {
 					"rotation": {
-						"vector": [-22.04831, -1.43364, 55.02563]
+						"vector": [-22.04831, -1.43364, 55.02563],
+						"easing": "easeInOutSine"
 					},
 					"position": {
-						"vector": [-0.6, 1.2, 0.4]
+						"vector": [-0.6, 1.2, 0.4],
+						"easing": "easeInOutSine"
 					},
 					"scale": {
 						"vector": [1, 1.9, 1]
@@ -16447,10 +16455,12 @@
 				},
 				"left_hand": {
 					"rotation": {
-						"vector": [-17.5, 0, -67.5]
+						"vector": [-17.5, 0, -67.5],
+						"easing": "easeInOutSine"
 					},
 					"position": {
-						"vector": [0.5, 1, 0]
+						"vector": [0.5, 1, 0],
+						"easing": "easeInOutSine"
 					},
 					"scale": {
 						"vector": [1, 2.2, 1]
@@ -16458,10 +16468,12 @@
 				},
 				"left_foot": {
 					"rotation": {
-						"vector": [47.5, 0, -90]
+						"vector": [47.5, 0, -90],
+						"easing": "easeInOutSine"
 					},
 					"position": {
-						"vector": [0.6, 1, -0.4]
+						"vector": [0.6, 1, -0.4],
+						"easing": "easeInOutSine"
 					},
 					"scale": {
 						"vector": [1, 1.8, 1]
@@ -16469,10 +16481,12 @@
 				},
 				"right_foot": {
 					"rotation": {
-						"vector": [57.5, 0, 90]
+						"vector": [57.5, 0, 90],
+						"easing": "easeInOutSine"
 					},
 					"position": {
-						"vector": [-0.6, 1, -0.6]
+						"vector": [-0.6, 1, -0.6],
+						"easing": "easeInOutSine"
 					},
 					"scale": {
 						"vector": [1, 2, 1]
@@ -16480,7 +16494,9 @@
 				},
 				"body_parent": {
 					"position": {
-						"vector": [0.8, 0, 0]
+						"vector": [0.2, -1.5, 0],
+						"easing": "easeInBounce",
+						"easingArgs": [0.8]
 					},
 					"scale": {
 						"0.0": {
