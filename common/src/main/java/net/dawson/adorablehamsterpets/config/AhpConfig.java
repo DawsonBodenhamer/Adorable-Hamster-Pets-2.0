@@ -28,8 +28,8 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedFloat;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
+import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -102,8 +102,10 @@ public class AhpConfig extends Config {
             .title(Text.translatable("config.adorablehamsterpets.main.helpAndResources.giveGuideBook"))
             .desc(Text.translatable("config.adorablehamsterpets.main.helpAndResources.giveGuideBook.desc"))
             .decoration(TextureIds.INSTANCE.getDECO_BOOK())
-            .build(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                    "/function adorablehamsterpets:technical/give_guide_book"));
+            .build(() -> {
+                // On 1.20.1, use the ModPackets channel and the 1.20.1 inner packet record
+                ModPackets.CHANNEL.sendToServer(new ModPackets.RequestGuidebookC2SPacket());
+            });
 
     @NonSync
     @Translatable.Name("Report a Bug")

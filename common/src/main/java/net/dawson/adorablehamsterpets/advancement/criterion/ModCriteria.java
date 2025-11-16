@@ -19,7 +19,6 @@ public class ModCriteria {
     // --- Define Criterion Instances ---
     public static final HamsterOnShoulderCriterion HAMSTER_ON_SHOULDER = new HamsterOnShoulderCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_on_shoulder"));
     public static final HamsterThrownCriterion HAMSTER_THROWN = new HamsterThrownCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_thrown"));
-    public static final FirstJoinCriterion FIRST_JOIN_GUIDEBOOK_CHECK = new FirstJoinCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "first_join_guidebook_check"));
     public static final FedHamsterSteamedBeansCriterion FED_HAMSTER_STEAMED_BEANS = new FedHamsterSteamedBeansCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "fed_hamster_steamed_beans"));
     public static final CheekPouchUnlockedCriterion CHEEK_POUCH_UNLOCKED = new CheekPouchUnlockedCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "cheek_pouch_unlocked"));
     public static final AppliedPinkPetalCriterion APPLIED_PINK_PETAL = new AppliedPinkPetalCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "applied_pink_petal"));
@@ -50,7 +49,6 @@ public class ModCriteria {
     public static void register() {
         register(HAMSTER_ON_SHOULDER);
         register(HAMSTER_THROWN);
-        register(FIRST_JOIN_GUIDEBOOK_CHECK);
         register(FED_HAMSTER_STEAMED_BEANS);
         register(CHEEK_POUCH_UNLOCKED);
         register(APPLIED_PINK_PETAL);
