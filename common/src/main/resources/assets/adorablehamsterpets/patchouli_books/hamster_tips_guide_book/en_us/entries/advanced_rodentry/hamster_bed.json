@@ -1,0 +1,90 @@
+{
+  "name": "book.adorablehamsterpets.entry.hamster_bed",
+  "icon": "adorablehamsterpets:hamster_bedding",
+  "category": "adorablehamsterpets:advanced_rodentry",
+  "entry_color": "00AAAA",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "adorablehamsterpets:page",
+      "header": "book.adorablehamsterpets.entry.hamster_bed",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page1.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "patchouli:image",
+      "title": "book.adorablehamsterpets.entry.hamster_bed.page2.header",
+      "images": [
+        "adorablehamsterpets:patchouli_books/hamster_tips_guide_book/images/hamster_bed/hamster_sitting_near_bed.png",
+        "adorablehamsterpets:patchouli_books/hamster_tips_guide_book/images/hamster_bed/hamster_bed_with_sleeping_hamster.png"
+      ],
+      "border": false,
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page2.body"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": {
+        "item": "adorablehamsterpets:hamster_bedding"
+      },
+      "link_recipe": true,
+      "anchor": "hamster_bedding",
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page3.body"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "adorablehamsterpets:hamster_bedding",
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page4.body"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": {
+        "item": "adorablehamsterpets:hamster_bed_oak"
+      },
+      "link_recipe": true,
+      "anchor": "hamster_bed",
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page5.body"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "adorablehamsterpets:hamster_bed_oak",
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page6.body"
+    },
+    {
+      "type": "patchouli:image",
+      "title": "book.adorablehamsterpets.entry.hamster_bed.page7.header",
+      "images": [
+        "adorablehamsterpets:patchouli_books/hamster_tips_guide_book/images/hamster_bed/hamster_bed_variety_showcase_acacia_cherry_and_mangrove.png"
+      ],
+      "border": false,
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page7.body"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "adorablehamsterpets:hamster_bed_cherry",
+      "recipe2": "adorablehamsterpets:hamster_bed_mangrove"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "adorablehamsterpets:hamster_bed_acacia",
+      "recipe2": "adorablehamsterpets:hamster_bed_spruce"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "adorablehamsterpets:hamster_bed_bamboo",
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page10.body"
+    },
+    {
+      "type": "adorablehamsterpets:page",
+      "anchor": "wander_mode",
+      "header": "book.adorablehamsterpets.entry.hamster_bed.page11.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page11.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page12.body"
+    }
+  ]
+}
