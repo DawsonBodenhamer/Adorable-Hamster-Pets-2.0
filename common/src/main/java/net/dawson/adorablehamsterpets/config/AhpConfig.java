@@ -892,6 +892,10 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Just the basic stuff. You know, detecting creepers, sniffing diamonds. Just average Minecraft stuff really. No big deal. Why are you clapping and squealing? Stop that. You look silly.")
     public ConfigGroup shoulderCore = new ConfigGroup("shoulderCore", true);
 
+    @Translatable.Name("Retain Shoulder Mounts")
+    @Translatable.Desc("If true, any hamsters on your shoulder will remain there when you respawn. If false (default), they will remain at your death location, passed out from the sheer shock of seeing you die. They may need a quick pat to wake them up when you return.")
+    public boolean keepHamstersOnShoulderOnDeath = false;
+
     @Translatable.Name("Consume Lure Item")
     @Translatable.Desc("Should luring a hamster to your shoulder consume the item (e.g., cheese)? Turn this off if you believe your charm alone should be enough. The item will still be required, just not eaten.")
     public boolean consumeLureItem = true;

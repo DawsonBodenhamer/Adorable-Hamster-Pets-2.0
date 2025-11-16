@@ -21,6 +21,7 @@ import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.ModBlockEntities;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.command.ModCommands;
+import net.dawson.adorablehamsterpets.component.HamsterShoulderData;
 import net.dawson.adorablehamsterpets.component.ModDataComponentTypes;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
@@ -50,7 +51,12 @@ import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
+
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 public class AdorableHamsterPets {
 	public static final String MOD_ID = "adorablehamsterpets";
@@ -178,40 +184,89 @@ public class AdorableHamsterPets {
 	}
 
 	/**
-	 * An event handler that is called when a player entity is "cloned".
-	 * This occurs upon player death and respawn, or when traveling between certain dimensions (like returning from the End).
+	 * An event handler that is called when a player entity is "cloned," which is observed to
+	 * fire reliably upon respawn after death.
 	 * <p>
-	 * This method ensures that a shoulder-mounted hamster is not lost during these events.
-	 * <ul>
-	 *     <li>If the player died ({@code wasDeath} is true), the hamster is spawned as an entity in the world at the player's death location.</li>
-	 *     <li>If the player was cloned for another reason (e.g., dimension travel), the hamster's NBT data is transferred directly to the new player entity instance, keeping it on their shoulder.</li>
-	 * </ul>
+	 * NOTE: This event does not fire for dimension travel (e.g., Nether/End portals).
+	 * In those cases, the same PlayerEntity instance is reused, preserving transient data like the
+	 * mount order queue automatically.
+	 * <p>
 	 *
-	 * @param oldPlayer The player entity instance before the cloning event.
-	 * @param newPlayer The new player entity instance created after the cloning event.
-	 * @param wasDeath  A boolean flag indicating whether the clone was caused by player death.
+	 * @param oldPlayer The player entity instance before death.
+	 * @param newPlayer The new player entity instance created upon respawn.
+	 * @param wasDeath_UNRELIABLE A boolean flag that is not reliable on all platforms and is ignored.
 	 */
-	private static void onPlayerClone(ServerPlayerEntity oldPlayer, ServerPlayerEntity newPlayer, boolean wasDeath) {
+	private static void onPlayerClone(ServerPlayerEntity oldPlayer, ServerPlayerEntity newPlayer, boolean wasDeath_UNRELIABLE) {
 		PlayerEntityAccessor oldPlayerAccessor = (PlayerEntityAccessor) oldPlayer;
 		PlayerEntityAccessor newPlayerAccessor = (PlayerEntityAccessor) newPlayer;
 
+		// --- 1. Handle "Keep on Shoulder" Scenario ---
+		if (Configs.AHP.keepHamstersOnShoulderOnDeath) {
+			newPlayerAccessor.adorablehamsterpets$getMountOrderQueue().addAll(oldPlayerAccessor.adorablehamsterpets$getMountOrderQueue());
+			for (ShoulderLocation location : ShoulderLocation.values()) {
+				NbtCompound shoulderNbt = oldPlayerAccessor.getShoulderHamster(location);
+				if (!shoulderNbt.isEmpty()) {
+					newPlayerAccessor.setShoulderHamster(location, shoulderNbt);
+					AdorableHamsterPets.LOGGER.debug("Player {} respawned with 'Keep on Shoulder' enabled. Transferring {} hamster to new entity.", newPlayer.getName().getString(), location);
+				}
+			}
+			return; // Data transferred, nothing more to do.
+		}
+
+		// --- 2. Handle Spawning at Death Location (Default) ---
+		ServerWorld world = oldPlayer.getServerWorld();
+		BlockPos deathPos = oldPlayer.getBlockPos();
+		Set<BlockPos> occupiedSpawnPositions = new HashSet<>();
+
 		for (ShoulderLocation location : ShoulderLocation.values()) {
 			NbtCompound shoulderNbt = oldPlayerAccessor.getShoulderHamster(location);
-			if (shoulderNbt.isEmpty()) {
-				continue;
-			}
+			if (shoulderNbt.isEmpty()) continue;
 
-			if (wasDeath) {
-				// Player Died: Spawn the hamster at the death location
-				ServerWorld world = oldPlayer.getServerWorld();
-				HamsterEntity.spawnFromNbt(world, oldPlayer, shoulderNbt, false, null);
-				AdorableHamsterPets.LOGGER.debug("Player {} died. Spawning {} hamster at death location.", oldPlayer.getName().getString(), location);
-			} else {
-				// Player Cloned (e.g., End Portal): Transfer hamster to the new player instance
-				newPlayerAccessor.setShoulderHamster(location, shoulderNbt);
-				AdorableHamsterPets.LOGGER.debug("Player {} was cloned. Transferring {} hamster to new entity.", newPlayer.getName().getString(), location);
-			}
+			// Modify NBT to set the knocked-out state before spawning
+			NbtCompound modifiedNbt = setKnockedOutInNbt(shoulderNbt);
+			HamsterEntity hamster = HamsterEntity.createFromNbt(world, oldPlayer, modifiedNbt);
+			if (hamster == null) continue;
+
+			// Find a unique, safe spawn position
+			Optional<BlockPos> safePosOpt = hamster.findSafeSpawnPosition(deathPos, world, 5, occupiedSpawnPositions);
+
+			BlockPos finalSpawnPos = safePosOpt.orElse(deathPos);
+			occupiedSpawnPositions.add(finalSpawnPos); // Add chosen position to the set for the next hamster
+
+			// Set initial position
+			hamster.refreshPositionAndAngles(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, 0, 0);
+
+			// Spawn the entity in the world
+			world.spawnEntityAndPassengers(hamster);
+
+			// Randomize the Yaw so they don't all face the exact same direction
+			float randomYaw = world.random.nextFloat() * 360.0F;
+			hamster.setBodyYaw(randomYaw);
+			hamster.setHeadYaw(randomYaw);
+
+			AdorableHamsterPets.LOGGER.debug("Player {} died. Spawning {} hamster at {} in KO state.", oldPlayer.getName().getString(), location, finalSpawnPos);
 		}
+		// By not transferring any data to newPlayer, they will respawn with empty shoulders.
+	}
+
+	/**
+	 * A helper method that takes a hamster's NBT data, deserializes it, sets the
+	 * knocked-out flag, and re-serializes it to a new NbtCompound.
+	 *
+	 * @param originalNbt The original NbtCompound from the player's shoulder data.
+	 * @return A new NbtCompound with the KNOCKED_OUT_FLAG set.
+	 */
+	private static NbtCompound setKnockedOutInNbt(NbtCompound originalNbt) {
+		return HamsterShoulderData.fromNbt(originalNbt).map(data -> {
+			int newFlags = data.hamsterFlags() | HamsterEntity.KNOCKED_OUT_FLAG;
+			HamsterShoulderData knockedOutData = new HamsterShoulderData(
+					data.entityUuid(), data.variantId(), data.health(), data.inventoryNbt(),
+					data.breedingAge(), data.throwCooldownEndTick(), data.greenBeanBuffData(),
+					data.autoEatCooldownTicks(), data.customName(), data.pinkPetalType(),
+					data.animationPersonalityId(), data.seekingBehaviorData(), data.wanderModeData(), newFlags
+			);
+			return knockedOutData.toNbt();
+		}).orElse(originalNbt); // Fallback to original NBT if deserialization fails
 	}
 
 	/**
