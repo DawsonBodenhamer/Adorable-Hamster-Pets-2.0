@@ -23,6 +23,7 @@ import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.command.ModCommands;
 import net.dawson.adorablehamsterpets.component.ModDataComponentTypes;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
@@ -34,7 +35,6 @@ import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.world.ModSpawnPlacements;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
@@ -135,9 +135,8 @@ public class AdorableHamsterPets {
 	 * <p>
 	 * This method is responsible for the one-time delivery of the Hamster Guide Book. It checks if the player
 	 * has the {@code adorablehamsterpets:technical/has_received_initial_guidebook} advancement. If they do not,
-	 * and if the {@code uiTweaks.enableAutoGuidebookDelivery} config option is enabled, it triggers a custom
-	 * criterion. This criterion, in turn, grants another advancement that rewards the player with the
-	 * fully-written guide book via a function.
+	 * and if the {@code uiTweaks.enableAutoGuidebookDelivery} config option is enabled, it directly gives
+	 * the player the book, plays effects, and then grants the advancement flag to prevent future deliveries.
 	 *
 	 * @param player The ServerPlayerEntity who has just joined the world.
 	 */
@@ -147,14 +146,27 @@ public class AdorableHamsterPets {
 			Identifier flagAdvId = Identifier.of(MOD_ID, "technical/has_received_initial_guidebook");
 			net.minecraft.advancement.AdvancementEntry flagAdvancementEntry = player.server.getAdvancementLoader().get(flagAdvId);
 
-
 			if (flagAdvancementEntry != null) {
 				AdvancementProgress flagProgress = advancementTracker.getProgress(flagAdvancementEntry);
 				if (!flagProgress.isDone()) {
-					ModCriteria.FIRST_JOIN_GUIDEBOOK_CHECK.get().trigger(player);
+					// --- 1. Create the Book ItemStack Directly ---
+					ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
+					@SuppressWarnings("unchecked")
+					ComponentType<Identifier> bookComponent = (ComponentType<Identifier>) Registries.DATA_COMPONENT_TYPE.get(Identifier.of("patchouli", "book"));
+					if (bookComponent != null) {
+						bookStack.set(bookComponent, Identifier.of(MOD_ID, "hamster_tips_guide_book"));
+					} else {
+						LOGGER.error("Could not find Patchouli's book component type! Guidebook will not be functional.");
+					}
+
+					// --- 2. Give the Item to the Player ---
+					player.getInventory().offerOrDrop(bookStack);
+
+					// --- 3. Grant the Flag Advancement ---
 					for (String criterion : flagAdvancementEntry.value().criteria().keySet()) {
 						advancementTracker.grantCriterion(flagAdvancementEntry, criterion);
 					}
+					LOGGER.info("Gave 'Hamster Tips' guide book to player {}.", player.getName().getString());
 				}
 			} else {
 				LOGGER.warn("Could not find flag advancement: {}", flagAdvId);

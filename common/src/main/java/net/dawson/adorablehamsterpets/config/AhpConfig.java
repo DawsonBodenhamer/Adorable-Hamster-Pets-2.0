@@ -10,6 +10,7 @@ package net.dawson.adorablehamsterpets.config;
  * Provided "AS IS" without warranty. See LICENSE for details.
  */
 
+import dev.architectury.networking.NetworkManager;
 import me.fzzyhmstrs.fzzy_config.annotations.NonSync;
 import me.fzzyhmstrs.fzzy_config.annotations.RootConfig;
 import me.fzzyhmstrs.fzzy_config.annotations.Translation;
@@ -28,8 +29,8 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedFloat;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
+import net.dawson.adorablehamsterpets.networking.payload.RequestGuidebookPayload;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -102,8 +103,9 @@ public class AhpConfig extends Config {
             .title(Text.translatable("config.adorablehamsterpets.main.helpAndResources.giveGuideBook"))
             .desc(Text.translatable("config.adorablehamsterpets.main.helpAndResources.giveGuideBook.desc"))
             .decoration(TextureIds.INSTANCE.getDECO_BOOK())
-            .build(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                    "/function adorablehamsterpets:technical/give_guide_book"));
+            .build(() -> {
+                NetworkManager.sendToServer(new RequestGuidebookPayload());
+            });
 
     @NonSync
     @Translatable.Name("Report a Bug")

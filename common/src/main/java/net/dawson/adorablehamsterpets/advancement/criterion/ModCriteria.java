@@ -26,7 +26,6 @@ public class ModCriteria {
     // --- 2. Change all fields to RegistrySuppliers ---
     public static final RegistrySupplier<HamsterOnShoulderCriterion> HAMSTER_ON_SHOULDER = CRITERIA.register("hamster_on_shoulder", HamsterOnShoulderCriterion::new);
     public static final RegistrySupplier<HamsterThrownCriterion> HAMSTER_THROWN = CRITERIA.register("hamster_thrown", HamsterThrownCriterion::new);
-    public static final RegistrySupplier<FirstJoinCriterion> FIRST_JOIN_GUIDEBOOK_CHECK = CRITERIA.register("first_join_guidebook_check", FirstJoinCriterion::new);
     public static final RegistrySupplier<FedHamsterSteamedBeansCriterion> FED_HAMSTER_STEAMED_BEANS = CRITERIA.register("fed_hamster_steamed_beans", FedHamsterSteamedBeansCriterion::new);
     public static final RegistrySupplier<CheekPouchUnlockedCriterion> CHEEK_POUCH_UNLOCKED = CRITERIA.register("cheek_pouch_unlocked", CheekPouchUnlockedCriterion::new);
     public static final RegistrySupplier<AppliedPinkPetalCriterion> APPLIED_PINK_PETAL = CRITERIA.register("applied_pink_petal", AppliedPinkPetalCriterion::new);

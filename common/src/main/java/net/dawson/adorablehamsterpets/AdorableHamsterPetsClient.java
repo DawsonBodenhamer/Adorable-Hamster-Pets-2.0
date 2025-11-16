@@ -21,7 +21,6 @@ import me.fzzyhmstrs.fzzy_config.api.ConfigApiJava;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.ModBlockEntities;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
-import net.dawson.adorablehamsterpets.block.client.HamsterBedItemRenderer;
 import net.dawson.adorablehamsterpets.block.client.HamsterBedRenderer;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementHudRenderer;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
@@ -45,11 +44,16 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.particle.SimpleParticleType;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
@@ -364,6 +368,45 @@ public class AdorableHamsterPetsClient {
             client.world.addParticle(particleType,
                     particleCenter.x + offsetX, particleCenter.y + offsetY, particleCenter.z + offsetZ,
                     0, HamsterBeddingParticle.BEDDING_ITEM_FLAG, 0);
+        }
+    }
+
+    public static void handlePlayGuidebookEffects() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null) return;
+
+        // Close the config screen to un-pause the game
+        client.setScreen(null);
+
+        PlayerEntity player = client.player;
+        ClientWorld world = client.world;
+        if (player == null || world == null) return;
+
+        // Send Action Bar Message
+        player.sendMessage(Text.translatable("message.adorablehamsterpets.guidebook_rediscovered").formatted(Formatting.GOLD), true);
+
+        // Play sounds at the player's location
+        world.playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.PLAYERS, 0.5f, 1.2f, false);
+        world.playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, 0.7f, 1.5f, false);
+
+        // Spawn particles at the player's location
+        for (int i = 0; i < 50; i++) {
+            world.addParticle(ParticleTypes.ENCHANT,
+                    player.getParticleX(0.6),
+                    player.getRandomBodyY(),
+                    player.getParticleZ(0.6),
+                    (world.random.nextDouble() - 0.5) * 0.5,
+                    (world.random.nextDouble() - 0.5) * 0.5,
+                    (world.random.nextDouble() - 0.5) * 0.5);
+        }
+        for (int i = 0; i < 20; i++) {
+            world.addParticle(ParticleTypes.HAPPY_VILLAGER,
+                    player.getParticleX(1.0),
+                    player.getRandomBodyY(),
+                    player.getParticleZ(1.0),
+                    (world.random.nextDouble() - 0.5) * 0.5,
+                    (world.random.nextDouble() - 0.5) * 0.5,
+                    (world.random.nextDouble() - 0.5) * 0.5);
         }
     }
 }

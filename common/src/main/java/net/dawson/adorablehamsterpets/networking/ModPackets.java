@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.networking;
 
-
 /*
  * All Rights Reserved
  * Copyright (c) 2025 Dawson Bodenhamer (www.ForTheKing.Design)
@@ -11,12 +10,18 @@ package net.dawson.adorablehamsterpets.networking;
  */
 
 import dev.architectury.networking.NetworkManager;
+import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.networking.payload.*;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
+import net.minecraft.component.ComponentType;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.Identifier;
 
 public class ModPackets {
 
@@ -32,6 +37,7 @@ public class ModPackets {
         NetworkManager.registerS2CPayloadType(StartHamsterFlightSoundPayload.ID, StartHamsterFlightSoundPayload.CODEC);
         NetworkManager.registerS2CPayloadType(StartHamsterThrowSoundPayload.ID, StartHamsterThrowSoundPayload.CODEC);
         NetworkManager.registerS2CPayloadType(SpawnBeddingParticlesPayload.ID, SpawnBeddingParticlesPayload.CODEC);
+        NetworkManager.registerS2CPayloadType(PlayGuidebookEffectsPayload.ID, PlayGuidebookEffectsPayload.CODEC);
     }
 
     /**
@@ -54,6 +60,22 @@ public class ModPackets {
                     }
                 })
         );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, RequestGuidebookPayload.ID, RequestGuidebookPayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    ServerPlayerEntity player = (ServerPlayerEntity) context.getPlayer();
+                    ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
+                    @SuppressWarnings("unchecked")
+                    ComponentType<Identifier> bookComponent = (ComponentType<Identifier>) Registries.DATA_COMPONENT_TYPE.get(Identifier.of("patchouli", "book"));
+                    if (bookComponent != null) {
+                        bookStack.set(bookComponent, Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+                        player.getInventory().offerOrDrop(bookStack);
+
+                        // Send effects packet back to the player
+                        NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload());
+                    }
+                })
+        );
     }
 
     /**
@@ -71,6 +93,10 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, SpawnBeddingParticlesPayload.ID, SpawnBeddingParticlesPayload.CODEC,
                 (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handleSpawnBeddingParticles(payload))
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, PlayGuidebookEffectsPayload.ID, PlayGuidebookEffectsPayload.CODEC,
+                (payload, context) -> context.queue(AdorableHamsterPetsClient::handlePlayGuidebookEffects)
         );
     }
 
