@@ -2965,7 +2965,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // --- 1. Immediately trigger the animation ---
             // Use the GeoAnimatable's built-in method for triggering server-side
             this.triggerAnim(controllerName, animName);
-            AdorableHamsterPets.LOGGER.info("[HamsterEntity {}] Triggered server-side animation: Controller='{}', Anim='{}'", this.getId(), controllerName, animName);
+            AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Triggered server-side animation: Controller='{}', Anim='{}'", this.getId(), controllerName, animName);
 
             // --- 2. Schedule the cancellation task ---
             Integer duration = TRIGGERABLE_ANIM_DURATIONS.get(animName);
@@ -2974,12 +2974,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 // Lambda that calls stopTriggeredAnim for the specific animation.
                 Runnable cancellationAction = () -> {
                     this.stopTriggeredAnim(controllerName, animName);
-                    AdorableHamsterPets.LOGGER.info("[HamsterEntity {}] Executed scheduled stop for animation: '{}'", this.getId(), animName);
+                    AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Executed scheduled stop for animation: '{}'", this.getId(), animName);
                 };
                 scheduledTasks.add(new ScheduledTask(executionTick, animName, cancellationAction));
-                AdorableHamsterPets.LOGGER.info("[HamsterEntity {}] Scheduled stop for animation '{}' in {} ticks (at tick {}).", this.getId(), animName, duration, executionTick);
+                AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Scheduled stop for animation '{}' in {} ticks (at tick {}).", this.getId(), animName, duration, executionTick);
             } else {
-                AdorableHamsterPets.LOGGER.info("[HamsterEntity {}] No duration found for triggerable animation '{}'. Cancellation not scheduled.", this.getId(), animName);
+                AdorableHamsterPets.LOGGER.warn("[HamsterEntity {}] No duration found for triggerable animation '{}'. Cancellation not scheduled.", this.getId(), animName);
             }
         }
     }
