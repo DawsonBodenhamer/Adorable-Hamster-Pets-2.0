@@ -1979,6 +1979,19 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     // --- Tick Logic ---
     @Override
     public void tick() {
+        // --- Triggerable Animation Cancellation Scheduler ---
+        if (!this.getWorld().isClient()) {
+            long currentTime = this.getWorld().getTime();
+            // Use removeIf for safe concurrent modification while iterating
+            scheduledTasks.removeIf(task -> {
+                if (currentTime >= task.executionTick()) {
+                    task.action().run();
+                    return true; // Remove the task
+                }
+                return false;
+            });
+        }
+
         // --- 1. Decrement Simple Timers ---
         if (this.interactionCooldown > 0) this.interactionCooldown--;
         if (this.suffocationGracePeriod > 0) this.suffocationGracePeriod--;
@@ -2938,15 +2951,36 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         return this.cache;
     }
 
-    // --- Helper method to trigger animations server-side ---
-    // Needs to be called from server-side logic (tick, interactMob, goals)
+    /**
+     * Triggers a one-shot animation on the server, which is then synced to clients.
+     * This method also schedules a follow-up task to stop the triggered animation after its
+     * expected duration. This serves as a failsafe to prevent animations that were triggered
+     * while the entity was off-screen from playing belatedly when the entity is rendered again.
+     *
+     * @param controllerName The name of the animation controller.
+     * @param animName The internal name of the triggerable animation (e.g., "crash").
+     */
     public void triggerAnimOnServer(String controllerName, String animName) {
         if (!this.getWorld().isClient()) { // Ensure we're on the server
-            ServerWorld serverWorld = (ServerWorld) this.getWorld();
+            // --- 1. Immediately trigger the animation ---
             // Use the GeoAnimatable's built-in method for triggering server-side
             this.triggerAnim(controllerName, animName);
-            // The library handles the synchronization to clients automatically.
-            AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Triggered server-side animation: Controller='{}', Anim='{}'", this.getId(), controllerName, animName);
+            AdorableHamsterPets.LOGGER.info("[HamsterEntity {}] Triggered server-side animation: Controller='{}', Anim='{}'", this.getId(), controllerName, animName);
+
+            // --- 2. Schedule the cancellation task ---
+            Integer duration = TRIGGERABLE_ANIM_DURATIONS.get(animName);
+            if (duration != null) {
+                long executionTick = this.getWorld().getTime() + duration;
+                // Lambda that calls stopTriggeredAnim for the specific animation.
+                Runnable cancellationAction = () -> {
+                    this.stopTriggeredAnim(controllerName, animName);
+                    AdorableHamsterPets.LOGGER.info("[HamsterEntity {}] Executed scheduled stop for animation: '{}'", this.getId(), animName);
+                };
+                scheduledTasks.add(new ScheduledTask(executionTick, animName, cancellationAction));
+                AdorableHamsterPets.LOGGER.info("[HamsterEntity {}] Scheduled stop for animation '{}' in {} ticks (at tick {}).", this.getId(), animName, duration, executionTick);
+            } else {
+                AdorableHamsterPets.LOGGER.info("[HamsterEntity {}] No duration found for triggerable animation '{}'. Cancellation not scheduled.", this.getId(), animName);
+            }
         }
     }
 
@@ -3243,6 +3277,45 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       6. Private Helper Methods
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * A simple server-side task scheduler to handle delayed actions, primarily for animation cleanup.
+     * When a triggerable animation is fired, a corresponding "stop" task is scheduled to run
+     * after the animation's expected duration. This prevents animations that were triggered while
+     * the entity was off-screen from playing belatedly when the entity is rendered again.
+     */
+    // --- Animation Cancellation Scheduler ---
+    private record ScheduledTask(long executionTick, String animName, Runnable action) {}
+    private final List<ScheduledTask> scheduledTasks = new ArrayList<>();
+
+    private static final Map<String, Integer> TRIGGERABLE_ANIM_DURATIONS = new HashMap<>();
+    static {
+        // Durations are in ticks (Animation Length + small 3 tick buffer)
+        TRIGGERABLE_ANIM_DURATIONS.put("crash", 18);
+        TRIGGERABLE_ANIM_DURATIONS.put("wakeup_from_ko", 15);
+        TRIGGERABLE_ANIM_DURATIONS.put("stationary_headshake", 25);
+        TRIGGERABLE_ANIM_DURATIONS.put("moving_headshake", 25);
+        TRIGGERABLE_ANIM_DURATIONS.put("attack", 23);
+        TRIGGERABLE_ANIM_DURATIONS.put("sit1", 13);
+        TRIGGERABLE_ANIM_DURATIONS.put("sit2", 13);
+        TRIGGERABLE_ANIM_DURATIONS.put("sit3", 13);
+        TRIGGERABLE_ANIM_DURATIONS.put("standup1", 13);
+        TRIGGERABLE_ANIM_DURATIONS.put("standup2", 13);
+        TRIGGERABLE_ANIM_DURATIONS.put("standup3", 13);
+        TRIGGERABLE_ANIM_DURATIONS.put("wakeup1", 13);
+        TRIGGERABLE_ANIM_DURATIONS.put("wakeup2", 13);
+        TRIGGERABLE_ANIM_DURATIONS.put("wakeup3", 13);
+        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_sit_settle_sleep1", 23);
+        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_sit_settle_sleep2", 23);
+        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_sit_settle_sleep3", 23);
+        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_stand_settle_sleep1", 35);
+        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_stand_settle_sleep2", 35);
+        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_stand_settle_sleep3", 35);
+        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_sulk", 63);
+        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_diamond_pounce", 23);
+        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_celebrate_chase", 33);
+    }
+
 
     /**
      * Gets the value of a specific boolean flag from the packed integer.
