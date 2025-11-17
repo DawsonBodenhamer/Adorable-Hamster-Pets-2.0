@@ -367,6 +367,7 @@
     "book.adorablehamsterpets.entry.missing_book": "Lost the book?",
     "book.adorablehamsterpets.entry.missing_book.page1.body": "Misplaced this invaluable tome of rodent wisdom, or need another one?$(br2)Shocking.$(br2)$(c:/function adorablehamsterpets:player/give_book_to_self)<b>Click here</>, or craft another with a vanilla <b>Book</> and some $(l:crops_food/cucumber#item)<dark_green><b>Sliced Cucumber</>.",
     "book.adorablehamsterpets.entry.missing_book.page2.body": "Don't ask why Sliced Cucumber.$(br2)It's a long story involving a very particular hamster and an unfortunate water polo incident.",
+    "book.adorablehamsterpets.entry.missing_book.recipe_title": "The Guidebook",
   "book.adorablehamsterpets.category.update_notes": "§r§6§l§nUpdate Notes§r",
     "book.adorablehamsterpets.category.update_notes.desc": "What's new, what's fixed, and what's probably going to break next.",
   "book.adorablehamsterpets.category.announcements": "§r§6§l§nAnnouncements§r",

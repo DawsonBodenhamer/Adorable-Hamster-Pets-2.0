@@ -15,6 +15,7 @@
     {
       "type": "patchouli:crafting",
       "recipe": "adorablehamsterpets:hamster_guide_book_from_crafting",
+      "title": "book.adorablehamsterpets.entry.missing_book.recipe_title",
       "text": "book.adorablehamsterpets.entry.missing_book.page2.body"
     }
   ]
