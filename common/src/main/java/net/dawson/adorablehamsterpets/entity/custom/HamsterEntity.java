@@ -1463,7 +1463,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- Hamster Bed Linking/Configuration ---
         if (this.isTamed() && this.isOwner(player) && stack.getItem() instanceof HamsterBedItem) {
             if (!world.isClient) {
-                UUID linkedUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID);
+                UUID linkedUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID.get());
                 Text nameToSet;
                 if (this.hasCustomName()) {
                     nameToSet = this.getName();
@@ -1474,9 +1474,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 if (linkedUuid == null) {
                     // Case 1: Initial Linking (Unlinked Bed)
                     ItemStack newStack = stack.copy();
-                    newStack.set(ModDataComponentTypes.LINKED_HAMSTER_UUID, this.getUuid());
-                    newStack.set(ModDataComponentTypes.LINKED_HAMSTER_NAME, nameToSet);
-                    newStack.set(ModDataComponentTypes.WANDER_DISTANCE, Configs.AHP.defaultWanderDistance.get());
+                    newStack.set(ModDataComponentTypes.LINKED_HAMSTER_UUID.get(), this.getUuid());
+                    newStack.set(ModDataComponentTypes.LINKED_HAMSTER_NAME.get(), nameToSet);
+                    newStack.set(ModDataComponentTypes.WANDER_DISTANCE.get(), Configs.AHP.defaultWanderDistance.get());
 
                     player.setStackInHand(hand, newStack);
 
@@ -1491,10 +1491,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
                 } else if (linkedUuid.equals(this.getUuid())) {
                     // Case 2: Re-configuring Wander Distance of already linked bed
-                    WanderDistance currentDistance = stack.getOrDefault(ModDataComponentTypes.WANDER_DISTANCE, Configs.AHP.defaultWanderDistance.get());
+                    WanderDistance currentDistance = stack.getOrDefault(ModDataComponentTypes.WANDER_DISTANCE.get(), Configs.AHP.defaultWanderDistance.get());
                     WanderDistance[] values = WanderDistance.values();
                     WanderDistance nextDistance = values[(currentDistance.ordinal() + 1) % values.length];
-                    stack.set(ModDataComponentTypes.WANDER_DISTANCE, nextDistance);
+                    stack.set(ModDataComponentTypes.WANDER_DISTANCE.get(), nextDistance);
 
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.wander_distance_set", this.getName(), nextDistance.asString()), true);
                     world.playSound(null, this.getBlockPos(), SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.PLAYERS, 0.5f, 1.0f);
@@ -1502,9 +1502,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 } else {
                     // Case 3: Re-linking a bed that was linked to a DIFFERENT hamster
                     ItemStack newStack = stack.copy();
-                    newStack.set(ModDataComponentTypes.LINKED_HAMSTER_UUID, this.getUuid());
-                    newStack.set(ModDataComponentTypes.LINKED_HAMSTER_NAME, nameToSet);
-                    newStack.set(ModDataComponentTypes.WANDER_DISTANCE, Configs.AHP.defaultWanderDistance.get()); // Reset to default
+                    newStack.set(ModDataComponentTypes.LINKED_HAMSTER_UUID.get(), this.getUuid());
+                    newStack.set(ModDataComponentTypes.LINKED_HAMSTER_NAME.get(), nameToSet);
+                    newStack.set(ModDataComponentTypes.WANDER_DISTANCE.get(), Configs.AHP.defaultWanderDistance.get()); // Reset to default
 
                     player.setStackInHand(hand, newStack);
 
@@ -2099,7 +2099,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             boolean stopped = false;
 
             if (blockHit.getType() == HitResult.Type.BLOCK) {
-                // --- 2a. Block Collision Handling ---
+                // --- Block Collision Handling ---
                 net.minecraft.util.hit.BlockHitResult blockHitResult = (net.minecraft.util.hit.BlockHitResult) blockHit;
                 BlockPos adjacentPos = blockHitResult.getBlockPos().offset(blockHitResult.getSide());
 
@@ -2121,7 +2121,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 EntityHitResult entityHit = ProjectileUtil.getEntityCollision(world, this, currentPos, nextPos, this.getBoundingBox().stretch(currentVel).expand(1.0), this::canHitEntity);
 
                 if (entityHit != null && entityHit.getEntity() != null) {
-                    // --- 2b. Entity Collision Handling ---
+                    // --- Entity Collision Handling ---
                     Entity hitEntity = entityHit.getEntity();
                     BlockPos impactPos = hitEntity.getBlockPos();
                     boolean playEffects = false;

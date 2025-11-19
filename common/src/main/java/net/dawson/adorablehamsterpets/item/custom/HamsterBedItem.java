@@ -62,7 +62,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                 bedEntity.triggerAnim("hamster_bed_controller", "anim_bed_being_placed");
 
                 // Spawn particles with the wood variant
-                WoodVariant variant = stack.getOrDefault(ModDataComponentTypes.WOOD_VARIANT, this.variant);
+                WoodVariant variant = stack.getOrDefault(ModDataComponentTypes.WOOD_VARIANT.get(), this.variant);
                 ((ServerWorld)world).spawnParticles(ModParticles.getForVariant(variant),
                         pos.getX() + 0.5, pos.getY() + 0.3, pos.getZ() + 0.5,
                         30, 0.1, 0.2, 0.1, 0.0);
@@ -74,7 +74,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
 
     @Override
     public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
-        WoodVariant stackVariant = stack.getOrDefault(ModDataComponentTypes.WOOD_VARIANT, this.variant);
+        WoodVariant stackVariant = stack.getOrDefault(ModDataComponentTypes.WOOD_VARIANT.get(), this.variant);
         if (Configs.AHP.enableItemTooltips) {
             if (Screen.hasShiftDown()) {
                 // --- Expanded Tooltip (Sneaking) ---
@@ -86,9 +86,9 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.unlink_hint").formatted(Formatting.GRAY));
 
                 // --- Conditional Linked Info ---
-                UUID hamsterUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID);
-                Text hamsterName = stack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME);
-                WanderDistance wanderDistance = stack.get(ModDataComponentTypes.WANDER_DISTANCE);
+                UUID hamsterUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID.get());
+                Text hamsterName = stack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME.get());
+                WanderDistance wanderDistance = stack.get(ModDataComponentTypes.WANDER_DISTANCE.get());
 
                 if (hamsterUuid != null && hamsterName != null) {
                     tooltip.add(Text.literal("")); // Blank line for spacing
@@ -120,7 +120,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
             return;
         }
 
-        UUID linkedUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID);
+        UUID linkedUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID.get());
         if (linkedUuid != null && entity instanceof PlayerEntity) {
             // Search nearby entities for the linked hamster
             world.getEntitiesByClass(HamsterEntity.class, entity.getBoundingBox().expand(16), e -> e.getUuid().equals(linkedUuid))
@@ -132,9 +132,9 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                             newName = hamster.getDisplayName().copy().append(" " + hamster.getId());
                         }
 
-                        Text currentNameOnStack = stack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME);
+                        Text currentNameOnStack = stack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME.get());
                         if (currentNameOnStack == null || !currentNameOnStack.equals(newName)) {
-                            stack.set(ModDataComponentTypes.LINKED_HAMSTER_NAME, newName);
+                            stack.set(ModDataComponentTypes.LINKED_HAMSTER_NAME.get(), newName);
                         }
                     });
         }

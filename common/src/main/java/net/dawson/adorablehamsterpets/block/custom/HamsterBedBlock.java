@@ -116,7 +116,7 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
     @Override
     public BlockState getPlacementState(ItemPlacementContext ctx) {
         boolean isUpsideDown = ctx.getSide() == Direction.DOWN;
-        WoodVariant variant = ctx.getStack().getOrDefault(ModDataComponentTypes.WOOD_VARIANT, WoodVariant.OAK);
+        WoodVariant variant = ctx.getStack().getOrDefault(ModDataComponentTypes.WOOD_VARIANT.get(), WoodVariant.OAK);
 
         BlockPos pos = ctx.getBlockPos();
         // Derive a pseudo‑random but deterministic orientation from the block position
@@ -159,9 +159,9 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                 // Trigger placement animation
                 bedEntity.triggerAnim("hamster_bed_controller", "anim_bed_being_placed");
 
-                UUID hamsterUuid = itemStack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID);
-                Text hamsterName = itemStack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME);
-                WanderDistance wanderDistance = itemStack.get(ModDataComponentTypes.WANDER_DISTANCE);
+                UUID hamsterUuid = itemStack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID.get());
+                Text hamsterName = itemStack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME.get());
+                WanderDistance wanderDistance = itemStack.get(ModDataComponentTypes.WANDER_DISTANCE.get());
 
                 if (hamsterUuid != null) {
                     bedEntity.setLinkedHamster(hamsterUuid, hamsterName, wanderDistance);
@@ -354,9 +354,9 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
 
         BlockEntity blockEntity = builder.get(LootContextParameters.BLOCK_ENTITY);
         if (blockEntity instanceof HamsterBedBlockEntity bedEntity) {
-            bedEntity.getLinkedHamsterUuid().ifPresent(uuid -> stack.set(ModDataComponentTypes.LINKED_HAMSTER_UUID, uuid));
-            bedEntity.getLinkedHamsterName().ifPresent(name -> stack.set(ModDataComponentTypes.LINKED_HAMSTER_NAME, name));
-            stack.set(ModDataComponentTypes.WANDER_DISTANCE, bedEntity.getWanderDistance());
+            bedEntity.getLinkedHamsterUuid().ifPresent(uuid -> stack.set(ModDataComponentTypes.LINKED_HAMSTER_UUID.get(), uuid));
+            bedEntity.getLinkedHamsterName().ifPresent(name -> stack.set(ModDataComponentTypes.LINKED_HAMSTER_NAME.get(), name));
+            stack.set(ModDataComponentTypes.WANDER_DISTANCE.get(), bedEntity.getWanderDistance());
         }
         return List.of(stack);
     }
