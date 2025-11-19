@@ -70,7 +70,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             rightCheekInfBone.setHidden(!rightFull);
         }
 
-        // --- Scaling Logic ---
+        // --- Scaling & Rotation Logic ---
         // bodyParentBone scale is intentionally not set here, allowing JSON breathing anims to work proportionally.
         if (rootBone != null && headParentBone != null) {
             // 1. Determine the base scale for the entire model and the head.
@@ -91,6 +91,25 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             headParentBone.setScaleX(headScale);
             headParentBone.setScaleY(headScale);
             headParentBone.setScaleZ(headScale);
+
+            // --- Dynamic Throw Pitch ---
+            // Rotates the root bone to match the flight trajectory
+            if (entity.isThrown()) {
+                double dx = entity.getX() - entity.prevX;
+                double dy = entity.getY() - entity.prevY;
+                double dz = entity.getZ() - entity.prevZ;
+                double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+
+                // Prevent rotation calculation on zero movement
+                if (horizontalDistance > 0.001 || Math.abs(dy) > 0.001) {
+                    // Positive X-Rot = Nose Up, Negative X-Rot = Nose Down
+                    float pitchRadians = (float) Math.atan2(dy, horizontalDistance);
+                    rootBone.setRotX(pitchRadians);
+                }
+            } else {
+                // Ensure rotation is reset when landing/not thrown
+                rootBone.setRotX(0);
+            }
         }
     }
 }
