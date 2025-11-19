@@ -73,6 +73,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.network.packet.s2c.play.PlaySoundS2CPacket;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryOps;
@@ -2163,6 +2164,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 this.setVelocity(currentVel.multiply(0.6, 0.0, 0.6));
                 this.setThrown(false);
                 this.playSound(SoundEvents.ENTITY_GENERIC_SMALL_FALL, 1.0f, 1.2f);
+                // Play faint sound for distant players
+                broadcastDistantImpact(SoundEvents.ENTITY_GENERIC_SMALL_FALL, 1.2f);
+
                 this.setKnockedOut(true);
                 this.setInSittingPose(true);
                 if (!world.isClient()) {
@@ -2202,6 +2206,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     if (playEffects) {
                         // For 1.20.1, call .get() on the RegistrySupplier
                         world.playSound(null, this.getX(), this.getY(), this.getZ(), ModSounds.HAMSTER_IMPACT.get(), SoundCategory.NEUTRAL, 1.0F, 1.0F);
+                        // Play faint sound for distant players
+                        broadcastDistantImpact(ModSounds.HAMSTER_IMPACT.get(), 1.0f);
                         if (!world.isClient()) {
                             ((ServerWorld)world).spawnParticles(ParticleTypes.POOF, this.getX(), this.getY() + this.getHeight() / 2.0, this.getZ(), 50, 0.4, 0.4, 0.4, 0.1);
                         }
@@ -3326,6 +3332,42 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       6. Private Helper Methods
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Plays a faint impact sound for players who are too far away to hear the standard sound (16 blocks)
+     * but close enough that they should still hear *something* (50 blocks).
+     * The volume is dynamically scaled based on distance: 0.18 at 16 blocks down to 0.10 at 50 blocks.
+     *
+     * @param sound The sound event to play.
+     * @param pitch The pitch at which to play the sound.
+     */
+    private void broadcastDistantImpact(SoundEvent sound, float pitch) {
+        if (this.getWorld().isClient()) return;
+
+        double impactX = this.getX();
+        double impactY = this.getY();
+        double impactZ = this.getZ();
+
+        for (ServerPlayerEntity player : ((ServerWorld) this.getWorld()).getPlayers()) {
+            double distSq = player.squaredDistanceTo(impactX, impactY, impactZ);
+
+            if (distSq > 256 && distSq <= 2500) {
+                double distance = Math.sqrt(distSq);
+
+                float volume = 0.18F - 0.10F * ((float) (distance - 16.0) / 34.0F);
+
+                // Play sound AT THE PLAYER'S LOCATION to ensure they hear it at the calculated volume,
+                // bypassing vanilla's distance attenuation which would silence it.
+                player.networkHandler.sendPacket(new PlaySoundS2CPacket(
+                        RegistryEntry.of(sound),
+                        SoundCategory.NEUTRAL,
+                        player.getX(), player.getY(), player.getZ(),
+                        volume, pitch,
+                        player.getRandom().nextLong()
+                ));
+            }
+        }
+    }
 
     /**
      * Simulates the hamster's trajectory 1 second (20 ticks) into the future.
