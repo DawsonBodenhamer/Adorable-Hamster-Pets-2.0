@@ -28,29 +28,26 @@ import net.dawson.adorablehamsterpets.client.event.AHPClientScreenEvents;
 import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconAnimator;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
-import net.dawson.adorablehamsterpets.client.sound.HamsterFlightSoundInstance;
-import net.dawson.adorablehamsterpets.client.sound.HamsterThrowSoundInstance;
 import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
-import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
-import net.dawson.adorablehamsterpets.networking.payload.*;
+import net.dawson.adorablehamsterpets.networking.payload.DismountHamsterPayload;
+import net.dawson.adorablehamsterpets.networking.payload.SpawnBeddingParticlesPayload;
+import net.dawson.adorablehamsterpets.networking.payload.ThrowHamsterPayload;
+import net.dawson.adorablehamsterpets.networking.payload.UpdateHamsterRenderStatePayload;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
-import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.particle.SimpleParticleType;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -213,27 +210,6 @@ public class AdorableHamsterPetsClient {
 
         // --- Dismount Logic ---
         handleDismountKeyPress(client);
-    }
-
-    public static void handleStartFlightSound(StartHamsterFlightSoundPayload payload) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null) return;
-        Entity entity = client.world.getEntityById(payload.hamsterEntityId());
-        if (entity instanceof HamsterEntity hamster) {
-            SoundEvent flightSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_FLYING_SOUNDS, hamster.getRandom());
-            if (flightSound != null) {
-                client.getSoundManager().play(new HamsterFlightSoundInstance(flightSound, SoundCategory.NEUTRAL, hamster));
-            }
-        }
-    }
-
-    public static void handleStartThrowSound(StartHamsterThrowSoundPayload payload) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null) return;
-        Entity entity = client.world.getEntityById(payload.hamsterEntityId());
-        if (entity instanceof HamsterEntity hamster) {
-            client.getSoundManager().play(new HamsterThrowSoundInstance(ModSounds.HAMSTER_THROW.get(), SoundCategory.PLAYERS, hamster));
-        }
     }
 
     /**

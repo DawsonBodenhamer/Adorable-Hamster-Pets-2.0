@@ -11,7 +11,6 @@ package net.dawson.adorablehamsterpets.mixin.server;
  */
 
 import com.mojang.authlib.GameProfile;
-import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
@@ -21,8 +20,6 @@ import net.dawson.adorablehamsterpets.config.DismountOrder;
 import net.dawson.adorablehamsterpets.entity.AI.HamsterSeekDiamondGoal;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.dawson.adorablehamsterpets.networking.payload.StartHamsterFlightSoundPayload;
-import net.dawson.adorablehamsterpets.networking.payload.StartHamsterThrowSoundPayload;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -42,6 +39,7 @@ import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
@@ -86,6 +84,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private boolean adorablehamsterpets$isDiamondAlertConditionMet = false;
     @Unique private int adorablehamsterpets$lastGoldMessageIndex = -1;
     @Unique private final transient ArrayDeque<ShoulderLocation> adorablehamsterpets$mountOrderQueue = new ArrayDeque<>();
+    @Unique private final List<ScheduledTask> adorablehamsterpets$scheduledTasks = new ArrayList<>();
+    @Unique private record ScheduledTask(long executionTick, Runnable action) {}
 
     // --- Inject into the constructor to initialize the data holder ---
     @Inject(method = "<init>", at = @At("TAIL"))
@@ -233,14 +233,24 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         Random random = world.getRandom();
         final AhpConfig config = AdorableHamsterPets.CONFIG;
 
-        // --- 2. Cooldown Decrement ---
+        // --- 2. Process Scheduled Tasks ---
+        long currentTime = world.getTime();
+        adorablehamsterpets$scheduledTasks.removeIf(task -> {
+            if (currentTime >= task.executionTick()) {
+                task.action().run();
+                return true;
+            }
+            return false;
+        });
+
+        // --- 3. Cooldown Decrement ---
         if (adorablehamsterpets$diamondSoundCooldownTicks > 0) adorablehamsterpets$diamondSoundCooldownTicks--;
         if (adorablehamsterpets$creeperSoundCooldownTicks > 0) adorablehamsterpets$creeperSoundCooldownTicks--;
 
-        // --- 3. Shoulder Pet Logic ---
+        // --- 4. Shoulder Pet Logic ---
         if (this.hasAnyShoulderHamster()) {
 
-            // --- 3. Shoulder Diamond Detection ---
+            // --- 4a. Shoulder Diamond Detection ---
             if (config.enableShoulderDiamondDetection) {
                 adorablehamsterpets$diamondCheckTimer++;
                 if (adorablehamsterpets$diamondCheckTimer >= CHECK_INTERVAL_TICKS) {
@@ -262,7 +272,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 }
             }
 
-            // --- 4. Shoulder Creeper Detection ---
+            // --- 4b. Shoulder Creeper Detection ---
             if (config.enableShoulderCreeperDetection) {
                 adorablehamsterpets$creeperCheckTimer++;
                 if (adorablehamsterpets$creeperCheckTimer >= CHECK_INTERVAL_TICKS) {
@@ -390,16 +400,17 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         if (isThrow) {
             // --- Throw-Specific Effects ---
-            StartHamsterFlightSoundPayload flightPayload = new StartHamsterFlightSoundPayload(hamster.getId());
-            StartHamsterThrowSoundPayload throwPayload = new StartHamsterThrowSoundPayload(hamster.getId());
-            NetworkManager.sendToPlayer((ServerPlayerEntity) self, flightPayload);
-            NetworkManager.sendToPlayer((ServerPlayerEntity) self, throwPayload);
-            double radius = 64.0;
-            Vec3d hamsterPos = hamster.getPos();
-            Box searchBox = new Box(hamsterPos.subtract(radius, radius, radius), hamsterPos.add(radius, radius, radius));
-            List<ServerPlayerEntity> nearbyPlayers = ((ServerWorld) world).getPlayers(p -> p != self && searchBox.contains(p.getPos()));
-            NetworkManager.sendToPlayers(nearbyPlayers, flightPayload);
-            NetworkManager.sendToPlayers(nearbyPlayers, throwPayload);
+            // Play throw sound at the player's location
+            world.playSound(null, self.getX(), self.getY(), self.getZ(), ModSounds.HAMSTER_THROW.get(), SoundCategory.PLAYERS, 1.0f, 1.0f);
+
+            // Schedule airborne celebration sound with a 3-tick delay
+            this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(world.getTime() + 3, () -> {
+                SoundEvent celebrationSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_FLYING_SOUNDS, random);
+                if (celebrationSound != null) {
+                    world.playSound(null, self.getX(), self.getY(), self.getZ(), celebrationSound, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                }
+            }));
+
             ModCriteria.HAMSTER_THROWN.get().trigger((ServerPlayerEntity) self);
         } else {
             // --- Standard Dismount Effects ---

@@ -34,8 +34,6 @@ public class ModPackets {
     public static void registerPayloads() {
         // --- S2C Payloads (Server-to-Client) ---
         // This is a crucial step for the server. It learns what these packets are.
-        NetworkManager.registerS2CPayloadType(StartHamsterFlightSoundPayload.ID, StartHamsterFlightSoundPayload.CODEC);
-        NetworkManager.registerS2CPayloadType(StartHamsterThrowSoundPayload.ID, StartHamsterThrowSoundPayload.CODEC);
         NetworkManager.registerS2CPayloadType(SpawnBeddingParticlesPayload.ID, SpawnBeddingParticlesPayload.CODEC);
         NetworkManager.registerS2CPayloadType(PlayGuidebookEffectsPayload.ID, PlayGuidebookEffectsPayload.CODEC);
     }
@@ -83,14 +81,6 @@ public class ModPackets {
      * This method MUST ONLY be called on the client side.
      */
     public static void registerS2CPackets() {
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C, StartHamsterFlightSoundPayload.ID, StartHamsterFlightSoundPayload.CODEC,
-                (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handleStartFlightSound(payload))
-        );
-
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C, StartHamsterThrowSoundPayload.ID, StartHamsterThrowSoundPayload.CODEC,
-                (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handleStartThrowSound(payload))
-        );
-
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, SpawnBeddingParticlesPayload.ID, SpawnBeddingParticlesPayload.CODEC,
                 (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handleSpawnBeddingParticles(payload))
         );
