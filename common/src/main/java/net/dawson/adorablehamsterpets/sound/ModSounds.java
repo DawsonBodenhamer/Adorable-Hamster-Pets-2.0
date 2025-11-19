@@ -39,6 +39,7 @@ public class ModSounds {
     // --- Impact/Throw ---
     public static final RegistrySupplier<SoundEvent> HAMSTER_IMPACT = registerSoundEvent("hamster_impact");
     public static final RegistrySupplier<SoundEvent> HAMSTER_THROW = registerSoundEvent("hamster_throw");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_INCOMING = registerSoundEvent("hamster_throw_reversed");
 
     // --- Flying / Special ---
     public static final RegistrySupplier<SoundEvent> HAMSTER_AIRBORNE_CELEBRATION = registerSoundEvent("hamster_airborne_celebration");

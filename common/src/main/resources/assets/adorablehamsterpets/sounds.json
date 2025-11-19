@@ -7,6 +7,10 @@
     "subtitle": "subtitles.adorablehamsterpets.hamster_throw",
     "sounds": [ "adorablehamsterpets:hamster_throw" ]
   },
+  "hamster_throw_reversed": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_throw",
+    "sounds": [ "adorablehamsterpets:hamster_throw_reversed" ]
+  },
   "hamster_airborne_celebration": {
     "subtitle": "subtitles.adorablehamsterpets.hamster_flying",
     "sounds": [ "adorablehamsterpets:hamster_airborne_celebration" ]

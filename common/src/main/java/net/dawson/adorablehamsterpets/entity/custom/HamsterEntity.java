@@ -592,6 +592,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique private float thumpSoundVolume = 0.2f;
     @Unique public int pathingFailures = 0;
     @Nullable @Unique public BlockPos lastFailedTarget = null;
+    @Unique private boolean hasPlayedIncomingSound = false;
 
     // --- Inventory ---
     private final DefaultedList<ItemStack> items = ImplementedInventory.create(INVENTORY_SIZE);
@@ -657,7 +658,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public boolean isRefusingFood() { return getHamsterFlag(REFUSING_FOOD_FLAG); }
     public void setRefusingFood(boolean value) { setHamsterFlag(REFUSING_FOOD_FLAG, value); }
     public boolean isThrown() { return getHamsterFlag(THROWN_FLAG); }
-    public void setThrown(boolean thrown) { setHamsterFlag(THROWN_FLAG, thrown); }
+    public void setThrown(boolean thrown) {
+        setHamsterFlag(THROWN_FLAG, thrown);
+        if (thrown) {
+            this.hasPlayedIncomingSound = false; // Reset sound flag on new throw
+        }
+    }
     public boolean isLeftCheekFull() { return getHamsterFlag(LEFT_CHEEK_FULL_FLAG); }
     public void setLeftCheekFull(boolean full) { setHamsterFlag(LEFT_CHEEK_FULL_FLAG, full); }
     public boolean isRightCheekFull() { return getHamsterFlag(RIGHT_CHEEK_FULL_FLAG); }
@@ -1061,6 +1067,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             result.result().ifPresent(tag -> nbt.put("LinkedBedPos", tag));
         });
         nbt.putBoolean("BypassNextSleepDelay", this.bypassNextSleepDelay);
+
+        // --- 7. Write Flight Data ---
+        nbt.putBoolean("HasPlayedIncomingSound", this.hasPlayedIncomingSound);
+
     }
 
     @Override
@@ -1148,6 +1158,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.linkedBedPos = Optional.empty();
         }
         this.bypassNextSleepDelay = nbt.getBoolean("BypassNextSleepDelay");
+
+        // --- 7. Read Flight Data ---
+        this.hasPlayedIncomingSound = nbt.getBoolean("HasPlayedIncomingSound");
     }
 
 
@@ -2215,8 +2228,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // Apply gravity, update position, and spawn trail particles if still thrown
+            // Apply gravity, update position, simulate trajectory audio, and spawn trail particles if still thrown
             if (this.isThrown() && !stopped) {
+                if (!this.getWorld().isClient() && !this.hasPlayedIncomingSound) {
+                    simulateTrajectoryAndCheckSound();
+                }
+
                 if (!this.hasNoGravity()) {
                     this.setVelocity(this.getVelocity().add(0.0, THROWN_GRAVITY, 0.0));
                 }
@@ -3000,20 +3017,22 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.triggerAnim(controllerName, animName);
             AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Triggered server-side animation: Controller='{}', Anim='{}'", this.getId(), controllerName, animName);
 
-            // --- 2. Schedule the cancellation task ---
-            Integer duration = TRIGGERABLE_ANIM_DURATIONS.get(animName);
-            if (duration != null) {
-                long executionTick = this.getWorld().getTime() + duration;
-                // Lambda that calls stopTriggeredAnim for the specific animation.
-                Runnable cancellationAction = () -> {
-                    this.stopTriggeredAnim(controllerName, animName);
-                    AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Executed scheduled stop for animation: '{}'", this.getId(), animName);
-                };
-                scheduledTasks.add(new ScheduledTask(executionTick, animName, cancellationAction));
-                AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Scheduled stop for animation '{}' in {} ticks (at tick {}).", this.getId(), animName, duration, executionTick);
-            } else {
-                AdorableHamsterPets.LOGGER.warn("[HamsterEntity {}] No duration found for triggerable animation '{}'. Cancellation not scheduled.", this.getId(), animName);
-            }
+            // 1.20.1 Note: stopTriggeredAnim is not available in this version of GeckoLib.
+            // TODO: Fix cancellation scheduler logic for 1.20.1.
+//            // --- 2. Schedule the cancellation task ---
+//            Integer duration = TRIGGERABLE_ANIM_DURATIONS.get(animName);
+//            if (duration != null) {
+//                long executionTick = this.getWorld().getTime() + duration;
+//                // Lambda that calls stopTriggeredAnim for the specific animation.
+//                Runnable cancellationAction = () -> {
+//                    this.stopTriggeredAnim(controllerName, animName);
+//                    AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Executed scheduled stop for animation: '{}'", this.getId(), animName);
+//                };
+//                scheduledTasks.add(new ScheduledTask(executionTick, animName, cancellationAction));
+//                AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Scheduled stop for animation '{}' in {} ticks (at tick {}).", this.getId(), animName, duration, executionTick);
+//            } else {
+//                AdorableHamsterPets.LOGGER.warn("[HamsterEntity {}] No duration found for triggerable animation '{}'. Cancellation not scheduled.", this.getId(), animName);
+//            }
         }
     }
 
@@ -3307,6 +3326,70 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       6. Private Helper Methods
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Simulates the hamster's trajectory 1 second (20 ticks) into the future.
+     * If an impact (block or entity) is predicted within that window, and the total
+     * throw time will have been at least 1 second, it plays the "Incoming" sound
+     * at the target location.
+     */
+    private void simulateTrajectoryAndCheckSound() {
+        Vec3d simPos = this.getPos();
+        Vec3d simVel = this.getVelocity();
+
+        // Simulate up to 20 ticks ahead
+        for (int i = 1; i <= 20; i++) {
+            // Apply physics matching the actual tick logic
+            if (!this.hasNoGravity()) {
+                simVel = simVel.add(0.0, THROWN_GRAVITY, 0.0);
+            }
+
+            Vec3d nextPos = simPos.add(simVel);
+
+            // 1. Block Collision Check
+            HitResult blockHit = this.getWorld().raycast(new RaycastContext(
+                    simPos,
+                    nextPos,
+                    RaycastContext.ShapeType.COLLIDER,
+                    RaycastContext.FluidHandling.NONE,
+                    this
+            ));
+
+            // 2. Entity Collision Check
+            // We use the same logic as ProjectileUtil to check for entities along the path segment
+            EntityHitResult entityHit = ProjectileUtil.getEntityCollision(
+                    this.getWorld(),
+                    this,
+                    simPos,
+                    nextPos,
+                    this.getBoundingBox().stretch(simVel).expand(1.0),
+                    this::canHitEntity
+            );
+
+            Vec3d impactPos = null;
+
+            if (entityHit != null) {
+                impactPos = entityHit.getPos();
+            } else if (blockHit.getType() != HitResult.Type.MISS) {
+                impactPos = blockHit.getPos();
+            }
+
+            if (impactPos != null) {
+                // Collision predicted in 'i' ticks.
+                // Only play sound if the TOTAL time (elapsed + future) is >= 20 ticks.
+                if (this.throwTicks + i >= 20) {
+                    this.getWorld().playSound(null, impactPos.x, impactPos.y, impactPos.z, ModSounds.HAMSTER_INCOMING.get(), SoundCategory.NEUTRAL, 1.0f, 1.0f);
+                    AdorableHamsterPets.LOGGER.debug("Played Incoming sound at target: {}", impactPos);
+                }
+                // Mark as handled regardless of whether we played it (to prevent spamming checks for short throws)
+                this.hasPlayedIncomingSound = true;
+                return;
+            }
+
+            // Update simulation position for next tick
+            simPos = nextPos;
+        }
+    }
 
     /**
      * A simple server-side task scheduler to handle delayed actions, primarily for animation cleanup.

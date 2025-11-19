@@ -40,8 +40,6 @@ public class ModPackets {
     public record RequestGuidebookC2SPacket() {}
 
     // S2C (Server-to-Client)
-    public record StartFlightSoundS2CPacket(int entityId) {}
-    public record StartThrowSoundS2CPacket(int entityId) {}
     public record PlayGuidebookEffectsS2CPacket() {}
     public record SpawnBeddingParticlesS2CPacket(BlockPos pos, Direction direction, WoodVariant variant) {}
 
@@ -102,18 +100,6 @@ public class ModPackets {
         );
 
         // --- S2C Packet Registrations ---
-        CHANNEL.register(StartFlightSoundS2CPacket.class,
-                (packet, buf) -> buf.writeInt(packet.entityId()),
-                (buf) -> new StartFlightSoundS2CPacket(buf.readInt()),
-                (packet, context) -> context.get().queue(() -> AdorableHamsterPetsClient.handleStartFlightSound(packet.entityId()))
-        );
-
-        CHANNEL.register(StartThrowSoundS2CPacket.class,
-                (packet, buf) -> buf.writeInt(packet.entityId()),
-                (buf) -> new StartThrowSoundS2CPacket(buf.readInt()),
-                (packet, context) -> context.get().queue(() -> AdorableHamsterPetsClient.handleStartThrowSound(packet.entityId()))
-        );
-
         CHANNEL.register(SpawnBeddingParticlesS2CPacket.class,
                 (packet, buf) -> {
                     buf.writeBlockPos(packet.pos());
