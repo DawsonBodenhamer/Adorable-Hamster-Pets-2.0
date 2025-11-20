@@ -910,8 +910,8 @@ public class AhpConfig extends Config {
     public boolean enableShoulderCreeperDetection = true;
 
     @NonSync
-    @Translatable.Name("Creeper Detection Radius (Blocks)")
-    @Translatable.Desc("Adjust paranoia levels.")
+    @Translatable.Name("Creeper Detection Radius")
+    @Translatable.Desc("Adjust paranoia levels. (Distance in blocks)")
     public ValidatedDouble shoulderCreeperDetectionRadius = new ValidatedDouble(16.0, 16.0, 1.0);
 
     @NonSync
@@ -921,8 +921,8 @@ public class AhpConfig extends Config {
 
     @NonSync
     @ConfigGroup.Pop
-    @Translatable.Name("Diamond Detection Radius (Blocks)")
-    @Translatable.Desc("How close you need to be before the squeak says \"bling.\"")
+    @Translatable.Name("Diamond Detection Radius")
+    @Translatable.Desc("How close (in blocks) you need to be before the squeak says \"bling.\"")
     public ValidatedDouble shoulderDiamondDetectionRadius = new ValidatedDouble(10.0, 20.0, 5.0);
 
     @Translatable.Name("Dismount Settings")
