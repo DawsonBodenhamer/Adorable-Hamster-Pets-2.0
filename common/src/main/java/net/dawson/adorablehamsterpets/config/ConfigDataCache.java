@@ -1,4 +1,4 @@
-package net.dawson.adorablehamsterpets.tag;
+package net.dawson.adorablehamsterpets.config;
 
 /*
  * All Rights Reserved
@@ -10,7 +10,6 @@ package net.dawson.adorablehamsterpets.tag;
  */
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.dawson.adorablehamsterpets.config.Configs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -33,7 +32,7 @@ import java.util.Set;
  * checker methods (e.g., {@code isStandardFood()}, {@code isBlueBiome()}) for fast,
  * O(1) lookups during gameplay, avoiding repeated config parsing.
  */
-public class ModItemTags {
+public class ConfigDataCache {
 
     // --- Cached Sets for Item Performance ---
     private static final Set<Item> tamingItems = new HashSet<>();

@@ -12,7 +12,7 @@ package net.dawson.adorablehamsterpets.entity.AI;
 
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.TemptGoalAccessor;
-import net.dawson.adorablehamsterpets.tag.ModItemTags;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.TargetPredicate;
 import net.minecraft.entity.ai.goal.TemptGoal;
@@ -45,7 +45,7 @@ public class HamsterTemptGoal extends TemptGoal {
      * It checks if the given entity (a player) is holding a valid temptation item.
      */
     private boolean isTemptedBy(LivingEntity entity) {
-        return ModItemTags.isTamingFood(entity.getMainHandStack()) || ModItemTags.isTamingFood(entity.getOffHandStack());
+        return ConfigDataCache.isTamingFood(entity.getMainHandStack()) || ConfigDataCache.isTamingFood(entity.getOffHandStack());
     }
 
     @Override
