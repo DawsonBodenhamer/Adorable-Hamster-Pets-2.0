@@ -1,0 +1,28 @@
+{
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded", "values": ["thermal"]
+    }
+  ],
+  "conditions": [
+    {
+      "type": "forge:mod_loaded", "modid": "thermal"
+    }
+  ],
+  "type": "thermal:insolator",
+  "ingredient": {
+    "item": "adorablehamsterpets:green_bean_seeds"
+  },
+  "result": [
+    {
+      "item": "adorablehamsterpets:green_beans",
+      "chance": 2.0
+    },
+    {
+      "item": "adorablehamsterpets:green_bean_seeds",
+      "chance": 1.1
+    }
+  ],
+  "water_mod": 0.5,
+  "experience": 0.15
+}
