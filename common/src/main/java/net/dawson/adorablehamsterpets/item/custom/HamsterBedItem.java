@@ -1,6 +1,8 @@
 package net.dawson.adorablehamsterpets.item.custom;
 
-import net.dawson.adorablehamsterpets.block.client.HamsterBedItemRenderer;
+import dev.architectury.injectables.annotations.ExpectPlatform;
+import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
@@ -15,7 +17,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
-import net.minecraft.client.render.item.BuiltinModelItemRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
@@ -30,7 +31,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.animatable.client.RenderProvider;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
@@ -44,8 +44,31 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final WoodVariant variant;
 
+    /**
+     * Platform-agnostic factory method.
+     * On Fabric: Returns new HamsterBedItem()
+     * On Forge: Returns new HamsterBedItem() { @Override initializeClient... }
+     */
+    @ExpectPlatform
+    public static HamsterBedItem create(Block block, WoodVariant variant, Settings settings) {
+        throw new AssertionError();
+    }
+
     // On 1.20.1, initialize the RenderProvider and implement the getter
-    private final Supplier<Object> renderProvider = GeoItem.makeRenderer(this);
+    private final Supplier<Object> renderProvider = new Supplier<Object>() {
+        private Object provider;
+
+        @Override
+        public Object get() {
+            if (provider == null) {
+                if (Platform.getEnvironment() == Env.CLIENT) {
+                    // Only load HamsterBedRenderProvider on the client.
+                    provider = net.dawson.adorablehamsterpets.item.client.HamsterBedRenderProvider.create();
+                }
+            }
+            return provider;
+        }
+    };
 
     @Override
     public Supplier<Object> getRenderProvider() {
@@ -202,15 +225,9 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
 
     @Override
     public void createRenderer(Consumer<Object> consumer) {
-        consumer.accept(new RenderProvider() {
-            private HamsterBedItemRenderer renderer;
-
-            @Override
-            public BuiltinModelItemRenderer getCustomRenderer() {
-                if (renderer == null)
-                    renderer = new HamsterBedItemRenderer();
-                return renderer;
-            }
-        });
+        // On 1.20.1, delegating to the separate client-only class prevents ClassNotFound errors on the server
+        if (Platform.getEnvironment() == Env.CLIENT) {
+            consumer.accept(net.dawson.adorablehamsterpets.item.client.HamsterBedRenderProvider.create());
+        }
     }
 }

@@ -207,12 +207,14 @@ public class ModItems {
     static {
         for (WoodVariant variant : WoodVariant.values()) {
             HAMSTER_BED_ITEMS.put(variant, registerBlockItem("hamster_bed_" + variant.asString(),
-                    () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), variant, new Item.Settings())));
+                    // On 1.20.1, use HamsterBedItem.create(...) instead of new HamsterBedItem(...)
+                    () -> HamsterBedItem.create(ModBlocks.HAMSTER_BED.get(), variant, new Item.Settings())));
         }
     }
 
     public static final RegistrySupplier<Item> UPSIDE_DOWN_HAMSTER_BED_ICON = registerItem("upside_down_hamster_bed_icon",
-            () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), WoodVariant.OAK, new Item.Settings()));
+            // On 1.20.1, use HamsterBedItem.create(...)
+            () -> HamsterBedItem.create(ModBlocks.HAMSTER_BED.get(), WoodVariant.OAK, new Item.Settings()));
 
     // So Patchouli can display custom bell icon in its category list
     public static final RegistrySupplier<Item> ANNOUNCEMENT_BELL_ICON = registerItem("announcement_bell_icon",
