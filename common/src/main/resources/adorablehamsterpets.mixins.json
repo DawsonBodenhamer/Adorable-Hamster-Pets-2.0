@@ -8,14 +8,12 @@
     "server.SpiderEntityMixin",
     "server.PlayerEntityMixin",
     "accessor.SlotAccessor",
-    "accessor.ScreenWidgetAdder",
     "accessor.MeleeAttackGoalAccessor",
     "accessor.LandPathNodeMakerInvoker",
     "accessor.LookAtEntityGoalAccessor",
     "accessor.LookAroundGoalAccessor",
     "accessor.FollowOwnerGoalAccessor",
     "accessor.TemptGoalAccessor",
-    "accessor.BookContentsBuilderAccessor",
     "accessor.ValidatedFieldAccessor"
   ],
   "client": [
@@ -33,6 +31,8 @@
     "client.GuiBookIndexMixin",
     "client.accessor.GuiBookAccessor",
     "client.accessor.GuiButtonEntryAccessor",
+    "accessor.ScreenWidgetAdder",
+    "accessor.BookContentsBuilderAccessor",
     "client.accessor.ClickableWidgetAccessor"
   ],
   "injectors": {
