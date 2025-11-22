@@ -40,9 +40,14 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
             return false;
         }
 
-        // Custom state checks that prevent following.
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() ||
-                this.hamster.isSulking() || this.hamster.isCelebratingDiamond() || this.hamster.isCelebratingChase()) {
+        // --- 2. Apply  custom conditions ---
+        if (this.hamster.isSitting() ||
+                this.hamster.isSleeping() ||
+                this.hamster.isKnockedOut() ||
+                this.hamster.isSulking() ||
+                this.hamster.isCelebratingDiamond() ||
+                this.hamster.isCelebratingChase() ||
+                this.hamster.isWanderModeActive()) {
             return false;
         }
 

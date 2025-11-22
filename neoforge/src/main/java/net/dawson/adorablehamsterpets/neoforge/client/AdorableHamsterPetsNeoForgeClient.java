@@ -1,7 +1,5 @@
 package net.dawson.adorablehamsterpets.neoforge.client;
 
-
-
 /*
  * All Rights Reserved
  * Copyright (c) 2025 Dawson Bodenhamer (www.ForTheKing.Design)
@@ -11,34 +9,46 @@ package net.dawson.adorablehamsterpets.neoforge.client;
  * Provided "AS IS" without warranty. See LICENSE for details.
  */
 
+import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
+import net.dawson.adorablehamsterpets.block.ModBlockEntities;
+import net.dawson.adorablehamsterpets.block.client.HamsterBedRenderer;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
+import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.client.feature.HamsterShoulderFeatureRenderer;
+import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.SkinTextures;
+import net.minecraft.particle.SimpleParticleType;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
-
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 
 public final class AdorableHamsterPetsNeoForgeClient {
 
-
     private AdorableHamsterPetsNeoForgeClient() {}
-
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         // General setup.
         event.enqueueWork(AdorableHamsterPetsClient::init);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterParticleProviders(RegisterParticleProvidersEvent event) {
+        // Register particle factory for all variants.
+        for (RegistrySupplier<SimpleParticleType> particleSupplier : ModParticles.BEDDING_PARTICLES.values()) {
+            event.registerSpriteSet(particleSupplier.get(), HamsterBeddingParticle.Factory::new);
+        }
     }
 
     /**
@@ -68,6 +78,11 @@ public final class AdorableHamsterPetsNeoForgeClient {
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.HAMSTER.get(), HamsterRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterBlockEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(ModBlockEntities.HAMSTER_BED_BLOCK_ENTITY.get(), HamsterBedRenderer::new);
     }
 
     /**

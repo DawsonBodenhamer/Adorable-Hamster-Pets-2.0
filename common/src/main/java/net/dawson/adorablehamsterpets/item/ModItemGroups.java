@@ -47,6 +47,8 @@ public class ModItemGroups {
                         output.add(ModItems.SUNFLOWER_BLOCK_ITEM.get());
                         output.add(ModItems.WILD_GREEN_BEAN_BUSH_ITEM.get());
                         output.add(ModItems.WILD_CUCUMBER_BUSH_ITEM.get());
+                        output.add(ModItems.HAMSTER_BEDDING.get());
+                        ModItems.HAMSTER_BED_ITEMS.values().forEach(supplier -> output.add(supplier.get()));
                     }))
     );
 

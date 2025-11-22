@@ -1,0 +1,61 @@
+{
+  "parent": "adorablehamsterpets:husbandry/craft_hamster_bed",
+  "display": {
+    "icon": {"item": "adorablehamsterpets:hamster_bed_cherry"},
+    "title": { "translate": "advancements.adorablehamsterpets.husbandry.craft_all_hamster_beds.title" },
+    "description": { "translate": "advancements.adorablehamsterpets.husbandry.craft_all_hamster_beds.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "crafted_oak": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": { "recipe_id": "adorablehamsterpets:hamster_bed_oak" }
+    },
+    "crafted_spruce": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": { "recipe_id": "adorablehamsterpets:hamster_bed_spruce" }
+    },
+    "crafted_birch": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": { "recipe_id": "adorablehamsterpets:hamster_bed_birch" }
+    },
+    "crafted_jungle": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": { "recipe_id": "adorablehamsterpets:hamster_bed_jungle" }
+    },
+    "crafted_acacia": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": { "recipe_id": "adorablehamsterpets:hamster_bed_acacia" }
+    },
+    "crafted_dark_oak": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": { "recipe_id": "adorablehamsterpets:hamster_bed_dark_oak" }
+    },
+    "crafted_mangrove": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": { "recipe_id": "adorablehamsterpets:hamster_bed_mangrove" }
+    },
+    "crafted_cherry": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": { "recipe_id": "adorablehamsterpets:hamster_bed_cherry" }
+    },
+    "crafted_bamboo": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": { "recipe_id": "adorablehamsterpets:hamster_bed_bamboo" }
+    }
+  },
+  "requirements": [
+    ["crafted_oak"],
+    ["crafted_spruce"],
+    ["crafted_birch"],
+    ["crafted_jungle"],
+    ["crafted_acacia"],
+    ["crafted_dark_oak"],
+    ["crafted_mangrove"],
+    ["crafted_cherry"],
+    ["crafted_bamboo"]
+  ]
+}

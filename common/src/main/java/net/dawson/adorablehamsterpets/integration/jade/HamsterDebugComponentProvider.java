@@ -11,22 +11,27 @@ package net.dawson.adorablehamsterpets.integration.jade;
  */
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 import snownee.jade.api.EntityAccessor;
 import snownee.jade.api.IEntityComponentProvider;
+import snownee.jade.api.IServerDataProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationProcessor;
 
-public enum HamsterDebugComponentProvider implements IEntityComponentProvider {
+public enum HamsterDebugComponentProvider implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {
     INSTANCE;
 
     private static final Identifier UID = Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_debug_info");
@@ -74,7 +79,6 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider {
             tooltip.add(fText("State: %s", Text.literal("Celebrating Diamond").formatted(Formatting.AQUA, Formatting.BOLD)));
         }
 
-
         tooltip.add(fText("Is Navigating: %s", (!hamster.getNavigation().isIdle() ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED)) ));
         LivingEntity target = hamster.getTarget();
         tooltip.add(fText("Has Target: %s", (target != null ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED))));
@@ -83,6 +87,30 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider {
         }
         String activeGoalName = hamster.getActiveCustomGoalDebugName();
         tooltip.add(fText("Current Custom Goal: %s", Text.literal(activeGoalName).formatted(activeGoalName.equals("None") ? Formatting.GRAY : Formatting.AQUA)));
+
+        // --- Bed Link Status ---
+        tooltip.add(Text.literal("--- Bed Link ---").formatted(Formatting.GRAY));
+        NbtCompound serverData = accessor.getServerData();
+        boolean isWanderActive = serverData.getBoolean("IsWanderModeActive");
+        boolean isOnTheWayToBed = serverData.getBoolean("IsOnTheWayToBed");
+        int goToBedDelay = serverData.getInt("GoToBedDelay");
+
+        // Display wander mode status
+        tooltip.add(fText("Wander Mode: %s", isWanderActive ? Text.literal("ACTIVE").formatted(Formatting.GREEN) : Text.literal("INACTIVE").formatted(Formatting.RED)));
+
+        // If wandering, show distance. If pathfinding to bed, show that instead.
+        if (isWanderActive) {
+            if (isOnTheWayToBed) {
+                if (goToBedDelay > 0) {
+                    tooltip.add(fText("  Status: %s", Text.literal(String.format("Waiting... (starts in %.1f s)", goToBedDelay / 20.0)).formatted(Formatting.YELLOW)));
+                } else {
+                    tooltip.add(fText("  Status: %s", Text.literal("Pathfinding to bed...").formatted(Formatting.YELLOW)));
+                }
+            } else if (serverData.contains("WanderDistance")) {
+                String distanceStr = serverData.getString("WanderDistance");
+                tooltip.add(fText("  Wander Distance: %s", Text.literal(distanceStr).formatted(Formatting.AQUA)));
+            }
+        }
 
         // --- Tamed Sleep Sequence ---
         if (hamster.isTamed()) {
@@ -141,6 +169,27 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider {
     @Override
     public Identifier getUid() {
         return UID;
+    }
+
+    @Override
+    public void appendServerData(NbtCompound data, EntityAccessor accessor) {
+        Entity entity = accessor.getEntity();
+        if (entity instanceof HamsterEntity hamster) {
+            data.putBoolean("IsWanderModeActive", hamster.isWanderModeActive());
+            data.putBoolean("IsOnTheWayToBed", hamster.isOnTheWayToBed());
+            data.putInt("GoToBedDelay", hamster.getGoToBedDelayTicks());
+
+            if (hamster.isWanderModeActive()) {
+                hamster.getLinkedBedPos().ifPresent(globalPos -> {
+                    World world = hamster.getWorld();
+                    if (world instanceof ServerWorld serverWorld && serverWorld.getRegistryKey() == globalPos.getDimension()) {
+                        if (serverWorld.getBlockEntity(globalPos.getPos()) instanceof HamsterBedBlockEntity bedEntity) {
+                            data.putString("WanderDistance", bedEntity.getWanderDistance().asString());
+                        }
+                    }
+                });
+            }
+        }
     }
 
     // Helper for formatted text

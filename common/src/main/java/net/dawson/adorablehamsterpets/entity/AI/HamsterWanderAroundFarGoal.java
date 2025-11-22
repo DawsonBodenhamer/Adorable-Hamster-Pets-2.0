@@ -11,10 +11,16 @@ package net.dawson.adorablehamsterpets.entity.AI;
  */
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
+import net.dawson.adorablehamsterpets.config.Configs;
+import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.ai.FuzzyTargeting;
 import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,12 +117,57 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
     @Nullable
     @Override
     protected Vec3d getWanderTarget() {
+        // --- 1. Priority: Green Bean Buff "Zoomies" ---
         if (this.hamster.hasGreenBeanBuff()) {
             // Convert the BlockPos from our precise helper to a Vec3d for the goal.
             return getPreciseZoomiesTarget().map(Vec3d::ofCenter).orElse(null);
-        } else {
-            return super.getWanderTarget();
         }
+
+        // --- 2. Priority: Wander Mode (around bed) ---
+        if (this.hamster.isWanderModeActive()) {
+            Optional<GlobalPos> bedPosOptional = this.hamster.getLinkedBedPos();
+            if (bedPosOptional.isPresent()) {
+                GlobalPos bedGlobalPos = bedPosOptional.get();
+                if (this.hamster.getWorld().getRegistryKey() == bedGlobalPos.getDimension()) {
+                    BlockPos bedPos = bedGlobalPos.getPos();
+                    BlockEntity be = this.hamster.getWorld().getBlockEntity(bedPos);
+                    if (be instanceof HamsterBedBlockEntity bedEntity) {
+                        WanderDistance distance = bedEntity.getWanderDistance();
+                        int radius = switch (distance) {
+                            case NEAR -> Configs.AHP.wanderDistanceNear.get();
+                            case FAR -> Configs.AHP.wanderDistanceFar.get();
+                            default -> Configs.AHP.wanderDistanceMedium.get();
+                        };
+
+                        // If hamster is outside its radius, path back towards the bed
+                        if (this.hamster.getBlockPos().getSquaredDistance(bedPos) > radius * radius) {
+                            Vec3d directionToBed = Vec3d.ofCenter(bedPos).subtract(this.hamster.getPos());
+                            // Use findTo with a reasonable range to find a point in the direction of the bed
+                            return FuzzyTargeting.findTo(this.mob, 7, 7, directionToBed);
+                        } else {
+                            // Hamster is inside the radius, find a random point centered on the bed
+                            for (int i = 0; i < 10; ++i) { // Try up to 10 times
+                                int dx = this.hamster.getRandom().nextInt(2 * radius + 1) - radius;
+                                int dz = this.hamster.getRandom().nextInt(2 * radius + 1) - radius;
+
+                                BlockPos potentialTarget = bedPos.add(dx, 0, dz);
+
+                                if (bedPos.getSquaredDistance(potentialTarget) <= radius * radius) {
+                                    BlockPos validatedPos = FuzzyTargeting.validate(this.mob, potentialTarget);
+                                    if (validatedPos != null) {
+                                        return Vec3d.ofBottomCenter(validatedPos);
+                                    }
+                                }
+                            }
+                            return null; // Failed to find a point
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- 3. Fallback: Default Wandering ---
+        return super.getWanderTarget();
     }
 
     /**

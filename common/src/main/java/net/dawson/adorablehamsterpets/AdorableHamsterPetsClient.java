@@ -11,46 +11,49 @@ package net.dawson.adorablehamsterpets;
  */
 
 import dev.architectury.event.events.client.ClientGuiEvent;
-import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
+import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.client.rendering.ColorHandlerRegistry;
 import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import dev.architectury.registry.menu.MenuRegistry;
 import io.netty.buffer.Unpooled;
 import me.fzzyhmstrs.fzzy_config.api.ConfigApiJava;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
+import net.dawson.adorablehamsterpets.block.ModBlockEntities;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
+import net.dawson.adorablehamsterpets.block.client.HamsterBedRenderer;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementHudRenderer;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
 import net.dawson.adorablehamsterpets.client.event.AHPClientScreenEvents;
 import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconAnimator;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
+import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
 import net.dawson.adorablehamsterpets.client.sound.HamsterFlightSoundInstance;
 import net.dawson.adorablehamsterpets.client.sound.HamsterThrowSoundInstance;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
-import net.dawson.adorablehamsterpets.config.Configs;
-import net.dawson.adorablehamsterpets.config.DismountPressType;
-import net.dawson.adorablehamsterpets.config.DismountTriggerType;
+import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
+import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.particle.DefaultParticleType;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -85,8 +88,23 @@ public class AdorableHamsterPetsClient {
      * Initializes general client-side features like screens, keybinds, and events.
      */
     public static void init() {
+        // --- RenderTypeRegistry call ---
+        RenderTypeRegistry.register(RenderLayer.getCutout(),
+                ModBlocks.GREEN_BEANS_CROP.get(),
+                ModBlocks.CUCUMBER_CROP.get(),
+                ModBlocks.SUNFLOWER_BLOCK.get(),
+                ModBlocks.WILD_CUCUMBER_BUSH.get(),
+                ModBlocks.WILD_GREEN_BEAN_BUSH.get(),
+                ModBlocks.HAMSTER_BED.get());
+
         // --- Initializers ---
-        RenderTypeRegistry.register(RenderLayer.getCutout(), ModBlocks.GREEN_BEANS_CROP.get(), ModBlocks.CUCUMBER_CROP.get(), ModBlocks.SUNFLOWER_BLOCK.get(), ModBlocks.WILD_CUCUMBER_BUSH.get(), ModBlocks.WILD_GREEN_BEAN_BUSH.get());
+        RenderTypeRegistry.register(RenderLayer.getCutout(),
+                ModBlocks.GREEN_BEANS_CROP.get(),
+                ModBlocks.CUCUMBER_CROP.get(),
+                ModBlocks.SUNFLOWER_BLOCK.get(),
+                ModBlocks.WILD_CUCUMBER_BUSH.get(),
+                ModBlocks.WILD_GREEN_BEAN_BUSH.get(),
+                ModBlocks.HAMSTER_BED.get());
         ConfigApiJava.event().onUpdateClient((id, config) -> {
             if (id.equals(Identifier.of(AdorableHamsterPets.MOD_ID, "main"))) {
                 ConfigDataCache.parseConfig();
@@ -101,6 +119,13 @@ public class AdorableHamsterPetsClient {
         // --- Event Registrations ---
         ClientTickEvent.CLIENT_POST.register(AdorableHamsterPetsClient::onEndClientTick);
         ClientGuiEvent.RENDER_HUD.register((context, tickDelta) -> announcementHudRenderer.render(context, tickDelta));
+    }
+
+    /**
+     * Registers the block entities. Separate because NeoForge needs to call it natively.
+     */
+    public static void initBlockEntityRenderers() {
+        BlockEntityRendererRegistry.register(ModBlockEntities.HAMSTER_BED_BLOCK_ENTITY.get(), HamsterBedRenderer::new);
     }
 
     /**
@@ -325,6 +350,28 @@ public class AdorableHamsterPetsClient {
                 AdorableHamsterPets.LOGGER.trace("[AHP DEBUG CLIENT] Tick Handler: DOUBLE_TAP timed out.");
                 isWaitingForSecondSneakPress = false;
             }
+        }
+    }
+
+    public static void handleSpawnBeddingParticles(ModPackets.SpawnBeddingParticlesS2CPacket packet) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null) return;
+
+        BlockPos spawnPos = packet.pos().offset(packet.direction());
+        Vec3d particleCenter = Vec3d.ofCenter(spawnPos);
+
+        // Get the particle type
+        // In 1.20.1, use DefaultParticleType instead of SimpleParticleType
+        DefaultParticleType particleType = ModParticles.getForVariant(packet.variant());
+
+        for (int i = 0; i < 30; i++) {
+            double offsetX = client.world.random.nextGaussian() * 1.2;
+            double offsetY = client.world.random.nextGaussian() * 1.2;
+            double offsetZ = client.world.random.nextGaussian() * 1.2;
+            // Spawn the dynamic particle type and use the vy flag to trigger floaty physics
+            client.world.addParticle(particleType,
+                    particleCenter.x + offsetX, particleCenter.y + offsetY, particleCenter.z + offsetZ,
+                    0, HamsterBeddingParticle.BEDDING_ITEM_FLAG, 0);
         }
     }
 }

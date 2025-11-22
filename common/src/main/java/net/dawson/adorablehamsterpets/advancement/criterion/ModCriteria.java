@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.advancement.criterion;
 
-
 /*
  * All Rights Reserved
  * Copyright (c) 2025 Dawson Bodenhamer (www.ForTheKing.Design)
@@ -30,6 +29,11 @@ public class ModCriteria {
     public static final HamsterPouchFilledCriterion HAMSTER_POUCH_FILLED = new HamsterPouchFilledCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_pouch_filled"));
     public static final HamsterLedToDiamondCriterion HAMSTER_LED_TO_DIAMOND = new HamsterLedToDiamondCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_led_to_diamond"));
     public static final HamsterFoundGoldCriterion HAMSTER_FOUND_GOLD = new HamsterFoundGoldCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_found_gold"));
+    public static final HamsterBedLinkedCriterion HAMSTER_BED_LINKED = new HamsterBedLinkedCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_bed_linked"));
+    public static final HamsterSleptInBedCriterion HAMSTER_SLEPT_IN_BED = new HamsterSleptInBedCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_slept_in_bed"));
+    public static final UsedHamsterBeddingCriterion USED_HAMSTER_BEDDING = new UsedHamsterBeddingCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "used_hamster_bedding"));
+    public static final HamsterBedPlacedUpsideDownCriterion HAMSTER_BED_PLACED_UPSIDE_DOWN = new HamsterBedPlacedUpsideDownCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_bed_placed_upside_down"));
+    public static final DispensedHamsterBeddingCriterion DISPENSED_HAMSTER_BEDDING = new DispensedHamsterBeddingCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "dispensed_hamster_bedding"));
 
     /**
      * Registers a criterion with Minecraft's advancement system.
@@ -56,6 +60,11 @@ public class ModCriteria {
         register(HAMSTER_POUCH_FILLED);
         register(HAMSTER_LED_TO_DIAMOND);
         register(HAMSTER_FOUND_GOLD);
+        register(HAMSTER_BED_LINKED);
+        register(HAMSTER_SLEPT_IN_BED);
+        register(USED_HAMSTER_BEDDING);
+        register(HAMSTER_BED_PLACED_UPSIDE_DOWN);
+        register(DISPENSED_HAMSTER_BEDDING);
 
         AdorableHamsterPets.LOGGER.info("Registering Mod Criteria for " + AdorableHamsterPets.MOD_ID);
     }

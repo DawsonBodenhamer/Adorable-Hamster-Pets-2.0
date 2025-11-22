@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/craft_hamster_bed",
+  "display": {
+    "icon": {
+      "item": "minecraft:lead"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.hamster_bed_linked.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.hamster_bed_linked.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "linked_bed": {
+      "trigger": "adorablehamsterpets:hamster_bed_linked"
+    }
+  }
+}

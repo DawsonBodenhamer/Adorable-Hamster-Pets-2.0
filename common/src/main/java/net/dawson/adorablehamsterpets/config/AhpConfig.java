@@ -29,6 +29,7 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -131,6 +132,32 @@ public class AhpConfig extends Config {
             .decoration(TextureIds.INSTANCE.getDECO_LINK())
             .build(new ClickEvent(ClickEvent.Action.OPEN_URL,
                     "https://www.fortheking.design"));
+
+    // --- UI & Quality of Life ---
+    @Translatable.Name("UI & Quality of Life")
+    @Translatable.Desc("Because Sanity is Overrated")
+    public ConfigGroup uiPreferences = new ConfigGroup("uiPreferences", true);
+
+    @NonSync
+    @Translatable.Name("Auto Guidebook Delivery")
+    @Translatable.Desc("Hand-delivers the sacred texts on first login. Read it—or don’t. I'm not your conscience.")
+    public boolean enableAutoGuidebookDelivery = true;
+
+    @NonSync
+    @Translatable.Name("Mod Item Tooltips")
+    @Translatable.Desc("Helpful whispers on what the heck that cucumber is for.")
+    public boolean enableItemTooltips = true;
+
+    @NonSync
+    @Translatable.Name("Shoulder Dismount Messages")
+    @Translatable.Desc("Little status mumbles when your co-pilot disembarks.")
+    public boolean enableShoulderDismountMessages = true;
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Jade Hamster Debug Info")
+    @Translatable.Desc("More stats than anyone asked for. Defaults to off—mercifully.")
+    public boolean enableJadeHamsterDebugInfo = false;
 
     // --- Announcements & Update Notes ---
     @Translatable.Name("Announcements & Update Notes")
@@ -307,31 +334,31 @@ public class AhpConfig extends Config {
                     );
 
 
-    // --- UI & Quality of Life ---
-    @Translatable.Name("UI & Quality of Life")
-    @Translatable.Desc("Because Sanity is Overrated")
-    public ConfigGroup uiPreferences = new ConfigGroup("uiPreferences", true);
+    // --- Falling Leaf Settings ---
+    @Translatable.Name("Falling Leaf Settings")
+    @Translatable.Desc("Here's where you tweak the behavior of the floaty leaf particles spawned from Hamster Bedding. Didn't know you could spawn particles from Hamster Bedding? Try to keep up.")
+    public ConfigGroup particleEffects = new ConfigGroup("particleEffects", true);
 
     @NonSync
-    @Translatable.Name("Auto Guidebook Delivery")
-    @Translatable.Desc("Hand-delivers the sacred texts on first login. Read it—or don’t. I'm not your conscience.")
-    public boolean enableAutoGuidebookDelivery = true;
+    @Translatable.Name("Dynamic Drift")
+    @Translatable.Desc("Should the gentle, drift of Hamster Bedding leaf particles slowly change direction over time? If true, it's a slow, majestic rotation. (It takes a bout 3 minutes to make a full 360 degree rotation). If false, you get to pick a static wind direction below.")
+    public ValidatedBoolean enableDynamicDriftAngle = new ValidatedBoolean(true);
 
-    @NonSync
-    @Translatable.Name("Mod Item Tooltips")
-    @Translatable.Desc("Helpful whispers on what the heck that cucumber is for.")
-    public boolean enableItemTooltips = true;
-
-    @NonSync
-    @Translatable.Name("Shoulder Dismount Messages")
-    @Translatable.Desc("Little status mumbles when your co-pilot disembarks.")
-    public boolean enableShoulderDismountMessages = true;
+    // Helper field to gate the static angle slider. This is true when the dynamic toggle is OFF.
+    private final ValidatedField<Boolean> isDynamicDriftDisabled =
+            enableDynamicDriftAngle.map(value -> !value, value -> !value);
 
     @NonSync
     @ConfigGroup.Pop
-    @Translatable.Name("Jade Hamster Debug Info")
-    @Translatable.Desc("More stats than anyone asked for. Defaults to off—mercifully.")
-    public boolean enableJadeHamsterDebugInfo = false;
+    @Translatable.Name("Static Drift Angle")
+    @Translatable.Desc("Set a fixed direction for the universal leaf drift (0-360 degrees). 0/360 is East, 90 is South, 180 is West, 270 is North, I think. Or just slide it until it looks cool. Whatever. Only works if 'Dynamic Drift' is off.")
+    public ValidatedCondition<Integer> staticDriftAngle =
+            new ValidatedInt(0, 360, 0)
+                    .toCondition(
+                            isDynamicDriftDisabled,
+                            Text.literal("Only available when 'Dynamic Leaf Drift' is OFF."),
+                            () -> 0
+                    );
 
     // --- Core Feature Toggles ---
     @Translatable.Name("Core Feature Toggles")
@@ -341,6 +368,10 @@ public class AhpConfig extends Config {
     @Translatable.Name("Enable Hamster Throwing")
     @Translatable.Desc("Do we yeet the hamster? ('G' by default).")
     public boolean enableHamsterThrowing = true;
+
+    @Translatable.Name("Enable Wander Mode")
+    @Translatable.Desc("For when you need some personal space. Allows tamed hamsters to be linked to a Hamster Bed, letting them wander freely within a set radius instead of clinging to you like melted duct-tape. You're welcome.")
+    public ValidatedBoolean enableWanderMode = new ValidatedBoolean(true);
 
     @Translatable.Name("Require Food Mix to Unlock Cheeks")
     @Translatable.Desc("Gate cheek-pouch storage behind gourmet cuisine, because drama.")
@@ -432,9 +463,13 @@ public class AhpConfig extends Config {
     @Translatable.Desc("The list of questionable substances that grant your hamster temporary superpowers. By default, it's just steamed green beans.")
     public List<String> buffFoods = new ArrayList<>(List.of("adorablehamsterpets:steamed_green_beans"));
 
-    @Translatable.Name("Shoulder Summoning Lures")
-    @Translatable.Desc("The specific item that convinces a tamed hamster your shoulder is the best seat in the house. Defaults to cheese, because of course it does.")
-    public List<String> shoulderMountFoods = new ArrayList<>(List.of("adorablehamsterpets:cheese"));
+    @Translatable.Name("Lure Items")
+    @Translatable.Desc("The list of specific items that convinces a tamed hamster your shoulder is the best seat in the house or lures them to their linked bed. Defaults to cheese, because of course it does.")
+    public List<String> lureItems = new ArrayList<>(List.of("adorablehamsterpets:cheese"));
+
+    @Translatable.Name("Rodent Repellent")
+    @Translatable.Desc("The list of specific items that, when used on a Hamster Bed, will set 'Wander Mode Settings > Allow Sleeping in Bed' to false. For when you need your hamster to stay awake and wander around for... reasons. This can be reversed by using a lure item (cheese by default) on the bed. Sneaking before right-clicking with this item will unlink the bed entirely.")
+    public List<String> bedAvoidanceFoods = new ArrayList<>(List.of("minecraft:rotten_flesh"));
 
     @Translatable.Name("Cheek Pouch Keys")
     @Translatable.Desc("The one-time offering required to earn a hamster's ultimate trust, unlocking their cheek inventory. Make it something special. Or don't. See if I care.")
@@ -762,6 +797,90 @@ public class AhpConfig extends Config {
             "c:tag_name"
     ));
 
+    @Translatable.Name("Bed & Wander Mode Settings")
+    @Translatable.Desc("For when 'following you into lava' is no longer a desirable trait. Tweak the settings for your hamster's newfound, bed-based independence.")
+    public ConfigGroup wanderMode = new ConfigGroup("wanderMode", true);
+
+    @Translatable.Name("Avoid Unlinked Beds")
+    @Translatable.Desc("Should hamsters treat other hamsters' beds as sacred ground? If true, they'll try to politely path around them, but they will only try a few alternate paths before their tiny rodent-patience runs out. If false, they'll trample wherever they please.")
+    public boolean avoidUnlinkedBeds = true;
+
+    @Translatable.Name("Default Wander Distance")
+    @Translatable.Desc("The initial wander distance set when a hamster is first linked to a bed. It defaults to medium, because that is the universally accepted starting point for all life choices.")
+    public ValidatedEnum<WanderDistance> defaultWanderDistance = new ValidatedEnum<>(WanderDistance.MEDIUM);
+
+    @Translatable.Name("Wander Distance: Near (Blocks)")
+    @Translatable.Desc("The radius for the 'Near' wander distance setting. For the clingy hamster who wants freedom, but not too much.")
+    public ValidatedInt wanderDistanceNear = new ValidatedInt(8, 64, 1);
+
+    @Translatable.Name("Wander Distance: Medium (Blocks)")
+    @Translatable.Desc("The radius for the 'Medium' wander distance setting. A respectable distance. Not too close, not too far. Perfectly balanced, as all things should be.")
+    public ValidatedInt wanderDistanceMedium = new ValidatedInt(16, 64, 1);
+
+    @Translatable.Name("Wander Distance: Far (Blocks)")
+    @Translatable.Desc("The radius for the 'Far' wander distance setting. For the adventurous hamster who might send you a postcard someday. Maybe.")
+    public ValidatedInt wanderDistanceFar = new ValidatedInt(32, 64, 1);
+
+    @Translatable.Name("Bed Break Notification")
+    @Translatable.Desc("Get an action bar message when your hamster's bed is broken. Here's where you can turn it off if you prefer... complete immersion.")
+    public boolean enableBedBreakMessage = true;
+
+    @Translatable.Name("Allow Sleeping in Bed")
+    @Translatable.Desc("The global override for whether hamsters can sleep in their beds. If enabled, all hamsters in wander mode will seek out their bed to sleep at specific times, regardless of individual bed settings. If disabled, they'll just pass out when sitting, like your old uncle at family gatherings.")
+    public ValidatedBoolean allowSleepInBed = new ValidatedBoolean(true);
+
+    // Helper field to gate all other sleep settings
+    private final ValidatedField<Boolean> isSleepInBedAllowed = allowSleepInBed.map(b -> b, b -> b);
+
+    @Translatable.Name("Circadian Chaos")
+    @Translatable.Desc("Tired of your hamsters adhering to the rigid tyranny of the day/night cycle? Enable this for a more... unpredictable napping schedule. When enabled, this will override the 'Sleep During the Day' setting.")
+    public ValidatedCondition<Boolean> circadianChaos = new ValidatedBoolean(false)
+            .toCondition(
+                    isSleepInBedAllowed,
+                    Text.literal("Only available when 'Allow Sleeping in Bed' is true."),
+                    () -> false
+            );
+
+    // Helper field to gate the min and max time settings
+    private final ValidatedField<Boolean> isCircadianChaosEnabled = circadianChaos.map(b -> b, b -> b);
+
+    @Translatable.Name("Min Nap Interval")
+    @Translatable.Desc("The shortest possible time (in seconds) a hamster will stay awake or asleep in bed before considering a change. Defaults to 5 minutes— for the truly narcoleptic rodent. A random duration between the min and max is chosen each time, so move them further apart to increase randomness.")
+    public ValidatedCondition<Integer> minNapInBedIntervalSeconds  = new ValidatedInt(300, 7000, 5)
+            .toCondition(
+                    () -> allowSleepInBed.get() && circadianChaos.get(),
+                    Text.literal("Only available when 'Enable Circadian Chaos' is ON."),
+                    () -> 300
+            );
+
+    @Translatable.Name("Max Nap Interval")
+    @Translatable.Desc("The longest amount of time (in seconds) a hamster can possibly stay awake or asleep in bed before it gets bored and switches things up. Defaults to 10 minutes.")
+    public ValidatedCondition<Integer> maxNapInBedIntervalSeconds = new ValidatedInt(600, 7200, 10)
+            .toCondition(
+                    () -> allowSleepInBed.get() && circadianChaos.get(),
+                    Text.literal("Only available when 'Enable Circadian Chaos' is ON."),
+                    () -> 900
+            );
+
+    @Translatable.Name("Sleep During the Day")
+    @Translatable.Desc("If false, wandering hamsters will sleep in their beds during the night. If true, they'll adopt a more nocturnal, goth-adjacent lifestyle and sleep in the daytime.")
+    public ValidatedCondition<Boolean> sleepDuringDay = new ValidatedBoolean(true)
+            .toCondition(
+                    () -> allowSleepInBed.get() && !circadianChaos.get(),
+                    Text.literal("Overridden by 'Enable Circadian Chaos' or disabled by 'Allow Sleeping in Bed'."),
+                    () -> true
+            );
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Manual Wake-Up Duration")
+    @Translatable.Desc("The mandatory grumpiness period if you rudely awaken a hamster from its bed before it was ready. It won't go back to sleep until this timer runs out. (20 ticks = 1 second)")
+    public ValidatedCondition<Integer> bedWakeUpCooldown = new ValidatedInt(300, 1200, 20)
+            .toCondition(
+                    isSleepInBedAllowed,
+                    Text.literal("Only available when 'Allow Sleeping in Bed' is ON."),
+                    () -> 300
+            );
+
     // --- Shoulder Hamster Settings ---
     @Translatable.Name("Shoulder Hamster Settings")
     @Translatable.Desc("Settings for your fuzzy parrot of doom.")
@@ -771,9 +890,9 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Just the basic stuff. You know, detecting creepers, sniffing diamonds. Just average Minecraft stuff really. No big deal. Why are you clapping and squealing? Stop that. You look silly.")
     public ConfigGroup shoulderCore = new ConfigGroup("shoulderCore", true);
 
-    @Translatable.Name("Consume Shoulder-Mount Item")
+    @Translatable.Name("Consume Lure Item")
     @Translatable.Desc("Should luring a hamster to your shoulder consume the item (e.g., cheese)? Turn this off if you believe your charm alone should be enough. The item will still be required, just not eaten.")
-    public boolean consumeShoulderMountItem = true;
+    public boolean consumeLureItem = true;
 
     @Translatable.Name("Enable Force-Mount Keybind")
     @Translatable.Desc("Tired of wasting perfectly good cheese? Enable this to use a dedicated keybind (unbound by default). Hold down this key while right-clicking your hamster to hoist them onto your shoulder, no questions asked. Uses a separate key you must set in Controls > Key Binds.")
@@ -932,7 +1051,7 @@ public class AhpConfig extends Config {
 
     @NonSync
     @Translatable.Name("Require Daytime?")
-    @Translatable.Desc("Night-owl hamsters? Your choice.")
+    @Translatable.Desc("Choose when your sitting hamster will succumb to drowsiness. 'True' means your sitting hamster will only doze off during the day— 'false' means it can doze off anytime. This setting does not affect the behavior of a hamster when sleeping in a bed.")
     public boolean requireDaytimeForTamedSleep = true;
 
     @NonSync

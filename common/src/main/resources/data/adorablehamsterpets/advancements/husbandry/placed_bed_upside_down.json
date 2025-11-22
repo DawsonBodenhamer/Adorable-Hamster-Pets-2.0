@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/craft_hamster_bed",
+  "display": {
+    "icon": {
+      "item": "adorablehamsterpets:upside_down_hamster_bed_icon"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.placed_bed_upside_down.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.placed_bed_upside_down.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "placed_upside_down": {
+      "trigger": "adorablehamsterpets:hamster_bed_placed_upside_down"
+    }
+  }
+}

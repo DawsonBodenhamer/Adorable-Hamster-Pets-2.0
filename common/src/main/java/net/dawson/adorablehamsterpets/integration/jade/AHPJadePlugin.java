@@ -10,8 +10,11 @@ package net.dawson.adorablehamsterpets.integration.jade;
  * Provided "AS IS" without warranty. See LICENSE for details.
  */
 
+import net.dawson.adorablehamsterpets.block.ModBlocks;
+import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.WildCucumberBushBlock;
 import net.dawson.adorablehamsterpets.block.custom.WildGreenBeanBushBlock;
+import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import snownee.jade.api.IWailaClientRegistration;
 import snownee.jade.api.IWailaCommonRegistration;
@@ -26,6 +29,8 @@ public final class AHPJadePlugin implements IWailaPlugin {
         // Block components
         registration.registerBlockComponent(WildBushComponentProvider.INSTANCE, WildCucumberBushBlock.class);
         registration.registerBlockComponent(WildBushComponentProvider.INSTANCE, WildGreenBeanBushBlock.class);
+        registration.registerBlockComponent(HamsterBedComponentProvider.INSTANCE, HamsterBedBlock.class);
+        registration.usePickedResult(ModBlocks.HAMSTER_BED.get());
 
         // Entity component for Hamster debugging
         registration.registerEntityComponent(HamsterDebugComponentProvider.INSTANCE, HamsterEntity.class);
@@ -33,8 +38,8 @@ public final class AHPJadePlugin implements IWailaPlugin {
 
     @Override
     public void register(IWailaCommonRegistration registration) {
-        // This method is for server-side registration if needed.
-        // We don't have any server-specific data for Jade in this case,
-        // so this method can remain empty.
+        // Server-side data providers
+        registration.registerBlockDataProvider(HamsterBedComponentProvider.INSTANCE, HamsterBedBlockEntity.class);
+        registration.registerEntityDataProvider(HamsterDebugComponentProvider.INSTANCE, HamsterEntity.class);
     }
 }

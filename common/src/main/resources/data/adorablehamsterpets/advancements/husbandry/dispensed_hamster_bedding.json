@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/craft_hamster_bedding",
+  "display": {
+    "icon": {
+      "item": "minecraft:dispenser"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.dispensed_hamster_bedding.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.dispensed_hamster_bedding.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "dispensed_bedding": {
+      "trigger": "adorablehamsterpets:dispensed_hamster_bedding"
+    }
+  }
+}

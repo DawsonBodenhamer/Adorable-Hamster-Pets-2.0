@@ -123,16 +123,14 @@ shadowJar {
     configurations = [project.configurations.shadowBundle]
     archiveClassifier = 'dev-shadow'
 
-    // include compiled classes + normal resources
     from sourceSets.main.output
 
-    // include generated assets & data directly, but skip cache
-    from('src/main/generated') {
-        exclude('.cache/**')
-    }
-
-    // make sure the files exist before we package
     dependsOn('runDatagen')
+
+    // Exclude the generated hamster bed item model
+    from('src/main/generated') {
+        exclude('assets/adorablehamsterpets/models/item/hamster_bed.json')
+    }
 }
 
 remapJar {
