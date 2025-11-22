@@ -3023,22 +3023,21 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.triggerAnim(controllerName, animName);
             AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Triggered server-side animation: Controller='{}', Anim='{}'", this.getId(), controllerName, animName);
 
-            // 1.20.1 Note: stopTriggeredAnim is not available in this version of GeckoLib.
-            // TODO: Fix cancellation scheduler logic for 1.20.1.
-//            // --- 2. Schedule the cancellation task ---
-//            Integer duration = TRIGGERABLE_ANIM_DURATIONS.get(animName);
-//            if (duration != null) {
-//                long executionTick = this.getWorld().getTime() + duration;
-//                // Lambda that calls stopTriggeredAnim for the specific animation.
-//                Runnable cancellationAction = () -> {
-//                    this.stopTriggeredAnim(controllerName, animName);
-//                    AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Executed scheduled stop for animation: '{}'", this.getId(), animName);
-//                };
-//                scheduledTasks.add(new ScheduledTask(executionTick, animName, cancellationAction));
-//                AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Scheduled stop for animation '{}' in {} ticks (at tick {}).", this.getId(), animName, duration, executionTick);
-//            } else {
-//                AdorableHamsterPets.LOGGER.warn("[HamsterEntity {}] No duration found for triggerable animation '{}'. Cancellation not scheduled.", this.getId(), animName);
-//            }
+            // --- 2. Schedule the cancellation task ---
+            Integer duration = TRIGGERABLE_ANIM_DURATIONS.get(animName);
+            if (duration != null) {
+                long executionTick = this.getWorld().getTime() + duration;
+                // Lambda that calls stopTriggeredAnim for the specific animation.
+                Runnable cancellationAction = () -> {
+                    // On 1.20.1 stopTriggeredAnim is stopTriggeredAnimation
+                    this.stopTriggeredAnimation(controllerName, animName);
+                    AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Executed scheduled stop for animation: '{}'", this.getId(), animName);
+                };
+                scheduledTasks.add(new ScheduledTask(executionTick, animName, cancellationAction));
+                AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Scheduled stop for animation '{}' in {} ticks (at tick {}).", this.getId(), animName, duration, executionTick);
+            } else {
+                AdorableHamsterPets.LOGGER.warn("[HamsterEntity {}] No duration found for triggerable animation '{}'. Cancellation not scheduled.", this.getId(), animName);
+            }
         }
     }
 
