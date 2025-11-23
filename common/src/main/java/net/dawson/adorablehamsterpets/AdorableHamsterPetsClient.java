@@ -112,6 +112,9 @@ public class AdorableHamsterPetsClient {
         });
         ColorHandlerRegistry.registerItemColors((stack, tintIndex) -> -1, ModItems.HAMSTER_SPAWN_EGG.get());
 
+        // --- Networking Registration ---
+        ModPackets.registerS2CPackets();
+
         // Announcement System
         AHPClientScreenEvents.register();
 

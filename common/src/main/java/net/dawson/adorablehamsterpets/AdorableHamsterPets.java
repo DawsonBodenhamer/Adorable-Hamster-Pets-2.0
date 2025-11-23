@@ -91,7 +91,7 @@ public class AdorableHamsterPets {
 			ConfigDataCache.parseConfig();
 
 			// --- Networking Registration ---
-			ModPackets.register();
+			ModPackets.registerC2SPackets();
 
 			// --- World Gen ---
 			ModWorldGeneration.registerBiomeModifications();

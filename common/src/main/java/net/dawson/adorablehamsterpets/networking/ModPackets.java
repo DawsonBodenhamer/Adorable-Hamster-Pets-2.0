@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.networking;
 
-
 /*
  * All Rights Reserved
  * Copyright (c) 2025 Dawson Bodenhamer (www.ForTheKing.Design)
@@ -11,7 +10,6 @@ package net.dawson.adorablehamsterpets.networking;
  */
 
 import dev.architectury.networking.NetworkChannel;
-import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
@@ -29,7 +27,7 @@ import static net.dawson.adorablehamsterpets.AdorableHamsterPets.MOD_ID;
 
 public class ModPackets {
 
-    // --- 1. Create the Network Channel ---
+    // --- 1. Create Network Channel ---
     public static final NetworkChannel CHANNEL = NetworkChannel.create(new Identifier(MOD_ID, "main"));
 
     // --- 2. Define Packet Data as Records ---
@@ -44,12 +42,9 @@ public class ModPackets {
     public record SpawnBeddingParticlesS2CPacket(BlockPos pos, Direction direction, WoodVariant variant) {}
 
     /**
-     * Registers all packet types and their handlers using the NetworkChannel API.
-     * This method is safe to call from the common initializer, as the API handles
-     * client/server separation internally.
+     * Registers Client-to-Server packets.
      */
-    public static void register() {
-        // --- C2S Packet Registrations ---
+    public static void registerC2SPackets() {
         CHANNEL.register(ThrowHamsterC2SPacket.class,
                 (packet, buf) -> {},
                 (buf) -> new ThrowHamsterC2SPacket(),
@@ -98,8 +93,12 @@ public class ModPackets {
                     CHANNEL.sendToPlayer(player, new PlayGuidebookEffectsS2CPacket());
                 })
         );
+    }
 
-        // --- S2C Packet Registrations ---
+    /**
+     * Registers Server-to-Client packets.
+     */
+    public static void registerS2CPackets() {
         CHANNEL.register(SpawnBeddingParticlesS2CPacket.class,
                 (packet, buf) -> {
                     buf.writeBlockPos(packet.pos());
@@ -114,10 +113,9 @@ public class ModPackets {
                 (packet, context) -> context.get().queue(() -> AdorableHamsterPetsClient.handleSpawnBeddingParticles(packet))
         );
 
-        // Guidebook Effects Handler for 1.20.1
         CHANNEL.register(PlayGuidebookEffectsS2CPacket.class,
-                (packet, buf) -> {}, // No data
-                (buf) -> new PlayGuidebookEffectsS2CPacket(), // No data
+                (packet, buf) -> {},
+                (buf) -> new PlayGuidebookEffectsS2CPacket(),
                 (packet, context) -> context.get().queue(AdorableHamsterPetsClient::handlePlayGuidebookEffects)
         );
     }
