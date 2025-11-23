@@ -54,7 +54,7 @@ jobs:
       # 5) Pull the public changelog (kept in a separate repo) into the workspace
       - name: Download CHANGELOG.md from public repo
         run: |
-          curl -fL "https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Public/main/CHANGELOG.md" -o CHANGELOG.md
+          curl -fL "https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/CHANGELOG.md" -o CHANGELOG.md
 
       # 6) Extract only the section for this tag from the changelog
       #    Logic:
