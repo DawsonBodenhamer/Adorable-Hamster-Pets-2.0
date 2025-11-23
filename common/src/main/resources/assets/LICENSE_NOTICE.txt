@@ -1,0 +1,7 @@
+ASSET LICENSE NOTICE
+
+All non-code assets in this folder (including textures, models, animations, sounds, and other media)
+are NOT licensed under the GNU LGPL.
+
+These assets are All Rights Reserved.
+See the repository root file "ASSETS_LICENSE.txt" for the full terms.

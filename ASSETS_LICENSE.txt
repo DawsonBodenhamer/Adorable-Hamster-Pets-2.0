@@ -1,0 +1,27 @@
+ASSETS LICENSE — ALL RIGHTS RESERVED
+
+Copyright (c) 2025 Dawson Bodenhamer
+www.ForTheKing.Design
+
+This file applies ONLY to non-code assets in this repository. Non-code assets include, but are not limited to:
+- Textures, sprites, and other artwork (block, item, entity, GUI, icons, etc.)
+- Models and geometry
+- Animations
+- Sounds, music, and other audio
+- Resource-pack and data assets such as blockstates, model definitions, sound definitions, and related JSON resources
+- Language/localization files
+- Patchouli book content, including book data and embedded images
+- Any other media or asset files that are not program source code
+
+All such assets are the exclusive property of the copyright holder.
+
+Permission is NOT granted to copy, reproduce, modify, adapt, translate, distribute, publicly display,
+publicly perform, sublicense, or sell any of these assets, in whole or in part, without prior written permission.
+
+These assets are provided “AS IS”, without warranty of any kind, express or implied, including but not limited to
+the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the
+authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract,
+tort, or otherwise, arising from, out of, or in connection with the assets or their use.
+
+NOTE: Source code in this repository is licensed separately under the GNU Lesser General Public License v3.0
+(or later). See the root LICENSE file for code licensing terms.
