@@ -728,7 +728,7 @@ public class AhpConfig extends Config {
     @ConfigGroup.Pop
     @Translatable.Name("Excluded Tags")
     public List<String> grayExclusionTags = new ArrayList<>(List.of(
-            "minecraft:is_badlands", "minecraft:is_jungle", "minecraft:is_savanna"
+            "minecraft:is_badlands", "minecraft:is_jungle", "minecraft:is_savanna", "c:is_sandy"
     ));
 
     @Translatable.Name("Priority 5: Black Variants")
