@@ -456,7 +456,7 @@ public class AhpConfig extends Config {
     public List<String> buffFoods = new ArrayList<>(List.of("adorablehamsterpets:steamed_green_beans"));
 
     @Translatable.Name("Lure Items")
-    @Translatable.Desc("The list of specific items that convinces a tamed hamster your shoulder is the best seat in the house or lures them to their linked bed. Defaults to cheese, because of course it does.")
+    @Translatable.Desc("The specific items that convince a tamed hamster your shoulder is the best seat in the house. Also acts as a bribe to lure them into their linked bed. Defaults to cheese, because of course it does.")
     public List<String> lureItems = new ArrayList<>(List.of("adorablehamsterpets:cheese"));
 
     @Translatable.Name("Rodent Repellent")
