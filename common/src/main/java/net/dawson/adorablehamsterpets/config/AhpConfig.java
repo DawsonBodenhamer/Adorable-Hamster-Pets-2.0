@@ -837,7 +837,7 @@ public class AhpConfig extends Config {
     private final ValidatedField<Boolean> isCircadianChaosEnabled = circadianChaos.map(b -> b, b -> b);
 
     @Translatable.Name("Min Nap Interval")
-    @Translatable.Desc("The shortest possible time (in seconds) a hamster will stay awake or asleep in bed before considering a change. Defaults to 5 minutes— for the truly narcoleptic rodent. A random duration between the min and max is chosen each time, so move them further apart to increase randomness.")
+    @Translatable.Desc("The shortest possible time (in seconds) a hamster will stay awake or asleep in bed before considering a change. Defaults to 5 minutes— for the truly narcoleptic rodent. A random duration between the min and max is chosen each time, so move them further apart for more... unpredictable behavior.")
     public ValidatedCondition<Integer> minNapInBedIntervalSeconds  = new ValidatedInt(300, 7000, 5)
             .toCondition(
                     () -> allowSleepInBed.get() && circadianChaos.get(),
@@ -1177,7 +1177,7 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Custom sunflowers, because the vanilla ones just weren’t fabulous enough. Only changes fresh chunks.")
     public ConfigGroup sunflowerSettings = new ConfigGroup("sunflowerSettings", true);
 
-    @Translatable.Name("Sunflower Seed Regrowth Speed")
+    @Translatable.Name("Seed Regrowth Speed")
     @Translatable.Desc("Higher = slower, lower = faster. Photosynthesis is hard, okay?")
     public ValidatedDouble sunflowerRegrowthModifier = new ValidatedDouble(1.0, 5.0, 0.1);
 
