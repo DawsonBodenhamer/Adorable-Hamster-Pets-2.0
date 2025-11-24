@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.block.custom;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.minecraft.block.*;
 import net.minecraft.entity.player.PlayerEntity;
@@ -57,7 +58,7 @@ public class WildGreenBeanBushBlock extends PlantBlock {
     public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
         // --- Regrowth Logic ---
         if (!state.get(SEEDED)) {
-            final AhpConfig config = AdorableHamsterPets.CONFIG;
+            final AhpWorldGenConfig config = AdorableHamsterPets.WORLD_GEN_CONFIG;
             double modifier = config.wildBushRegrowthModifier.get();
             modifier = Math.max(0.1, modifier); // Ensure positive modifier
 

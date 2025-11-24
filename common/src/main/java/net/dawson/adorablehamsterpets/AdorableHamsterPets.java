@@ -10,9 +10,7 @@ import net.dawson.adorablehamsterpets.block.ModBlockEntities;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.command.ModCommands;
 import net.dawson.adorablehamsterpets.component.HamsterShoulderData;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
-import net.dawson.adorablehamsterpets.config.ConfigDataCache;
-import net.dawson.adorablehamsterpets.config.Configs;
+import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
@@ -47,14 +45,19 @@ import java.util.Set;
 public class AdorableHamsterPets {
 	public static final String MOD_ID = "adorablehamsterpets";
 	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(MOD_ID);
+
+	public static AhpRootConfig ROOT_CONFIG;
 	public static AhpConfig CONFIG;
+	public static AhpWorldGenConfig WORLD_GEN_CONFIG;
 
 	/**
 	 * Initializes all DeferredRegister instances.
 	 * This must be called during mod construction (e.g., the loader-specific entrypoint's constructor or onInitialize).
 	 */
 	public static void initRegistries() {
+		ROOT_CONFIG = Configs.AHP_ROOT;
 		CONFIG = Configs.AHP;
+		WORLD_GEN_CONFIG = Configs.AHP_WORLDGEN;
 		ModEntities.register();
 		ModSounds.register();
 		ModBlocks.register();

@@ -103,40 +103,40 @@ public class ConfigDataCache {
         parseItemList(Configs.AHP.autoHealFoods, autoHealFoodItems, autoHealFoodTags, "autoHealFoods");
 
         // --- Parse Biome Lists ---
-        parseBiomeIdList(Configs.AHP.blueBiomes, blueBiomeIds, "blueBiomes");
-        parseBiomeTagList(Configs.AHP.blueTags, blueBiomeTags, "blueTags");
-        parseBiomeIdList(Configs.AHP.blueExclusionBiomes, blueExclusionBiomeIds, "blueExclusionBiomes");
-        parseBiomeTagList(Configs.AHP.blueExclusionTags, blueExclusionBiomeTags, "blueExclusionTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.blueBiomes, blueBiomeIds, "blueBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.blueTags, blueBiomeTags, "blueTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.blueExclusionBiomes, blueExclusionBiomeIds, "blueExclusionBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.blueExclusionTags, blueExclusionBiomeTags, "blueExclusionTags");
 
-        parseBiomeIdList(Configs.AHP.lavenderBiomes, lavenderBiomeIds, "lavenderBiomes");
-        parseBiomeTagList(Configs.AHP.lavenderTags, lavenderBiomeTags, "lavenderTags");
-        parseBiomeIdList(Configs.AHP.lavenderExclusionBiomes, lavenderExclusionBiomeIds, "lavenderExclusionBiomes");
-        parseBiomeTagList(Configs.AHP.lavenderExclusionTags, lavenderExclusionBiomeTags, "lavenderExclusionTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.lavenderBiomes, lavenderBiomeIds, "lavenderBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.lavenderTags, lavenderBiomeTags, "lavenderTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.lavenderExclusionBiomes, lavenderExclusionBiomeIds, "lavenderExclusionBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.lavenderExclusionTags, lavenderExclusionBiomeTags, "lavenderExclusionTags");
 
-        parseBiomeIdList(Configs.AHP.whiteBiomes, whiteBiomeIds, "whiteBiomes");
-        parseBiomeTagList(Configs.AHP.whiteTags, whiteBiomeTags, "whiteTags");
-        parseBiomeIdList(Configs.AHP.whiteExclusionBiomes, whiteExclusionBiomeIds, "whiteExclusionBiomes");
-        parseBiomeTagList(Configs.AHP.whiteExclusionTags, whiteExclusionBiomeTags, "whiteExclusionTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.whiteBiomes, whiteBiomeIds, "whiteBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.whiteTags, whiteBiomeTags, "whiteTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.whiteExclusionBiomes, whiteExclusionBiomeIds, "whiteExclusionBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.whiteExclusionTags, whiteExclusionBiomeTags, "whiteExclusionTags");
 
-        parseBiomeIdList(Configs.AHP.grayBiomes, grayBiomeIds, "grayBiomes");
-        parseBiomeTagList(Configs.AHP.grayTags, grayBiomeTags, "grayTags");
-        parseBiomeIdList(Configs.AHP.grayExclusionBiomes, grayExclusionBiomeIds, "grayExclusionBiomes");
-        parseBiomeTagList(Configs.AHP.grayExclusionTags, grayExclusionBiomeTags, "grayExclusionTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.grayBiomes, grayBiomeIds, "grayBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.grayTags, grayBiomeTags, "grayTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.grayExclusionBiomes, grayExclusionBiomeIds, "grayExclusionBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.grayExclusionTags, grayExclusionBiomeTags, "grayExclusionTags");
 
-        parseBiomeIdList(Configs.AHP.blackBiomes, blackBiomeIds, "blackBiomes");
-        parseBiomeTagList(Configs.AHP.blackTags, blackBiomeTags, "blackTags");
-        parseBiomeIdList(Configs.AHP.blackExclusionBiomes, blackExclusionBiomeIds, "blackExclusionBiomes");
-        parseBiomeTagList(Configs.AHP.blackExclusionTags, blackExclusionBiomeTags, "blackExclusionTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.blackBiomes, blackBiomeIds, "blackBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.blackTags, blackBiomeTags, "blackTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.blackExclusionBiomes, blackExclusionBiomeIds, "blackExclusionBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.blackExclusionTags, blackExclusionBiomeTags, "blackExclusionTags");
 
-        parseBiomeIdList(Configs.AHP.creamBiomes, creamBiomeIds, "creamBiomes");
-        parseBiomeTagList(Configs.AHP.creamTags, creamBiomeTags, "creamTags");
-        parseBiomeIdList(Configs.AHP.creamExclusionBiomes, creamExclusionBiomeIds, "creamExclusionBiomes");
-        parseBiomeTagList(Configs.AHP.creamExclusionTags, creamExclusionBiomeTags, "creamExclusionTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.creamBiomes, creamBiomeIds, "creamBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.creamTags, creamBiomeTags, "creamTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.creamExclusionBiomes, creamExclusionBiomeIds, "creamExclusionBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.creamExclusionTags, creamExclusionBiomeTags, "creamExclusionTags");
 
-        parseBiomeIdList(Configs.AHP.chocolateBiomes, chocolateBiomeIds, "chocolateBiomes");
-        parseBiomeTagList(Configs.AHP.chocolateTags, chocolateBiomeTags, "chocolateTags");
-        parseBiomeIdList(Configs.AHP.chocolateExclusionBiomes, chocolateExclusionBiomeIds, "chocolateExclusionBiomes");
-        parseBiomeTagList(Configs.AHP.chocolateExclusionTags, chocolateExclusionBiomeTags, "chocolateExclusionTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.chocolateBiomes, chocolateBiomeIds, "chocolateBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.chocolateTags, chocolateBiomeTags, "chocolateTags");
+        parseBiomeIdList(Configs.AHP_WORLDGEN.chocolateExclusionBiomes, chocolateExclusionBiomeIds, "chocolateExclusionBiomes");
+        parseBiomeTagList(Configs.AHP_WORLDGEN.chocolateExclusionTags, chocolateExclusionBiomeTags, "chocolateExclusionTags");
 
         AdorableHamsterPets.LOGGER.info("Parsed all item and biome tag overrides from config.");
     }

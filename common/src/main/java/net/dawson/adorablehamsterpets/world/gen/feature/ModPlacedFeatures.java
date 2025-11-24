@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.world.gen.feature;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.minecraft.registry.Registerable;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -23,7 +24,7 @@ public class ModPlacedFeatures {
 
     public static void bootstrap(Registerable<PlacedFeature> context) {
         var configuredFeatureRegistryEntryLookup = context.getRegistryLookup(RegistryKeys.CONFIGURED_FEATURE);
-        final AhpConfig config = AdorableHamsterPets.CONFIG; // Access static config
+        final AhpWorldGenConfig config = AdorableHamsterPets.WORLD_GEN_CONFIG; // Access static config
 
         // Sunflower
         register(context, CUSTOM_SUNFLOWER_PLACED_KEY,

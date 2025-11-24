@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import me.fzzyhmstrs.fzzy_config.api.ConfigApiJava;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.AhpRootConfig;
+import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
 import net.minecraft.registry.RegistryWrapper;
@@ -72,9 +74,28 @@ public class EnUsGenerator extends FabricLanguageProvider {
             }
         };
 
+        // 1. Generate for Root Config
+        ConfigApiJava.buildTranslations(
+                AhpRootConfig.class,
+                Identifier.of(AdorableHamsterPets.MOD_ID, "root"),
+                "en_us",
+                /* includeDescriptions = */ true,
+                safeSingleWriter
+        );
+
+        // 2. Generate for Main Config
         ConfigApiJava.buildTranslations(
                 AhpConfig.class,
                 Identifier.of(AdorableHamsterPets.MOD_ID, "main"),
+                "en_us",
+                /* includeDescriptions = */ true,
+                safeSingleWriter
+        );
+
+        // 3. Generate for WorldGen Config
+        ConfigApiJava.buildTranslations(
+                AhpWorldGenConfig.class,
+                Identifier.of(AdorableHamsterPets.MOD_ID, "worldgen"),
                 "en_us",
                 /* includeDescriptions = */ true,
                 safeSingleWriter
