@@ -1,7 +1,9 @@
 package net.dawson.adorablehamsterpets;
 
+import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
+import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.client.rendering.ColorHandlerRegistry;
@@ -22,6 +24,7 @@ import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
 import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
@@ -111,6 +114,23 @@ public class AdorableHamsterPetsClient {
         // --- Event Registrations ---
         ClientTickEvent.CLIENT_POST.register(AdorableHamsterPetsClient::onEndClientTick);
         ClientGuiEvent.RENDER_HUD.register((context, tickDelta) -> announcementHudRenderer.render(context, tickDelta));
+
+        // Interaction Event for Force Shoulder Mount Keybind
+        InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
+            // Ensure we are on client and main hand to avoid double firing
+            if (player.getWorld().isClient && hand == net.minecraft.util.Hand.MAIN_HAND && entity instanceof HamsterEntity hamster) {
+                // Check if key is pressed AND config enabled
+                if (Configs.AHP.enableShoulderMountKeybind && ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY.isPressed()) {
+                    // Only if it's tamed hamster
+                    if (hamster.isTamed() && hamster.isOwner(player)) {
+                        // Send packet using the 1.20.1 NetworkChannel
+                        ModPackets.CHANNEL.sendToServer(new ModPackets.RequestHamsterMountC2SPacket(hamster.getId()));
+                        return EventResult.interruptTrue(); // Cancel default interaction to prevent sitting
+                    }
+                }
+            }
+            return EventResult.pass();
+        });
     }
 
     /**

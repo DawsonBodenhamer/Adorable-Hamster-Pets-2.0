@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
+import dev.architectury.networking.NetworkManager;
 import com.mojang.serialization.DataResult;
 import dev.architectury.registry.menu.MenuRegistry;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
@@ -885,6 +886,63 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.navigation = createNavigation(this.getWorld());
         }
     }
+    @SuppressWarnings("UnusedReturnValue")
+    public boolean tryShoulderMount(PlayerEntity player, ItemStack stack) {
+        // Attempts to mount the hamster to the player's shoulder. True if successful.
+        PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
+
+        // Find First Available Slot
+        ShoulderLocation availableSlot = null;
+        if (playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty()) {
+            availableSlot = ShoulderLocation.RIGHT_SHOULDER;
+        } else if (playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) {
+            availableSlot = ShoulderLocation.LEFT_SHOULDER;
+        } else if (playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty()) {
+            availableSlot = ShoulderLocation.HEAD;
+        }
+
+        if (availableSlot != null) {
+            // Disable Wander Mode Before Saving
+            this.setWanderModeActive(false);
+
+            // Save, Set, and Update Queue
+            HamsterShoulderData data = this.saveToShoulderData();
+            playerAccessor.setShoulderHamster(availableSlot, data.toNbt());
+            playerAccessor.adorablehamsterpets$getMountOrderQueue().addLast(availableSlot);
+
+            BlockPos hamsterPosForMountSound = this.getBlockPos();
+            this.discard(); // Remove hamster from world
+
+            // Trigger Generic Events and Play Mount Sound
+            if (player instanceof ServerPlayerEntity serverPlayer) {
+                ModCriteria.HAMSTER_ON_SHOULDER.trigger(serverPlayer);
+            }
+            player.sendMessage(Text.translatable("message.adorablehamsterpets.shoulder_mount_success"), true);
+
+            SoundEvent mountSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SHOULDER_MOUNT_SOUNDS, this.random);
+            if (mountSound != null) {
+                this.getWorld().playSound(null, player.getBlockPos(), mountSound, SoundCategory.PLAYERS, 1.0f, this.getSoundPitch());
+            }
+
+            // Item-Specific Effects and Consumption (if stack is valid lure)
+            if (ConfigDataCache.isLureItem(stack)) {
+                SoundEvent mountLureSound = ModSounds.getDynamicItemSound(stack);
+                this.getWorld().playSound(null, hamsterPosForMountSound, mountLureSound, SoundCategory.PLAYERS, 1.0f, 1.0f);
+
+                ((ServerWorld)this.getWorld()).spawnParticles(new ItemStackParticleEffect(ParticleTypes.ITEM, stack),
+                        hamsterPosForMountSound.getX() + 0.5, hamsterPosForMountSound.getY() + 0.5, hamsterPosForMountSound.getZ() + 0.5,
+                        8, 0.25D, 0.25D, 0.25D, 0.05);
+
+                if (!player.getAbilities().creativeMode && Configs.AHP.consumeLureItem) {
+                    stack.decrement(1);
+                }
+            }
+            return true;
+        } else {
+            player.sendMessage(Text.translatable("message.adorablehamsterpets.shoulder_occupied"), true);
+            return false;
+        }
+    }
     @Override
     public boolean damage(DamageSource source, float amount) {
         // If the damage is suffocation AND the grace period is active, cancel the damage.
@@ -1697,65 +1755,15 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- Shoulder Mounting Logic ---
             boolean isUsingItem = ConfigDataCache.isLureItem(stack);
-            boolean isUsingKeybind = !world.isClient() && Configs.AHP.enableShoulderMountKeybind && ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY.isPressed();
 
-            if (isUsingItem || isUsingKeybind) {
+            // Only check item here. Force-Mount Keybind handled by client event + packet.
+            if (ConfigDataCache.isLureItem(stack)) {
                 if (!world.isClient) {
-                    // Find First Available Slot
-                    ShoulderLocation availableSlot = null;
-                    if (playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty()) {
-                        availableSlot = ShoulderLocation.RIGHT_SHOULDER;
-                    } else if (playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) {
-                        availableSlot = ShoulderLocation.LEFT_SHOULDER;
-                    } else if (playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty()) {
-                        availableSlot = ShoulderLocation.HEAD;
-                    }
-
-                    if (availableSlot != null) {
-                        AdorableHamsterPets.LOGGER.debug("[AHP DEBUG] MOUNTING: Found available slot '{}' for Hamster ID {}.", availableSlot, this.getId());
-
-                        // Disable Wander Mode Before Saving
-                        this.setWanderModeActive(false);
-
-                        // Save, Set, and Update Queue
-                        HamsterShoulderData data = this.saveToShoulderData();
-                        playerAccessor.setShoulderHamster(availableSlot, data.toNbt());
-                        playerAccessor.adorablehamsterpets$getMountOrderQueue().addLast(availableSlot);
-
-                        BlockPos hamsterPosForMountSound = this.getBlockPos();
-                        this.discard(); // Remove hamster from world
-
-                        // Trigger Generic Events and Play Mount Sound
-                        if (player instanceof ServerPlayerEntity serverPlayer) {
-                            ModCriteria.HAMSTER_ON_SHOULDER.trigger(serverPlayer);
-                        }
-                        player.sendMessage(Text.translatable("message.adorablehamsterpets.shoulder_mount_success"), true);
-
-                        SoundEvent mountSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SHOULDER_MOUNT_SOUNDS, this.random);
-                        if (mountSound != null) {
-                            world.playSound(null, player.getBlockPos(), mountSound, SoundCategory.PLAYERS, 1.0f, this.getSoundPitch());
-                        }
-
-                        // Item-Specific Effects and Consumption
-                        if (isUsingItem) {
-                            SoundEvent mountLureSound = ModSounds.getDynamicItemSound(stack);
-                            world.playSound(null, hamsterPosForMountSound, mountLureSound, SoundCategory.PLAYERS, 1.0f, 1.0f);
-
-                            ((ServerWorld)world).spawnParticles(new ItemStackParticleEffect(ParticleTypes.ITEM, stack),
-                                    hamsterPosForMountSound.getX() + 0.5, hamsterPosForMountSound.getY() + 0.5, hamsterPosForMountSound.getZ() + 0.5,
-                                    8, 0.25D, 0.25D, 0.25D, 0.05);
-
-                            if (!player.getAbilities().creativeMode && Configs.AHP.consumeLureItem) {
-                                stack.decrement(1);
-                            }
-                        }
-                    } else {
-                        player.sendMessage(Text.translatable("message.adorablehamsterpets.shoulder_occupied"), true);
-                    }
+                    tryShoulderMount(player, stack);
                 } else {
                     player.swingHand(hand);
                 }
-                return ActionResult.CONSUME;
+                return ActionResult.CONSUME; // Consume item interaction
             }
 
             // --- Inventory Access ---

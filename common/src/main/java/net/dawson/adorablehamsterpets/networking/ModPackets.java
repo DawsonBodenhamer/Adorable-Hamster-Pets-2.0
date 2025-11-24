@@ -27,6 +27,7 @@ public class ModPackets {
     public record DismountHamsterC2SPacket() {}
     public record UpdateRenderStateC2SPacket(int entityId, boolean isRendering) {}
     public record RequestGuidebookC2SPacket() {}
+    public record RequestHamsterMountC2SPacket(int entityId) {}
 
     // S2C (Server-to-Client)
     public record PlayGuidebookEffectsS2CPacket() {}
@@ -82,6 +83,22 @@ public class ModPackets {
 
                     // Send effects packet back to the player
                     CHANNEL.sendToPlayer(player, new PlayGuidebookEffectsS2CPacket());
+                })
+        );
+
+        CHANNEL.register(RequestHamsterMountC2SPacket.class,
+                (packet, buf) -> buf.writeInt(packet.entityId()), // Encoder
+                (buf) -> new RequestHamsterMountC2SPacket(buf.readInt()), // Decoder
+                (packet, context) -> context.get().queue(() -> {
+                    net.minecraft.entity.player.PlayerEntity player = context.get().getPlayer();
+                    net.minecraft.entity.Entity entity = player.getWorld().getEntityById(packet.entityId());
+                    if (entity instanceof HamsterEntity hamster && hamster.isOwner(player)) {
+                        // Distance check for security
+                        if (hamster.squaredDistanceTo(player) < 64.0) {
+                            // Use the 1.20.1 version of tryShoulderMount (check signature)
+                            hamster.tryShoulderMount(player, net.minecraft.item.ItemStack.EMPTY);
+                        }
+                    }
                 })
         );
     }
