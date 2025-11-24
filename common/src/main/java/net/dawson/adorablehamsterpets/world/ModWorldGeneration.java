@@ -63,20 +63,20 @@ public class ModWorldGeneration {
         CUCUMBER_BUSH_EXCLUSIONS.clear();
 
         // --- Parse Sunflowers ---
-        Configs.AHP.sunflowerBiomes.forEach(idStr -> parseIdentifier(idStr, SUNFLOWER_IDS, "sunflowerBiomes"));
-        Configs.AHP.sunflowerBiomeTags.forEach(tagStr -> parseTag(tagStr, SUNFLOWER_TAGS, "sunflowerBiomeTags"));
+        Configs.AHP_WORLDGEN.sunflowerBiomes.forEach(idStr -> parseIdentifier(idStr, SUNFLOWER_IDS, "sunflowerBiomes"));
+        Configs.AHP_WORLDGEN.sunflowerBiomeTags.forEach(tagStr -> parseTag(tagStr, SUNFLOWER_TAGS, "sunflowerBiomeTags"));
 
         // --- Parse Green Bean Bushes ---
-        Configs.AHP.greenBeanBushBiomes.forEach(idStr -> parseIdentifier(idStr, GREEN_BEAN_BUSH_IDS, "greenBeanBushBiomes"));
-        Configs.AHP.greenBeanBushTags.forEach(tagStr -> parseTag(tagStr, GREEN_BEAN_BUSH_TAGS, "greenBeanBushTags"));
-        Configs.AHP.greenBeanBushConventionTags.forEach(tagStr -> parseTag(tagStr, GREEN_BEAN_BUSH_CONVENTION_TAGS, "greenBeanBushConventionTags"));
-        Configs.AHP.greenBeanBushExclusions.forEach(idStr -> parseIdentifier(idStr, GREEN_BEAN_BUSH_EXCLUSIONS, "greenBeanBushExclusions"));
+        Configs.AHP_WORLDGEN.greenBeanBushBiomes.forEach(idStr -> parseIdentifier(idStr, GREEN_BEAN_BUSH_IDS, "greenBeanBushBiomes"));
+        Configs.AHP_WORLDGEN.greenBeanBushTags.forEach(tagStr -> parseTag(tagStr, GREEN_BEAN_BUSH_TAGS, "greenBeanBushTags"));
+        Configs.AHP_WORLDGEN.greenBeanBushConventionTags.forEach(tagStr -> parseTag(tagStr, GREEN_BEAN_BUSH_CONVENTION_TAGS, "greenBeanBushConventionTags"));
+        Configs.AHP_WORLDGEN.greenBeanBushExclusions.forEach(idStr -> parseIdentifier(idStr, GREEN_BEAN_BUSH_EXCLUSIONS, "greenBeanBushExclusions"));
 
         // --- Parse Cucumber Bushes ---
-        Configs.AHP.cucumberBushBiomes.forEach(idStr -> parseIdentifier(idStr, CUCUMBER_BUSH_IDS, "cucumberBushBiomes"));
-        Configs.AHP.cucumberBushTags.forEach(tagStr -> parseTag(tagStr, CUCUMBER_BUSH_TAGS, "cucumberBushTags"));
-        Configs.AHP.cucumberBushConventionTags.forEach(tagStr -> parseTag(tagStr, CUCUMBER_BUSH_CONVENTION_TAGS, "cucumberBushConventionTags"));
-        Configs.AHP.cucumberBushExclusions.forEach(idStr -> parseIdentifier(idStr, CUCUMBER_BUSH_EXCLUSIONS, "cucumberBushExclusions"));
+        Configs.AHP_WORLDGEN.cucumberBushBiomes.forEach(idStr -> parseIdentifier(idStr, CUCUMBER_BUSH_IDS, "cucumberBushBiomes"));
+        Configs.AHP_WORLDGEN.cucumberBushTags.forEach(tagStr -> parseTag(tagStr, CUCUMBER_BUSH_TAGS, "cucumberBushTags"));
+        Configs.AHP_WORLDGEN.cucumberBushConventionTags.forEach(tagStr -> parseTag(tagStr, CUCUMBER_BUSH_CONVENTION_TAGS, "cucumberBushConventionTags"));
+        Configs.AHP_WORLDGEN.cucumberBushExclusions.forEach(idStr -> parseIdentifier(idStr, CUCUMBER_BUSH_EXCLUSIONS, "cucumberBushExclusions"));
 
         AdorableHamsterPets.LOGGER.info("[FeatureConfig] Parsed feature generation settings from config.");
     }

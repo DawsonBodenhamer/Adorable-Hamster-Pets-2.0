@@ -36,9 +36,9 @@ public class ConfigurableHamsterSpawnModifier implements BiomeModifier {
             var spawnBuilder = builder.getMobSpawnSettings();
             var spawnEntry = new SpawnSettings.SpawnEntry(
                     ModEntities.HAMSTER.get(),
-                    Configs.AHP.spawnWeight.get(),
+                    Configs.AHP_WORLDGEN.spawnWeight.get(),
                     1, // minCount is always 1
-                    Configs.AHP.maxGroupSize.get()
+                    Configs.AHP_WORLDGEN.maxGroupSize.get()
             );
 
             // Add the new spawn entry to the CREATURE spawn group.

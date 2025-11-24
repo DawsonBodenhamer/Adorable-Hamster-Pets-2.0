@@ -76,7 +76,7 @@ public class ModEntitySpawns {
         PARSED_EXCLUDES.clear();
 
         // Parse Tags
-        for (String tagStr : Configs.AHP.spawnBiomeTags) {
+        for (String tagStr : Configs.AHP_WORLDGEN.spawnBiomeTags) {
             try {
                 PARSED_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
             } catch (Exception e) {
@@ -85,7 +85,7 @@ public class ModEntitySpawns {
         }
 
         // Parse Includes
-        for (String biomeIdStr : Configs.AHP.includeBiomes) {
+        for (String biomeIdStr : Configs.AHP_WORLDGEN.includeBiomes) {
             try {
                 PARSED_INCLUDES.add(Identifier.of(biomeIdStr));
             } catch (Exception e) {
@@ -94,7 +94,7 @@ public class ModEntitySpawns {
         }
 
         // Parse Excludes
-        for (String biomeIdStr : Configs.AHP.excludeBiomes) {
+        for (String biomeIdStr : Configs.AHP_WORLDGEN.excludeBiomes) {
             try {
                 PARSED_EXCLUDES.add(Identifier.of(biomeIdStr));
             } catch (Exception e) {

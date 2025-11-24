@@ -22,9 +22,9 @@ public final class AdorableHamsterPetsFabric implements ModInitializer {
                             SpawnGroup.CREATURE,
                             new SpawnSettings.SpawnEntry(
                                     ModEntities.HAMSTER.get(),
-                                    Configs.AHP.spawnWeight.get(),
+                                    Configs.AHP_WORLDGEN.spawnWeight.get(),
                                     1,
-                                    Configs.AHP.maxGroupSize.get()
+                                    Configs.AHP_WORLDGEN.maxGroupSize.get()
                             )
                     );
                 }

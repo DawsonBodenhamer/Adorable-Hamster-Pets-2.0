@@ -11,8 +11,9 @@ import me.fzzyhmstrs.fzzy_config.api.RegisterType;
 public final class Configs {
 
     /** Global, sync-enabled, GUI-enabled config instance. */
-    public static final AhpConfig AHP =
-            ConfigApiJava.registerAndLoadConfig(AhpConfig::new, RegisterType.BOTH);
+    public static final AhpRootConfig AHP_ROOT = ConfigApiJava.registerAndLoadConfig(AhpRootConfig::new);
+    public static final AhpConfig AHP = ConfigApiJava.registerAndLoadConfig(AhpConfig::new);
+    public static final AhpWorldGenConfig AHP_WORLDGEN = ConfigApiJava.registerAndLoadConfig(AhpWorldGenConfig::new);
 
     private Configs() {} // prevent instantiation
 }
