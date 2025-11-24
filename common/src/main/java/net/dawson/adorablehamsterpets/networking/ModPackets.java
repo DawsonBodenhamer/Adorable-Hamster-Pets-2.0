@@ -9,6 +9,8 @@ import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.networking.payload.*;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
 import net.minecraft.component.ComponentType;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -62,6 +64,19 @@ public class ModPackets {
 
                         // Send effects packet back to the player
                         NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload());
+                    }
+                })
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, RequestHamsterMountPayload.ID, RequestHamsterMountPayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    PlayerEntity player = context.getPlayer();
+                    Entity entity = player.getWorld().getEntityById(payload.entityId());
+                    if (entity instanceof HamsterEntity hamster && hamster.isOwner(player)) {
+                        // Distance check for security
+                        if (hamster.squaredDistanceTo(player) < 64.0) {
+                            hamster.tryShoulderMount(player, ItemStack.EMPTY);
+                        }
                     }
                 })
         );
