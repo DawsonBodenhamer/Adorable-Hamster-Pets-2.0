@@ -58,11 +58,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New Jade Integration for Hamster Bed**
   -   If the Jade mod is installed, looking at a Hamster Bed will now display a detailed tooltip.
   -   It shows which hamster the bed is linked to, whether Wander Mode is active, the current wander distance, and whether the hamster is allowed to sleep in the bed. Sneaking reveals detailed instructions on how to control the bed's functions.
-- **Default Compatibility for Croptopia, Immersive Engineering, and Serene Seasons**
-  -   Integrated 30 new resource files directly into the mod to ensure out-of-the-box compatibility. A huge thank you to [`@CasualAnimalEnjoyer`](https://github.com/CasualAnimalEnjoyer) for creating and sharing these files!
-  -   Cucumbers and Green Beans are now recognized as valid recipe ingredients by **Croptopia**.
-  -   Cucumber and Green Bean crops are now categorized by **Serene Seasons**.
-  -   Cucumber and Green Bean crops can now be put inside **Immersive Engineering**'s Insulator.
+- **Added Compatibility for Croptopia, Immersive Engineering, Serene Seasons, and Thermal Expansion**
+  - A huge thank you to [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer) for creating 30 new resource files to ensure out-of-the-box compatibility.
+  - **Croptopia:** Food recipes now accept AHP vegetables via tags. Seed crafting recipes have been separated to ensure crafting an AHP vegetable yields an AHP seed, preventing conflicts with Croptopia's own seed recipes.
+  - **Serene Seasons:** Cucumber and Green Bean crops now have defined growing seasons and will bloom accordingly.
+  - **Tech Mods:** Added support for growing Cucumber and Green Bean crops in the **Immersive Engineering** Garden Cloche and the **Thermal Expansion** Phytogenic Insolator.
+- **New Mod Icon**
+  -   Huge thanks to [@The Retro Stitcher](https://theretrostitcher.com/) for re-designing the mod's temporary icon! (They are also funding the creation of a new icon)
 
 ### Changed
 - **Announcement icon position in Creative Inventory**
@@ -106,6 +108,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   -   Gray hamsters were incorrectly spawning in sandy biomes like deserts, where Cream hamsters are intended to appear.
   -   Added the `c:is_sandy` tag to the Gray variant's exclusion list to prevent this overlap.
   -   **Note:** If you're still seeing Gray hamsters in deserts, navigate to `Spawn Settings > Variant Spawning > Gray Variants > Excluded Tags` in the config menu, right-click the setting, and select "Restore Defaults."
+- **Fixed Uninteractable Hamsters with Force-Mount Keybind**
+  -   Resolved a critical bug where enabling the "Force Shoulder Mount" keybind in the config would prevent all interactions with tamed hamsters.
+  -   This was caused by the server trying to access client-side keybinding code.
+  -   The logic has been refactored to use a network packet, ensuring interactions work correctly regardless of the keybind setting.
+- **Resolved World Gen Config Weirdness**
+  -   Previously, world-gen settings like spawn weights and biome lists were locked on the title screen because they were bundled with other synced server settings, making it impossible to configure them before creating a Singleplayer world.
+  -   The configuration system has been restructured: clicking "Adorable Hamster Pets" in the mod menu now opens a new landing page with two distinct buttons: **"Main Settings"** (gameplay & client options) and **"World Gen Settings"**.
+  -   The new "World Gen Settings" menu uses a special save mode (`SaveType.SEPARATE`), allowing you to freely edit your local defaults for Singleplayer worlds while still respecting server-side overrides when joining a Multiplayer server.
 
 ---
 

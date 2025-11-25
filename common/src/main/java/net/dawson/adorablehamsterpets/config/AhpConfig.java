@@ -31,7 +31,6 @@ import java.util.List;
 
 @Translatable.Name("Main Settings")
 @Translatable.Desc("The command center for rodent-based chaos. Tweak physics, nerf cheese, and generally play god with small furry creatures.")
-
 public class AhpConfig extends Config {
 
     public AhpConfig() {
