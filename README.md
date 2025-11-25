@@ -19,10 +19,10 @@
 <a href="https://youtube.com/shorts/YEBDFItiOXA?si=lgGFLeAcsdrMn7qD">
 <img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/crimsongaming_showcase_thumbnail.png"
      alt="Watch the Adorable Hamster Pets Crimson Gaming Showcase"
-     width="55%">
+     width="61%">
 </a>
 
-# <font color="orange">The most hamster-ish pet mod you've ever seen.</font>
+# <font color="orange">The most useful pet you've ever seen... or at least the bounciest.</font>
 
 That's a bold claim, so allow me to demonstrate. **Adorable Hamster Pets** stuffs Minecraft with pint-sized, jiggly fur-missiles that have a craving for... diamonds.
 
@@ -95,6 +95,13 @@ Does enough damage by default to kill a creeper, which is... really convenient. 
 
 They'll energetically implement hamster kung fu on enemies (yours or theirs). Essentially, they like round-house kicks. Complete with particles effects on their tiny kicking feet!
 
+Note: to record this footage, I increased their health to 200 per hamster in the config. Normally a single hamster wouldn't be able to defeat a Stray on its own (but I'm planning on adding Acorn Armor in the future to help with that!)
+
+<p align="center">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_fighting_stray.gif" alt="A hamster fighting a stray" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamsters_fighting_husks.gif" alt="Hamsters fighting husks" width="48%">
+</p>
+
 ## <font color="teal">Tamed Wander Mode & Hamster Beds ———————————————</font>
 
 Tired of your hamsters treating your feet like a personal jungle gym?
@@ -102,8 +109,8 @@ Tired of your hamsters treating your feet like a personal jungle gym?
 Craft a **Hamster Bed** (available in all vanilla wood flavors, because aesthetics) from some wood planks and **Hamster Bedding**. **Right-click** your tamed hamster with the bed to link them, then place the bed in the world. Boom. Your hamster is now a free-range rodent, happily wandering within a set radius of its new home base.
 
 <p align="center">
- <img src="https://i.imgur.com/BZlWLk8.jpeg" alt="A hamster sleeping in its linked bed." width="48%">
- <img src="https://i.imgur.com/rsq7MJB.jpeg" alt="A hamster sitting near its linked bed." width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_sleeping_in_bed.gif" alt="A hamster sleeping in its linked bed." width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_sitting_near_bed.gif" alt="A hamster sitting near its linked bed." width="48%">
  <img src="https://i.imgur.com/wSuzX0F.jpeg" alt="A hamster sitting near its linked bed." width="96%">
 </p>
 
@@ -216,7 +223,6 @@ My wife's IRL hamster (Sweet Potato) goes nuts for steamed green beans, which of
 
 It's not just faster— it will also gain icreased **Strength, Absorption, and Regeneration,** and instead of standing around idly, it will engage in sporadic, high-speed chaotic sprints in circles around you, leaving a trail of energetic particles in its wake. And when it comes to following you, they no longer go in a straight line— it's more of a "hyperactive escort mission."
 
-
 <p align="center">
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/green_bean_zoomies1.gif" alt="Green Bean Zoomies part 1" width="48%">
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/green_bean_zoomies2.gif" alt="Green Bean Zoomies part 2" width="48%">
@@ -225,6 +231,11 @@ It's not just faster— it will also gain icreased **Strength, Absorption, and R
 ## <font color="teal">Cheek Pouches of Holding —————————————————————</font>
 
 Yes, inventory... *in their face*. Feed them **Hamster Food Mix** once to earn their trust (and cheek access!), then Sneak + Right-click a tamed hamster for 6 slots of prime real estate. No, you can't stuff a Netherite block in there. They'll even automatically scarf down **Hamster Food Mix** from their cheeks if they take a tumble, after a brief, dramatic pause to consider their options. Can't make them *too* overpowered.
+
+<p align="center">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_inventory_gui.png" alt="Hamster inventory GUI" width="29%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_with_full_cheeks.jpg" alt="Hamster with full cheeks" width="65%">
+</p>
 
 ## <font color="teal">Spider/Ravager Psychological Warfare ———————————————</font>
 
