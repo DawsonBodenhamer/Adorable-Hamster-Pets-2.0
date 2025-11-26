@@ -78,6 +78,11 @@ Lure up to three of your tamed hamsters onto your person with the irresistible s
 
 These aren't static decorations; they're fully animated, living shoulder buddies. Thanks to a custom physics simulation, they'll bounce realistically when you jump, float slightly when you fall, and satisfyingly squash back onto your shoulder when you land, complete with unique sound effects. They'll even hunker down and hold on for dear life when you sprint.
 
+<p align="center">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamsters_riding_on_shoulder1.gif" alt="Hamsters riding on players shoulder part 1" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamsters_riding_on_shoulder2.gif" alt="Hamsters riding on players shoulder part 1" width="48%">
+</p>
+
 They're also polite enough to make room for your gear, automatically shifting their position to sit neatly on top of your chestplate instead of clipping through it.
 
 ## <font color="teal">The Hamster Yeet™ ————————————————————————</font>
@@ -313,14 +318,14 @@ Translating technical jargon is hard. Translating "Hamster Yeet" into another la
 
 | Language | Progress | Translators                                                        |
 | :--- | :--- |:-------------------------------------------------------------------|
-| **Chinese Simplified** | 100% | [**@SnowCutieOwO**](https://github.com/SnowCutieOwO)     |
-| **Chinese Traditional** | 100% | [**@創造Creative**](https://portaly.cc/creativeyoo)      |
+| **Chinese Simplified** | 100% | [**@SnowCutieOwO**](https://github.com/SnowCutieOwO) |
+| **Chinese Traditional** | 100% | [**@創造Creative**](https://portaly.cc/creativeyoo) |
 | **Russian** | ~84% | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) |
-| **Spanish** | ~46% | [**@The Retro Stitcher**](https://theretrostitcher.com/)           |
-| **Korean** | ~31% | (Pending credits)                                                  |
-| **Polish** | ~26% | (Pending credits)                                                  |
-| **German** | ~7% | (Pending credits)                                                  |
-| **Japanese** | ~6% | (Pending credits)                                                  |
+| **Spanish** | ~46% | [**@The Retro Stitcher**](https://theretrostitcher.com/) |
+| **Korean** | ~31% | (Pending credits) |
+| **Polish** | ~26% | (Pending credits) |
+| **German** | ~7% | [**@glitchyboy**](https://crowdin.com/profile/glitchyboy) |
+| **Japanese** | ~6% | (Pending credits) |
 
 ### <font color="teal">Collaborators & Conspirators</font>
 
@@ -328,11 +333,11 @@ I'd like to claim I did this all by myself while meditating on a mountain peak, 
 
 | Name                                                               | Contribution                                                                                                                                                                                                                                 |
 |:-------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [**@The Retro Stitcher**](https://theretrostitcher.com/)           | For re-designing the mod's temporary icon!                                                                                                                                                                                                   |
+| [**@The Retro Stitcher**](https://theretrostitcher.com/) | For re-designing the mod's temporary icon!                                                                                                                                                                                                   |
 | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) | For contributing a mountainous number of ideas, helping squash bugs, and assisting with the complex mod compatibility logic (Farmer's Delight, Cultural Delights, Croptopia, Immersive Engineering, and Serene Seasons).                     |
-| [**@fzzyhmstrs**](https://github.com/fzzyhmstrs)                   | For the heroic assistance required to refactor this project to Architectury. Without them, you wouldn't be yeeting hamsters on NeoForge right now.                                                                                           |
-| **@ZeMonkey**                                                      | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support.                                                                                                      |
-| [**@MylesGit**](https://modrinth.com/user/hOL20ANs)                | For the original suggestion of the custom Advancement tree, and creating the template for [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server!                                                                               |
+| [**@fzzyhmstrs**](https://github.com/fzzyhmstrs) | For the heroic assistance required to refactor this project to Architectury. Without them, you wouldn't be yeeting hamsters on NeoForge right now.                                                                                           |
+| **@ZeMonkey**  | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support.                                                                                                      |
+| [**@MylesGit**](https://modrinth.com/user/hOL20ANs) | For the original suggestion of the custom Advancement tree, and creating the template for [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server!                                                                               |
 
 ### <font color="teal">Dependencies</font>
 

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.4.0] - 2025-11-13
 
+# **The Cuteness Overhaul Update**
+
+## Beds, wander mode, new animations, suspiciously advanced leaf physics, and more!
+
+Give your tamed hamsters an actual home with the new Hamster Bed, Wander Mode, and cozy bedding that doubles as a tiny leaf particle generator. Yeeted hamsters are now cuter, more terrifying, and broadcast their sound effects farther, so your friends can fully appreciate incoming fur missiles. Added new animations, updated some existing ones. Under the hood, variant spawning is now fully biome-configurable and a pile of long-suffering bugs—ghost shoulder hamsters, startup crashes, and more—have finally been escorted off the premises.
+
 ### Added
 - **Fully Configurable Biome-Based Variant Spawning System**
   -   The logic determining which hamster color variants spawn in which biomes is no longer hardcoded.
