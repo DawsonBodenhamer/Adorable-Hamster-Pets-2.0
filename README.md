@@ -19,10 +19,10 @@
 <a href="https://youtube.com/shorts/YEBDFItiOXA?si=lgGFLeAcsdrMn7qD">
 <img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/crimsongaming_showcase_thumbnail.png"
      alt="Watch the Adorable Hamster Pets Crimson Gaming Showcase"
-     width="61%">
+     width="55%">
 </a>
 
-# <font color="orange">The most useful pet you've ever seen... or at least the bounciest.</font>
+# <font color="orange">The cutest, most useful pet in Minecraft.</font>
 
 That's a bold claim, so allow me to demonstrate. **Adorable Hamster Pets** stuffs Minecraft with pint-sized, jiggly fur-missiles that have a craving for... diamonds.
 
@@ -79,8 +79,8 @@ Lure up to three of your tamed hamsters onto your person with the irresistible s
 These aren't static decorations; they're fully animated, living shoulder buddies. Thanks to a custom physics simulation, they'll bounce realistically when you jump, float slightly when you fall, and satisfyingly squash back onto your shoulder when you land, complete with unique sound effects. They'll even hunker down and hold on for dear life when you sprint.
 
 <p align="center">
- <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamsters_riding_on_shoulder1.gif" alt="Hamsters riding on players shoulder part 1" width="48%">
- <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamsters_riding_on_shoulder2.gif" alt="Hamsters riding on players shoulder part 1" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamsters_riding_on_shoulder.gif" alt="Hamsters riding on players shoulder" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/shoulder_hamster_smells_diamond_and_creeper.gif" alt="Shoulder hamster smells diamond and creeper" width="48%">
 </p>
 
 They're also polite enough to make room for your gear, automatically shifting their position to sit neatly on top of your chestplate instead of clipping through it.
@@ -119,7 +119,9 @@ Craft a **Hamster Bed** (available in all vanilla wood flavors, because aestheti
  <img src="https://i.imgur.com/wSuzX0F.jpeg" alt="A hamster sitting near its linked bed." width="96%">
 </p>
 
-Need to adjust the settings? Interact with the bed:
+<details>
+  <summary>Wander Mode Bed Interaction Details</summary>
+
 *   **Right-click:** Toggles Wander Mode on/off. For when you need a break from the constant, ankle adoration.
 *   **Sneak + Right-click:** Cycles through the wander distance (Near, Medium, Far). All configurable, of course.
 *   **Right-click with Cheese:** Lures your hamster to its bed for a nap. Useful for when you need it to stay put for a while.
@@ -130,6 +132,8 @@ By default, your now-independent hamster will dutifully toddle off to its bed fo
 
 P.S. - Don't place the bed upside down. Just don't do it.
 
+</details>
+
 ## <font color="teal">Furry Diamond Prospecting ————————————————————</font>
 
 So, your shoulder-mounted furball just made a series of excited squeaks and sniffs, hinting at nearby diamonds? Excellent. Now for the fun part. Dismount your tiny prospector. If it was indeed onto something shiny, it might just take matters into its own feet.
@@ -138,11 +142,14 @@ Watch as it attempts to lead you to the alleged riches, complete with sniffing a
 
 If its path is blocked, it'll wait patiently (or impatiently, it's hard to tell), hoping you'll clear the way. Upon reaching its target, it'll celebrate with cool particle effects and a chorus of happy bounces (with sound!).
 
+<p align="center">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_finds_diamonds.gif" alt="Shoulder hamster finds diamonds" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_finds_gold.gif" alt="Shoulder hamster finds gold" width="48%">
+</p>
+
 But be warned: sometimes, in their eagerness, these little geologists might get a tad confused about what exactly constitutes a "valuable shiny rock." If it unearths something... less diamond-y and more... not-quite-diamond-ish... prepare for a dramatic sulk, complete with its own unique animation, sound effects, and a display of utter disappointment. A quick pat should snap it out of its angst.
 
 This whole ore-seeking escapade is, of course, configurable.
-
-![Diamond Sniffing](https://i.imgur.com/mF7L8ph.jpeg)
 
 ## <font color="teal">Item Stealing & The Game of Tag ——————————————————</font>
 
@@ -174,8 +181,8 @@ Hamsters found shivering in snowy plains look different from those basking in de
   <img src="https://i.imgur.com/lHl4sAx.jpeg" alt="Biome Variants & Genetics" width="98%">
 </p>
 
-### <font color="teal">A Field Guide to Hamster Habitats</font>
 <details>
+  <summary>A Field Guide to Hamster Habitats</summary>
 
 *   **Orange & Cream:** The most common type, often found sunning themselves in Plains, Savannas, Deserts, and non-frigid Beaches. Badlands also seem to attract the Orange ones.
 *   **Chocolate:** Prefers the shaded canopy of Forests and non-snowy Taigas (excluding Cherry Groves, those are special).
@@ -185,12 +192,26 @@ Hamsters found shivering in snowy plains look different from those basking in de
 *   **Blue:** A master of glacial camouflage. This rare variant's cool, blue-tinted fur is an uncanny match for the shimmering ice and packed snow of the most frigid landscapes. While vary rare in the default game, (only spawns in Ice Spikes), its love for ice means it might also be spotted in other crystalline wonderlands added by mods.
 *   **Lavender:** Less about survival and more about style, this variant's dusty purple coat is a perfect match for the fantastical flora of magical biomes. Look for them amidst the pink petals of Cherry Groves and the strange hues of Mushroom Fields. Their preference for the peculiar means you might also find them in other enchanted forests or mystical groves added by mods.
 
-</details>
-
 ### <font color="teal">Future Plans </font>
 *   Dark fur patches
 *   Additional model shapes and sizes (shoulder mounting needs to be considered)
 *   Join **[The Cheek Pouch](https://discord.gg/w54mk5bqdf)** Discord server if you have your own ideas! I'm all ears.
+
+</details>
+
+## <font color="teal">Cheek Pouches of Holding —————————————————————</font>
+
+Yes, inventory... *in their face*. Feed them **Hamster Food Mix** once to earn their trust (and cheek access!), then Sneak + Right-click a tamed hamster for 6 slots of prime real estate. No, you can't stuff a Netherite block in there. They'll even automatically scarf down **Hamster Food Mix** from their cheeks if they take a tumble, after a brief, dramatic pause to consider their options. Can't make them *too* overpowered.
+
+<p align="center">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_inventory_gui.png" alt="Hamster inventory GUI" width="29%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_with_full_cheeks.jpg" alt="Hamster with full cheeks" width="65%">
+</p>
+
+## <font color="teal">Spider/Ravager Psychological Warfare ———————————————</font>
+
+**Ravagers** and **Spiders** are utterly terrified of hamsters. The sight of a tiny ball of fluff will send these menaces fleeing in the opposite direction. Why? Don't ask questions you don't want the answer to. This behavior is, of course, fully configurable if you feel the local monster population isn't suffering enough existential dread.
+
 
 ## <font color="teal">New Questionable Flora ——————————————————————</font>
 
@@ -232,19 +253,6 @@ It's not just faster— it will also gain icreased **Strength, Absorption, and R
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/green_bean_zoomies1.gif" alt="Green Bean Zoomies part 1" width="48%">
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/green_bean_zoomies2.gif" alt="Green Bean Zoomies part 2" width="48%">
 </p>
-
-## <font color="teal">Cheek Pouches of Holding —————————————————————</font>
-
-Yes, inventory... *in their face*. Feed them **Hamster Food Mix** once to earn their trust (and cheek access!), then Sneak + Right-click a tamed hamster for 6 slots of prime real estate. No, you can't stuff a Netherite block in there. They'll even automatically scarf down **Hamster Food Mix** from their cheeks if they take a tumble, after a brief, dramatic pause to consider their options. Can't make them *too* overpowered.
-
-<p align="center">
- <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_inventory_gui.png" alt="Hamster inventory GUI" width="29%">
- <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_with_full_cheeks.jpg" alt="Hamster with full cheeks" width="65%">
-</p>
-
-## <font color="teal">Spider/Ravager Psychological Warfare ———————————————</font>
-
-**Ravagers** and **Spiders** are utterly terrified of hamsters. The sight of a tiny ball of fluff will send these menaces fleeing in the opposite direction. Why? Don't ask questions you don't want the answer to. This behavior is, of course, fully configurable if you feel the local monster population isn't suffering enough existential dread.
 
 ## <font color="teal">Artisanal Floor Mulch (Hamster Bedding) ——————————————</font>
 
