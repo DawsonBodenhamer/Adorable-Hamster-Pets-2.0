@@ -30,7 +30,7 @@ Perfect for anyone who surveys their diamond-encrusted empire and mutters, “Ne
 
 These hamsters like to bounce, shoulder-surf, hoard snacks, sniff for things, and moonlight as throwable projectiles, all while adding maximum charm and helping with your inventory clutter. Tame, feed, or yeet at will; (ethics optional).
 
-<br> <p> <img src="https://i.imgur.com/UQ670Uh.png" alt="Adorable Hamster Pets Features" width="100%"/> </p>
+<br> <p> <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_features_banner.png" alt="Adorable Hamster Pets Features" width="100%"/> </p>
 
 # <font color="orange">TL;DR Features, for the Impatient</font>
 
@@ -54,10 +54,10 @@ These hamsters like to bounce, shoulder-surf, hoard snacks, sniff for things, an
 
 # <font color="orange">Or If You Prefer Juicy Details</font>
 
-## <font color="teal">The Basics, But Cuter ———————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_basics_but_cuter.png" alt="The Basics, But Cuter" width="100%"></p>
 
 - **Taming & Sitting**
-  - Bribe them with enough Sliced Cucumber, and they'll follow you like a furry, ankle-biting shadow. Right-click to make them sit, lest they develop a sudden fascination with the nearest lava pool. Again. (Jk I actually coded them to be terrified of lava and water)
+    - Bribe them with enough Sliced Cucumber, and they'll follow you like a furry, ankle-biting shadow. Right-click to make them sit, lest they develop a sudden fascination with the nearest lava pool. Again. (Jk I actually coded them to be terrified of lava and water)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_begging.gif" alt="Hamster begging" width="48%">
@@ -65,14 +65,14 @@ These hamsters like to bounce, shoulder-surf, hoard snacks, sniff for things, an
 </p>
 
 - **Advanced Napping Protocols**
-  - Tamed hamsters, when left sitting, might just decide it's naptime. Watch as they gradually drift off through an elaborate "Path to Slumber" sequence, complete with unique animations for dozing, settling, and several adorable deep sleep poses. This dedication to slumber is, of course, configurable. 
+    - Tamed hamsters, when left sitting, might just decide it's naptime. Watch as they gradually drift off through an elaborate "Path to Slumber" sequence, complete with unique animations for dozing, settling, and several adorable deep sleep poses. This dedication to slumber is, of course, configurable.
 
 - **Unique Animation Personalities**
-  - Not all hamsters are created equal. Upon birth, each hamster is assigned one of three "personalities," which determines the specific sitting and dozing off animations it will use for its entire life. One might be a prim and proper sitter, while another is a bit more of a sloucher. It's a small touch to make your specific furry companion feel even more unique.
+    - Not all hamsters are created equal. Upon birth, each hamster is assigned one of three "personalities," which determines the specific sitting and dozing off animations it will use for its entire life. One might be a prim and proper sitter, while another is a bit more of a sloucher. It's a small touch to make your specific furry companion feel even more unique.
 
 - ### I have many more plans for more QOL features like these! 👆🏼👆🏼
 
-## <font color="teal">Shoulder Surfing— with *Perks* ———————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_shoulder_surfing_with_perks.png" alt="Shoulder Surfing— with *Perks*" width="100%"></p>
 
 Lure up to three of your tamed hamsters onto your person with the irresistible siren call of Cheese. They'll offer helpful alerts about nearby threats and possibly valuable shiny rocks. They're smart enough to find the next available perch—one for each shoulder, and yes, one for your head.
 
@@ -85,7 +85,7 @@ These aren't static decorations; they're fully animated, living shoulder buddies
 
 They're also polite enough to make room for your gear, automatically shifting their position to sit neatly on top of your chestplate instead of clipping through it.
 
-## <font color="teal">The Hamster Yeet™ ————————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_hamster_yeet.png" alt="The Hamster Yeet™" width="100%"></p>
 
 For when words fail and you need a furry, surprisingly aerodynamic solution— press **'G'** (by default - check your keybinds if you're just flailing your arms) while *not* staring intently at a block. Behold as your shoulder companion becomes a surprisingly effective, albeit concussed, projectile. Includes satisfying particle trail, impact sound effects, and flight sounds that change pitch as it flies— the [**Doppler Effect**](https://en.wikipedia.org/wiki/Doppler_effect)!
 
@@ -96,7 +96,7 @@ For when words fail and you need a furry, surprisingly aerodynamic solution— p
 
 Does enough damage by default to kill a creeper, which is... really convenient. Gentle interaction (a pat, a click, whatever) required for post-impact recovery.
 
-## <font color="teal">Hamster Kung Fu Techniques ———————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_hamster_kung_fu_techniques.png" alt="Hamster Kung Fu Techniques" width="100%"></p>
 
 They'll energetically implement hamster kung fu on enemies (yours or theirs). Essentially, they like round-house kicks. Complete with particles effects on their tiny kicking feet!
 
@@ -107,7 +107,7 @@ Note: to record this footage, I increased their health to 200 per hamster in the
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamsters_fighting_husks.gif" alt="Hamsters fighting husks" width="48%">
 </p>
 
-## <font color="teal">Tamed Wander Mode & Hamster Beds ———————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_wander_mode_hamster_beds.png" alt="Tamed Wander Mode & Hamster Beds" width="100%"></p>
 
 Tired of your hamsters treating your feet like a personal jungle gym?
 
@@ -134,7 +134,7 @@ P.S. - Don't place the bed upside down. Just don't do it.
 
 </details>
 
-## <font color="teal">Furry Diamond Prospecting ————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_furry_diamond_prospecting.png" alt="Furry Diamond Prospecting" width="100%"></p>
 
 So, your shoulder-mounted furball just made a series of excited squeaks and sniffs, hinting at nearby diamonds? Excellent. Now for the fun part. Dismount your tiny prospector. If it was indeed onto something shiny, it might just take matters into its own feet.
 
@@ -151,7 +151,7 @@ But be warned: sometimes, in their eagerness, these little geologists might get 
 
 This whole ore-seeking escapade is, of course, configurable.
 
-## <font color="teal">Item Stealing & The Game of Tag ——————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_item_stealing_the_game_of_tag.png" alt="Item Stealing & The Game of Tag" width="100%"></p>
 
 Your hamster's love for shiny things may have evolved into full-blown kleptomania. If you carelessly leave valuable items (like, say, diamonds) on the ground, your tamed companion might just decide it's time for a game.
 
@@ -164,7 +164,7 @@ The only way to retrieve your property is to catch the furry thief and right-cli
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/item_stealing2.gif" alt="Item Stealing part 2" width="48%">
 </p>
 
-## <font color="teal">Biome Variants & Genetics —————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_biome_variants_genetics.png" alt="Biome Variants & Genetics" width="100%"></p>
 
 Got a heavily modded world? Good news— my spawning system is set up to be incredibly compatible with world-gen mods like Terralith and Biomes O' Plenty right out of the box. Don't like the defaults? Fine. The system is also fully configurable, allowing you to define exactly where hamsters and plants should (or shouldn't) appear using biome IDs and a wide range of biome tags. Your world, your rules.
 
@@ -199,7 +199,7 @@ Hamsters found shivering in snowy plains look different from those basking in de
 
 </details>
 
-## <font color="teal">Cheek Pouches of Holding —————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_cheek_pouches_of_holding.png" alt="Cheek Pouches of Holding" width="100%"></p>
 
 Yes, inventory... *in their face*. Feed them **Hamster Food Mix** once to earn their trust (and cheek access!), then Sneak + Right-click a tamed hamster for 6 slots of prime real estate. No, you can't stuff a Netherite block in there. They'll even automatically scarf down **Hamster Food Mix** from their cheeks if they take a tumble, after a brief, dramatic pause to consider their options. Can't make them *too* overpowered.
 
@@ -208,12 +208,16 @@ Yes, inventory... *in their face*. Feed them **Hamster Food Mix** once to earn t
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_with_full_cheeks.jpg" alt="Hamster with full cheeks" width="65%">
 </p>
 
-## <font color="teal">Spider/Ravager Psychological Warfare ———————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_spider_ravager_psych_warfare.png" alt="Spider/Ravager Psychological Warfare" width="100%"></p>
 
 **Ravagers** and **Spiders** are utterly terrified of hamsters. The sight of a tiny ball of fluff will send these menaces fleeing in the opposite direction. Why? Don't ask questions you don't want the answer to. This behavior is, of course, fully configurable if you feel the local monster population isn't suffering enough existential dread.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/spiders_fleeing_from_hamsters.gif" alt="Spiders fleeing from hamsters" width="48%">
+  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ravager_fleeing_from_hamsters.gif" alt="Ravager fleeing from hamsters" width="48%">
+</p>
 
-## <font color="teal">New Questionable Flora ——————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_new_questionable_flora.png" alt="New Questionable Flora" width="100%"></p>
 
 *   **Wild Cucumber Bushes:** These crunchy snacks prefer a tan. By default, you'll find them lurking in **Plains, Savannas, Forests, and Jungles**. Basically, if it’s warm and dry-ish, there’s probably a cucumber waiting to be found. Right-click the seeded ones for seeds. If you are living in a modded world with totally weird biomes, you can fully customize their spawning in the config, geography be hanged.
 <p align="center">
@@ -234,7 +238,7 @@ Yes, inventory... *in their face*. Feed them **Hamster Food Mix** once to earn t
  <img src="https://i.imgur.com/LJmPjlo.jpeg" alt="Sunflower Seeds" width="48%">
 </p>
 
-## <font color="teal">Exciting New Foodstuffs ——————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_exciting_new_foodstuffs.png" alt="Exciting New Foodstuffs" width="100%"></p>
 
 <img align="right" src="https://i.imgur.com/VUrQDWD.png" alt="Items: cucumber, sliced cucumber, green beans, steamed green beans, hamster food mix, cheese" width="60%">
 
@@ -243,7 +247,7 @@ Yes, inventory... *in their face*. Feed them **Hamster Food Mix** once to earn t
 *   **Hamster Food Mix:** Allegedly gourmet. Heals well, bypasses their irritating pickiness, and is the key to unlocking their cheek pouches. Craft it. Or don't. Your hamster, your problem.
 *   **Cheese:** Not only can it lure hamsters onto your shoulder, it's player-edible. Surprisingly nutritious (think cooked porkchop levels) and you can scarf it down about 30% faster than most foods. The only catch? The... *distinctively moist* eating sound. Consider it an acquired taste. Its nutritional value is fully configurable, for those of you who felt cheese was somehow "unbalanced." Plebs.
 
-## <font color="teal">Steamed Green Bean Zoomies ———————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_steamed_green_bean_zoomies.png" alt="Steamed Green Bean Zoomies" width="100%"></p>
 
 My wife's IRL hamster (Sweet Potato) goes nuts for steamed green beans, which of course inspired this feature. Feed your hamster Steamed Green Beans, and it will enter a state of pure, unadulterated zoomies.
 
@@ -254,7 +258,7 @@ It's not just faster— it will also gain icreased **Strength, Absorption, and R
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/green_bean_zoomies2.gif" alt="Green Bean Zoomies part 2" width="48%">
 </p>
 
-## <font color="teal">Artisanal Floor Mulch (Hamster Bedding) ——————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_artisanal_floor_mulch.png" alt="Artisanal Floor Mulch (Hamster Bedding)" width="100%"></p>
 
 This humble pile of leaves and twigs, officially known as **Hamster Bedding**, is the cornerstone of hamster interior design. You'll need it to craft the aforementioned **Hamster Beds**.
 
@@ -270,7 +274,7 @@ It's deeply unnecessary, and I'm incredibly satisfied with it.
 
 P.S. - Remember, don't place your hamster bed upside down. Don't even think about it.
 
-## <font color="teal">Custom Hamster Accessories ———————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_custom_hamster_accessories.png" alt="Custom Hamster Accessories" width="100%"></p>
 
 Found some **Pink Petals**? Right-click your tamed hamster to bestow upon it a stylish floral accessory. Not feeling that particular look? Click again with petals to cycle through a few options. Regret your decision entirely? A quick snip with **Shears** will undo your fashionable folly (and you even get the petal back, because I'm nice like that).
 
@@ -289,7 +293,7 @@ The current accessory collection is... sparse, but the hamster haberdashery is j
 
 These are subject to change! Got a genius idea for the next hamster accessory that absolutely needs to exist? Think you've designed the perfect tiny helmet? Bring your brilliant, weird, and wonderful ideas to **[The Cheek Pouch](https://discord.gg/w54mk5bqdf)** Discord Server. Make sure you select **"Share Your Genius"** in the screening questions to get the `@Idea Generator` role, and then unleash your creativity in the suggestions channel.
 
-## <font color="teal">The Hamster Tips Guide Book ———————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_hamster_tips_guide_book.png" alt="The Hamster Tips Guide Book" width="100%"></p>
 
 You get one automatically the first time you join a world (unless you turned that off in the config, you rebel). It contains *hints*. Read it. Or use it as kindling. See if I care. Lost it? Craft another with a Book and some Sliced Cucumber. Don't ask why Sliced Cucumber. It's a long story.
 
@@ -302,7 +306,7 @@ You get one automatically the first time you join a world (unless you turned tha
   <img src="https://i.imgur.com/mIWfT5t.jpeg" alt="The Hamster Tips Guide Book screenshot" width="32%">
 </p>
 
-## <font color="teal">Immersive Advancements —————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_immersive_advancements.png" alt="Immersive Advancements" width="100%"></p>
 
 <img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/immersive_advancements.png" alt="Immersive Advancements" width="60%">
 
@@ -314,7 +318,7 @@ If you follow the advancements, you'll naturally discover most features in the m
 
 Big thanks to [**@MylesGit**](https://modrinth.com/user/hOL20ANs) for the original advancement tree suggestion!
 
-## <font color="teal">The Hall of Fame —————————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_hall_of_fame.png" alt="The Hall of Fame" width="100%"></p>
 
 Want to see your name etched into this digital monument? Whether you want to help translate my nonsense, fix bugs, or suggest the next great hamster accessory, join **[The Cheek Pouch](https://discord.gg/w54mk5bqdf)** Discord server! (If you've helped in the past and I forgot to list you, please come yell at me there. There's a lot to keep track of here.)
 
@@ -324,11 +328,11 @@ Translating technical jargon is hard. Translating "Hamster Yeet" into another la
 
 [![Crowdin Translations](https://img.shields.io/badge/crowdin-Adorable_Hamster_Pets-orange?color=c37301&label=crowdin&logo=crowdin&style=for-the-badge)](https://crowdin.com/project/adorable-hamster-pets/invite?h=f0c9693f50d4006be56b7ea9115fc2672501384)
 
-| Language | Progress | Translators                                                        |
-| :--- | :--- |:-------------------------------------------------------------------|
+| Language | Progress | Translators |
+| :--- |:----------|:-------------------------------------------------------------------|
 | **Chinese Simplified** | 100% | [**@SnowCutieOwO**](https://github.com/SnowCutieOwO) |
 | **Chinese Traditional** | 100% | [**@創造Creative**](https://portaly.cc/creativeyoo) |
-| **Russian** | ~84% | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) |
+| **Russian** | 100% | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) |
 | **Spanish** | ~46% | [**@The Retro Stitcher**](https://theretrostitcher.com/) |
 | **Korean** | ~31% | (Pending credits) |
 | **Polish** | ~26% | (Pending credits) |
@@ -339,30 +343,30 @@ Translating technical jargon is hard. Translating "Hamster Yeet" into another la
 
 I'd like to claim I did this all by myself while meditating on a mountain peak, but that would be a lie. These fine folks helped suggest features, fix bugs, and generally kept the mod from imploding.
 
-| Name                                                               | Contribution                                                                                                                                                                                                                                 |
-|:-------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [**@The Retro Stitcher**](https://theretrostitcher.com/) | For re-designing the mod's temporary icon!                                                                                                                                                                                                   |
-| [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) | For contributing a mountainous number of ideas, helping squash bugs, and assisting with the complex mod compatibility logic (Farmer's Delight, Cultural Delights, Croptopia, Immersive Engineering, and Serene Seasons).                     |
-| [**@fzzyhmstrs**](https://github.com/fzzyhmstrs) | For the heroic assistance required to refactor this project to Architectury. Without them, you wouldn't be yeeting hamsters on NeoForge right now.                                                                                           |
-| **@ZeMonkey**  | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support.                                                                                                      |
-| [**@MylesGit**](https://modrinth.com/user/hOL20ANs) | For the original suggestion of the custom Advancement tree, and creating the template for [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server!                                                                               |
+| Name | Contribution |
+|:-------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [**@The Retro Stitcher**](https://theretrostitcher.com/) | For re-designing the mod's icon! |
+| [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) | For contributing a mountainous number of ideas, helping squash bugs, and assisting with the complex mod compatibility logic (Farmer's Delight, Cultural Delights, Croptopia, Immersive Engineering, and Serene Seasons). |
+| [**@fzzyhmstrs**](https://github.com/fzzyhmstrs) | For the heroic assistance required to refactor this project to Architectury. Without them, you wouldn't be yeeting hamsters on NeoForge right now. |
+| **@ZeMonkey** | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support. |
+| [**@MylesGit**](https://modrinth.com/user/hOL20ANs) | For the original suggestion of the custom Advancement tree, and creating the template for [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server! |
 
 ### <font color="teal">Dependencies</font>
 
 This mod stands on the shoulders of giants. Or rather, it stands on top of giant code libraries that do all the hard math for me so I can focus on making round things bounce.
 
-| Library | Status | Platform | The Cool Stuff                                                                                                                                                                                                                                                                           |
+| Library | Status | Platform | The Cool Stuff |
 | :--- | :--- | :--- |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [**Architectury API**](https://modrinth.com/mod/architectury-api) | **Required** | Both | The universal translator that lets this mod exist on Fabric and NeoForge simultaneously without me losing my mind. Licensed under [LGPL v3](https://www.gnu.org/licenses/lgpl-3.0).                                                                                                      |
-| [**GeckoLib**](https://modrinth.com/mod/geckolib) | **Required** | Both | The animation engine powering every wiggle, jiggle, and even that shapely pile of leaves in the hamster beds. Without it, everything would be sad, boring cubes. Licensed under [MIT](https://opensource.org/licenses/MIT).                                                              |
-| [**Fzzy Config**](https://modrinth.com/mod/fzzy-config) | **Required** | Both | Provides a *super fancy* in-game config screen that lets you play god with basically every aspect of the mod. Licensed under [TDL M](https://github.com/fzzyhmstrs/Timefall-Development-Licence-Modified).                                                                               |
-| [**Patchouli**](https://modrinth.com/mod/patchouli) | **Required** | Both | Powers the *Hamster Tips* guide book. Because coding a custom book UI from scratch sounds like a nightmare I'd rather avoid. Licensed under [CC-BY-NC-SA-3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/).                             |
-| [**Fabric Language Kotlin**](https://modrinth.com/mod/fabric-language-kotlin) | **Required** | Fabric | Fabric's preferred brand of Kotlin. Required because Fzzy Config speaks fluent Kotlin. Licensed under [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0).                                                                                                                         |
-| [**Kotlin for Forge**](https://modrinth.com/mod/kotlin-for-forge) | **Required** | NeoForge | The NeoForge flavor of the above. Same deal—Fzzy Config needs it to render those fancy menus. Licensed under [LGPL-2.1-only](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html#SEC1).                                                                                           |
-| [**Jade**](https://modrinth.com/mod/jade) | Optional | Both | Shows helpful tooltips (like "What wild bush is this?"). I added custom integration so you can see hamster stats, bed stats, and everything else. Highly recommended unless you enjoy guessing. Licensed under [CC-BY-NC-SA-4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).    |
-| [**Mod Menu**](https://modrinth.com/mod/modmenu) | Optional | Fabric | Adds the "Mods" button to the menu so you can actually *reach* the config screen on Fabric. NeoForge has this built-in, because they like buttons. Licensed under [MIT](https://opensource.org/licenses/MIT).                                                                            |
+| [**Architectury API**](https://modrinth.com/mod/architectury-api) | **Required** | Both | The universal translator that lets this mod exist on Fabric and NeoForge simultaneously without me losing my mind. Licensed under [LGPL v3](https://www.gnu.org/licenses/lgpl-3.0). |
+| [**GeckoLib**](https://modrinth.com/mod/geckolib) | **Required** | Both | The animation engine powering every wiggle, jiggle, and even that shapely pile of leaves in the hamster beds. Without it, everything would be sad, boring cubes. Licensed under [MIT](https://opensource.org/licenses/MIT). |
+| [**Fzzy Config**](https://modrinth.com/mod/fzzy-config) | **Required** | Both | Provides a *super fancy* in-game config screen that lets you play god with basically every aspect of the mod. Licensed under [TDL M](https://github.com/fzzyhmstrs/Timefall-Development-Licence-Modified). |
+| [**Patchouli**](https://modrinth.com/mod/patchouli) | **Required** | Both | Powers the *Hamster Tips* guide book. Because coding a custom book UI from scratch sounds like a nightmare I'd rather avoid. Licensed under [CC-BY-NC-SA-3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/). |
+| [**Fabric Language Kotlin**](https://modrinth.com/mod/fabric-language-kotlin) | **Required** | Fabric | Fabric's preferred brand of Kotlin. Required because Fzzy Config speaks fluent Kotlin. Licensed under [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0). |
+| [**Kotlin for Forge**](https://modrinth.com/mod/kotlin-for-forge) | **Required** | NeoForge | The NeoForge flavor of the above. Same deal—Fzzy Config needs it to render those fancy menus. Licensed under [LGPL-2.1-only](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html#SEC1). |
+| [**Jade**](https://modrinth.com/mod/jade) | Optional | Both | Shows helpful tooltips (like "What wild bush is this?"). I added custom integration so you can see hamster stats, bed stats, and everything else. Highly recommended unless you enjoy guessing. Licensed under [CC-BY-NC-SA-4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). |
+| [**Mod Menu**](https://modrinth.com/mod/modmenu) | Optional | Fabric | Adds the "Mods" button to the menu so you can actually *reach* the config screen on Fabric. NeoForge has this built-in, because they like buttons. Licensed under [MIT](https://opensource.org/licenses/MIT). |
 
-## <font color="teal">Getting Started  ——————————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_getting_started.png" alt="Getting Started" width="100%"></p>
 
 1.  **Go Outside:** Wander aimlessly through Plains, Savannas, Forests, Swamps, etc., until you trip over **Wild Cucumber Bushes** or **Wild Green Bean Bushes**. Right-click the ones that look like they have seeds. Collect said seeds.
 2.  **Pretend to Farm:** Plant seeds on farmland. Wait. Harvest. Try not to starve while waiting for virtual vegetables.
@@ -370,16 +374,16 @@ This mod stands on the shoulders of giants. Or rather, it stands on top of giant
 4.  **Attempt Taming:** Find a wild hamster. **Sneak**. Hold **Sliced Cucumber**. Approach like you're diffusing a tiny, furry bomb. Click. Repeat until successful or rage-quit.
 5.  **Basic Hamster Operations:** Right-click to sit/stand. Sneak + Right-click for cheek inventory access (after feeding Food Mix!). Wave Cheese around to shoulder-mount. By default, you crouch to dismount, or Press 'G' to dismount... *rapidly*. However, the whole dismounting process is highly configurable. You can choose between a single or double tap, and also set a custom keybind if you like.
 
-## <font color="teal">How to Contact Me ————————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_how_to_contact_me.png" alt="How to Contact Me" width="100%"></p>
 
 Alright, let's be real. Sometimes things break. Sometimes hamsters exhibit behavior that even *I* can't explain (looking at you, hamster #37, who tried to eat a sign). And sometimes you, my friend, might have a stroke of genius that could elevate this mod from "questionably charming" to "quite good."
 
 Whether it's your genius ideas, or my not-so-genius mistakes, please tell me all about it! Knowing about either one just makes the mod all that much better. Here's how to get in touch.
 
-*   **[The Cheek Pouch](https://discord.gg/w54mk5bqdf)** (official Discord server):  This is the hub. Report bugs, suggest features, or just post pictures of your hamster judging your cheese selection. Running a server or modpack? We have channels to advertise it. Looking for a server? We have channels to find one. Need to hire talent or looking for work? We have forums for that. Come hang out— it's organized chaos, and you're invited.
+*   **[The Cheek Pouch](https://discord.gg/w54mk5bqdf)** (official Discord server): This is the hub. Report bugs, suggest features, or just post pictures of your hamster judging your cheese selection. Running a server or modpack? We have channels to advertise it. Looking for a server? We have channels to find one. Need to hire talent or looking for work? We have forums for that. Come hang out— it's organized chaos, and you're invited.
 *   **[GitHub Issues Page](https://github.com/DawsonBodenhamer/AdorableHamsterPets-Public/issues):** If you're allergic to Discord, there's this. I do check it, but not very often.
 
-## <font color="teal">Bug Reporting Etiquette (Please, I Beg You): ————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_bug_reporting_etiquette.png" alt="Bug Reporting Etiquette (Please, I Beg You):" width="100%"></p>
 
 If you're reporting a bug, to save both our sanities, try to include:
 
@@ -400,7 +404,7 @@ The more info you give, the less I have to guess, and the faster things might ge
 
 Fun fact: I've already implemented new features like the custom advancement tree and config toggles for the hamster guidebook based on suggestions from my GitHub! We move quick around here.
 
-## <font color="teal">Configuration & Mod Pack Compatibility ——————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_configuration_mod_pack_compat.png" alt="Configuration & Mod Pack Compatibility" width="100%"></p>
 
 ### <font color="teal">Total Control</font>
 Uses [**Fzzy Config**](https://modrinth.com/mod/fzzy-config) for configuration. If you have Mod Menu, click the button. If not, venture into the `config/adorablehamsterpets` folder and edit `main.toml` by hand like some kind of digital caveman.
@@ -422,7 +426,7 @@ Thanks to some glorious assistance from [**@CasualAnimalEnjoyer**](https://githu
 ### <font color="teal">Immersion, Because I'm Fancy Like That</font>
 Don't like that your hamsters can be mounted with cheese so you changed it to diamonds in the config? Good news—the sound effects and particle systems are smart enough to keep up. When you mount your hamster, it won't make a "squish" sound anymore; it'll make a satisfying "clink" and sparkle with diamond particles. This dynamic system applies to several interactions, ensuring the audio and visual feedback always matches your custom configuration. Because details. 💅🏼 (Even works with custom modded items!)
 
-## <font color="teal">Loader & Version Support —————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_loader_version_support.png" alt="Loader & Version Support" width="100%"></p>
 
 The dark days of unofficial workarounds and digital duct tape are ancient history. As of version 2.3.0, this mod officially supports:
 *   **Fabric**
@@ -437,7 +441,7 @@ Actually just kidding about the heroic caffeine-fueled part. It was more like te
 ### **"What About More Minecraft Versions?"**
 Yes, that's the plan. Once I get the mod out of beta, the goal is to keep it updated for the latest versions of Minecraft while continuing to support 1.20.1. Your hamster army's temporal conquest is inevitable. I do have quite a few more features I want to add before the full release though, so don't hold your breath. Definitely join **[The Cheek Pouch](https://discord.gg/w54mk5bqdf)** Discord server to keep up with progress!
 
-## <font color="teal">Installation ————————————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_installation_guide.png" alt="Installation" width="100%"></p>
 
 1.  Install Fabric Loader if you haven't already.
 2.  Install Fabric API, Geckolib.
@@ -446,7 +450,7 @@ Yes, that's the plan. Once I get the mod out of beta, the goal is to keep it upd
 5.  Launch Minecraft. Brace yourself.
 6.  Briefly question the series of events that led you to installing a mod primarily focused on hamsters.
 
-## <font color="teal">Future Plans ———————————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_some_of_the_future_plans.png" alt="Future Plans" width="100%"></p>
 
 The hamster wheel of "progress" never truly stops. Here's a peek at what might be scurrying out of the development pipeline, eventually:
 
@@ -459,7 +463,7 @@ The hamster wheel of "progress" never truly stops. Here's a peek at what might b
 
 Got a genius idea for the next feature that absolutely needs to exist? Bring your brilliant, weird, and wonderful ideas to **[The Cheek Pouch](https://discord.gg/w54mk5bqdf)** Discord Server. Make sure you select **"Share Your Genius"** in the screening questions to get the `@Idea Generator` role, and then unleash your creativity in the suggestions channel.
 
-## <font color="teal">License Info ————————————————————————————</font>
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_custom_license_info.png" alt="License Info" width="100%"></p>
 
 [![Asset license (Unlicensed)](https://img.shields.io/badge/Asssets_License-All_Rights_Reserved-orange?color=005454&label=Assets_License&logo=&style=for-the-badge)](https://github.com/DawsonBodenhamer/AdorableHamsterPets-Source/blob/develop/ASSETS_LICENSE.txt)
 [![Code license (LGPL v3.0)](https://img.shields.io/badge/Code_License-LGPL%20v3.0-orange?color=005454&label=Code_License&logo=&style=for-the-badge)](https://github.com/DawsonBodenhamer/AdorableHamsterPets-Source/blob/develop/LICENSE.txt)

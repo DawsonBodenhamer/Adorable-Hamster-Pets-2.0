@@ -70,7 +70,7 @@ Give your tamed hamsters an actual home with the new Hamster Bed, Wander Mode, a
   - **Serene Seasons:** Cucumber and Green Bean crops now have defined growing seasons and will bloom accordingly.
   - **Tech Mods:** Added support for growing Cucumber and Green Bean crops in the **Immersive Engineering** Garden Cloche and the **Thermal Expansion** Phytogenic Insolator.
 - **New Mod Icon**
-  -   Huge thanks to [@The Retro Stitcher](https://theretrostitcher.com/) for re-designing the mod's temporary icon! (They are also funding the creation of a new icon)
+  -   Huge thanks to [@The Retro Stitcher](https://theretrostitcher.com/) for re-designing the mod's icon!
 
 ### Changed
 - **Announcement icon position in Creative Inventory**
