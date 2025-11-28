@@ -25,7 +25,13 @@ public class PatchouliIntegration {
         // Check if the entry is already in the list before adding
         if (!data.viewedEntries.contains(entryId)) {
             data.viewedEntries.add(entryId);
-            entry.markReadStateDirty();
+
+            // If the book doesn't exist yet on the title screen, save the
+            // data to the file, but don't try to refresh the book UI
+            if (entry.getCategory() != null) {
+                entry.markReadStateDirty();
+            }
+
             PersistentData.save();
             AdorableHamsterPets.LOGGER.debug("[Announcements] Marked Patchouli entry '{}' as read.", entryId);
         }
