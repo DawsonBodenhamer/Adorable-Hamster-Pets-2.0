@@ -128,7 +128,7 @@ public class AhpConfig extends Config {
 
     @NonSync
     @Translatable.Name("Auto Guidebook Delivery")
-    @Translatable.Desc("Hand-delivers the sacred texts on first login. Read it—or don’t. I'm not your conscience.")
+    @Translatable.Desc("Hand-delivers the sacred texts on first login. Read it— or don’t. I'm not your conscience.")
     public boolean enableAutoGuidebookDelivery = true;
 
     @NonSync
@@ -144,7 +144,7 @@ public class AhpConfig extends Config {
     @NonSync
     @ConfigGroup.Pop
     @Translatable.Name("Jade Hamster Debug Info")
-    @Translatable.Desc("More stats than anyone asked for. Defaults to off—mercifully.")
+    @Translatable.Desc("More stats than anyone asked for. Defaults to off— mercifully.")
     public boolean enableJadeHamsterDebugInfo = false;
 
     // --- Announcements & Update Notes ---
@@ -392,28 +392,28 @@ public class AhpConfig extends Config {
     @Translatable.Desc("How often a sitting hamster gets the sudden urge to clean. It's a 1-in-X chance per tick, so lower numbers mean a higher chance for cleaning. For example, 1200 means on average, it'll clean about once a minute. 300 ≈ every 15 secs, and 5000 ≈ every 4 mins. Congratulations— now you know enough to be dangerous.")
     public ValidatedInt cleaningChanceDenominator = new ValidatedInt(1200, 5000, 300);
 
-    @Translatable.Name("Throw Cooldown (Ticks)")
+    @Translatable.Name("Throw Cooldown")
     @Translatable.Desc("Time-out after using your living projectile. (20 ticks = 1 s)")
     public ValidatedInt hamsterThrowCooldown = new ValidatedInt(2400, 20 * 60 * 10, 20);
 
-    @Translatable.Name("Green Bean Buff Cooldown (Ticks)")
+    @Translatable.Name("Green Bean Buff Cooldown")
     @Translatable.Desc("When the sugar rush ends, force a breather. (20 ticks = 1 s)")
     public ValidatedInt steamedGreenBeansBuffCooldown = new ValidatedInt(6000, 20 * 60 * 10, 20);
 
-    @Translatable.Name("Enable Diamond Seeking Cooldown?")
+    @Translatable.Name("Diamond Seeking Cooldown")
     @Translatable.Desc("Force a cool-down after striking it rich. Off by default, since this can't happen again anyway without another mount/dismount on the shoulder.")
     public boolean enableIndependentDiamondSeekCooldown = false;
 
-    @Translatable.Name("Diamond Seeking Cooldown (Ticks)")
+    @Translatable.Name("Diamond Seeking Cooldown")
     @Translatable.Desc("Cooldown before your hamster can go on another treasure hunt. (20 ticks = 1 s)")
     public ValidatedInt independentOreSeekCooldownTicks = new ValidatedInt(2400, 6000, 20);
 
-    @Translatable.Name("Diamond Thievery Cooldown (Ticks)")
+    @Translatable.Name("Diamond Thievery Cooldown")
     @Translatable.Desc("Mandatory time-out after a successful heist to prevent serial kleptomania. (20 ticks = 1s). WARNING: Increasing this cooldown can dramatically change the diamond stealing mechanic, since that AI goal sometimes re-runs multiple times in a row when the hamster has trouble pathfinding to the item that it wants to steal. So instead of increasing this, you should probably just stop dropping your diamonds on the ground everywhere, butter fingers.")
     public ValidatedInt stealCooldownTicks = new ValidatedInt(100, 6000, 20);
 
     @ConfigGroup.Pop
-    @Translatable.Name("Breeding Cooldown (Ticks)")
+    @Translatable.Name("Breeding Cooldown")
     @Translatable.Desc("Hamsters need their space. (20 ticks = 1 s)")
     public ValidatedInt breedingCooldownTicks = new ValidatedInt(6000, 24000, 600);
 
@@ -689,7 +689,7 @@ public class AhpConfig extends Config {
 
     @NonSync
     @ConfigGroup.Pop
-    @Translatable.Name("Double-Tap Delay (Ticks)")
+    @Translatable.Name("Double-Tap Delay")
     @Translatable.Desc("Max time between sneak key presses to count as a double-tap. (20 ticks = 1 second)")
     public ValidatedCondition<Integer> doubleTapDelayTicks =
             new ValidatedInt(10, 40, 5)
@@ -840,8 +840,8 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Nutrition, but make it dramatic. Tweaks to caffeine-bean highs.")
     public ConfigGroup greenBeanBuffs = new ConfigGroup("greenBeanBuffs", true);
 
-    @Translatable.Name("Duration (Ticks)")
-    @Translatable.Desc("Steamed beans: power that fades faster than your attention span.")
+    @Translatable.Name("Duration")
+    @Translatable.Desc("Steamed beans: power that fades faster than your attention span. (20 ticks = 1 second)")
     public ValidatedInt greenBeanBuffDuration = new ValidatedInt(3600, 20 * 60 * 10, 20);
 
     @Translatable.Name("Speed Level")
