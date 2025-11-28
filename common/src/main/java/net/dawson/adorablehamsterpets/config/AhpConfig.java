@@ -638,7 +638,7 @@ public class AhpConfig extends Config {
     public boolean consumeLureItem = true;
 
     @Translatable.Name("Enable Force-Mount Keybind")
-    @Translatable.Desc("Tired of wasting perfectly good cheese? Enable this to use a dedicated keybind (unbound by default). Hold down this key while right-clicking your hamster to hoist them onto your shoulder, no questions asked. Uses a separate key you must set in Controls > Key Binds.")
+    @Translatable.Desc("Tired of wasting perfectly good cheese? Enable this to use a dedicated keybind (unbound by default). Hold down this key while right-clicking your hamster to hoist them onto your shoulder, no questions asked. Uses a separate key you must set in Settings > Controls > Key Binds.")
     public boolean enableShoulderMountKeybind = false;
 
     @NonSync
