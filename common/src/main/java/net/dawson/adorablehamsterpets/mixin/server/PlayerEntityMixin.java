@@ -503,7 +503,10 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public ClientShoulderHamsterData adorablehamsterpets$getClientShoulderData() {
-        // On the server, this will be null, which is fine as it's only used by client code.
+        // Lazy initialization to support shader/fake players
+        if (this.adorablehamsterpets$clientShoulderData == null && this.getWorld().isClient) {
+            this.adorablehamsterpets$clientShoulderData = new ClientShoulderHamsterData();
+        }
         return this.adorablehamsterpets$clientShoulderData;
     }
 }
