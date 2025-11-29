@@ -59,11 +59,17 @@ public class HamsterShoulderFeatureRenderer
                        float tickDelta, float animationProgress, float headYaw, float headPitch) {
 
         PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
-        if (!playerAccessor.hasAnyShoulderHamster()) {
+
+        // --- Defensive Check ---
+        // Some shader mods (Oculus/Iris) create "shadow" player entities that
+        // do not have fully initialized DataTrackers. Attempting to access my custom data
+        // on them can crash the game (NPE or IllegalArgumentException).
+        // Catch these exceptions to safely skip rendering for these specific entities.
+        if (!hasShoulderDataSafe(playerAccessor)) {
             return;
         }
 
-        // --- Lazy Initialization (checks if the map is empty) ---
+        // --- Lazy Initialization ---
         if (this.dummyHamsters.isEmpty()) {
             initializeDummies(player.getWorld());
         }
@@ -84,6 +90,21 @@ public class HamsterShoulderFeatureRenderer
     }
 
     // --- 5. Private Helper Methods ---
+    /**
+     * Safely checks if the player has any shoulder hamster data.
+     * Wraps the DataTracker access in a try-catch block to prevent crashes when rendering
+     * malformed entities (e.g., shader shadows or uninitialized fake players).
+     */
+    private boolean hasShoulderDataSafe(PlayerEntityAccessor playerAccessor) {
+        try {
+            return playerAccessor.hasAnyShoulderHamster();
+        } catch (RuntimeException e) {
+            // Swallowing NPE/IllegalArgumentException here is intentional.
+            // It indicates the entity is not in a valid state to have its data read.
+            return false;
+        }
+    }
+
     /**
      * Applies visual data from the stored shoulder NBT to a specific dummy entity.
      * This ensures the rendered model has the correct appearance (variant, age, cheeks, etc.).
