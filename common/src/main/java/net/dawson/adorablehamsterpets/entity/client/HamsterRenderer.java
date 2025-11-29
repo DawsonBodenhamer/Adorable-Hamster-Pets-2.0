@@ -260,8 +260,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
 
             // poseStack.multiply(...): Rotates the item. This is complex.
-            // This specific line rotates the item 90 degrees on its X-axis, which makes it
-            // stand upright as if held, rather than lying flat. You likely won't need to change this.
+            // Rotates the item 90 degrees on its X-axis, which makes it stand upright as if held, rather than lying flat.
             poseStack.multiply(new Quaternionf(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0)));
 
             // Render the item from the DataTracker
