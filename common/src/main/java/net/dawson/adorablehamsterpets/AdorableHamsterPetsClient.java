@@ -236,7 +236,14 @@ public class AdorableHamsterPetsClient {
         if (client.player == null || client.world == null) return;
 
         // --- 1. Shoulder state ---
-        boolean hasShoulderHamster = ((PlayerEntityAccessor) client.player).hasAnyShoulderHamster();
+        boolean hasShoulderHamster;
+        try {
+            hasShoulderHamster = ((PlayerEntityAccessor) client.player).hasAnyShoulderHamster();
+        } catch (RuntimeException e) {
+            // If the player entity's data tracker is corrupted (missing entries due to mod conflicts),
+            // assume no hamster is present to prevent a crash.
+            hasShoulderHamster = false;
+        }
 
         // Detect the exact tick we JUST mounted (transition: false -> true)
         if (hasShoulderHamster && !hadShoulderHamsterLastTick) {

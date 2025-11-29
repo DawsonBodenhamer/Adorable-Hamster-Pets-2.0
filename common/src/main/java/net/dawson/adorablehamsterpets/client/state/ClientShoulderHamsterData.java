@@ -110,7 +110,15 @@ public class ClientShoulderHamsterData {
         // Iterate through all possible locations to update states
         int delay = 1; // Initialize delay counter for staggered sounds
         for (ShoulderLocation location : ShoulderLocation.values()) {
-            NbtCompound shoulderNbt = playerAccessor.getShoulderHamster(location);
+            NbtCompound shoulderNbt;
+            try {
+                // Try to get the data safely
+                shoulderNbt = playerAccessor.getShoulderHamster(location);
+            } catch (RuntimeException e) {
+                // If the player entity is corrupted/uninitialized (Oculus shadow, etc),
+                // stop trying to simulate physics for it.
+                continue;
+            }
 
             if (!shoulderNbt.isEmpty()) {
                 // --- 3.1. Standard State Ticking ---
