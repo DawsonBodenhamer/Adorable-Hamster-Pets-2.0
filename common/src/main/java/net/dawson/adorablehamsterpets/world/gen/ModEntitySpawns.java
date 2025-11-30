@@ -136,12 +136,12 @@ public class ModEntitySpawns {
     }
 
     /**
-     * A NeoForge-specific decider that works directly with a RegistryEntry.
+     * A Forge-specific decider that works directly with a RegistryEntry.
      *
-     * @param biomeEntry The biome entry from the NeoForge modifier.
+     * @param biomeEntry The biome entry from the Forge modifier.
      * @return True if hamsters should spawn, false otherwise.
      */
-    public static boolean shouldSpawnInBiomeNeoForge(RegistryEntry<Biome> biomeEntry) {
+    public static boolean shouldSpawnInBiomeForge(RegistryEntry<Biome> biomeEntry) {
         Identifier biomeId = biomeEntry.getKey().map(RegistryKey::getValue).orElse(null);
         if (biomeId == null) return false;
 

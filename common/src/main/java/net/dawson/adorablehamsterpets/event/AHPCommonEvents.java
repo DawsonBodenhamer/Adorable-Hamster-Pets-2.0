@@ -53,7 +53,7 @@ public class AHPCommonEvents {
         Set<Inventory> inventories = new HashSet<>();
         for (Slot slot : menu.slots) {
             // Use the Mixin Accessor to get the inventory object.
-            // This works on both Fabric (inventory) and NeoForge (container) thanks to the remapper.
+            // This works on both Fabric (inventory) and Forge (container) thanks to the remapper.
             Inventory inv = ((SlotAccessor) slot).adorablehamsterpets$getInventory();
             if (inv != null) {
                 inventories.add(inv);

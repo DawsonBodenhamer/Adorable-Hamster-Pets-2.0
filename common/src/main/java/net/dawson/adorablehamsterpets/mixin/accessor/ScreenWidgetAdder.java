@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 /**
  * Provides a cross-loader way to call Screen#addDrawableChild (Fabric/Yarn) or
- * Screen#addRenderableWidget (NeoForge/Mojang). The method name is remapped by
+ * Screen#addRenderableWidget (Forge/Mojang). The method name is remapped by
  * Architectury when building for each loader.
  */
 @Mixin(Screen.class)

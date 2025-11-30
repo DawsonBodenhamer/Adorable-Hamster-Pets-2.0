@@ -31,9 +31,9 @@ public class ConfigurableHamsterSpawnModifier implements BiomeModifier {
             return;
         }
 
-        // The NeoForge modifier directly checks the biome entry against the parsed config sets.
+        // The Forge modifier directly checks the biome entry against the parsed config sets.
         // This avoids the need for a BiomeContext object.
-        if (ModEntitySpawns.shouldSpawnInBiomeNeoForge(biome)) {
+        if (ModEntitySpawns.shouldSpawnInBiomeForge(biome)) {
             var spawnBuilder = builder.getMobSpawnSettings();
             var spawnEntry = new SpawnSettings.SpawnEntry(
                     ModEntities.HAMSTER.get(),
