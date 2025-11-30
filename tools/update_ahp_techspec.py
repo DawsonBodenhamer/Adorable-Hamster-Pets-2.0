@@ -296,10 +296,23 @@ def main():
         print_error(f"Tech spec file not found: {techspec_filename}")
         sys.exit(1)
 
+    # --- Branch Specific Exclusions ---
+    branch_excludes_map = config.get("branch_specific_excludes", {})
+    extra_excludes = []
+
+    print_verbose("Checking branch-specific rules...")
+    for pattern, excludes in branch_excludes_map.items():
+        if re.search(pattern, raw_branch):
+            print_info(f"Branch '{raw_branch}' matches rule '{pattern}'. Excluding: {excludes}")
+            extra_excludes.extend(excludes)
+
     # Discovery
     print_info("Scanning files...")
     gitignore = load_gitignore(root_dir)
-    exclude_patterns = config["exclude_patterns"]
+
+    # Combine global excludes with branch-specific excludes
+    exclude_patterns = config["exclude_patterns"] + extra_excludes
+
     omit_content_patterns = config.get("omit_content_patterns", [])
     include_exts = set(config["include_extensions"])
     force_include = set(config["force_include_files"])
@@ -338,7 +351,7 @@ def main():
     included_files.sort(key=get_semantic_sort_key)
 
     # Generation
-    print_info("Generating content blocks...")
+    print_info(f"Generating blocks for {len(included_files)} files...")
     generated_output = []
 
     # State for folder grouping
@@ -370,14 +383,12 @@ def main():
         if args.structure_only:
             # Structure Mode: Skip code block entirely, just keep header/notes
             pass
-
         elif is_pattern_omitted:
             # Config Omission: Keep code block, but use placeholder
             lang = get_language_id(rel_path)
             block.append(f"```{lang}")
             block.append("(Content omitted to save token count and can be provided upon request)")
             block.append("```")
-
         else:
             # Normal: Read file and include content
             lang = get_language_id(rel_path)

@@ -5,34 +5,14 @@
   "backup_pattern": "Adorable_Hamster_Pets_Tech_Spec_{branch}_Backup.md",
 
   "include_extensions": [
-    ".java",
-    ".kt",
-    ".kts",
-    ".json",
-    ".yml",
-    ".yaml",
-    ".md",
-    ".txt",
-    ".toml",
-    ".cfg",
-    ".gradle",
-    ".properties",
-    ".mcmeta",
-    ".mcfunction"
+    ".java", ".kt", ".kts", ".json", ".yml", ".yaml",
+    ".md", ".txt", ".toml", ".cfg", ".gradle", ".properties",
+    ".mcmeta", ".mcfunction"
   ],
 
   "exclude_patterns": [
-    "media/",
-    "build/",
-    "out/",
-    "bin/",
-    ".gradle/",
-    ".gitignore",
-    ".idea/",
-    "tools/",
-    "neoforge/run/",
-    "forge/run/",
-    "fabric/run/",
+    "media/", "build/", "out/", "bin/", ".gradle/", ".gitignore", ".idea/", "tools/",
+    "neoforge/run/", "forge/run/", "fabric/run/",
     "common/src/main/resources/data/adorablehamsterpets/recipe/immersiveengineering_cloche_compat",
     "common/src/main/resources/data/adorablehamsterpets/recipe/thermal_insolator_compat",
     "common/src/main/resources/data/adorablehamsterpets/tags/item/tools/knives.json",
@@ -42,8 +22,21 @@
     "common/src/main/resources/assets/adorablehamsterpets/patchouli_books/hamster_tips_guide_book/en_us/templates",
     "common/src/main/resources/assets/adorablehamsterpets/patchouli_books/hamster_tips_guide_book/images",
     "common/src/main/resources/assets/adorablehamsterpets/lang/*.json",
-    "README_CURSEFORGE_STYLE.md"
+    "README_CURSEFORGE_STYLE.md",
+    "gradle/wrapper/",
+    "gradlew",
+    "gradlew.bat",
+    "dependency-tree.txt"
   ],
+
+  "branch_specific_excludes": {
+    "1\\.20.*": [ "neoforge/" ],
+    "1\\.1[0-9].*": [ "neoforge/" ],
+
+    "1\\.2[1-9].*": [ "forge/" ],
+    "1\\.[3-9][0-9].*": [ "forge/" ],
+    "develop": [ "forge/" ]
+  },
 
   "omit_content_patterns": [
     "common/src/main/resources/assets/adorablehamsterpets/animations/",
@@ -60,22 +53,18 @@
   "file_notes": {
     "common/src/main/resources/assets/adorablehamsterpets/lang/en_us_base.json": {
       "position": "before",
-      "title": "",
       "note": "The entire contents of this file are copied into `en_us.json` during the data generation process by `EnUsGenerator.java`. Therefore, the generated `en_us.json` file is `.gitignore`d and is not included in this tech spec to avoid redundancy."
     },
     "common/src/main/java/net/dawson/adorablehamsterpets/config/AhpConfig.java": {
       "position": "before",
-      "title": "",
       "note": "All `@Translatable.Name` and `@Translatable.Desc` strings in this class are copied into `en_us.json` during the data generation process. That generated file is `.gitignore`d and is not included in this tech spec to avoid redundancy."
     },
     "common/src/main/java/net/dawson/adorablehamsterpets/config/AhpWorldGenConfig.java": {
       "position": "before",
-      "title": "",
       "note": "All `@Translatable.Name` and `@Translatable.Desc` strings in this class are copied into `en_us.json` during the data generation process. That generated file is `.gitignore`d and is not included in this tech spec to avoid redundancy."
     },
     "common/src/main/java/net/dawson/adorablehamsterpets/config/AhpRootConfig.java": {
       "position": "before",
-      "title": "",
       "note": "All `@Translatable.Name` and `@Translatable.Desc` strings in this class are copied into `en_us.json` during the data generation process. That generated file is `.gitignore`d and is not included in this tech spec to avoid redundancy."
     }
   }
