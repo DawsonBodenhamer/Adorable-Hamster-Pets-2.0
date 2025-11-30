@@ -50,3 +50,13 @@
 logs/
 **/*.log
 .DS_Store
+
+# =================================================
+# AHP Tech Spec Tools
+# =================================================
+# Ignore the tech spec
+Adorable_Hamster_Pets_Tech_Spec_*.md
+
+# Ignore compiled Python files
+__pycache__/
+*.py[cod]
