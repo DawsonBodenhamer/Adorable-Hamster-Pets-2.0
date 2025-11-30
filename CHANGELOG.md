@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2025-11-29
+
+### Fixed
+- **Added defensive measures for crashes with Shaders and optimization mods.**
+  -   While not directly caused by Adorable Hamster Pets, shaders often create "fake" player entities to render shadows and aggressive optimization mods sometimes leave these entities in a broken/uninitialized state. Then when this mod would ask, "Does this shadow have a pet?" for the shoulder hamster feature, the game would panic and crash.
+  -   Added defensive checks to both the **Renderer** and the **Physics Simulation** for shoulder hamsters to safely ignore these corrupted entities. This should not have any visual effect on the game except that your hamster may not have a shadow for a few seconds when you first load into the world.
+- **Fixed a crash when managing Announcements from the Title Screen.**
+  -   Clicking "Mark as Read" or "Snooze" while on the main menu no longer causes a `NullPointerException`.
+- **Fixed stray semi-transparent pixels on the Hamster Bedding texture.**
+- **Fixed localization and text errors.**
+  -   Corrected the "Icon Position Preset" buttons in the config menu to show translated text instead of raw enum names.
+  -   Fixed a few other grammatical errors.
+
+---
+
 ## [3.4.0] - 2025-11-13
 
 # **The Cuteness Overhaul Update**
