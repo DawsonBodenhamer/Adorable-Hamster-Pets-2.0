@@ -82,7 +82,7 @@ public class ModWorldGeneration {
     }
 
     /**
-     * The NeoForge-specific decider method for feature placement, driven by the parsed config.
+     * The Forge-specific decider method for feature placement, driven by the parsed config.
      * For sunflowers, it also verifies that the biome already contains the vanilla sunflower feature. Fabric does this same filtering, but in the Fabric/`ModWorldGenerationImpl` class instead.
      *
      * @param feature The PlacedFeature being considered for generation.

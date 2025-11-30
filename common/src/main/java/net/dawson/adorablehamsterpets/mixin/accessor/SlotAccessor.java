@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 /**
  * Provides safe, cross-loader access to the inventory/container field within a Slot.
  * The Architectury remapper will automatically change the target of the "inventory" accessor
- * to "container" when building for the NeoForge platform.
+ * to "container" when building for the Forge platform.
  */
 @Mixin(Slot.class)
 public interface SlotAccessor {

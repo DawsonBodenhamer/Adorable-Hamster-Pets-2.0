@@ -134,14 +134,14 @@ public class AdorableHamsterPetsClient {
     }
 
     /**
-     * Registers the block entities. Separate because NeoForge needs to call it natively.
+     * Registers the block entities. Separate because Forge needs to call it natively.
      */
     public static void initBlockEntityRenderers() {
         BlockEntityRendererRegistry.register(ModBlockEntities.HAMSTER_BED_BLOCK_ENTITY.get(), HamsterBedRenderer::new);
     }
 
     /**
-     * Registers the screen factory. Separate because NeoForge needs to call it natively.
+     * Registers the screen factory. Separate because Forge needs to call it natively.
      */
     public static void initScreenHandlers() {
         MenuRegistry.registerScreenFactory(ModScreenHandlers.HAMSTER_INVENTORY_SCREEN_HANDLER.get(), HamsterInventoryScreen::new);
