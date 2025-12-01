@@ -7,20 +7,20 @@
   "include_extensions": [
     ".java", ".kt", ".kts", ".json", ".yml", ".yaml",
     ".md", ".txt", ".toml", ".cfg", ".gradle", ".properties",
-    ".mcmeta", ".mcfunction"
+    ".mcmeta", ".mcfunction", ".png", ".ogg"
   ],
 
   "exclude_patterns": [
     "media/", "build/", "out/", "bin/", ".gradle/", ".gitignore", ".idea/", "tools/",
-    "neoforge/run/", "forge/run/", "fabric/run/",
-    "common/src/main/resources/data/adorablehamsterpets/recipe/immersiveengineering_cloche_compat",
-    "common/src/main/resources/data/adorablehamsterpets/recipe/thermal_insolator_compat",
+    "neoforge/run/", "forge/run/", "fabric/run/", "fabric/src/main/generated/",
+    "common/src/main/resources/data/adorablehamsterpets/recipe/immersiveengineering_cloche_compat/",
+    "common/src/main/resources/data/adorablehamsterpets/recipe/thermal_insolator_compat/",
     "common/src/main/resources/data/adorablehamsterpets/tags/item/tools/knives.json",
-    "common/src/main/resources/data/croptopia",
-    "common/src/main/resources/data/sereneseasons",
-    "common/src/main/resources/data/minecraft",
-    "common/src/main/resources/assets/adorablehamsterpets/patchouli_books/hamster_tips_guide_book/en_us/templates",
-    "common/src/main/resources/assets/adorablehamsterpets/patchouli_books/hamster_tips_guide_book/images",
+    "common/src/main/resources/data/croptopia/",
+    "common/src/main/resources/data/sereneseasons/",
+    "common/src/main/resources/data/minecraft/",
+    "common/src/main/resources/assets/adorablehamsterpets/patchouli_books/hamster_tips_guide_book/en_us/templates/",
+    "common/src/main/resources/assets/adorablehamsterpets/patchouli_books/hamster_tips_guide_book/images/",
     "common/src/main/resources/assets/adorablehamsterpets/lang/*.json",
     "README_CURSEFORGE_STYLE.md",
     "gradle/wrapper/",
@@ -41,8 +41,8 @@
   "omit_content_patterns": [
     "common/src/main/resources/assets/adorablehamsterpets/animations/",
     "common/src/main/resources/assets/adorablehamsterpets/geo/",
-    "common/src/main/resources/assets/adorablehamsterpets/patchouli_books/hamster_tips_guide_book/en_us/categories",
-    "common/src/main/resources/assets/adorablehamsterpets/patchouli_books/hamster_tips_guide_book/en_us/entries",
+    "common/src/main/resources/assets/adorablehamsterpets/patchouli_books/hamster_tips_guide_book/en_us/categories/",
+    "common/src/main/resources/assets/adorablehamsterpets/patchouli_books/hamster_tips_guide_book/en_us/entries/",
     "LICENSE.txt"
   ],
 

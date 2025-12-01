@@ -11,6 +11,7 @@ import time
 CONFIG_FILENAME = "techspec_config.json"
 MARKER_START = "## AHP Provided Code"
 MARKER_END = "End AHP Provided Code"
+BINARY_EXTENSIONS = {'.png', '.ogg'}
 
 # --- Globals ---
 VERBOSE = False
@@ -100,14 +101,23 @@ def load_gitignore(root_dir):
 def is_ignored(rel_path, ignore_patterns):
     """Check if a path matches ignore patterns."""
     for pattern in ignore_patterns:
-        # Directory pattern
+        # Case 1: Explicit Directory (ends with /)
         if pattern.endswith('/'):
             if rel_path.startswith(pattern): return True
             if ("/" + pattern) in rel_path: return True
-        # File pattern
+
+        # Case 2: File Glob OR Implicit Directory (no trailing /)
         else:
+            # 2a. Standard Glob Match (file name or full path string)
             if fnmatch.fnmatch(os.path.basename(rel_path), pattern): return True
             if fnmatch.fnmatch(rel_path, pattern): return True
+
+            # 2b. Implicit Directory Match (treat pattern as a folder)
+            # Matches "pattern/..." at root
+            if rel_path.startswith(pattern + "/"): return True
+            # Matches ".../pattern/..." nested
+            if ("/" + pattern + "/") in rel_path: return True
+
     return False
 
 def get_language_id(filename):
@@ -159,75 +169,103 @@ def get_semantic_sort_key(rel_path):
     """
     lower = rel_path.lower()
     filename = os.path.basename(lower)
+    directory = os.path.dirname(lower)
 
     # 1. Loader Priority
-    loader_prio = 9
+    loader_prio = 99
     if lower in ['changelog.md', 'readme.md', 'readme_curseforge_style.md']: loader_prio = 0
-    elif '/' not in lower: loader_prio = 1
+    elif '/' not in lower: loader_prio = 1 # Other Root files
     elif lower.startswith('common/'): loader_prio = 2
     elif lower.startswith('fabric/'): loader_prio = 3
     elif lower.startswith('neoforge/') or lower.startswith('forge/'): loader_prio = 4
+    elif lower.startswith('.github'): loader_prio = 90
 
-    # 2. Root Type (Code vs Resources)
-    # Prioritize Java/Source files before Resources
-    is_resource = 'src/main/resources' in lower or 'src/main/generated' in lower
-    root_type_prio = 1 if is_resource else 0
+    # 2. Root Type Priority (Strict Code vs Resources Split)
+    # 0: Misc/Config/Build (files not in src)
+    # 1: Source Code (src/main/java, src/main/kotlin)
+    # 2: Resources (src/main/resources, src/main/generated)
 
-    # 3. Identify "Feature Root"
-    # The feature root is the folder immediately following the main namespace.
-    # e.g. "net/dawson/adorablehamsterpets/block/custom/X.java" -> Feature Root is "block"
-    # e.g. "assets/adorablehamsterpets/models/item/X.json" -> Feature Root is "models"
+    if 'src/main/resources' in lower or 'src/main/generated' in lower:
+        root_type_prio = 2
+    elif 'src/main/java' in lower or 'src/main/kotlin' in lower:
+        root_type_prio = 1
+    else:
+        root_type_prio = 0
 
-    feature_root = ""
+    # 3. Feature Priority
+    # Detect "Meta" files here to float them to the top of their *Root Type* section.
 
-    # Heuristic to find the segment after the namespace
-    keywords = ['net/dawson/adorablehamsterpets/', 'assets/adorablehamsterpets/', 'data/adorablehamsterpets/']
-    for kw in keywords:
-        if kw in lower:
-            idx = lower.find(kw) + len(kw)
-            remainder = lower[idx:]
-            if '/' in remainder:
-                feature_root = remainder.split('/')[0]
-            else:
-                feature_root = "root_package" # Files directly in the main package
-            break
+    meta_keywords = ['license', 'readme', 'fabric.mod.json', 'mods.toml', 'neoforge.mods.toml', 'pack.mcmeta', 'mixins.json']
+    is_meta_file = any(x in filename for x in meta_keywords)
 
-    if not feature_root and 'mixin' in lower: feature_root = "mixin"
+    if is_meta_file:
+        feat_prio = -10 # Absolute top of the specific RootType section
+        feature_root = "meta" # Placeholder
+    else:
+        # Heuristic to find the feature root
+        feature_root = ""
+        keywords = ['net/dawson/adorablehamsterpets/', 'assets/adorablehamsterpets/', 'data/adorablehamsterpets/', 'data/c/']
 
-    # 4. Feature Priority (The "Group Weight")
-    # Prioritize the FEATURE ROOT, not the specific file.
-    # This keeps 'block', 'block/client', and 'block/custom' together.
+        for kw in keywords:
+            if kw in lower:
+                idx = lower.find(kw) + len(kw)
+                remainder = lower[idx:]
 
-    feat_prio = 50 # Default (Alphabetical Middle)
+                # Check if remainder has slashes
+                if '/' in remainder:
+                    parts = remainder.split('/')
+                    candidate = parts[0]
 
-    # Priority 0: Entrypoints & Configs
-    if feature_root in ['root_package', 'config', 'registry', 'init', 'main', 'datagen']:
-        feat_prio = 0
-    # Priority 1: Core Game Objects
-    elif feature_root in ['block', 'item', 'entity', 'fluid', 'effect', 'enchantment', 'potion', 'sound']:
-        feat_prio = 10
-    # Priority 2: Gameplay Systems
-    elif feature_root in ['advancement', 'recipe', 'loot', 'tag', 'data', 'networking', 'component', 'command', 'event']:
-        feat_prio = 20
-    # Priority 3: World Gen
-    elif feature_root in ['world', 'biome', 'structure', 'dimension']:
-        feat_prio = 30
-    # Priority 4: Client/Visuals
-    elif feature_root in ['client', 'screen', 'gui', 'render', 'model', 'texture', 'particle', 'animation', 'geo', 'blockstates']:
-        feat_prio = 40
-    # Priority 90: Tech/Mixins/Compat (Bottom of code)
-    elif feature_root in ['mixin', 'integration', 'compat', 'util', 'access', 'accessor']:
-        feat_prio = 90
-    # Priority 99: Lang (Bottom of assets)
-    elif feature_root in ['lang']:
-        feat_prio = 99
+                    # FIX: Handle "fabric" or "neoforge" package segments (e.g. net.dawson.mod.fabric.datagen)
+                    if candidate in ['fabric', 'neoforge', 'forge'] and len(parts) > 1:
+                        feature_root = parts[1] # Look one deeper
+                    else:
+                        feature_root = candidate
+                else:
+                    feature_root = "root_package"
+                break
 
-    # 5. Filename Weight (Specific overrides inside a folder)
+        if not feature_root:
+            if 'mixin' in lower: feature_root = "mixin"
+            elif 'src/main/resources/assets' in lower: feature_root = "root_assets"
+
+            # Assign Priority based on Root
+        feat_prio = 50 # Default
+
+        # Priority 0: Entrypoints, Configs, Datagen
+        if feature_root in ['root_package', 'config', 'registry', 'init', 'main', 'datagen']:
+            feat_prio = 0
+        # Priority 1: Core Game Objects
+        elif feature_root in ['block', 'item', 'entity', 'fluid', 'effect', 'enchantment', 'potion', 'sound', 'root_assets']:
+            feat_prio = 10
+        # Priority 2: Gameplay Systems
+        elif feature_root in ['advancement', 'recipe', 'loot', 'tag', 'data', 'networking', 'component', 'command', 'event', 'function', 'data_maps']:
+            feat_prio = 20
+        # Priority 3: Documentation & Guides (PATCHOULI)
+        elif feature_root in ['patchouli_books', 'guidebook', 'books']:
+            feat_prio = 25
+            # Priority 4: World Gen
+        elif feature_root in ['world', 'biome', 'structure', 'dimension']:
+            feat_prio = 30
+        # Priority 5: Client/Visuals
+        elif feature_root in ['client', 'screen', 'gui', 'render', 'model', 'texture', 'particle', 'animation', 'geo', 'blockstates']:
+            feat_prio = 40
+        # Priority 90: Tech/Mixins/Compat
+        elif feature_root in ['mixin', 'integration', 'compat', 'util', 'access', 'accessor']:
+            feat_prio = 90
+        elif feature_root in ['lang']:
+            feat_prio = 99
+
+    # 5. Filename Weight
     file_prio = 10
-    if any(x in filename for x in ['registry', 'registries', 'modblocks', 'moditems', 'modentities']):
-        file_prio = 0 # Main registry files top of list
+    if is_meta_file:
+        file_prio = -1
+    elif any(x in filename for x in ['registry', 'registries', 'modblocks', 'moditems', 'modentities']):
+        file_prio = 0
 
-    return loader_prio, root_type_prio, feat_prio, lower, file_prio, filename
+        # FINAL SORT KEY
+    # We sort by Directory *before* Filename to prevent header fragmentation.
+    return loader_prio, root_type_prio, feat_prio, directory, file_prio, filename
 
 def remove_java_imports(content):
     """
@@ -236,34 +274,24 @@ def remove_java_imports(content):
     """
     lines = content.splitlines()
     new_lines = []
-
     in_import_block = False
     placeholder_added = False
 
     for line in lines:
         stripped = line.strip()
-
-        # Check for import statement
         if stripped.startswith("import "):
             in_import_block = True
             if not placeholder_added:
-                new_lines.append("// (Imports removed to save token count)")
+                new_lines.append("// (Imports omitted to save token count)")
                 placeholder_added = True
-            continue # Skip the actual import line
-
-        # If we are currently in the "after-import" zone...
+            continue
         if in_import_block:
             if stripped == "":
-                # Swallow existing blank lines to avoid double/triple spacing
                 continue
             else:
-                # Found the first line of code (Annotation, Class, Comment, etc.)
-                # Force insert exactly one blank line here to separate from placeholder
                 new_lines.append("")
                 in_import_block = False
-
         new_lines.append(line)
-
     return "\n".join(new_lines)
 
 def main():
@@ -299,7 +327,6 @@ def main():
     # --- Branch Specific Exclusions ---
     branch_excludes_map = config.get("branch_specific_excludes", {})
     extra_excludes = []
-
     print_verbose("Checking branch-specific rules...")
     for pattern, excludes in branch_excludes_map.items():
         if re.search(pattern, raw_branch):
@@ -309,31 +336,22 @@ def main():
     # Discovery
     print_info("Scanning files...")
     gitignore = load_gitignore(root_dir)
-
-    # Combine global excludes with branch-specific excludes
     exclude_patterns = config["exclude_patterns"] + extra_excludes
-
     omit_content_patterns = config.get("omit_content_patterns", [])
     include_exts = set(config["include_extensions"])
     force_include = set(config["force_include_files"])
-    # Always exclude the spec and backup files relative to root
     forbidden = {techspec_filename, backup_filename}
 
     included_files = []
-    scanned_count = 0
 
     for root, dirs, files in os.walk(root_dir):
         if ".git" in dirs: dirs.remove(".git")
-
         for file in files:
-            scanned_count += 1
             abs_path = os.path.join(root, file)
             rel_path = os.path.relpath(abs_path, root_dir).replace("\\", "/")
-
             if rel_path in forbidden: continue
 
             should_include = False
-
             if rel_path in force_include:
                 should_include = True
             else:
@@ -352,105 +370,85 @@ def main():
 
     # Generation
     print_info(f"Generating blocks for {len(included_files)} files...")
-    generated_output = []
-
-    # State for folder grouping
+    final_output_parts = []
     last_directory = None
+    last_was_compact = False
 
     for rel_path in included_files:
         current_directory = os.path.dirname(rel_path)
         filename = os.path.basename(rel_path)
+        ext = os.path.splitext(rel_path)[1].lower()
+        is_binary = ext in BINARY_EXTENSIONS
+        is_omitted = is_ignored(rel_path, omit_content_patterns)
+        is_compact = is_binary or is_omitted or args.structure_only
 
-        # 1. Directory Header
+        separator = ""
         if current_directory != last_directory:
+            if last_directory is not None:
+                separator = "\n\n"
             display_dir = current_directory if current_directory else "Repository Root"
-            generated_output.append(f"### 📂 `{display_dir}/`")
+            separator += f"### 📂 `{display_dir}/`\n"
             last_directory = current_directory
-
-        # 2. File Name
-        block = []
-        block.append(f"`{filename}`")
-
-        # Notes
-        note_data = config.get("file_notes", {}).get(rel_path)
-        if note_data:
-            if note_data.get("position") == "before":
-                block.append(note_data.get("note", ""))
-
-        # 3. Content Logic
-        is_pattern_omitted = is_ignored(rel_path, omit_content_patterns)
-
-        if args.structure_only:
-            # Structure Mode: Skip code block entirely, just keep header/notes
-            pass
-        elif is_pattern_omitted:
-            # Config Omission: Keep code block, but use placeholder
-            lang = get_language_id(rel_path)
-            block.append(f"```{lang}")
-            block.append("(Content omitted to save token count and can be provided upon request)")
-            block.append("```")
+            last_was_compact = False
         else:
-            # Normal: Read file and include content
+            if is_compact and last_was_compact:
+                separator = "\n"
+            else:
+                separator = "\n\n"
+
+        block_content = ""
+        if is_omitted and not args.structure_only and not is_binary:
+            block_content = f"`{filename}` (Content omitted)"
+        else:
+            block_content = f"`{filename}`"
+
+        note_data = config.get("file_notes", {}).get(rel_path)
+        if note_data and note_data.get("position") == "before":
+            block_content += "\n" + note_data.get("note", "")
+
+        if not is_compact:
             lang = get_language_id(rel_path)
             abs_path = os.path.join(root_dir, rel_path)
-            content = ""
             try:
                 with open(abs_path, 'r', encoding='utf-8', errors='replace') as f:
                     content = f.read()
-
                 if rel_path == "CHANGELOG.md":
                     content = parse_changelog(content)
-
-                # Strip imports for Java files
                 if rel_path.endswith(".java"):
                     content = remove_java_imports(content)
-
+                block_content += f"\n```{lang}\n{content}\n```"
             except Exception as e:
                 print_error(f"Read error: {rel_path} ({e})")
                 content = "(Read Error)"
 
-            block.append(f"```{lang}")
-            block.append(content)
-            block.append("```")
-
-        # Note After
         if note_data and note_data.get("position") == "after":
-            block.append(note_data.get("note", ""))
+            block_content += "\n" + note_data.get("note", "")
 
-        generated_output.append("\n".join(block))
+        final_output_parts.append(separator + block_content)
+        last_was_compact = is_compact
 
-    # Join blocks
-    # If Structure Only mode, use single newline (compact).
-    # Otherwise use double newline (standard markdown spacing).
-    separator = "\n" if args.structure_only else "\n\n"
-    full_content_body = separator.join(generated_output)
+    full_content_body = "".join(final_output_parts)
 
     # Backup & Write
     print_info(f"Writing to {techspec_path} (Backup: {backup_filename})...")
-
     try:
-        # Read Original
         with open(techspec_path, 'r', encoding='utf-8') as f:
             original = f.read()
 
-        # Write Backup
         with open(backup_path, 'w', encoding='utf-8') as f:
             f.write(original)
 
-        # Inject
         start_idx = original.find(MARKER_START)
         end_idx = original.find(MARKER_END)
 
         if start_idx == -1 or end_idx == -1 or end_idx < start_idx:
             raise ValueError("Markers missing or invalid.")
 
-        # Locate exact insertion point (next line after start marker)
         start_cut = original.find('\n', start_idx)
         if start_cut == -1: start_cut = start_idx + len(MARKER_START)
 
         pre = original[:start_cut]
         post = original[end_idx:]
-
         final_doc = f"{pre}\n\n{full_content_body}\n\n{post}"
 
         with open(techspec_path, 'w', encoding='utf-8') as f:
