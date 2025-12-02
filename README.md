@@ -1,4 +1,4 @@
-<p> <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_banner.png" alt="Adorable Hamster Pets Banner" width="100%"/> </p>
+<p> <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_new_banner_for_mod_page.png" alt="Adorable Hamster Pets Banner" width="100%"/> </p>
 
 <div align="center">
 
