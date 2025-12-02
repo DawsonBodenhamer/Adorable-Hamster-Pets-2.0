@@ -1,4 +1,4 @@
-![Adorable Hamster Pets Banner](https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_banner.png)
+![Adorable Hamster Pets Banner](https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_new_banner_for_mod_page.png)
 
 <p style="text-align: center;">
     <a href="https://modrinth.com/mod/adorable-hamster-pets"><img src="https://img.shields.io/modrinth/dt/adorable-hamster-pets?color=00AF5C&logo=modrinth&style=for-the-badge" alt="Modrinth Downloads"></a>&nbsp;
