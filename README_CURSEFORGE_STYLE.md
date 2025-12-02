@@ -100,17 +100,6 @@ For when words fail and you need a furry, surprisingly aerodynamic solution— p
 
 Does enough damage by default to kill a creeper, which is... really convenient. Gentle interaction (a pat, a click, whatever) required for post-impact recovery.
 
-<img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_hamster_kung_fu_techniques.png" alt="Hamster Kung Fu Techniques" width="100%">
-
-They'll energetically implement hamster kung fu on enemies (yours or theirs). Essentially, they like round-house kicks. Complete with particles effects on their tiny kicking feet!
-
-Note: to record this footage, I increased their health to 200 per hamster in the config. Normally a single hamster wouldn't be able to defeat a Stray on its own (but I'm planning on adding Acorn Armor in the future to help with that!)
-
-<p style="text-align: center;">
- <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_fighting_stray.gif" alt="A hamster fighting a stray" width="48%">
- <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamsters_fighting_husks.gif" alt="Hamsters fighting husks" width="48%">
-</p>
-
 <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_wander_mode_hamster_beds.png" alt="Tamed Wander Mode & Hamster Beds" width="100%">
 
 Tired of your hamsters treating your feet like a personal jungle gym?
@@ -163,6 +152,17 @@ The only way to retrieve your property is to catch the furry thief and right-cli
 <p style="text-align: center;">
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/item_stealing1.gif" alt="Item Stealing part 1" width="48%">
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/item_stealing2.gif" alt="Item Stealing part 2" width="48%">
+</p>
+
+<img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_hamster_kung_fu_techniques.png" alt="Hamster Kung Fu Techniques" width="100%">
+
+They'll energetically implement hamster kung fu on enemies (yours or theirs). Essentially, they like round-house kicks. Complete with particles effects on their tiny kicking feet!
+
+Note: to record this footage, I increased their health to 200 per hamster in the config. Normally a single hamster wouldn't be able to defeat a Stray on its own (but I'm planning on adding Acorn Armor in the future to help with that!)
+
+<p style="text-align: center;">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_fighting_stray.gif" alt="A hamster fighting a stray" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamsters_fighting_husks.gif" alt="Hamsters fighting husks" width="48%">
 </p>
 
 <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_biome_variants_genetics.png" alt="Biome Variants & Genetics" width="100%">
