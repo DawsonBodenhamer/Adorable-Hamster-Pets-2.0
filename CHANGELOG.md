@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed localization and text errors.**
   -   Corrected the "Icon Position Preset" buttons in the config menu to show translated text instead of raw enum names.
   -   Fixed a few other grammatical errors.
+- **Network Protocol Error (Macaw's Mods Conflict)**
+  -   Refactored the shoulder pet data system to use custom network packets instead of vanilla DataTrackers.
+  -   This eliminates ID collisions with mods like Macaw's Furniture that inject their own data into the player entity.
+- **"Failed to encode packet" Disconnects**
+  -   Fixed a race condition where the item stack used for particle effects was emptied before the network packet could be sent.
+  -   This prevents players from being kicked when feeding/mounting hamsters cheese with a stack size of 1.
 
 ---
 

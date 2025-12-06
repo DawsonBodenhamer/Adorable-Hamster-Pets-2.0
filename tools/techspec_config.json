@@ -11,6 +11,9 @@
   ],
 
   "exclude_patterns": [
+    "Adorable_Hamster_Pets_Tech_Spec_*.md",
+    "Adorable_Hamster_Pets_Tech_Spec_*_Backup.md",
+    "common/src/main/resources/assets/adorablehamsterpets/icon.png",
     "media/", "build/", "out/", "bin/", ".gradle/", ".gitignore", ".idea/", "tools/",
     "neoforge/run/", "forge/run/", "fabric/run/", "fabric/src/main/generated/",
     "common/src/main/resources/data/adorablehamsterpets/recipe/immersiveengineering_cloche_compat/",
