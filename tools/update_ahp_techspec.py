@@ -216,7 +216,7 @@ def get_semantic_sort_key(rel_path):
                     parts = remainder.split('/')
                     candidate = parts[0]
 
-                    # FIX: Handle "fabric" or "neoforge" package segments (e.g. net.dawson.mod.fabric.datagen)
+                    # Handle "fabric" or "neoforge" package segments (e.g. net.dawson.mod.fabric.datagen)
                     if candidate in ['fabric', 'neoforge', 'forge'] and len(parts) > 1:
                         feature_root = parts[1] # Look one deeper
                     else:
@@ -264,7 +264,7 @@ def get_semantic_sort_key(rel_path):
         file_prio = 0
 
         # FINAL SORT KEY
-    # We sort by Directory *before* Filename to prevent header fragmentation.
+    # Sort by Directory *before* Filename to prevent header fragmentation.
     return loader_prio, root_type_prio, feat_prio, directory, file_prio, filename
 
 def remove_java_imports(content):
@@ -286,13 +286,32 @@ def remove_java_imports(content):
                 placeholder_added = True
             continue
         if in_import_block:
-            if stripped == "":
-                continue
+            if stripped == "": continue
             else:
                 new_lines.append("")
                 in_import_block = False
         new_lines.append(line)
     return "\n".join(new_lines)
+
+def print_stats_table(full_stats, omitted_stats):
+    """Pretty print the statistics."""
+    print("")
+
+    # Helper for printing a section
+    def print_section(title, data):
+        if not data:
+            return
+        print(f"  {title}:")
+        # Sort by count descending, then extension name
+        sorted_data = sorted(data.items(), key=lambda x: (-x[1], x[0]))
+        for ext, count in sorted_data:
+            display_ext = ext if ext else "(no-ext)"
+            print(f"    {display_ext:<10} : {count}")
+
+    print_section("Included Content (Full Code)", full_stats)
+    if full_stats and omitted_stats:
+        print("")
+    print_section("Omitted Content (Structure Only)", omitted_stats)
 
 def main():
     start_time = time.time()
@@ -374,13 +393,22 @@ def main():
     last_directory = None
     last_was_compact = False
 
+    # Stats Tracking
+    stats_full = {}
+    stats_omitted = {}
+
     for rel_path in included_files:
         current_directory = os.path.dirname(rel_path)
         filename = os.path.basename(rel_path)
         ext = os.path.splitext(rel_path)[1].lower()
+
         is_binary = ext in BINARY_EXTENSIONS
         is_omitted = is_ignored(rel_path, omit_content_patterns)
         is_compact = is_binary or is_omitted or args.structure_only
+
+        # Track Stats
+        target_stats = stats_omitted if is_compact else stats_full
+        target_stats[ext] = target_stats.get(ext, 0) + 1
 
         separator = ""
         if current_directory != last_directory:
@@ -457,7 +485,8 @@ def main():
         print_info("--- Success ---")
         print(f"  Branch: {raw_branch}")
         print(f"  Files:  {len(included_files)}")
-        print(f"  Time:   {round(time.time() - start_time, 2)}s")
+        print_stats_table(stats_full, stats_omitted)
+        print(f"\n  Time:   {round(time.time() - start_time, 2)}s")
 
     except Exception as e:
         print_error(f"Operation failed: {e}")
