@@ -8,6 +8,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.networking.payload.*;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.ComponentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -29,6 +30,7 @@ public class ModPackets {
         // This is a crucial step for the server. It learns what these packets are.
         NetworkManager.registerS2CPayloadType(SpawnBeddingParticlesPayload.ID, SpawnBeddingParticlesPayload.CODEC);
         NetworkManager.registerS2CPayloadType(PlayGuidebookEffectsPayload.ID, PlayGuidebookEffectsPayload.CODEC);
+        NetworkManager.registerS2CPayloadType(SyncShoulderDataPayload.ID, SyncShoulderDataPayload.CODEC);
     }
 
     /**
@@ -54,6 +56,7 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, RequestGuidebookPayload.ID, RequestGuidebookPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
+                    // Cast to ServerPlayerEntity explicitly
                     ServerPlayerEntity player = (ServerPlayerEntity) context.getPlayer();
                     ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
                     @SuppressWarnings("unchecked")
@@ -93,6 +96,21 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, PlayGuidebookEffectsPayload.ID, PlayGuidebookEffectsPayload.CODEC,
                 (payload, context) -> context.queue(AdorableHamsterPetsClient::handlePlayGuidebookEffects)
+        );
+
+        // Handle the Shoulder Data Sync
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SyncShoulderDataPayload.ID, SyncShoulderDataPayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    // Client-side logic to apply the NBT
+                    MinecraftClient client = MinecraftClient.getInstance();
+                    if (client.world != null) {
+                        Entity entity = client.world.getEntityById(payload.entityId());
+                        // Check if the entity is a player and has my accessor
+                        if (entity instanceof PlayerEntity && entity instanceof PlayerEntityAccessor accessor) {
+                            accessor.adorablehamsterpets$setRawShoulderData(payload.data());
+                        }
+                    }
+                })
         );
     }
 
