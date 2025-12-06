@@ -32,6 +32,7 @@ public class ModPackets {
     // S2C (Server-to-Client)
     public record PlayGuidebookEffectsS2CPacket() {}
     public record SpawnBeddingParticlesS2CPacket(BlockPos pos, Direction direction, WoodVariant variant) {}
+    public record SyncShoulderDataS2CPacket(int entityId, NbtCompound data) {}
 
     /**
      * Registers Client-to-Server packets.
@@ -125,6 +126,24 @@ public class ModPackets {
                 (packet, buf) -> {},
                 (buf) -> new PlayGuidebookEffectsS2CPacket(),
                 (packet, context) -> context.get().queue(AdorableHamsterPetsClient::handlePlayGuidebookEffects)
+        );
+
+        CHANNEL.register(SyncShoulderDataS2CPacket.class,
+                (packet, buf) -> {
+                    buf.writeInt(packet.entityId());
+                    buf.writeNbt(packet.data());
+                },
+                (buf) -> new SyncShoulderDataS2CPacket(buf.readInt(), buf.readNbt()),
+                (packet, context) -> context.get().queue(() -> {
+                    net.minecraft.client.MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance();
+                    if (client.world != null) {
+                        net.minecraft.entity.Entity entity = client.world.getEntityById(packet.entityId());
+                        // Use the accessor to set the data
+                        if (entity instanceof PlayerEntityAccessor accessor) {
+                            accessor.adorablehamsterpets$setRawShoulderData(packet.data());
+                        }
+                    }
+                })
         );
     }
 }

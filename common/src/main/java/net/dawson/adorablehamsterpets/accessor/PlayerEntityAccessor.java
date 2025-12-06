@@ -26,6 +26,8 @@ public interface PlayerEntityAccessor {
         adorablehamsterpets$dismountShoulderHamster(false);
     }
 
+    void adorablehamsterpets$setRawShoulderData(net.minecraft.nbt.NbtCompound nbt);
+
     ArrayDeque<ShoulderLocation> adorablehamsterpets$getMountOrderQueue();
 
     ClientShoulderHamsterData adorablehamsterpets$getClientShoulderData();
