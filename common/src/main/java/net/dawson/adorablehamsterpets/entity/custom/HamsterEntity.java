@@ -925,7 +925,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 SoundEvent mountLureSound = ModSounds.getDynamicItemSound(stack);
                 this.getWorld().playSound(null, hamsterPosForMountSound, mountLureSound, SoundCategory.PLAYERS, 1.0f, 1.0f);
 
-                ((ServerWorld)this.getWorld()).spawnParticles(new ItemStackParticleEffect(ParticleTypes.ITEM, stack),
+                // Use stack.copy() to prevent "Failed to encode packet" crashes if decrement empties the stack
+                ((ServerWorld)this.getWorld()).spawnParticles(new ItemStackParticleEffect(ParticleTypes.ITEM, stack.copy()),
                         hamsterPosForMountSound.getX() + 0.5, hamsterPosForMountSound.getY() + 0.5, hamsterPosForMountSound.getZ() + 0.5,
                         8, 0.25D, 0.25D, 0.25D, 0.05);
 
