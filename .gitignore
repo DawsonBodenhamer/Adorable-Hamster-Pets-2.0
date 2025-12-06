@@ -53,6 +53,8 @@ logs/
 # =================================================
 # AHP Tech Spec Tools
 # =================================================
+# Ignore the tech spec backups
+Adorable_Hamster_Pets_Tech_Spec_*_Backup.md
 
 # Ignore compiled Python files
 __pycache__/
