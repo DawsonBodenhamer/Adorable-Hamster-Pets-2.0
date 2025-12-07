@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.4.1] - 2025-12-07
 
+# **The Edge Case Extravaganza Patch**
+
+This patch is dedicated to the 1% of you running modpacks complicated enough to break the space-time continuum. If you weren't crashing, you probably won't notice a difference. If you *were* crashing because you threw a hamster at a target more than 16 blocks away while running Shaders and Macaw's Furniture on NeoForge... your problems are solved!
+
+### Added
+- **Translations**
+  - Updated langage files with a few translated strings that Crowdin elected to omit from the last version!
+  - Major overhaul to the Russian translation of the Hamster Tips guidebook to ensure the text fits better on the pages, thanks to [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!
+
 ### Changed
 - **Mod Icon**
   - As all true geniuses do, [@The Retro Stitcher](https://theretrostitcher.com/) woke up in a cold sweat with ideas for improving the mod's icon even further. JK about the cold sweat part. His improvements have been implemented. Thanks again!
