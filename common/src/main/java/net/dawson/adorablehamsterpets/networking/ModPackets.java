@@ -31,6 +31,7 @@ public class ModPackets {
         NetworkManager.registerS2CPayloadType(SpawnBeddingParticlesPayload.ID, SpawnBeddingParticlesPayload.CODEC);
         NetworkManager.registerS2CPayloadType(PlayGuidebookEffectsPayload.ID, PlayGuidebookEffectsPayload.CODEC);
         NetworkManager.registerS2CPayloadType(SyncShoulderDataPayload.ID, SyncShoulderDataPayload.CODEC);
+        NetworkManager.registerS2CPayloadType(PlayDistantSoundPayload.ID, PlayDistantSoundPayload.CODEC);
     }
 
     /**
@@ -111,6 +112,10 @@ public class ModPackets {
                         }
                     }
                 })
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, PlayDistantSoundPayload.ID, PlayDistantSoundPayload.CODEC,
+                (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handlePlayDistantSound(payload))
         );
     }
 
