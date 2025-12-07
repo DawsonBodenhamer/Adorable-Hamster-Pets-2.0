@@ -5,9 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.5.0] - 2025-11-29
+## [3.4.1] - 2025-12-07
+
+### Changed
+- **Mod Icon**
+  - As all true geniuses do, [@The Retro Stitcher](https://theretrostitcher.com/) woke up in a cold sweat with ideas for improving the mod's icon even further. JK about the cold sweat part. His improvements have been implemented. Thanks again!
+- **The mod's `README.md` file (also known as the "landing page") has had a major overhaul!**
+  - Used the Flashback mod to render epic GIFs showing off almost every feature.
+  - Added new graphic headings with cozy pixel art tree branches, featuring the actual Hamster Bedding item texture for their leaves.
+  - Reworked info banners for layout clarity and added credits for everyone who has helped out with development, artwork, and translations.
+  - Added a new pixel art banner image up at the top. Huge thanks to [@The Retro Stitcher](https://theretrostitcher.com/) for helping me get it pixel-perfect. He and I both spent a considerable number of hours on it!
+  - Go check it out right here, and **turn off your ad blocker** and watch a few ads while you're there to help support the development of Adorable Hamster Pets!
 
 ### Fixed
+
+(Note: If I sent you a jar file on Discord marked `v3.5.0`, those fixes are included here.)
 - **Added defensive measures for crashes with Shaders and optimization mods.**
   -   While not directly caused by Adorable Hamster Pets, shaders often create "fake" player entities to render shadows and aggressive optimization mods sometimes leave these entities in a broken/uninitialized state. Then when this mod would ask, "Does this shadow have a pet?" for the shoulder hamster feature, the game would panic and crash.
   -   Added defensive checks to both the **Renderer** and the **Physics Simulation** for shoulder hamsters to safely ignore these corrupted entities. This should not have any visual effect on the game except that your hamster may not have a shadow for a few seconds when you first load into the world.
@@ -23,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **"Failed to encode packet" Disconnects**
   -   Fixed a race condition where the item stack used for particle effects was emptied before the network packet could be sent.
   -   This prevents players from being kicked when feeding/mounting hamsters cheese with a stack size of 1.
+- **Crash when throwing hamsters at targets further than 16 blocks away on NeoForge**
+  -   Resolved a `NoSuchMethodError` caused by a mapping mismatch when sending vanilla sound packets by migrating the "distant impact" sound logic to a custom network packet to ensure stability across loaders.
+  -   Minecraft cuts off any sound that happens more than 16 blocks away from your player— this logic exists in order for players to hear those distant impacts.
 
 ---
 

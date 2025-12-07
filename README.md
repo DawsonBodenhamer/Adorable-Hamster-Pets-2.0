@@ -343,13 +343,13 @@ Translating technical jargon is hard. Translating "Hamster Yeet" into another la
 
 I'd like to claim I did this all by myself while meditating on a mountain peak, but that would be a lie. These fine folks helped suggest features, fix bugs, and generally kept the mod from imploding.
 
-| Name | Contribution |
-|:-------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [**@The Retro Stitcher**](https://theretrostitcher.com/) | For re-designing the mod's icon! |
+| Name | Contribution                                                                                                                                                                                                             |
+|:-------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [**@The Retro Stitcher**](https://theretrostitcher.com/) | For re-designing the mod's icon, and helping make the banner image pixel-perfect.                                                                                                                                        |
 | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) | For contributing a mountainous number of ideas, helping squash bugs, and assisting with the complex mod compatibility logic (Farmer's Delight, Cultural Delights, Croptopia, Immersive Engineering, and Serene Seasons). |
-| [**@fzzyhmstrs**](https://github.com/fzzyhmstrs) | For the heroic assistance required to refactor this project to Architectury. Without them, you wouldn't be yeeting hamsters on NeoForge right now. |
-| **@ZeMonkey** | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support. |
-| [**@MylesGit**](https://modrinth.com/user/hOL20ANs) | For the original suggestion of the custom Advancement tree, and creating the template for [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server! |
+| [**@fzzyhmstrs**](https://github.com/fzzyhmstrs) | For the heroic assistance required to refactor this project to Architectury. Without them, you wouldn't be yeeting hamsters on NeoForge right now.                                                                       |
+| **@ZeMonkey** | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support.                                                                                  |
+| [**@MylesGit**](https://modrinth.com/user/hOL20ANs) | For the original suggestion of the custom Advancement tree, and creating the template for [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server!                                                           |
 
 ### <font color="teal">Dependencies</font>
 
