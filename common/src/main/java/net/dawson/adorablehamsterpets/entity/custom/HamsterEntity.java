@@ -24,6 +24,7 @@ import net.dawson.adorablehamsterpets.entity.control.HamsterBodyControl;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterBedItem;
 import net.dawson.adorablehamsterpets.mixin.accessor.LandPathNodeMakerInvoker;
+import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
@@ -3357,13 +3358,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
                 // Play sound AT THE PLAYER'S LOCATION to ensure they hear it at the calculated volume,
                 // bypassing vanilla's distance attenuation which would silence it.
-                player.networkHandler.sendPacket(new PlaySoundS2CPacket(
-                        RegistryEntry.of(sound),
-                        SoundCategory.NEUTRAL,
-                        player.getX(), player.getY(), player.getZ(),
-                        volume, pitch,
-                        player.getRandom().nextLong()
-                ));
+                // Send packet using 1.20.1 channel
+                ModPackets.CHANNEL.sendToPlayer(player, new ModPackets.PlayDistantSoundS2CPacket(sound.getId(), volume, pitch));
             }
         }
     }

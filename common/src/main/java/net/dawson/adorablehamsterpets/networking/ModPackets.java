@@ -33,6 +33,7 @@ public class ModPackets {
     public record PlayGuidebookEffectsS2CPacket() {}
     public record SpawnBeddingParticlesS2CPacket(BlockPos pos, Direction direction, WoodVariant variant) {}
     public record SyncShoulderDataS2CPacket(int entityId, NbtCompound data) {}
+    public record PlayDistantSoundS2CPacket(Identifier soundId, float volume, float pitch) {}
 
     /**
      * Registers Client-to-Server packets.
@@ -144,6 +145,20 @@ public class ModPackets {
                         }
                     }
                 })
+        );
+
+        CHANNEL.register(PlayDistantSoundS2CPacket.class,
+                (packet, buf) -> {
+                    buf.writeIdentifier(packet.soundId());
+                    buf.writeFloat(packet.volume());
+                    buf.writeFloat(packet.pitch());
+                },
+                (buf) -> new PlayDistantSoundS2CPacket(
+                        buf.readIdentifier(),
+                        buf.readFloat(),
+                        buf.readFloat()
+                ),
+                (packet, context) -> context.get().queue(() -> AdorableHamsterPetsClient.handlePlayDistantSound(packet))
         );
     }
 }
