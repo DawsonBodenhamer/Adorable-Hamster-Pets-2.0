@@ -39,6 +39,7 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.particle.DefaultParticleType;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -54,33 +55,33 @@ import java.util.Set;
 
 public class AdorableHamsterPetsClient {
 
+    // --- Rendering State ---
     private static final Set<Integer> renderedHamsterIdsThisTick = new HashSet<>();
     private static final Set<Integer> renderedHamsterIdsLastTick = new HashSet<>();
+
+    // --- Input & Dismount Logic ---
     private static long lastSneakPressTime = 0;
     private static boolean isWaitingForSecondSneakPress = false;
-
     private static boolean hadShoulderHamsterLastTick = false;
     private static int dismountDebounceTicks = 0;
     private static final int DISMOUNT_DEBOUNCE_DEFAULT = 5;
 
-    // --- Announcement System Fields ---
+    // --- Announcement System ---
     private static final AnnouncementHudRenderer announcementHudRenderer = new AnnouncementHudRenderer();
     private static List<AnnouncementManager.PendingNotification> pendingNotifications = Collections.emptyList();
     private static int nextRefreshTicks = 6000; // 5 minutes
 
-    /**
-     * Public getter for other client classes to access the cached list of pending notifications.
-     * @return The current list of pending notifications.
-     */
-    public static List<AnnouncementManager.PendingNotification> getPendingNotifications() {
-        return pendingNotifications;
-    }
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                       1. Initialization & Registration
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
-     * Initializes general client-side features like screens, keybinds, and events.
+     * Initializes general client-side features.
+     * This includes RenderTypes, Config Events, Item Colors, Packet Receivers,
+     * Screen Events, Tick Events, and Keybind Interactions.
      */
     public static void init() {
-        // --- RenderTypeRegistry call ---
+        // --- Block Render Types ---
         RenderTypeRegistry.register(RenderLayer.getCutout(),
                 ModBlocks.GREEN_BEANS_CROP.get(),
                 ModBlocks.CUCUMBER_CROP.get(),
@@ -89,39 +90,34 @@ public class AdorableHamsterPetsClient {
                 ModBlocks.WILD_GREEN_BEAN_BUSH.get(),
                 ModBlocks.HAMSTER_BED.get());
 
-        // --- Initializers ---
-        RenderTypeRegistry.register(RenderLayer.getCutout(),
-                ModBlocks.GREEN_BEANS_CROP.get(),
-                ModBlocks.CUCUMBER_CROP.get(),
-                ModBlocks.SUNFLOWER_BLOCK.get(),
-                ModBlocks.WILD_CUCUMBER_BUSH.get(),
-                ModBlocks.WILD_GREEN_BEAN_BUSH.get(),
-                ModBlocks.HAMSTER_BED.get());
+        // --- Config Reload Listener ---
         ConfigApiJava.event().onUpdateClient((id, config) -> {
             if (id.equals(Identifier.of(AdorableHamsterPets.MOD_ID, "main"))) {
                 ConfigDataCache.parseConfig();
                 AdorableHamsterPets.LOGGER.info("Reloaded Adorable Hamster Pets item tag config on client following GUI update. *wink wink*");
             }
         });
+
+        // --- Item Colors ---
         ColorHandlerRegistry.registerItemColors((stack, tintIndex) -> -1, ModItems.HAMSTER_SPAWN_EGG.get());
 
         // --- Networking Registration ---
         ModPackets.registerS2CPackets();
 
-        // Announcement System
+        // --- Announcement System ---
         AHPClientScreenEvents.register();
 
         // --- Event Registrations ---
         ClientTickEvent.CLIENT_POST.register(AdorableHamsterPetsClient::onEndClientTick);
         ClientGuiEvent.RENDER_HUD.register((context, tickDelta) -> announcementHudRenderer.render(context, tickDelta));
 
-        // Interaction Event for Force Shoulder Mount Keybind
+        // --- Force-Mount Keybind Interaction ---
         InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
             // Ensure we are on client and main hand to avoid double firing
             if (player.getWorld().isClient && hand == net.minecraft.util.Hand.MAIN_HAND && entity instanceof HamsterEntity hamster) {
                 // Check if key is pressed AND config enabled
                 if (Configs.AHP.enableShoulderMountKeybind && ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY.isPressed()) {
-                    // Only if it's tamed hamster
+                    // Only if it's tamed hamster and owned by player
                     if (hamster.isTamed() && hamster.isOwner(player)) {
                         // Send packet using the 1.20.1 NetworkChannel
                         ModPackets.CHANNEL.sendToServer(new ModPackets.RequestHamsterMountC2SPacket(hamster.getId()));
@@ -154,16 +150,23 @@ public class AdorableHamsterPetsClient {
         EntityRendererRegistry.register(ModEntities.HAMSTER, HamsterRenderer::new);
     }
 
-    public static void onHamsterRendered(int entityId) {
-        renderedHamsterIdsThisTick.add(entityId);
-    }
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                       2. Event Listeners (Tick & Render)
+     * ────────────────────────────────────────────────────────────────────────────*/
 
+    /**
+     * The main client-tick event handler.
+     * Manages announcement animations, manifest refreshing, custom keybind logic (throwing/dismounting),
+     * and render state cleanup to determine if entities are off-screen.
+     *
+     * @param client The Minecraft client instance.
+     */
     private static void onEndClientTick(MinecraftClient client) {
-        // --- Announcement System Tick Logic ---
+        // --- 1. Announcement System Tick Logic ---
         boolean isGuiOpen = client.currentScreen != null;
         AnnouncementIconAnimator.INSTANCE.tick(isGuiOpen);
 
-        // --- Sync Patchouli State (once per session after world load) ---
+        // Sync Patchouli State (once per session after world load)
         if (client.world != null && !AnnouncementManager.INSTANCE.isPatchouliStateSynced()) {
             AnnouncementManager.INSTANCE.syncPatchouliReadState();
             // Once the sync is successful, also process any deferred read marks from the session.
@@ -177,20 +180,21 @@ public class AdorableHamsterPetsClient {
             pendingNotifications = AnnouncementManager.INSTANCE.getPendingNotifications();
         }
 
-        // --- Periodic Manifest Refresh ---
+        // Periodic Manifest Refresh
         if (--nextRefreshTicks <= 0) {
             nextRefreshTicks = 6000; // Reset timer
             AnnouncementManager.INSTANCE.refreshManifest(); // Fire and forget
             AdorableHamsterPets.LOGGER.debug("[AHP Client Tick] Triggered periodic manifest refresh.");
         }
 
-        // -- Key Presses and Other Tick Logic ---
+        // --- 2. Input & Game Logic ---
         if (client.player == null || client.world == null) {
             renderedHamsterIdsThisTick.clear();
             renderedHamsterIdsLastTick.clear();
             return;
         }
 
+        // Handle Throw Hamster Keybind
         if (ModKeyBindings.THROW_HAMSTER_KEY.wasPressed()) {
             final AhpConfig currentConfig = AdorableHamsterPets.CONFIG;
             if (!currentConfig.enableHamsterThrowing) {
@@ -206,11 +210,14 @@ public class AdorableHamsterPetsClient {
             }
         }
 
+        // --- 3. Render State Tracking ---
+        // Determines which hamsters stopped rendering this tick (went off-screen)
         Set<Integer> stoppedRendering = new HashSet<>(renderedHamsterIdsLastTick);
         stoppedRendering.removeAll(renderedHamsterIdsThisTick);
 
         for (Integer entityId : stoppedRendering) {
             // Send the render state update packet
+            // Using ByteBuf because Architectury 1.20.1 helper logic for update packet
             PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
             buf.writeInt(entityId);
             buf.writeBoolean(false); // isRendering = false
@@ -222,9 +229,13 @@ public class AdorableHamsterPetsClient {
         renderedHamsterIdsLastTick.addAll(renderedHamsterIdsThisTick);
         renderedHamsterIdsThisTick.clear();
 
-        // --- Dismount Logic ---
+        // --- 4. Dismount Logic ---
         handleDismountKeyPress(client);
     }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                            3. Logic Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
      * Handles the client-side logic for dismounting a shoulder hamster.
@@ -232,9 +243,6 @@ public class AdorableHamsterPetsClient {
      * This method is called every client tick. It checks the user's configuration to determine
      * which key to listen for (vanilla sneak or a custom keybind) and what press behavior
      * is required (single press or double-tap).
-     * <p>
-     * When a valid dismount action is detected, it sends a packet
-     * to the server to execute the dismount.
      *
      * @param client The MinecraftClient instance.
      */
@@ -253,7 +261,7 @@ public class AdorableHamsterPetsClient {
 
         // Detect the exact tick we JUST mounted (transition: false -> true)
         if (hasShoulderHamster && !hadShoulderHamsterLastTick) {
-            // Drain any queued presses on BOTH possible bindings, and clear held states.
+            // Drain any queued presses on BOTH possible bindings
             KeyBinding vanillaSneak = client.options.sneakKey;
             KeyBinding customDismount = ModKeyBindings.DISMOUNT_HAMSTER_KEY;
 
@@ -271,23 +279,18 @@ public class AdorableHamsterPetsClient {
 
             // Reset any double-tap state on fresh mount.
             isWaitingForSecondSneakPress = false;
-
-            AdorableHamsterPets.LOGGER.trace("[AHP DEBUG CLIENT] Mount transition detected -> draining input queues and starting debounce ({} ticks).",
-                    DISMOUNT_DEBOUNCE_DEFAULT);
         }
 
-        // Remember shoulder state for next tick.
+        // Remember shoulder state for next tick
         hadShoulderHamsterLastTick = hasShoulderHamster;
 
-        // If no hamster on shoulder, clear double-tap state and bail.
+        // If no hamster, bail
         if (!hasShoulderHamster) {
-            if (isWaitingForSecondSneakPress) {
-                isWaitingForSecondSneakPress = false;
-            }
+            isWaitingForSecondSneakPress = false;
             return;
         }
 
-        // While the debounce window is active, ignore dismount input.
+        // Handle debounce
         if (dismountDebounceTicks > 0) {
             dismountDebounceTicks--;
             return;
@@ -295,7 +298,7 @@ public class AdorableHamsterPetsClient {
 
         final AhpConfig config = AdorableHamsterPets.CONFIG;
 
-        // --- 2. Choose which key to listen for based on config ---
+        // --- 2. Choose Key ---
         KeyBinding keyToListenFor;
         if (Configs.AHP.dismountTriggerType == DismountTriggerType.CUSTOM_KEYBIND) {
             keyToListenFor = ModKeyBindings.DISMOUNT_HAMSTER_KEY;
@@ -303,20 +306,11 @@ public class AdorableHamsterPetsClient {
             keyToListenFor = client.options.sneakKey;
         }
 
-        // --- 3. Edge detection: call wasPressed() ONCE and store the result ---
+        // --- 3. Detect Press ---
         boolean wasKeyPressed = keyToListenFor != null && keyToListenFor.wasPressed();
 
-        AdorableHamsterPets.LOGGER.trace(
-                "[AHP DEBUG CLIENT] Tick Handler: Listening for '{}'. wasPressed() = {}",
-                keyToListenFor != null ? keyToListenFor.getTranslationKey() : "null-binding",
-                wasKeyPressed
-        );
-
         if (wasKeyPressed) {
-            AdorableHamsterPets.LOGGER.debug("[AHP DEBUG CLIENT] Tick Handler: SINGLE_PRESS detected. Press type config: {}",
-                    config.dismountPressType.get());
-
-            // --- 4. Apply press type logic (SINGLE vs DOUBLE) ---
+            // --- 4. Apply Press Type Logic ---
             if (config.dismountPressType.get() == DismountPressType.SINGLE_PRESS) {
                 // Single press always triggers the dismount
                 // Send a typed packet for 1.20.1
@@ -326,30 +320,39 @@ public class AdorableHamsterPetsClient {
                 long delayMillis = config.doubleTapDelayTicks.get() * 50L;
 
                 if (isWaitingForSecondSneakPress && (currentTime - lastSneakPressTime) <= delayMillis) {
-                    AdorableHamsterPets.LOGGER.trace("[AHP DEBUG CLIENT] Tick Handler: DOUBLE_TAP second press detected. Sending dismount payload.");
                     // Second press was within the delay window, trigger dismount
                     // Send a typed packet for 1.20.1
                     ModPackets.CHANNEL.sendToServer(new ModPackets.DismountHamsterC2SPacket());
                     isWaitingForSecondSneakPress = false; // Reset the double-tap state
                 } else {
-                    AdorableHamsterPets.LOGGER.trace("[AHP DEBUG CLIENT] Tick Handler: DOUBLE_TAP first press detected. Starting timer.");
+                    // First press
                     isWaitingForSecondSneakPress = true;
                     lastSneakPressTime = currentTime;
                 }
             }
         }
 
-        // --- 5. Handle timeout for the double-tap window ---
+        // --- 5. Timeout for Double Tap ---
         if (isWaitingForSecondSneakPress) {
             long currentTime = System.currentTimeMillis();
             long delayMillis = config.doubleTapDelayTicks.get() * 50L;
             if ((currentTime - lastSneakPressTime) > delayMillis) {
-                AdorableHamsterPets.LOGGER.trace("[AHP DEBUG CLIENT] Tick Handler: DOUBLE_TAP timed out.");
                 isWaitingForSecondSneakPress = false;
             }
         }
     }
 
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                       4. Network Packet Handlers
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Handles the {@link ModPackets.SpawnBeddingParticlesS2CPacket} packet.
+     * Spawns a burst of "floaty" leaf particles at the specified location.
+     * Used by dispensers and the Hamster Bedding item.
+     *
+     * @param packet The packet data containing position, direction, and wood variant.
+     */
     public static void handleSpawnBeddingParticles(ModPackets.SpawnBeddingParticlesS2CPacket packet) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null) return;
@@ -357,8 +360,7 @@ public class AdorableHamsterPetsClient {
         BlockPos spawnPos = packet.pos().offset(packet.direction());
         Vec3d particleCenter = Vec3d.ofCenter(spawnPos);
 
-        // Get the particle type
-        // In 1.20.1, use DefaultParticleType instead of SimpleParticleType
+        // Get the particle type. In 1.20.1, use DefaultParticleType instead of SimpleParticleType.
         DefaultParticleType particleType = ModParticles.getForVariant(packet.variant());
 
         for (int i = 0; i < 30; i++) {
@@ -372,42 +374,90 @@ public class AdorableHamsterPetsClient {
         }
     }
 
+    /**
+     * Handles the {@link ModPackets.PlayGuidebookEffectsS2CPacket} packet.
+     * Plays sound effects, particles, and an action bar message when the guidebook
+     * is retrieved via the config menu.
+     */
     public static void handlePlayGuidebookEffects() {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null) return;
 
-        // Close the config screen to un-pause the game
+        // Close config screen to un-pause game
         client.setScreen(null);
 
         PlayerEntity player = client.player;
         ClientWorld world = client.world;
         if (player == null || world == null) return;
 
-        // Send Action Bar Message
+        // Feedback
         player.sendMessage(Text.translatable("message.adorablehamsterpets.guidebook_rediscovered").formatted(Formatting.GOLD), true);
-
-        // Play sounds at the player's location
         world.playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.PLAYERS, 0.5f, 1.2f, false);
         world.playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, 0.7f, 1.5f, false);
 
-        // Spawn particles at the player's location
+        // Particles
         for (int i = 0; i < 50; i++) {
             world.addParticle(ParticleTypes.ENCHANT,
-                    player.getParticleX(0.6),
-                    player.getRandomBodyY(),
-                    player.getParticleZ(0.6),
+                    player.getParticleX(0.6), player.getRandomBodyY(), player.getParticleZ(0.6),
                     (world.random.nextDouble() - 0.5) * 0.5,
                     (world.random.nextDouble() - 0.5) * 0.5,
                     (world.random.nextDouble() - 0.5) * 0.5);
         }
         for (int i = 0; i < 20; i++) {
             world.addParticle(ParticleTypes.HAPPY_VILLAGER,
-                    player.getParticleX(1.0),
-                    player.getRandomBodyY(),
-                    player.getParticleZ(1.0),
+                    player.getParticleX(1.0), player.getRandomBodyY(), player.getParticleZ(1.0),
                     (world.random.nextDouble() - 0.5) * 0.5,
                     (world.random.nextDouble() - 0.5) * 0.5,
                     (world.random.nextDouble() - 0.5) * 0.5);
         }
+    }
+
+    /**
+     * Handles the {@link ModPackets.PlayDistantSoundS2CPacket} packet.
+     * Plays a sound at a specific location on the client, bypassing vanilla's distance attenuation checks
+     * often imposed by ServerPlayerEntity#playSound, allowing "distant" sounds to be heard.
+     *
+     * @param packet The packet data containing sound ID, volume, and pitch.
+     */
+    public static void handlePlayDistantSound(ModPackets.PlayDistantSoundS2CPacket packet) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null || client.player == null) return;
+
+        // Resolve the sound identifier to a SoundEvent (1.20.1 syntax)
+        SoundEvent sound = SoundEvent.of(packet.soundId());
+
+        // Play the sound at the PLAYER'S location to ensure audibility
+        client.world.playSound(
+                client.player.getX(),
+                client.player.getY(),
+                client.player.getZ(),
+                sound,
+                SoundCategory.NEUTRAL,
+                packet.volume(),
+                packet.pitch(),
+                false // distanceDelay
+        );
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                       5. Trackers & Accessors
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Called by the renderer to track which entities are currently visible.
+     * Used for optimizing network traffic related to rendering state.
+     * @param entityId The ID of the rendered entity.
+     */
+    public static void onHamsterRendered(int entityId) {
+        renderedHamsterIdsThisTick.add(entityId);
+    }
+
+    /**
+     * Public getter for other client classes (like the HUD renderer and Widget)
+     * to access the cached list of pending notifications.
+     * @return The current list of pending notifications.
+     */
+    public static List<AnnouncementManager.PendingNotification> getPendingNotifications() {
+        return pendingNotifications;
     }
 }
