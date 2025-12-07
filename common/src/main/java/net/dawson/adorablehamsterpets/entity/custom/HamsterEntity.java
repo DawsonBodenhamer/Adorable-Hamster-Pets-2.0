@@ -7,7 +7,6 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
-import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.component.HamsterShoulderData;
 import net.dawson.adorablehamsterpets.component.ModDataComponentTypes;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
@@ -24,6 +23,7 @@ import net.dawson.adorablehamsterpets.entity.control.HamsterBodyControl;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterBedItem;
 import net.dawson.adorablehamsterpets.mixin.accessor.LandPathNodeMakerInvoker;
+import net.dawson.adorablehamsterpets.networking.payload.PlayDistantSoundPayload;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
@@ -65,7 +65,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.network.packet.s2c.play.PlaySoundS2CPacket;
 import net.minecraft.particle.EntityEffectParticleEffect;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
@@ -3324,15 +3323,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
                 float volume = 0.18F - 0.10F * ((float) (distance - 16.0) / 34.0F);
 
-                // Play sound AT THE PLAYER'S LOCATION to ensure they hear it at the calculated volume,
+                // Send a custom packet to play the sound at the player's location,
                 // bypassing vanilla's distance attenuation which would silence it.
-                player.networkHandler.sendPacket(new PlaySoundS2CPacket(
-                        RegistryEntry.of(sound),
-                        SoundCategory.NEUTRAL,
-                        player.getX(), player.getY(), player.getZ(),
-                        volume, pitch,
-                        player.getRandom().nextLong()
-                ));
+                NetworkManager.sendToPlayer(player, new PlayDistantSoundPayload(sound.getId(), volume, pitch));
             }
         }
     }
