@@ -24,11 +24,11 @@ This patch is dedicated to the 1% of you running modpacks complicated enough to 
   - Added new graphic headings with cozy pixel art tree branches, featuring the actual Hamster Bedding item texture for their leaves.
   - Reworked info banners for layout clarity and added credits for everyone who has helped out with development, artwork, and translations.
   - Added a new pixel art banner image up at the top. Huge thanks to [@The Retro Stitcher](https://theretrostitcher.com/) for helping me get it pixel-perfect. He and I both spent a considerable number of hours on it!
-  - Go check it out right here, and **turn off your ad blocker** and watch a few ads while you're there to help support the development of Adorable Hamster Pets!
+  - Go check it out [**right here**](https://modrinth.com/mod/adorable-hamster-pets), and **turn off your ad blocker** and watch a few ads while you're there to help support the development of Adorable Hamster Pets!
 
 ### Fixed
 
-(Note: If I sent you a jar file on Discord marked `v3.5.0`, those fixes are included here.)
+(Note: If I sent you a preview jar file on Discord marked `v3.5.0`, those fixes are included here.)
 - **Added defensive measures for crashes with Shaders and optimization mods.**
   -   While not directly caused by Adorable Hamster Pets, shaders often create "fake" player entities to render shadows and aggressive optimization mods sometimes leave these entities in a broken/uninitialized state. Then when this mod would ask, "Does this shadow have a pet?" for the shoulder hamster feature, the game would panic and crash.
   -   Added defensive checks to both the **Renderer** and the **Physics Simulation** for shoulder hamsters to safely ignore these corrupted entities. This should not have any visual effect on the game except that your hamster may not have a shadow for a few seconds when you first load into the world.
