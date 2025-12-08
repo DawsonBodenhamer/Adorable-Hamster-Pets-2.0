@@ -326,16 +326,16 @@ Translating technical jargon is hard. Translating "Hamster Yeet" into another la
 
 [![Crowdin Translations](https://img.shields.io/badge/crowdin-Adorable_Hamster_Pets-orange?color=c37301&label=crowdin&logo=crowdin&style=for-the-badge)](https://crowdin.com/project/adorable-hamster-pets/invite?h=f0c9693f50d4006be56b7ea9115fc2672501384)
 
-| Language | Progress | Translators |
-| :--- |:----------|:-------------------------------------------------------------------|
-| **Chinese Simplified** | 100% | [**@SnowCutieOwO**](https://github.com/SnowCutieOwO) |
-| **Chinese Traditional** | 100% | [**@創造Creative**](https://portaly.cc/creativeyoo) |
-| **Russian** | 100% | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) |
-| **Spanish** | ~46% | [**@The Retro Stitcher**](https://theretrostitcher.com/) |
-| **Korean** | ~31% | (Pending credits) |
-| **Polish** | ~26% | (Pending credits) |
-| **German** | ~7% | [**@glitchyboy**](https://crowdin.com/profile/glitchyboy) |
-| **Japanese** | ~6% | (Pending credits) |
+| Language | Progress | Translators                                                        |
+| :--- |:---------|:-------------------------------------------------------------------|
+| **Chinese Simplified** | 100%     | [**@SnowCutieOwO**](https://github.com/SnowCutieOwO)               |
+| **Chinese Traditional** | 100%     | [**@創造Creative**](https://portaly.cc/creativeyoo)                  |
+| **Russian** | 100%     | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) |
+| **Japanese** | 100%   | [**@SAGA**](https://github.com/saga5368965-dev)                |
+| **Spanish** | ~46%     | [**@The Retro Stitcher**](https://theretrostitcher.com/)           |
+| **Korean** | ~31%     | (Pending credits)                                                  |
+| **Polish** | ~26%     | (Pending credits)                                                  |
+| **German** | ~7%      | [**@glitchyboy**](https://crowdin.com/profile/glitchyboy)          |
 
 ### <span style="color: #169179;"><strong>Collaborators & Conspirators</strong></span>
 
@@ -348,6 +348,16 @@ I'd like to claim I did this all by myself while meditating on a mountain peak, 
 | [**@fzzyhmstrs**](https://github.com/fzzyhmstrs) | For the heroic assistance required to refactor this project to Architectury. Without them, you wouldn't be yeeting hamsters on NeoForge right now. |
 | **@ZeMonkey** | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support. |
 | [**@MylesGit**](https://modrinth.com/user/hOL20ANs) | For the original suggestion of the custom Advancement tree, and creating the template for [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server! |
+
+### <span style="color: #169179;"><strong>Snack Providers</strong></span>
+
+These generous souls contributed to the project to keep the lights on and the hamster wheels spinning. They are awesome and, yes, fully awesome. Did I say they are awesome?
+
+| Name                                                     | Fun Fact                                                                |
+|:---------------------------------------------------------|:------------------------------------------------------------------------|
+| [**@The Retro Stitcher**](https://theretrostitcher.com/) | Rumored to dream exclusively in pixel art with a precise color palette. |
+| [**@Slicktopia**](https://ko-fi.com/slicktopia)          | Single-handedly influencing the global virtual cheese economy.          |
+
 
 ### <span style="color: #169179;"><strong>Dependencies</strong></span>
 
