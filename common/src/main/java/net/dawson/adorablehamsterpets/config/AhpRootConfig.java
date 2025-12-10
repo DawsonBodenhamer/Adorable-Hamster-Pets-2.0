@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.config;
 
 import me.fzzyhmstrs.fzzy_config.annotations.RootConfig;
+import me.fzzyhmstrs.fzzy_config.annotations.Translation;
 import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.util.Translatable;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
@@ -12,6 +13,7 @@ import net.minecraft.util.Identifier;
  * description to be shown on the landing page, and the other configs in
  * the same namespace will be listed below it.
  */
+@Translation(prefix = "adorablehamsterpets.root") // TODO: Remove @Translation annotation in Fzzy Config 0.7.4+ (See EnUsGenerator.java)
 @Translatable.Name("Main Menu")
 @Translatable.Desc("Here's where your hamster experimentation begins. Don't forget to touch grass.")
 @RootConfig
