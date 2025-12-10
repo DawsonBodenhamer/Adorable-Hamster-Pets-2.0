@@ -28,6 +28,7 @@ import net.minecraft.util.Identifier;
 import java.util.ArrayList;
 import java.util.List;
 
+@Translation(prefix = "adorablehamsterpets.main") // TODO: Remove @Translation annotation in Fzzy Config 0.7.4+ (See EnUsGenerator.java)
 @Translatable.Name("Main Settings")
 @Translatable.Desc("The command center for rodent-based chaos. Tweak physics, nerf cheese, and generally play god with small furry creatures.")
 
@@ -219,7 +220,7 @@ public class AhpConfig extends Config {
             new ValidatedEnum<>(IconPositionPreset.TOP_LEFT)
                     .toCondition(
                             isHudIconEnabled,
-                            Text.literal("Only available when 'Enable HUD Icon' is ON."),
+                            Text.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
                             () -> IconPositionPreset.TOP_LEFT
                     );
 
@@ -230,7 +231,7 @@ public class AhpConfig extends Config {
             new ValidatedInt(10, 500, -500)
                     .toCondition(
                             isHudIconEnabled,
-                            Text.literal("Only available when 'Enable HUD Icon' is ON."),
+                            Text.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
                             () -> 10
                     );
 
@@ -241,7 +242,7 @@ public class AhpConfig extends Config {
             new ValidatedInt(10, 500, -500)
                     .toCondition(
                             isHudIconEnabled,
-                            Text.literal("Only available when 'Enable HUD Icon' is ON."),
+                            Text.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
                             () -> 10
                     );
 
@@ -253,7 +254,7 @@ public class AhpConfig extends Config {
             new ValidatedFloat(1.0f, 3.0f, 0.5f)
                     .toCondition(
                             isHudIconEnabled,
-                            Text.literal("Only available when 'Enable HUD Icon' is ON."),
+                            Text.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
                             () -> 1.0f
                     );
 
@@ -305,7 +306,7 @@ public class AhpConfig extends Config {
             new ValidatedAny<>(new WidgetIconOffsets())
                     .toCondition(
                             isWidgetIconEnabled,
-                            Text.literal("Only available when 'Enable GUI Widget Icon' is ON."),
+                            Text.translatable("config.adorablehamsterpets.condition.widget_icon_enabled"),
                             WidgetIconOffsets::new
                     );
 
@@ -318,7 +319,7 @@ public class AhpConfig extends Config {
             new ValidatedAny<>(new WidgetIconOffsets())
                     .toCondition(
                             isWidgetIconEnabled,
-                            Text.literal("Only available when 'Enable GUI Widget Icon' is ON."),
+                            Text.translatable("config.adorablehamsterpets.condition.widget_icon_enabled"),
                             WidgetIconOffsets::new
                     );
 
@@ -345,7 +346,7 @@ public class AhpConfig extends Config {
             new ValidatedInt(0, 360, 0)
                     .toCondition(
                             isDynamicDriftDisabled,
-                            Text.literal("Only available when 'Dynamic Leaf Drift' is OFF."),
+                            Text.translatable("config.adorablehamsterpets.condition.dynamic_drift_off"),
                             () -> 0
                     );
 
@@ -548,16 +549,16 @@ public class AhpConfig extends Config {
     @Translatable.Desc("The initial wander distance set when a hamster is first linked to a bed. It defaults to medium, because that is the universally accepted starting point for all life choices.")
     public ValidatedEnum<WanderDistance> defaultWanderDistance = new ValidatedEnum<>(WanderDistance.MEDIUM);
 
-    @Translatable.Name("Wander Distance: Near (Blocks)")
-    @Translatable.Desc("The radius for the 'Near' wander distance setting. For the clingy hamster who wants freedom, but not too much.")
+    @Translatable.Name("Distance: Near")
+    @Translatable.Desc("The radius (in blocks) for the 'Near' wander distance setting. For the clingy hamster who wants freedom, but not too much.")
     public ValidatedInt wanderDistanceNear = new ValidatedInt(8, 64, 1);
 
-    @Translatable.Name("Wander Distance: Medium (Blocks)")
-    @Translatable.Desc("The radius for the 'Medium' wander distance setting. A respectable distance. Not too close, not too far. Perfectly balanced, as all things should be.")
+    @Translatable.Name("Distance: Medium")
+    @Translatable.Desc("The radius (in blocks) for the 'Medium' wander distance setting. A respectable distance. Not too close, not too far. Perfectly balanced, as all things should be.")
     public ValidatedInt wanderDistanceMedium = new ValidatedInt(16, 64, 1);
 
-    @Translatable.Name("Wander Distance: Far (Blocks)")
-    @Translatable.Desc("The radius for the 'Far' wander distance setting. For the adventurous hamster who might send you a postcard someday. Maybe.")
+    @Translatable.Name("Distance: Far")
+    @Translatable.Desc("The radius (in blocks) for the 'Far' wander distance setting. For the adventurous hamster who might send you a postcard someday. Maybe.")
     public ValidatedInt wanderDistanceFar = new ValidatedInt(32, 64, 1);
 
     @Translatable.Name("Bed Break Notification")
@@ -576,7 +577,7 @@ public class AhpConfig extends Config {
     public ValidatedCondition<Boolean> circadianChaos = new ValidatedBoolean(false)
             .toCondition(
                     isSleepInBedAllowed,
-                    Text.literal("Only available when 'Allow Sleeping in Bed' is true."),
+                    Text.translatable("config.adorablehamsterpets.condition.sleep_in_bed_allowed"),
                     () -> false
             );
 
@@ -588,7 +589,7 @@ public class AhpConfig extends Config {
     public ValidatedCondition<Integer> minNapInBedIntervalSeconds  = new ValidatedInt(300, 7000, 5)
             .toCondition(
                     () -> allowSleepInBed.get() && circadianChaos.get(),
-                    Text.literal("Only available when 'Enable Circadian Chaos' is ON."),
+                    Text.translatable("config.adorablehamsterpets.condition.circadian_chaos_on"),
                     () -> 300
             );
 
@@ -597,7 +598,7 @@ public class AhpConfig extends Config {
     public ValidatedCondition<Integer> maxNapInBedIntervalSeconds = new ValidatedInt(600, 7200, 10)
             .toCondition(
                     () -> allowSleepInBed.get() && circadianChaos.get(),
-                    Text.literal("Only available when 'Enable Circadian Chaos' is ON."),
+                    Text.translatable("config.adorablehamsterpets.condition.circadian_chaos_on"),
                     () -> 900
             );
 
@@ -606,7 +607,7 @@ public class AhpConfig extends Config {
     public ValidatedCondition<Boolean> sleepDuringDay = new ValidatedBoolean(true)
             .toCondition(
                     () -> allowSleepInBed.get() && !circadianChaos.get(),
-                    Text.literal("Overridden by 'Enable Circadian Chaos' or disabled by 'Allow Sleeping in Bed'."),
+                    Text.translatable("config.adorablehamsterpets.condition.circadian_chaos_overrides"),
                     () -> true
             );
 
@@ -616,7 +617,7 @@ public class AhpConfig extends Config {
     public ValidatedCondition<Integer> bedWakeUpCooldown = new ValidatedInt(300, 1200, 20)
             .toCondition(
                     isSleepInBedAllowed,
-                    Text.literal("Only available when 'Allow Sleeping in Bed' is ON."),
+                    Text.translatable("config.adorablehamsterpets.condition.sleep_in_bed_allowed"),
                     () -> 300
             );
 
@@ -696,7 +697,7 @@ public class AhpConfig extends Config {
             new ValidatedInt(10, 40, 5)
                     .toCondition(
                             isDoubleTap,
-                            Text.literal("Only available when Button-Press Behavior is set to DOUBLE_TAP."),
+                            Text.translatable("config.adorablehamsterpets.condition.double_tap"),
                             () -> 10
                     );
 
@@ -725,7 +726,7 @@ public class AhpConfig extends Config {
                             // use the inverted validated field as the gating condition
                             dynamicShoulderDisabled,
                             // message shown when the condition fails
-                            Text.literal("Only available when 'Enable Dynamic Shoulder Animations' is turned OFF."),
+                            Text.translatable("config.adorablehamsterpets.condition.dynamic_shoulder_off"),
                             // fallback when the condition fails
                             () -> ForcedShoulderState.ALWAYS_STAND
                     );
@@ -787,22 +788,18 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Even digital rodents need beauty sleep— adjust according to your patience levels.")
     public ConfigGroup tamedSleepSettings = new ConfigGroup("tamedSleepSettings", true);
 
-    @NonSync
-    @Translatable.Name("Threat Radius (Blocks)")
-    @Translatable.Desc("How close a hostile mob can get before a hamster wakes up from it's power nap.")
+    @Translatable.Name("Threat Radius")
+    @Translatable.Desc("How close (in blocks) a hostile mob can get before a hamster wakes up from it's power nap.")
     public ValidatedInt tamedSleepThreatDetectionRadiusBlocks = new ValidatedInt(8, 32, 1);
 
-    @NonSync
     @Translatable.Name("Require Daytime?")
     @Translatable.Desc("Choose when your sitting hamster will succumb to drowsiness. 'True' means your sitting hamster will only doze off during the day— 'false' means it can doze off anytime. This setting does not affect the behavior of a hamster when sleeping in a bed.")
     public boolean requireDaytimeForTamedSleep = true;
 
-    @NonSync
     @Translatable.Name("Min Sit Time Before Drowsy (Secs)")
     @Translatable.Desc("Minimum seconds before a sitting hamster gets sleepy.")
     public ValidatedInt tamedQuiescentSitMinSeconds = new ValidatedInt(120, 300, 1);
 
-    @NonSync
     @ConfigGroup.Pop
     @Translatable.Name("Max Sit Time Before Drowsy (Secs)")
     @Translatable.Desc("Maximum seconds before the inevitable deep snooze.")
@@ -871,8 +868,8 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Permit hamsters to embark on solo get-rich-quick schemes?")
     public boolean enableIndependentDiamondSeeking = true;
 
-    @Translatable.Name("Diamond Seek Scan Radius (Blocks)")
-    @Translatable.Desc("How far a hamster scans once it’s decided to play prospector.")
+    @Translatable.Name("Diamond Seek Scan Radius")
+    @Translatable.Desc("How far (in blocks) a hamster scans once it’s decided to play prospector.")
     public ValidatedInt diamondSeekRadius = new ValidatedInt(10, 20, 5);
 
     @ConfigGroup.Pop
@@ -893,20 +890,20 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Probability (0.1 to 1.0) a hamster will succumb to temptation. High by default. You shouldn't leave your diamonds lying around anyway.")
     public ValidatedFloat diamondPounceChance = new ValidatedFloat(0.75f, 1.0f, 0.1f);
 
-    @Translatable.Name("Minimum Flee Distance (Blocks)")
-    @Translatable.Desc("The hamster's personal space bubble.")
+    @Translatable.Name("Minimum Flee Distance")
+    @Translatable.Desc("The hamster's personal space bubble (in blocks).")
     public ValidatedInt minFleeDistance = new ValidatedInt(5, 20, 1);
 
-    @Translatable.Name("Maximum Flee Distance (Blocks)")
-    @Translatable.Desc("The maximum distance before the hamster gets bored and stops running to taunt you.")
+    @Translatable.Name("Maximum Flee Distance")
+    @Translatable.Desc("The maximum distance (in blocks) before the hamster gets bored and stops running to taunt you.")
     public ValidatedInt maxFleeDistance = new ValidatedInt(20, 40, 5);
 
-    @Translatable.Name("Minimum Steal Duration (Seconds)")
-    @Translatable.Desc("The shortest amount of time the hamster will entertain this little game before getting bored and dropping your stuff.")
+    @Translatable.Name("Minimum Steal Duration")
+    @Translatable.Desc("The shortest amount of time (in seconds) the hamster will entertain this little game before getting bored and dropping your stuff.")
     public ValidatedInt minStealDurationSeconds = new ValidatedInt(5, 240, 1);
 
     @ConfigGroup.Pop
-    @Translatable.Name("Maximum Steal Duration (Seconds)")
-    @Translatable.Desc("The longest your cardio session can last before the hamster's attention span gives out.")
+    @Translatable.Name("Maximum Steal Duration")
+    @Translatable.Desc("The longest (in seconds) your cardio session can last before the hamster's attention span gives out.")
     public ValidatedInt maxStealDurationSeconds = new ValidatedInt(15, 300, 5);
 }
