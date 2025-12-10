@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.config;
 
 import me.fzzyhmstrs.fzzy_config.annotations.RootConfig;
+import me.fzzyhmstrs.fzzy_config.annotations.Translation;
 import me.fzzyhmstrs.fzzy_config.api.SaveType;
 import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.config.ConfigGroup;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+@Translation(prefix = "adorablehamsterpets.worldgen") // TODO: Remove @Translation annotation in Fzzy Config 0.7.4+ (See EnUsGenerator.java)
 @Translatable.Name("World Gen Settings")
 @Translatable.Desc("Control the rodent population density and where their food grows. Changes here usually require a restart, or at least a deep breath. Note: If you join a server, its world gen settings will override yours.")
 public class AhpWorldGenConfig extends Config {
