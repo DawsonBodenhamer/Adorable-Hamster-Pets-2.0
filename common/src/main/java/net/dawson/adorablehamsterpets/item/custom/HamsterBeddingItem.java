@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.item.custom;
 
+import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
@@ -89,7 +90,7 @@ public class HamsterBeddingItem extends Item {
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint1").formatted(Formatting.GOLD));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.shift_for_info").formatted(Formatting.DARK_GRAY));
             }
-        } else {
+        } else if (!Platform.isModLoaded("emi")) {
             tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
         }
         super.appendTooltip(stack, world, tooltip, context);

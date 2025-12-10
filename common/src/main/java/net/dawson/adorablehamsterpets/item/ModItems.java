@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.item;
 
 import dev.architectury.injectables.annotations.ExpectPlatform;
+import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
@@ -40,7 +41,7 @@ public class ModItems {
                     if (Configs.AHP.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.green_bean_seeds.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.green_bean_seeds.hint2").formatted(Formatting.GRAY));
-                    } else {
+                    } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }
                     super.appendTooltip(stack, world, tooltip, context);
@@ -54,7 +55,7 @@ public class ModItems {
                     if (Configs.AHP.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cucumber_seeds.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cucumber_seeds.hint2").formatted(Formatting.GRAY));
-                    } else {
+                    } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }
                     super.appendTooltip(stack, world, tooltip, context);
@@ -68,7 +69,7 @@ public class ModItems {
                     if (Configs.AHP.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sunflower_seeds.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sunflower_seeds.hint2").formatted(Formatting.GRAY));
-                    } else {
+                    } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }
                     super.appendTooltip(stack, world, tooltip, context);
@@ -82,7 +83,7 @@ public class ModItems {
                     if (Configs.AHP.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cucumber.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cucumber.hint2").formatted(Formatting.GRAY));
-                    } else {
+                    } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }
                     super.appendTooltip(stack, world, tooltip, context);
@@ -96,7 +97,7 @@ public class ModItems {
                     if (Configs.AHP.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sliced_cucumber.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sliced_cucumber.hint2").formatted(Formatting.GRAY));
-                    } else {
+                    } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }
                     super.appendTooltip(stack, world, tooltip, context);
@@ -110,7 +111,7 @@ public class ModItems {
                     if (Configs.AHP.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.green_beans.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.green_beans.hint2").formatted(Formatting.GRAY));
-                    } else {
+                    } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }
                     super.appendTooltip(stack, world, tooltip, context);
@@ -124,7 +125,7 @@ public class ModItems {
                     if (Configs.AHP.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.steamed_green_beans.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.steamed_green_beans.hint2").formatted(Formatting.GRAY));
-                    } else {
+                    } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }
                     super.appendTooltip(stack, world, tooltip, context);
@@ -138,7 +139,7 @@ public class ModItems {
                     if (Configs.AHP.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_food_mix.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_food_mix.hint2").formatted(Formatting.GRAY));
-                    } else {
+                    } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }
                     super.appendTooltip(stack, world, tooltip, context);
@@ -155,7 +156,7 @@ public class ModItems {
                     if (Configs.AHP.enableItemTooltips) {
                         tooltip.add(Text.translatable("block.adorablehamsterpets.wild_green_bean_bush.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("block.adorablehamsterpets.wild_green_bean_bush.hint2").formatted(Formatting.GRAY));
-                    } else {
+                    } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }
                     super.appendTooltip(stack, world, tooltip, context);
@@ -169,7 +170,7 @@ public class ModItems {
                     if (Configs.AHP.enableItemTooltips) {
                         tooltip.add(Text.translatable("block.adorablehamsterpets.wild_cucumber_bush.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("block.adorablehamsterpets.wild_cucumber_bush.hint2").formatted(Formatting.GRAY));
-                    } else {
+                    } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }
                     super.appendTooltip(stack, world, tooltip, context);
@@ -183,7 +184,7 @@ public class ModItems {
                     if (Configs.AHP.enableItemTooltips) {
                         tooltip.add(Text.translatable("block.adorablehamsterpets.sunflower_block.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("block.adorablehamsterpets.sunflower_block.hint2").formatted(Formatting.GRAY));
-                    } else {
+                    } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }
                     super.appendTooltip(stack, world, tooltip, context);
