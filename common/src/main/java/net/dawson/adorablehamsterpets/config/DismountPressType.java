@@ -1,6 +1,15 @@
 package net.dawson.adorablehamsterpets.config;
 
-public enum DismountPressType {
+import me.fzzyhmstrs.fzzy_config.util.EnumTranslatable;
+import org.jetbrains.annotations.NotNull;
+
+public enum DismountPressType implements EnumTranslatable {
     SINGLE_PRESS,
-    DOUBLE_TAP
+    DOUBLE_TAP;
+
+    @NotNull
+    @Override
+    public String prefix() {
+        return "config.adorablehamsterpets.enum.dismount_press_type";
+    }
 }
