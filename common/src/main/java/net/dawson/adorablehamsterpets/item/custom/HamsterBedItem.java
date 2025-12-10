@@ -161,7 +161,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.description1").formatted(Formatting.GOLD));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.shift_for_info").formatted(Formatting.DARK_GRAY));
             }
-        } else {
+        } else if (!Platform.isModLoaded("emi")) {
             tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
         }
         super.appendTooltip(stack, world, tooltip, context);

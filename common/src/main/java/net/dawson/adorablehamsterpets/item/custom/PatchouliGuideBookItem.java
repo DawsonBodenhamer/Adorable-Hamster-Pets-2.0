@@ -49,6 +49,7 @@ public class PatchouliGuideBookItem extends Item {
 
         // --- 2. Get Contextual Information ---
         boolean isJadeLoaded = Platform.isModLoaded("jade");
+        boolean isEMILoaded = Platform.isModLoaded("emi");
         Screen currentScreen = MinecraftClient.getInstance().currentScreen;
 
         // --- 3. Determine screen context ---
@@ -56,8 +57,8 @@ public class PatchouliGuideBookItem extends Item {
         boolean needsToolTip = (currentScreen == null || currentScreen.getClass() == CreativeInventoryScreen.class);
 
         // --- 4. Add the mod name line if needed ---
-        // Add line if EITHER Jade is not installed OR we are in a screen that needs a tooltip.
-        if (!isJadeLoaded || needsToolTip) {
+        // Add line if EITHER Jade/EMI is not installed OR we are in a screen that needs a tooltip.
+        if (!isJadeLoaded || !isEMILoaded || needsToolTip) {
             tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
         }
 
