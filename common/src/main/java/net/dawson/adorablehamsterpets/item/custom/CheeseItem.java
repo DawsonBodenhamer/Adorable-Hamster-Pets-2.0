@@ -64,7 +64,7 @@ public class CheeseItem extends Item {
                         String.format("%.1f", Configs.AHP.cheeseSaturation.get() * Configs.AHP.cheeseNutrition.get() * 2.0F)
                 ).formatted(Formatting.DARK_GRAY));
             }
-        } else {
+        }  else if (!Platform.isModLoaded("emi")) {
             tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
         }
         super.appendTooltip(stack, context, tooltip, type);
