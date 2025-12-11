@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.4.2] - 2025-12-14
+## [3.4.2] - 2025-12-11
+
+# **The Tiny Patch**
+
+This patch is hamster-sized, but fixes a pretty big issue. In my zeal to make my code more defensive against Macaw's Mods on Sunday, I accidentally created a bug that locked players out of worlds if they logged out with a shoulder hamster. That is now fixed. Your worlds are safe, and you can log in again. I also squeezed in Xaero's Minimap support and a few other things while I was at it.
 
 ### Added
 - **New Translations**
@@ -14,13 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Thanks to help from [@Kazerio](https://modrinth.com/user/kazerio), added hamster icons to Xaero's Minimap!
 
 ### Fixed
+- **Invalid Player Data / World Join Crash**
+  -   Resolved a critical issue where the game would crash or lock players out of worlds if they had a hamster on their shoulder. This was accidentally introduced in version 3.4.1 when I refactored the code to defend against the network protocol error caused by Macaw's Mods.
+  -   I had accidentally introduced a race condition where the mod attempted to sync pet data before the player's network connection was fully established. If you had previously been locked out of any of your worlds due to this bug, you should now be able to join just fine and your hamsters will still be on your shoulder.
 - **Config Screen Localization**
   -   Implemented a work-around for an issue where the "Main Settings" and "World Gen Settings" descriptions were not translatable due to a known bug with Fzzy Config.
   -   Fixed untranslated enum values (e.g., "Near/Medium/Far", "Sneak Key") in dropdown menus.
   -   Fixed untranslated conditional help text (e.g., "Only available when...").
 - **EMI Compatibility**
   - Resolved tooltip mod name duplication when EMI is installed.
-
 
 ## [3.4.1] - 2025-12-07
 
