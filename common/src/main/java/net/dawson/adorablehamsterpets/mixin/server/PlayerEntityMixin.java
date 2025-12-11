@@ -159,15 +159,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         } else {
             this.adorablehamsterpets$lastGoldMessageIndex = -1;
         }
-
-        // Sync to Client on Login (if Server)
-        if (!this.getWorld().isClient() && !this.ahp$shoulderData.isEmpty()) {
-            PlayerEntity self = (PlayerEntity) (Object) this;
-            if (self instanceof ServerPlayerEntity serverPlayer) {
-                SyncShoulderDataPayload packet = new SyncShoulderDataPayload(this.getId(), this.ahp$shoulderData);
-                NetworkManager.sendToPlayer(serverPlayer, packet);
-            }
-        }
     }
 
     /**
@@ -238,6 +229,19 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     public void adorablehamsterpets$setRawShoulderData(NbtCompound nbt) {
         // Called by client packet handler to update local state
         this.ahp$shoulderData = nbt;
+    }
+
+    @Unique
+    @Override
+    public void adorablehamsterpets$syncShoulderData() {
+        // Called via PlayerEvent.PLAYER_JOIN to ensure connection is ready before sending
+        if (!this.getWorld().isClient() && !this.ahp$shoulderData.isEmpty()) {
+            PlayerEntity self = (PlayerEntity) (Object) this;
+            if (self instanceof ServerPlayerEntity serverPlayer) {
+                SyncShoulderDataPayload packet = new SyncShoulderDataPayload(this.getId(), this.ahp$shoulderData);
+                NetworkManager.sendToPlayer(serverPlayer, packet);
+            }
+        }
     }
 
     // --- 4. Tick Logic ---
