@@ -333,24 +333,24 @@ Translating technical jargon is hard. Translating "Hamster Yeet" into another la
 | **Chinese Simplified** | 100%     | [**@SnowCutieOwO**](https://github.com/SnowCutieOwO)               |
 | **Chinese Traditional** | 100%     | [**@創造Creative**](https://portaly.cc/creativeyoo)                  |
 | **Russian** | 100%     | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) |
-| **Japanese** | 100%   | [**@SAGA**](https://github.com/saga5368965-dev)                |
+| **Japanese** | 100%     | [**@SAGA**](https://github.com/saga5368965-dev)                    |
 | **Spanish** | ~46%     | [**@The Retro Stitcher**](https://theretrostitcher.com/)           |
-| **Korean** | ~31%     | (Pending credits)                                                  |
 | **Polish** | ~26%     | (Pending credits)                                                  |
+| **Korean** | ~25%     | [@na6ie](https://nolink.com)                                             |
 | **German** | ~7%      | [**@glitchyboy**](https://crowdin.com/profile/glitchyboy)          |
 
 ### <font color="teal">Collaborators & Conspirators</font>
 
 I'd like to claim I did this all by myself while meditating on a mountain peak, but that would be a lie. These fine folks helped suggest features, fix bugs, and generally kept the mod from imploding.
 
-| Name | Contribution                                                                                                                                                                                                             |
+| Name                                                               | Contribution                                                                                                                                                                                                             |
 |:-------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [**@Kazerio**](https://modrinth.com/user/kazerio) | For adding compatibility with Xaero's Minimap so it shows hamster icons.                                                                                                                                                 |
-| [**@The Retro Stitcher**](https://theretrostitcher.com/) | For re-designing the mod's icon, and helping make the banner image pixel-perfect.                                                                                                                                        |
+| [**@Kazerio**](https://modrinth.com/user/kazerio)                  | For adding compatibility with Xaero's Minimap so it shows hamster icons.                                                                                                                                                 |
+| [**@The Retro Stitcher**](https://theretrostitcher.com/)           | For re-designing the mod's icon, and helping make the banner image pixel-perfect.                                                                                                                                        |
 | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) | For contributing a mountainous number of ideas, helping squash bugs, and assisting with the complex mod compatibility logic (Farmer's Delight, Cultural Delights, Croptopia, Immersive Engineering, and Serene Seasons). |
-| [**@fzzyhmstrs**](https://github.com/fzzyhmstrs) | For the heroic assistance required to refactor this project to Architectury. Without them, you wouldn't be yeeting hamsters on NeoForge right now.                                                                       |
-| **@ZeMonkey** | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support.                                                                                  |
-| [**@MylesGit**](https://modrinth.com/user/hOL20ANs) | For the original suggestion of the custom Advancement tree, and creating the template for [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server!                                                           |
+| [**@fzzyhmstrs**](https://github.com/fzzyhmstrs)                   | For the heroic assistance required to refactor this project to Architectury. Without them, you wouldn't be yeeting hamsters on NeoForge right now.                                                                       |
+| [**@ZeMonkey**](https://nolink.com)                                | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support.                                                                                  |
+| [**@MylesGit**](https://modrinth.com/user/hOL20ANs)                | For the original suggestion of the custom Advancement tree, and creating the template for [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server!                                                           |
 
 ### <font color="teal">Snack Providers</font>
 
