@@ -159,6 +159,9 @@ public class AdorableHamsterPets {
 			}
 		}
 
+		// Sync initial shoulder data
+		((PlayerEntityAccessor) player).adorablehamsterpets$syncShoulderData();
+
 		// Upgrade any old hamster tips guide books in the player's inventory
 		replaceOldBooksInInventory(player.getInventory());
 	}
