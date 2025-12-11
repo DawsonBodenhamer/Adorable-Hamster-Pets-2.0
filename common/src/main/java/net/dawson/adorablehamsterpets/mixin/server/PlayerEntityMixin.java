@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.mixin.server;
 
 import com.mojang.authlib.GameProfile;
+import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
@@ -158,15 +159,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         } else {
             this.adorablehamsterpets$lastGoldMessageIndex = -1;
         }
-
-        // --- Sync to Client on Login (if Server) ---
-        if (!this.getWorld().isClient() && !this.ahp$shoulderData.isEmpty()) {
-            PlayerEntity self = (PlayerEntity) (Object) this;
-            if (self instanceof ServerPlayerEntity serverPlayer) {
-                ModPackets.SyncShoulderDataS2CPacket packet = new ModPackets.SyncShoulderDataS2CPacket(this.getId(), this.ahp$shoulderData);
-                ModPackets.CHANNEL.sendToPlayer(serverPlayer, packet);
-            }
-        }
     }
 
     /**
@@ -236,6 +228,20 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     public void adorablehamsterpets$setRawShoulderData(NbtCompound nbt) {
         // Called by client packet handler to update local state
         this.ahp$shoulderData = nbt;
+    }
+
+    @Unique
+    @Override
+    public void adorablehamsterpets$syncShoulderData() {
+        // Called via PlayerEvent.PLAYER_JOIN to ensure connection is ready before sending
+        if (!this.getWorld().isClient() && !this.ahp$shoulderData.isEmpty()) {
+            PlayerEntity self = (PlayerEntity) (Object) this;
+            if (self instanceof ServerPlayerEntity serverPlayer) {
+                // On 1.20.1, use ModPackets.CHANNEL and the inner record class
+                var packet = new ModPackets.SyncShoulderDataS2CPacket(this.getId(), this.ahp$shoulderData);
+                ModPackets.CHANNEL.sendToPlayer(serverPlayer, packet);
+            }
+        }
     }
 
     // --- 4. Tick Logic ---
