@@ -5,11 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.5.0] - 2025-12-14
+## [3.4.2] - 2025-12-14
 
 ### Added
-- **New translations, sort of**
+- **New Translations**
   - Added 6 new locals for the Spanish translation thanks to [@The Retro Stitcher](https://theretrostitcher.com/).
+- **Xaero's Minimap Compatibility**
+  - Thanks to help from [@Kazerio](https://modrinth.com/user/kazerio), added hamster icons to Xaero's Minimap!
+
+### Fixed
+- **Config Screen Localization**
+  -   Implemented a work-around for an issue where the "Main Settings" and "World Gen Settings" descriptions were not translatable due to a known bug with Fzzy Config.
+  -   Fixed untranslated enum values (e.g., "Near/Medium/Far", "Sneak Key") in dropdown menus.
+  -   Fixed untranslated conditional help text (e.g., "Only available when...").
+- **EMI Compatibility**
+  - Resolved tooltip mod name duplication when EMI is installed.
+
 
 ## [3.4.1] - 2025-12-07
 
