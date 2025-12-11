@@ -28,6 +28,12 @@ public interface PlayerEntityAccessor {
 
     void adorablehamsterpets$setRawShoulderData(net.minecraft.nbt.NbtCompound nbt);
 
+    /**
+     * Triggers the synchronization of shoulder data to the client.
+     * This must be called AFTER the player has fully joined and the connection is established.
+     */
+    void adorablehamsterpets$syncShoulderData();
+
     ArrayDeque<ShoulderLocation> adorablehamsterpets$getMountOrderQueue();
 
     ClientShoulderHamsterData adorablehamsterpets$getClientShoulderData();
