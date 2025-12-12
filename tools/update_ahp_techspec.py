@@ -9,6 +9,7 @@ import time
 
 # --- Constants ---
 CONFIG_FILENAME = "techspec_config.json"
+STATS_FILENAME = "ahp_run_stats.json"
 MARKER_START = "## AHP Provided Code"
 MARKER_END = "End AHP Provided Code"
 BINARY_EXTENSIONS = {'.png', '.ogg'}
@@ -59,6 +60,28 @@ def load_config():
         sys.exit(1)
 
     return config
+
+def load_previous_stats():
+    """Load stats from the previous run to calculate diffs."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    stats_path = os.path.join(script_dir, STATS_FILENAME)
+    if os.path.exists(stats_path):
+        try:
+            with open(stats_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_current_stats(stats_data):
+    """Save current stats to disk."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    stats_path = os.path.join(script_dir, STATS_FILENAME)
+    try:
+        with open(stats_path, 'w', encoding='utf-8') as f:
+            json.dump(stats_data, f, indent=2)
+    except Exception as e:
+        print_verbose(f"Failed to save stats file: {e}")
 
 def get_git_branch(root_dir):
     """Get current git branch name."""
@@ -174,17 +197,13 @@ def get_semantic_sort_key(rel_path):
     # 1. Loader Priority
     loader_prio = 99
     if lower in ['changelog.md', 'readme.md', 'readme_curseforge_style.md']: loader_prio = 0
-    elif '/' not in lower: loader_prio = 1 # Other Root files
+    elif '/' not in lower: loader_prio = 1
     elif lower.startswith('common/'): loader_prio = 2
     elif lower.startswith('fabric/'): loader_prio = 3
     elif lower.startswith('neoforge/') or lower.startswith('forge/'): loader_prio = 4
     elif lower.startswith('.github'): loader_prio = 90
 
-    # 2. Root Type Priority (Strict Code vs Resources Split)
-    # 0: Misc/Config/Build (files not in src)
-    # 1: Source Code (src/main/java, src/main/kotlin)
-    # 2: Resources (src/main/resources, src/main/generated)
-
+    # 2. Root Type Priority
     if 'src/main/resources' in lower or 'src/main/generated' in lower:
         root_type_prio = 2
     elif 'src/main/java' in lower or 'src/main/kotlin' in lower:
@@ -199,8 +218,8 @@ def get_semantic_sort_key(rel_path):
     is_meta_file = any(x in filename for x in meta_keywords)
 
     if is_meta_file:
-        feat_prio = -10 # Absolute top of the specific RootType section
-        feature_root = "meta" # Placeholder
+        feat_prio = -10
+        feature_root = "meta"
     else:
         # Heuristic to find the feature root
         feature_root = ""
@@ -293,25 +312,45 @@ def remove_java_imports(content):
         new_lines.append(line)
     return "\n".join(new_lines)
 
-def print_stats_table(full_stats, omitted_stats):
-    """Pretty print the statistics."""
+def format_diff(current, previous):
+    """Helper to format '10 (+2)' or '10 (-1)' or '10'."""
+    if previous is None:
+        # First run ever for this metric, treat previous as 0
+        diff = current
+        # If needing to show (+X) on first run, uncomment next line:
+        # return f"{current} (+{diff})"
+        return f"{current}"
+
+    diff = current - previous
+    if diff > 0:
+        return f"{current} (+{diff})"
+    elif diff < 0:
+        return f"{current} ({diff})"
+    else:
+        return f"{current}"
+
+def print_stats_table(full_stats, omitted_stats, prev_full, prev_omitted):
+    """Pretty print the statistics with diffs."""
     print("")
 
     # Helper for printing a section
-    def print_section(title, data):
-        if not data:
+    def print_section(title, current_data, prev_data):
+        if not current_data:
             return
         print(f"  {title}:")
         # Sort by count descending, then extension name
-        sorted_data = sorted(data.items(), key=lambda x: (-x[1], x[0]))
+        sorted_data = sorted(current_data.items(), key=lambda x: (-x[1], x[0]))
         for ext, count in sorted_data:
-            display_ext = ext if ext else "(no-ext)"
-            print(f"    {display_ext:<10} : {count}")
+            prev_count = prev_data.get(ext, 0) if prev_data else None
+            count_str = format_diff(count, prev_count)
 
-    print_section("Included Content (Full Code)", full_stats)
+            display_ext = ext if ext else "(no-ext)"
+            print(f"    {display_ext:<10} : {count_str}")
+
+    print_section("Included Content (Full Code)", full_stats, prev_full)
     if full_stats and omitted_stats:
         print("")
-    print_section("Omitted Content (Structure Only)", omitted_stats)
+    print_section("Omitted Content (Structure Only)", omitted_stats, prev_omitted)
 
 def main():
     start_time = time.time()
@@ -334,6 +373,14 @@ def main():
     # Determine Git Branch
     raw_branch = get_git_branch(root_dir)
     sanitized_branch = sanitize_branch_name(raw_branch)
+
+    # Load previous stats for this branch
+    all_prev_stats = load_previous_stats()
+    prev_branch_stats = all_prev_stats.get(raw_branch, {})
+    prev_total_files = prev_branch_stats.get("total_files", None)
+    prev_full_stats = prev_branch_stats.get("full_stats", {})
+    prev_omitted_stats = prev_branch_stats.get("omitted_stats", {})
+
     techspec_filename = config["techspec_pattern"].replace("{branch}", sanitized_branch)
     backup_filename = config["backup_pattern"].replace("{branch}", sanitized_branch)
     techspec_path = os.path.join(root_dir, techspec_filename)
@@ -393,9 +440,9 @@ def main():
     last_directory = None
     last_was_compact = False
 
-    # Stats Tracking
-    stats_full = {}
-    stats_omitted = {}
+    # Stats Tracking (Current)
+    current_full_stats = {}
+    current_omitted_stats = {}
 
     for rel_path in included_files:
         current_directory = os.path.dirname(rel_path)
@@ -407,7 +454,7 @@ def main():
         is_compact = is_binary or is_omitted or args.structure_only
 
         # Track Stats
-        target_stats = stats_omitted if is_compact else stats_full
+        target_stats = current_omitted_stats if is_compact else current_full_stats
         target_stats[ext] = target_stats.get(ext, 0) + 1
 
         separator = ""
@@ -482,11 +529,26 @@ def main():
         with open(techspec_path, 'w', encoding='utf-8') as f:
             f.write(final_doc)
 
+        # Print Report
+        total_files = len(included_files)
+        total_diff_str = format_diff(total_files, prev_total_files)
+
         print_info("--- Success ---")
         print(f"  Branch: {raw_branch}")
-        print(f"  Files:  {len(included_files)}")
-        print_stats_table(stats_full, stats_omitted)
+        print(f"  Files:  {total_diff_str}")
+
+        print_stats_table(current_full_stats, current_omitted_stats, prev_full_stats, prev_omitted_stats)
+
         print(f"\n  Time:   {round(time.time() - start_time, 2)}s")
+
+        # Save stats for next run
+        all_prev_stats[raw_branch] = {
+            "timestamp": time.time(),
+            "total_files": total_files,
+            "full_stats": current_full_stats,
+            "omitted_stats": current_omitted_stats
+        }
+        save_current_stats(all_prev_stats)
 
     except Exception as e:
         print_error(f"Operation failed: {e}")
