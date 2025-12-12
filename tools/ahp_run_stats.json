@@ -19,5 +19,26 @@
       ".json": 31,
       ".ogg": 91
     }
+  },
+  "1.20.x": {
+    "timestamp": 1765552875.501069,
+    "total_files": 689,
+    "full_stats": {
+      ".txt": 2,
+      ".gradle": 5,
+      ".properties": 2,
+      ".java": 176,
+      ".json": 173,
+      ".mcmeta": 1,
+      ".mcfunction": 7,
+      ".toml": 1,
+      ".yml": 1
+    },
+    "omitted_stats": {
+      ".txt": 1,
+      ".png": 198,
+      ".json": 31,
+      ".ogg": 91
+    }
   }
 }
