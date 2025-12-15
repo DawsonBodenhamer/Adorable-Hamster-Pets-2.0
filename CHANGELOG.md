@@ -7,20 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.4.3] - 2025-12-15
 
-# **The 1.20.1 Slap My Forehead Patch**
+# **The Slap My Forehead Patch**
 
-### ⚠️ NOTE: This update is exclusive to 1.20.1.
-**If you are playing on 1.21.1, you do not need this.** Your version was already written correctly. Go have a snack.
+⚠️ NOTE: If you are playing on 1.21.1, you do not technically need this. Go have a snack.
 
 ### Fixed
+
+#### 1.20.1
 - **Server Crash: "Unknown Message Type" (The 'I misunderstood how old Architectury works' bug)**
   -   **The Issue:** On dedicated 1.20.1 servers, the game would crash immediately upon trying to sync hamster data.
   -   **The Cause:** I (sort of) copy-pasted the shiny, modern Architectury networking code from 1.21.1 into the 1.20.1 backport. Turns out, the older Architectury API requires you to introduce packets to the server politely before sending them. The server received the hamster data, said "I don't know her," and panicked.
   -   **The Fix:** Refactored the network registration to actually work on 1.20.1.
   -   Also, I have left several aggressively capitalized comments in the source code warning my future self that 1.20.1 Architectury networking is different. So hopefully this will never happen again!
+#### 1.21.1 and 1.20.1
 - **"Mutant Hamster Pile" Cleanup**
-  -   **The Issue:** Players affected by the previous bug might have ended up with "ghost" hamster data, resulting in dozens of duplicate hamsters appearing in their data file.
-  -   **The Fix:** Added an auto-sanitizer that runs on login. It will instantly detect and delete any ghost/duplicate hamster entries, returning your character to normal without you needing to do anything.
+  -   **The Issue:** Players affected by the previous Invalid Player Data bug might have ended up with "ghost" hamster data, resulting in dozens of duplicate hamsters appearing on their shoulder.
+  -   **The Fix:** Spamming your dismount button should fix the issue, but not everyone reads changelogs so I added an auto-sanitizer that runs on login. It will instantly detect and delete any ghost/duplicate hamster entries, returning your character to normal without you needing to do anything.
 
 ---
 
