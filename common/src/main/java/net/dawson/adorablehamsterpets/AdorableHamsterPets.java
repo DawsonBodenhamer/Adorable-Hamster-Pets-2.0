@@ -84,7 +84,8 @@ public class AdorableHamsterPets {
 			ConfigDataCache.parseConfig();
 
 			// --- Networking Registration ---
-			ModPackets.registerC2SPackets();
+			// On 1.20.1, register all  packets on both sides using the safe common method.
+			ModPackets.registerCommonPackets();
 
 			// --- World Gen ---
 			ModWorldGeneration.registerBiomeModifications();
