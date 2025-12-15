@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   -   **The Cause:** I (sort of) copy-pasted the shiny, modern Architectury networking code from 1.21.1 into the 1.20.1 backport. Turns out, the older Architectury API requires you to introduce packets to the server politely before sending them. The server received the hamster data, said "I don't know her," and panicked.
   -   **The Fix:** Refactored the network registration to actually work on 1.20.1.
   -   Also, I have left several aggressively capitalized comments in the source code warning my future self that 1.20.1 Architectury networking is different. So hopefully this will never happen again!
+- **"Mutant Hamster Pile" Cleanup**
+  -   **The Issue:** Players affected by the previous bug might have ended up with "ghost" hamster data, resulting in dozens of duplicate hamsters appearing in their data file.
+  -   **The Fix:** Added an auto-sanitizer that runs on login. It will instantly detect and delete any ghost/duplicate hamster entries, returning your character to normal without you needing to do anything.
 
 ---
 
