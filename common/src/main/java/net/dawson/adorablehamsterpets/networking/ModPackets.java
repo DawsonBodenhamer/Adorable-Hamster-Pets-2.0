@@ -1,6 +1,8 @@
 package net.dawson.adorablehamsterpets.networking;
 
 import dev.architectury.networking.NetworkChannel;
+import dev.architectury.utils.Env;
+import dev.architectury.utils.EnvExecutor;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
@@ -16,6 +18,14 @@ import net.minecraft.util.math.Direction;
 
 import static net.dawson.adorablehamsterpets.AdorableHamsterPets.MOD_ID;
 
+/**
+ * Manages network packet registration and handling for the 1.20.1 version of the mod.
+ * Utilizes Architectury API's {@link NetworkChannel} to handle cross-platform networking.
+ * <p>
+ * Note: In Architectury 9 (1.20.1), packets must be registered on both logical sides
+ * to ensure the NetworkChannel knows how to encode/decode them. Client-side handlers
+ * are wrapped in {@link EnvExecutor} to prevent classloading crashes on the server.
+ */
 public class ModPackets {
 
     // --- 1. Create Network Channel ---
@@ -36,9 +46,12 @@ public class ModPackets {
     public record PlayDistantSoundS2CPacket(Identifier soundId, float volume, float pitch) {}
 
     /**
-     * Registers Client-to-Server packets.
+     * Registers all packet definitions and their handlers.
+     * This method must be called during common setup on both client and server.
      */
-    public static void registerC2SPackets() {
+    public static void registerCommonPackets() {
+
+        // --- Client to Server (C2S) ---
         CHANNEL.register(ThrowHamsterC2SPacket.class,
                 (packet, buf) -> {},
                 (buf) -> new ThrowHamsterC2SPacket(),
@@ -71,8 +84,8 @@ public class ModPackets {
         );
 
         CHANNEL.register(RequestGuidebookC2SPacket.class,
-                (packet, buf) -> {}, // No data to encode
-                (buf) -> new RequestGuidebookC2SPacket(), // No data to decode
+                (packet, buf) -> {},
+                (buf) -> new RequestGuidebookC2SPacket(),
                 (packet, context) -> context.get().queue(() -> {
                     ServerPlayerEntity player = (ServerPlayerEntity) context.get().getPlayer();
                     ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
@@ -89,8 +102,8 @@ public class ModPackets {
         );
 
         CHANNEL.register(RequestHamsterMountC2SPacket.class,
-                (packet, buf) -> buf.writeInt(packet.entityId()), // Encoder
-                (buf) -> new RequestHamsterMountC2SPacket(buf.readInt()), // Decoder
+                (packet, buf) -> buf.writeInt(packet.entityId()),
+                (buf) -> new RequestHamsterMountC2SPacket(buf.readInt()),
                 (packet, context) -> context.get().queue(() -> {
                     net.minecraft.entity.player.PlayerEntity player = context.get().getPlayer();
                     net.minecraft.entity.Entity entity = player.getWorld().getEntityById(packet.entityId());
@@ -103,12 +116,8 @@ public class ModPackets {
                     }
                 })
         );
-    }
 
-    /**
-     * Registers Server-to-Client packets.
-     */
-    public static void registerS2CPackets() {
+        // --- Server to Client (S2C) ---
         CHANNEL.register(SpawnBeddingParticlesS2CPacket.class,
                 (packet, buf) -> {
                     buf.writeBlockPos(packet.pos());
@@ -120,13 +129,17 @@ public class ModPackets {
                         buf.readEnumConstant(Direction.class),
                         buf.readEnumConstant(WoodVariant.class)
                 ),
-                (packet, context) -> context.get().queue(() -> AdorableHamsterPetsClient.handleSpawnBeddingParticles(packet))
+                (packet, context) -> context.get().queue(() ->
+                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handleSpawnBeddingParticles(packet))
+                )
         );
 
         CHANNEL.register(PlayGuidebookEffectsS2CPacket.class,
                 (packet, buf) -> {},
                 (buf) -> new PlayGuidebookEffectsS2CPacket(),
-                (packet, context) -> context.get().queue(AdorableHamsterPetsClient::handlePlayGuidebookEffects)
+                (packet, context) -> context.get().queue(() ->
+                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handlePlayGuidebookEffects())
+                )
         );
 
         CHANNEL.register(SyncShoulderDataS2CPacket.class,
@@ -135,16 +148,9 @@ public class ModPackets {
                     buf.writeNbt(packet.data());
                 },
                 (buf) -> new SyncShoulderDataS2CPacket(buf.readInt(), buf.readNbt()),
-                (packet, context) -> context.get().queue(() -> {
-                    net.minecraft.client.MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance();
-                    if (client.world != null) {
-                        net.minecraft.entity.Entity entity = client.world.getEntityById(packet.entityId());
-                        // Use the accessor to set the data
-                        if (entity instanceof PlayerEntityAccessor accessor) {
-                            accessor.adorablehamsterpets$setRawShoulderData(packet.data());
-                        }
-                    }
-                })
+                (packet, context) -> context.get().queue(() ->
+                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handleSyncShoulderData(packet.entityId(), packet.data()))
+                )
         );
 
         CHANNEL.register(PlayDistantSoundS2CPacket.class,
@@ -158,7 +164,9 @@ public class ModPackets {
                         buf.readFloat(),
                         buf.readFloat()
                 ),
-                (packet, context) -> context.get().queue(() -> AdorableHamsterPetsClient.handlePlayDistantSound(packet))
+                (packet, context) -> context.get().queue(() ->
+                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handlePlayDistantSound(packet))
+                )
         );
     }
 }

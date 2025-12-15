@@ -1,7 +1,6 @@
 package net.dawson.adorablehamsterpets.mixin.server;
 
 import com.mojang.authlib.GameProfile;
-import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;

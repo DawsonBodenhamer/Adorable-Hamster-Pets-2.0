@@ -102,7 +102,8 @@ public class AdorableHamsterPetsClient {
         ColorHandlerRegistry.registerItemColors((stack, tintIndex) -> -1, ModItems.HAMSTER_SPAWN_EGG.get());
 
         // --- Networking Registration ---
-        ModPackets.registerS2CPackets();
+        // On 1.20.1, register all  packets on both sides using the safe common method.
+        ModPackets.registerCommonPackets();
 
         // --- Announcement System ---
         AHPClientScreenEvents.register();
@@ -345,6 +346,19 @@ public class AdorableHamsterPetsClient {
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       4. Network Packet Handlers
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Handles the SyncShoulderData packet on the client.
+     */
+    public static void handleSyncShoulderData(int entityId, net.minecraft.nbt.NbtCompound data) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world != null) {
+            net.minecraft.entity.Entity entity = client.world.getEntityById(entityId);
+            if (entity instanceof net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor accessor) {
+                accessor.adorablehamsterpets$setRawShoulderData(data);
+            }
+        }
+    }
 
     /**
      * Handles the {@link ModPackets.SpawnBeddingParticlesS2CPacket} packet.
