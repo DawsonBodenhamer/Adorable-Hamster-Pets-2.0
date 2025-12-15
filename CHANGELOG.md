@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # **The Slap My Forehead Patch**
 
-⚠️ NOTE: If you are playing on 1.21.1, you do not technically need this. Go have a snack.
+⚠️ NOTE: If you are playing on 1.21.1, you do not technically need this, unless you're seeing dozens of hamsters on your shoulder. Go have a snack.
 
 ### Fixed
 
