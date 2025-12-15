@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.3] - 2025-12-15
+
+# **The 1.20.1 Slap My Forehead Patch**
+
+### ⚠️ NOTE: This update is exclusive to 1.20.1.
+**If you are playing on 1.21.1, you do not need this.** Your version was already written correctly. Go have a snack.
+
+### Fixed
+- **Server Crash: "Unknown Message Type" (The 'I misunderstood how old Architectury works' bug)**
+  -   **The Issue:** On dedicated 1.20.1 servers, the game would crash immediately upon trying to sync hamster data.
+  -   **The Cause:** I (sort of) copy-pasted the shiny, modern Architectury networking code from 1.21.1 into the 1.20.1 backport. Turns out, the older Architectury API requires you to introduce packets to the server politely before sending them. The server received the hamster data, said "I don't know her," and panicked.
+  -   **The Fix:** Refactored the network registration to actually work on 1.20.1.
+  -   Also, I have left several aggressively capitalized comments in the source code warning my future self that 1.20.1 Architectury networking is different. So hopefully this will never happen again!
+
+---
+
 ## [3.4.2] - 2025-12-11
 
 # **The Tiny Patch**
@@ -27,6 +43,8 @@ This patch is hamster-sized, but fixes a pretty big issue. In my zeal to make my
   -   Fixed untranslated conditional help text (e.g., "Only available when...").
 - **EMI Compatibility**
   - Resolved tooltip mod name duplication when EMI is installed.
+
+---
 
 ## [3.4.1] - 2025-12-07
 
