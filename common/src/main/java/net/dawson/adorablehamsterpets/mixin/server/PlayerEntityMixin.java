@@ -41,10 +41,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @Mixin(PlayerEntity.class)
 public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEntityAccessor {
@@ -129,13 +126,25 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             this.ahp$shoulderData = nbt.getCompound("ShoulderHamsters");
         }
 
-        // Read Mount Order Queue
+        // Read Mount Order Queue with Auto-Sanitization
         this.adorablehamsterpets$mountOrderQueue.clear();
         if (nbt.contains("MountOrderQueue", NbtElement.LIST_TYPE)) {
             NbtList mountOrderList = nbt.getList("MountOrderQueue", NbtElement.STRING_TYPE);
+
+            // Track seen locations to prevent duplicates
+            Set<ShoulderLocation> seenLocations = new HashSet<>();
+
             for (NbtElement element : mountOrderList) {
                 try {
-                    this.adorablehamsterpets$mountOrderQueue.add(ShoulderLocation.valueOf(element.asString()));
+                    ShoulderLocation location = ShoulderLocation.valueOf(element.asString());
+
+                    // Sanitize: Only add if:
+                    // 1. Haven't added this location already (Deduplication)
+                    // 2. The shoulder slot actually contains data (Ghost cleanup)
+                    if (!seenLocations.contains(location) && !this.getShoulderHamster(location).isEmpty()) {
+                        this.adorablehamsterpets$mountOrderQueue.add(location);
+                        seenLocations.add(location);
+                    }
                 } catch (IllegalArgumentException e) {
                     AdorableHamsterPets.LOGGER.warn("Found invalid ShoulderLocation name in NBT: {}", element.asString());
                 }
@@ -143,6 +152,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
 
         // --- Self-Healing Logic for Potential Corrupted State ---
+        // If sanitization cleared everything but there's still data, rebuild cleanly.
         if (this.adorablehamsterpets$mountOrderQueue.isEmpty() && this.hasAnyShoulderHamster()) {
             AdorableHamsterPets.LOGGER.info("Player {} has shoulder hamsters but an empty mount queue. Rebuilding queue...", this.getDisplayName().getString());
             for (ShoulderLocation location : ShoulderLocation.values()) {
