@@ -1,0 +1,38 @@
+{
+  "conditions": [
+    {
+      "type": "forge:mod_loaded", "modid": "immersiveengineering"
+    }
+  ],
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded", "modid": "immersiveengineering"
+    }
+  ],
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded", "values": ["immersiveengineering"]
+    }
+  ],
+  "type": "immersiveengineering:cloche",
+  "input": {
+    "item": "adorablehamsterpets:green_bean_seeds"
+  },
+  "soil": {
+    "item": "minecraft:dirt"
+  },
+  "results": [
+    {
+      "item": "adorablehamsterpets:green_beans",
+      "Count": 2
+    },
+    {
+      "item": "adorablehamsterpets:green_bean_seeds"
+    }
+  ],
+  "time": 640,
+  "render": {
+    "type": "immersiveengineering:crop",
+    "block": "adorablehamsterpets:green_beans_crop"
+  }
+}

@@ -1,12 +1,17 @@
 {
-  "fabric:load_conditions": [
+  "conditions": [
     {
-      "condition": "fabric:all_mods_loaded", "values": ["thermal"]
+      "type": "forge:mod_loaded", "modid": "thermal_expansion"
     }
   ],
   "neoforge:conditions": [
     {
-      "type": "neoforge:mod_loaded", "modid": "thermal"
+      "type": "neoforge:mod_loaded", "modid": "thermal_expansion"
+    }
+  ],
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded", "values": ["thermal_expansion"]
     }
   ],
   "type": "thermal:insolator",
@@ -15,11 +20,11 @@
   },
   "result": [
     {
-      "item": "adorablehamsterpets:green_beans",
+      "id": "adorablehamsterpets:green_beans",
       "chance": 2.0
     },
     {
-      "item": "adorablehamsterpets:green_bean_seeds",
+      "id": "adorablehamsterpets:green_bean_seeds",
       "chance": 1.1
     }
   ],
