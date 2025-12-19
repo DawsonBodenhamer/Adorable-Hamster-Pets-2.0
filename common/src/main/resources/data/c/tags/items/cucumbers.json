@@ -1,8 +1,7 @@
 {
   "replace": false,
   "values": [
-    "adorablehamsterpets:cucumber",
-    "#c:vegetables/cucumber",
-    "#c:crops/cucumber"
+    "#c:crops/cucumber",
+    "#c:vegetables/cucumber"
   ]
 }

@@ -1,8 +1,7 @@
 {
   "replace": false,
   "values": [
-    "adorablehamsterpets:green_beans",
-    "#c:vegetables/greenbean",
-    "#c:crops/greenbean"
+    "#c:crops/greenbean",
+    "#c:vegetables/greenbean"
   ]
 }

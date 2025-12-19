@@ -4,6 +4,11 @@
       "type": "forge:mod_loaded", "modid": "farmersdelight"
     }
   ],
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded", "modid": "farmersdelight"
+    }
+  ],
   "fabric:load_conditions": [
     {
       "condition": "fabric:all_mods_loaded", "values": ["farmersdelight"]
