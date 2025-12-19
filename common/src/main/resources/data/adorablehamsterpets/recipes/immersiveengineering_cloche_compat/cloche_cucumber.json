@@ -1,0 +1,38 @@
+{
+  "conditions": [
+    {
+      "type": "forge:mod_loaded", "modid": "immersiveengineering"
+    }
+  ],
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded", "modid": "immersiveengineering"
+    }
+  ],
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded", "values": ["immersiveengineering"]
+    }
+  ],
+  "type": "immersiveengineering:cloche",
+  "input": {
+    "item": "adorablehamsterpets:cucumber_seeds"
+  },
+  "soil": {
+    "item": "minecraft:dirt"
+  },
+  "results": [
+    {
+      "item": "adorablehamsterpets:cucumber",
+      "Count": 2
+    },
+    {
+      "item": "adorablehamsterpets:cucumber_seeds"
+    }
+  ],
+  "time": 640,
+  "render": {
+    "type": "immersiveengineering:crop",
+    "block": "adorablehamsterpets:cucumber_crop"
+  }
+}
