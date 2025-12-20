@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2025-12-19
+
+### Added
+- **Legacy Forge Support** (Thanks to [@Konkeeztador](https://github.com/Konkeeztador)!)
+  - Added specific data structures and loading conditions to ensure the mod loads correctly on the legacy Forge loader.
+- **Mod Compatibility Improvements** (Thanks to [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
+  - Added conventional `c` tags for Cheese to improve cross-mod compatibility.
+
+### Fixed
+- **Data Structure & Recipes** (Thanks again [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
+  - Duplicated tag folders to resolve structural differences between 1.20.1 (plural directories) and 1.21.1 (singular directories).
+  - Corrected the Cloche and Insolator compatibility recipe paths for 1.20.1.
+  - Fixed load conditions for Thermal Expansion integration to ensure recipes only load when the mod is present.
+
+---
+
+
 ## [3.4.3] - 2025-12-15
 
 # **The Slap My Forehead Patch**
