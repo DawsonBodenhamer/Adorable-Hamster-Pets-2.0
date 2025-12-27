@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.5.0] - 2025-12-19
 
 ### Added
-- **Legacy Forge Support** (Thanks to [@Konkeeztador](https://github.com/Konkeeztador)!)
-  - Added specific data structures and loading conditions to ensure the mod loads correctly on the legacy Forge loader.
+- **Legacy Forge Support** (Thanks to [@Konkeeztador](https://nolink.com)!)
+  - Added data structures and loading conditions to ensure the mod tags/recipes load correctly on the legacy Forge loader.
 - **Mod Compatibility Improvements** (Thanks to [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
   - Added conventional `c` tags for Cheese to improve cross-mod compatibility.
 
