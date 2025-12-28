@@ -7,6 +7,7 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.DismountOrder;
 import net.dawson.adorablehamsterpets.entity.AI.HamsterSeekDiamondGoal;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
@@ -288,8 +289,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 adorablehamsterpets$diamondCheckTimer++;
                 if (adorablehamsterpets$diamondCheckTimer >= CHECK_INTERVAL_TICKS) {
                     adorablehamsterpets$diamondCheckTimer = 0;
-                    // The isDiamondNearby method internally prioritizes exposed ore.
-                    if (isDiamondNearby(self, config.shoulderDiamondDetectionRadius.get())) {
+                    // The isCelebrationOreNearby method internally prioritizes exposed ore.
+                    if (isCelebrationOreNearby(self, config.shoulderDiamondDetectionRadius.get())) {
                         this.adorablehamsterpets$isDiamondAlertConditionMet = true;
                         if (adorablehamsterpets$diamondSoundCooldownTicks == 0) {
                             world.playSound(null, self.getBlockPos(),
@@ -463,14 +464,14 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     // --- Helper Methods ---
     /**
-     * Scans a spherical area around the player for diamond ore blocks, prioritizing exposed ores.
+     * Scans a spherical area around the player for "Desirable" ore blocks (configured via Config), prioritizing exposed ores.
      *
      * @param player The player to check around.
      * @param radius The radius of the sphere to scan, in blocks.
-     * @return {@code true} if any diamond ore is found (with exposed ones taking precedence), otherwise {@code false}.
+     * @return {@code true} if any desirable ore is found (with exposed ones taking precedence), otherwise {@code false}.
      */
     @Unique
-    private boolean isDiamondNearby(PlayerEntity player, double radius) {
+    private boolean isCelebrationOreNearby(PlayerEntity player, double radius) {
         World world = player.getWorld();
         BlockPos center = player.getBlockPos();
         int intRadius = (int) Math.ceil(radius);
@@ -481,8 +482,10 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         for (BlockPos checkPos : BlockPos.iterate(center.add(-intRadius, -intRadius, -intRadius), center.add(intRadius, intRadius, intRadius))) {
             if (checkPos.getSquaredDistance(center) <= radius * radius) {
                 BlockState state = world.getBlockState(checkPos);
-                if (state.isOf(Blocks.DIAMOND_ORE) || state.isOf(Blocks.DEEPSLATE_DIAMOND_ORE)) {
-                    // Use the public static helper from the HamsterSeekDiamondGoal
+
+                // Use the ConfigDataCache to check against the user-configured list of "Desirable Ores" that cause celebration upon being found
+                if (ConfigDataCache.isCelebrationOre(state)) {
+                    // Use public static helper from HamsterSeekDiamondGoal
                     if (HamsterSeekDiamondGoal.isOreExposed(checkPos, world)) {
                         exposedOres.add(checkPos.toImmutable());
                     } else {
