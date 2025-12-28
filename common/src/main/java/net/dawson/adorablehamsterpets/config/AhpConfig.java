@@ -1,7 +1,6 @@
 package net.dawson.adorablehamsterpets.config;
 
 import me.fzzyhmstrs.fzzy_config.annotations.NonSync;
-import me.fzzyhmstrs.fzzy_config.annotations.RootConfig;
 import me.fzzyhmstrs.fzzy_config.annotations.Translation;
 import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.config.ConfigAction;
@@ -872,10 +871,22 @@ public class AhpConfig extends Config {
     @Translatable.Desc("How far (in blocks) a hamster scans once it’s decided to play prospector.")
     public ValidatedInt diamondSeekRadius = new ValidatedInt(10, 20, 5);
 
-    @ConfigGroup.Pop
     @Translatable.Name("Gold 'Mistake' Chance")
     @Translatable.Desc("The probability (0.0 to 1.0) that a hamster will seek gold instead of diamond, if both are available. At 0.5, it's a coin toss. At 1.0, it's guaranteed hamster sulking.")
     public ValidatedFloat goldMistakeChance = new ValidatedFloat(0.33f, 1.0f, 0.0f);
+
+    @Translatable.Name("Desirable Ores")
+    @Translatable.Desc("The list of blocks that smell... shiny. Especially to greedy hamsters. Diamonds by default, but maybe you want them to sniff for Zinc ore? Accepts block IDs (e.g. 'create:zinc_ore') and #tags (e.g. '#c:ores/diamond').")
+    public List<String> celebrationOres = new ArrayList<>(List.of(
+            "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore"
+    ));
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Disappointing Ores")
+    @Translatable.Desc("Blocks that look promising but ultimately lead to a dramatic emotional breakdown. Gold by default, but if you want them to sniff for dirt, I'm not your conscience. Accepts block IDs (e.g. 'create:copper_ore') and #tags (e.g. '#c:ores/gold').")
+    public List<String> sulkingOres = new ArrayList<>(List.of(
+            "minecraft:gold_ore", "minecraft:deepslate_gold_ore"
+    ));
 
     // --- Diamond Stealing Behavior Settings---
     @Translatable.Name("Diamond Stealing Behavior Settings")
