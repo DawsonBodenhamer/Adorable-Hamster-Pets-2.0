@@ -1,6 +1,8 @@
 package net.dawson.adorablehamsterpets.config;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -49,6 +51,12 @@ public class ConfigDataCache {
     private static final Set<Item> pouchDisallowedItems = new HashSet<>();
     private static final Set<TagKey<Item>> pouchDisallowedTags = new HashSet<>();
 
+    // --- Cached Sets for Block Performance ---
+    private static final Set<Block> celebrationOreBlocks = new HashSet<>();
+    private static final Set<TagKey<Block>> celebrationOreTags = new HashSet<>();
+    private static final Set<Block> sulkingOreBlocks = new HashSet<>();
+    private static final Set<TagKey<Block>> sulkingOreTags = new HashSet<>();
+
     // --- Cached Sets for Biome Variant Performance ---
     private static final Set<Identifier> blueBiomeIds = new HashSet<>();
     private static final Set<TagKey<Biome>> blueBiomeTags = new HashSet<>();
@@ -86,6 +94,7 @@ public class ConfigDataCache {
      */
     public static void parseConfig() {
         clearAllItemSets();
+        clearAllBlockSets();
         clearAllBiomeSets();
 
         // --- Parse Item Lists ---
@@ -101,6 +110,10 @@ public class ConfigDataCache {
         parseItemList(Configs.AHP.pouchDisallowedItems, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedItems");
         parseItemList(Configs.AHP.pouchDisallowedTags, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedTags");
         parseItemList(Configs.AHP.autoHealFoods, autoHealFoodItems, autoHealFoodTags, "autoHealFoods");
+
+        // --- Parse Block Lists ---
+        parseBlockList(Configs.AHP.celebrationOres, celebrationOreBlocks, celebrationOreTags, "celebrationOres");
+        parseBlockList(Configs.AHP.sulkingOres, sulkingOreBlocks, sulkingOreTags, "sulkingOres");
 
         // --- Parse Biome Lists ---
         parseBiomeIdList(Configs.AHP_WORLDGEN.blueBiomes, blueBiomeIds, "blueBiomes");
@@ -154,6 +167,10 @@ public class ConfigDataCache {
     public static boolean isPouchAllowed(ItemStack stack) { return matchesItem(stack, pouchAllowedItems, pouchAllowedTags); }
     public static boolean isPouchDisallowed(ItemStack stack) { return matchesItem(stack, pouchDisallowedItems, pouchDisallowedTags); }
 
+    // --- Public Block Checker Methods ---
+    public static boolean isCelebrationOre(BlockState state) { return matchesBlock(state, celebrationOreBlocks, celebrationOreTags); }
+    public static boolean isSulkingOre(BlockState state) { return matchesBlock(state, sulkingOreBlocks, sulkingOreTags); }
+
     // --- Public Biome Checker Methods ---
     public static boolean isBlueBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, blueBiomeIds, blueBiomeTags, blueExclusionBiomeIds, blueExclusionBiomeTags); }
     public static boolean isLavenderBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, lavenderBiomeIds, lavenderBiomeTags, lavenderExclusionBiomeIds, lavenderExclusionBiomeTags); }
@@ -179,6 +196,26 @@ public class ConfigDataCache {
                     Registries.ITEM.getOrEmpty(itemId).ifPresent(itemSet::add);
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[ItemTagManager] Invalid item identifier in '{}' config list: '{}'", listName, entry);
+                }
+            }
+        }
+    }
+
+    private static void parseBlockList(List<String> configList, Set<Block> blockSet, Set<TagKey<Block>> tagSet, String listName) {
+        for (String entry : configList) {
+            if (entry.startsWith("#")) {
+                try {
+                    Identifier tagId = Identifier.of(entry.substring(1));
+                    tagSet.add(TagKey.of(RegistryKeys.BLOCK, tagId));
+                } catch (Exception e) {
+                    AdorableHamsterPets.LOGGER.warn("[BlockTagManager] Invalid block tag identifier in '{}' config list: '{}'", listName, entry);
+                }
+            } else {
+                try {
+                    Identifier blockId = Identifier.of(entry);
+                    Registries.BLOCK.getOrEmpty(blockId).ifPresent(blockSet::add);
+                } catch (Exception e) {
+                    AdorableHamsterPets.LOGGER.warn("[BlockTagManager] Invalid block identifier in '{}' config list: '{}'", listName, entry);
                 }
             }
         }
@@ -210,6 +247,17 @@ public class ConfigDataCache {
         if (itemSet.contains(stack.getItem())) return true;
         for (TagKey<Item> tag : tagSet) {
             if (stack.isIn(tag)) return true;
+        }
+        return false;
+    }
+
+    private static boolean matchesBlock(BlockState state, Set<Block> blockSet, Set<TagKey<Block>> tagSet) {
+        if (state == null) return false;
+        // Check exact block ID
+        if (blockSet.contains(state.getBlock())) return true;
+        // Check tags
+        for (TagKey<Block> tag : tagSet) {
+            if (state.isIn(tag)) return true;
         }
         return false;
     }
@@ -256,6 +304,13 @@ public class ConfigDataCache {
         pouchAllowedTags.clear();
         pouchDisallowedItems.clear();
         pouchDisallowedTags.clear();
+    }
+
+    private static void clearAllBlockSets() {
+        celebrationOreBlocks.clear();
+        celebrationOreTags.clear();
+        sulkingOreBlocks.clear();
+        sulkingOreTags.clear();
     }
 
     private static void clearAllBiomeSets() {

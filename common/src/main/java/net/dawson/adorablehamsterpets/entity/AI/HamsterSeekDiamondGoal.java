@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.entity.AI;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
@@ -43,7 +44,7 @@ public class HamsterSeekDiamondGoal extends Goal {
     private final HamsterEntity hamster;
     private final World world;
     private BlockPos targetOrePos; // The specific ore block being targeted
-    private boolean isSeekingGold; // True if the current target is gold ore
+    private boolean isSeekingDisappointingOre; // True if the current target is gold ore
 
     private enum SeekingState {
         IDLE,
@@ -94,45 +95,47 @@ public class HamsterSeekDiamondGoal extends Goal {
 
     private boolean findNewTargetOreAndSetState() {
         this.targetOrePos = null; // Reset before scan
-        this.isSeekingGold = false;
+        this.isSeekingDisappointingOre = false;
         this.hamster.currentOreTarget = null; // Clear entity's direct target tracker initially
 
-        List<BlockPos> exposedDiamondOres = new ArrayList<>();
-        List<BlockPos> buriedDiamondOres = new ArrayList<>();
-        List<BlockPos> buriedGoldOres = new ArrayList<>(); // Only track buried gold for the "mistake"
+        List<BlockPos> exposedCelebrationOres = new ArrayList<>();
+        List<BlockPos> buriedCelebrationOres = new ArrayList<>();
+        List<BlockPos> buriedSulkingOres = new ArrayList<>(); // Only track buried "bad" ores for the mistake logic
         int radius = Configs.AHP.diamondSeekRadius.get();
 
         for (BlockPos pos : BlockPos.iterateOutwards(hamster.getBlockPos(), radius, radius, radius)) {
             BlockState state = world.getBlockState(pos);
-            Block block = state.getBlock();
 
-            if (block == Blocks.DIAMOND_ORE || block == Blocks.DEEPSLATE_DIAMOND_ORE) {
+            // Check if it is a "Desirable" ore (e.g. Diamond)
+            if (ConfigDataCache.isCelebrationOre(state)) {
                 if (isOreExposed(pos, this.world)) {
-                    exposedDiamondOres.add(pos.toImmutable());
+                    exposedCelebrationOres.add(pos.toImmutable());
                 } else {
-                    buriedDiamondOres.add(pos.toImmutable());
+                    buriedCelebrationOres.add(pos.toImmutable());
                 }
-            } else if (block == Blocks.GOLD_ORE || block == Blocks.DEEPSLATE_GOLD_ORE) {
-                if (isOreExposed(pos, this.world)) { // Only consider gold if it's hidden
-                    buriedGoldOres.add(pos.toImmutable());
+            }
+            // Check if it is a "Disappointing" ore (e.g. Gold), and not exposed
+            else if (ConfigDataCache.isSulkingOre(state)) {
+                if (!isOreExposed(pos, this.world)) {
+                    buriedSulkingOres.add(pos.toImmutable());
                 }
             }
         }
 
         // --- Prioritized Target Selection ---
-        boolean targetIsGold = !buriedGoldOres.isEmpty() && this.world.random.nextFloat() < Configs.AHP.goldMistakeChance.get();
+        boolean targetIsSulkingOre = !buriedSulkingOres.isEmpty() && this.world.random.nextFloat() < Configs.AHP.goldMistakeChance.get();
 
-        if (targetIsGold) {
-            buriedGoldOres.sort(Comparator.comparingDouble(pos -> pos.getSquaredDistance(hamster.getPos())));
-            this.targetOrePos = buriedGoldOres.get(0);
-            this.isSeekingGold = true;
+        if (targetIsSulkingOre) {
+            buriedSulkingOres.sort(Comparator.comparingDouble(pos -> pos.getSquaredDistance(hamster.getPos())));
+            this.targetOrePos = buriedSulkingOres.get(0);
+            this.isSeekingDisappointingOre = true;
         } else {
-            if (!exposedDiamondOres.isEmpty()) {
-                exposedDiamondOres.sort(Comparator.comparingDouble(pos -> pos.getSquaredDistance(hamster.getPos())));
-                this.targetOrePos = exposedDiamondOres.get(0);
-            } else if (!buriedDiamondOres.isEmpty()) {
-                buriedDiamondOres.sort(Comparator.comparingDouble(pos -> pos.getSquaredDistance(hamster.getPos())));
-                this.targetOrePos = buriedDiamondOres.get(0);
+            if (!exposedCelebrationOres.isEmpty()) {
+                exposedCelebrationOres.sort(Comparator.comparingDouble(pos -> pos.getSquaredDistance(hamster.getPos())));
+                this.targetOrePos = exposedCelebrationOres.get(0);
+            } else if (!buriedCelebrationOres.isEmpty()) {
+                buriedCelebrationOres.sort(Comparator.comparingDouble(pos -> pos.getSquaredDistance(hamster.getPos())));
+                this.targetOrePos = buriedCelebrationOres.get(0);
             }
         }
 
@@ -147,7 +150,7 @@ public class HamsterSeekDiamondGoal extends Goal {
 
     @Override
     public void start() {
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName() + (isSeekingGold ? "_Gold" : "_Diamond"));
+        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName() + (isSeekingDisappointingOre ? "_Gold" : "_Diamond"));
         this.pathingTickTimer = 0;
         this.soundTimer = 0;
         // currentState is already SCANNING from canStart/findNewTargetOreAndSetState
@@ -192,16 +195,16 @@ public class HamsterSeekDiamondGoal extends Goal {
             return false;
         }
         // Target validity
-        if (this.targetOrePos == null) return false; // Should be caught by IDLE state, but good check
+        if (this.targetOrePos == null) return false;
 
-        Block targetBlock = world.getBlockState(this.targetOrePos).getBlock();
-        boolean isTargetDiamond = targetBlock == Blocks.DIAMOND_ORE || targetBlock == Blocks.DEEPSLATE_DIAMOND_ORE;
-        boolean isTargetGold = targetBlock == Blocks.GOLD_ORE || targetBlock == Blocks.DEEPSLATE_GOLD_ORE;
+        BlockState targetState = world.getBlockState(this.targetOrePos);
+        boolean isTargetCelebration = ConfigDataCache.isCelebrationOre(targetState);
+        boolean isTargetSulking = ConfigDataCache.isSulkingOre(targetState);
 
-        if (this.isSeekingGold) {
-            return isTargetGold; // Target gold ore was broken or changed
+        if (this.isSeekingDisappointingOre) {
+            return isTargetSulking; // Target "bad" ore was broken or changed
         } else {
-            return isTargetDiamond; // Target diamond ore was broken or changed
+            return isTargetCelebration; // Target "good" ore was broken or changed
         }
     }
 
@@ -264,7 +267,7 @@ public class HamsterSeekDiamondGoal extends Goal {
             this.hamster.foundOreCooldownEndTick = this.world.getTime() + Configs.AHP.independentOreSeekCooldownTicks.get();
         }
 
-        if (this.isSeekingGold) {
+        if (this.isSeekingDisappointingOre) {
             this.currentState = SeekingState.SULKING_AT_GOLD;
             if (this.hamster.getOwner() instanceof ServerPlayerEntity owner) {
                 if (this.hamster.squaredDistanceTo(owner) < 36.0) {
@@ -313,14 +316,17 @@ public class HamsterSeekDiamondGoal extends Goal {
         this.path = null; // Clear the path when the goal stops
         this.hamster.getNavigation().stop();
         boolean targetOreStillExists = false;
+
         if (this.targetOrePos != null) {
-            Block targetBlock = world.getBlockState(this.targetOrePos).getBlock();
-            boolean isTargetDiamond = targetBlock == Blocks.DIAMOND_ORE || targetBlock == Blocks.DEEPSLATE_DIAMOND_ORE;
-            boolean isTargetGold = targetBlock == Blocks.GOLD_ORE || targetBlock == Blocks.DEEPSLATE_GOLD_ORE;
-            if (this.isSeekingGold && isTargetGold) targetOreStillExists = true;
-            if (!this.isSeekingGold && isTargetDiamond) targetOreStillExists = true;
+            BlockState targetState = world.getBlockState(this.targetOrePos);
+            boolean isTargetCelebration = ConfigDataCache.isCelebrationOre(targetState);
+            boolean isTargetSulking = ConfigDataCache.isSulkingOre(targetState);
+
+            if (this.isSeekingDisappointingOre && isTargetSulking) targetOreStillExists = true;
+            if (!this.isSeekingDisappointingOre && isTargetCelebration) targetOreStillExists = true;
         }
 
+        // Only clear the "primed" flag if it didn't finish successfully
         if (this.currentState != SeekingState.CELEBRATING_DIAMOND && this.currentState != SeekingState.SULKING_AT_GOLD && !targetOreStillExists) {
             this.hamster.isPrimedToSeekDiamonds = false;
         }
