@@ -12,12 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added data structures and loading conditions to ensure the mod tags/recipes load correctly on the legacy Forge loader.
 - **Mod Compatibility Improvements** (Thanks to [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
   - Added conventional `c` tags for Cheese to improve cross-mod compatibility.
+- **Configurable Ore Seeking**
+  - Added new `celebrationOres` (Desirable Ores) and `sulkingOres` (Disappointing Ores) lists to the config.
+  - You can now define exactly which blocks your hamster gets excited about (or disappointed by) using Block IDs or Tags.
+  - This affects both the Shoulder Hamster Alert and the Independent Seeking behavior.
 
 ### Fixed
 - **Data Structure & Recipes** (Thanks again [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
   - Duplicated tag folders to resolve structural differences between 1.20.1 (plural directories) and 1.21.1 (singular directories).
   - Corrected the Cloche and Insolator compatibility recipe paths for 1.20.1.
   - Fixed load conditions for Thermal Expansion integration to ensure recipes only load when the mod is present.
+- **Ore Seeking Logic**
+  - Fixed a bug where hamsters ignored buried "Disappointing Ores" (Gold) even when configured to make mistakes, due to checking for exposed blocks instead of hidden ones.
 
 ---
 
