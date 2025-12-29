@@ -205,14 +205,16 @@ public class ConfigDataCache {
         for (String entry : configList) {
             if (entry.startsWith("#")) {
                 try {
-                    Identifier tagId = Identifier.of(entry.substring(1));
+                    // On 1.20.1, use 'new Identifier()' instead of 'Identifier.of()'
+                    Identifier tagId = new Identifier(entry.substring(1));
                     tagSet.add(TagKey.of(RegistryKeys.BLOCK, tagId));
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[BlockTagManager] Invalid block tag identifier in '{}' config list: '{}'", listName, entry);
                 }
             } else {
                 try {
-                    Identifier blockId = Identifier.of(entry);
+                    // 1.20.1 Fix: Use 'new Identifier()' instead of 'Identifier.of()'
+                    Identifier blockId = new Identifier(entry);
                     Registries.BLOCK.getOrEmpty(blockId).ifPresent(blockSet::add);
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[BlockTagManager] Invalid block identifier in '{}' config list: '{}'", listName, entry);
