@@ -24,9 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed load conditions for Thermal Expansion integration to ensure recipes only load when the mod is present.
 - **Ore Seeking Logic**
   - Fixed a bug where hamsters ignored buried "Disappointing Ores" (Gold) even when configured to make mistakes, due to checking for exposed blocks instead of hidden ones.
+- **Shoulder Hamster "Mutant" Splitting Glitch**
+  - Fixed a visual bug on Forge/NeoForge (caused by Oculus/Iris) where shoulder hamsters would visually "split" into two overlapping models causing a z-fighting flicker effect.
+  - This was caused by the animation controller randomly switching between the two idle animations every frame. They now deterministically pick one based on their personality ID.
 
 ---
-
 
 ## [3.4.3] - 2025-12-15
 
