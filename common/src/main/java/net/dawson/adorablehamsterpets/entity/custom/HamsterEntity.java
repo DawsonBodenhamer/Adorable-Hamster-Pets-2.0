@@ -2780,14 +2780,11 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                                 case HEAD -> event.setAndContinue(LAYING_DOWN_HEAD_ANIM);
                                 default -> event.setAndContinue(LAYING_DOWN_RIGHT_SHOULDER_ANIM);
                             };
-                    default -> { // STANDING
-                        // "Sticky" logic: If already playing an idle anim, keep it. Otherwise, pick a new one.
-                        RawAnimation current = event.getController().getCurrentRawAnimation();
-                        if (current != null && (current.equals(IDLE1_ANIM) || current.equals(IDLE2_ANIM))) {
-                            yield event.setAndContinue(current);
-                        }
-                        yield event.setAndContinue(this.random.nextBoolean() ? IDLE1_ANIM : IDLE2_ANIM);
-                    }
+
+                    // Use deterministic selection based on personality instead of random to prevent a
+                    // "splitting" glitch on Oculus/Embedium with rapid flickering between IDLE1 and IDLE2.
+                    default -> // STANDING
+                            event.setAndContinue((personality % 2 == 0) ? IDLE2_ANIM : IDLE1_ANIM);
                 };
             }
 
