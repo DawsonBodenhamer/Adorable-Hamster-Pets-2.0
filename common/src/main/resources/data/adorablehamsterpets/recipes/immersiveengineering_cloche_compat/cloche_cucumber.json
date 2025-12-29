@@ -1,12 +1,12 @@
 {
-  "fabric:load_conditions": [
-    {
-      "condition": "fabric:all_mods_loaded", "values": ["immersiveengineering"]
-    }
-  ],
   "conditions": [
     {
       "type": "forge:mod_loaded", "modid": "immersiveengineering"
+    }
+  ],
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded", "values": ["immersiveengineering"]
     }
   ],
   "type": "immersiveengineering:cloche",
@@ -18,11 +18,11 @@
   },
   "results": [
     {
-      "id": "adorablehamsterpets:cucumber",
+      "item": "adorablehamsterpets:cucumber",
       "Count": 2
     },
     {
-      "id": "adorablehamsterpets:cucumber_seeds"
+      "item": "adorablehamsterpets:cucumber_seeds"
     }
   ],
   "time": 640,

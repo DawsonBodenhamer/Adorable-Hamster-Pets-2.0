@@ -1,12 +1,12 @@
 {
-  "fabric:load_conditions": [
-    {
-      "condition": "fabric:all_mods_loaded", "values": ["thermal"]
-    }
-  ],
   "conditions": [
     {
-      "type": "forge:mod_loaded", "modid": "thermal"
+      "type": "forge:mod_loaded", "modid": "thermal_expansion"
+    }
+  ],
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded", "values": ["thermal_expansion"]
     }
   ],
   "type": "thermal:insolator",

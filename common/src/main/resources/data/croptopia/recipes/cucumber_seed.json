@@ -1,12 +1,12 @@
 {
-  "fabric:load_conditions": [
-    {
-      "condition": "fabric:all_mods_loaded", "values": ["croptopia"]
-    }
-  ],
   "conditions": [
     {
       "type": "forge:mod_loaded", "modid": "croptopia"
+    }
+  ],
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded", "values": ["croptopia"]
     }
   ],
   "type": "minecraft:crafting_shapeless",
@@ -18,6 +18,6 @@
   ],
   "result": {
     "count": 1,
-    "id": "croptopia:cucumber_seed"
+    "item": "croptopia:cucumber_seed"
   }
 }
