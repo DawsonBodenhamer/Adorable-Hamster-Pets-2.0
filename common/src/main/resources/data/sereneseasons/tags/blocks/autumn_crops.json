@@ -4,11 +4,6 @@
       "type": "forge:mod_loaded", "modid": "sereneseasons"
     }
   ],
-  "neoforge:conditions": [
-    {
-      "type": "neoforge:mod_loaded", "modid": "sereneseasons"
-    }
-  ],
   "fabric:load_conditions": [
     {
       "condition": "fabric:all_mods_loaded", "values": ["sereneseasons"]
