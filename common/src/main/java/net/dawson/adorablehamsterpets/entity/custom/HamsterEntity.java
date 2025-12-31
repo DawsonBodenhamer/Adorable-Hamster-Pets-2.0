@@ -484,7 +484,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation KNOCKED_OUT_ANIM = RawAnimation.begin().thenPlay("anim_hamster_ko");
     private static final RawAnimation WAKE_UP_FROM_KO_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wakeup_from_ko");
     private static final RawAnimation FLYING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_flying");
-    private static final RawAnimation STATIONARY_HEADSHAKE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_stationary_headshake");
+    private static final RawAnimation STANDING_HEADSHAKE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_standing_headshake");
+    private static final RawAnimation SITTING_HEADSHAKE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sitting_headshake");
     private static final RawAnimation MOVING_HEADSHAKE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_moving_headshake");
     private static final RawAnimation SLEEP_POSE1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sleep_pose1");
     private static final RawAnimation SLEEP_POSE2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sleep_pose2");
@@ -523,10 +524,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation ATTACK_ANIM = RawAnimation.begin().thenPlay("anim_hamster_attack");
     private static final RawAnimation SULK_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sulk");
     private static final RawAnimation SULKING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sulking");
-    private static final RawAnimation SEEKING_DIAMOND_ANIM = RawAnimation.begin().thenPlay("anim_hamster_seeking_diamond");
-    private static final RawAnimation WANTS_TO_SEEK_DIAMOND_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wants_to_seek_diamond");
-    private static final RawAnimation DIAMOND_POUNCE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_diamond_pounce");
-    private static final RawAnimation DIAMOND_TAUNT_ANIM = RawAnimation.begin().thenPlay("anim_hamster_diamond_taunt");
+    private static final RawAnimation SEEKING_ORE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_seeking_ore");
+    private static final RawAnimation WANTS_TO_SEEK_ORE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wants_to_seek_ore");
+    private static final RawAnimation POUNCE_ON_ITEM_ANIM = RawAnimation.begin().thenPlay("anim_hamster_pounce_on_item");
+    private static final RawAnimation PLAY_WITH_ITEM_ANIM = RawAnimation.begin().thenPlay("anim_hamster_play_with_item");
     private static final RawAnimation CELEBRATE_CHASE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_celebrate_chase");
     private static final RawAnimation LAYING_DOWN_HEAD_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_head");
     private static final RawAnimation LAYING_DOWN_RIGHT_SHOULDER_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_right_shoulder");
@@ -2796,7 +2797,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // --- Thrown State ---
             if (this.isThrown()) {return event.setAndContinue(FLYING_ANIM);}
             // --- Diamond Stealing / Taunting State ---
-            if (this.isTaunting()) return event.setAndContinue(DIAMOND_TAUNT_ANIM);
+            if (this.isTaunting()) return event.setAndContinue(PLAY_WITH_ITEM_ANIM);
             // --- Seeking/Wanting to Seek Diamond/Ore State ---
             boolean isSeekingGoalActive = false;
             String activeGoalName = this.getActiveCustomGoalDebugName();
@@ -2806,9 +2807,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (isSeekingGoalActive) {
                 double horizontalSpeedSquared = this.getVelocity().horizontalLengthSquared();
                 if (horizontalSpeedSquared > 1.0E-6) { // Use a very small threshold to detect any movement
-                    return event.setAndContinue(SEEKING_DIAMOND_ANIM); // Hamster is moving
+                    return event.setAndContinue(SEEKING_ORE_ANIM); // Hamster is moving
                 } else {
-                    return event.setAndContinue(WANTS_TO_SEEK_DIAMOND_ANIM); // Hamster is not moving
+                    return event.setAndContinue(WANTS_TO_SEEK_ORE_ANIM); // Hamster is not moving
                 }
             }
 
@@ -2928,7 +2929,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             })
             .triggerableAnim("crash", CRASH_ANIM)
             .triggerableAnim("wakeup_from_ko", WAKE_UP_FROM_KO_ANIM)
-            .triggerableAnim("stationary_headshake", STATIONARY_HEADSHAKE_ANIM)
+            .triggerableAnim("stationary_headshake", STANDING_HEADSHAKE_ANIM)
+            .triggerableAnim("sitting_headshake", SITTING_HEADSHAKE_ANIM)
             .triggerableAnim("moving_headshake", MOVING_HEADSHAKE_ANIM)
             .triggerableAnim("attack", ATTACK_ANIM)
             .triggerableAnim("sit1", SIT1_ANIM)
@@ -2947,7 +2949,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             .triggerableAnim("anim_hamster_stand_settle_sleep2", STAND_SETTLE_SLEEP2_ANIM)
             .triggerableAnim("anim_hamster_stand_settle_sleep3", STAND_SETTLE_SLEEP3_ANIM)
             .triggerableAnim("anim_hamster_sulk", SULK_ANIM)
-            .triggerableAnim("anim_hamster_diamond_pounce", DIAMOND_POUNCE_ANIM)
+            .triggerableAnim("anim_hamster_pounce_on_item", POUNCE_ON_ITEM_ANIM)
             .triggerableAnim("anim_hamster_celebrate_chase", CELEBRATE_CHASE_ANIM)
 
             // --- Handle Keyframe Particles ---
@@ -3407,6 +3409,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         TRIGGERABLE_ANIM_DURATIONS.put("crash", 18);
         TRIGGERABLE_ANIM_DURATIONS.put("wakeup_from_ko", 15);
         TRIGGERABLE_ANIM_DURATIONS.put("stationary_headshake", 25);
+        TRIGGERABLE_ANIM_DURATIONS.put("sitting_headshake", 25);
         TRIGGERABLE_ANIM_DURATIONS.put("moving_headshake", 25);
         TRIGGERABLE_ANIM_DURATIONS.put("attack", 23);
         TRIGGERABLE_ANIM_DURATIONS.put("sit1", 13);
@@ -3425,7 +3428,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_stand_settle_sleep2", 35);
         TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_stand_settle_sleep3", 35);
         TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_sulk", 63);
-        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_diamond_pounce", 23);
+        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_pounce_on_item", 23);
         TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_celebrate_chase", 33);
     }
 
@@ -3569,9 +3572,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     /**
      * Checks if the hamster should refuse being fed the same item twice consecutively.
      * <p>
-     * If a refusal occurs, this method also triggers a context-aware headshake animation:
-     * {@code anim_hamster_moving_headshake} if the hamster is walking, or
-     * {@code anim_hamster_stationary_headshake} if it is still.
+     * If a refusal occurs, this method also triggers a context-aware headshake animation.
      * <p>
      * An item is exempt from this check if it is included in the user-configurable
      * {@code repeatableFoods} list, managed by {@link ConfigDataCache#isRepeatableFood(ItemStack)}.
@@ -3581,7 +3582,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * @return {@code true} if the food was refused, {@code false} otherwise.
      */
     private boolean checkRepeatFoodRefusal(ItemStack currentStack, PlayerEntity player) {
-        // --- 1. Check Repeat Food Refusal ---
         if (ConfigDataCache.isRepeatableFood(currentStack)) return false;
 
         if (!this.lastFoodItem.isEmpty() && ItemStack.areItemsEqual(this.lastFoodItem, currentStack)) {
@@ -3591,12 +3591,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- Conditional Animation Trigger ---
             if (!this.getWorld().isClient()) {
-                // Check if the hamster has significant horizontal velocity.
-                boolean isMoving = this.getVelocity().horizontalLengthSquared() > 1.0E-6;
-                if (isMoving) {
-                    this.triggerAnimOnServer("mainController", "moving_headshake");
+                if (this.isSitting()) {
+                    // If sitting, play the sitting headshake
+                    this.triggerAnimOnServer("mainController", "sitting_headshake");
                 } else {
-                    this.triggerAnimOnServer("mainController", "stationary_headshake");
+                    // If standing/moving, check velocity
+                    boolean isMoving = this.getVelocity().horizontalLengthSquared() > 1.0E-6;
+                    if (isMoving) {
+                        this.triggerAnimOnServer("mainController", "moving_headshake");
+                    } else {
+                        this.triggerAnimOnServer("mainController", "standing_headshake");
+                    }
                 }
             }
             return true;
