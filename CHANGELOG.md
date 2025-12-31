@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added new `celebrationOres` (Desirable Ores) and `sulkingOres` (Disappointing Ores) lists to the config.
   - You can now define exactly which blocks your hamster gets excited about (or disappointed by) using Block IDs or Tags.
   - This affects both the Shoulder Hamster Alert and the Independent Seeking behavior.
+- **Sitting Headshake**
+  - Added `anim_hamster_sitting_headshake` for when a hamster refuses food while sitting.
+  - The food refusal logic now intelligently selects between sitting, standing, and moving headshake animations.
+
+### Changed
+- **Refusal Interactions**
+  - Attempting to open a locked cheek pouch now triggers the same new intelligent headshake animations (sitting/standing/moving) used for food refusal.
+- **Item Stealing**
+  - Hamsters now use their sprinting animation/speed (1.5D) when running towards a diamond to steal it, matching their flee speed. Originally I had them walking at normal speed so as not to alert the player that they were about to steal the diamond, but I changed my mind and I think it's a lot cuter if they sprint over to it.
 
 ### Fixed
 - **Data Structure & Recipes** (Thanks again [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
