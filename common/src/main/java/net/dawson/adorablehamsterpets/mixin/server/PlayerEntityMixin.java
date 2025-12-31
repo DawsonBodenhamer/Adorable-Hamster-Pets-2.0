@@ -9,13 +9,12 @@ import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.DismountOrder;
-import net.dawson.adorablehamsterpets.entity.AI.HamsterSeekDiamondGoal;
+import net.dawson.adorablehamsterpets.entity.AI.HamsterSniffForOreGoal;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.networking.payload.SyncShoulderDataPayload;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -485,8 +484,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
                 // Use the ConfigDataCache to check against the user-configured list of "Desirable Ores" that cause celebration upon being found
                 if (ConfigDataCache.isCelebrationOre(state)) {
-                    // Use public static helper from HamsterSeekDiamondGoal
-                    if (HamsterSeekDiamondGoal.isOreExposed(checkPos, world)) {
+                    // Use public static helper from HamsterSniffForOreGoal
+                    if (HamsterSniffForOreGoal.isOreExposed(checkPos, world)) {
                         exposedOres.add(checkPos.toImmutable());
                     } else {
                         buriedOres.add(checkPos.toImmutable());
