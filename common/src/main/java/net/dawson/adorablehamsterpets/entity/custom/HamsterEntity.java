@@ -1750,6 +1750,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     MenuRegistry.openExtendedMenu((ServerPlayerEntity) player, new HamsterScreenHandlerFactory(this));
                 } else {
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.cheek_pouch_locked").formatted(Formatting.WHITE), true);
+                    // Trigger refusal animation when locked
+                    this.playRefusalAnimation();
                 }
                 return ActionResult.CONSUME; // Consume sneak action regardless of opening
             }
@@ -3568,18 +3570,30 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
     }
 
-    // --- Check for Repeatable Foods ---
+    /**
+     * Triggers the appropriate headshake animation based on the hamster's current physical state.
+     * Intelligent selection between sitting, standing, or moving headshakes.
+     */
+    public void playRefusalAnimation() {
+        if (!this.getWorld().isClient()) {
+            if (this.isSitting()) {
+                // If sitting, play the sitting headshake
+                this.triggerAnimOnServer("mainController", "sitting_headshake");
+            } else {
+                // If standing/moving, check velocity
+                boolean isMoving = this.getVelocity().horizontalLengthSquared() > 1.0E-6;
+                if (isMoving) {
+                    this.triggerAnimOnServer("mainController", "moving_headshake");
+                } else {
+                    this.triggerAnimOnServer("mainController", "standing_headshake");
+                }
+            }
+        }
+    }
+
     /**
      * Checks if the hamster should refuse being fed the same item twice consecutively.
-     * <p>
-     * If a refusal occurs, this method also triggers a context-aware headshake animation.
-     * <p>
-     * An item is exempt from this check if it is included in the user-configurable
-     * {@code repeatableFoods} list, managed by {@link ConfigDataCache#isRepeatableFood(ItemStack)}.
-     *
-     * @param currentStack The ItemStack the player is attempting to feed.
-     * @param player The player performing the action.
-     * @return {@code true} if the food was refused, {@code false} otherwise.
+     * Uses {@link #playRefusalAnimation()} to trigger the visual response.
      */
     private boolean checkRepeatFoodRefusal(ItemStack currentStack, PlayerEntity player) {
         if (ConfigDataCache.isRepeatableFood(currentStack)) return false;
@@ -3589,21 +3603,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.refuseTimer = REFUSE_FOOD_TIMER_TICKS;
             player.sendMessage(Text.translatable("message.adorablehamsterpets.food_refusal"), true);
 
-            // --- Conditional Animation Trigger ---
-            if (!this.getWorld().isClient()) {
-                if (this.isSitting()) {
-                    // If sitting, play the sitting headshake
-                    this.triggerAnimOnServer("mainController", "sitting_headshake");
-                } else {
-                    // If standing/moving, check velocity
-                    boolean isMoving = this.getVelocity().horizontalLengthSquared() > 1.0E-6;
-                    if (isMoving) {
-                        this.triggerAnimOnServer("mainController", "moving_headshake");
-                    } else {
-                        this.triggerAnimOnServer("mainController", "standing_headshake");
-                    }
-                }
-            }
+            // Use shared helper
+            this.playRefusalAnimation();
+
             return true;
         }
         return false;
