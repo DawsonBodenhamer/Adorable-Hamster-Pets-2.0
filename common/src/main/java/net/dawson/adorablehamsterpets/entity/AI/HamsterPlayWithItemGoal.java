@@ -195,7 +195,7 @@ public class HamsterPlayWithItemGoal extends Goal {
         } else {
             // --- FRESH START LOGIC ---
             this.currentState = State.MOVING_TO_DIAMOND;
-            this.hamster.getNavigation().startMovingTo(this.targetItem, 0.75D);
+            this.hamster.getNavigation().startMovingTo(this.targetItem, 1.5D);
             this.stealDurationTimer = this.hamster.getRandom().nextBetween(
                     Configs.AHP.minStealDurationSeconds.get() * 20,
                     Configs.AHP.maxStealDurationSeconds.get() * 20
@@ -319,6 +319,9 @@ public class HamsterPlayWithItemGoal extends Goal {
                 if (this.hamster.getNavigation().isIdle()) {
                     this.repositionTarget = null; // Clear the target to find a new one next tick if needed
                     this.currentState = State.MOVING_TO_DIAMOND;
+
+                    // Explicitly restart moving to the item
+                    this.hamster.getNavigation().startMovingTo(this.targetItem, 1.5D);
                     AdorableHamsterPets.LOGGER.trace("[StealGoal-{}] Repositioning move complete. Transitioning back to MOVING_TO_DIAMOND.", this.hamster.getId());
                 }
                 break;
