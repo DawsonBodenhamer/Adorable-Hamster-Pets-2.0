@@ -3033,7 +3033,7 @@
 				}
 			}
 		},
-		"anim_hamster_stationary_headshake": {
+		"anim_hamster_standing_headshake": {
 			"animation_length": 1.0833,
 			"bones": {
 				"body_parent": {
@@ -3101,6 +3101,23 @@
 						},
 						"1.0833": {
 							"vector": [-8, 0, 0],
+							"easing": "easeInOutSine"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.25": {
+							"vector": [0, 0.14564, -1.09032],
+							"easing": "easeInOutSine"
+						},
+						"0.8333": {
+							"vector": [0, 0.14564, -1.09032],
+							"easing": "easeInOutSine"
+						},
+						"1.0": {
+							"vector": [0, 0, 0],
 							"easing": "easeInOutSine"
 						}
 					}
@@ -3288,6 +3305,205 @@
 				}
 			}
 		},
+		"anim_hamster_sitting_headshake": {
+			"loop": true,
+			"animation_length": 1.0833,
+			"bones": {
+				"body_parent": {
+					"rotation": {
+						"0.0": {
+							"vector": [-108.5, 0, 0]
+						},
+						"0.0833": {
+							"vector": [-108.5, 0, 2.5],
+							"easing": "easeInOutSine"
+						},
+						"0.25": {
+							"vector": [-108.5, 0, -2.5],
+							"easing": "easeInOutSine"
+						},
+						"0.4583": {
+							"vector": [-108.5, 0, 2.5],
+							"easing": "easeInOutSine"
+						},
+						"0.625": {
+							"vector": [-108.5, 0, -2.5],
+							"easing": "easeInOutSine"
+						},
+						"0.8333": {
+							"vector": [-108.5, 0, 2.5],
+							"easing": "easeInOutSine"
+						},
+						"1.0": {
+							"vector": [-108.5, 0, -2.5],
+							"easing": "easeInOutSine"
+						},
+						"1.0833": {
+							"vector": [-108.5, 0, 0]
+						}
+					},
+					"position": {
+						"vector": [0, -0.9, -4]
+					}
+				},
+				"head_parent": {
+					"rotation": {
+						"0.0": {
+							"vector": [105, 0, 0]
+						},
+						"0.0833": {
+							"vector": [105, 0, 26],
+							"easing": "easeInOutSine"
+						},
+						"0.25": {
+							"vector": [105, 0, -65],
+							"easing": "easeInOutSine"
+						},
+						"0.4583": {
+							"vector": [105, 0, 40],
+							"easing": "easeInOutSine"
+						},
+						"0.625": {
+							"vector": [105, 0, -47.5],
+							"easing": "easeInOutSine"
+						},
+						"0.8333": {
+							"vector": [105, 0, 40],
+							"easing": "easeInOutSine"
+						},
+						"1.0": {
+							"vector": [105, 0, -12.5],
+							"easing": "easeInOutSine"
+						},
+						"1.0833": {
+							"vector": [105, 0, 0],
+							"easing": "easeInOutSine"
+						}
+					},
+					"position": {
+						"vector": [0, -0.37582, -3.074]
+					}
+				},
+				"left_ear": {
+					"rotation": {
+						"0.0": {
+							"vector": ["(Math.cos((query.anim_time - 0.0) * 180) * -3)", 0, 0]
+						},
+						"0.0833": {
+							"vector": ["Math.sin((query.anim_time - 0.0) * 1500) * -30", 0, 0],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"right_ear": {
+					"rotation": {
+						"0.0": {
+							"vector": ["(Math.cos((query.anim_time - 0.2) * 180) * -3)", 0, 0]
+						},
+						"0.0833": {
+							"vector": ["Math.sin((query.anim_time - 0.0) * 1500) * 30", 0, 0]
+						}
+					}
+				},
+				"tail": {
+					"rotation": {
+						"vector": [105, 0, 0]
+					},
+					"position": {
+						"vector": [0, -0.31766, -2.06455]
+					}
+				},
+				"right_hand": {
+					"rotation": {
+						"vector": [31.30644, -11.00223, 26.51196]
+					},
+					"position": {
+						"vector": [-0.1, 0.56899, 0.80962]
+					},
+					"scale": {
+						"vector": [1, 2.2, 1]
+					}
+				},
+				"left_hand": {
+					"rotation": {
+						"vector": [40.8248, 10.32223, -18.38866]
+					},
+					"position": {
+						"vector": [0.43162, 0.45302, 1.10674]
+					},
+					"scale": {
+						"vector": [1, 1.8, 1]
+					}
+				},
+				"left_foot": {
+					"rotation": {
+						"vector": [33.18958, 4.1491, -45.55354],
+						"easing": "easeInOutSine"
+					},
+					"position": {
+						"vector": [0.4, 0.71656, 0.0031]
+					},
+					"scale": {
+						"vector": [1, 2, 1]
+					}
+				},
+				"right_foot": {
+					"rotation": {
+						"vector": [31.81364, -15.10708, 27.62124]
+					},
+					"position": {
+						"vector": [-0.5, 0.55313, 0.1262]
+					},
+					"scale": {
+						"vector": [1, 1.8, 1]
+					}
+				},
+				"closed_eyes": {
+					"position": {
+						"0.0": {
+							"vector": [0, 4, 0],
+							"easing": "linear"
+						},
+						"0.0833": {
+							"vector": [0, 0, 0],
+							"easing": "easeInOutCirc"
+						},
+						"0.875": {
+							"vector": [0, 0, 0],
+							"easing": "easeInOutCirc"
+						},
+						"1.0833": {
+							"vector": [0, 4, 0],
+							"easing": "easeInExpo"
+						}
+					},
+					"scale": {
+						"0.0": {
+							"vector": [1, 0, 0.99],
+							"easing": "linear"
+						},
+						"0.0833": {
+							"vector": [1, 1, 1],
+							"easing": "easeInOutCirc"
+						},
+						"0.875": {
+							"vector": [1, 1, 1],
+							"easing": "easeInOutCirc"
+						},
+						"1.0833": {
+							"vector": [1, 0, 0.99],
+							"easing": "easeInExpo"
+						}
+					}
+				},
+				"body_child": {
+					"scale": {
+						"vector": [1, 1, 1],
+						"easing": "easeInOutSine"
+					}
+				}
+			}
+		},
 		"anim_hamster_moving_headshake": {
 			"animation_length": 1.0833,
 			"bones": {
@@ -3355,6 +3571,23 @@
 							"easing": "easeInOutSine"
 						},
 						"1.0833": {
+							"vector": [0, 0, 0],
+							"easing": "easeInOutSine"
+						}
+					},
+					"position": {
+						"0.0833": {
+							"vector": [0, 0, 0]
+						},
+						"0.25": {
+							"vector": [0, 0.14564, -1.09032],
+							"easing": "easeInOutSine"
+						},
+						"0.8333": {
+							"vector": [0, 0.14564, -1.09032],
+							"easing": "easeInOutSine"
+						},
+						"1.0": {
 							"vector": [0, 0, 0],
 							"easing": "easeInOutSine"
 						}
@@ -16817,7 +17050,7 @@
 				}
 			}
 		},
-		"anim_hamster_seeking_diamond": {
+		"anim_hamster_seeking_ore": {
 			"loop": true,
 			"animation_length": 3.2967,
 			"bones": {
@@ -17170,7 +17403,7 @@
 				}
 			}
 		},
-		"anim_hamster_wants_to_seek_diamond": {
+		"anim_hamster_wants_to_seek_ore": {
 			"loop": true,
 			"animation_length": 12,
 			"bones": {
@@ -18307,7 +18540,7 @@
 				}
 			}
 		},
-		"anim_hamster_diamond_pounce": {
+		"anim_hamster_pounce_on_item": {
 			"animation_length": 1,
 			"bones": {
 				"body_parent": {
@@ -18813,7 +19046,7 @@
 				}
 			}
 		},
-		"anim_hamster_diamond_taunt": {
+		"anim_hamster_play_with_item": {
 			"loop": true,
 			"animation_length": 3,
 			"bones": {

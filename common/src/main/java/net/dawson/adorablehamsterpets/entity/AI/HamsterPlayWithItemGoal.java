@@ -280,7 +280,7 @@ public class HamsterPlayWithItemGoal extends Goal {
                     this.lungeTicks = LUNGE_DURATION_TICKS; // Use the constant
                     this.pounceStartPos = this.hamster.getPos(); // Store starting position for the lunge
                     this.hamster.getNavigation().stop();
-                    this.hamster.triggerAnimOnServer("mainController", "anim_hamster_diamond_pounce");
+                    this.hamster.triggerAnimOnServer("mainController", "anim_hamster_pounce_on_item");
                     this.bounceSoundDelayTicks = 5;
                     // --- Play celebration sound ---
                     SoundEvent celebrationSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, this.hamster.getRandom());
