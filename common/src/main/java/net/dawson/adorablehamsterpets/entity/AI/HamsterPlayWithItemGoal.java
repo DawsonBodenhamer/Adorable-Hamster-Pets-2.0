@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class HamsterStealDiamondGoal extends Goal {
+public class HamsterPlayWithItemGoal extends Goal {
 
     private final HamsterEntity hamster;
     private final World world;
@@ -56,7 +56,7 @@ public class HamsterStealDiamondGoal extends Goal {
     private State currentState = State.SCANNING;
     private int stealDurationTimer;
 
-    public HamsterStealDiamondGoal(HamsterEntity hamster) {
+    public HamsterPlayWithItemGoal(HamsterEntity hamster) {
         this.hamster = hamster;
         this.world = hamster.getWorld();
         this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
