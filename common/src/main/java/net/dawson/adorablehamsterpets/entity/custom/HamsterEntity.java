@@ -2800,7 +2800,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // --- Seeking/Wanting to Seek Diamond/Ore State ---
             boolean isSeekingGoalActive = false;
             String activeGoalName = this.getActiveCustomGoalDebugName();
-            if (activeGoalName.startsWith(HamsterSeekDiamondGoal.class.getSimpleName())) {
+            if (activeGoalName.startsWith(HamsterSniffForOreGoal.class.getSimpleName())) {
                 isSeekingGoalActive = true;
             }
             if (isSeekingGoalActive) {
@@ -3035,7 +3035,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 this.getId(), this.getWorld().isClient ? "ClientTick?" : this.getWorld().getTime(), this.isSleeping(), this.isInSittingPose());
         // --- 1. Initialize Goals ---
         this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new HamsterSeekDiamondGoal(this));
+        this.goalSelector.add(1, new HamsterSniffForOreGoal(this));
         this.goalSelector.add(1, new HamsterStealDiamondGoal(this));
         this.goalSelector.add(2, new HamsterGoToBedAndSleepGoal(this));
         this.goalSelector.add(2, new HamsterMeleeAttackGoal(this, 1.5D, true));
