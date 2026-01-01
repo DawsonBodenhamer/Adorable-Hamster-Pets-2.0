@@ -4,6 +4,8 @@
     "adorablehamsterpets:cucumber":    { "chance": 0.5 },
     "adorablehamsterpets:green_bean_seeds": { "chance": 0.25 },
     "adorablehamsterpets:cucumber_seeds":   { "chance": 0.25 },
-    "adorablehamsterpets:sunflower_seeds":  { "chance": 0.25 }
+    "adorablehamsterpets:sunflower_seeds":  { "chance": 0.25 },
+    "adorablehamsterpets:hamster_bedding":  { "chance": 0.75 },
+    "adorablehamsterpets:acorn":  { "chance": 0.3 }
   }
 }

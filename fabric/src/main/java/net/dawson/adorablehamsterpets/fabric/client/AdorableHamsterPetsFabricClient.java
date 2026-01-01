@@ -5,9 +5,12 @@ import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
+import net.dawson.adorablehamsterpets.client.render.LeafJiggleRenderer;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.particle.SimpleParticleType;
 
 public final class AdorableHamsterPetsFabricClient implements ClientModInitializer {
@@ -28,5 +31,18 @@ public final class AdorableHamsterPetsFabricClient implements ClientModInitializ
         for (RegistrySupplier<SimpleParticleType> particleSupplier : ModParticles.BEDDING_PARTICLES.values()) {
             ParticleFactoryRegistry.getInstance().register(particleSupplier.get(), HamsterBeddingParticle.Factory::new);
         }
+
+        // --- Register Leaf Jiggle Renderer ---
+        WorldRenderEvents.AFTER_ENTITIES.register(context -> {
+            MinecraftClient client = MinecraftClient.getInstance();
+
+            LeafJiggleRenderer.render(
+                    client,
+                    context.matrixStack(),
+                    context.consumers(),
+                    context.camera().getPos(),
+                    context.tickCounter().getTickDelta(client.isPaused())
+            );
+        });
     }
 }

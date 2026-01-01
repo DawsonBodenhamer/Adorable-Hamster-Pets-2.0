@@ -19,6 +19,7 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
 import net.dawson.adorablehamsterpets.networking.payload.RequestGuidebookPayload;
+import net.dawson.adorablehamsterpets.networking.payload.ResetHeistHistoryPayload;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
@@ -171,7 +172,7 @@ public class AhpConfig extends Config {
                 AnnouncementManager.INSTANCE.markAllAsRead();
                 if (MinecraftClient.getInstance().player != null) {
                     MinecraftClient.getInstance().player.sendMessage(
-                            Text.translatable("message.adorablehamsterpets.announcements_marked_read").formatted(Formatting.GREEN),
+                            Text.translatable("message.adorablehamsterpets.announcements_marked_read").formatted(Formatting.WHITE),
                             false
                     );
                 }
@@ -188,7 +189,7 @@ public class AhpConfig extends Config {
                 AnnouncementManager.INSTANCE.resetClientState();
                 if (MinecraftClient.getInstance().player != null) {
                     MinecraftClient.getInstance().player.sendMessage(
-                            Text.translatable("message.adorablehamsterpets.announcements_reset").formatted(Formatting.GREEN),
+                            Text.translatable("message.adorablehamsterpets.announcements_reset").formatted(Formatting.WHITE),
                             false
                     );
                 }
@@ -361,6 +362,10 @@ public class AhpConfig extends Config {
     @Translatable.Desc("For when you need some personal space. Allows tamed hamsters to be linked to a Hamster Bed, letting them wander freely within a set radius instead of clinging to you like melted duct-tape. You're welcome.")
     public ValidatedBoolean enableWanderMode = new ValidatedBoolean(true);
 
+    @Translatable.Name("Enable Armor Perks")
+    @Translatable.Desc("If true, specialized armor (Gold, Netherite) grants attributes like Speed and Knockback Resistance. If false (because you hate fun?), armor acts only as a damage shield/visual.")
+    public boolean enableArmorPerks = true;
+
     @Translatable.Name("Require Food Mix to Unlock Cheeks")
     @Translatable.Desc("Gate cheek-pouch storage behind gourmet cuisine, because drama.")
     public boolean requireFoodMixToUnlockCheeks = true;
@@ -408,8 +413,8 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Cooldown before your hamster can go on another treasure hunt. (20 ticks = 1 s)")
     public ValidatedInt independentOreSeekCooldownTicks = new ValidatedInt(2400, 6000, 20);
 
-    @Translatable.Name("Diamond Thievery Cooldown")
-    @Translatable.Desc("Mandatory time-out after a successful heist to prevent serial kleptomania. (20 ticks = 1s). WARNING: Increasing this cooldown can dramatically change the diamond stealing mechanic, since that AI goal sometimes re-runs multiple times in a row when the hamster has trouble pathfinding to the item that it wants to steal. So instead of increasing this, you should probably just stop dropping your diamonds on the ground everywhere, butter fingers.")
+    @Translatable.Name("Item Thievery Cooldown")
+    @Translatable.Desc("Mandatory time-out after a successful heist to prevent serial kleptomania. (20 ticks = 1s). WARNING: Increasing this cooldown can dramatically change the item stealing mechanic, since that AI goal sometimes re-runs multiple times in a row when the hamster has trouble pathfinding to the item that it wants to steal. So instead of increasing this, you should probably just stop dropping your diamonds on the ground everywhere, butter fingers.")
     public ValidatedInt stealCooldownTicks = new ValidatedInt(100, 6000, 20);
 
     @ConfigGroup.Pop
@@ -446,6 +451,10 @@ public class AhpConfig extends Config {
     @Translatable.Name("High-Value Heistables")
     @Translatable.Desc("The list of items a hamster might try to... 'borrow' if you leave them on the ground. A chase will ensue. You have been warned.")
     public List<String> stealableItems = new ArrayList<>(List.of("minecraft:diamond"));
+
+    @Translatable.Name("Retrievable Items")
+    @Translatable.Desc("Items the hamster views as gifts or toys to bring back to you. Picking these up triggers Delivery Mode. Default: Acorns.")
+    public List<String> retrievableItems = new ArrayList<>(List.of("adorablehamsterpets:acorn"));
 
     @Translatable.Name("Performance-Enhancers")
     @Translatable.Desc("The list of questionable substances that grant your hamster temporary superpowers. By default, it's just steamed green beans.")
@@ -533,6 +542,59 @@ public class AhpConfig extends Config {
     @Translatable.Name("Throw Damage")
     @Translatable.Desc("Damage dealt by thrown hamster. Surprisingly effective against Creepers. How convenient.")
     public ValidatedDouble hamsterThrowDamage = new ValidatedDouble(20.0, 40.0, 0.0);
+
+    // --- Armor Visual Toggles ---
+    @Translatable.Name("Armor Visual Toggles")
+    @Translatable.Desc("Customize or completely banish the visual representation of hamster armor.")
+    public ConfigGroup armorVisuals = new ConfigGroup("armorVisuals", true);
+
+    @NonSync
+    @Translatable.Name("Enable Armor Visuals")
+    @Translatable.Desc("Master switch for armor rendering. If false, hamsters will appear unarmored even when equipped. Useful if you prefer the natural look but still want the protection.")
+    public boolean enableArmorVisuals = true;
+
+    // Helper field to gate the Acorn Hat setting
+    private final ValidatedField<Boolean> isArmorVisualsEnabled = new ValidatedBoolean(true).map(b -> b, b -> enableArmorVisuals);
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Render Acorn Hat")
+    @Translatable.Desc("Determines whether you are able to see the jaunty little Acorn Hat when hamsters are wearing the base Acorn Armor. Does not affect what other players see, and does not apply to the standalone Acorn Hat accessory.")
+    public ValidatedCondition<Boolean> renderAcornHat = new ValidatedBoolean(true)
+            .toCondition(
+                    isArmorVisualsEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
+                    () -> false
+            );
+
+    @Translatable.Name("Tree Heist Settings")
+    @Translatable.Desc("Configure the acorn-gathering operations.")
+    public ConfigGroup treeHeist = new ConfigGroup("treeHeist", true);
+
+    @Translatable.Name("Acorn Drop Chance")
+    @Translatable.Desc("The likelihood (0.0 to 1.0) of an acorn dropping each time your hamster rummages. Default is very low at 0.03 (3%), because the hamster rummages roughly ~5 times per second. Crank it up if you want to crash the local squirrel economy. (Maximum output is 1 acorn per second even if you turn it all the way up).")
+    public ValidatedFloat acornDropChance = new ValidatedFloat(0.03f, 1.0f, 0.0f);
+
+    @NonSync
+    @Translatable.Name("Show Start Message")
+    @Translatable.Desc("Whether to show an action bar message when a Tree Heist begins.")
+    public boolean enableTreeHeistStartMessage = true;
+
+    @NonSync
+    @Translatable.Name("Reset History")
+    public ConfigAction resetHeistHistory = new ConfigAction.Builder()
+            .title(Text.translatable("config.adorablehamsterpets.main.treeHeist.resetHeistHistory"))
+            .desc(Text.translatable("config.adorablehamsterpets.main.treeHeist.resetHeistHistory.desc"))
+            .decoration(TextureIds.INSTANCE.getRESTORE())
+            .build(() -> {
+                NetworkManager.sendToServer(new ResetHeistHistoryPayload());
+            });
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Debug Mode")
+    @Translatable.Desc("Shows visual particles for the detected Tree ID (the lowest block of the trunk) and leaf canopy during a heist, and turns on extra logging in the console. Useful for seeing exactly which tree your hamster is searching and/or debugging if things are being weird.")
+    public boolean debugTreeDetection = false;
 
     // --- Bed & Wander Mode Settings ---
     @Translatable.Name("Bed & Wander Mode Settings")
@@ -887,33 +949,33 @@ public class AhpConfig extends Config {
             "minecraft:gold_ore", "minecraft:deepslate_gold_ore"
     ));
 
-    // --- Diamond Stealing Behavior Settings---
-    @Translatable.Name("Diamond Stealing Behavior Settings")
-    @Translatable.Desc("For when your hamster develops a taste for the finer things in life. Can be configured so they steal any item— even from other mods, but they only steal diamonds by default.")
-    public ConfigGroup diamondStealing = new ConfigGroup("diamondStealing", true);
+    // --- Chase/Retrieval Settings---
+    @Translatable.Name("Chase/Retrieval Settings")
+    @Translatable.Desc("For when your hamster develops a taste for the finer things in life. Can be configured so they steal or fetch any item— even from other mods. They steal diamonds and fetch acorns by default.")
+    public ConfigGroup itemInterest = new ConfigGroup("itemInterest", true);
 
-    @Translatable.Name("Enable Diamond Stealing")
-    @Translatable.Desc("Permits hamsters to engage in spontaneous, high-stakes games of keep-away with your valuables. A chase ensues. Obviously.")
-    public boolean enableDiamondStealing = true;
+    @Translatable.Name("Enable Stealing/Fetching")
+    @Translatable.Desc("Permits hamsters to engage in spontaneous, high-stakes games of keep-away with your valuables, or they might fetch items for you.")
+    public boolean enableItemCarrying = true;
 
-    @Translatable.Name("Pounce Chance")
-    @Translatable.Desc("Probability (0.1 to 1.0) a hamster will succumb to temptation. High by default. You shouldn't leave your diamonds lying around anyway.")
-    public ValidatedFloat diamondPounceChance = new ValidatedFloat(0.75f, 1.0f, 0.1f);
+    @Translatable.Name("Thievery Pounce Chance")
+    @Translatable.Desc("Probability (0.1 to 1.0) a hamster will succumb to temptation. High by default. You shouldn't leave your diamonds lying around anyway. Does not apply to retrieval.")
+    public ValidatedFloat itemThieveryChance = new ValidatedFloat(0.75f, 1.0f, 0.1f);
 
     @Translatable.Name("Minimum Flee Distance")
-    @Translatable.Desc("The hamster's personal space bubble (in blocks).")
+    @Translatable.Desc("The hamster's personal space bubble (in blocks) when stealing your shinies.")
     public ValidatedInt minFleeDistance = new ValidatedInt(5, 20, 1);
 
     @Translatable.Name("Maximum Flee Distance")
-    @Translatable.Desc("The maximum distance (in blocks) before the hamster gets bored and stops running to taunt you.")
+    @Translatable.Desc("The maximum distance (in blocks) before the hamster gets bored and stops running to taunt you with the stolen goods.")
     public ValidatedInt maxFleeDistance = new ValidatedInt(20, 40, 5);
 
-    @Translatable.Name("Minimum Steal Duration")
-    @Translatable.Desc("The shortest amount of time (in seconds) the hamster will entertain this little game before getting bored and dropping your stuff.")
+    @Translatable.Name("Minimum Interest Duration")
+    @Translatable.Desc("The shortest amount of time (in seconds) the hamster will entertain interest in an item before getting bored and dropping it.")
     public ValidatedInt minStealDurationSeconds = new ValidatedInt(5, 240, 1);
 
     @ConfigGroup.Pop
-    @Translatable.Name("Maximum Steal Duration")
-    @Translatable.Desc("The longest (in seconds) your cardio session can last before the hamster's attention span gives out.")
+    @Translatable.Name("Maximum Interest Duration")
+    @Translatable.Desc("The longest amount of time (in seconds) the hamster will entertain interest in an item before getting bored and dropping it.")
     public ValidatedInt maxStealDurationSeconds = new ValidatedInt(15, 300, 5);
 }

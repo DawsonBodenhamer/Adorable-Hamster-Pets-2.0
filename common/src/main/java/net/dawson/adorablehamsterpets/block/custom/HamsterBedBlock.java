@@ -254,7 +254,7 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                 boolean lureWasSuccessful = bedEntity.lureHamsterToBed(player, heldStack);
 
                 if (wasRepellentActive) {
-                    player.sendMessage(Text.translatable("message.adorablehamsterpets.bed_repellent_removed").formatted(Formatting.GREEN), true);
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.bed_repellent_removed").formatted(Formatting.WHITE), true);
                 } else if (lureWasSuccessful) {
                     bedEntity.getLinkedHamsterName().ifPresent(name ->
                             player.sendMessage(Text.translatable("message.adorablehamsterpets.lure_to_bed_success", name), true)

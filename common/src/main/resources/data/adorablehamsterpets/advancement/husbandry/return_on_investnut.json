@@ -1,0 +1,30 @@
+{
+  "parent": "adorablehamsterpets:husbandry/tree_heist",
+  "display": {
+    "icon": {
+      "id": "adorablehamsterpets:acorn"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.return_on_investnut.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.return_on_investnut.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_acorn": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": ["adorablehamsterpets:acorn"]
+          }
+        ]
+      }
+    }
+  }
+}

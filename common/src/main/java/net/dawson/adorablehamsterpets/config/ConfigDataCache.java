@@ -34,6 +34,8 @@ public class ConfigDataCache {
     private static final Set<TagKey<Item>> standardFoodTags = new HashSet<>();
     private static final Set<Item> stealableItems = new HashSet<>();
     private static final Set<TagKey<Item>> stealableTags = new HashSet<>();
+    private static final Set<Item> retrievableItems = new HashSet<>();
+    private static final Set<TagKey<Item>> retrievableItemTags = new HashSet<>();
     private static final Set<Item> buffFoodItems = new HashSet<>();
     private static final Set<TagKey<Item>> buffFoodTags = new HashSet<>();
     private static final Set<Item> lureItems = new HashSet<>();
@@ -101,6 +103,7 @@ public class ConfigDataCache {
         parseItemList(Configs.AHP.tamingFoods, tamingItems, tamingTags, "tamingFoods");
         parseItemList(Configs.AHP.standardFoods, standardFoodItems, standardFoodTags, "standardFoods");
         parseItemList(Configs.AHP.stealableItems, stealableItems, stealableTags, "stealableItems");
+        parseItemList(Configs.AHP.retrievableItems, retrievableItems, retrievableItemTags, "retrievableItems");
         parseItemList(Configs.AHP.buffFoods, buffFoodItems, buffFoodTags, "buffFoods");
         parseItemList(Configs.AHP.lureItems, lureItems, lureItemTags, "lureItems");
         parseItemList(Configs.AHP.bedAvoidanceFoods, bedAvoidanceFoodItems, bedAvoidanceFoodTags, "bedAvoidanceFoods");
@@ -158,6 +161,7 @@ public class ConfigDataCache {
     public static boolean isTamingFood(ItemStack stack) { return matchesItem(stack, tamingItems, tamingTags); }
     public static boolean isStandardFood(ItemStack stack) { return matchesItem(stack, standardFoodItems, standardFoodTags); }
     public static boolean isStealableItem(ItemStack stack) { return matchesItem(stack, stealableItems, stealableTags); }
+    public static boolean isRetrievableItem(ItemStack stack) { return matchesItem(stack, retrievableItems, retrievableItemTags); }
     public static boolean isBuffFood(ItemStack stack) { return matchesItem(stack, buffFoodItems, buffFoodTags); }
     public static boolean isLureItem(ItemStack stack) { return matchesItem(stack, lureItems, lureItemTags); }
     public static boolean isBedAvoidanceFood(ItemStack stack) {return matchesItem(stack, bedAvoidanceFoodItems, bedAvoidanceFoodTags);}
@@ -288,6 +292,8 @@ public class ConfigDataCache {
         standardFoodTags.clear();
         stealableItems.clear();
         stealableTags.clear();
+        retrievableItems.clear();
+        retrievableItemTags.clear();
         buffFoodItems.clear();
         buffFoodTags.clear();
         lureItems.clear();

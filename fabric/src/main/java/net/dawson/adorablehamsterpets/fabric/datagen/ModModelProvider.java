@@ -103,6 +103,20 @@ public class ModModelProvider extends FabricModelProvider {
         itemModelGenerator.register(ModBlocks.WILD_GREEN_BEAN_BUSH.get().asItem(), Models.GENERATED);
         itemModelGenerator.register(ModBlocks.WILD_CUCUMBER_BUSH.get().asItem(), Models.GENERATED);
         itemModelGenerator.register(ModItems.HAMSTER_BEDDING.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.ACORN.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.ACORN_SHARD.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.ACORN_HAT.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_ACORN.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_IRON.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_GOLD.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_DIAMOND.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_NETHERITE.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_IRON.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_GOLD.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_DIAMOND.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_NETHERITE.get(), Models.GENERATED);
+
+
         for (RegistrySupplier<Item> bedItemSupplier : ModItems.HAMSTER_BED_ITEMS.values()) {
             // Register each bed item variant to use the 'hamster_bed' item model.
             itemModelGenerator.register(bedItemSupplier.get(), new Model(Optional.of(Identifier.of(AdorableHamsterPets.MOD_ID, "item/hamster_bed")), Optional.empty()));

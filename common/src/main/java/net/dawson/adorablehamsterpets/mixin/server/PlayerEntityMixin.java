@@ -8,18 +8,25 @@ import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.DismountOrder;
 import net.dawson.adorablehamsterpets.entity.AI.HamsterSniffForOreGoal;
+import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
+import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.networking.payload.SyncShoulderDataPayload;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.CreeperEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -31,6 +38,8 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
@@ -74,6 +83,10 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private final List<ScheduledTask> adorablehamsterpets$scheduledTasks = new ArrayList<>();
     @Unique private record ScheduledTask(long executionTick, Runnable action) {}
 
+    // Tree Heist History
+    @Unique private static final long HEIST_MEMORY_DURATION = 24000L; // 1 Minecraft Day (20 mins)
+    @Unique private final List<TreeHeistUtil.HeistRecord> ahp$heistHistory = new ArrayList<>();
+
     // --- Constructor Injection ---
     @Inject(method = "<init>", at = @At("TAIL"))
     private void adorablehamsterpets$onInit(World world, BlockPos pos, float yaw, GameProfile gameProfile, CallbackInfo ci) {
@@ -105,6 +118,26 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         if (this.adorablehamsterpets$lastGoldMessageIndex != -1) {
             nbt.putInt("LastGoldMessageIndex", this.adorablehamsterpets$lastGoldMessageIndex);
+        }
+
+        // Save Tree Heist History
+        if (!this.ahp$heistHistory.isEmpty()) {
+            NbtList historyList = new NbtList();
+            long currentTime = this.getWorld().getTime();
+
+            for (TreeHeistUtil.HeistRecord record : this.ahp$heistHistory) {
+                if (currentTime - record.timestamp() < HEIST_MEMORY_DURATION) {
+                    NbtCompound tag = new NbtCompound();
+                    tag.putLong("x", record.pos().getX());
+                    tag.putLong("y", record.pos().getY());
+                    tag.putLong("z", record.pos().getZ());
+                    tag.putLong("t", record.timestamp());
+                    historyList.add(tag);
+                }
+            }
+            if (!historyList.isEmpty()) {
+                nbt.put("AHPHeistHistory", historyList);
+            }
         }
     }
 
@@ -149,6 +182,18 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 } catch (IllegalArgumentException e) {
                     AdorableHamsterPets.LOGGER.warn("Found invalid ShoulderLocation name in NBT: {}", element.asString());
                 }
+            }
+        }
+
+        // Read Tree Heist History
+        this.ahp$heistHistory.clear();
+        if (nbt.contains("AHPHeistHistory", NbtElement.LIST_TYPE)) {
+            NbtList historyList = nbt.getList("AHPHeistHistory", NbtElement.COMPOUND_TYPE);
+            for (int i = 0; i < historyList.size(); i++) {
+                NbtCompound tag = historyList.getCompound(i);
+                BlockPos pos = new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
+                long time = tag.getLong("t");
+                this.ahp$heistHistory.add(new TreeHeistUtil.HeistRecord(pos, time));
             }
         }
 
@@ -385,6 +430,44 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             return;
         }
 
+        // --- Tree Heist Trigger (Targeted Dismount) ---
+        // If looking at Oak Leaves within 5 blocks, trigger the heist instead of dismounting normally.
+        HitResult hitResult = self.raycast(5.0, 0.0f, false);
+        if (hitResult.getType() == HitResult.Type.BLOCK) {
+            BlockPos hitPos = ((BlockHitResult) hitResult).getBlockPos();
+            if (world.getBlockState(hitPos).isOf(Blocks.OAK_LEAVES)) {
+
+                // 1. Scan for tree structure
+                TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, hitPos);
+
+                // 2. Check if occupied
+                if (HamsterTreeSearcherEntity.isTreeBlocked(world, scanResult.treeId())) {
+                    // Send message and abort dismount
+                    self.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist.occupied").formatted(Formatting.RED), true);
+                    return; // Prevent the hamster from dismounting
+                } else {
+                    // Tree is free, proceed with Heist
+                    HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(world);
+                    if (searcher != null) {
+                        hamster.triggerLeafPopEffects(hitPos, false);
+                        NbtCompound fullNbt = new NbtCompound();
+                        hamster.writeNbt(fullNbt);
+
+                        searcher.initializeSearch(hitPos, scanResult, fullNbt);
+
+                        world.spawnEntity(searcher);
+
+                        // Cleanup Shoulder Data
+                        if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
+                        else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+                        this.setShoulderHamster(locationToProcess, new NbtCompound());
+
+                        return; // Skip standard spawn logic
+                    }
+                }
+            }
+        }
+
         // Handle Throw-Specific Logic
         if (isThrow) {
             if (hamster.isBaby()) {
@@ -413,6 +496,15 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             // Dynamic Velocity Logic
             boolean isBuffed = hamster.hasGreenBeanBuff();
             float throwSpeed = isBuffed ? config.hamsterThrowVelocityBuffed.get().floatValue() : config.hamsterThrowVelocity.get().floatValue();
+
+            // Iron Armor speed boost
+            ItemStack armorStack = hamster.getArmorStack();
+            if (!armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
+                if (armorItem.getMaterial() == HamsterArmorItem.HamsterArmorMaterial.IRON) {
+                    throwSpeed += 0.75f;
+                }
+            }
+
             Vec3d lookVec = self.getRotationVec(1.0f);
             Vec3d throwVec = new Vec3d(lookVec.x, lookVec.y + 0.1f, lookVec.z).normalize();
             hamster.setVelocity(throwVec.multiply(throwSpeed));
@@ -552,5 +644,76 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             this.adorablehamsterpets$clientShoulderData = new ClientShoulderHamsterData();
         }
         return this.adorablehamsterpets$clientShoulderData;
+    }
+
+    // --- Tree Heist Logic ---
+    @Unique
+    @Override
+    public void ahp$registerTreeHeist(BlockPos treeId) {
+        long time = this.getWorld().getTime();
+        this.ahp$heistHistory.add(new TreeHeistUtil.HeistRecord(treeId, time));
+        // Simple cleanup
+        this.ahp$heistHistory.removeIf(r -> time - r.timestamp() > HEIST_MEMORY_DURATION);
+    }
+
+    @Unique
+    @Override
+    public float ahp$getHeistProfitability(BlockPos treeId) {
+        long time = this.getWorld().getTime();
+        int initialSize = this.ahp$heistHistory.size();
+
+        // 1. Prune expired first
+        this.ahp$heistHistory.removeIf(r -> time - r.timestamp() > HEIST_MEMORY_DURATION);
+        int prunedSize = this.ahp$heistHistory.size();
+
+        // 2. Count nearby recent heists
+        int matchCount = 0;
+        List<Long> matchAges = new ArrayList<>();
+
+        for (TreeHeistUtil.HeistRecord record : this.ahp$heistHistory) {
+            if (record.pos().equals(treeId)) {
+                matchCount++;
+                matchAges.add(time - record.timestamp());
+            }
+        }
+
+        // 3. Calculate sliding scale
+        // 0 nearby = 100%
+        // 1 nearby = 60%
+        // 2 nearby = 30%
+        // 3+ nearby = 0%
+        float multiplier;
+        if (matchCount == 0) multiplier = 1.0f;
+        else if (matchCount == 1) multiplier = 0.6f;
+        else if (matchCount == 2) multiplier = 0.3f;
+        else multiplier = 0.0f;
+
+        if (Configs.AHP.debugTreeDetection) {
+            AdorableHamsterPets.LOGGER.info("""
+                [TreeHeist-Profitability] Calculating for Tree Anchor: {}
+                  - Current World Time: {}
+                  - Player History Size: {} (Pruned from {})
+                  - Matches Found for this Tree: {}
+                  - Match Ages (ticks ago): {} (Memory Limit: {})
+                  - Calculated Multiplier: {}""",
+                    treeId.toShortString(),
+                    time,
+                    prunedSize, initialSize,
+                    matchCount,
+                    matchAges, HEIST_MEMORY_DURATION,
+                    String.format("%.2f", multiplier)
+            );
+        }
+
+        return multiplier;
+    }
+
+    @Unique
+    @Override
+    public void ahp$clearHeistHistory() {
+        this.ahp$heistHistory.clear();
+        AdorableHamsterPets.LOGGER.info("[TreeHeist] Cleared heist history for player {}.", this.getName().getString());
+        // Cast to PlayerEntity to access the 2-argument sendMessage method
+        ((PlayerEntity)(Object)this).sendMessage(Text.translatable("message.adorablehamsterpets.heist_history_reset").formatted(Formatting.WHITE), true);
     }
 }
