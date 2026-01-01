@@ -18,9 +18,11 @@ import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.world.World;
 import org.joml.Matrix4f;
@@ -120,6 +122,21 @@ public class HamsterShoulderFeatureRenderer
         dummyHamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, data.pinkPetalType());
         dummyHamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
         dummyHamster.setBreedingAge(data.breedingAge());
+
+        // --- Apply Inventory for Armor/Accessories ---
+        // Clear the inventory first to avoid ghost items if the data is empty/changed
+        dummyHamster.getItems().clear();
+
+        if (!data.inventoryNbt().isEmpty()) {
+            // Use the owner's registry manager since we are on the client
+            RegistryWrapper.WrapperLookup registries = owner.getRegistryManager();
+
+            // Populate the dummy's inventory from NBT
+            Inventories.readNbt(data.inventoryNbt(), dummyHamster.getItems(), registries);
+
+            // Force update the tracked data fields so the RenderLayers can see the items
+            dummyHamster.updateEquipmentTrackers();
+        }
 
         // --- Set Ownership for Animation Logic ---
         dummyHamster.setOwnerUuid(owner.getUuid());

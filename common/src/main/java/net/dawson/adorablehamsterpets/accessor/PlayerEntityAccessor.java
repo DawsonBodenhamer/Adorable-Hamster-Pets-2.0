@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.accessor;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayDeque;
 
@@ -37,4 +38,19 @@ public interface PlayerEntityAccessor {
     ArrayDeque<ShoulderLocation> adorablehamsterpets$getMountOrderQueue();
 
     ClientShoulderHamsterData adorablehamsterpets$getClientShoulderData();
+
+    /**
+     * Registers a new tree heist for a specific Tree ID (Anchor position).
+     */
+    void ahp$registerTreeHeist(BlockPos treeId);
+
+    /**
+     * Calculates the profitability multiplier (0.0 to 1.0) for a specific Tree ID.
+     */
+    float ahp$getHeistProfitability(BlockPos treeId);
+
+    /**
+     * Clears all recorded tree heist history for this player.
+     */
+    void ahp$clearHeistHistory();
 }

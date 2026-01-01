@@ -15,6 +15,18 @@
     {
       "type": "patchouli:text",
       "text": "book.adorablehamsterpets.entry.cheek_pouches.page2.body"
+    },
+    {
+      "type": "adorablehamsterpets:page",
+      "header": "book.adorablehamsterpets.entry.cheek_pouches.page3.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.cheek_pouches.page3.body",
+      "text_color": "000000",
+      "anchor": "equipment_slots"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "book.adorablehamsterpets.entry.cheek_pouches.page4.body"
     }
   ]
 }

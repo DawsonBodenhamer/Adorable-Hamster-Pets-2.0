@@ -6,23 +6,25 @@ import net.dawson.adorablehamsterpets.block.ModBlockEntities;
 import net.dawson.adorablehamsterpets.block.client.HamsterBedRenderer;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
+import net.dawson.adorablehamsterpets.client.render.LeafJiggleRenderer;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.client.feature.HamsterShoulderFeatureRenderer;
+import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterTreeSearcherRenderer;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.particle.SimpleParticleType;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
-import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
+import net.neoforged.neoforge.client.event.*;
+import net.neoforged.neoforge.common.NeoForge;
 
 public final class AdorableHamsterPetsNeoForgeClient {
 
@@ -31,7 +33,30 @@ public final class AdorableHamsterPetsNeoForgeClient {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         // General setup.
-        event.enqueueWork(AdorableHamsterPetsClient::init);
+        event.enqueueWork(() -> {
+            AdorableHamsterPetsClient.init();
+
+            // Register world render hook on the game bus
+            NeoForge.EVENT_BUS.addListener(AdorableHamsterPetsNeoForgeClient::onRenderLevelStage);
+        });
+    }
+
+    // --- Render Level Hook ---
+    private static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
+
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        // Retrieve the buffer source from the client's buffer builders
+        VertexConsumerProvider consumers = client.getBufferBuilders().getEntityVertexConsumers();
+
+        LeafJiggleRenderer.render(
+                client,
+                event.getPoseStack(),
+                consumers,
+                event.getCamera().getPos(),
+                event.getPartialTick().getTickDelta(client.isPaused())
+        );
     }
 
     @SubscribeEvent
@@ -69,6 +94,7 @@ public final class AdorableHamsterPetsNeoForgeClient {
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.HAMSTER.get(), HamsterRenderer::new);
+        event.registerEntityRenderer(ModEntities.HAMSTER_TREE_SEARCHER.get(), HamsterTreeSearcherRenderer::new);
     }
 
     @SubscribeEvent

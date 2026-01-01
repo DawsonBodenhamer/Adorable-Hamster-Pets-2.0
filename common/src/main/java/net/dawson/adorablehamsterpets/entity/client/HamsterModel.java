@@ -1,7 +1,10 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.item.ModItems;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animation.AnimationState;
@@ -10,7 +13,6 @@ import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoRenderer;
 
 @SuppressWarnings("removal") // Suppress deprecation warnings for the old abstract methods
-
 public class HamsterModel extends GeoModel<HamsterEntity> {
 
     // --- 1. Constants for Scaling and Positioning ---
@@ -27,19 +29,8 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
 
     @Override
     public Identifier getTextureResource(HamsterEntity animatable, @Nullable GeoRenderer<HamsterEntity> renderer) {
-        return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/orange.png"); // Fallback
-    }
-
-    @Deprecated(forRemoval = true)
-    @Override
-    public Identifier getModelResource(HamsterEntity animatable) {
-        return this.getModelResource(animatable, null);
-    }
-
-    @Deprecated(forRemoval = true)
-    @Override
-    public Identifier getTextureResource(HamsterEntity animatable) {
-        return this.getTextureResource(animatable, null);
+        // Fallback texture; actual texture is handled by the Renderer
+        return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/orange.png");
     }
 
     @Override
@@ -58,6 +49,16 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         GeoBone rightCheekDefBone = this.getAnimationProcessor().getBone("right_cheek_deflated");
         GeoBone leftCheekInfBone = this.getAnimationProcessor().getBone("left_cheek_inflated");
         GeoBone rightCheekInfBone = this.getAnimationProcessor().getBone("right_cheek_inflated");
+        GeoBone rightEarBone = this.getAnimationProcessor().getBone("right_ear");
+        GeoBone acornHatBone = this.getAnimationProcessor().getBone("acorn_hat");
+        GeoBone petalHeadBone = this.getAnimationProcessor().getBone("pink_petal_head");
+        GeoBone petalSideBone = this.getAnimationProcessor().getBone("pink_petal_side");
+        GeoBone petalBackBone = this.getAnimationProcessor().getBone("pink_petal_lower_back");
+
+        // --- Pink Petal Visibility Defaults ---
+        if (petalHeadBone != null) petalHeadBone.setHidden(true);
+        if (petalSideBone != null) petalSideBone.setHidden(true);
+        if (petalBackBone != null) petalBackBone.setHidden(true);
 
         // --- Cheek Pouch Visibility Logic ---
         if (leftCheekDefBone != null && leftCheekInfBone != null) {
@@ -69,6 +70,36 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             boolean rightFull = entity.isRightCheekFull();
             rightCheekDefBone.setHidden(rightFull);
             rightCheekInfBone.setHidden(!rightFull);
+        }
+
+        // --- Armor/Accessory Visual Logic ---
+        if (rightEarBone != null) {
+            boolean shouldHideEar = false;
+            boolean shouldShowHat = false;
+
+            // 1. Check Bling Slot (Slot 6) - Highest Priority
+            ItemStack blingStack = entity.getAccessoryStack();
+            if (blingStack.isOf(ModItems.ACORN_HAT.get())) {
+                shouldHideEar = true; // Prevent clipping through hat
+                shouldShowHat = true;
+            }
+
+            // 2. Check Armor Slot (Slot 7) + Config
+            // Only check if we haven't already decided to show the hat (bling overrides armor)
+            ItemStack armorStack = entity.getArmorStack();
+            if (armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP.renderAcornHat.get()) {
+                // If wearing Acorn Armor AND config enables hat, hide ear and show hat.
+                shouldHideEar = true;
+                shouldShowHat = true;
+            }
+
+            // Apply visibility states
+            rightEarBone.setHidden(shouldHideEar);
+
+            if (acornHatBone != null) {
+                // Default the hat bone to hidden unless specifically enabled.
+                acornHatBone.setHidden(!shouldShowHat);
+            }
         }
 
         // --- Scaling & Rotation Logic ---
@@ -94,8 +125,8 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             headParentBone.setScaleZ(headScale);
 
             // --- Dynamic Throw Pitch ---
-            // Rotates the root bone to match the flight trajectory
-            if (entity.isThrown()) {
+            // Rotates the root bone to match the trajectory
+            if (entity.shouldRenderFlying()) {
                 double dx = entity.getX() - entity.prevX;
                 double dy = entity.getY() - entity.prevY;
                 double dz = entity.getZ() - entity.prevZ;
@@ -108,9 +139,22 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
                     rootBone.setRotX(pitchRadians);
                 }
             } else {
-                // Ensure rotation is reset when landing/not thrown
+                // Ensure rotation is reset when landing
                 rootBone.setRotX(0);
             }
         }
+    }
+
+    // Deprecated methods required by superclass
+    @Deprecated(forRemoval = true)
+    @Override
+    public Identifier getModelResource(HamsterEntity animatable) {
+        return this.getModelResource(animatable, null);
+    }
+
+    @Deprecated(forRemoval = true)
+    @Override
+    public Identifier getTextureResource(HamsterEntity animatable) {
+        return this.getTextureResource(animatable, null);
     }
 }

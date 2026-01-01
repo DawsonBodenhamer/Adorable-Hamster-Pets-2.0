@@ -129,12 +129,22 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
             tooltip.add(fText("  Found Ore Cooldown: %s", Text.literal("Disabled").formatted(Formatting.GRAY)));
         }
 
-        // --- Diamond Stealing States ---
-        tooltip.add(Text.literal("--- Diamond Stealing ---").formatted(Formatting.GRAY));
-        tooltip.add(fText("Is Stealing: %s", hamster.isStealingDiamond() ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED)));
-        if (hamster.isStealingDiamond()) {
-            int remainingTicks = hamster.getStealDurationTimer();
+        // --- Stealing/Fetching States ---
+        tooltip.add(Text.literal("--- Item Stealing/Fetching ---").formatted(Formatting.GRAY));
+        boolean isHolding = hamster.isHoldingInterestItem();
+        tooltip.add(fText("Is Interested in Item: %s", isHolding ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED)));
+
+        if (isHolding) {
+            int remainingTicks = hamster.getItemInterestTimer();
             tooltip.add(fText("  Time Remaining: %s sec", Text.literal(String.format("%.1f", remainingTicks / 20.0)).formatted(Formatting.YELLOW)));
+
+            if (hamster.isTauntingWithItem()) {
+                tooltip.add(fText("  Action: %s", Text.literal("Taunting").formatted(Formatting.GOLD)));
+            } else if (hamster.isPresentingItem()) {
+                tooltip.add(fText("  Action: %s", Text.literal("Presenting").formatted(Formatting.AQUA)));
+            } else {
+                tooltip.add(fText("  Action: %s", Text.literal("Moving/Fleeing").formatted(Formatting.WHITE)));
+            }
         }
 
         // --- Love & Interaction States ---

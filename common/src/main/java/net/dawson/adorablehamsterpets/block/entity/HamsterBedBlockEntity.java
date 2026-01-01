@@ -44,7 +44,7 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar registrar) {
-        AnimationController<HamsterBedBlockEntity> controller = new AnimationController<>(this, "hamster_bed_controller", 2, state -> {
+        AnimationController<HamsterBedBlockEntity> controller = new AnimationController<>(this, "hamster_bed_controller", 5, state -> {
             BlockState blockState = state.getAnimatable().getCachedState();
             if (blockState.get(HamsterBedBlock.OCCUPIED)) {
                 return state.setAndContinue(RawAnimation.begin().thenLoop("anim_bed_idle_waving_occupied"));

@@ -36,7 +36,7 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
     @Override
     public boolean canStart() {
         // --- 1. Initial State Checks ---
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isSulking() || this.hamster.isCelebratingDiamond() || this.hamster.isCelebratingChase()) {
+        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isSulking() || this.hamster.isCelebratingDiamond() || this.hamster.isCelebratingRetrieval()) {
             return false;
         }
 

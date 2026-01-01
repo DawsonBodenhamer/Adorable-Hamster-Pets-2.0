@@ -1,0 +1,30 @@
+{
+  "parent": "adorablehamsterpets:husbandry/hardened_salad",
+  "display": {
+    "icon": {
+      "id": "adorablehamsterpets:hamster_armor_diamond"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.expensive_therapy.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.expensive_therapy.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_diamond_armor": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": ["adorablehamsterpets:hamster_armor_diamond"]
+          }
+        ]
+      }
+    }
+  }
+}

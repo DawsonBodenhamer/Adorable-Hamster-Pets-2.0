@@ -13,33 +13,46 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ColorHelper;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
-
 public class HamsterPinkPetalOverlayLayer extends GeoRenderLayer<HamsterEntity> {
+
+    // Single shared texture for all 3D petal positions
+    private static final Identifier PETAL_TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/overlay_pink_petal.png");
 
     public HamsterPinkPetalOverlayLayer(GeoRenderer<HamsterEntity> entityRendererIn) {
         super(entityRendererIn);
-    }
-
-    @Nullable
-    private Identifier getPetalTexture(HamsterEntity entity) {
-        int petalType = entity.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE);
-        if (petalType > 0 && petalType <= 3) {
-            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/overlay_pink_petal" + petalType + ".png");
-        }
-        return null; // No petal or invalid type
     }
 
     @Override
     public void render(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel bakedModel, RenderLayer renderType,
                        VertexConsumerProvider bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
 
-        Identifier petalTexture = getPetalTexture(animatable);
+        // 1. Get the petal type (0 = none, 1 = head, 2 = side, 3 = lower back)
+        int petalType = animatable.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE);
+        if (petalType == 0) return;
 
-        if (petalTexture != null) {
-            RenderLayer petalRenderType = RenderLayer.getEntityTranslucent(petalTexture);
+        // 2. Locate the bones
+        GeoBone headBone = getRenderer().getGeoModel().getAnimationProcessor().getBone("pink_petal_head");
+        GeoBone sideBone = getRenderer().getGeoModel().getAnimationProcessor().getBone("pink_petal_side");
+        GeoBone backBone = getRenderer().getGeoModel().getAnimationProcessor().getBone("pink_petal_lower_back");
+
+        // 3. Determine which bone to unhide
+        GeoBone targetBone = switch (petalType) {
+            case 1 -> headBone;
+            case 2 -> sideBone;
+            case 3 -> backBone;
+            default -> null;
+        };
+
+        if (targetBone != null) {
+            // 4. Temporarily unhide the target bone for this render pass
+            targetBone.setHidden(false);
+
+            // 5. Render the model using the petal texture
+            RenderLayer petalRenderType = RenderLayer.getEntityCutoutNoCull(PETAL_TEXTURE);
 
             getRenderer().reRender(
                     bakedModel,
@@ -53,6 +66,9 @@ public class HamsterPinkPetalOverlayLayer extends GeoRenderLayer<HamsterEntity> 
                     OverlayTexture.DEFAULT_UV,
                     ColorHelper.Argb.getArgb(255, 255, 255, 255)
             );
+
+            // 6. Re-hide the bone immediately to keep the main render pass clean
+            targetBone.setHidden(true);
         }
     }
 }

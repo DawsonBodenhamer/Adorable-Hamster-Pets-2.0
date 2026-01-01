@@ -109,5 +109,12 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         int customTextRightX = 95;
         int customTextRightY = 80;
         context.drawText(this.textRenderer, customTextRight, customTextRightX, customTextRightY, 4210752, false);
+
+        // --- "Bling" and "Armor" Text ---
+        Text blingText = Text.translatable("entity.adorablehamsterpets.hamster.inventory_bling_title");
+        context.drawText(this.textRenderer, blingText, 79, 29, 4210752, false);
+
+        Text armorText = Text.translatable("entity.adorablehamsterpets.hamster.inventory_armor_title");
+        context.drawText(this.textRenderer, armorText, 127, 29, 4210752, false);
     }
 }

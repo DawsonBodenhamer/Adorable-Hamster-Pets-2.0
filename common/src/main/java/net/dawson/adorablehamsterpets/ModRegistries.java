@@ -37,6 +37,7 @@ public class ModRegistries {
         ComposterBlock.ITEM_TO_LEVEL_INCREASE_CHANCE.put(ModItems.CUCUMBER_SEEDS.get(), 0.25f);
         ComposterBlock.ITEM_TO_LEVEL_INCREASE_CHANCE.put(ModItems.SUNFLOWER_SEEDS.get(), 0.25f);
         ComposterBlock.ITEM_TO_LEVEL_INCREASE_CHANCE.put(ModItems.HAMSTER_BEDDING.get(), 0.75f);
+        ComposterBlock.ITEM_TO_LEVEL_INCREASE_CHANCE.put(ModItems.ACORN.get(), 0.3f);
     }
 
     /**

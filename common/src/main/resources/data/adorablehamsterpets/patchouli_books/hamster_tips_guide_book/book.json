@@ -28,6 +28,7 @@
     "<dark_green>": "$(#00AA00)",
     "<dark_aqua>": "$(#00AAAA)",
     "<pink>": "$(#FF55FF)",
-    "<light_gray>": "$(#938a80)"
+    "<light_gray>": "$(#938a80)",
+    "<dark_purple>": "$(#301934)"
   }
 }

@@ -34,7 +34,7 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
         // Use our stored 'hamsterMob' reference
         if (this.hamsterMob instanceof HamsterEntity hamster) {
             return !hamster.isSitting() && !hamster.isSleeping() && !hamster.isKnockedOut() && !hamster.isSulking()
-                    && !hamster.isStealingDiamond() && !hamster.isCelebratingChase()
+                    && !hamster.isHoldingInterestItem() && !hamster.isCelebratingRetrieval()
                     && !hamster.getActiveCustomGoalDebugName().equals(HamsterWanderAroundFarGoal.class.getSimpleName());
         }
         return true;
@@ -54,7 +54,7 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
         // --- 1. Check Hamster State ---
         // Use our stored 'hamsterMob' reference
         if (this.hamsterMob instanceof HamsterEntity hamster) {
-            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isStealingDiamond() || hamster.isCelebratingChase()) {
+            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isHoldingInterestItem() || hamster.isCelebratingRetrieval()) {
                 return false;
             }
         }
