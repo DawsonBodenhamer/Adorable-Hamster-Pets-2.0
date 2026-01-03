@@ -75,6 +75,7 @@ public final class AdorableHamsterPetsForgeClient {
         // Manually register the keys with Forge's event.
         event.register(ModKeyBindings.THROW_HAMSTER_KEY);
         event.register(ModKeyBindings.DISMOUNT_HAMSTER_KEY);
+        event.register(ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY);
     }
 
     /* ------------------------------------------------------------ */
