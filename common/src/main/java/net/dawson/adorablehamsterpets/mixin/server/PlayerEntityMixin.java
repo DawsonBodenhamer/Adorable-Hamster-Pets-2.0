@@ -477,10 +477,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             long currentTime = world.getTime();
             if (hamster.throwCooldownEndTick > currentTime) {
                 long remainingTicks = hamster.throwCooldownEndTick - currentTime;
-                long totalSecondsRemaining = remainingTicks / 20;
-                long minutes = totalSecondsRemaining / 60;
-                long seconds = totalSecondsRemaining % 60;
-                self.sendMessage(Text.translatable("message.adorablehamsterpets.throw_cooldown", minutes, seconds).formatted(Formatting.RED), true);
+                long totalSecondsRemaining = Math.max(1, remainingTicks / 20);
+
+                self.sendMessage(Text.translatable("message.adorablehamsterpets.throw_cooldown", totalSecondsRemaining).formatted(Formatting.RED), true);
                 return;
             }
 
