@@ -7,7 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.5.0] - 2025-12-19
 
+# The Tactical Fluff & Tree Heist Update
+
+The hamsters were too squishy. This update introduces military-grade protection for your rodents and a questionable, overengineered new method of deforestation.
+
 ### Added
+- **Hamster Armor System**
+  - **Acorn Armor:** The biodegradable base tier. Crafted from Acorn Shards and an Acorn Hat. It works like Wolf Armor— completely negating damage until it breaks.
+  - **Tiered Upgrades:** Use the Smithing Table to plate your Acorn Armor with Iron, Gold, Diamond, or Netherite using new **Smithing Templates** found in places where normal smithing templates are usually found.
+  - **Tactical Perks:**
+    - **Gold:** Grants 15% extra movement speed.
+    - **Netherite:** Grants extreme knockback resistance.
+    - **Diamond:** Cures kleptomania. Hamsters wearing diamond armor will **fetch** valuables instead of stealing them.
+- **New Tree Heist Mechanic**
+  - **The Trigger:** Throw your hamster at an Oak Tree (or dismount them while staring at Oak Leaves) to initiate a heist.
+  - **The Simulation Architecture:**
+    - **Intelligent Canopy Mapping Algorithm:** Upon impact, a Gradient Descent Scan locates the trunk anchor. Then a Breadth-First Search utilizes leaf distance gradients to intelligently segment overlapping foliage, allowing the system to isolate and map the specific 3D shape of a single tree, even within a dense forest where the leaves are all touching.
+    - **Proxy Entity:** Your physical hamster is temporarily swapped for an invisible, weightless `TreeSearcher` entity. This proxy physically navigates the mapped leaf volume for that specific tree in real-time, randomizing its path to "rummage" for acorns.
+    - **Spatial Integrity:** The system verifies the tree's structural integrity every second. If you chop the tree down while a heist is active, the proxy detects the destruction, forces an emergency eject, and your hamster exits.
+  - **Visual & Audio Fidelity:**
+    - **Reactive Foliage:** A deterministically randomized physics simulation makes the leaves physically jiggle and shudder as the proxy moves through them. Each block has a unique oscillation pattern derived from its coordinates, further selling the "scurrying" effect.
+    - **Dynamic Audio:** Sound sources track the invisible proxy's position, meaning you can hear exactly where your hamster is inside the canopy.
+  - **The Economy:** Trees possess persistent "profitability" memory. Over-farming the same coordinates depletes yields until your hamster finds nothing and pouts.
+- **New Accessory**
+  - **Acorn Hat:** Increases Tree Heist profitability by 2x, yielding more acorns. Fashionable and functional.
+- **New Ingredient**
+  - **Acorn Shards:** Processed Acorns used to construct the base armor.
+- **New Inventory Slots**
+  - Added dedicated **"Bling"** and **"Armor"** slots with interactive UI sounds.
+- **8 New Advancements**
+  - "Tree Heist" (Start a Tree Heist)
+  - "Return on Investnut" (Obtain an Acorn)
+  - "Ecological Menace" (Exaust a tree's supply)
+  - "Industrial Nutcracking" (Obtain Acorn Shards).
+  - "Hardened Salad" (Craft Acorn Armor)
+  - "Squirrel Cosplay" (Equip Acorn Hat)
+  - "Expensive Therapy" (Craft Diamond-Plated Acorn Armor)
+  - "The Immovable Object" (Craft Netherite-Plated Acorn Armor)
+- **Global Loot Table Injection**
+  - **Seeds:** You can now find Cucumber, Green Bean, and Sunflower seeds scrounging around in Village, Dungeon, and Mineshaft chests.
+  - **Hamster Armor:**
+    - **Acorn Base, Iron, Gold):** Found in Dungeons, Temples, and Mineshafts.
+    - **Diamond:** Found in Nether Fortresses, Bastions, Strongholds, and End Cities.
+    - **Netherite:** This can only be crafted, just like vanilla horse armor.
+  - **Smithing Templates:** The blueprints for advanced armor are now scattered across the world (Mineshafts, Pyramids, Strongholds, and Bastions).
+  - **The Acorn Hat:** This legendary fashion statement can now be found in Ancient Cities, Woodland Mansions, and Buried Treasure. Happy hunting.
 - **Legacy Forge Support** (Thanks to [@Konkeeztador](https://nolink.com)!)
   - Added data structures and loading conditions to ensure the mod tags/recipes load correctly on the legacy Forge loader.
 - **Mod Compatibility Improvements** (Thanks to [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
@@ -21,10 +65,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The food refusal logic now intelligently selects between sitting, standing, and moving headshake animations.
 
 ### Changed
+- **Diamond Stealing AI**
+  - Refactored the diamond stealing behavior system. Hamsters now intelligently switch between "Theft Mode" (Taunting) and "Delivery Mode" (Presenting) based on the item type and their current equipment. (Configurable)
 - **Refusal Interactions**
   - Attempting to open a locked cheek pouch now triggers the same new intelligent headshake animations (sitting/standing/moving) used for food refusal.
 - **Item Stealing**
   - Hamsters now use their sprinting animation/speed (1.5D) when running towards a diamond to steal it, matching their flee speed. Originally I had them walking at normal speed so as not to alert the player that they were about to steal the diamond, but I changed my mind and I think it's a lot cuter if they sprint over to it.
+- **Dynamic Aerodynamics**
+  -   Hamsters now react to gravity with appropriate drama. The "Flying" animation and dynamic nose-dive rotation logic are no longer exclusive to the Hamster Yeet.
+  -   Any significant fall— whether it's jumping off a ledge or popping out of a tree— will now automatically trigger the flight pose and dynamic pitch rotation, ensuring they always look like they are falling.
+- **Pink Petal Accessories**
+  - Updated rendering to use **3D models** instead of flat texture overlays.
+  - Petals now have depth and similar positioning on the hamster's head, side, and back.
 
 ### Fixed
 - **Data Structure & Recipes** (Thanks again [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
