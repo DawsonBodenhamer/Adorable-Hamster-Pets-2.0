@@ -140,6 +140,24 @@ But be warned: sometimes, in their eagerness, these little geologists might get 
 
 This whole ore-seeking escapade is, of course, configurable.
 
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_commercial_break.png" alt="Commercial break" width="100%"></p>
+
+## So, you want a server. Here's 25% off your first one.
+
+I did some through research into the best hosting services based on my four top priorities:
+- Modded Support
+- Customer Support
+- Hardware Power Per Dollar
+- Uninterrupted Uptime
+
+I can honestly recommend **Apex Hosting** for the job— they consistently came out on top when compared to other similar services. And if you click the banner below, it helps fund future updates for Adorable Hamster Pets!
+
+<p align="center">
+  <a href="https://apexhost.gg/TheScarletFox">
+    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_apex_hosting_banner_1235x118.png" alt="Apex Hosting Affiliate Banner" width="100%">
+  </a>
+</p>
+
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_item_stealing_the_game_of_tag.png" alt="Item Stealing & The Game of Tag" width="100%"></p>
 
 Your hamster's love for shiny things may have evolved into full-blown kleptomania. If you carelessly leave valuable items (like, say, diamonds) on the ground, your tamed companion might just decide it's time for a game.
@@ -352,15 +370,17 @@ I'd like to claim I did this all by myself while meditating on a mountain peak, 
 | [**@Konkeeztador**](https://nolink.com)                            | For adding data structures and loading conditions to ensure the mod tags/recipes load correctly on the legacy Forge loader.                                                                                              |
 | [**@Kazerio**](https://modrinth.com/user/kazerio)                  | For adding compatibility with Xaero's Minimap so it shows hamster icons.                                                                                                                                                 |
 | [**@ZeMonkey**](https://nolink.com)                                | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support.                                                                                  |
+| [**@Saint_Victus**](https://nolink.com) | For birthing the "Battle Hamster" brain-child, and commisioning riding mechanics.                                                                                                                                        |
 
 ### <font color="teal">Snack Providers</font>
 
 These generous souls contributed to the project to keep the lights on and the hamster wheels spinning. They are awesome and, yes, fully awesome. Did I say they are awesome?
 
-| Name                                                     | Fun Fact                                                                |
-|:---------------------------------------------------------|:------------------------------------------------------------------------|
-| [**@The Retro Stitcher**](https://theretrostitcher.com/) | Rumored to dream exclusively in pixel art with a precise color palette. |
-| [**@Slicktopia**](https://ko-fi.com/slicktopia)          | Single-handedly influencing the global virtual cheese economy.          |
+| Name                                                     | Fun Fact                                                                                     |
+|:---------------------------------------------------------|:---------------------------------------------------------------------------------------------|
+| [**@The Retro Stitcher**](https://theretrostitcher.com/) | Rumored to dream exclusively in pixel art with a precise color palette.                      |
+| [**@Slicktopia**](https://ko-fi.com/slicktopia)          | Single-handedly influencing the global virtual cheese economy.                               |
+| [**@Saint_Victus**](https://nolink.com) | Frequently rides hamsters into battle after shrinking themselves down to the size of an ant. |
 
 ### <font color="teal">Dependencies</font>
 

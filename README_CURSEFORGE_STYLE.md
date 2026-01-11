@@ -141,6 +141,24 @@ But be warned: sometimes, in their eagerness, these little geologists might get 
 
 This whole ore-seeking escapade is, of course, configurable.
 
+<img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_commercial_break.png" alt="Commercial break" width="100%">
+
+## So, you want a server. Here's 25% off your first one.
+
+I did some through research into the best hosting services based on my four top priorities:
+- Modded Support
+- Customer Support
+- Hardware Power Per Dollar
+- Uninterrupted Uptime
+
+I can honestly recommend **Apex Hosting** for the job— they consistently came out on top when compared to other similar services. And if you click the banner below, it helps fund future updates for Adorable Hamster Pets!
+
+<p style="text-align: center;">
+    <a href="https://apexhost.gg/TheScarletFox">
+        <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_apex_hosting_banner_1235x118.png" alt="Apex Hosting Affiliate Banner" width="100%">
+    </a>
+</p>
+
 <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_item_stealing_the_game_of_tag.png" alt="Item Stealing & The Game of Tag" width="100%">
 
 Your hamster's love for shiny things may have evolved into full-blown kleptomania. If you carelessly leave valuable items (like, say, diamonds) on the ground, your tamed companion might just decide it's time for a game.
