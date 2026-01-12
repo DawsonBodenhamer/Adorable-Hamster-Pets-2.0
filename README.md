@@ -12,7 +12,7 @@
 [![Discord](https://img.shields.io/discord/1382334723333820568.svg?label=Discord&logo=discord&logoColor=white&color=c37301&labelColor=555555&style=for-the-badge)](https://discord.gg/w54mk5bqdf)
 [![GitHub](https://img.shields.io/badge/Source%20Code-GitHub-c37301?labelColor=555555&logo=github&style=for-the-badge)](https://github.com/DawsonBodenhamer/AdorableHamsterPets-Public)
 [![Ko-fi](https://img.shields.io/badge/Ko--Fi-9_Coffees-c37301?labelColor=555555&logo=kofi&logoColor=white&style=for-the-badge)](https://ko-fi.com/dawsonbodenhamer)
-[![Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3DFor_the_King%26type%3Dpatrons&style=for-the-badge&logo=patreon&logoColor=white&labelColor=555555&color=c37301)](https://www.patreon.com/c/For_the_King/membership)
+[![Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3DFor_the_King%26type%3Dpatrons&style=for-the-badge&logo=patreon&logoColor=white&labelColor=555555&color=c37301)](https://www.patreon.com/c/dawson_bodenhamer)
 
 </div>
 
