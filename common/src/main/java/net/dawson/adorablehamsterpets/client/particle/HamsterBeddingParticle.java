@@ -190,8 +190,11 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
                     if (gust.key != lastAppliedGustKey) {
                         // Play sound once per unique gust event per tick, up to MAX_CONCURRENT_SOUNDS simultaneously
                         if (soundStartTimes.size() < MAX_CONCURRENT_SOUNDS && playedGustSoundsThisTick.add(gust.key)) {
-                            this.world.playSound(this.x, this.y, this.z, ModSounds.GENTLE_BREEZE.get(), SoundCategory.AMBIENT, 1.0f, 1.0f, false);
-                            soundStartTimes.addLast(worldTime);
+                            float vol = Configs.AHP.leafGustVolume.get();
+                            if (vol > 0) {
+                                this.world.playSound(this.x, this.y, this.z, ModSounds.GENTLE_BREEZE.get(), SoundCategory.AMBIENT, vol, 1.0f, false);
+                                soundStartTimes.addLast(worldTime);
+                            }
                         }
 
                         Random pr = new Random(mix64(gust.key, System.identityHashCode(this)));

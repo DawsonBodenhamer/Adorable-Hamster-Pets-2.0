@@ -499,8 +499,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             // Iron Armor speed boost
             ItemStack armorStack = hamster.getArmorStack();
             if (!armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
-                if (armorItem.getMaterial() == HamsterArmorItem.HamsterArmorMaterial.IRON) {
-                    throwSpeed += 0.75f;
+                if (config.enableArmorPerks.get() && armorItem.getMaterial() == HamsterArmorItem.HamsterArmorMaterial.IRON) {
+                    throwSpeed += config.ironArmorThrowSpeedBoost.get().floatValue();
                 }
             }
 
