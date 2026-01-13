@@ -1,0 +1,28 @@
+{
+  "parent": "adorablehamsterpets:husbandry/root",
+  "display": {
+    "icon": {
+      "item": "minecraft:skeleton_skull"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.killed_by_hamster.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.killed_by_hamster.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "killed_by_hamster": {
+      "trigger": "minecraft:entity_killed_player",
+      "conditions": {
+        "entity": {
+          "type": "adorablehamsterpets:hamster"
+        }
+      }
+    }
+  }
+}

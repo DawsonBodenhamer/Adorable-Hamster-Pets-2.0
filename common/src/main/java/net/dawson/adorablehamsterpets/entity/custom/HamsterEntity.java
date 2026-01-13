@@ -9,10 +9,7 @@ import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.component.HamsterShoulderData;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
-import net.dawson.adorablehamsterpets.config.ConfigDataCache;
-import net.dawson.adorablehamsterpets.config.Configs;
-import net.dawson.adorablehamsterpets.config.WanderDistance;
+import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.AI.*;
 import net.dawson.adorablehamsterpets.entity.AI.navigation.HamsterNavigation;
 import net.dawson.adorablehamsterpets.entity.ImplementedInventory;
@@ -165,6 +162,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             PathNodeType.DANGER_OTHER,
             PathNodeType.DAMAGE_CAUTIOUS,
             PathNodeType.WATER
+    );
+
+    // --- Wild Loot Tables ---
+    // A simplified list of items wild hamsters might scavenge
+    private static final List<Item> WILD_CHEEK_LOOT_TABLE = List.of(
+            Items.WHEAT_SEEDS, Items.PUMPKIN_SEEDS, Items.MELON_SEEDS,
+            Items.BEETROOT_SEEDS, Items.CARROT, Items.POTATO, Items.POISONOUS_POTATO,
+            Items.APPLE, Items.STICK, Items.FEATHER, Items.STRING, Items.GOLD_NUGGET,
+            Items.IRON_NUGGET, Items.FLINT
+            // Mod items added dynamically in initialize() to avoid classloading issues
     );
 
     private static final List<HamsterVariant> ORANGE_VARIANTS = List.of(
@@ -501,7 +508,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation KNOCKED_OUT_ANIM = RawAnimation.begin().thenPlay("anim_hamster_ko");
     private static final RawAnimation WAKE_UP_FROM_KO_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wakeup_from_ko");
     private static final RawAnimation FLYING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_flying");
-    private static final RawAnimation STATIONARY_HEADSHAKE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_stationary_headshake");
+    private static final RawAnimation STANDING_HEADSHAKE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_standing_headshake");
+    private static final RawAnimation SITTING_HEADSHAKE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sitting_headshake");
     private static final RawAnimation MOVING_HEADSHAKE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_moving_headshake");
     private static final RawAnimation SLEEP_POSE1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sleep_pose1");
     private static final RawAnimation SLEEP_POSE2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sleep_pose2");
@@ -913,14 +921,28 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // Attempts to mount the hamster to the player's shoulder. True if successful.
         PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
 
-        // Find First Available Slot
+        // --- Mount Priority Logic ---
         ShoulderLocation availableSlot = null;
-        if (playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty()) {
-            availableSlot = ShoulderLocation.RIGHT_SHOULDER;
-        } else if (playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) {
-            availableSlot = ShoulderLocation.LEFT_SHOULDER;
-        } else if (playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty()) {
-            availableSlot = ShoulderLocation.HEAD;
+        MountPriority priority = Configs.AHP.mountPriority.get();
+
+        if (priority == MountPriority.HEAD_FIRST) {
+            // Check Head -> Right -> Left
+            if (playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty()) {
+                availableSlot = ShoulderLocation.HEAD;
+            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty()) {
+                availableSlot = ShoulderLocation.RIGHT_SHOULDER;
+            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) {
+                availableSlot = ShoulderLocation.LEFT_SHOULDER;
+            }
+        } else {
+            // Default: Shoulders -> Head
+            if (playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty()) {
+                availableSlot = ShoulderLocation.RIGHT_SHOULDER;
+            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) {
+                availableSlot = ShoulderLocation.LEFT_SHOULDER;
+            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty()) {
+                availableSlot = ShoulderLocation.HEAD;
+            }
         }
 
         if (availableSlot != null) {
@@ -1376,6 +1398,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.items.clear();
         if (nbt.contains("Inventory", NbtElement.COMPOUND_TYPE)) {
             Inventories.readNbt(nbt.getCompound("Inventory"), this.items);
+        }
+        // If the NBT from a command or save file doesn't specify wild loot, generate it.
+        if (!hasInventoryData(nbt) && !this.isTamed()) {
+            generateWildLoot();
         }
         this.updateCheekTrackers();
         this.updateEquipmentTrackers();
@@ -2526,8 +2552,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                         // 3. Apply Netherite Armor Bonus
                         ItemStack armorStack = this.getArmorStack();
                         if (!armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
-                            if (armorItem.getMaterial() == HamsterArmorItem.HamsterArmorMaterial.NETHERITE) {
-                                damageAmount += 10.0f;
+                            // Check config boolean before applying bonus
+                            if (Configs.AHP.enableArmorPerks.get() && armorItem.getMaterial() == HamsterArmorItem.HamsterArmorMaterial.NETHERITE) {
+                                damageAmount += Configs.AHP.netheriteArmorThrowDamageBonus.get().floatValue();
                             }
                         }
 
@@ -2535,7 +2562,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                         boolean damaged = livingHit.damage(damageSource, damageAmount);
 
                         if (damaged) {
+                            // Apply damage
                             livingHit.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 20, 0, false, false, false));
+                            // Calculate knockback direction based on velocity
+                            double knockbackStrength = 0.5;
+                            double dx = currentVel.x;
+                            double dz = currentVel.z;
+                            // Apply knockback
+                            livingHit.takeKnockback(knockbackStrength, -dx, -dz);
                             playEffects = true;
                         }
                     } else {
@@ -3100,12 +3134,18 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         if (customLoveTimer <= 0 && this.isInLove()) this.setInLove(false);
     }
 
-    // --- Override onDeath to Drop Inventory ---
     @Override
     public void onDeath(DamageSource source) {
         // --- 1. Drop Cheek Pouch Inventory ---
-        World world = this.getWorld(); // Get the world instance
+        World world = this.getWorld();
         if (!world.isClient()) {
+
+            // Check if wild loot drops are disabled
+            if (!this.isTamed() && Configs.AHP.disableWildLootDrops) {
+                // If disabled and untamed, clear the inventory so nothing drops
+                this.items.clear();
+            }
+
             // Iterate through the items list and drop each non-empty stack
             for (ItemStack stack : this.items) {
                 if (!stack.isEmpty()) {
@@ -3113,13 +3153,11 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     ItemScatterer.spawn(world, this.getX(), this.getY(), this.getZ(), stack);
                 }
             }
-            // Clear the internal list after dropping
             this.items.clear();
-            // Update cheek trackers one last time
             this.updateCheekTrackers();
         }
 
-        // Call the superclass method AFTER dropping items
+        // Call the superclass method after dropping items
         super.onDeath(source);
     }
 
@@ -3331,7 +3369,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             })
             .triggerableAnim("crash", CRASH_ANIM)
             .triggerableAnim("wakeup_from_ko", WAKE_UP_FROM_KO_ANIM)
-            .triggerableAnim("stationary_headshake", STATIONARY_HEADSHAKE_ANIM)
+            .triggerableAnim("standing_headshake", STANDING_HEADSHAKE_ANIM)
+            .triggerableAnim("sitting_headshake", SITTING_HEADSHAKE_ANIM)
             .triggerableAnim("moving_headshake", MOVING_HEADSHAKE_ANIM)
             .triggerableAnim("attack", ATTACK_ANIM)
             .triggerableAnim("sit1", SIT1_ANIM)
@@ -3682,8 +3721,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.setHealth(this.getMaxHealth()); // Set current health to the new max
         }
 
-        // Always update cheek trackers on initialization
-        this.updateCheekTrackers();
+        // --- Wild Hamster Loot Generation ---
+        generateWildLoot();
 
         // Call and return the super method's result with the added nbt parameter for 1.20.1
         return super.initialize(world, difficulty, spawnReason, entityData, nbt);
@@ -3699,6 +3738,60 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       6. Private Helper Methods
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Checks if the provided NBT compound contains valid inventory data.
+     */
+    private boolean hasInventoryData(NbtCompound nbt) {
+        return nbt.contains("Inventory", NbtElement.COMPOUND_TYPE);
+    }
+
+    /**
+     * Helper method to generate random loot in the cheek pouches of wild hamsters.
+     * Includes a check to ensure we don't overwrite existing items or fill tamed hamsters.
+     */
+    private void generateWildLoot() {
+        // Only generate if untamed and inventory is empty (safety check)
+        if (this.isTamed() || !this.items.get(0).isEmpty()) return;
+
+        // 50% chance to have scavenged something
+        if (this.random.nextFloat() < 0.5f) {
+            // Determine quantity: 60% chance for 1 cheek (lopsided), 40% for both
+            boolean fillBothCheeks = this.random.nextFloat() < 0.4f;
+
+            // Build effective loot list including mod items
+            List<Item> effectiveLoot = new ArrayList<>(WILD_CHEEK_LOOT_TABLE);
+            effectiveLoot.add(ModItems.SUNFLOWER_SEEDS.get());
+            effectiveLoot.add(ModItems.CUCUMBER_SEEDS.get());
+            effectiveLoot.add(ModItems.GREEN_BEAN_SEEDS.get());
+            effectiveLoot.add(ModItems.ACORN.get());
+
+            // Helper to fill a cheek (3 slots)
+            java.util.function.Consumer<Integer> fillCheek = (startSlot) -> {
+                // Pick one random item type for this cheek
+                Item item = effectiveLoot.get(this.random.nextInt(effectiveLoot.size()));
+                // Random count 1-3
+                int count = 1 + this.random.nextInt(3);
+                // Put it in a random slot within the cheek (0-2 or 3-5)
+                int specificSlot = startSlot + this.random.nextInt(3);
+
+                // Safety check for disallowed items
+                ItemStack stack = new ItemStack(item, count);
+                if (!isItemDisallowed(stack)) {
+                    this.items.set(specificSlot, stack);
+                }
+            };
+
+            // Fill Left Cheek (Slots 0-2) or Right Cheek (Slots 3-5)
+            // If lopsided, pick left or right randomly
+            if (fillBothCheeks) {
+                fillCheek.accept(0); // Left
+                fillCheek.accept(3); // Right
+            } else {
+                fillCheek.accept(this.random.nextBoolean() ? 0 : 3);
+            }
+        }
+    }
 
     /**
      * Triggers the visual and auditory effects of a hamster entering a tree canopy.
@@ -3825,7 +3918,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         // --- 1. Calculate Expected State ---
         // Determine which buffs should be active based on the global config and the specific armor material.
-        boolean perksEnabled = Configs.AHP.enableArmorPerks;
+        boolean perksEnabled = Configs.AHP.enableArmorPerks.get();
         boolean shouldHaveSpeed = false;
         boolean shouldHaveKnockback = false;
 
@@ -4021,7 +4114,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // Durations are in ticks (Animation Length + small 3 tick buffer)
         TRIGGERABLE_ANIM_DURATIONS.put("crash", 18);
         TRIGGERABLE_ANIM_DURATIONS.put("wakeup_from_ko", 15);
-        TRIGGERABLE_ANIM_DURATIONS.put("stationary_headshake", 25);
+        TRIGGERABLE_ANIM_DURATIONS.put("standing_headshake", 25);
+        TRIGGERABLE_ANIM_DURATIONS.put("sitting_headshake", 25);
         TRIGGERABLE_ANIM_DURATIONS.put("moving_headshake", 25);
         TRIGGERABLE_ANIM_DURATIONS.put("attack", 23);
         TRIGGERABLE_ANIM_DURATIONS.put("sit1", 13);
@@ -4104,11 +4198,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
     /**
      * Checks if the given item stack is disallowed in the hamster's inventory.
-     * The logic follows a clear priority:
-     * 1. If the item is on the `pouchAllowedItems` config list, it is ALWAYS allowed.
-     * 2. If the item is on the `pouchDisallowedItems` or `pouchDisallowedTags` config lists, it is disallowed.
-     * 3. If the item is a `BlockItem` (and wasn't on the allow list), it is disallowed.
-     * 4. If the item is a `SpawnEggItem`, it is disallowed.
      *
      * @param stack The ItemStack to check.
      * @return True if the item is disallowed, false otherwise.
@@ -4116,30 +4205,41 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public boolean isItemDisallowed(ItemStack stack) {
         if (stack.isEmpty()) return false;
 
-        // 1. Explicit ALLOW list has highest priority.
+        // 1. Explicit allow list has highest priority.
         if (ConfigDataCache.isPouchAllowed(stack)) {
-            return false; // It's allowed, so it's NOT disallowed.
+            return false; // It's allowed, so override everything else.
         }
 
-        // 2. Check the new DISALLOW lists from config.
+        // 2. Check the disallow lists from config.
         if (ConfigDataCache.isPouchDisallowed(stack)) {
             return true;
         }
 
-        // 3. Allow any item that is considered food.
-        if (stack.getItem().isFood()) { // Use isFood() method for 1.20.1
-            return false; // It's food, so it's NOT disallowed.
+        // 3. Mod Food Logic
+        // If the mod considers it food or bait, the hamster can hold it, even if it's a block item.
+        if (ConfigDataCache.isStandardFood(stack) ||
+                ConfigDataCache.isTamingFood(stack) ||
+                ConfigDataCache.isBuffFood(stack) ||
+                ConfigDataCache.isPouchUnlockFood(stack) ||
+                ConfigDataCache.isAutoHealFood(stack)) {
+            return false;
+        }
+
+        // 4. Allow any item that is considered food by vanilla.
+        // 1.20.1: Food status is a direct method
+        if (stack.isFood()) {
+            return false;
         }
 
         Item item = stack.getItem();
 
-        // 4. Global block-item rule (a general disallow).
+        // 5. Global block-item rule
         if (item instanceof BlockItem) {
-            // Any block is disallowed by default unless it was on the allowlist.
+            // Any block is disallowed by default unless it was on the allowlist or was food.
             return true;
         }
 
-        // 5. Spawn eggs are always disallowed.
+        // 6. Spawn eggs always disallowed.
         return item instanceof SpawnEggItem;
     }
 

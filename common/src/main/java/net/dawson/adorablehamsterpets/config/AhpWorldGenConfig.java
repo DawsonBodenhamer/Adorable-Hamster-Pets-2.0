@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.config;
 
-import me.fzzyhmstrs.fzzy_config.annotations.RootConfig;
 import me.fzzyhmstrs.fzzy_config.annotations.Translation;
 import me.fzzyhmstrs.fzzy_config.api.SaveType;
 import me.fzzyhmstrs.fzzy_config.config.Config;
@@ -33,7 +32,7 @@ public class AhpWorldGenConfig extends Config {
     // --- Hamster Spawn Settings ---
     @Translatable.Name("Hamster Spawn Settings")
     @Translatable.Desc("How Many, Where, and How Often?  Note: Some of these settings require re-logging into your world to take effect.")
-    public ConfigGroup hamsterSpawning = new ConfigGroup("hamsterSpawning", false);
+    public ConfigGroup hamsterSpawning = new ConfigGroup("hamsterSpawning", true);
 
     @Translatable.Name("Spawn Weight")
     @Translatable.Desc("Adjusts hamster spawn frequency. Higher = more chaos. 1 = blissful silence.")
@@ -125,7 +124,7 @@ public class AhpWorldGenConfig extends Config {
 
     @Translatable.Name("Variant Spawning by Biome")
     @Translatable.Desc("For the aspiring digital zoologist. This is where you control exactly which hamster colors appear in which biomes. The system checks each color group below in order, from top to bottom (rarest to most common). The first base color that a biome qualifies for is the one that will spawn there. 'Why no settings for orange hamsters?' Because orange is the default fallback if no other rules match.")
-    public ConfigGroup variantSpawning = new ConfigGroup("variantSpawning", false);
+    public ConfigGroup variantSpawning = new ConfigGroup("variantSpawning", true);
 
     @Translatable.Name("Priority 1: Blue Variants")
     @Translatable.Desc("The icy ones. Checked before all other colors. If a biome matches these rules, it will get blue hamsters, even if it also matches rules for other colors below.")
@@ -284,7 +283,7 @@ public class AhpWorldGenConfig extends Config {
     // --- Worldgen: Bush & Sunflower Stuff ---
     @Translatable.Name("Worldgen: Bush & Sunflower Stuff")
     @Translatable.Desc("For The Aspiring Landscape Artist. Note: Most of these settings require re-logging into your world to take effect, and it's unlikely you will see changes in chunks that have already been generated.")
-    public ConfigGroup worldGenMisc = new ConfigGroup("worldGenMisc", false);
+    public ConfigGroup worldGenMisc = new ConfigGroup("worldGenMisc", true);
 
     @Translatable.Name("Wild Bush Regrowth Modifier")
     @Translatable.Desc("Higher = slower, lower = faster. Makes perfect sense.")

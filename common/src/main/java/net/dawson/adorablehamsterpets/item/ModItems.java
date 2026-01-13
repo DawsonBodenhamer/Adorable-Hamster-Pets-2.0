@@ -63,7 +63,13 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> SUNFLOWER_SEEDS = registerItem("sunflower_seeds",
-            () -> new Item(new Item.Settings()) {
+            () -> new TallBlockItem(ModBlocks.SUNFLOWER_BLOCK.get(), new Item.Settings()) {
+                @Override
+                public String getTranslationKey() {
+                    // Force the item to use its own ID instead of the block's ID so it displays the correct item name
+                    return this.getOrCreateTranslationKey();
+                }
+
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
                     if (Configs.AHP.enableItemTooltips) {
