@@ -329,6 +329,11 @@ public class AhpConfig extends Config {
     public ConfigGroup particleEffects = new ConfigGroup("particleEffects", true);
 
     @NonSync
+    @Translatable.Name("Gust Volume")
+    @Translatable.Desc("How loud the wind gust sound effect is, for you overachievers who are running 15 different sound physics mods. 1.0 is default, 0.0 is silent.")
+    public ValidatedFloat leafGustVolume = new ValidatedFloat(0.3f, 3.0f, 0.0f);
+
+    @NonSync
     @Translatable.Name("Dynamic Drift")
     @Translatable.Desc("Should the gentle, drift of Hamster Bedding leaf particles slowly change direction over time? If true, it's a slow, majestic rotation. (It takes a bout 3 minutes to make a full 360 degree rotation). If false, you get to pick a static wind direction below.")
     public ValidatedBoolean enableDynamicDriftAngle = new ValidatedBoolean(true);
@@ -363,8 +368,15 @@ public class AhpConfig extends Config {
     public ValidatedBoolean enableWanderMode = new ValidatedBoolean(true);
 
     @Translatable.Name("Enable Armor Perks")
-    @Translatable.Desc("If true, specialized armor (Gold, Netherite) grants attributes like Speed and Knockback Resistance. If false (because you hate fun?), armor acts only as a damage shield/visual.")
-    public boolean enableArmorPerks = true;
+    @Translatable.Desc("If true, upgraded armor grants special perks. If false (because you hate fun?), armor acts only as a damage shield/visual. Each perk can also be individually configured in 'Armor Settings.'")
+    public ValidatedBoolean enableArmorPerks = new ValidatedBoolean(true);
+
+    // Helper predicate for the sliders in "Armor Perks"
+    private final ValidatedField<Boolean> areArmorPerksEnabled = enableArmorPerks.map(b -> b, b -> b);
+
+    @Translatable.Name("Disable Wild Loot Drops")
+    @Translatable.Desc("If true, wild hamsters take their cheek-treasures to the grave. Prevents players from creating 'ethical' hamster recycling farms for seeds and nuggets.")
+    public boolean disableWildLootDrops = false;
 
     @Translatable.Name("Require Food Mix to Unlock Cheeks")
     @Translatable.Desc("Gate cheek-pouch storage behind gourmet cuisine, because drama.")
@@ -487,10 +499,8 @@ public class AhpConfig extends Config {
     @Translatable.Name("Allowed Items")
     @Translatable.Desc("A specific list of items and tags that are allowed in the hamster's cheek pouch. You can add things to this list to bypass the default 'no tools or big blocks' rule, since this overrides the 'disallowed' settings.")
     public List<String> pouchAllowedItems = new ArrayList<>(List.of(
-            "minecraft:torch", "minecraft:soul_torch", "minecraft:redstone_torch",
-            "minecraft:repeater", "minecraft:comparator", "minecraft:lever",
-            "#minecraft:buttons", "#minecraft:rails",
-            "#minecraft:pressure_plates"
+            "minecraft:torch", "minecraft:soul_torch", "minecraft:redstone_torch", "minecraft:repeater", "minecraft:comparator", "minecraft:lever", "#minecraft:buttons",
+            "#minecraft:pressure_plates", "minecraft:beetroot_seeds", "minecraft:pumpkin_seeds", "minecraft:melon_seeds", "minecraft:pitcher_pod", "minecraft:torchflower_seeds", "#c:seeds", "#forge:seeds"
     ));
 
     @Translatable.Name("Pouch Disallowed Items")
@@ -503,8 +513,7 @@ public class AhpConfig extends Config {
             "minecraft:saddle", "minecraft:bucket", "minecraft:water_bucket", "minecraft:lava_bucket", "minecraft:milk_bucket", "minecraft:powder_snow_bucket",
             "minecraft:axolotl_bucket", "minecraft:tadpole_bucket", "minecraft:cod_bucket", "minecraft:pufferfish_bucket", "minecraft:salmon_bucket", "minecraft:tropical_fish_bucket",
             "minecraft:item_frame", "minecraft:glow_item_frame", "minecraft:painting", "minecraft:armor_stand",
-            "minecraft:end_crystal", "minecraft:spyglass", "minecraft:nether_star", "minecraft:dragon_egg", "minecraft:bundle",
-            "adorablehamsterpets:hamster_guide_book"
+            "minecraft:end_crystal", "minecraft:spyglass", "minecraft:nether_star", "minecraft:dragon_egg", "minecraft:bundle"
     ));
 
     @ConfigGroup.Pop
@@ -543,10 +552,57 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Damage dealt by thrown hamster. Surprisingly effective against Creepers. How convenient.")
     public ValidatedDouble hamsterThrowDamage = new ValidatedDouble(20.0, 40.0, 0.0);
 
-    // --- Armor Visual Toggles ---
-    @Translatable.Name("Armor Visual Toggles")
-    @Translatable.Desc("Customize or completely banish the visual representation of hamster armor.")
-    public ConfigGroup armorVisuals = new ConfigGroup("armorVisuals", true);
+    // --- Armor Settings ---
+    @Translatable.Name("Armor Settings")
+    @Translatable.Desc("Here's where you make armor OP. Or turn it off. See if I care.")
+    public ConfigGroup armorSettings = new ConfigGroup("armorSettings", true);
+
+    @Translatable.Name("Armor Perks")
+    @Translatable.Desc("Configure the buffs provided by specific armor materials. For Diamond armor perk configuration, remove or add items to the 'Retrievable Items' list in 'Core Item Tag Overrides.'")
+    public ConfigGroup armorPerks = new ConfigGroup("armorPerks", true);
+
+    @Translatable.Name("Iron")
+    @Translatable.Desc("Aerodynamics provided by smooth Iron plating. Adds 0.5 to the throw velocity, which is 1.5 by default or 2.5 when under the influence of Steamed Green Beans.")
+    public ValidatedCondition<Double> ironArmorThrowSpeedBoost = new ValidatedDouble(0.5, 5.0, 0.0)
+            .toCondition(
+                    areArmorPerksEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
+                    () -> 0.0
+            );
+
+    @Translatable.Name("Gold")
+    @Translatable.Desc("The zoom factor provided by Gold Armor. Because flimsier things go faster. Obviously. (+0.20 = +20% Speed)")
+    public ValidatedCondition<Double> goldArmorSpeedBoost = new ValidatedDouble(0.20, 2.0, 0.0)
+            .toCondition(
+                    areArmorPerksEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
+                    () -> 0.0
+            );
+
+    @Translatable.Name("Netherite")
+    @Translatable.Desc("Configure the individual netherite buffs.")
+    public ConfigGroup netheritePerks = new ConfigGroup("netheritePerks", true);
+
+
+    @Translatable.Name("Knockback Resistance")
+    @Translatable.Desc("The 'Immovable Object' density factor. 0.5 is 50% resistance. 1.0 makes them a neutron star.")
+    public ValidatedCondition<Double> netheriteArmorKnockbackResist = new ValidatedDouble(0.5, 1.0, 0.0)
+            .toCondition(
+                    areArmorPerksEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
+                    () -> 0.0
+            );
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Throw Damage")
+    @Translatable.Desc("Heavy things hit harder. Adds this much flat damage to the projectile impact. (1 = 0.5 hearts)")
+    public ValidatedCondition<Double> netheriteArmorThrowDamageBonus = new ValidatedDouble(10.0, 100.0, 0.0)
+            .toCondition(
+                    areArmorPerksEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
+                    () -> 0.0
+            );
 
     @NonSync
     @Translatable.Name("Enable Armor Visuals")
@@ -689,6 +745,11 @@ public class AhpConfig extends Config {
     @Translatable.Name("Core Settings")
     @Translatable.Desc("Just the basic stuff. You know, detecting creepers, sniffing diamonds. Just average Minecraft stuff really. No big deal. Why are you clapping and squealing? Stop that. You look silly.")
     public ConfigGroup shoulderCore = new ConfigGroup("shoulderCore", true);
+
+    @NonSync
+    @Translatable.Name("Mount Priority")
+    @Translatable.Desc("Where should the hamster go first? 'Shoulders First' fills Right then Left then Head. 'Head First' fills Head then Right then Left.")
+    public ValidatedEnum<MountPriority> mountPriority = new ValidatedEnum<>(MountPriority.SHOULDERS_FIRST);
 
     @Translatable.Name("Retain Shoulder Mounts")
     @Translatable.Desc("If true, any hamsters on your shoulder will remain there when you respawn. If false (default), they will remain at your death location, passed out from the sheer shock of seeing you die. They may need a quick pat to wake them up when you return.")

@@ -1,0 +1,28 @@
+{
+  "parent": "adorablehamsterpets:husbandry/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:iron_sword"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.murderer.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.murderer.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "killed_hamster": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": {
+          "type": "adorablehamsterpets:hamster"
+        }
+      }
+    }
+  }
+}
