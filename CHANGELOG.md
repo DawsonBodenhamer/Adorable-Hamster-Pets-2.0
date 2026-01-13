@@ -15,10 +15,11 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Hamster Armor System**
   - **Acorn Armor:** The biodegradable base tier. Crafted from Acorn Shards and an Acorn Hat. It works like Wolf Armor— completely negating damage until it breaks.
   - **Tiered Upgrades:** Use the Smithing Table to plate your Acorn Armor with Iron, Gold, Diamond, or Netherite using new **Smithing Templates** found in places where normal smithing templates are usually found.
-  - **Tactical Perks:**
-    - **Gold:** Grants 15% extra movement speed.
-    - **Netherite:** Grants extreme knockback resistance.
-    - **Diamond:** Cures kleptomania. Hamsters wearing diamond armor will **fetch** valuables instead of stealing them.
+  - **Tactical Perks (Configurable):**
+    - **Iron:** Reduces wind resistance, granting extra flight velocity.
+    - **Gold:** Lightweight; grants extra movement speed.
+    - **Diamond:** Shiny; cures kleptomania. Hamsters wearing diamond armor will **fetch** valuables instead of stealing them.
+    - **Netherite:** Dense; grants increased throw inertia and knockback resistance.
 - **New Tree Heist Mechanic**
   - **The Trigger:** Throw your hamster at an Oak Tree (or dismount them while staring at Oak Leaves) to initiate a heist.
   - **The Simulation Architecture:**
@@ -35,7 +36,7 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - **Acorn Shards:** Processed Acorns used to construct the base armor.
 - **New Inventory Slots**
   - Added dedicated **"Bling"** and **"Armor"** slots with interactive UI sounds.
-- **8 New Advancements**
+- **10 New Advancements**
   - "Tree Heist" (Start a Tree Heist)
   - "Return on Investnut" (Obtain an Acorn)
   - "Ecological Menace" (Exaust a tree's supply)
@@ -44,6 +45,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - "Squirrel Cosplay" (Equip Acorn Hat)
   - "Expensive Therapy" (Craft Diamond-Plated Acorn Armor)
   - "The Immovable Object" (Craft Netherite-Plated Acorn Armor)
+  - "MURDERER" (Kill a hamster)
+  - "Rodent Reckoning" (Be killed by a hamster)
 - **Global Loot Table Injection**
   - **Seeds:** You can now find Cucumber, Green Bean, and Sunflower seeds scrounging around in Village, Dungeon, and Mineshaft chests.
   - **Hamster Armor:**
@@ -52,6 +55,18 @@ The hamsters were too squishy. This update introduces military-grade protection 
     - **Netherite:** This can only be crafted, just like vanilla horse armor.
   - **Smithing Templates:** The blueprints for advanced armor are now scattered across the world (Mineshafts, Pyramids, Strongholds, and Bastions).
   - **The Acorn Hat:** This legendary fashion statement can now be found in Ancient Cities, Woodland Mansions, and Buried Treasure. Happy hunting.
+- **Wild Cheek Pouch Loot**
+  - Wild hamsters now have a 50% chance to spawn with scavenged items (seeds, nuggets, etc.) in their cheek pouches. Includes modded sunflower seeds.
+  - **Lopsided Cheeks**: There is a 60% chance the loot will spawn in only one cheek, creating a cute, asymmetrical look.
+  - **Logic**: These items drop on death (configurable), or persist when tamed— meaning if you tame a wild hamster with full cheeks, you get to keep the loot once you unlock the pouch.
+- **Sunflower Farming**
+  - **Plantable Seeds**: `Sunflower Seeds` can now be planted to grow the custom 2-block tall Sunflower.
+  - **Bonemeal Duplication**: Right-clicking a fully grown custom Sunflower with Bonemeal now drops a vanilla Sunflower item, matching vanilla tall-flower behavior.
+- **Mount Priority**
+  - Added a "Mount Priority" setting (`Shoulders First` vs `Head First`).
+  - You can now configure hamsters to prioritize the **Head** slot before filling the shoulders, allowing a single hamster to be mounted on the head.
+- **Gust Volume**
+  - Added a volume slider for the "Gentle Breeze" sound effect used by Hamster Bedding particles. In some modded environments with mods like **Sound Physics Remastered**, the gust SFX was not loud enough to be audible.
 - **Legacy Forge Support** (Thanks to [@Konkeeztador](https://nolink.com)!)
   - Added data structures and loading conditions to ensure the mod tags/recipes load correctly on the legacy Forge loader.
 - **Mod Compatibility Improvements** (Thanks to [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
@@ -74,6 +89,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Dynamic Aerodynamics**
   -   Hamsters now react to gravity with appropriate drama. The "Flying" animation and dynamic nose-dive rotation logic are no longer exclusive to the Hamster Yeet.
   -   Any significant fall— whether it's jumping off a ledge or popping out of a tree— will now automatically trigger the flight pose and dynamic pitch rotation, ensuring they always look like they are falling.
+- **Yeet Physics**
+  - Thrown hamsters now apply **Knockback** to the entities they hit. The force is calculated based on the hamster's velocity, so faster throws = harder hits.
 - **Pink Petal Accessories**
   - Updated rendering to use **3D models** instead of flat texture overlays.
   - Petals now have depth and similar positioning on the hamster's head, side, and back.
@@ -88,6 +105,11 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Shoulder Hamster "Mutant" Splitting Glitch**
   - Fixed a visual bug on Forge/NeoForge (caused by Oculus/Iris) where shoulder hamsters would visually "split" into two overlapping models causing a z-fighting flicker effect.
   - This was caused by the animation controller randomly switching between the two idle animations every frame. They now deterministically pick one based on their personality ID.
+- **Cheek Pouch Refusal Animation**
+  - Fixed a bug where the "No" headshake animation wouldn't play when trying to open a locked cheek pouch. (Caused by a mismatch between the animation controller name `stationary_headshake` and the code calling `standing_headshake`).
+  - The refusal logic now intelligently selects between sitting, standing, and moving headshakes.
+- **World Gen Config**
+  - Some of the groups had "collapsedByDefault" set to "false" which was making it messy.
 
 ---
 
