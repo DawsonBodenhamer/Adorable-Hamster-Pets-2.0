@@ -22,7 +22,6 @@ import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.particle.BlockStateParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.BlockSoundGroup;
@@ -222,6 +221,13 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                                 animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                         ));
                     }
+                    break;
+                case "hamster_thump_sound":
+                    float thumpPitch = 1.0F + animatable.getRandom().nextFloat() * 0.4F;
+                    client.getSoundManager().play(new PositionedSoundInstance(
+                            ModSounds.HAMSTER_THUMP.get(), SoundCategory.NEUTRAL, 0.3f, thumpPitch,
+                            animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
+                    ));
                     break;
             }
             // Reset the flag
