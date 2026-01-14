@@ -62,9 +62,9 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Sunflower Farming**
   - **Plantable Seeds**: `Sunflower Seeds` can now be planted to grow the custom 2-block tall Sunflower.
   - **Bonemeal Duplication**: Right-clicking a fully grown custom Sunflower with Bonemeal now drops a vanilla Sunflower item, matching vanilla tall-flower behavior.
-- **Mount Priority**
+- **Head Mount Priority**
   - Added a "Mount Priority" setting (`Shoulders First` vs `Head First`).
-  - You can now configure hamsters to prioritize the **Head** slot before filling the shoulders, allowing a single hamster to be mounted on the head.
+  - You can now configure hamsters to prioritize the **Head** slot before filling the shoulders, allowing a single hamster to be mounted on the head. It's kind of my new favorite thing to do. I'm even considering making it the default lol. Let me know your thoughts in the **[Discord server](https://discord.gg/w54mk5bqdf)**!
 - **Gust Volume**
   - Added a volume slider for the "Gentle Breeze" sound effect used by Hamster Bedding particles. In some modded environments with mods like **Sound Physics Remastered**, the gust SFX was not loud enough to be audible.
 - **Legacy Forge Support** (Thanks to [@Konkeeztador](https://nolink.com)!)
@@ -78,6 +78,18 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Sitting Headshake**
   - Added `anim_hamster_sitting_headshake` for when a hamster refuses food while sitting.
   - The food refusal logic now intelligently selects between sitting, standing, and moving headshake animations.
+- **Hamster Riding (Commissioned by [@Saint_Victus](https://nolink.com))**
+  - Added a new configuration option: "Enable Hamster Riding" under a new "Commissioned Features" category.
+  - Adds a keybind (`Ride Hamster`, unbound by default) that allows you to mount a hamster.
+  - **Dynamic Rider Visuals**
+    - Players riding a hamster physically attach to the `body_parent` bone.
+    - This means riders will bob, sway, and rotate in perfect sync with the hamster's running animations instead of floating statically on top.
+  - **Mechanics**
+    - You can ride *any* hamster (even wild ones), but you can only steer hamsters you own.
+    - Riding an unowned hamster (or if you are not the owner) results in an uncontrolled ride (like a pig without a carrot).
+    - Riding your own hamster disables its Wander Mode to give you full control.
+  - **Unofficial capacity**
+    - This commissioned feature doesn't fit the theme of the mod, so this changelog is the only place you'll find it mentioned.
 
 ### Changed
 - **Diamond Stealing AI**
@@ -94,6 +106,10 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Pink Petal Accessories**
   - Updated rendering to use **3D models** instead of flat texture overlays.
   - Petals now have depth and similar positioning on the hamster's head, side, and back.
+- **Animations**
+  - Updated the durations for the `crash` animation, and made it cuter. Now instead of landing flat, the hamster bounces multiple times on its face.
+- **Audio Effects**
+  - Added support for the `hamster_thump_sound` keyframe in the crash animation, triggering `ModSounds.HAMSTER_THUMP` for extra dramatic effect.
 
 ### Fixed
 - **Data Structure & Recipes** (Thanks again [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
