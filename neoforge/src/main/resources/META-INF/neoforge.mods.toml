@@ -40,7 +40,7 @@ side = "BOTH"
 [[dependencies.adorablehamsterpets]]
 modId = "geckolib"
 type = "required"
-versionRange = "[4.7.3,)"
+versionRange = "[4.8.3,)"
 ordering = "NONE"
 side = "BOTH"
 
