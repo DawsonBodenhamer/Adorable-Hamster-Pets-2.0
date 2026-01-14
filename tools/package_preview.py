@@ -52,6 +52,19 @@ FILES_LEGACY = [
 # Logic
 # ──────────────────────────────────────────────────────────────────────────────
 
+def get_preview_prefix(filename):
+    """Returns the specific prefix based on the platform found in the filename."""
+    lower_name = filename.lower()
+
+    if "neoforge" in lower_name:
+        return "NeoForge-PREVIEW-"
+    elif "fabric" in lower_name:
+        return "Fabric-PREVIEW-"
+    elif "forge" in lower_name:
+        return "Forge-PREVIEW-"
+    else:
+        return "PREVIEW-"
+
 def copy_files(file_patterns):
     print(f"--- Scanning for jars in {REPO_ROOT} ---")
     files_copied = 0
@@ -78,7 +91,8 @@ def copy_files(file_patterns):
             if "sources" in filename or "dev" in filename:
                 continue
 
-            new_filename = "PREVIEW-" + filename
+            prefix = get_preview_prefix(filename)
+            new_filename = prefix + filename
             dest_path = os.path.join(DEST_DIR, new_filename)
 
             try:
