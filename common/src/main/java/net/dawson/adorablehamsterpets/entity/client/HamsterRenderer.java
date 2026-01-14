@@ -223,6 +223,13 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                         ));
                     }
                     break;
+                case "hamster_thump_sound":
+                    float thumpPitch = 1.0F + animatable.getRandom().nextFloat() * 0.4F;
+                    client.getSoundManager().play(new PositionedSoundInstance(
+                            ModSounds.HAMSTER_THUMP.get(), SoundCategory.NEUTRAL, 0.3f, thumpPitch,
+                            animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
+                    ));
+                    break;
             }
             // Reset the flag
             animatable.soundEffectId = null;

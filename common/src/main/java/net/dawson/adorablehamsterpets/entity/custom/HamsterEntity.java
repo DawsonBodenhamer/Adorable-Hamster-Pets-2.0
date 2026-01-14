@@ -4112,8 +4112,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final Map<String, Integer> TRIGGERABLE_ANIM_DURATIONS = new HashMap<>();
     static {
         // Durations are in ticks (Animation Length + small 3 tick buffer)
-        TRIGGERABLE_ANIM_DURATIONS.put("crash", 18);
-        TRIGGERABLE_ANIM_DURATIONS.put("wakeup_from_ko", 15);
+        TRIGGERABLE_ANIM_DURATIONS.put("crash", 32);
+        TRIGGERABLE_ANIM_DURATIONS.put("wakeup_from_ko", 18);
         TRIGGERABLE_ANIM_DURATIONS.put("standing_headshake", 25);
         TRIGGERABLE_ANIM_DURATIONS.put("sitting_headshake", 25);
         TRIGGERABLE_ANIM_DURATIONS.put("moving_headshake", 25);

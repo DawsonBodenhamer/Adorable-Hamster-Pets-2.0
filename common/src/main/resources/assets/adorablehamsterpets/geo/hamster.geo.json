@@ -18,12 +18,12 @@
 				{
 					"name": "body_parent",
 					"parent": "root",
-					"pivot": [0, 1.5, 3]
+					"pivot": [0, 1.5, 2]
 				},
 				{
 					"name": "body_child",
 					"parent": "body_parent",
-					"pivot": [0, 1.5, 3],
+					"pivot": [0, 2.5, 0],
 					"cubes": [
 						{"origin": [-3, 0.5, -2], "size": [6, 4, 6], "inflate": 0.01, "uv": [3, 3]}
 					]
