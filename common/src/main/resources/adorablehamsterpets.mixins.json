@@ -30,7 +30,8 @@
     "client.accessor.GuiBookAccessor",
     "accessor.ScreenWidgetAdder",
     "accessor.BookContentsBuilderAccessor",
-    "client.accessor.GuiButtonEntryAccessor"
+    "client.accessor.GuiButtonEntryAccessor",
+    "client.LivingEntityRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -75,6 +75,11 @@ public class AdorableHamsterPetsClient {
     // --- Tree Heist Feature ---
     private static final Map<Integer, HamsterTreeLoopSoundInstance> activeTreeSounds = new HashMap<>();
 
+    // --- Hamster Riding ---
+    private static boolean lastJumpDown = false;
+    private static boolean lastSprintDown = false;
+
+
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       1. Initialization & Registration
      * ────────────────────────────────────────────────────────────────────────────*/
@@ -134,17 +139,25 @@ public class AdorableHamsterPetsClient {
             return EventResult.pass();
         });
 
-        // --- Force-Mount Keybind Interaction ---
+        // --- Custom Keybind Interaction ---
         InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
             // Ensure we are on client and main hand to avoid double firing
             if (player.getWorld().isClient && hand == net.minecraft.util.Hand.MAIN_HAND && entity instanceof HamsterEntity hamster) {
-                // Check if key is pressed AND config enabled
+
+                // 1. Force Shoulder Mount
                 if (Configs.AHP.enableShoulderMountKeybind && ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY.isPressed()) {
-                    // Only if it's tamed hamster and owned by player
                     if (hamster.isTamed() && hamster.isOwner(player)) {
-                        // Send packet
                         NetworkManager.sendToServer(new RequestHamsterMountPayload(hamster.getId()));
-                        return EventResult.interruptTrue(); // Cancel default interaction to prevent sitting
+                        return EventResult.interruptTrue(); // Cancel default interaction
+                    }
+                }
+
+                // 2. Hamster Riding
+                if (Configs.AHP.enableMountableHamsters.get() && ModKeyBindings.RIDE_HAMSTER_KEY.isPressed()) {
+                    // Prevent mounting if already riding
+                    if (!hamster.hasPassenger(player)) {
+                        NetworkManager.sendToServer(new RequestHamsterRidePayload(hamster.getId()));
+                        return EventResult.interruptTrue(); // Cancel default interaction
                     }
                 }
             }
@@ -224,6 +237,33 @@ public class AdorableHamsterPetsClient {
             return;
         }
 
+        // Hamster riding inputs
+        boolean ridingHamster = client.player != null && client.player.getVehicle() instanceof HamsterEntity;
+
+        // Only process if enabled and riding
+        if (ridingHamster && Configs.AHP.enableMountableHamsters.get()) {
+            boolean jumpDown = client.options.jumpKey.isPressed();
+            boolean sprintDown = client.options.sprintKey.isPressed();
+
+            // If either input changed, send update
+            if (jumpDown != lastJumpDown || sprintDown != lastSprintDown) {
+                lastJumpDown = jumpDown;
+                lastSprintDown = sprintDown;
+
+                // 1. Send Packet
+                NetworkManager.sendToServer(new HamsterInputPayload(jumpDown, sprintDown));
+
+                // 2. Client-Side Prediction
+                HamsterEntity hamster = (HamsterEntity) client.player.getVehicle();
+                hamster.setRiderInput(jumpDown, sprintDown);
+            }
+        } else if (lastJumpDown || lastSprintDown) {
+            // Reset state if dismounted while holding buttons
+            lastJumpDown = false;
+            lastSprintDown = false;
+            NetworkManager.sendToServer(new HamsterInputPayload(false, false));
+        }
+
         // Handle Throw Hamster Keybind
         if (ModKeyBindings.THROW_HAMSTER_KEY.wasPressed()) {
             final AhpConfig currentConfig = AdorableHamsterPets.CONFIG;
@@ -252,7 +292,7 @@ public class AdorableHamsterPetsClient {
         renderedHamsterIdsLastTick.addAll(renderedHamsterIdsThisTick);
         renderedHamsterIdsThisTick.clear();
 
-        // --- 5. Dismount Logic ---
+        // --- 5. Hamster Dismount From Shoulder Logic ---
         handleDismountKeyPress(client);
     }
 
@@ -261,8 +301,8 @@ public class AdorableHamsterPetsClient {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
-     * Handles the complex client-side logic for dismounting a shoulder hamster.
-     * Checks the user's configuration to determine if dismount requires:
+     * Handles the complex client-side logic for a hamster dismounting from the player's
+     * shoulder. Checks the user's configuration to determine if dismount requires:
      * <ul>
      *     <li>Sneak Key vs. Custom Keybind</li>
      *     <li>Single Press vs. Double Tap</li>

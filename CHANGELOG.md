@@ -100,7 +100,7 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Hamsters now use their sprinting animation/speed (1.5D) when running towards a diamond to steal it, matching their flee speed. Originally I had them walking at normal speed so as not to alert the player that they were about to steal the diamond, but I changed my mind and I think it's a lot cuter if they sprint over to it.
 - **Dynamic Aerodynamics**
   -   Hamsters now react to gravity with appropriate drama. The "Flying" animation and dynamic nose-dive rotation logic are no longer exclusive to the Hamster Yeet.
-  -   Any significant fall— whether it's jumping off a ledge or popping out of a tree— will now automatically trigger the flight pose and dynamic pitch rotation, ensuring they always look like they are falling.
+  -   Now any significant fall— whether it's jumping off a ledge or popping out of a tree— will now automatically trigger the flight pose and dynamic pitch rotation, (uses smooth cosine interpolation) ensuring they always look like they are falling.
 - **Yeet Physics**
   - Thrown hamsters now apply **Knockback** to the entities they hit. The force is calculated based on the hamster's velocity, so faster throws = harder hits.
 - **Pink Petal Accessories**
@@ -126,6 +126,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - The refusal logic now intelligently selects between sitting, standing, and moving headshakes.
 - **World Gen Config**
   - Some of the groups had "collapsedByDefault" set to "false" which was making it messy.
+- **Config Typo**
+  - Fixed a few mistakes in the "Falling Leaf Settings > Static Drift Angle" config tooltip. It now correctly assigns degrees to angles.
 
 ---
 

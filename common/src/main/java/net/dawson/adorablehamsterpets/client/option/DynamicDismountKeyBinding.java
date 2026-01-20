@@ -13,20 +13,14 @@ import net.minecraft.client.util.InputUtil;
 public class DynamicDismountKeyBinding extends KeyBinding {
 
     private final String enabledTranslationKey;
-    private final String disabledTranslationKey;
 
 
     /**
      * Constructs a new dynamic key binding.
-     *
-     * @param translationKey The base translation key for the keybind's name when it is enabled.
-     * @param code           The default key code.
-     * @param category       The translation key for the category this keybind belongs to.
      */
     public DynamicDismountKeyBinding(String translationKey, int code, String category) {
         super(translationKey, InputUtil.Type.KEYSYM, code, category);
         this.enabledTranslationKey = translationKey;
-        this.disabledTranslationKey = translationKey + ".disabled";
     }
 
     /**
@@ -37,13 +31,10 @@ public class DynamicDismountKeyBinding extends KeyBinding {
      */
     @Override
     public String getTranslationKey() {
-        // Check the live config value.
         if (Configs.AHP.dismountTriggerType == DismountTriggerType.CUSTOM_KEYBIND) {
-            // If the custom keybind is enabled in the config, use the standard name.
             return this.enabledTranslationKey;
         } else {
-            // Otherwise, use the special "disabled" name.
-            return this.disabledTranslationKey;
+            return this.enabledTranslationKey + ".disabled";
         }
     }
 }
