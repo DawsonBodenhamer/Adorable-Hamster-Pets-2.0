@@ -4,6 +4,7 @@ import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.networking.payload.*;
@@ -89,6 +90,35 @@ public class ModPackets {
                 (payload, context) -> context.queue(() -> {
                     if (context.getPlayer() instanceof PlayerEntityAccessor accessor) {
                         accessor.ahp$clearHeistHistory();
+                    }
+                })
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, RequestHamsterRidePayload.ID, RequestHamsterRidePayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    if (!Configs.AHP.enableMountableHamsters.get()) {
+                        return;
+                    }
+
+                    PlayerEntity player = context.getPlayer();
+                    Entity entity = player.getWorld().getEntityById(payload.entityId());
+
+                    if (entity instanceof HamsterEntity hamster) {
+                        if (hamster.squaredDistanceTo(player) < 64.0) {
+                            hamster.putPlayerOnBack(player);
+                        }
+                    }
+                })
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, HamsterInputPayload.ID, HamsterInputPayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    if (!net.dawson.adorablehamsterpets.config.Configs.AHP.enableMountableHamsters.get()) return;
+
+                    if (context.getPlayer().getVehicle() instanceof net.dawson.adorablehamsterpets.entity.custom.HamsterEntity hamster) {
+                        if (hamster.getControllingPassenger() == context.getPlayer()) {
+                            hamster.setRiderInput(payload.jumpHeld(), payload.sprintHeld());
+                        }
                     }
                 })
         );

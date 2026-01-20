@@ -6,16 +6,16 @@ import net.minecraft.client.util.InputUtil;
 
 /**
  * A custom KeyBinding that dynamically changes its display name in the Controls menu
- * based on the "Enable Force-Mount Keybind" configuration setting.
+ * based on the "Enable Hamster Riding" configuration setting.
  */
-public class DynamicForceMountKeyBinding extends KeyBinding {
+public class DynamicRideKeyBinding extends KeyBinding {
 
     private final String enabledTranslationKey;
 
     /**
      * Constructs a new dynamic key binding.
      */
-    public DynamicForceMountKeyBinding(String translationKey, int code, String category) {
+    public DynamicRideKeyBinding(String translationKey, int code, String category) {
         super(translationKey, InputUtil.Type.KEYSYM, code, category);
         this.enabledTranslationKey = translationKey;
     }
@@ -28,7 +28,7 @@ public class DynamicForceMountKeyBinding extends KeyBinding {
      */
     @Override
     public String getTranslationKey() {
-        if (Configs.AHP.enableShoulderMountKeybind) {
+        if (Configs.AHP.enableMountableHamsters.get()) {
             return this.enabledTranslationKey;
         } else {
             return this.enabledTranslationKey + ".disabled";

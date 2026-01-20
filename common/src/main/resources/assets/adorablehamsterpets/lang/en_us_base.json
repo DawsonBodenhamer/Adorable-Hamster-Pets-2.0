@@ -154,9 +154,11 @@
   "key.categories.adorablehamsterpets.main": "Adorable Hamster Pets",
   "key.adorablehamsterpets.throw_hamster": "Throw Hamster",
   "key.adorablehamsterpets.dismount_hamster": "Dismount Hamster",
-  "key.adorablehamsterpets.dismount_hamster.disabled": "(Currently Inactive - See Config)",
   "key.adorablehamsterpets.force_mount_hamster": "Force Shoulder Mount",
+  "key.adorablehamsterpets.ride_hamster": "Ride Hamster",
+  "key.adorablehamsterpets.dismount_hamster.disabled": "(Currently Inactive - See Config)",
   "key.adorablehamsterpets.force_mount_hamster.disabled": "(Currently Inactive - See Config)",
+  "key.adorablehamsterpets.ride_hamster.disabled": "(Currently Inactive - See Config)",
 
   "message.adorablehamsterpets.throw_cooldown": "Your hamster needs a break— try again in %d seconds.",
   "message.adorablehamsterpets.baby_throw_refusal": "Your baby hamster clings tightly, refusing to become a furry cannonball. Perhaps wait until it's older?",
@@ -362,6 +364,7 @@
   "config.adorablehamsterpets.condition.double_tap": "Only available when Button-Press Behavior is set to 'Double Tap'.",
   "config.adorablehamsterpets.condition.dynamic_shoulder_off": "Only available when 'Enable Dynamic Animations' is FALSE.",
   "config.adorablehamsterpets.condition.armor_perks_enabled": "Only available when 'Enable Armor Perks' is TRUE.",
+  "config.adorablehamsterpets.condition.riding_enabled": "Only available when 'Enable Hamster Riding' is TRUE.",
 
   "book.adorablehamsterpets.hamster_guide_book.title": "§f§lHamster Tips§r",
   "book.adorablehamsterpets.hamster_guide_book.subtitle": "§6§o Guidebook to the Tiny, Furry Heart§r",
