@@ -33,6 +33,8 @@
     "client.accessor.GuiButtonEntryAccessor",
     "accessor.ScreenWidgetAdder",
     "accessor.BookContentsBuilderAccessor",
+    "client.accessor.GuiButtonEntryAccessor",
+    "client.LivingEntityRendererMixin",
     "client.accessor.ClickableWidgetAccessor"
   ],
   "injectors": {

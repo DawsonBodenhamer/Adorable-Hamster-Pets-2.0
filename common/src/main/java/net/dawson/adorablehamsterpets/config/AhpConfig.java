@@ -345,7 +345,7 @@ public class AhpConfig extends Config {
     @NonSync
     @ConfigGroup.Pop
     @Translatable.Name("Static Drift Angle")
-    @Translatable.Desc("Set a fixed direction for the universal leaf drift (0-360 degrees). 0/360 is East, 90 is South, 180 is West, 270 is North, I think. Or just slide it until it looks cool. Whatever. Only works if 'Dynamic Drift' is off.")
+    @Translatable.Desc("Set a fixed direction for the universal leaf drift (0-360 degrees). 0 = South, 90 = West, 180 = North, 270 = East. Or just slide it until it looks cool. Whatever. Only works if 'Dynamic Drift' is off.")
     public ValidatedCondition<Integer> staticDriftAngle =
             new ValidatedInt(0, 360, 0)
                     .toCondition(
@@ -1040,4 +1040,39 @@ public class AhpConfig extends Config {
     @Translatable.Name("Maximum Interest Duration")
     @Translatable.Desc("The longest amount of time (in seconds) the hamster will entertain interest in an item before getting bored and dropping it.")
     public ValidatedInt maxStealDurationSeconds = new ValidatedInt(15, 300, 5);
+
+    @Translatable.Name("Commissioned Features")
+    @Translatable.Desc("Specialized, unofficial mechanics that don't necessarily fit the theme of the mod, but were funded by various individuals in the community. Purposefully tucked away in the config to ensure most people don't notice them.")
+    public ConfigGroup commissionedFeatures = new ConfigGroup("commissionedFeatures", true);
+
+    @Translatable.Name("Hamster Riding Settings")
+    @Translatable.Desc("Configure hamster-mounted cavalry. Tweak speeds, toggles, and physics. Don't blame me if you accidentally zoom off a cliff after turning up the speed too high.")
+    public ConfigGroup hamsterRiding = new ConfigGroup("hamsterRiding", true);
+
+    @Translatable.Name("Enable Hamster Riding")
+    @Translatable.Desc("Adds a keybind to mount hamsters. (It's unbound by default). Allows riding any hamster, but you can only steer your own. \n\nCommissioned by @Saint_Victus.")
+    public ValidatedBoolean enableMountableHamsters = new ValidatedBoolean(false);
+
+    // Helper for condition: Maps the ValidatedBoolean to a ValidatedField<Boolean> for toCondition checks
+    private final ValidatedField<Boolean> isRidingEnabled = enableMountableHamsters.map(b -> b, b -> b);
+
+    @Translatable.Name("Base Ride Speed")
+    @Translatable.Desc("The casual strolling speed multiplier. 0.25 is the default. Don't ask why.")
+    public ValidatedCondition<Double> ridingBaseSpeedMultiplier = new ValidatedDouble(0.25, 0.8, 0.0)
+            .toCondition(
+                    isRidingEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.riding_enabled"),
+                    () -> 0.25
+            );
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Sprint Ride Speed")
+    @Translatable.Desc("The speed multiplier when sprinting. Hold on to your acorn hat. 0.35 is the default. I wish it was a nice round number, but alas, hamster riding is a complex enigma.")
+    public ValidatedCondition<Double> ridingSprintSpeedMultiplier = new ValidatedDouble(0.35, 1.0, 0.0)
+            .toCondition(
+                    isRidingEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.riding_enabled"),
+                    () -> 0.8
+            );
 }

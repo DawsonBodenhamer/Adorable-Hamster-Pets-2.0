@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animatable.model.CoreGeoBone;
@@ -121,22 +122,21 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             headParentBone.setScaleY(headScale);
             headParentBone.setScaleZ(headScale);
 
-            // --- Dynamic Throw Pitch ---
+            // --- Dynamic Pitch Rotation ---
             // Rotates the root bone to match the trajectory
-            if (entity.shouldRenderFlying()) {
-                double dx = entity.getX() - entity.prevX;
-                double dy = entity.getY() - entity.prevY;
-                double dz = entity.getZ() - entity.prevZ;
-                double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+            if (entity.clientFallPitchProgress > 0.0f) {
+                // 1. Calculate Cosine Interpolation (0.0 to 1.0)
+                // Formula: (1 - cos(t * π)) / 2
+                float t = entity.clientFallPitchProgress;
+                float interpolated = (1.0f - MathHelper.cos(t * (float) Math.PI)) * 0.5f;
 
-                // Prevent rotation calculation on zero movement
-                if (horizontalDistance > 0.001 || Math.abs(dy) > 0.001) {
-                    // Positive X-Rot = Nose Up, Negative X-Rot = Nose Down
-                    float pitchRadians = (float) Math.atan2(dy, horizontalDistance);
-                    rootBone.setRotX(pitchRadians);
-                }
+                // 2. Map to Target Angle (-90 degrees / -PI/2 radians)
+                // Rotates the model to face downward
+                float targetPitch = (float) (-Math.PI / 2.0);
+
+                rootBone.setRotX(targetPitch * interpolated);
             } else {
-                // Ensure rotation is reset when landing
+                // Not falling -> Reset to neutral
                 rootBone.setRotX(0);
             }
         }

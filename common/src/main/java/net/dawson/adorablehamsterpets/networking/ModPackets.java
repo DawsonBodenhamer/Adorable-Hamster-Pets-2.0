@@ -6,9 +6,11 @@ import dev.architectury.utils.EnvExecutor;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -39,6 +41,8 @@ public class ModPackets {
     public record RequestGuidebookC2SPacket() {}
     public record RequestHamsterMountC2SPacket(int entityId) {}
     public record ResetHeistHistoryC2SPacket() {}
+    public record RequestHamsterRideC2SPacket(int entityId) {}
+    public record HamsterInputC2SPacket(boolean jumpHeld, boolean sprintHeld) {}
 
     // S2C (Server-to-Client)
     public record PlayGuidebookEffectsS2CPacket() {}
@@ -106,7 +110,7 @@ public class ModPackets {
                 (packet, buf) -> buf.writeInt(packet.entityId()),
                 (buf) -> new RequestHamsterMountC2SPacket(buf.readInt()),
                 (packet, context) -> context.get().queue(() -> {
-                    net.minecraft.entity.player.PlayerEntity player = context.get().getPlayer();
+                    PlayerEntity player = context.get().getPlayer();
                     net.minecraft.entity.Entity entity = player.getWorld().getEntityById(packet.entityId());
                     if (entity instanceof HamsterEntity hamster && hamster.isOwner(player)) {
                         // Distance check for security
@@ -124,6 +128,43 @@ public class ModPackets {
                 (packet, context) -> context.get().queue(() -> {
                     if (context.get().getPlayer() instanceof PlayerEntityAccessor accessor) {
                         accessor.ahp$clearHeistHistory();
+                    }
+                })
+        );
+
+        CHANNEL.register(RequestHamsterRideC2SPacket.class,
+                (packet, buf) -> buf.writeInt(packet.entityId()),
+                (buf) -> new RequestHamsterRideC2SPacket(buf.readInt()),
+                (packet, context) -> context.get().queue(() -> {
+                    if (!Configs.AHP.enableMountableHamsters.get()) {
+                        return;
+                    }
+
+                    PlayerEntity player = context.get().getPlayer();
+                    net.minecraft.entity.Entity entity = player.getWorld().getEntityById(packet.entityId());
+
+                    if (entity instanceof HamsterEntity hamster) {
+                        if (hamster.squaredDistanceTo(player) < 64.0) {
+                            hamster.putPlayerOnBack(player);
+                        }
+                    }
+                })
+        );
+
+        CHANNEL.register(HamsterInputC2SPacket.class,
+                (packet, buf) -> {
+                    buf.writeBoolean(packet.jumpHeld());
+                    buf.writeBoolean(packet.sprintHeld());
+                },
+                (buf) -> new HamsterInputC2SPacket(buf.readBoolean(), buf.readBoolean()),
+                (packet, context) -> context.get().queue(() -> {
+                    if (!Configs.AHP.enableMountableHamsters.get()) return;
+
+                    PlayerEntity player = context.get().getPlayer();
+                    if (player.getVehicle() instanceof HamsterEntity hamster) {
+                        if (hamster.getControllingPassenger() == player) {
+                            hamster.setRiderInput(packet.jumpHeld(), packet.sprintHeld());
+                        }
                     }
                 })
         );
