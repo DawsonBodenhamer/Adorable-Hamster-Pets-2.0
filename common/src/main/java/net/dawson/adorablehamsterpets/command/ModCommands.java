@@ -2,7 +2,9 @@ package net.dawson.adorablehamsterpets.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.networking.payload.PlayGuidebookEffectsPayload;
 import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
@@ -22,6 +24,20 @@ public class ModCommands {
                 .requires(source -> source.hasPermissionLevel(2)) // Require op level 2 (typical for debug commands)
                 .executes(context -> executeUnlockAllModAdvancements(context.getSource()))
         );
+
+        // Technical command to trigger guidebook effects from data packs/functions
+        // Permission level 0 allows command blocks/functions to run it for the player
+        dispatcher.register(CommandManager.literal("ahp_trigger_guidebook_fx")
+                .requires(source -> true)
+                .executes(context -> executeTriggerBookEffects(context.getSource()))
+        );
+    }
+
+    private static int executeTriggerBookEffects(ServerCommandSource source) throws CommandSyntaxException {
+        ServerPlayerEntity player = source.getPlayerOrThrow();
+        // Send the effects payload with closeScreen = false (keep inventory/creative menu open)
+        NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(false));
+        return 1;
     }
 
     private static int executeUnlockAllModAdvancements(ServerCommandSource source) throws CommandSyntaxException {
@@ -47,7 +63,6 @@ public class ModCommands {
 
         // --- Create a final variable for use in the lambda ---
         final int finalCount = count;
-        // --- End Create a final variable ---
 
         if (finalCount > 0) { // Use finalCount here
             source.sendFeedback(() -> Text.literal("Unlocked " + finalCount + " Adorable Hamster Pets advancements."), true);

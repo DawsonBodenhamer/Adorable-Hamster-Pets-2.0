@@ -179,6 +179,11 @@ public class AdorableHamsterPets {
 
 		// Upgrade any old hamster tips guide books in the player's inventory
 		replaceOldBooksInInventory(player.getInventory());
+
+		// Initialize guidebook tracking state based on current inventory
+		// NOTE: Auto-delivered books are intentionally silent
+		PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
+		accessor.ahp$initGuideBookTracking(accessor.ahp$computeHasGuideBook(player));
 	}
 
 	/**
