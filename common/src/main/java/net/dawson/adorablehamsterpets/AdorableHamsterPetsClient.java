@@ -436,15 +436,16 @@ public class AdorableHamsterPetsClient {
 
     /**
      * Handles the {@link PlayGuidebookEffectsPayload} packet.
-     * Plays sound effects, particles, and an action bar message when the guidebook
-     * is retrieved via the config menu.
+     * Plays sound effects, particles, and an action bar message when the guidebook is retrieved.
      */
-    public static void handlePlayGuidebookEffects() {
+    public static void handlePlayGuidebookEffects(PlayGuidebookEffectsPayload payload) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null) return;
 
-        // Close config screen to un-pause game
-        client.setScreen(null);
+        // Close config screen only if requested
+        if (payload.closeScreen()) {
+            client.setScreen(null);
+        }
 
         PlayerEntity player = client.player;
         if (player == null || client.world == null) return;

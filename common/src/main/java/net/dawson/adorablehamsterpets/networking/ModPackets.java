@@ -67,8 +67,11 @@ public class ModPackets {
                         bookStack.set(bookComponent, Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
                         player.getInventory().offerOrDrop(bookStack);
 
-                        // Send effects packet back to the player
-                        NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload());
+                        // Set cache
+                        ((PlayerEntityAccessor) player).ahp$initGuideBookTracking(true);
+
+                        // TRUE = Close the screen (since they clicked the button in the config menu)
+                        NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(true));
                     }
                 })
         );
@@ -134,7 +137,7 @@ public class ModPackets {
         );
 
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, PlayGuidebookEffectsPayload.ID, PlayGuidebookEffectsPayload.CODEC,
-                (payload, context) -> context.queue(AdorableHamsterPetsClient::handlePlayGuidebookEffects)
+                (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handlePlayGuidebookEffects(payload))
         );
 
         // Handle the Shoulder Data Sync

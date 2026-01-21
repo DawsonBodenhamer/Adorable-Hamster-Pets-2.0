@@ -15,7 +15,9 @@ import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
+import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
+import net.dawson.adorablehamsterpets.networking.payload.PlayGuidebookEffectsPayload;
 import net.dawson.adorablehamsterpets.networking.payload.SyncShoulderDataPayload;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
@@ -70,6 +72,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             "message.adorablehamsterpets.dismount.3", "message.adorablehamsterpets.dismount.4",
             "message.adorablehamsterpets.dismount.5", "message.adorablehamsterpets.dismount.6"
     );
+    @Unique private static final int AHP_GUIDEBOOK_CHECK_INTERVAL_TICKS = 20;
+    @Unique private static final String AHP_NBT_GUIDEBOOK_HAS_KEY = "AHPHasGuideBook";
+    @Unique private static final String AHP_NBT_GUIDEBOOK_INIT_KEY = "AHPGuideBookTrackingInit";
 
     // --- Fields ---
     @Unique private int adorablehamsterpets$diamondCheckTimer = 0;
@@ -82,10 +87,11 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private final transient ArrayDeque<ShoulderLocation> adorablehamsterpets$mountOrderQueue = new ArrayDeque<>();
     @Unique private final List<ScheduledTask> adorablehamsterpets$scheduledTasks = new ArrayList<>();
     @Unique private record ScheduledTask(long executionTick, Runnable action) {}
-
-    // Tree Heist History
     @Unique private static final long HEIST_MEMORY_DURATION = 24000L; // 1 Minecraft Day (20 mins)
     @Unique private final List<TreeHeistUtil.HeistRecord> ahp$heistHistory = new ArrayList<>();
+    @Unique private boolean ahp$cachedHasGuideBook = false;
+    @Unique private boolean ahp$guideBookTrackingInitialized = false;
+    @Unique private int ahp$guideBookCheckTimer = 0;
 
     // --- Constructor Injection ---
     @Inject(method = "<init>", at = @At("TAIL"))
@@ -139,6 +145,10 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 nbt.put("AHPHeistHistory", historyList);
             }
         }
+
+        // Save Guidebook tracking info
+        nbt.putBoolean(AHP_NBT_GUIDEBOOK_HAS_KEY, this.ahp$cachedHasGuideBook);
+        nbt.putBoolean(AHP_NBT_GUIDEBOOK_INIT_KEY, this.ahp$guideBookTrackingInitialized);
     }
 
     @Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
@@ -214,6 +224,14 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         } else {
             this.adorablehamsterpets$lastGoldMessageIndex = -1;
         }
+
+        // Read Guidebook tracking info
+        if (nbt.contains(AHP_NBT_GUIDEBOOK_HAS_KEY, NbtElement.BYTE_TYPE)) {
+            this.ahp$cachedHasGuideBook = nbt.getBoolean(AHP_NBT_GUIDEBOOK_HAS_KEY);
+        }
+        if (nbt.contains(AHP_NBT_GUIDEBOOK_INIT_KEY, NbtElement.BYTE_TYPE)) {
+            this.ahp$guideBookTrackingInitialized = nbt.getBoolean(AHP_NBT_GUIDEBOOK_INIT_KEY);
+        }
     }
 
     /**
@@ -241,6 +259,35 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     }
 
     // --- 3. Public Accessors ---
+    /**
+     * Checks whether the given player currently has at least one Hamster Guide Book anywhere in their inventory.
+     */
+    @Unique
+    @Override
+    public boolean ahp$computeHasGuideBook(PlayerEntity player) {
+        var inv = player.getInventory();
+        for (int i = 0; i < inv.size(); i++) {
+            ItemStack stack = inv.getStack(i);
+            if (!stack.isEmpty() && stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Initializes the server-side guidebook possession cache for this player.
+     * Call after join (or any time book is removed/granted via code) to seed the cached state
+     * without triggering acquisition effects.
+     */
+    @Unique
+    @Override
+    public void ahp$initGuideBookTracking(boolean currentlyHasGuideBook) {
+        this.ahp$cachedHasGuideBook = currentlyHasGuideBook;
+        this.ahp$guideBookTrackingInitialized = true;
+        this.ahp$guideBookCheckTimer = 0;
+    }
+
     @Unique
     @Override
     public NbtCompound getShoulderHamster(ShoulderLocation location) {
@@ -324,6 +371,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         // Cooldown Decrement
         if (adorablehamsterpets$diamondSoundCooldownTicks > 0) adorablehamsterpets$diamondSoundCooldownTicks--;
         if (adorablehamsterpets$creeperSoundCooldownTicks > 0) adorablehamsterpets$creeperSoundCooldownTicks--;
+
+        // Tick Guidebook tracking
+        tickGuideBookTracking();
 
         // Shoulder Pet Logic
         if (this.hasAnyShoulderHamster()) {
@@ -553,6 +603,40 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     }
 
     // --- Helper Methods ---
+    /**
+     * Server-side edge detector for the Hamster Guide Book.
+     * Plays the guidebook FX exactly once when the player transitions from not-having → having the book.
+     */
+    @Unique
+    private void tickGuideBookTracking() {
+        PlayerEntity self = (PlayerEntity) (Object) this;
+        if (self.getWorld().isClient) return;
+        if (!(self instanceof ServerPlayerEntity player)) return;
+
+        // --- Periodic Scanning ---
+        if (++this.ahp$guideBookCheckTimer < AHP_GUIDEBOOK_CHECK_INTERVAL_TICKS) {
+            return;
+        }
+        this.ahp$guideBookCheckTimer = 0;
+
+        // --- Init Guard ---
+        // If something skipped init (fake players, weird lifecycle edge), seed silently and bail.
+        if (!this.ahp$guideBookTrackingInitialized) {
+            this.ahp$initGuideBookTracking(this.ahp$computeHasGuideBook(player));
+            return;
+        }
+
+        boolean hasNow = ahp$computeHasGuideBook(player);
+
+        // --- Edge: No -> Yes (play FX once) ---
+        if (hasNow && !this.ahp$cachedHasGuideBook) {
+            NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(false));
+        }
+
+        // --- State Commit ---
+        this.ahp$cachedHasGuideBook = hasNow;
+    }
+
     /**
      * Scans a spherical area around the player for "Desirable" ore blocks (configured via Config), prioritizing exposed ores.
      *

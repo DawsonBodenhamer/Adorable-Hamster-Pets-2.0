@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The hamsters were too squishy. This update introduces military-grade protection for your rodents and a questionable, overengineered new method of deforestation.
 
 ### Added
+- **Hamster Tips Guide Book to Custom Creative Tab**
+  - Registered the guide book item in the Adorable Hamster Pets creative menu group.
+  - Linked my custom Advancements tree to the Guidebook with a star-shaped button on the landing page.
 - **Hamster Armor System**
   - **Acorn Armor:** The biodegradable base tier. Crafted from Acorn Shards and an Acorn Hat. It works like Wolf Armor— completely negating damage until it breaks.
   - **Tiered Upgrades:** Use the Smithing Table to plate your Acorn Armor with Iron, Gold, Diamond, or Netherite using new **Smithing Templates** found in places where normal smithing templates are usually found.
