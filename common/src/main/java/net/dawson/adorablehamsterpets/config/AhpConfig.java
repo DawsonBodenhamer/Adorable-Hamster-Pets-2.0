@@ -964,7 +964,7 @@ public class AhpConfig extends Config {
     public ValidatedInt greenBeanBuffDuration = new ValidatedInt(3600, 20 * 60 * 10, 20);
 
     @Translatable.Name("Speed Level")
-    @Translatable.Desc("Because someone has to go fast.")
+    @Translatable.Desc("Because someone gotta go fast.")
     public ValidatedInt greenBeanBuffAmplifierSpeed = new ValidatedInt(1, 4, 0);
 
     @Translatable.Name("Strength Level")
