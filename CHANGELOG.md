@@ -93,6 +93,12 @@ The hamsters were too squishy. This update introduces military-grade protection 
     - Riding your own hamster disables its Wander Mode to give you full control.
   - **Unofficial capacity**
     - This commissioned feature doesn't fit the theme of the mod, so this changelog is the only place you'll find it mentioned.
+- **Missing Guidebook Warning**
+  - Added a client-side check that runs 3 minutes after joining a world (configurable).
+  - If the player is missing the guidebook, a dramatic, clickable chat message appears, offering to open the config screen to reclaim it.
+  - Includes a solemn oath to read the manual before asking questions in Discord.
+  - It cannot be disabled. Too many players have come to the Discord asking questions that are answered in the guidebook, and upon further investigation, I find they did not get the guidebook and didn't know about it, because the creator of their modpack turned off auto-delivery.
+  - This warning persists across servers/worlds so it only triggers once per client installation (unless reset in config).
 
 ### Changed
 - **Animations**
