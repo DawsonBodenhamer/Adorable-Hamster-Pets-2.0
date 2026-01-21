@@ -60,7 +60,7 @@ public class SunflowerBlock extends TallFlowerBlock implements Fertilizable {
             double modifier = config.sunflowerRegrowthModifier.get();
             modifier = Math.max(0.1, modifier);
 
-            int baseRegrowthChanceDenominator = 150;
+            int baseRegrowthChanceDenominator = 10;
             int effectiveDenominator = (int) Math.round(baseRegrowthChanceDenominator * modifier);
             effectiveDenominator = Math.max(1, effectiveDenominator);
 
