@@ -352,7 +352,7 @@ Translating technical jargon is hard. Translating "Hamster Yeet" into another la
 | **Japanese** | 100%     | [**@SAGA**](https://github.com/saga5368965-dev)                    |
 | **Spanish** | ~46%     | [**@The Retro Stitcher**](https://theretrostitcher.com/)           |
 | **Polish** | ~26%     | (Pending credits)                                                  |
-| **Korean** | ~25%     | [@na6ie](https://nolink.com)                                             |
+| **Korean** | ~25%     | [@na6ie](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)                                             |
 | **German** | ~7%      | [**@glitchyboy**](https://crowdin.com/profile/glitchyboy)          |
 
 ### <span style="color: #169179;"><strong>Collaborators & Conspirators</strong></span>
@@ -361,12 +361,15 @@ I'd like to claim I did this all by myself while meditating on a mountain peak, 
 
 | Name                                                               | Contribution                                                                                                                                                                                                             |
 |:-------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [**@Kazerio**](https://modrinth.com/user/kazerio)                  | For adding compatibility with Xaero's Minimap so it shows hamster icons.                                                                                                                                                 |
-| [**@The Retro Stitcher**](https://theretrostitcher.com/)           | For re-designing the mod's icon, and helping make the banner image pixel-perfect.                                                                                                                                        |
 | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) | For contributing a mountainous number of ideas, helping squash bugs, and assisting with the complex mod compatibility logic (Farmer's Delight, Cultural Delights, Croptopia, Immersive Engineering, and Serene Seasons). |
+| [**@The Retro Stitcher**](https://theretrostitcher.com/)           | For re-designing the mod's icon, and helping make the banner image pixel-perfect.                                                                                                                                        |
 | [**@fzzyhmstrs**](https://github.com/fzzyhmstrs)                   | For the heroic assistance required to refactor this project to Architectury. Without them, you wouldn't be yeeting hamsters on NeoForge right now.                                                                       |
-| [**@ZeMonkey**](https://nolink.com)                                | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support.                                                                                  |
 | [**@MylesGit**](https://modrinth.com/user/hOL20ANs)                | For the original suggestion of the custom Advancement tree, and creating the template for [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server!                                                           |
+| [**@Konkeeztador**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)                            | For adding data structures and loading conditions to ensure the mod tags/recipes load correctly on the legacy Forge loader.                                                                                              |
+| [**@Kazerio**](https://modrinth.com/user/kazerio)                  | For adding compatibility with Xaero's Minimap so it shows hamster icons.                                                                                                                                                 |
+| [**@ZeMonkey**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)                                | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support.                                                                                  |
+| [**@Saint_Victus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) | For birthing the "Battle Hamster" brain-child, and commisioning riding mechanics.                                                                                                                                        |
+| [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)                             | For creating fresh new textures for the Wild Green Bean and Wild Cucumber bushes.                                                                                                                                        |
 
 ### <span style="color: #169179;"><strong>Snack Providers</strong></span>
 

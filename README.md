@@ -354,7 +354,7 @@ Translating technical jargon is hard. Translating "Hamster Yeet" into another la
 | **Japanese** | 100%     | [**@SAGA**](https://github.com/saga5368965-dev)                    |
 | **Spanish** | ~46%     | [**@The Retro Stitcher**](https://theretrostitcher.com/)           |
 | **Polish** | ~26%     | (Pending credits)                                                  |
-| **Korean** | ~25%     | [@na6ie](https://nolink.com)                                             |
+| **Korean** | ~25%     | [@na6ie](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)                                             |
 | **German** | ~7%      | [**@glitchyboy**](https://crowdin.com/profile/glitchyboy)          |
 
 ### <font color="teal">Collaborators & Conspirators</font>
@@ -367,10 +367,11 @@ I'd like to claim I did this all by myself while meditating on a mountain peak, 
 | [**@The Retro Stitcher**](https://theretrostitcher.com/)           | For re-designing the mod's icon, and helping make the banner image pixel-perfect.                                                                                                                                        |
 | [**@fzzyhmstrs**](https://github.com/fzzyhmstrs)                   | For the heroic assistance required to refactor this project to Architectury. Without them, you wouldn't be yeeting hamsters on NeoForge right now.                                                                       |
 | [**@MylesGit**](https://modrinth.com/user/hOL20ANs)                | For the original suggestion of the custom Advancement tree, and creating the template for [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server!                                                           |
-| [**@Konkeeztador**](https://nolink.com)                            | For adding data structures and loading conditions to ensure the mod tags/recipes load correctly on the legacy Forge loader.                                                                                              |
+| [**@Konkeeztador**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)                            | For adding data structures and loading conditions to ensure the mod tags/recipes load correctly on the legacy Forge loader.                                                                                              |
 | [**@Kazerio**](https://modrinth.com/user/kazerio)                  | For adding compatibility with Xaero's Minimap so it shows hamster icons.                                                                                                                                                 |
-| [**@ZeMonkey**](https://nolink.com)                                | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support.                                                                                  |
-| [**@Saint_Victus**](https://nolink.com) | For birthing the "Battle Hamster" brain-child, and commisioning riding mechanics.                                                                                                                                        |
+| [**@ZeMonkey**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)                                | For the moral support and technical wizardry that prevented me from giving up during the terrifying transition to multi-loader support.                                                                                  |
+| [**@Saint_Victus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) | For birthing the "Battle Hamster" brain-child, and commisioning riding mechanics.                                                                                                                                        |
+| [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)                             | For creating fresh new textures for the Wild Green Bean and Wild Cucumber bushes.                                                                                                                                        |
 
 ### <font color="teal">Snack Providers</font>
 
@@ -380,7 +381,7 @@ These generous souls contributed to the project to keep the lights on and the ha
 |:---------------------------------------------------------|:---------------------------------------------------------------------------------------------|
 | [**@The Retro Stitcher**](https://theretrostitcher.com/) | Rumored to dream exclusively in pixel art with a precise color palette.                      |
 | [**@Slicktopia**](https://ko-fi.com/slicktopia)          | Single-handedly influencing the global virtual cheese economy.                               |
-| [**@Saint_Victus**](https://nolink.com) | Frequently rides hamsters into battle after shrinking themselves down to the size of an ant. |
+| [**@Saint_Victus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) | Frequently rides hamsters into battle after shrinking themselves down to the size of an ant. |
 
 ### <font color="teal">Dependencies</font>
 

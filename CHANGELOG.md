@@ -70,7 +70,7 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - You can now configure hamsters to prioritize the **Head** slot before filling the shoulders, allowing a single hamster to be mounted on the head. It's kind of my new favorite thing to do. I'm even considering making it the default lol. Let me know your thoughts in the **[Discord server](https://discord.gg/w54mk5bqdf)**!
 - **Gust Volume**
   - Added a volume slider for the "Gentle Breeze" sound effect used by Hamster Bedding particles. In some modded environments with mods like **Sound Physics Remastered**, the gust SFX was not loud enough to be audible.
-- **Legacy Forge Support** (Thanks to [@Konkeeztador](https://nolink.com)!)
+- **Legacy Forge Support** (Thanks to [@Konkeeztador](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!)
   - Added data structures and loading conditions to ensure the mod tags/recipes load correctly on the legacy Forge loader.
 - **Mod Compatibility Improvements** (Thanks to [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
   - Added conventional `c` tags for Cheese to improve cross-mod compatibility.
@@ -81,7 +81,7 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Sitting Headshake**
   - Added `anim_hamster_sitting_headshake` for when a hamster refuses food while sitting.
   - The food refusal logic now intelligently selects between sitting, standing, and moving headshake animations.
-- **Hamster Riding (Commissioned by [@Saint_Victus](https://nolink.com))**
+- **Hamster Riding (Commissioned by [@Saint_Victus](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com))**
   - Added a new configuration option: "Enable Hamster Riding" under a new "Commissioned Features" category.
   - Adds a keybind (`Ride Hamster`, unbound by default) that allows you to mount a hamster.
   - **Dynamic Rider Visuals**
@@ -115,6 +115,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Petals now have depth and similar positioning on the hamster's head, side, and back.
 - **Audio Effects**
   - Added support for the `hamster_thump_sound` keyframe in the crash animation, triggering `ModSounds.HAMSTER_THUMP` for extra dramatic effect.
+- **Wild Bush Textures**
+  - Thanks to [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) for giving the textures for Wild Green Bean and Wild Cucumber bushes a fresh new look!
 
 ### Fixed
 - **Data Structure & Recipes** (Thanks again [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
