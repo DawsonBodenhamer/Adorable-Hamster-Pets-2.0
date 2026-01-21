@@ -228,7 +228,7 @@ Yes, inventory... *in their face*. Feed them **Hamster Food Mix** once to earn t
 
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_spider_ravager_psych_warfare.png" alt="Spider/Ravager Psychological Warfare" width="100%"></p>
 
-**Ravagers** and **Spiders** are utterly terrified of hamsters. The sight of a tiny ball of fluff will send these menaces fleeing in the opposite direction. Why? Don't ask questions you don't want the answer to. This behavior is, of course, fully configurable if you feel the local monster population isn't suffering enough existential dread.
+**Ravagers** and **Spiders** are utterly terrified of hamsters. The sight of a tiny ball of fluff will send these menaces fleeing in the opposite direction. Why? Don't ask questions you don't want the answer to. This behavior is, of course, fully configurable if you feel the local monster population is already suffering enough existential dread.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/spiders_fleeing_from_hamsters.gif" alt="Spiders fleeing from hamsters" width="48%">
