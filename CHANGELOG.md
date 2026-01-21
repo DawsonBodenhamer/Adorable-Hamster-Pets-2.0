@@ -92,6 +92,10 @@ The hamsters were too squishy. This update introduces military-grade protection 
     - This commissioned feature doesn't fit the theme of the mod, so this changelog is the only place you'll find it mentioned.
 
 ### Changed
+- **Animations**
+  - Updated the crash animation to make it cuter. Now instead of landing flat, the hamster bounces multiple times on its face. Includes sound effects!
+- **Geckolib Version** ← **UPDATE OR YOUR GAME WILL NOT LAUNCH**
+  - Updated required Geckolib version from 4.7.3 to 4.8.3 (it was way out of date) to fix animation flickering issues. It may also fix other issues that I had not come across yet— it was literally 10 versions behind lol
 - **Diamond Stealing AI**
   - Refactored the diamond stealing behavior system. Hamsters now intelligently switch between "Theft Mode" (Taunting) and "Delivery Mode" (Presenting) based on the item type and their current equipment. (Configurable)
 - **Refusal Interactions**
@@ -100,14 +104,12 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Hamsters now use their sprinting animation/speed (1.5D) when running towards a diamond to steal it, matching their flee speed. Originally I had them walking at normal speed so as not to alert the player that they were about to steal the diamond, but I changed my mind and I think it's a lot cuter if they sprint over to it.
 - **Dynamic Aerodynamics**
   -   Hamsters now react to gravity with appropriate drama. The "Flying" animation and dynamic nose-dive rotation logic are no longer exclusive to the Hamster Yeet.
-  -   Now any significant fall— whether it's jumping off a ledge or popping out of a tree— will now automatically trigger the flight pose and dynamic pitch rotation, (uses smooth cosine interpolation) ensuring they always look like they are falling.
+  -   Any significant fall— whether it's jumping off a ledge or popping out of a tree— will now automatically trigger the flight pose and dynamic pitch rotation (uses smooth cosine interpolation), ensuring they always look like they are falling.
 - **Yeet Physics**
   - Thrown hamsters now apply **Knockback** to the entities they hit. The force is calculated based on the hamster's velocity, so faster throws = harder hits.
 - **Pink Petal Accessories**
   - Updated rendering to use **3D models** instead of flat texture overlays.
   - Petals now have depth and similar positioning on the hamster's head, side, and back.
-- **Animations**
-  - Updated the durations for the `crash` animation, and made it cuter. Now instead of landing flat, the hamster bounces multiple times on its face.
 - **Audio Effects**
   - Added support for the `hamster_thump_sound` keyframe in the crash animation, triggering `ModSounds.HAMSTER_THUMP` for extra dramatic effect.
 
@@ -126,8 +128,9 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - The refusal logic now intelligently selects between sitting, standing, and moving headshakes.
 - **World Gen Config**
   - Some of the groups had "collapsedByDefault" set to "false" which was making it messy.
-- **Config Typo**
-  - Fixed a few mistakes in the "Falling Leaf Settings > Static Drift Angle" config tooltip. It now correctly assigns degrees to angles.
+- **Config Issues**
+    - Fixed a few mistakes in the "Falling Leaf Settings > Static Drift Angle" config tooltip. It now correctly assigns degrees to angles.
+    - Fixed a bug where configuration options (like "Top Left", "Near", "Single-Press") appeared untranslated in the config screen.
 
 ---
 
