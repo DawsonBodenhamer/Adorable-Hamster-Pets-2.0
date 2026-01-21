@@ -47,20 +47,23 @@ public class PatchouliGuideBookItem extends Item {
         // --- 1. Add the primary hint text unconditionally ---
         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_guide_book.hint").formatted(Formatting.GRAY));
 
-        // --- 2. Get Contextual Information ---
-        boolean isJadeLoaded = Platform.isModLoaded("jade");
-        boolean isEMILoaded = Platform.isModLoaded("emi");
-        Screen currentScreen = MinecraftClient.getInstance().currentScreen;
-
-        // --- 3. Determine screen context ---
-        // A tooltip is needed anywhere Jade does NOT add its own tooltip.
-        boolean needsToolTip = (currentScreen == null || currentScreen.getClass() == CreativeInventoryScreen.class);
-
-        // --- 4. Add the mod name line if needed ---
-        // Add line if EITHER Jade/EMI is not installed OR we are in a screen that needs a tooltip.
-        if (!isJadeLoaded || !isEMILoaded || needsToolTip) {
-            tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
-        }
+//        Note: The logic below does not seem to work and I'm tired of trying to figure it out, and it's not crucial so here we are.
+//        // --- 2. Get Contextual Information ---
+//        boolean isJadeLoaded = Platform.isModLoaded("jade");
+//        boolean isEMILoaded = Platform.isModLoaded("emi");
+//        boolean isREILoaded = Platform.isModLoaded("rei");
+//        boolean isJEILoaded = Platform.isModLoaded("jei");
+//        Screen currentScreen = MinecraftClient.getInstance().currentScreen;
+//
+//        // --- 3. Determine screen context ---
+//        // A tooltip is needed anywhere Jade does NOT add its own tooltip.
+//        boolean needsToolTip = (currentScreen == null || currentScreen.getClass() == CreativeInventoryScreen.class);
+//
+//        // --- 4. Add the mod name line if needed ---
+//        // Add line if EITHER Jade/EMI/REI/JEI are not installed OR we are in a screen that needs a tooltip.
+//        if (!isJadeLoaded || !isEMILoaded || !isREILoaded || !isJEILoaded || needsToolTip) {
+//            tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
+//        }
 
         super.appendTooltip(stack, world, tooltip, context);
     }

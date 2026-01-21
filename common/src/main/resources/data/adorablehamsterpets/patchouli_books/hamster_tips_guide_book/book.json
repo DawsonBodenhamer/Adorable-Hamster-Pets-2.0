@@ -6,6 +6,7 @@
   "book_texture": "adorablehamsterpets:textures/gui/hamster_guide_book_ui.png",
   "model": "adorablehamsterpets:hamster_guide_book",
   "index_icon": "adorablehamsterpets:hamster_guide_book",
+  "advancements_tab": "adorablehamsterpets:husbandry/root",
   "text_color": "000000",
   "header_color": "333333",
   "link_color": "00AAAA",

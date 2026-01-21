@@ -45,7 +45,7 @@ public class ModPackets {
     public record HamsterInputC2SPacket(boolean jumpHeld, boolean sprintHeld) {}
 
     // S2C (Server-to-Client)
-    public record PlayGuidebookEffectsS2CPacket() {}
+    public record PlayGuidebookEffectsS2CPacket(boolean closeScreen) {}
     public record SpawnBeddingParticlesS2CPacket(BlockPos pos, Direction direction, WoodVariant variant) {}
     public record SyncShoulderDataS2CPacket(int entityId, NbtCompound data) {}
     public record PlayDistantSoundS2CPacket(Identifier soundId, float volume, float pitch) {}
@@ -101,8 +101,11 @@ public class ModPackets {
 
                     player.getInventory().offerOrDrop(bookStack);
 
-                    // Send effects packet back to the player
-                    CHANNEL.sendToPlayer(player, new PlayGuidebookEffectsS2CPacket());
+                    // Set cache
+                    ((PlayerEntityAccessor) player).ahp$initGuideBookTracking(true);
+
+                    // TRUE = Close the screen (since they clicked the button in the config menu)
+                    CHANNEL.sendToPlayer(player, new PlayGuidebookEffectsS2CPacket(true));
                 })
         );
 
@@ -187,10 +190,10 @@ public class ModPackets {
         );
 
         CHANNEL.register(PlayGuidebookEffectsS2CPacket.class,
-                (packet, buf) -> {},
-                (buf) -> new PlayGuidebookEffectsS2CPacket(),
+                (packet, buf) -> buf.writeBoolean(packet.closeScreen()),
+                (buf) -> new PlayGuidebookEffectsS2CPacket(buf.readBoolean()),
                 (packet, context) -> context.get().queue(() ->
-                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handlePlayGuidebookEffects())
+                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handlePlayGuidebookEffects(packet))
                 )
         );
 

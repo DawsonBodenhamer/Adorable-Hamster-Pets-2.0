@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.accessor;
 
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 
@@ -53,4 +54,17 @@ public interface PlayerEntityAccessor {
      * Clears all recorded tree heist history for this player.
      */
     void ahp$clearHeistHistory();
+
+    /**
+     * Initializes the server-side guidebook possession cache for this player.
+     * Call after join (or any time book is removed/granted via code) to seed the cached state
+     * without triggering acquisition effects.
+     */
+    void ahp$initGuideBookTracking(boolean currentlyHasGuideBook);
+
+    /**
+     * Checks whether the given player currently has at least one Hamster Tips Guide Book anywhere in their inventory.
+     * Intended for seeding and polling guidebook tracking logic.
+     */
+    boolean ahp$computeHasGuideBook(PlayerEntity player);
 }

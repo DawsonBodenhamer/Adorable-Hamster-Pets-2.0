@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.minecraft.advancement.Advancement;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
@@ -22,6 +23,21 @@ public class ModCommands {
                 .requires(source -> source.hasPermissionLevel(2))
                 .executes(context -> executeUnlockAllModAdvancements(context.getSource()))
         );
+
+        // Technical command to trigger guidebook effects from data packs/functions
+        // Permission level 0 allows command blocks/functions to run it for the player
+        dispatcher.register(CommandManager.literal("ahp_trigger_guidebook_fx")
+                .requires(source -> true)
+                .executes(context -> executeTriggerBookEffects(context.getSource()))
+        );
+    }
+
+    private static int executeTriggerBookEffects(ServerCommandSource source) throws CommandSyntaxException {
+        ServerPlayerEntity player = source.getPlayerOrThrow();
+        // Send the effects packet with closeScreen = false (keep inventory/creative menu open)
+        // Use the Networking channel on 1.20.1
+        ModPackets.CHANNEL.sendToPlayer(player, new ModPackets.PlayGuidebookEffectsS2CPacket(false));
+        return 1;
     }
 
     private static int executeUnlockAllModAdvancements(ServerCommandSource source) throws CommandSyntaxException {
@@ -49,7 +65,8 @@ public class ModCommands {
         }
 
         final int finalCount = count;
-        if (finalCount > 0) {
+
+        if (finalCount > 0) { // Use finalCount here
             source.sendFeedback(() -> Text.literal("Unlocked " + finalCount + " Adorable Hamster Pets advancements."), true);
         } else {
             source.sendFeedback(() -> Text.literal("No new Adorable Hamster Pets advancements to unlock or all already unlocked."), true);
