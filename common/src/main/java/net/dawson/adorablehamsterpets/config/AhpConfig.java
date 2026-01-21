@@ -410,11 +410,11 @@ public class AhpConfig extends Config {
     public ValidatedInt cleaningChanceDenominator = new ValidatedInt(1200, 5000, 300);
 
     @Translatable.Name("Throw Cooldown")
-    @Translatable.Desc("Time-out after using your living projectile. (20 ticks = 1 s)")
+    @Translatable.Desc("Time-out after using your living projectile. (20 ticks = 1 second)")
     public ValidatedInt hamsterThrowCooldown = new ValidatedInt(2400, 20 * 60 * 10, 20);
 
     @Translatable.Name("Green Bean Buff Cooldown")
-    @Translatable.Desc("When the sugar rush ends, force a breather. (20 ticks = 1 s)")
+    @Translatable.Desc("When the sugar rush ends, force a breather. (20 ticks = 1 second)")
     public ValidatedInt steamedGreenBeansBuffCooldown = new ValidatedInt(6000, 20 * 60 * 10, 20);
 
     @Translatable.Name("Diamond Seeking Cooldown")
@@ -422,7 +422,7 @@ public class AhpConfig extends Config {
     public boolean enableIndependentDiamondSeekCooldown = false;
 
     @Translatable.Name("Diamond Seeking Cooldown")
-    @Translatable.Desc("Cooldown before your hamster can go on another treasure hunt. (20 ticks = 1 s)")
+    @Translatable.Desc("Cooldown before your hamster can go on another treasure hunt. (20 ticks = 1 second)")
     public ValidatedInt independentOreSeekCooldownTicks = new ValidatedInt(2400, 6000, 20);
 
     @Translatable.Name("Item Thievery Cooldown")
@@ -431,7 +431,7 @@ public class AhpConfig extends Config {
 
     @ConfigGroup.Pop
     @Translatable.Name("Breeding Cooldown")
-    @Translatable.Desc("Hamsters need their space. (20 ticks = 1 s)")
+    @Translatable.Desc("Hamsters need their space. (20 ticks = 1 second)")
     public ValidatedInt breedingCooldownTicks = new ValidatedInt(6000, 24000, 600);
 
     // --- Core Item Tag Overrides ---
@@ -1025,20 +1025,20 @@ public class AhpConfig extends Config {
     public ValidatedFloat itemThieveryChance = new ValidatedFloat(0.75f, 1.0f, 0.1f);
 
     @Translatable.Name("Minimum Flee Distance")
-    @Translatable.Desc("The hamster's personal space bubble (in blocks) when stealing your shinies.")
+    @Translatable.Desc("The hamster's personal space bubble (in blocks) when stealing your shinies. The discrepancy between the minimum and maximum flee distance determines the randomness.")
     public ValidatedInt minFleeDistance = new ValidatedInt(5, 20, 1);
 
     @Translatable.Name("Maximum Flee Distance")
-    @Translatable.Desc("The maximum distance (in blocks) before the hamster gets bored and stops running to taunt you with the stolen goods.")
+    @Translatable.Desc("The maximum distance (in blocks) before the hamster gets bored and stops running to taunt you with the stolen goods. The discrepancy between the minimum and maximum flee distance determines the randomness.")
     public ValidatedInt maxFleeDistance = new ValidatedInt(20, 40, 5);
 
     @Translatable.Name("Minimum Interest Duration")
-    @Translatable.Desc("The shortest amount of time (in seconds) the hamster will entertain interest in an item before getting bored and dropping it.")
+    @Translatable.Desc("The shortest amount of time (in seconds) the hamster will entertain interest in an item before getting bored and dropping it. The discrepancy between the minimum and maximum duration determines the randomness.")
     public ValidatedInt minStealDurationSeconds = new ValidatedInt(5, 240, 1);
 
     @ConfigGroup.Pop
     @Translatable.Name("Maximum Interest Duration")
-    @Translatable.Desc("The longest amount of time (in seconds) the hamster will entertain interest in an item before getting bored and dropping it.")
+    @Translatable.Desc("The longest amount of time (in seconds) the hamster will entertain interest in an item before getting bored and dropping it. The discrepancy between the minimum and maximum duration determines the randomness.")
     public ValidatedInt maxStealDurationSeconds = new ValidatedInt(15, 300, 5);
 
     @Translatable.Name("Commissioned Features")
