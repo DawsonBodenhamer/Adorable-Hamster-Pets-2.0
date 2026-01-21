@@ -1,7 +1,9 @@
 package net.dawson.adorablehamsterpets;
 
 import dev.architectury.event.EventResult;
+import dev.architectury.event.events.client.ClientCommandRegistrationEvent;
 import dev.architectury.event.events.client.ClientGuiEvent;
+import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.InteractionEvent;
@@ -18,6 +20,7 @@ import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.block.client.HamsterBedRenderer;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementHudRenderer;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
+import net.dawson.adorablehamsterpets.client.command.ModClientCommands;
 import net.dawson.adorablehamsterpets.client.event.AHPClientScreenEvents;
 import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconAnimator;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
@@ -35,18 +38,20 @@ import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
+import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.particle.DefaultParticleType;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
+import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.HitResult;
@@ -60,6 +65,9 @@ public class AdorableHamsterPetsClient {
     // --- Rendering State ---
     private static final Set<Integer> renderedHamsterIdsThisTick = new HashSet<>();
     private static final Set<Integer> renderedHamsterIdsLastTick = new HashSet<>();
+
+    // --- Guidebook Warning State ---
+    private static int clientSessionTimer = 0;
 
     // --- Input & Dismount Logic ---
     private static long lastSneakPressTime = 0;
@@ -121,6 +129,13 @@ public class AdorableHamsterPetsClient {
         // --- Event Registrations ---
         ClientTickEvent.CLIENT_POST.register(AdorableHamsterPetsClient::onEndClientTick);
         ClientGuiEvent.RENDER_HUD.register((context, tickDelta) -> announcementHudRenderer.render(context, tickDelta));
+
+        // --- Register Client Commands ---
+        ClientCommandRegistrationEvent.EVENT.register(ModClientCommands::register);
+
+        // --- Guidebook Warning Timer Reset ---
+        // Reset guidebook warning timer whenever the player joins a world
+        ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(player -> clientSessionTimer = 0);
 
         // --- Register Tree Heist Sound & Jiggle Logic ---
         EntityEvent.ADD.register((entity, world) -> {
@@ -304,11 +319,117 @@ public class AdorableHamsterPetsClient {
 
         // --- 5. Hamster Dismount From Shoulder Logic ---
         handleDismountKeyPress(client);
+
+        // --- 6. Guidebook Warning Logic ---
+        handleGuidebookWarning(client);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *                            3. Logic Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Checks if the player has the guidebook. If they don't have it after a configured time,
+     * sends a dramatic warning message.
+     */
+    private static void handleGuidebookWarning(MinecraftClient client) {
+        if (client.player == null) return;
+
+        final AhpConfig config = AdorableHamsterPets.CONFIG;
+        String username = client.player.getGameProfile().getName();
+
+        // Fast exit if already seen by this player
+        if (config.playersWhoHaveSeenGuidebookWarning.contains(username)) return;
+
+        int warningTime = config.guidebookWarningTimer.get();
+
+        if (clientSessionTimer > warningTime + 145) {
+            clientSessionTimer = 0;
+        }
+
+        clientSessionTimer++;
+
+        // Check 1: 1 second in (20 ticks) - Silent Check
+        // If they spawn with the book (or get it from auto-delivery), mark as seen silently.
+        if (clientSessionTimer == 20) {
+            if (hasGuideBook(client.player)) {
+                config.playersWhoHaveSeenGuidebookWarning.add(username);
+                config.save();
+            }
+        }
+
+        // Check 2: Configured time - Warning Part 1
+        if (clientSessionTimer == warningTime) {
+            if (!hasGuideBook(client.player)) {
+                sendWarningPart1(client.player);
+            } else {
+                // If they have the book now, mark as seen and don't proceed to Part 2
+                config.playersWhoHaveSeenGuidebookWarning.add(username);
+                config.save();
+            }
+        }
+
+        // Check 3: 5 seconds later - Warning Part 2
+        if (clientSessionTimer == warningTime + 140) {
+            if (!hasGuideBook(client.player)) {
+                sendWarningPart2(client.player);
+            }
+            // Mark as seen regardless to prevent spamming next session
+            if (!config.playersWhoHaveSeenGuidebookWarning.contains(username)) {
+                config.playersWhoHaveSeenGuidebookWarning.add(username);
+                config.save();
+            }
+        }
+    }
+
+    private static boolean hasGuideBook(net.minecraft.entity.player.PlayerEntity player) {
+        return player.getInventory().contains(new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get()));
+    }
+
+    private static void sendWarningPart1(net.minecraft.entity.player.PlayerEntity player) {
+        // 1. Once Only Disclaimer
+        MutableText message = Text.literal("\n")
+                .append(Text.translatable("message.adorablehamsterpets.warning.only_once").formatted(Formatting.RED, Formatting.BOLD))
+                .append("\n\n");
+
+        // 2. Header
+        message.append(Text.translatable("message.adorablehamsterpets.warning.header_prefix").formatted(Formatting.GOLD))
+                .append(Text.translatable("message.adorablehamsterpets.warning.header_title").formatted(Formatting.RED, Formatting.BOLD))
+                .append("\n\n");
+
+        // 3. Context
+        message.append(Text.translatable("message.adorablehamsterpets.warning.context").formatted(Formatting.GRAY));
+
+        player.sendMessage(message, false);
+        player.playSound(ModSounds.HAMSTER_DING.get(), 1.0f, 0.8f);
+    }
+
+    private static void sendWarningPart2(net.minecraft.entity.player.PlayerEntity player) {
+        // 4. The Oath
+        MutableText message = Text.literal("\n")
+                .append(Text.translatable("message.adorablehamsterpets.warning.oath_label").formatted(Formatting.GOLD, Formatting.BOLD))
+                .append(" ")
+                .append(Text.translatable("message.adorablehamsterpets.warning.oath_text").formatted(Formatting.RED, Formatting.ITALIC))
+                .append("\n\n");
+
+        // 5. Action (Clickable Command)
+        message.append(Text.translatable("message.adorablehamsterpets.warning.action_button")
+                .setStyle(Style.EMPTY
+                        .withColor(Formatting.GREEN)
+                        .withBold(true)
+                        .withUnderline(true)
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ahp_open_config_screen"))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.translatable("message.adorablehamsterpets.warning.action_hover")))
+                )).append("\n\n");
+
+        // 6. Crafting Instructions
+        message.append(Text.translatable("message.adorablehamsterpets.warning.crafting_help").formatted(Formatting.GRAY));
+
+        player.sendMessage(message, false);
+
+        // Play a notification sound
+        player.playSound(ModSounds.HAMSTER_DING.get(), 1.0f, 1.0f);
+    }
 
     /**
      * Handles the complex client-side logic for a hamster dismounting from the player's

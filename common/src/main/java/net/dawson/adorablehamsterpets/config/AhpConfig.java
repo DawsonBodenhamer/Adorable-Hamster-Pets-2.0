@@ -127,10 +127,25 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Because Sanity is Overrated")
     public ConfigGroup uiPreferences = new ConfigGroup("uiPreferences", true);
 
+    @Translatable.Name("Guidebook Settings")
+    @Translatable.Desc("Settings related to the 'Hamster Tips' guide book and how aggressively I nag you about it.")
+    public ConfigGroup guidebookSettings = new ConfigGroup("guidebookSettings", true);
+
     @NonSync
     @Translatable.Name("Auto Guidebook Delivery")
-    @Translatable.Desc("Hand-delivers the sacred texts on first login. Read it— or don’t. I'm not your conscience.")
+    @Translatable.Desc("Hand-delivers the sacred texts on first login.")
     public boolean enableAutoGuidebookDelivery = true;
+
+    @NonSync
+    @Translatable.Name("Seen Warning Players")
+    @Translatable.Desc("A list of UUIDs for players who have already seen the missing guidebook warning. Ensures that everyone sees this, but only once unless you delete your name from this list.")
+    public List<String> playersWhoHaveSeenGuidebookWarning = new ArrayList<>();
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Warning Timer")
+    @Translatable.Desc("How long (in ticks) I wait before realizing you're book-less and panicking. 3600 = 3 minutes.")
+    public ValidatedInt guidebookWarningTimer = new ValidatedInt(3600, 6000, 100);
 
     @NonSync
     @Translatable.Name("Mod Item Tooltips")
