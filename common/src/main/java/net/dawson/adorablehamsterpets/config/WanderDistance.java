@@ -5,6 +5,8 @@ import me.fzzyhmstrs.fzzy_config.util.EnumTranslatable;
 import net.minecraft.util.StringIdentifiable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 public enum WanderDistance implements StringIdentifiable, EnumTranslatable {
     NEAR("Near"),
     MEDIUM("Medium"),
@@ -26,5 +28,11 @@ public enum WanderDistance implements StringIdentifiable, EnumTranslatable {
     @Override
     public String prefix() {
         return "config.adorablehamsterpets.enum.wander_distance";
+    }
+
+    @NotNull
+    @Override
+    public String translationKey() {
+        return prefix() + "." + this.name().toLowerCase(Locale.ROOT);
     }
 }
