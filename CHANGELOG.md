@@ -136,6 +136,9 @@ The hamsters were too squishy. This update introduces military-grade protection 
     - Fixed a bug where configuration options (like "Top Left", "Near", "Single-Press") appeared untranslated in the config screen.
 - **Sunflower Regrowth**
   - Drastically reduced the default time it takes for sunflowers to regrow seeds (Was ~2.8 hours, now ~10 minutes). My original idea was for it to feel like each sunflower gives you one set of seeds, and that's definitely how it felt until now. This change will put it more in line with the rest of Minecraft farming.
+- **Inventory Label Alignment**
+  - Updated the Hamster Inventory screen to dynamically center text labels ("Left/Right Cheek", "Bling", "Armor") over their respective slots.
+  - This ensures proper alignment for languages with text widths different from English.
 
 ---
 
