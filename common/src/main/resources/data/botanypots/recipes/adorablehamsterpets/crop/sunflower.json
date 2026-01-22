@@ -1,0 +1,61 @@
+{
+	"type": "botanypots:crop",
+	"seed": [
+		{
+			"item": "adorablehamsterpets:sunflower_seeds"
+		},
+		{
+			"item": "adorablehamsterpets:sunflower_block"
+		}
+	],
+	"categories": [
+		"dirt"
+	],
+	"growthTicks": 12000,
+		"drops": [
+		{
+			"chance": 1.00,
+			"output": {
+				"item": "adorablehamsterpets:sunflower_seeds"
+			},
+			"minRolls": 1,
+			"maxRolls": 2
+		},
+		{
+			"chance": 0.20,
+			"output": {
+				"item": "adorablehamsterpets:sunflower_block"
+			}
+		}
+	],
+	"display": [
+		{
+			"type": "botanypots:simple",
+				"block": "adorablehamsterpets:sunflower_block",
+				"properties": {
+					"half": "lower"
+				}
+		},
+		{
+			"type": "botanypots:transitional",
+			"phases": [ 
+				{
+					"type": "botanypots:simple",
+						"block": "adorablehamsterpets:sunflower_block",
+						"properties": {
+							"half": "upper",
+							"has_seeds": "false"
+						}
+				},
+				{
+					"type": "botanypots:simple",
+						"block": "adorablehamsterpets:sunflower_block",
+						"properties": {
+							"half": "upper",
+							"has_seeds": "true"
+						}
+				}
+			]
+		}
+	]
+}

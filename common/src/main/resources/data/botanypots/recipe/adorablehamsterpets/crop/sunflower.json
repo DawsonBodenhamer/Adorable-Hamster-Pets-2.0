@@ -1,0 +1,55 @@
+{
+	"type": "botanypots:block_derived_crop",
+	"block": "adorablehamsterpets:sunflower_block",
+	"input": [
+		{
+			"item": "adorablehamsterpets:sunflower_block"
+		},
+		{
+			"item": "adorablehamsterpets:sunflower_seeds"
+		}
+	],
+	"grow_time": 12000,
+	"drops": [
+		{
+			"type": "botanypots:loot_table",
+			"table_id": "botanypots:botanypots/adorablehamsterpets/crop/sunflower_block"
+		}
+	],
+	"display": [
+		{
+			"type": "botanypots:simple",
+			"block_state": {
+				"block": "adorablehamsterpets:sunflower_block",
+				"properties": {
+					"half": "lower"
+				}
+			}
+		},
+		{
+			"type": "botanypots:transitional",
+			"phases": [
+				{
+					"type": "botanypots:simple",
+					"block_state": {
+						"block": "adorablehamsterpets:sunflower_block",
+						"properties": {
+							"half": "upper",
+							"has_seeds": "false"
+						}
+					}
+				},
+				{
+					"type": "botanypots:simple",
+					"block_state": {
+						"block": "adorablehamsterpets:sunflower_block",
+						"properties": {
+							"half": "upper",
+							"has_seeds": "true"
+						}
+					}
+				}
+			]
+		}
+	]
+}
