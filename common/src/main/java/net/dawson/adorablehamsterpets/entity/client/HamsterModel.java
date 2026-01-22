@@ -7,6 +7,7 @@ import net.dawson.adorablehamsterpets.item.ModItems;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animatable.model.CoreGeoBone;
@@ -17,12 +18,11 @@ import software.bernie.geckolib.renderer.GeoRenderer;
 @SuppressWarnings("removal") // Suppress deprecation warnings for the old abstract methods
 public class HamsterModel extends GeoModel<HamsterEntity> {
 
-    // --- 1. Constants for Scaling and Positioning ---
+    // --- 1. Constants ---
     private static final float ADULT_SCALE = 0.8f;
     private static final float ADULT_HEAD_SCALE = 1.0f;
     private static final float BABY_SCALE = 0.5f;
     private static final float BABY_HEAD_SCALE = 1.2f;
-    // --- End 1. Constants ---
 
     @Override
     public Identifier getModelResource(HamsterEntity animatable) {
@@ -123,16 +123,29 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             headParentBone.setScaleZ(headScale);
 
             // --- Dynamic Pitch Rotation ---
-            // Rotates the root bone to match the trajectory
-            if (entity.clientFallPitchProgress > 0.0f) {
-                // 1. Calculate Cosine Interpolation (0.0 to 1.0)
+            if (entity.isThrown()) {
+                // Projectile Mode: Align with velocity vector (follow flight arc)
+                Vec3d velocity = entity.getVelocity();
+                double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+
+                // Calculate pitch: Positive RotX = Nose Up, Negative RotX = Nose Down
+                float targetPitch = (float) Math.atan2(velocity.y, horizontalSpeed);
+                rootBone.setRotX(targetPitch);
+
+            } else if (entity.clientFallPitchProgress > 0.0f || entity.prevClientFallPitchProgress > 0.0f) {
+                // Interpolate between ticks for smooth rendering
+                float partialTick = animationState.getPartialTick();
+                float lerpedProgress = MathHelper.lerp(partialTick, entity.prevClientFallPitchProgress, entity.clientFallPitchProgress);
+
+                // Natural Fall Mode: Procedural Nose Dive (Cosine Interpolation)
                 // Formula: (1 - cos(t * π)) / 2
                 float t = entity.clientFallPitchProgress;
-                float interpolated = (1.0f - MathHelper.cos(t * (float) Math.PI)) * 0.5f;
+                float interpolated = (1.0f - MathHelper.cos(lerpedProgress * (float) Math.PI)) * 0.5f;
 
-                // 2. Map to Target Angle (-90 degrees / -PI/2 radians)
+                // Map to Target Angle (-90 degrees / -PI/2 radians)
                 // Rotates the model to face downward
                 float targetPitch = (float) (-Math.PI / 2.0);
+                rootBone.setRotX(targetPitch * interpolated);
 
                 rootBone.setRotX(targetPitch * interpolated);
             } else {

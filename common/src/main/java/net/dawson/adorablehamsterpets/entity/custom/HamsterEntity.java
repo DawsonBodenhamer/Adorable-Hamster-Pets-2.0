@@ -131,8 +131,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     // 1.20.1: Use UUIDs for Attribute Modifiers
     private static final UUID ARMOR_SPEED_BOOST_UUID = UUID.fromString("74ba7508-3010-449e-97c7-573531b7987e");
     private static final UUID ARMOR_KNOCKBACK_RESISTANCE_UUID = UUID.fromString("a8470a74-d2ca-4c8d-806d-6215d290680d");
-    private static final int FALL_PITCH_DURATION_TICKS = 8;
-    private static final int FALL_PITCH_RESET_TICKS = 5;
+    private static final int NORMAL_FALL_PITCH_DURATION = 15;
+    private static final int PITCH_RESET_DURATION = 3;
     private static final int RIDER_JUMP_COOLDOWN_TICKS = 8;
     private static final double RIDER_JUMP_VELOCITY = 0.6D; // ~2 blocks
 
@@ -617,6 +617,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private boolean armorAbsorbedDamage = false;
     private boolean performDeferredArmorUpdate = false;
     @Unique public float clientFallPitchProgress = 0.0f;
+    @Unique public float prevClientFallPitchProgress = 0.0f;
     @Unique private int riderJumpCooldown = 0;
     @Unique private boolean riderJumpHeld = false;
     @Unique private boolean riderJumpQueued = false;
@@ -1156,12 +1157,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         return result;
     }
     /**
-     * True if the hamster is being thrown as a projectile OR if it is falling
-     * significantly (e.g., jumping off a cliff or exiting a tree).
+     * True any time the hamster is falling.
      */
     public boolean shouldRenderFlying() {
-        // This threshold prevents the animation from flickering during tiny bumps or steps down.
-        return this.isThrown() || (!this.isOnGround() && this.getVelocity().y < -0.4); // Move closer zero to increase sensitivity
+        return this.isThrown() || (!this.isOnGround() && this.getVelocity().y < -0.01); // Extremely high sensitivity
     }
     /**
      * Mounts the player onto the hamster and configures the state for riding.
@@ -3283,13 +3282,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         // --- 5.3 Fall Pitch Interpolation Logic ---
         if (world.isClient) {
-            // Use centralized logic to determine whether to pitch down.
-            if (this.shouldRenderFlying()) {
-                // Ramp up the pitch (Ease In)
-                this.clientFallPitchProgress += 1.0f / FALL_PITCH_DURATION_TICKS;
+            // Capture state for interpolation before modification
+            this.prevClientFallPitchProgress = this.clientFallPitchProgress;
+
+            // Determine whether to pitch down
+            // Thrown hamsters handle their own pitch in the Model based on velocity
+            if (this.shouldRenderFlying() && !this.isThrown()) {
+                // Ease in pitch for natural falls
+                this.clientFallPitchProgress += 1.0f / NORMAL_FALL_PITCH_DURATION;
             } else {
-                // Reset the pitch (Snap back faster)
-                this.clientFallPitchProgress -= 1.0f / FALL_PITCH_RESET_TICKS;
+                // Reset faster
+                this.clientFallPitchProgress -= 1.0f / PITCH_RESET_DURATION;
             }
 
             // Clamp between 0.0 and 1.0
