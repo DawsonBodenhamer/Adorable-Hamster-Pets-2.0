@@ -6,12 +6,16 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
@@ -21,6 +25,8 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoBlockEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -32,11 +38,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity {
+
+    // --- Fields ---
     private Optional<UUID> linkedHamsterUuid = Optional.empty();
     private Optional<Text> linkedHamsterName = Optional.empty();
     private WanderDistance wanderDistance = WanderDistance.MEDIUM;
     private boolean isNewlyPlaced = true;
     private boolean allowSleep = true;
+    private boolean respawnEnabled = false;
+    private int failSoundTimer = 0;
 
     // --- Geckolib Stuff ---
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -87,6 +97,23 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
     }
 
     // --- Everything Else ---
+    public boolean isRespawnEnabled() {
+        return this.respawnEnabled;
+    }
+
+    public void setRespawnEnabled(boolean enabled) {
+        this.respawnEnabled = enabled;
+        markDirty();
+        // Force a block update to sync with client immediately
+        if (world != null) {
+            world.updateListeners(pos, getCachedState(), getCachedState(), Block.NOTIFY_ALL);
+        }
+    }
+
+    public void triggerFailSound() {
+        this.failSoundTimer = 7; // Start sequence
+    }
+
     public boolean isNewlyPlaced() {
         return this.isNewlyPlaced;
     }
@@ -222,6 +249,7 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
         linkedHamsterName.ifPresent(name -> nbt.putString("LinkedHamsterName", Text.Serializer.toJson(name)));
         nbt.putString("WanderDistance", wanderDistance.asString());
         nbt.putBoolean("IsNewlyPlaced", this.isNewlyPlaced);
+        nbt.putBoolean("RespawnEnabled", this.respawnEnabled);
 
         // If an upside down bed is broken and replaced right-side up, set "AllowSleep" to true
         if (!this.getCachedState().get(HamsterBedBlock.UPSIDE_DOWN)) {
@@ -253,5 +281,23 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
 
         this.isNewlyPlaced = nbt.contains("IsNewlyPlaced") ? nbt.getBoolean("IsNewlyPlaced") : false;
         this.allowSleep = !nbt.contains("AllowSleep") || nbt.getBoolean("AllowSleep");
+        this.respawnEnabled = nbt.getBoolean("RespawnEnabled");
+    }
+
+    public static void tick(World world, BlockPos pos, BlockState state, HamsterBedBlockEntity be) {
+        if (be.failSoundTimer > 0) {
+            be.failSoundTimer--;
+
+            // Note: 5 ticks apart.
+            // Start at 6.
+            // Tick 6 -> 5: Play First Sound
+            // Tick 1 -> 0: Play Second Sound
+
+            if (be.failSoundTimer == 6) {
+                world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.BLOCKS, 1.0f, 1.0f);
+            } else if (be.failSoundTimer == 0) {
+                world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.BLOCKS, 1.0f, 0.2f);
+            }
+        }
     }
 }

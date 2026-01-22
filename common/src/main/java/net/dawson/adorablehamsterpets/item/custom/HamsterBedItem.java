@@ -6,6 +6,7 @@ import dev.architectury.utils.Env;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
@@ -123,15 +124,39 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
         if (Configs.AHP.enableItemTooltips) {
             if (Screen.hasShiftDown()) {
                 // --- Expanded Tooltip (Sneaking) ---
+                // --- 1. Main Hints ---
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.description1").formatted(Formatting.GOLD));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.description2").formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls").formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.lure_hint").formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.repellent_hint").formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.unlink_hint").formatted(Formatting.GRAY));
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls1").formatted(Formatting.GRAY));
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls2").formatted(Formatting.GRAY));
 
-                // --- Conditional Linked Info ---
-                // 1.20.1 Conditional linked info logic
+                // --- 2. Dynamic Interaction Hints ---
+                Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
+                Text repellentName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.bedAvoidanceFoods).copy().formatted(Formatting.RED, Formatting.BOLD);
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.lure_hint", lureName).formatted(Formatting.GRAY));
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.repellent_hint", repellentName).formatted(Formatting.GRAY));
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.unlink_hint", repellentName).formatted(Formatting.GRAY));
+
+                // --- 3. Respawn Status & Hint ---
+                boolean configEnabled = Configs.AHP.enableRespawnInBed.get();
+
+                Text statusText;
+                Text hintText;
+
+                if (!configEnabled) {
+                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.disabled_config");
+                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.disabled_config");
+                } else {
+                    // Items in inventory are always "Inactive" regarding respawn state
+                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.inactive");
+                    Text tributeName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.resurrectionTributes);
+                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.inactive", tributeName.copy().formatted(Formatting.GOLD, Formatting.BOLD));
+                }
+
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.label", statusText));
+                tooltip.add(hintText);
+
+                // --- 4. Conditional Linked Info ---
                 if (stack.hasNbt()) {
                     NbtCompound nbt = stack.getNbt();
                     if (nbt.contains(ModNbtKeys.LINKED_HAMSTER_UUID) && nbt.contains(ModNbtKeys.LINKED_HAMSTER_NAME)) {

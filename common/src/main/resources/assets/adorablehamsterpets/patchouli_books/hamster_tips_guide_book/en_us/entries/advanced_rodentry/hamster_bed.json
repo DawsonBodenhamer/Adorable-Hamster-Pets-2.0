@@ -85,6 +85,18 @@
     {
       "type": "patchouli:text",
       "text": "book.adorablehamsterpets.entry.hamster_bed.page12.body"
+    },
+    {
+      "type": "adorablehamsterpets:page",
+      "anchor": "respawn",
+      "header": "book.adorablehamsterpets.entry.hamster_bed.page13.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page13.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page14.body"
     }
   ]
 }

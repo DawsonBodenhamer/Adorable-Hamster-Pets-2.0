@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.integration.jade;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
@@ -53,12 +54,42 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
 
             if (player.isSneaking()) {
                 // --- Expanded Tooltip (Sneaking) ---
+                // --- 1. Sleep Status ---
                 boolean allowSleep = serverData.getBoolean("AllowSleepInBed");
                 Text sleepStatus = allowSleep
-                        ? Text.literal("TRUE").formatted(Formatting.GREEN)
-                        : Text.literal("FALSE").formatted(Formatting.RED);
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.sleep_status", sleepStatus));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls").formatted(Formatting.GRAY));
+                        ? Text.translatable("tooltip.adorablehamsterpets.jade.sleep_status.allowed").formatted(Formatting.GREEN)
+                        : Text.translatable("tooltip.adorablehamsterpets.jade.sleep_status.prevented").formatted(Formatting.RED);
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.sleep_status.label", sleepStatus));
+
+                // --- 2. Respawn Status & Hint ---
+                boolean isConfigRespawnEnabled = serverData.getBoolean("ConfigRespawnEnabled");
+                boolean isRespawnEnabled = serverData.getBoolean("RespawnEnabled");
+
+                Text statusText;
+                Text hintText;
+
+                if (!isConfigRespawnEnabled) {
+                    // State 1: Global config disabled
+                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.disabled_config");
+                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.disabled_config");
+                } else if (isRespawnEnabled) {
+                    // State 2: Active
+                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.active");
+                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.active");
+                } else {
+                    // State 3: Globally enabled, but inactive (Needs Tribute)
+                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.inactive");
+                    // Dynamic Item Name Lookup
+                    Text tributeName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.resurrectionTributes);
+                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.inactive", tributeName.copy().formatted(Formatting.GOLD, Formatting.BOLD));
+                }
+
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.label", statusText));
+                tooltip.add(hintText);
+
+                // --- 3. Interaction Tips
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls1").formatted(Formatting.GRAY));
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls2").formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.lure_hint").formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.repellent_hint").formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.unlink_hint").formatted(Formatting.GRAY));
@@ -105,6 +136,8 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
             data.putBoolean("WanderModeActive", bedEntity.isWanderModeActive());
             data.putString("WanderDistance", bedEntity.getWanderDistance().asString());
             data.putBoolean("AllowSleepInBed", bedEntity.isSleepingAllowed());
+            data.putBoolean("RespawnEnabled", bedEntity.isRespawnEnabled());
+            data.putBoolean("ConfigRespawnEnabled", Configs.AHP.enableRespawnInBed.get());
         }
     }
 
