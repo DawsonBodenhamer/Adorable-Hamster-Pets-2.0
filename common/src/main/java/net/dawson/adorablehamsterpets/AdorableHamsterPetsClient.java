@@ -398,7 +398,15 @@ public class AdorableHamsterPetsClient {
                 .append("\n\n");
 
         // 3. Context
-        message.append(Text.translatable("message.adorablehamsterpets.warning.context").formatted(Formatting.GRAY));
+        // Calculate minutes. Round up to 1 if less than a minute
+        int ticks = AdorableHamsterPets.CONFIG.guidebookWarningTimer.get();
+        int minutes = Math.max(1, ticks / 1200);
+
+        String key = (minutes == 1)
+                ? "message.adorablehamsterpets.warning.context.singular"
+                : "message.adorablehamsterpets.warning.context.plural";
+
+        message.append(Text.translatable(key, minutes).formatted(Formatting.GRAY));
 
         player.sendMessage(message, false);
         player.playSound(ModSounds.HAMSTER_DING.get(), 1.0f, 0.8f);
