@@ -391,7 +391,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             // Y: Positive values move it up. Negative moves it down
             // Z: Positive values move it towards the hamster's tail. Negative values move it forward, away from the tail
             // Using negative Z value to fix the item appearing at the tail
-            poseStack.translate(0, 0.13F, -0.2F); // If Math.toRadians = 90 (top of item pointing out), use (0, 0.22F, -0.4F) instead
+            poseStack.translate(0, 0.125F, -0.18F); // If Math.toRadians = 90 (top of item pointing out), use (0, 0.22F, -0.4F) instead
 
             // --- Scaling ---
             poseStack.scale(0.7f, 0.7f, 0.7f);
