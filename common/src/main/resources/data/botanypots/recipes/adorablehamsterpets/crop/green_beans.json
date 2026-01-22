@@ -1,0 +1,60 @@
+{
+	"type": "botanypots:crop",
+	"seed": {
+		"item": "adorablehamsterpets:green_bean_seeds"
+	},
+	"categories": [
+		"dirt",
+		"farmland"
+	],
+	"growthTicks": 800,
+		"drops": [
+		{
+			"chance": 1,
+			"output": {
+				"item": "adorablehamsterpets:green_beans"
+			}
+		},
+		{
+			"chance": 1,
+			"output": {
+				"item": "adorablehamsterpets:green_bean_seeds"
+			},
+			"minRolls": 1,
+			"maxRolls": 2
+		}
+	],
+	"display": {
+		"type": "botanypots:transitional",
+		"phases": [ 
+			{
+				"type": "botanypots:simple",
+					"block": "adorablehamsterpets:green_beans_crop",
+					"properties": {
+						"age": "0"
+					}
+			},
+			{
+				"type": "botanypots:simple",
+					"block": "adorablehamsterpets:green_beans_crop",
+					"properties": {
+						"age": "1"
+					}
+			},
+			{
+				"type": "botanypots:simple",
+					"block": "adorablehamsterpets:green_beans_crop",
+					"properties": {
+						"age": "2"
+					}
+			},
+			{
+				"type": "botanypots:simple",
+					"block": "adorablehamsterpets:green_beans_crop",
+					"properties": {
+						"age": "3"
+					}
+			}
+		]
+	}
+}
