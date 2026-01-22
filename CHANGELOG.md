@@ -99,6 +99,11 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Includes a solemn oath to read the manual before asking questions in Discord.
   - It cannot be disabled. Too many players have come to the Discord asking questions that are answered in the guidebook, and upon further investigation, I find they did not get the guidebook and didn't know about it, because the creator of their modpack turned off auto-delivery.
   - This warning persists across servers/worlds so it only triggers once per client installation (unless reset in config).
+- **Hamster Bed Respawn**
+  - Added a configuration toggle (`enableRespawnInBed`) to allow hamsters linked to a bed to respawn there upon death. Off by default so fit the mod's vanilla-friendly theme.
+  - Respawning hamsters retain their inventory, name, and owner. They may not retain other attributes added by external mods.
+  - Added tooltips to the Hamster Bed item and Jade overlay indicating if respawn is active.
+  - Added a new page to the Hamster Bed entry in the Hamster Tips guidebook explaining the feature.
 
 ### Changed
 - **Animations**
@@ -147,6 +152,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Inventory Label Alignment**
   - Updated the Hamster Inventory screen to dynamically center text labels ("Left/Right Cheek", "Bling", "Armor") over their respective slots.
   - This ensures proper alignment for languages with text widths different from English.
+- **Missing Localization**
+  - Updated Jade HUD tooltips for Hamster Beds to use translatable text for the various boolean states, removing hardcoded English "ENABLED" and "DISABLED" strings.
 
 ---
 

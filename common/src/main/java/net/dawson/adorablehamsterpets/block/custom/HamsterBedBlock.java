@@ -23,8 +23,10 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.loot.context.LootContextParameterSet;
 import net.minecraft.loot.context.LootContextParameters;
+import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -38,6 +40,7 @@ import net.minecraft.state.property.EnumProperty;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -184,7 +187,8 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
             ItemStack heldStack = player.getStackInHand(player.getActiveHand());
             boolean isLureItem = ConfigDataCache.isLureItem(heldStack);
             boolean isAvoidanceItem = ConfigDataCache.isBedAvoidanceFood(heldStack);
-            return (isLureItem || isAvoidanceItem) ? ActionResult.SUCCESS : ActionResult.CONSUME;
+            boolean isTributeItem = ConfigDataCache.isResurrectionTribute(heldStack);
+            return (isLureItem || isAvoidanceItem || isTributeItem) ? ActionResult.SUCCESS : ActionResult.CONSUME;
         }
 
         BlockEntity be = world.getBlockEntity(pos);
@@ -267,13 +271,67 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                 return ActionResult.SUCCESS;
             }
 
-            // --- 7. Sneak Action: Cycle Wander Distance ---
+            // --- 7. Resurrection Tribute Interaction ---
+            if (ConfigDataCache.isResurrectionTribute(heldStack)) {
+
+                // A. Check Global Config
+                if (!Configs.AHP.enableRespawnInBed.get()) {
+                    bedEntity.triggerFailSound();
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.respawn.disabled_by_config").formatted(Formatting.RED), true);
+                    return ActionResult.SUCCESS;
+                }
+
+                // B. Toggle Logic
+                if (!bedEntity.isRespawnEnabled()) {
+                    // Activate
+                    bedEntity.setRespawnEnabled(true);
+
+                    // Consume item
+                    if (!player.getAbilities().creativeMode) {
+                        heldStack.decrement(1);
+                    }
+
+                    // --- Feedback ---
+                    // Sound
+                    world.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.BLOCKS, 1.0f, 1.0f);
+
+                    // Spawn Totem particles if it's a totem, otherwise generic happy particles + item particles
+                    if (heldStack.isOf(Items.TOTEM_OF_UNDYING)) {
+                        ((ServerWorld)world).spawnParticles(ParticleTypes.TOTEM_OF_UNDYING, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 50, 0.3, 0.3, 0.3, 0);
+                    } else {
+                        ((ServerWorld)world).spawnParticles(ParticleTypes.HAPPY_VILLAGER, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 25, 0.3, 0.3, 0.3, 0);
+                        // Use a copy of the stack for particles since it may have just been emptied
+                        ItemStack particleStack = heldStack.isEmpty() ? new ItemStack(heldStack.getItem()) : heldStack;
+                        ((ServerWorld)world).spawnParticles(new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 25, 0.2, 0.2, 0.2, 0);
+                    }
+
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.respawn.activated").formatted(Formatting.GREEN), true);
+
+                } else {
+                    // Deactivate and refund
+                    bedEntity.setRespawnEnabled(false);
+
+                    // Refund 1 item (Spawn in world to avoid inventory overflow issues)
+                    // Refund the specific item held in hand to match the "key" used.
+                    ItemStack refundStack = new ItemStack(heldStack.getItem());
+                    ItemScatterer.spawn(world, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, refundStack);
+
+                    // Feedback
+                    world.playSound(null, pos, SoundEvents.BLOCK_BEACON_DEACTIVATE, SoundCategory.BLOCKS, 1.0f, 1.0f);
+
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.respawn.deactivated").formatted(Formatting.YELLOW), true);
+                }
+
+                return ActionResult.SUCCESS;
+            }
+
+            // --- 8. Sneak Action: Cycle Wander Distance ---
             if (player.isSneaking()) {
                 bedEntity.cycleWanderDistance(player);
                 return ActionResult.SUCCESS;
             }
 
-            // --- 8. Default Action: Toggle Wander Mode ---
+            // --- 9. Default Action: Toggle Wander Mode ---
             bedEntity.toggleWanderMode(player);
             return ActionResult.SUCCESS;
         }
@@ -334,8 +392,10 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                     }
                 }
             });
+        } else {
+            // Server Ticker
+            return validateTicker(type, ModBlockEntities.HAMSTER_BED_BLOCK_ENTITY.get(), HamsterBedBlockEntity::tick);
         }
-        return null;
     }
 
     @Override

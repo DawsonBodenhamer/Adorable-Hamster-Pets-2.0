@@ -672,6 +672,14 @@ public class AhpConfig extends Config {
     @Translatable.Desc("For when 'following you into lava' is no longer a desirable trait. Tweak the settings for your hamster's newfound, bed-based independence.")
     public ConfigGroup wanderMode = new ConfigGroup("wanderMode", true);
 
+    @Translatable.Name("Enable Respawn in Bed")
+    @Translatable.Desc("The Master Switch. Affects all Hamster Beds. If true, hamsters linked to a bed can be resurrected there. Cheating? Maybe. Convenient? Absolutely.")
+    public ValidatedBoolean enableRespawnInBed = new ValidatedBoolean(false);
+
+    @Translatable.Name("Resurrection Tributes")
+    @Translatable.Desc("The specific items accepted by the Hamster Bed to enable the Respawn Protocol. Defaults to the Totem of Undying, because immortality isn't cheap. Accepts item IDs (e.g. 'minecraft:totem_of_undying') or tags.")
+    public List<String> resurrectionTributes = new ArrayList<>(List.of("minecraft:totem_of_undying"));
+
     @Translatable.Name("Avoid Unlinked Beds")
     @Translatable.Desc("Should hamsters treat other hamsters' beds as sacred ground? If true, they'll try to politely path around them, but they will only try a few alternate paths before their tiny rodent-patience runs out. If false, they'll trample wherever they please.")
     public boolean avoidUnlinkedBeds = true;

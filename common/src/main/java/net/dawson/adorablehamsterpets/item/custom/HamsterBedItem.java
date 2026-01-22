@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.component.ModDataComponentTypes;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
@@ -78,15 +79,35 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
         WoodVariant stackVariant = stack.getOrDefault(ModDataComponentTypes.WOOD_VARIANT.get(), this.variant);
         if (Configs.AHP.enableItemTooltips) {
             if (Screen.hasShiftDown()) {
-                // --- Expanded Tooltip (Sneaking) ---
+                // --- Expanded Tooltip (Holding shift) ---
+                // --- 1. Main Hints ---
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.description1").formatted(Formatting.GOLD));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.description2").formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls").formatted(Formatting.GRAY));
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls1").formatted(Formatting.GRAY));
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls2").formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.lure_hint").formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.repellent_hint").formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.unlink_hint").formatted(Formatting.GRAY));
+                // --- 2. Respawn Status & Hint ---
+                boolean configEnabled = Configs.AHP.enableRespawnInBed.get();
 
-                // --- Conditional Linked Info ---
+                Text statusText;
+                Text hintText;
+
+                if (!configEnabled) {
+                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.disabled_config");
+                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.disabled_config");
+                } else {
+                    // Items in inventory are always "Inactive" regarding respawn state
+                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.inactive");
+                    Text tributeName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.resurrectionTributes);
+                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.inactive", tributeName.copy().formatted(Formatting.GOLD, Formatting.BOLD));
+                }
+
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.label", statusText));
+                tooltip.add(hintText);
+
+                // --- 3. Conditional Linked Info ---
                 UUID hamsterUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID.get());
                 Text hamsterName = stack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME.get());
                 WanderDistance wanderDistance = stack.get(ModDataComponentTypes.WANDER_DISTANCE.get());

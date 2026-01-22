@@ -5,11 +5,13 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.TagKey;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.biome.Biome;
 
@@ -52,6 +54,8 @@ public class ConfigDataCache {
     private static final Set<TagKey<Item>> pouchAllowedTags = new HashSet<>();
     private static final Set<Item> pouchDisallowedItems = new HashSet<>();
     private static final Set<TagKey<Item>> pouchDisallowedTags = new HashSet<>();
+    private static final Set<Item> resurrectionTributeItems = new HashSet<>();
+    private static final Set<TagKey<Item>> resurrectionTributeTags = new HashSet<>();
 
     // --- Cached Sets for Block Performance ---
     private static final Set<Block> celebrationOreBlocks = new HashSet<>();
@@ -113,6 +117,7 @@ public class ConfigDataCache {
         parseItemList(Configs.AHP.pouchDisallowedItems, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedItems");
         parseItemList(Configs.AHP.pouchDisallowedTags, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedTags");
         parseItemList(Configs.AHP.autoHealFoods, autoHealFoodItems, autoHealFoodTags, "autoHealFoods");
+        parseItemList(Configs.AHP.resurrectionTributes, resurrectionTributeItems, resurrectionTributeTags, "resurrectionTributes");
 
         // --- Parse Block Lists ---
         parseBlockList(Configs.AHP.celebrationOres, celebrationOreBlocks, celebrationOreTags, "celebrationOres");
@@ -170,6 +175,7 @@ public class ConfigDataCache {
     public static boolean isAutoHealFood(ItemStack stack) { return matchesItem(stack, autoHealFoodItems, autoHealFoodTags); }
     public static boolean isPouchAllowed(ItemStack stack) { return matchesItem(stack, pouchAllowedItems, pouchAllowedTags); }
     public static boolean isPouchDisallowed(ItemStack stack) { return matchesItem(stack, pouchDisallowedItems, pouchDisallowedTags); }
+    public static boolean isResurrectionTribute(ItemStack stack) { return matchesItem(stack, resurrectionTributeItems, resurrectionTributeTags); }
 
     // --- Public Block Checker Methods ---
     public static boolean isCelebrationOre(BlockState state) { return matchesBlock(state, celebrationOreBlocks, celebrationOreTags); }
@@ -310,6 +316,8 @@ public class ConfigDataCache {
         pouchAllowedTags.clear();
         pouchDisallowedItems.clear();
         pouchDisallowedTags.clear();
+        resurrectionTributeItems.clear();
+        resurrectionTributeTags.clear();
     }
 
     private static void clearAllBlockSets() {
@@ -348,5 +356,42 @@ public class ConfigDataCache {
         chocolateBiomeTags.clear();
         chocolateExclusionBiomeIds.clear();
         chocolateExclusionBiomeTags.clear();
+    }
+
+    /**
+     * Retrieves the localized display name of the first item found in a string configuration list.
+     * <p>
+     * This is designed for dynamic tooltips that need to reference a specific item required for an action
+     * (e.g., "Right-click with [Item]"), ensuring the text adapts automatically if the user changes the config.
+     *
+     * @param configList The list of strings (Item IDs or Tags) from the config.
+     * @return The formatted {@link Text} component of the item name. Returns the raw string if it is a tag
+     *         or an invalid ID. Returns "Air" if the list is empty.
+     */
+    public static Text getFirstItemNameFromList(List<String> configList) {
+        if (configList.isEmpty()) {
+            return Text.translatable("block.minecraft.air");
+        }
+
+        String firstEntry = configList.get(0);
+        if (firstEntry.startsWith("#")) {
+            // If it's a tag, just return the tag string visually
+            return Text.literal(firstEntry);
+        } else {
+            try {
+                // Try to resolve the Item ID to a localized name
+                Identifier itemId = Identifier.of(firstEntry);
+                Item item = Registries.ITEM.get(itemId);
+
+                // If registry returns default (Air) and input wasn't explicitly air, it's invalid or from a missing mod
+                if (item == Items.AIR && !firstEntry.equals("minecraft:air")) {
+                    return Text.literal(firstEntry);
+                }
+                return item.getName();
+            } catch (Exception e) {
+                // Fallback if ID is malformed
+                return Text.literal(firstEntry);
+            }
+        }
     }
 }

@@ -8,6 +8,7 @@ import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
+import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.component.HamsterShoulderData;
 import net.dawson.adorablehamsterpets.component.ModDataComponentTypes;
 import net.dawson.adorablehamsterpets.config.*;
@@ -75,6 +76,7 @@ import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.DamageTypeTags;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
@@ -3271,10 +3273,20 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
     @Override
     public void onDeath(DamageSource source) {
-        // --- 1. Drop Cheek Pouch Inventory ---
+        // --- Respawn in Bed Logic ---
+        if (!this.getWorld().isClient() && Configs.AHP.enableRespawnInBed.get()) {
+            boolean respawnSuccessful = tryRespawnInBed();
+
+            // If respawn worked, return immediately
+            if (respawnSuccessful) {
+                this.discard();
+                return;
+            }
+        }
+
+        // --- Standard Death Logic (Drops & XP) ---
         World world = this.getWorld();
         if (!world.isClient()) {
-
             // Check if wild loot drops are disabled
             if (!this.isTamed() && Configs.AHP.disableWildLootDrops) {
                 // If disabled and untamed, clear the inventory so nothing drops
@@ -3893,6 +3905,126 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       6. Private Helper Methods
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Attempts to respawn the hamster at its linked bed.
+     * @return True if respawn was successful, false otherwise.
+     */
+    private boolean tryRespawnInBed() {
+        if (this.getLinkedBedPos().isEmpty()) return false;
+
+        GlobalPos globalBedPos = this.getLinkedBedPos().get();
+        MinecraftServer server = this.getServer();
+        if (server == null) return false;
+
+        ServerWorld bedWorld = server.getWorld(globalBedPos.dimension());
+        if (bedWorld == null) return false;
+
+        BlockPos bedPos = globalBedPos.pos();
+        BlockState bedState = bedWorld.getBlockState(bedPos);
+
+        // Verify bed exists
+        if (!(bedState.getBlock() instanceof HamsterBedBlock)) {
+            return false;
+        }
+
+        // Check bed-specific enablement
+        BlockEntity beCheck = bedWorld.getBlockEntity(bedPos);
+        if (!(beCheck instanceof HamsterBedBlockEntity bedEntity) || !bedEntity.isRespawnEnabled()) {
+            // Bed exists, but respawn is not paid for/enabled.
+            // Silent fail.
+            return false;
+        }
+
+        // Check occupancy to determine spawn mode
+        boolean isBedFree = !bedState.get(HamsterBedBlock.OCCUPIED);
+        BlockPos finalSpawnPos = null;
+
+        if (!isBedFree) {
+            // Bed is occupied, fallback to finding a safe spot nearby
+            Optional<BlockPos> safePosOpt = this.findSafeSpawnPosition(bedPos, bedWorld, 2);
+            if (safePosOpt.isEmpty()) {
+                // Silent fail
+                return false;
+            }
+            finalSpawnPos = safePosOpt.get();
+        }
+
+        // --- Create Clone ---
+        HamsterEntity newHamster = ModEntities.HAMSTER.get().create(bedWorld);
+        if (newHamster == null) return false;
+
+        // Copy NBT Data
+        NbtCompound data = new NbtCompound();
+        this.writeCustomDataToNbt(data);
+        newHamster.readCustomDataFromNbt(data);
+
+        // Restore attributes that writeCustomDataToNbt might miss (Owner, Tame status)
+        newHamster.setOwnerUuid(this.getOwnerUuid());
+        newHamster.setTamed(this.isTamed(), false);
+        newHamster.setCustomName(this.getCustomName());
+
+        // Reset Common States
+        newHamster.setKnockedOut(false);
+        newHamster.interactionCooldown = 0;
+
+        // --- Spawn Logic Branch ---
+        if (isBedFree) {
+            // Scenario A: Bed is free -> Sleep in it
+            Vec3d bedCenter = Vec3d.ofCenter(bedPos).add(0, 0.1, 0);
+            newHamster.refreshPositionAndAngles(bedCenter.x, bedCenter.y, bedCenter.z, 0f, 0f);
+
+            // Set to 5% Health
+            newHamster.setHealth(Math.max(1.0f, newHamster.getMaxHealth() * 0.05f));
+
+            // Force Sleep State
+            newHamster.setDozingPhase(DozingPhase.DEEP_SLEEP);
+            newHamster.setSleeping(true);
+            newHamster.setInSittingPose(true); // Lock AI
+
+            // Select sleep pose based on personality ID to match original hamster
+            int personality = newHamster.getDataTracker().get(ANIMATION_PERSONALITY_ID);
+            int poseIndex = (personality >= 1 && personality <= 3) ? personality : 1;
+            String sleepAnim = "anim_hamster_sleep_pose" + poseIndex;
+            newHamster.getDataTracker().set(CURRENT_DEEP_SLEEP_ANIM_ID, sleepAnim);
+
+            // Update Block State
+            bedWorld.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
+
+            // Trigger Bed Animation
+            if (bedEntity instanceof GeoBlockEntity geoBE) {
+                geoBE.triggerAnim("hamster_bed_controller", "anim_bed_becoming_occupied");
+            }
+        } else {
+            // Scenario B: Bed occupied -> Spawn nearby standing up
+            newHamster.refreshPositionAndAngles(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, this.getYaw(), 0f);
+            newHamster.setHealth(newHamster.getMaxHealth());
+            newHamster.setSitting(false);
+        }
+
+        // --- Linkage Update & Charge Consumption ---
+        // Created a new entity, so it has a new UUID. Update the Bed Block Entity
+        if (bedWorld.getBlockEntity(bedPos) instanceof HamsterBedBlockEntity finalBedEntity) {
+            Text name = newHamster.hasCustomName() ? newHamster.getCustomName() : newHamster.getDisplayName();
+            finalBedEntity.setLinkedHamster(newHamster.getUuid(), name, finalBedEntity.getWanderDistance());
+
+            // Consume charge
+            finalBedEntity.setRespawnEnabled(false);
+        }
+
+        // Spawn
+        bedWorld.spawnEntity(newHamster);
+
+        // Effects
+        bedWorld.playSound(null, bedPos, SoundEvents.BLOCK_AMETHYST_BLOCK_RESONATE, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+        bedWorld.spawnParticles(ParticleTypes.REVERSE_PORTAL, bedPos.getX() + 0.5, bedPos.getY() + 0.5, bedPos.getZ() + 0.5, 20, 0.3, 0.3, 0.3, 0.1);
+
+        if (this.getOwner() instanceof PlayerEntity owner) {
+            owner.sendMessage(Text.translatable("message.adorablehamsterpets.respawn.success").formatted(Formatting.GOLD), true);
+        }
+
+        return true;
+    }
 
     /**
      * Called when a passenger is removed.
