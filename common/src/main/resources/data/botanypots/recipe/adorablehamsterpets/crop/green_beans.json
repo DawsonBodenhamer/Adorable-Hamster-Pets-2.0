@@ -1,0 +1,8 @@
+{
+	"type": "botanypots:block_derived_crop",
+	"block": "adorablehamsterpets:green_beans_crop",
+	"input": {
+		"item": "adorablehamsterpets:green_bean_seeds"
+	},
+	"grow_time": 800
+}
