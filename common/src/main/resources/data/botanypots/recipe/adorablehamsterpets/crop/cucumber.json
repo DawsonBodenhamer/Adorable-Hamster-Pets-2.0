@@ -1,0 +1,8 @@
+{
+	"type": "botanypots:block_derived_crop",
+	"block": "adorablehamsterpets:cucumber_crop",
+	"input": {
+		"item": "adorablehamsterpets:cucumber_seeds"
+	},
+	"grow_time": 800
+}
