@@ -107,8 +107,11 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Added tooltips to the Hamster Bed item and Jade overlay indicating if respawn is active.
   - Added a new page to the Hamster Bed entry in the Hamster Tips guidebook explaining the feature.
 - **Supplementaries Compatibility**
-  - Hamsters can now be caught in Cages from the [Supplementaries](https://modrinth.com/mod/supplementaries) mod. (Thanks to [**@just_a_cricket**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)  for the built-in datapack!)
+  - Hamsters can now be caught in Cages from the [**Supplementaries**](https://modrinth.com/mod/supplementaries) mod. (Thanks to [**@just_a_cricket**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)  for the built-in datapack!)
   - To enable catching of wild hamsters, go to `config > supplementaries-common.json > functional > cage > require_taming` and turn it off.
+- **Botany Pots Compatibility**
+  - Added support for [**Botany Pots**](https://modrinth.com/mod/botany-pots). You can now grow Cucumbers, Green Beans, Sunflowers, and the Wild Bushes in pots! (Thanks to [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) for the built-in datapack!)
+  - Hamster Bedding can also be used as a fertilizer in the pots.
 
 ### Changed
 - **Animations**
