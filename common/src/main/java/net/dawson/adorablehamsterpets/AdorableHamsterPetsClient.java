@@ -373,7 +373,14 @@ public class AdorableHamsterPetsClient {
     }
 
     private static boolean hasGuideBook(net.minecraft.entity.player.PlayerEntity player) {
-        return player.getInventory().contains(new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get()));
+        // Iterate and check item type to ignore NBT/Components
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            ItemStack stack = player.getInventory().getStack(i);
+            if (stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void sendWarningPart1(net.minecraft.entity.player.PlayerEntity player) {
