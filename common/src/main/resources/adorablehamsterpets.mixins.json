@@ -35,6 +35,8 @@
     "accessor.BookContentsBuilderAccessor",
     "client.accessor.GuiButtonEntryAccessor",
     "client.LivingEntityRendererMixin",
+    "client.accessor.InGameHudAccessor",
+    "client.InGameHudMixin",
     "client.accessor.ClickableWidgetAccessor"
   ],
   "injectors": {

@@ -158,10 +158,15 @@ public class AhpConfig extends Config {
     public boolean enableShoulderDismountMessages = true;
 
     @NonSync
-    @ConfigGroup.Pop
     @Translatable.Name("Jade Hamster Debug Info")
     @Translatable.Desc("More stats than anyone asked for. Defaults to off— mercifully.")
     public boolean enableJadeHamsterDebugInfo = false;
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Action Bar Duration")
+    @Translatable.Desc("The duration (in ticks) that action bar messages stay on screen. Only affects your personal computer. Vanilla is 60 (3 seconds), which is barely enough time to realize you're reading. Crank this up to savor the text. (20 ticks = 1 second).")
+    public ValidatedInt actionBarDuration = new ValidatedInt(100, 300, 40);
 
     // --- Announcements & Update Notes ---
     @Translatable.Name("Announcements & Update Notes")
