@@ -24,6 +24,14 @@ public class CheeseItem extends Item {
         super(settings);
     }
 
+    /**
+     * Color the item name gold.
+     */
+    @Override
+    public Text getName(ItemStack stack) {
+        return super.getName(stack).copy().formatted(Formatting.GOLD);
+    }
+
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         if (Configs.AHP.enableItemTooltips) {
