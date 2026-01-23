@@ -32,6 +32,9 @@ public final class AdorableHamsterPetsNeoForge {
         AdorableHamsterPets.initRegistries();
         AdorableHamsterPets.initAttributes();
 
+        // --- Register Spawn Placements ---
+        AdorableHamsterPets.registerSpawnPlacements();
+
         // --- Register custom biome modifier ---
         ModBiomeModifiers.register(modEventBus);
     }

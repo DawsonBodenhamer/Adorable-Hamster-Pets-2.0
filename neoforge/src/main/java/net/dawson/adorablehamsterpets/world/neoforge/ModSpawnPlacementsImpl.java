@@ -11,6 +11,7 @@ import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * The NeoForge-specific implementation for {@link ModSpawnPlacements}.
@@ -24,7 +25,7 @@ public class ModSpawnPlacementsImpl {
     /**
      * Caches the spawn placement data passed from the common module.
      */
-    public static <T extends MobEntity> void register(EntityType<T> entityType, SpawnLocation location, Heightmap.Type heightmapType, SpawnRestriction.SpawnPredicate<T> predicate) {
+    public static <T extends MobEntity> void register(Supplier<? extends EntityType<T>> entityType, SpawnLocation location, Heightmap.Type heightmapType, SpawnRestriction.SpawnPredicate<T> predicate) {
         PENDING_PLACEMENTS.add(new SpawnPlacementData<>(entityType, location, heightmapType, predicate));
     }
 
@@ -43,13 +44,13 @@ public class ModSpawnPlacementsImpl {
      * A helper record to store the parameters for a single spawn placement registration.
      */
     private record SpawnPlacementData<T extends MobEntity>(
-            EntityType<T> entityType,
+            Supplier<? extends EntityType<T>> entityTypeSupplier,
             SpawnLocation location,
             Heightmap.Type heightmapType,
             SpawnRestriction.SpawnPredicate<T> predicate
     ) {
         void register(RegisterSpawnPlacementsEvent event) {
-            event.register(this.entityType, this.location, this.heightmapType, this.predicate, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+            event.register(this.entityTypeSupplier.get(), this.location, this.heightmapType, this.predicate, RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
     }
 }

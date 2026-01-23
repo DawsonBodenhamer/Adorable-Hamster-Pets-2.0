@@ -7,14 +7,15 @@ import net.minecraft.entity.SpawnLocation;
 import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.world.Heightmap;
 
+import java.util.function.Supplier;
+
 /**
  * Common class for registering entity spawn restrictions using an @ExpectPlatform bridge.
  * The actual implementation is provided by each loader.
  */
 public final class ModSpawnPlacements {
     @ExpectPlatform
-    public static <T extends MobEntity> void register(EntityType<T> entityType, SpawnLocation location, Heightmap.Type heightmapType, SpawnRestriction.SpawnPredicate<T> predicate) {
-        // This is a placeholder that will be replaced by the platform-specific implementation at runtime.
+    public static <T extends MobEntity> void register(Supplier<? extends EntityType<T>> entityType, SpawnLocation location, Heightmap.Type heightmapType, SpawnRestriction.SpawnPredicate<T> predicate) {
         throw new AssertionError();
     }
 }

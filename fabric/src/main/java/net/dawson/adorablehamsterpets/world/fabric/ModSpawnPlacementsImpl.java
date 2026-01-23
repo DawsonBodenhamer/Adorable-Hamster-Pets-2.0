@@ -7,13 +7,15 @@ import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.world.Heightmap;
 
+import java.util.function.Supplier;
+
 /**
  * The Fabric-specific implementation for {@link ModSpawnPlacements}.
  * This class is called by the @ExpectPlatform bridge.
  */
 public class ModSpawnPlacementsImpl {
-    public static <T extends MobEntity> void register(EntityType<T> entityType, SpawnLocation location, Heightmap.Type heightmapType, SpawnRestriction.SpawnPredicate<T> predicate) {
-        // On Fabric, we can call the vanilla/Fabric static method directly.
-        SpawnRestriction.register(entityType, location, heightmapType, predicate);
+    // Fabric accepts Supplier; call .get() immediately
+    public static <T extends MobEntity> void register(Supplier<? extends EntityType<T>> entityTypeSupplier, SpawnLocation location, Heightmap.Type heightmapType, SpawnRestriction.SpawnPredicate<T> predicate) {
+        SpawnRestriction.register(entityTypeSupplier.get(), location, heightmapType, predicate);
     }
 }

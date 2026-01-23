@@ -112,6 +112,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Botany Pots Compatibility**
   - Added support for [**Botany Pots**](https://modrinth.com/mod/botany-pots). You can now grow Cucumbers, Green Beans, Sunflowers, and the Wild Bushes in pots! (Thanks to [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) for the built-in datapack!)
   - Hamster Bedding can also be used as a fertilizer in the pots.
+- **Configurable Biome Tag Exclusion:**
+  - Added a new `Exclude Biome Tags` list to the World Gen config. By default, this now excludes `#minecraft:is_ocean` and `#minecraft:is_river` to prevent spawns in those biomes regardless of other settings.
 
 ### Changed
 - **Animations**
@@ -167,6 +169,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Pale Oak Bed Particles**
   - Fixed the Pale Oak Hamster Bed missing its block model, which caused missing texture (purple/black) particles when breaking the block. This ensures full visual compatibility if you are using a Pale Garden backport mod on 1.21.1 or 1.20.1.
   - Note: there is no Pale Oak Hamster Bed recipe unless you add one with a datapack. I'm running my Data Generator in a 1.21.1 development environment, and the class `Items.PALE_OAK_PLANKS` does not exist in the code yet, so I cannot reference it in the Java generator to create the recipe.
+- **Fixed Water/Void Spawning:**
+  - Resolved an issue where hamsters could spawn floating in oceans/rivers or over the void in Skyblock worlds. This was caused by the spawn restriction rules not being registered at the correct time in the mod loading lifecycle, effectively disabling the "valid ground block" check.
 
 ---
 

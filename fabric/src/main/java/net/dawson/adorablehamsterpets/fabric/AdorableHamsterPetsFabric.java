@@ -15,6 +15,7 @@ public final class AdorableHamsterPetsFabric implements ModInitializer {
         AdorableHamsterPets.initRegistries();
         AdorableHamsterPets.initAttributes();
         AdorableHamsterPets.initCommonSetup();
+        AdorableHamsterPets.registerSpawnPlacements();
         BiomeModifications.addProperties(
                 ModEntitySpawns::shouldSpawnInBiome, // Use the common decider method
                 (context, props) -> {
