@@ -58,13 +58,20 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvider {
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constants and Static Utilities
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     public static final MapCodec<HamsterBedBlock> CODEC = createCodec(HamsterBedBlock::new);
+
+    // Block State Properties
     public static final BooleanProperty OCCUPIED = BooleanProperty.of("occupied");
     public static final BooleanProperty UPSIDE_DOWN = BooleanProperty.of("upside_down");
     public static final DirectionProperty ORIENTATION = DirectionProperty.of("orientation", dir -> dir.getAxis().isHorizontal());
     public static final EnumProperty<WoodVariant> WOOD_VARIANT = EnumProperty.of("wood_variant", WoodVariant.class);
 
-    // --- VoxelShape Definitions ---
+    // Voxel Shapes
     private static final VoxelShape SHAPE_NORMAL = Stream.of(
             Block.createCuboidShape(1, 0, 1, 15, 1, 15), // Floor
             Block.createCuboidShape(1, 0, 1, 15, 3, 2),   // North Wall
@@ -74,12 +81,29 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
     ).reduce(VoxelShapes::union).get();
 
     private static final VoxelShape SHAPE_UPSIDE_DOWN = Stream.of(
-            Block.createCuboidShape(1, 15, 1, 15, 16, 15), // Flipped Floor (now ceiling)
+            Block.createCuboidShape(1, 15, 1, 15, 16, 15), // Flipped Floor (ceiling)
             Block.createCuboidShape(1, 13, 1, 15, 16, 2),   // Flipped North Wall
             Block.createCuboidShape(1, 13, 14, 15, 16, 15), // Flipped South Wall
             Block.createCuboidShape(1, 13, 2, 2, 16, 14),   // Flipped West Wall
             Block.createCuboidShape(14, 13, 2, 15, 16, 14)  // Flipped East Wall
     ).reduce(VoxelShapes::union).get();
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructors
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    public HamsterBedBlock(Settings settings) {
+        super(settings);
+        setDefaultState(getStateManager().getDefaultState()
+                .with(OCCUPIED, false)
+                .with(UPSIDE_DOWN, false)
+                .with(ORIENTATION, Direction.NORTH)
+                .with(WOOD_VARIANT, WoodVariant.OAK));
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Public Methods
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
     public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
@@ -91,41 +115,22 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
         return state.get(UPSIDE_DOWN) ? SHAPE_UPSIDE_DOWN : SHAPE_NORMAL;
     }
 
-    public HamsterBedBlock(Settings settings) {
-        super(settings);
-        setDefaultState(getStateManager().getDefaultState()
-                .with(OCCUPIED, false)
-                .with(UPSIDE_DOWN, false)
-                .with(ORIENTATION, Direction.NORTH)
-                .with(WOOD_VARIANT, WoodVariant.OAK));
-    }
-
-    @Override
-    protected MapCodec<? extends BlockWithEntity> getCodec() {
-        return CODEC;
-    }
-
     @Nullable
     @Override
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
         return new HamsterBedBlockEntity(pos, state);
     }
 
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        builder.add(OCCUPIED, UPSIDE_DOWN, ORIENTATION, WOOD_VARIANT);
-    }
-
-    // Pick a random but deterministic orientation when the block is placed
     @Override
     public BlockState getPlacementState(ItemPlacementContext ctx) {
         boolean isUpsideDown = ctx.getSide() == Direction.DOWN;
         WoodVariant variant = ctx.getStack().getOrDefault(ModDataComponentTypes.WOOD_VARIANT.get(), WoodVariant.OAK);
-
         BlockPos pos = ctx.getBlockPos();
+
         // Derive a pseudo‑random but deterministic orientation from the block position
         long s = pos.asLong() ^ 0x9E3779B97F4A7C15L; // Noise so lines/grids don’t align
-        s ^= (s >>> 30);  s *= 0xBF58476D1CE4E5B9L;
-        s ^= (s >>> 27);  s *= 0x94D049BB133111EBL;
+        s ^= (s >>> 30); s *= 0xBF58476D1CE4E5B9L;
+        s ^= (s >>> 27); s *= 0x94D049BB133111EBL;
         s ^= (s >>> 31);
 
         int idx = (int)(s & 3L); // 0..3 → N/E/S/W
@@ -183,7 +188,7 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (world.isClient) {
-            // --- 1. Trigger hand swing ---
+            // --- 1. Client-Side Validation ---
             ItemStack heldStack = player.getStackInHand(player.getActiveHand());
             boolean isLureItem = ConfigDataCache.isLureItem(heldStack);
             boolean isAvoidanceItem = ConfigDataCache.isBedAvoidanceFood(heldStack);
@@ -194,7 +199,7 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
         BlockEntity be = world.getBlockEntity(pos);
         if (be instanceof HamsterBedBlockEntity bedEntity) {
 
-            // --- 2. Trigger Animation, Particles, and Sound on any interaction ---
+            // --- 2. Generic Interaction Feedback ---
             if (state.get(OCCUPIED)) {
                 bedEntity.triggerAnim("hamster_bed_controller", "anim_bed_interact_occupied");
             } else {
@@ -213,13 +218,13 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
 
             ItemStack heldStack = player.getStackInHand(player.getActiveHand());
 
-            // --- 3. Unlinking Logic (Sneak + Bed Avoidance Item) ---
+            // --- 3. Unlinking Logic (Sneak + Repellent) ---
             if (player.isSneaking() && ConfigDataCache.isBedAvoidanceFood(heldStack)) {
                 bedEntity.unlinkHamster(player);
                 return ActionResult.SUCCESS;
             }
 
-            // --- 4. Bed Avoidance Food Interaction ---
+            // --- 4. Handle Bed Avoidance/Repellent ---
             if (ConfigDataCache.isBedAvoidanceFood(heldStack)) {
                 // Wake up hamster if bed is occupied
                 if (state.get(OCCUPIED)) {
@@ -231,7 +236,7 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                     });
                 }
 
-                // --- 5. Apply repellent effect ---
+                // Apply repellent
                 bedEntity.applyRepellentEffect();
                 player.sendMessage(Text.translatable("message.adorablehamsterpets.bed_repellent_applied").formatted(Formatting.RED), true);
                 world.playSound(null, pos, SoundEvents.BLOCK_HONEY_BLOCK_SLIDE, SoundCategory.BLOCKS, 1.2f, 0.8f);
@@ -242,7 +247,7 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                 return ActionResult.SUCCESS;
             }
 
-            // --- 6. Lure Item Interaction ---
+            // --- 5. Lure Item Logic ---
             if (ConfigDataCache.isLureItem(heldStack)) {
                 if (state.get(UPSIDE_DOWN)) {
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.bed_upside_down_lure_fail").formatted(Formatting.RED), true);
@@ -271,9 +276,8 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                 return ActionResult.SUCCESS;
             }
 
-            // --- 7. Resurrection Tribute Interaction ---
+            // --- 6. Resurrection Tribute Logic ---
             if (ConfigDataCache.isResurrectionTribute(heldStack)) {
-
                 // A. Check Global Config
                 if (!Configs.AHP.enableRespawnInBed.get()) {
                     bedEntity.triggerFailSound();
@@ -286,13 +290,10 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                     // Activate
                     bedEntity.setRespawnEnabled(true);
 
-                    // Consume item
                     if (!player.getAbilities().creativeMode) {
                         heldStack.decrement(1);
                     }
 
-                    // --- Feedback ---
-                    // Sound
                     world.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.BLOCKS, 1.0f, 1.0f);
 
                     // Spawn Totem particles if it's a totem, otherwise generic happy particles + item particles
@@ -311,27 +312,24 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                     // Deactivate and refund
                     bedEntity.setRespawnEnabled(false);
 
-                    // Refund 1 item (Spawn in world to avoid inventory overflow issues)
                     // Refund the specific item held in hand to match the "key" used.
                     ItemStack refundStack = new ItemStack(heldStack.getItem());
                     ItemScatterer.spawn(world, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, refundStack);
 
-                    // Feedback
                     world.playSound(null, pos, SoundEvents.BLOCK_BEACON_DEACTIVATE, SoundCategory.BLOCKS, 1.0f, 1.0f);
-
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.respawn.deactivated").formatted(Formatting.YELLOW), true);
                 }
 
                 return ActionResult.SUCCESS;
             }
 
-            // --- 8. Sneak Action: Cycle Wander Distance ---
+            // --- 7. Configuration Actions (Sneak Cycle / Toggle Wander) ---
             if (player.isSneaking()) {
                 bedEntity.cycleWanderDistance(player);
                 return ActionResult.SUCCESS;
             }
 
-            // --- 9. Default Action: Toggle Wander Mode ---
+            // --- 8. Default Action: Toggle Wander Mode ---
             bedEntity.toggleWanderMode(player);
             return ActionResult.SUCCESS;
         }
@@ -393,7 +391,6 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                 }
             });
         } else {
-            // Server Ticker
             return validateTicker(type, ModBlockEntities.HAMSTER_BED_BLOCK_ENTITY.get(), HamsterBedBlockEntity::tick);
         }
     }
@@ -419,5 +416,19 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
             stack.set(ModDataComponentTypes.WANDER_DISTANCE.get(), bedEntity.getWanderDistance());
         }
         return List.of(stack);
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Protected Methods
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    @Override
+    protected MapCodec<? extends BlockWithEntity> getCodec() {
+        return CODEC;
+    }
+
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(OCCUPIED, UPSIDE_DOWN, ORIENTATION, WOOD_VARIANT);
     }
 }
