@@ -26,6 +26,7 @@ public class ModEntitySpawns {
     private static final Set<TagKey<Biome>> PARSED_TAGS = new HashSet<>();
     private static final Set<Identifier> PARSED_INCLUDES = new HashSet<>();
     private static final Set<Identifier> PARSED_EXCLUDES = new HashSet<>();
+    private static final Set<TagKey<Biome>> PARSED_EXCLUDE_TAGS = new HashSet<>();
 
     static {
         VALID_SPAWN_BLOCKS.add(Blocks.SAND);
@@ -74,6 +75,7 @@ public class ModEntitySpawns {
         PARSED_TAGS.clear();
         PARSED_INCLUDES.clear();
         PARSED_EXCLUDES.clear();
+        PARSED_EXCLUDE_TAGS.clear();
 
         // Parse Tags
         for (String tagStr : Configs.AHP_WORLDGEN.spawnBiomeTags) {
@@ -93,7 +95,7 @@ public class ModEntitySpawns {
             }
         }
 
-        // Parse Excludes
+        // Parse Excludes (IDs)
         for (String biomeIdStr : Configs.AHP_WORLDGEN.excludeBiomes) {
             try {
                 PARSED_EXCLUDES.add(new Identifier(biomeIdStr));
@@ -102,8 +104,17 @@ public class ModEntitySpawns {
             }
         }
 
-        AdorableHamsterPets.LOGGER.info("[BiomeConfig] Parsed {} tags, {} included biomes, and {} excluded biomes.",
-                PARSED_TAGS.size(), PARSED_INCLUDES.size(), PARSED_EXCLUDES.size());
+        // Parse Excludes (Tags)
+        for (String tagStr : Configs.AHP_WORLDGEN.excludeBiomeTags) {
+            try {
+                PARSED_EXCLUDE_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
+            } catch (Exception e) {
+                AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome exclusion tag identifier in config: '{}'", tagStr);
+            }
+        }
+
+        AdorableHamsterPets.LOGGER.info("[BiomeConfig] Parsed {} tags, {} includes, {} exclude IDs, and {} exclude tags.",
+                PARSED_TAGS.size(), PARSED_INCLUDES.size(), PARSED_EXCLUDES.size(), PARSED_EXCLUDE_TAGS.size());
     }
 
     /**
@@ -117,21 +128,29 @@ public class ModEntitySpawns {
         Identifier biomeId = ctx.getKey().orElse(null);
         if (biomeId == null) return false;
 
-        // 1. Exclusion check (highest priority)
+        // 1. Exclusion check (ID) - Highest Priority
         if (PARSED_EXCLUDES.contains(biomeId)) {
             return false;
         }
-        // 2. Inclusion check (specific biomes)
+
+        // 2. Exclusion check (Tag) - High Priority
+        for (TagKey<Biome> tag : PARSED_EXCLUDE_TAGS) {
+            if (ctx.hasTag(tag)) {
+                return false;
+            }
+        }
+
+        // 3. Inclusion check (ID)
         if (PARSED_INCLUDES.contains(biomeId)) {
             return true;
         }
-        // 3. Tag check
+
+        // 4. Inclusion check (Tag)
         for (TagKey<Biome> tag : PARSED_TAGS) {
             if (ctx.hasTag(tag)) {
                 return true;
             }
         }
-        // 4. Default to false if no rules match
         return false;
     }
 
@@ -145,21 +164,29 @@ public class ModEntitySpawns {
         Identifier biomeId = biomeEntry.getKey().map(RegistryKey::getValue).orElse(null);
         if (biomeId == null) return false;
 
-        // 1. Exclusion check
+        // 1. Exclusion check (ID) - Highest Priority
         if (PARSED_EXCLUDES.contains(biomeId)) {
             return false;
         }
-        // 2. Inclusion check
+
+        // 2. Exclusion check (Tag) - High Priority
+        for (TagKey<Biome> tag : PARSED_EXCLUDE_TAGS) {
+            if (biomeEntry.isIn(tag)) {
+                return false;
+            }
+        }
+
+        // 3. Inclusion check (ID)
         if (PARSED_INCLUDES.contains(biomeId)) {
             return true;
         }
-        // 3. Tag check
+
+        // 4. Inclusion check (Tag)
         for (TagKey<Biome> tag : PARSED_TAGS) {
             if (biomeEntry.isIn(tag)) {
                 return true;
             }
         }
-        // 4. Default to false
         return false;
     }
 }

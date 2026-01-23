@@ -122,6 +122,14 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("A list of specific biome IDs to NEVER allow spawns in, even if they match a tag. This overrides all other settings. Format: 'mod_id:biome_name'. For example, 'minecraft:plains'.")
     public List<String> excludeBiomes = new ArrayList<>(List.of("mod_id:biome_name"));
 
+    @Translatable.Name("Exclude Biome Tags")
+    @Translatable.Desc("A list of Biome Tags to NEVER allow spawns in. For excluding broad categories like Oceans or Rivers without listing every single ID. Overrides inclusions.")
+    public List<String> excludeBiomeTags = new ArrayList<>(List.of(
+            "minecraft:is_ocean",
+            "minecraft:is_river",
+            "minecraft:is_deep_ocean"
+    ));
+
     @Translatable.Name("Variant Spawning by Biome")
     @Translatable.Desc("For the aspiring digital zoologist. This is where you control exactly which hamster colors appear in which biomes. The system checks each color group below in order, from top to bottom (rarest to most common). The first base color that a biome qualifies for is the one that will spawn there. 'Why no settings for orange hamsters?' Because orange is the default fallback if no other rules match.")
     public ConfigGroup variantSpawning = new ConfigGroup("variantSpawning", true);
