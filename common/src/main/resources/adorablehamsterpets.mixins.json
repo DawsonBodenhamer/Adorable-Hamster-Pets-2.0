@@ -31,7 +31,9 @@
     "accessor.ScreenWidgetAdder",
     "accessor.BookContentsBuilderAccessor",
     "client.accessor.GuiButtonEntryAccessor",
-    "client.LivingEntityRendererMixin"
+    "client.LivingEntityRendererMixin",
+    "client.accessor.InGameHudAccessor",
+    "client.InGameHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1

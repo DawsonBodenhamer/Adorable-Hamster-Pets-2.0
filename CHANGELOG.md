@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The hamsters were too squishy. This update introduces military-grade protection for your rodents and a questionable, overengineered new method of deforestation.
 
 ### Added
+- **Configurable Action Bar Duration**
+  - Added a new setting in "UI & Quality of Life" to adjust how long action bar messages stay on screen so now you can actually read them. I couldn't find a mod that did this so I just added it myself. Defaults to 5 seconds (vanilla is 3 seconds), adjustable up to 15 seconds.
 - **Hamster Tips Guide Book to Custom Creative Tab**
   - Registered the guide book item in the Adorable Hamster Pets creative menu group.
   - Linked my custom Advancements tree to the Guidebook with a star-shaped button on the landing page.
