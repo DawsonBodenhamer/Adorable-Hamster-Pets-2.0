@@ -1162,6 +1162,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * True any time the hamster is falling.
      */
     public boolean shouldRenderFlying() {
+        if (this.isSitting()) return false;
+
         return this.isThrown() || (!this.isOnGround() && this.getVelocity().y < -0.01); // Extremely high sensitivity
     }
     /**
