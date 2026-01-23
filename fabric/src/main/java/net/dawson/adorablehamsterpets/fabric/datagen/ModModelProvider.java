@@ -21,8 +21,7 @@ public class ModModelProvider extends FabricModelProvider {
 
     // Helper for creating Hamster Bed models
     private void generateHamsterBedVariantModels(BlockStateModelGenerator generator) {
-        // TODO: Add "pale_oak" when porting
-        List<String> woodTypes = List.of("oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "bamboo");
+        List<String> woodTypes = List.of("oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "bamboo", "pale_oak");
         // Base model ID
         Identifier baseModelId = Identifier.of(AdorableHamsterPets.MOD_ID, "block/hamster_bed");
         for (String wood : woodTypes) {
