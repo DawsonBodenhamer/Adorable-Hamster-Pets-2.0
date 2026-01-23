@@ -1,4 +1,19 @@
 {
+	"conditions": [
+		{
+			"type": "forge:mod_loaded", "modid": "croptopia"
+		}
+	],
+	"neoforge:conditions": [
+		{
+			"type": "neoforge:mod_loaded", "modid": "croptopia"
+		}
+	],
+	"fabric:load_conditions": [
+		{
+			"condition": "fabric:all_mods_loaded", "values": ["croptopia"]
+		}
+	],
 	"type": "botanypots:crop",
 	"seed": {
 		"item": "adorablehamsterpets:wild_green_bean_bush"
