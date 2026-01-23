@@ -85,10 +85,15 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.description2").formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls1").formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls2").formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.lure_hint").formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.repellent_hint").formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.unlink_hint").formatted(Formatting.GRAY));
-                // --- 2. Respawn Status & Hint ---
+
+                // --- 2. Dynamic Interaction Hints ---
+                Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
+                Text repellentName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.bedAvoidanceFoods).copy().formatted(Formatting.RED, Formatting.BOLD);
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.lure_hint", lureName).formatted(Formatting.GRAY));
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.repellent_hint", repellentName).formatted(Formatting.GRAY));
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.unlink_hint", repellentName).formatted(Formatting.GRAY));
+
+                // --- 3. Respawn Status & Hint ---
                 boolean configEnabled = Configs.AHP.enableRespawnInBed.get();
 
                 Text statusText;
@@ -107,7 +112,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.label", statusText));
                 tooltip.add(hintText);
 
-                // --- 3. Conditional Linked Info ---
+                // --- 4. Conditional Linked Info ---
                 UUID hamsterUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID.get());
                 Text hamsterName = stack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME.get());
                 WanderDistance wanderDistance = stack.get(ModDataComponentTypes.WANDER_DISTANCE.get());

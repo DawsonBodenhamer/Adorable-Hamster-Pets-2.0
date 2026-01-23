@@ -128,6 +128,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Added support for the `hamster_thump_sound` keyframe in the crash animation, triggering `ModSounds.HAMSTER_THUMP` for extra dramatic effect.
 - **Wild Bush Textures**
   - Thanks to [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) for giving the textures for Wild Green Bean and Wild Cucumber bushes a fresh new look!
+- **Dynamic Bed Tooltips**
+  - The Hamster Bed item and Jade tooltips now dynamically display the names of the configured Lure and Repellent items, ensuring the text matches your config settings.
 
 ### Fixed
 - **Data Structure & Recipes** (Thanks again [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)

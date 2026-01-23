@@ -28,6 +28,14 @@ public class CheeseItem extends Item {
     }
 
     /**
+     * Color the item name gold.
+     */
+    @Override
+    public Text getName(ItemStack stack) {
+        return super.getName(stack).copy().formatted(Formatting.GOLD);
+    }
+
+    /**
      * Dynamically builds the item's ComponentMap, ensuring the FoodComponent
      * always reflects the current configuration values. This is crucial for compatibility
      * with mods like AppleSkin that read this component for their HUD overlays.
