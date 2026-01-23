@@ -107,7 +107,8 @@ public class ModEntitySpawns {
         // Parse Excludes (Tags)
         for (String tagStr : Configs.AHP_WORLDGEN.excludeBiomeTags) {
             try {
-                PARSED_EXCLUDE_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
+                // 1.20.1: Identifier.of(tagStr) -> new Identifier(tagStr)
+                PARSED_EXCLUDE_TAGS.add(TagKey.of(RegistryKeys.BIOME, new Identifier(tagStr)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome exclusion tag identifier in config: '{}'", tagStr);
             }

@@ -9,6 +9,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * The Forge-specific implementation for spawn placements.
@@ -20,16 +21,15 @@ public class ModSpawnPlacementsImpl {
     private static final List<SpawnPlacementData<?>> PENDING_PLACEMENTS = new ArrayList<>();
 
     /**
-     * Caches the spawn placement data passed from the common module via the @ExpectPlatform bridge.
+     * Caches the spawn placement data passed from the common module.
      */
-    public static <T extends MobEntity> void register(EntityType<T> entityType, SpawnRestriction.Location location, Heightmap.Type heightmapType, SpawnRestriction.SpawnPredicate<T> predicate) {
-        PENDING_PLACEMENTS.add(new SpawnPlacementData<>(entityType, location, heightmapType, predicate));
+    public static <T extends MobEntity> void register(Supplier<? extends EntityType<T>> entityTypeSupplier, SpawnRestriction.Location location, Heightmap.Type heightmapType, SpawnRestriction.SpawnPredicate<T> predicate) {
+        PENDING_PLACEMENTS.add(new SpawnPlacementData<>(entityTypeSupplier, location, heightmapType, predicate));
     }
 
     /**
      * Listens for the Forge event and registers all cached spawn placements.
      * This method is static and is automatically called by Forge because its class is registered to the event bus.
-     * @param event The event fired by Forge for registering spawn placements.
      */
     @SubscribeEvent
     public static void onRegisterSpawnPlacements(SpawnPlacementRegisterEvent event) {
@@ -43,7 +43,7 @@ public class ModSpawnPlacementsImpl {
      * A helper record to store the parameters for a single spawn placement registration.
      */
     private record SpawnPlacementData<T extends MobEntity>(
-            EntityType<T> entityType,
+            Supplier<? extends EntityType<T>> entityTypeSupplier,
             SpawnRestriction.Location location,
             Heightmap.Type heightmapType,
             SpawnRestriction.SpawnPredicate<T> predicate
@@ -53,7 +53,7 @@ public class ModSpawnPlacementsImpl {
          * @param event The spawn placement registration event.
          */
         void register(SpawnPlacementRegisterEvent event) {
-            event.register(this.entityType, this.location, this.heightmapType, this.predicate, SpawnPlacementRegisterEvent.Operation.REPLACE);
+            event.register(this.entityTypeSupplier.get(), this.location, this.heightmapType, this.predicate, SpawnPlacementRegisterEvent.Operation.REPLACE);
         }
     }
 }

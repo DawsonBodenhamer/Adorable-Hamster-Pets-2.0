@@ -97,7 +97,6 @@ public class AdorableHamsterPets {
 			PlayerEvent.PLAYER_JOIN.register(AdorableHamsterPets::onPlayerJoin);
 			PlayerEvent.PLAYER_CLONE.register(AdorableHamsterPets::onPlayerClone);
 			CommandRegistrationEvent.EVENT.register(ModCommands::register);
-			LifecycleEvent.SETUP.register(AdorableHamsterPets::onSetup);
 		}
 	}
 
@@ -110,13 +109,14 @@ public class AdorableHamsterPets {
 	}
 
 	/**
-	 * This method is called during the SETUP lifecycle event, after all registries are frozen.
-	 * It's the safe place to register things that require fully-realized registry objects,
-	 * like spawn placements.
+	 * Registers entity spawn placements.
+	 * This must be called at specific times depending on the loader:
+	 * - Fabric: During onInitialize.
+	 * - NeoForge: During the RegisterSpawnPlacementsEvent (or queued before it).
 	 */
-	private static void onSetup() {
-		// --- Spawn Restriction Registration ---
-		ModSpawnPlacements.register(ModEntities.HAMSTER.get(), SpawnRestriction.Location.ON_GROUND,
+	public static void registerSpawnPlacements() {
+		// Use SpawnRestriction.Location on 1.20.1
+		ModSpawnPlacements.register(ModEntities.HAMSTER, SpawnRestriction.Location.ON_GROUND,
 				Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,
 				(type, world, reason, pos, random) -> (world.getBlockState(pos.down()).isIn(net.minecraft.registry.tag.BlockTags.ANIMALS_SPAWNABLE_ON) ||
 						ModEntitySpawns.VALID_SPAWN_BLOCKS.contains(world.getBlockState(pos.down()).getBlock())));

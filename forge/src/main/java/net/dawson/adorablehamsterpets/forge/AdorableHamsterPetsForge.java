@@ -28,6 +28,9 @@ public final class AdorableHamsterPetsForge {
         AdorableHamsterPets.initRegistries();
         ModBiomeModifiers.register(modEventBus);
 
+        // --- 1. Register Spawn Placements ---
+        AdorableHamsterPets.registerSpawnPlacements();
+
         // Register event listeners for the mod lifecycle
         modEventBus.addListener(this::onCommonSetup);
         modEventBus.addListener(this::onAttributeCreate); // listener for attributes
