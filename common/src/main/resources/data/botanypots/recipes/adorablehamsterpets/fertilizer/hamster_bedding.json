@@ -1,0 +1,8 @@
+{
+	"type": "botanypots:fertilizer",
+	"ingredient": {
+		"item": "adorablehamsterpets:hamster_bedding"
+	},
+	"min_growth": 1000,
+	"max_growth": 1400
+}

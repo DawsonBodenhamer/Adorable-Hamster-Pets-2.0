@@ -1,0 +1,39 @@
+{
+	"type": "botanypots:crop",
+	"seed": {
+		"item": "adorablehamsterpets:wild_cucumber_bush"
+	},
+	"categories": [
+		"dirt"
+	],
+	"growthTicks": 6000,
+		"drops": [
+		{
+			"chance": 1,
+			"output": {
+				"item": "adorablehamsterpets:cucumber_seeds"
+			},
+			"minRolls": 1,
+			"maxRolls": 2
+		}
+	],
+	"display": {
+		"type": "botanypots:transitional",
+		"phases": [ 
+			{
+				"type": "botanypots:simple",
+					"block": "adorablehamsterpets:wild_cucumber_bush",
+					"properties": {
+						"seeded": "false"
+					}
+			},
+			{
+				"type": "botanypots:simple",
+					"block": "adorablehamsterpets:wild_cucumber_bush",
+					"properties": {
+						"seeded": "true"
+					}
+			}
+		]
+	}
+}
