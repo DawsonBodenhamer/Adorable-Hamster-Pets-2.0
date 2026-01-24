@@ -315,10 +315,18 @@ public class AhpWorldGenConfig extends Config {
             "c:is_dry"
     ));
 
-    @ConfigGroup.Pop
     @Translatable.Name("Specific Biomes")
     @Translatable.Desc("Specific biome IDs where these sunflowers can replace the vanilla ones. Format: 'mod_id:biome_name'. They’re picky.")
     public List<String> sunflowerBiomes = new ArrayList<>(List.of("minecraft:sunflower_plains"));
+
+    @Translatable.Name("Enable Glowing Sunflowers")
+    @Translatable.Desc("Enables the 'CasualAnimalEnjoyer' Protocol. A small chance for a random nearby sunflower to become a bioluminescent beacon at night— a reference to the Kikoriki cartoon, 'It Can't Be True' episode, around the 3:22 mark. Added upon request as a thank-you to CasualAnimalEnjoyer for their massive help with mod compatibility.")
+    public boolean enableGlowingSunflowers = true;
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Glow Rarity")
+    @Translatable.Desc("1 in X random ticks (20 ticks per second). Lower = more likely. Higher = more rare. Note: This only runs at night.")
+    public ValidatedInt glowingSunflowerChance = new ValidatedInt(1000, 10000, 10);
 
     // --- Cucumber Bush Settings ---
     @Translatable.Name("Cucumber Bush Settings")

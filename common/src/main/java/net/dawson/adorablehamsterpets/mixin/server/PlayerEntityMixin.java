@@ -5,6 +5,8 @@ import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
+import net.dawson.adorablehamsterpets.block.ModBlocks;
+import net.dawson.adorablehamsterpets.block.custom.SunflowerBlock;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
@@ -92,6 +94,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private boolean ahp$cachedHasGuideBook = false;
     @Unique private boolean ahp$guideBookTrackingInitialized = false;
     @Unique private int ahp$guideBookCheckTimer = 0;
+    @Unique private int ahp$sunflowerCheckTimer = 0;
 
     // --- Constructor Injection ---
     @Inject(method = "<init>", at = @At("TAIL"))
@@ -374,6 +377,25 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // Tick Guidebook tracking
         tickGuideBookTracking();
+
+        // Glowing Sunflower Discovery (Easter Egg)
+        // Only run on server once per second
+        if (!world.isClient && ++this.ahp$sunflowerCheckTimer >= 20) {
+            this.ahp$sunflowerCheckTimer = 0;
+            // Feature must be enabled and must be night
+            if (Configs.AHP_WORLDGEN.enableGlowingSunflowers && !world.isDay()) {
+                BlockPos playerPos = self.getBlockPos();
+                // Scan small 5 block radius
+                for (BlockPos pos : BlockPos.iterate(playerPos.add(-5, -3, -5), playerPos.add(5, 3, 5))) {
+                    BlockState state = world.getBlockState(pos);
+                    if (state.isOf(ModBlocks.SUNFLOWER_BLOCK.get())
+                            && state.get(SunflowerBlock.LIT)) {
+                        ModCriteria.WITNESS_GLOWING_SUNFLOWER.get().trigger((ServerPlayerEntity) self);
+                        break; // Trigger once per check is sufficient
+                    }
+                }
+            }
+        }
 
         // Shoulder Pet Logic
         if (this.hasAnyShoulderHamster()) {

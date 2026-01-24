@@ -33,7 +33,7 @@ public class ModCriteria {
     public static final RegistrySupplier<DispensedHamsterBeddingCriterion> DISPENSED_HAMSTER_BEDDING = CRITERIA.register("dispensed_hamster_bedding", DispensedHamsterBeddingCriterion::new);
     public static final RegistrySupplier<TreeHeistDepletionCriterion> TREE_HEIST_DEPLETION = CRITERIA.register("tree_heist_depletion", TreeHeistDepletionCriterion::new);
     public static final RegistrySupplier<TreeHeistStartedCriterion> TREE_HEIST_STARTED = CRITERIA.register("tree_heist_started", TreeHeistStartedCriterion::new);
-
+    public static final RegistrySupplier<WitnessGlowingSunflowerCriterion> WITNESS_GLOWING_SUNFLOWER = CRITERIA.register("witness_glowing_sunflower", WitnessGlowingSunflowerCriterion::new);
 
     // --- 3. Main Registration Call ---
     public static void register() {

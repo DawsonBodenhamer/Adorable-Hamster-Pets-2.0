@@ -1,13 +1,14 @@
 {
   "variants": {
-    "half=lower": {
-      "model": "adorablehamsterpets:block/sunflower_block_bottom"
-    },
-    "half=upper,has_seeds=false": {
-      "model": "adorablehamsterpets:block/sunflower_block_top_no_seeds"
-    },
-    "half=upper,has_seeds=true": {
-      "model": "adorablehamsterpets:block/sunflower_block_top_with_seeds"
-    }
+    "half=lower,has_seeds=false,lit=false": { "model": "adorablehamsterpets:block/sunflower_block_bottom" },
+    "half=lower,has_seeds=true,lit=false": { "model": "adorablehamsterpets:block/sunflower_block_bottom" },
+    "half=lower,has_seeds=false,lit=true": { "model": "adorablehamsterpets:block/sunflower_block_bottom" },
+    "half=lower,has_seeds=true,lit=true": { "model": "adorablehamsterpets:block/sunflower_block_bottom" },
+
+    "half=upper,has_seeds=false,lit=false": { "model": "adorablehamsterpets:block/sunflower_block_top_no_seeds" },
+    "half=upper,has_seeds=true,lit=false": { "model": "adorablehamsterpets:block/sunflower_block_top_with_seeds" },
+
+    "half=upper,has_seeds=false,lit=true": { "model": "adorablehamsterpets:block/sunflower_block_top_no_seeds" },
+    "half=upper,has_seeds=true,lit=true": { "model": "adorablehamsterpets:block/sunflower_block_top_with_seeds" }
   }
 }

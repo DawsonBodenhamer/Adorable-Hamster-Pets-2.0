@@ -114,6 +114,11 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Hamster Bedding can also be used as a fertilizer in the pots.
 - **Configurable Biome Tag Exclusion:**
   - Added a new `Exclude Biome Tags` list to the World Gen config. By default, this now excludes `#minecraft:is_ocean` and `#minecraft:is_river` to prevent spawns in those biomes regardless of other settings.
+- **Glowing Sunflowers** (Easter Egg)
+  - Added a rare event where my custom sunflowers will emit light at night, accompanied by magical particles. Rare enough that it is highly unlikely for it to affect multiple sunflowers simultaneously.
+  - Includes a hidden advancement ("It Can't Be True!") for players who witness the phenomenon up close.
+  - Configurable via the 'Sunflower Settings' in the World Gen config.
+  - This is a reference to the Kikoriki cartoon, 'It Can't Be True' episode, around the 3:22 mark. Added upon request as a thank-you to [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) for their massive help with mod compatibility and bug fixing.
 
 ### Changed
 - **Animations**

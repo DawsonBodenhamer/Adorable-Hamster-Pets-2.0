@@ -41,7 +41,9 @@ public class ModBlocks {
                     .sounds(BlockSoundGroup.SWEET_BERRY_BUSH)));
 
     public static final RegistrySupplier<Block> SUNFLOWER_BLOCK = registerBlock("sunflower_block",
-            () -> new SunflowerBlock(AbstractBlock.Settings.copy(Blocks.SUNFLOWER).nonOpaque()));
+            () -> new SunflowerBlock(AbstractBlock.Settings.copy(Blocks.SUNFLOWER)
+                    .nonOpaque()
+                    .luminance(state -> state.get(SunflowerBlock.LIT) ? 15 : 0)));
 
     public static final RegistrySupplier<Block> HAMSTER_BED = registerBlock("hamster_bed",
             () -> new HamsterBedBlock(AbstractBlock.Settings.create().mapColor(MapColor.OAK_TAN).instrument(NoteBlockInstrument.BASS).strength(0.5F).sounds(BlockSoundGroup.WOOD).nonOpaque()));
