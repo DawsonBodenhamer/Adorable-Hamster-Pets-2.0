@@ -287,23 +287,21 @@ public class TreeHeistUtil {
         if (world.isClient || !(world instanceof ServerWorld serverWorld)) return;
 
         // 1. Anchor Visualization
-        // Spawns a rotating ring of Soul Fire Flames around the trunk anchor
+        // Spawns a rotating ring of particles around the trunk anchor
         if (anchor != null) {
-            for (int i = 0; i < 10; i++) { // 15 particles per tick
-                double timeOffset = world.getTime() * 0.7; // Closer to 1 increases speed
-                // Spread 8 "spokes" around circle
-                double angle = timeOffset + (i * (Math.PI / 8)); // Divide by larger number increase "spokes"
-                double radius = 0.85; // Radius (Slightly larger than 1 block)
-
-                double x = anchor.getX() + 0.5 + Math.cos(angle) * radius;
-                double z = anchor.getZ() + 0.5 + Math.sin(angle) * radius;
-                // Bobbing Y effect
-                double y = anchor.getY() + 0.5 + Math.sin(timeOffset) * 0.55; // Bob height multiplier
-
-                serverWorld.spawnParticles(ParticleTypes.WAX_ON, // Using WAX_ON on 1.20.1
-                        x, y, z,
-                        1, 0, 0, 0, 0);
-            }
+            ParticleEffectsUtil.spawnSpinningRing(
+                    world,
+                    anchor,
+                    // Using WAX_ON for 1.20.1
+                    ParticleTypes.WAX_ON,
+                    10,
+                    0.85,
+                    0.0,
+                    0.7,
+                    0.55,
+                    3.0,
+                    0.0
+            );
         }
 
         // 2. Canopy Visualization
