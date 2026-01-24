@@ -342,6 +342,8 @@
   "advancements.adorablehamsterpets.husbandry.murderer.description": "You killed a hamster. My only question is... why?",
   "advancements.adorablehamsterpets.husbandry.killed_by_hamster.title": "Rodent Reckoning",
   "advancements.adorablehamsterpets.husbandry.killed_by_hamster.description": "Defeated by a... hamster. I definitely won't put that on your tombstone.",
+  "advancements.adorablehamsterpets.husbandry.it_cant_be_true.title": "It Can't Be True!",
+  "advancements.adorablehamsterpets.husbandry.it_cant_be_true.description": "What do you mean this just a good for nothing weed? It glows at night.",
 
   "config.adorablehamsterpets.main.helpAndResources": "Help & Other Distractions",
   "config.adorablehamsterpets.main.helpAndResources.desc": "Buttons to press when you're lost, bored, or have found a bug that isn't just a hamster exhibiting existential angst.",
@@ -491,7 +493,8 @@
   "book.adorablehamsterpets.category.crops_food": "§r§6§l§nCrops and Food§r",
   "book.adorablehamsterpets.category.crops_food.desc": "You can't build a hamster empire on an empty stomach.$(br2)This chapter covers the entire food chain, from foraging for wild seeds to cultivating $(l:crops_food/green_beans)<dark_green><b>performance-enhancing legumes</>.$(br2)Also, $(l:crops_food/cheese)<gold><b>Cheese</>.",
     "book.adorablehamsterpets.entry.sunflower": "Sunflower",
-    "book.adorablehamsterpets.entry.sunflower.page1.body": "These aren't your average, purely decorative sunflowers. Right-click a seeded one to harvest <dark_green><b>Sunflower Seeds</>— a key ingredient for the $(l:crops_food/hamster_food_mix)<dark_green><b>Hamster Food Mix</>.$(br2)No, you can't plant the seeds yet. That feature is still... incubating. Patience.",
+    "book.adorablehamsterpets.entry.sunflower.page1.body": "These aren't your average, purely decorative sunflowers. Right-click a seeded one to harvest <dark_green><b>Sunflower Seeds</>— a key ingredient for the $(l:crops_food/hamster_food_mix)<dark_green><b>Hamster Food Mix</>.$(br2)Use <b>Bone Meal</> or plant the seeds to create more.",
+    "book.adorablehamsterpets.entry.sunflower.page2.body": "<light_gray><i>May even glow at night</>",
     "book.adorablehamsterpets.entry.sunflower.page1.image_title": "New Sunflowers",
     "book.adorablehamsterpets.entry.cucumber" : "Cucumbers",
     "book.adorablehamsterpets.entry.cucumber.page1.body": "Find these <dark_green><b>Wild Cucumber Bushes</> lurking in warmer biomes.$(br2)Right-click a seeded one.$(br2)This is the first step on your path to hamster-fueled glory.",

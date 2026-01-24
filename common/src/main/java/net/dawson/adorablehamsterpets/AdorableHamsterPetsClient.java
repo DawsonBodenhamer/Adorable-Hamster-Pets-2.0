@@ -39,6 +39,7 @@ import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.ClientParticleManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
@@ -133,9 +134,13 @@ public class AdorableHamsterPetsClient {
         // --- Register Client Commands ---
         ClientCommandRegistrationEvent.EVENT.register(ModClientCommands::register);
 
-        // --- Guidebook Warning Timer Reset ---
-        // Reset guidebook warning timer whenever the player joins a world
-        ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(player -> clientSessionTimer = 0);
+        // --- Timers Reset ---
+        ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(player -> {
+            // Reset guidebook warning timer
+            clientSessionTimer = 0;
+            // Clear particle manager
+            ClientParticleManager.INSTANCE.clear();
+        });
 
         // --- Register Tree Heist Sound & Jiggle Logic ---
         EntityEvent.ADD.register((entity, world) -> {
@@ -322,6 +327,11 @@ public class AdorableHamsterPetsClient {
 
         // --- 6. Guidebook Warning Logic ---
         handleGuidebookWarning(client);
+
+        // --- 7. Tick Particle Manager ---
+        if (client.world != null && !client.isPaused()) {
+            ClientParticleManager.INSTANCE.tick(client.world);
+        }
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────

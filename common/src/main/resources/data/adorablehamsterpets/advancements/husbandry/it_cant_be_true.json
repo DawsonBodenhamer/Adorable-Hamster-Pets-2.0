@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/root",
+  "display": {
+    "icon": {
+      "item": "adorablehamsterpets:sunflower_block"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.it_cant_be_true.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.it_cant_be_true.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "witnessed": {
+      "trigger": "adorablehamsterpets:witness_glowing_sunflower"
+    }
+  }
+}

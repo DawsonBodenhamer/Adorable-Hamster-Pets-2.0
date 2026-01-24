@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.advancement.criterion;
 
-import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.advancement.criterion.Criterion;
@@ -27,6 +26,8 @@ public class ModCriteria {
     public static final DispensedHamsterBeddingCriterion DISPENSED_HAMSTER_BEDDING = new DispensedHamsterBeddingCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "dispensed_hamster_bedding"));
     public static final TreeHeistDepletionCriterion TREE_HEIST_DEPLETION = new TreeHeistDepletionCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "tree_heist_depletion"));
     public static final TreeHeistStartedCriterion TREE_HEIST_STARTED = new TreeHeistStartedCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "tree_heist_started"));
+    public static final WitnessGlowingSunflowerCriterion WITNESS_GLOWING_SUNFLOWER = new WitnessGlowingSunflowerCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "witness_glowing_sunflower"));
+
     /**
      * Registers a criterion with Minecraft's advancement system.
      * @param criterion The criterion instance to register.
@@ -58,6 +59,7 @@ public class ModCriteria {
         register(DISPENSED_HAMSTER_BEDDING);
         register(TREE_HEIST_DEPLETION);
         register(TREE_HEIST_STARTED);
+        register(WITNESS_GLOWING_SUNFLOWER);
 
         AdorableHamsterPets.LOGGER.info("Registering Mod Criteria for " + AdorableHamsterPets.MOD_ID);
     }

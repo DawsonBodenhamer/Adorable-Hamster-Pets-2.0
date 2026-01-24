@@ -40,7 +40,9 @@ public class ModBlocks {
                     .sounds(BlockSoundGroup.SWEET_BERRY_BUSH)));
 
     public static final RegistrySupplier<Block> SUNFLOWER_BLOCK = registerBlock("sunflower_block",
-            () -> new SunflowerBlock(AbstractBlock.Settings.copy(Blocks.SUNFLOWER).nonOpaque()));
+            () -> new SunflowerBlock(AbstractBlock.Settings.copy(Blocks.SUNFLOWER)
+                    .nonOpaque()
+                    .luminance(state -> state.get(SunflowerBlock.LIT) ? 15 : 0)));
 
     public static final RegistrySupplier<Block> HAMSTER_BED = registerBlock("hamster_bed",
             // On 1.20.1. copy the settings of oak planks to avoid "Cannot resolve symbol 'NoteBlockInstrument" error
