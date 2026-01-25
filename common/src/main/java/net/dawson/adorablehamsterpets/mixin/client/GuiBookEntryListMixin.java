@@ -1,8 +1,8 @@
 package net.dawson.adorablehamsterpets.mixin.client;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.dawson.adorablehamsterpets.mixin.accessor.ScreenWidgetAdder;
 import net.dawson.adorablehamsterpets.mixin.client.accessor.GuiBookAccessor;
+import net.dawson.adorablehamsterpets.mixin.accessor.ScreenWidgetAdder;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -30,59 +30,63 @@ import java.util.stream.Stream;
 @Mixin(value = GuiBookEntryList.class, remap = false)
 public abstract class GuiBookEntryListMixin extends GuiBook {
 
-    // Shadowed fields from target class
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Shadows
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     @Shadow @Final protected List<ButtonWidget> entryButtons;
     @Shadow @Final private List<BookEntry> visibleEntries;
     @Shadow private List<BookEntry> allEntries;
     @Shadow private TextFieldWidget searchField;
 
-    // Abstract methods need to be able to call
     @Shadow protected abstract void addSubcategoryButtons();
 
-    // Required constructor for the Mixin to compile
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructors
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     public GuiBookEntryListMixin(Book book, Text title) {
         super(book, title);
     }
 
-    /**
-     * Helper method to check if the currently rendered book is Hamster Tips guide book.
-     */
-    private boolean isHamsterBook() {
-        return this.book != null && this.book.id.equals(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
-    }
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Injections
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
-     * Injects into the start of buildEntryButtons to completely replace its logic for Hamster Tips guide book.
-     * This new implementation dynamically calculates page breaks based on the actual rendered height of each entry.
+     * Completely replaces the entry button generation logic for the Hamster Tips guide book.
+     * This implementation simulates text wrapping to dynamically calculate page breaks,
+     * allowing for entry titles that span multiple lines without overflowing the GUI.
      */
     @Inject(method = "buildEntryButtons", at = @At("HEAD"), cancellable = true)
     private void adorablehamsterpets$buildWrappedEntryButtons(CallbackInfo ci) {
-        if (!isHamsterBook()) {
-            // --- SAFETY CHECK ---
-            return; // If not the Hamster Tips guide book, let the original method run.
-        }
+        // --- 1. Validation & Setup ---
+        if (!isHamsterBook()) return;
 
-        ci.cancel(); // Replacing the entire method.
-
+        ci.cancel();
         GuiBookAccessor accessor = (GuiBookAccessor) this;
 
-        // --- 1. Replicate Initial Setup from Original Method ---
+        // --- 2. Filter Entries by Query ---
         this.removeDrawablesIn(this.entryButtons);
         this.entryButtons.clear();
         this.visibleEntries.clear();
+
         String query = this.searchField.getText().toLowerCase();
         Stream<BookEntry> stream = this.allEntries.stream().filter((e) -> e.isFoundByQuery(query));
         Objects.requireNonNull(this.visibleEntries);
         stream.forEach(this.visibleEntries::add);
 
-        // --- 2. Dynamic Page Layout Simulation ---
+        // --- 3. Dynamic Page Layout Simulation ---
+        // Track the starting entry index for every single page column
         List<Integer> pageStartIndices = new ArrayList<>();
-        if (!this.visibleEntries.isEmpty()) {
-            pageStartIndices.add(0); // Page 0 always starts at entry 0
+        pageStartIndices.add(0);
 
+        if (!this.visibleEntries.isEmpty()) {
             TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-            int availableWidth = 116 - 12;
-            int firstPageHeightLimit = 156 - 38; // Page height limit was 168. Reduced to create more bottom padding.
+            int availableWidth = 116 - 12; // Button width minus padding
+
+            // Define height limits (Top Y + Limit = Bottom Y ~156)
+            int firstPageHeightLimit = 156 - 38; // Patchouli default was 168 but I like more padding
             int subsequentPageHeightLimit = 156 - 18;
 
             int currentEntryIndex = 0;
@@ -92,77 +96,85 @@ public abstract class GuiBookEntryListMixin extends GuiBook {
                 int pageHeightLimit = isFirstPage ? firstPageHeightLimit : subsequentPageHeightLimit;
                 int currentY = 0;
 
-                // Left column
+                // Simulate filling the current page column
                 while (currentEntryIndex < this.visibleEntries.size()) {
                     BookEntry entry = this.visibleEntries.get(currentEntryIndex);
                     MutableText name = entry.isLocked() ? Text.translatable("patchouli.gui.lexicon.locked") : entry.getName().copy();
+
+                    // Calculate wrapped height
                     int buttonHeight = textRenderer.wrapLines(name, availableWidth).size() * 10;
 
-                    // This entry doesn't fit; starts the next page.
-                    if (currentY + buttonHeight > pageHeightLimit) break;
+                    // Break if adding this button overflows the page
+                    if (currentY > 0 && currentY + buttonHeight > pageHeightLimit) {
+                        break;
+                    }
 
-                    currentY += buttonHeight + 1;
+                    currentY += buttonHeight + 1; // +1 for spacing
                     currentEntryIndex++;
                 }
 
-                if (isFirstPage) {
-                    isFirstPage = false;
-                } else {
-                    // Right column (for spreads > 0)
-                    currentY = 0;
-                    while (currentEntryIndex < this.visibleEntries.size()) {
-                        BookEntry entry = this.visibleEntries.get(currentEntryIndex);
-                        MutableText name = entry.isLocked() ? Text.translatable("patchouli.gui.lexicon.locked") : entry.getName().copy();
-                        int buttonHeight = textRenderer.wrapLines(name, availableWidth).size() * 10;
-
-                        if (currentY + buttonHeight > pageHeightLimit) break;
-
-                        currentY += buttonHeight + 1;
-                        currentEntryIndex++;
-                    }
-                }
-
+                // Mark the start of the next page if entries remain
                 if (currentEntryIndex < this.visibleEntries.size()) {
                     pageStartIndices.add(currentEntryIndex);
                 }
+
+                isFirstPage = false;
             }
         }
 
-        // --- 3. Calculate maxSpreads and Validate Current Spread ---
+        // --- 4. Configure Spreads ---
         int numPages = pageStartIndices.size();
+        // Ceiling division to convert total pages to total spreads (2 pages per spread)
         accessor.adorablehamsterpets$setMaxSpreads(1 + (int) Math.ceil((numPages - 1) / 2.0));
+
         if (accessor.adorablehamsterpets$getMaxSpreads() < 1) {
             accessor.adorablehamsterpets$setMaxSpreads(1);
         }
 
-        // Ensure the current spread is not out of bounds if the number of pages changed
+        // Clamp current spread index if page count reduced
         if (accessor.adorablehamsterpets$getSpread() >= accessor.adorablehamsterpets$getMaxSpreads()) {
             accessor.adorablehamsterpets$setSpread(Math.max(0, accessor.adorablehamsterpets$getMaxSpreads() - 1));
         }
 
-        // --- 4. Draw Buttons for the Current Page ---
+        // --- 5. Render Buttons ---
         if (accessor.adorablehamsterpets$getSpread() == 0) {
+            // Spread 0: Right Page Only
             int start = pageStartIndices.isEmpty() ? 0 : pageStartIndices.get(0);
             int end = numPages > 1 ? pageStartIndices.get(1) : this.visibleEntries.size();
+
             addWrappedEntryButtons(141, 38, start, end - start);
             this.addSubcategoryButtons();
         } else {
+            // Subsequent Spreads: Left and Right Pages
             int leftPageIndex = accessor.adorablehamsterpets$getSpread() * 2 - 1;
             int rightPageIndex = accessor.adorablehamsterpets$getSpread() * 2;
 
             int leftStartIndex = numPages > leftPageIndex ? pageStartIndices.get(leftPageIndex) : this.visibleEntries.size();
-            int rightStartIndex = numPages > rightPageIndex ? pageStartIndices.get(rightPageIndex) : this.visibleEntries.size();
-            int leftCount = rightStartIndex - leftStartIndex;
+            int leftEndIndex = numPages > rightPageIndex ? pageStartIndices.get(rightPageIndex) : this.visibleEntries.size();
+            int leftCount = leftEndIndex - leftStartIndex;
 
-            addWrappedEntryButtons(15, 18, leftStartIndex, leftCount);
-            addWrappedEntryButtons(141, 18, rightStartIndex, this.visibleEntries.size() - rightStartIndex);
+            // Right page starts where left ended
+            int rightStartIndex = leftEndIndex;
+            int rightEndIndex = (numPages > rightPageIndex + 1) ? pageStartIndices.get(rightPageIndex + 1) : this.visibleEntries.size();
+            int rightCount = rightEndIndex - rightStartIndex;
+
+            if (leftCount > 0) {
+                addWrappedEntryButtons(15, 18, leftStartIndex, leftCount);
+            }
+            if (rightCount > 0) {
+                addWrappedEntryButtons(141, 18, rightStartIndex, rightCount);
+            }
         }
     }
 
-    /**
-     * A helper method to add entry buttons with dynamic heights. This is the logic that was
-     * previously in its own Mixin, now integrated here.
-     */
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private boolean isHamsterBook() {
+        return this.book != null && this.book.id.equals(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+    }
+
     private void addWrappedEntryButtons(int x, int y, int start, int count) {
         GuiBookEntryList self = (GuiBookEntryList) (Object) this;
         GuiBookAccessor accessor = (GuiBookAccessor) self;
@@ -179,12 +191,14 @@ public abstract class GuiBookEntryListMixin extends GuiBook {
 
             BookEntry entry = this.visibleEntries.get(entryIndex);
             MutableText name = entry.isLocked() ? Text.translatable("patchouli.gui.lexicon.locked") : entry.getName().copy();
+
+            // Calculate height dynamically
             int buttonHeight = textRenderer.wrapLines(name, availableWidth).size() * 10;
 
             ButtonWidget button = new GuiButtonEntry(self, bookLeft + x, bookTop + yOffset, entry, self::handleButtonEntry);
             button.setHeight(buttonHeight);
 
-            // Use ScreenWidgetAdder accessor to add the widget for cross-loader compatibility
+            // Use Accessor for cross-loader compatibility
             ((ScreenWidgetAdder)(Object)self).adorablehamsterpets$addWidget(button);
             this.entryButtons.add(button);
 

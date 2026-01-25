@@ -156,10 +156,9 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - The Hamster Bed item and Jade tooltips now dynamically display the names of the configured Lure and Repellent items, ensuring the text matches your config settings.
 
 ### Fixed
-- **Data Structure & Recipes** (Thanks again [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
-  - Duplicated tag folders to resolve structural differences between 1.20.1 (plural directories) and 1.21.1 (singular directories).
-  - Corrected the Cloche and Insolator compatibility recipe paths for 1.20.1.
-  - Fixed load conditions for Thermal Expansion integration to ensure recipes only load when the mod is present.
+- **Guidebook Entry Index Overflow**
+  - Refactored my custom text-wrapping and pagination mixin logic in the Hamster Tips guidebook index.
+  - Entry titles in the Entry Index now correctly flow into new pages instead of overflowing off the bottom of the book interface.
 - **Ore Seeking Logic**
   - Fixed a bug where hamsters ignored buried "Disappointing Ores" (Gold) even when configured to make mistakes, due to checking for exposed blocks instead of hidden ones.
 - **Shoulder Hamster "Mutant" Splitting Glitch**
@@ -185,6 +184,10 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Note: there is no Pale Oak Hamster Bed recipe unless you add one with a datapack. I'm running my Data Generator in a 1.21.1 development environment, and the class `Items.PALE_OAK_PLANKS` does not exist in the code yet, so I cannot reference it in the Java generator to create the recipe.
 - **Fixed Water/Void Spawning:**
   - Resolved an issue where hamsters could spawn floating in oceans/rivers or over the void in Skyblock worlds. This was caused by the spawn restriction rules not being registered at the correct time in the mod loading lifecycle, effectively disabling the "valid ground block" check.
+- **Data Structure & Recipes** (Thanks again [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
+  - Duplicated tag folders to resolve structural differences between 1.20.1 (plural directories) and 1.21.1 (singular directories).
+  - Corrected the Cloche and Insolator compatibility recipe paths for 1.20.1.
+  - Fixed load conditions for Thermal Expansion integration to ensure recipes only load when the mod is present.
 
 ---
 
