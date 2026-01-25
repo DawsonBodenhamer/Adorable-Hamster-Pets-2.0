@@ -608,6 +608,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique private boolean riderJumpHeld = false;
     @Unique private boolean riderJumpQueued = false;
     @Unique private boolean riderSprintHeld = false;
+    @Unique private transient int fallFlyImmunityTicks = 60;
 
     // --- Inventory ---
     private final DefaultedList<ItemStack> items = ImplementedInventory.create(INVENTORY_SIZE);
@@ -1139,12 +1140,19 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         return result;
     }
     /**
-     * True any time the hamster is falling.
+     * True any time the hamster is falling, unless sitting or in the startup grace period.
      */
     public boolean shouldRenderFlying() {
         if (this.isSitting()) return false;
 
-        return this.isThrown() || (!this.isOnGround() && this.getVelocity().y < -0.01); // Extremely high sensitivity
+        // Thrown state overrides immunity
+        if (this.isThrown()) return true;
+
+        // Prevent visual glitch where entities loading in
+        // apparently have enough downward velocity to trigger flying
+        if (this.fallFlyImmunityTicks > 0) return false;
+
+        return !this.isOnGround() && this.getVelocity().y < -0.01; // Extremely high sensitivity
     }
     /**
      * Mounts the player onto the hamster and configures the state for riding.
@@ -2494,6 +2502,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         if (this.lureToBedTimer > 0) this.lureToBedTimer--;
         if (this.wakeUpFromBedDelay > 0) this.wakeUpFromBedDelay--;
         if (this.napInBedDurationTimer > 0) this.napInBedDurationTimer--;
+        if (this.fallFlyImmunityTicks > 0) this.fallFlyImmunityTicks--;
 
         // --- Settle "Thump" Sound Effect ---
         if (this.thumpSoundDelayTicks > 0) {
