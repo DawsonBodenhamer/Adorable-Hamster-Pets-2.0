@@ -15,6 +15,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.biome.Biome;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -93,6 +94,11 @@ public class ConfigDataCache {
     private static final Set<Identifier> chocolateExclusionBiomeIds = new HashSet<>();
     private static final Set<TagKey<Biome>> chocolateExclusionBiomeTags = new HashSet<>();
 
+    // --- Cached Lists for Loot Generation ---
+    // Tags are expanded into individual items for generation logic
+    private static final List<Item> flattenedDefaultCheekLoot = new ArrayList<>();
+    private static final List<Item> flattenedCustomCheekLoot = new ArrayList<>();
+
 
     /**
      * Parses all item and biome tag lists from the config file.
@@ -118,6 +124,8 @@ public class ConfigDataCache {
         parseItemList(Configs.AHP.pouchDisallowedTags, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedTags");
         parseItemList(Configs.AHP.autoHealFoods, autoHealFoodItems, autoHealFoodTags, "autoHealFoods");
         parseItemList(Configs.AHP.resurrectionTributes, resurrectionTributeItems, resurrectionTributeTags, "resurrectionTributes");
+        parseLootGenerationList(Configs.AHP_WORLDGEN.defaultCheekLootList, flattenedDefaultCheekLoot, "defaultCheekLootList");
+        parseLootGenerationList(Configs.AHP_WORLDGEN.extraCheekLootList, flattenedCustomCheekLoot, "extraCheekLootList");
 
         // --- Parse Block Lists ---
         parseBlockList(Configs.AHP.celebrationOres, celebrationOreBlocks, celebrationOreTags, "celebrationOres");
@@ -176,6 +184,8 @@ public class ConfigDataCache {
     public static boolean isPouchAllowed(ItemStack stack) { return matchesItem(stack, pouchAllowedItems, pouchAllowedTags); }
     public static boolean isPouchDisallowed(ItemStack stack) { return matchesItem(stack, pouchDisallowedItems, pouchDisallowedTags); }
     public static boolean isResurrectionTribute(ItemStack stack) { return matchesItem(stack, resurrectionTributeItems, resurrectionTributeTags); }
+    public static Item getRandomDefaultLootItem(net.minecraft.util.math.random.Random random) {if (flattenedDefaultCheekLoot.isEmpty()) return Items.AIR;return flattenedDefaultCheekLoot.get(random.nextInt(flattenedDefaultCheekLoot.size()));}
+    public static Item getRandomCustomLootItem(net.minecraft.util.math.random.Random random) {if (flattenedCustomCheekLoot.isEmpty()) return Items.AIR;return flattenedCustomCheekLoot.get(random.nextInt(flattenedCustomCheekLoot.size()));}
 
     // --- Public Block Checker Methods ---
     public static boolean isCelebrationOre(BlockState state) { return matchesBlock(state, celebrationOreBlocks, celebrationOreTags); }
@@ -211,11 +221,43 @@ public class ConfigDataCache {
         }
     }
 
+    /**
+     * Parses a config list into a flat list of Items for generation purposes.
+     * Tags (#) are resolved to all their contained items.
+     */
+    private static void parseLootGenerationList(List<String> configList, List<Item> targetList, String listName) {
+        for (String entry : configList) {
+            if (entry.startsWith("#")) {
+                try {
+                    // 1.20.1: Use new Identifier()
+                    Identifier tagId = new Identifier(entry.substring(1));
+                    TagKey<Item> tagKey = TagKey.of(RegistryKeys.ITEM, tagId);
+
+                    Registries.ITEM.getEntryList(tagKey).ifPresent(entries -> {
+                        for (var itemEntry : entries) {
+                            targetList.add(itemEntry.value());
+                        }
+                    });
+                } catch (Exception e) {
+                    AdorableHamsterPets.LOGGER.warn("[LootConfig] Invalid item tag in '{}': '{}'", listName, entry);
+                }
+            } else {
+                try {
+                    // 1.20.1: Use new Identifier()
+                    Identifier itemId = new Identifier(entry);
+                    Registries.ITEM.getOrEmpty(itemId).ifPresent(targetList::add);
+                } catch (Exception e) {
+                    AdorableHamsterPets.LOGGER.warn("[LootConfig] Invalid item ID in '{}': '{}'", listName, entry);
+                }
+            }
+        }
+    }
+
     private static void parseBlockList(List<String> configList, Set<Block> blockSet, Set<TagKey<Block>> tagSet, String listName) {
         for (String entry : configList) {
             if (entry.startsWith("#")) {
                 try {
-                    // On 1.20.1, use 'new Identifier()' instead of 'Identifier.of()'
+                    // 1.20.1: Use new Identifier()
                     Identifier tagId = new Identifier(entry.substring(1));
                     tagSet.add(TagKey.of(RegistryKeys.BLOCK, tagId));
                 } catch (Exception e) {
@@ -223,7 +265,7 @@ public class ConfigDataCache {
                 }
             } else {
                 try {
-                    // 1.20.1 Fix: Use 'new Identifier()' instead of 'Identifier.of()'
+                    // 1.20.1: Use new Identifier()
                     Identifier blockId = new Identifier(entry);
                     Registries.BLOCK.getOrEmpty(blockId).ifPresent(blockSet::add);
                 } catch (Exception e) {
@@ -236,7 +278,7 @@ public class ConfigDataCache {
     private static void parseBiomeIdList(List<String> configList, Set<Identifier> idSet, String listName) {
         for (String entry : configList) {
             try {
-                // On 1.20.1, use 'new Identifier(entry)'
+                // 1.20.1: Use new Identifier()
                 idSet.add(new Identifier(entry));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeTagManager] Invalid biome identifier in '{}' config list: '{}'", listName, entry);
@@ -248,7 +290,7 @@ public class ConfigDataCache {
         for (String entry : configList) {
             String tagName = entry.startsWith("#") ? entry.substring(1) : entry;
             try {
-                // On 1.20.1, use 'new Identifier(tagName)'
+                // 1.20.1: Use new Identifier()
                 tagSet.add(TagKey.of(RegistryKeys.BIOME, new Identifier(tagName)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeTagManager] Invalid biome tag in '{}' config list: '{}'", listName, entry);
@@ -322,6 +364,8 @@ public class ConfigDataCache {
         pouchDisallowedTags.clear();
         resurrectionTributeItems.clear();
         resurrectionTributeTags.clear();
+        flattenedDefaultCheekLoot.clear();
+        flattenedCustomCheekLoot.clear();
     }
 
     private static void clearAllBlockSets() {

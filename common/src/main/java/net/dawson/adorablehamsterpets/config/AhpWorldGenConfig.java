@@ -5,9 +5,14 @@ import me.fzzyhmstrs.fzzy_config.api.SaveType;
 import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.config.ConfigGroup;
 import me.fzzyhmstrs.fzzy_config.util.Translatable;
+import me.fzzyhmstrs.fzzy_config.validation.ValidatedField;
+import me.fzzyhmstrs.fzzy_config.validation.misc.ValidatedBoolean;
+import me.fzzyhmstrs.fzzy_config.validation.misc.ValidatedCondition;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedDouble;
+import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedFloat;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,8 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Translation(prefix = "adorablehamsterpets.worldgen") // TODO: Remove @Translation annotation in Fzzy Config 0.7.4+ (See EnUsGenerator.java)
-@Translatable.Name("World Gen Settings")
-@Translatable.Desc("Control the rodent population density and where their food grows. Changes here usually require a restart, or at least a deep breath. Note: If you join a server, its world gen settings will override yours.")
+@Translatable.Name("World Gen & Loot")
+@Translatable.Desc("Control the rodent population density, where their food grows, and what they scavenge for. Changes here usually require a restart, or at least a deep breath. Note: If you join a server, its world gen settings will override yours.")
 public class AhpWorldGenConfig extends Config {
 
     public AhpWorldGenConfig() {
@@ -288,6 +293,88 @@ public class AhpWorldGenConfig extends Config {
             "c:tag_name"
     ));
 
+    // --- Cheek Pouch & World Loot Settings ---
+    @Translatable.Name("Cheek Pouch & World Loot Settings")
+    @Translatable.Desc("Control the economy of hamster-related trash. Adjust chest loot rarities and define exactly what wild hamsters are stuffing in their faces. Requires a world reload to apply.")
+    public ConfigGroup lootSettings = new ConfigGroup("lootSettings", true);
+
+    @Translatable.Name("Cheek Pouch Loot")
+    @Translatable.Desc("Configure the contents and rarity of wild hamster cheek pouch loot. Requires a world reload to apply.")
+    public ConfigGroup cheekPouchLoot = new ConfigGroup("cheekPouchLoot", true);
+
+    @Translatable.Name("Default Loot")
+    @Translatable.Desc("The curated selection of pocket lint, seeds, and snacks that hamsters naturally forage. Edit this if you think hamsters should naturally forage for diamonds.")
+    public List<String> defaultCheekLootList = new ArrayList<>(List.of(
+            "minecraft:wheat_seeds", "minecraft:pumpkin_seeds", "minecraft:melon_seeds",
+            "minecraft:beetroot_seeds", "minecraft:carrot", "minecraft:potato", "minecraft:poisonous_potato",
+            "minecraft:apple", "minecraft:stick", "minecraft:feather", "minecraft:string", "minecraft:gold_nugget",
+            "minecraft:iron_nugget", "minecraft:flint", "adorablehamsterpets:sunflower_seeds",
+            "adorablehamsterpets:cucumber_seeds", "adorablehamsterpets:green_bean_seeds", "adorablehamsterpets:acorn"
+    ));
+
+    @Translatable.Name("Default Loot Chance")
+    @Translatable.Desc("The chance (0.0 to 1.0) that a wild hamster spawns with the default junk (seeds, nuggets, carrots, etc). 0.5 = 50%.")
+    public ValidatedFloat defaultCheekLootChance = new ValidatedFloat(0.5f, 1.0f, 0.0f);
+
+    @Translatable.Name("Extra Loot")
+    @Translatable.Desc("A list of item IDs (e.g. 'minecraft:cookie') or tags (e.g. '#c:fruits') that wild hamsters can spawn with. If you want them to spawn with Nether Stars, this is where you make that bad decision.")
+    public List<String> extraCheekLootList = new ArrayList<>();
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Extra Loot Chance")
+    @Translatable.Desc("The chance (0.0 to 1.0) that a wild hamster spawns with items from your Extra Loot list above. Independent of the default loot check.")
+    public ValidatedFloat extraCheekLootChance = new ValidatedFloat(0.5f, 1.0f, 0.0f);
+
+    @Translatable.Name("Chest & World Loot")
+    @Translatable.Desc("Control the economy of hamster-related trash. Adjust chest loot rarities and define exactly what wild hamsters are stuffing in their faces. Requires a world reload to apply.\n\nWondering where each loot type spawns? Check the mod page or the Hamster Tips guidebook.")
+    public ConfigGroup worldLoot = new ConfigGroup("worldLoot", true);
+
+    @Translatable.Name("Seed Loot Chance")
+    @Translatable.Desc("Chance (0.0 to 1.0) to find Cucumber, Green Bean, or Sunflower seeds in general loot chests.")
+    public ValidatedFloat seedLootChance = new ValidatedFloat(0.60f, 1.0f, 0.0f);
+
+    @Translatable.Name("Standard Armor Chance")
+    @Translatable.Desc("Chance (0.0 to 1.0) to find Acorn, Iron, or Gold hamster armor in standard Dungeons, Temples, Mineshafts, etc.).")
+    public ValidatedFloat standardArmorLootChance = new ValidatedFloat(0.30f, 1.0f, 0.0f);
+
+    @Translatable.Name("High-Tier Armor Chance")
+    @Translatable.Desc("Chance (0.0 to 1.0) to find Diamond hamster armor in high-level chests (End City, Nether Fortress).")
+    public ValidatedFloat highTierArmorLootChance = new ValidatedFloat(0.15f, 1.0f, 0.0f);
+
+    @Translatable.Name("Allow Netherite Loot")
+    @Translatable.Desc("Vanilla horse armor doesn't spawn in Netherite, but maybe you think that's stupid. Enable this to allow Netherite Hamster Armor to appear in chests.")
+    public ValidatedBoolean enableNetheriteArmorLoot = new ValidatedBoolean(false);
+
+    // Helper to gate the slider
+    private final ValidatedField<Boolean> isNetheriteLootEnabled = enableNetheriteArmorLoot.map(b -> b, b -> b);
+
+    @Translatable.Name("Netherite Loot Chance")
+    @Translatable.Desc("Chance (0.0 to 1.0) to find Netherite Hamster Armor in high-level chests. Only applies if the toggle above is ON. Don't be too liberal with it. Or do. See if I care.")
+    public ValidatedCondition<Float> netheriteArmorLootChance = new ValidatedFloat(0.1f, 1.0f, 0.0f)
+            .toCondition(
+                    isNetheriteLootEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.netherite_loot_enabled"),
+                    () -> 0.0f
+            );
+
+    @Translatable.Name("Basic Template Chance")
+    @Translatable.Desc("Chance (0.0 to 1.0) to find Iron and Gold upgrade templates in High-Tier chests (Bastions, Fortresses, etc).")
+    public ValidatedFloat basicSmithingTemplateLootChance = new ValidatedFloat(0.2f, 1.0f, 0.0f);
+
+    @Translatable.Name("Advanced Template Chance")
+    @Translatable.Desc("Chance (0.0 to 1.0) to find Diamond and Netherite upgrade templates in Legendary chests (Ancient Cities, Ominous Vaults, etc).")
+    public ValidatedFloat advancedSmithingTemplateLootChance = new ValidatedFloat(0.1f, 1.0f, 0.0f);
+
+    @Translatable.Name("Accessory Loot Chance")
+    @Translatable.Desc("Chance (0.0 to 1.0) to find accessories in rare chests. Default is low.")
+    public ValidatedFloat accessoryLootChance = new ValidatedFloat(0.05f, 1.0f, 0.0f);
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Oak Leaf Acorn Chance")
+    @Translatable.Desc("Chance (0.0 to 1.0) for an Oak Leaf block to drop an Acorn when broken. Default is low, similar to Apples.")
+    public ValidatedFloat oakLeavesAcornChance = new ValidatedFloat(0.05f, 1.0f, 0.0f);
+
     // --- Worldgen: Bush & Sunflower Stuff ---
     @Translatable.Name("Worldgen: Bush & Sunflower Stuff")
     @Translatable.Desc("For The Aspiring Landscape Artist. Note: Most of these settings require re-logging into your world to take effect, and it's unlikely you will see changes in chunks that have already been generated.")
@@ -327,6 +414,7 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Name("Glow Rarity")
     @Translatable.Desc("1 in X random ticks (20 ticks per second). Lower = more likely. Higher = more rare. Note: This only runs at night.")
     public ValidatedInt glowingSunflowerChance = new ValidatedInt(1000, 10000, 10);
+
 
     // --- Cucumber Bush Settings ---
     @Translatable.Name("Cucumber Bush Settings")

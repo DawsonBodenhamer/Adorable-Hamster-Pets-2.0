@@ -1,6 +1,6 @@
 {
   "name": "book.adorablehamsterpets.category.the_kitchen_drawer",
   "description": "book.adorablehamsterpets.category.the_kitchen_drawer.desc",
-  "icon": "minecraft:chest",
-  "sortnum": 5
+  "icon": "minecraft:comparator",
+  "sortnum": 6
 }
