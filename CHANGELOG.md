@@ -53,17 +53,26 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - "MURDERER" (Kill a hamster)
   - "Rodent Reckoning" (Be killed by a hamster)
 - **Global Loot Table Injection**
-  - **Seeds:** You can now find Cucumber, Green Bean, and Sunflower seeds scrounging around in Village, Dungeon, and Mineshaft chests.
-  - **Hamster Armor:**
-    - **Acorn Base, Iron, Gold):** Found in Dungeons, Temples, and Mineshafts.
-    - **Diamond:** Found in Nether Fortresses, Bastions, Strongholds, and End Cities.
-    - **Netherite:** This can only be crafted, just like vanilla horse armor.
-  - **Smithing Templates:** The blueprints for advanced armor are now scattered across the world (Mineshafts, Pyramids, Strongholds, and Bastions).
-  - **The Acorn Hat:** This legendary fashion statement can now be found in Ancient Cities, Woodland Mansions, and Buried Treasure. Happy hunting.
+  - **Common Loot**
+    - **Items:** Cucumber, Green Bean, and Sunflower **Seeds**.
+    - **Locations:** Villages (Houses, Butchers, Shepherds), Dungeons, Mineshafts, Shipwrecks, Outposts, Small Underwater Ruins, Trial Chamber Supply chests.
+  - **Uncommon Loot**
+    - **Items:** Standard Armor (Acorn, Iron, Gold).
+    - **Locations:** Desert Pyramids, Jungle Temples, Igloos, Ruined Portals, Village Blacksmiths, Large Underwater Ruins.
+  - **High-Tier Loot**
+    - **Items:** Diamond Armor and Basic Upgrade Templates (Iron, Gold). (Also Netherite Armor, if enabled in config).
+    - **Locations:** Nether Fortresses, Bastions, Stronghold Corridors, End Cities, Ancient Cities, Trial Chamber Reward chests.
+  - **Legendary Loot**
+    - **Items:** Accessories (just the Acorn Hat for now) and Advanced Upgrade Templates (Diamond, Netherite).
+    - **Locations:** Woodland Mansions, Buried Treasure, Stronghold Libraries, Ominous Trial Spawners.
+  - **Configuration:** Check the **World Gen & Loot** config to adjust the drop chance for every single category listed above, or disable them entirely. Requires a restart to take effect, which is why I put it in the World Gen & Loot config so you can modify it before loading into the world.
 - **Wild Cheek Pouch Loot**
-  - Wild hamsters now have a 50% chance to spawn with scavenged items (seeds, nuggets, etc.) in their cheek pouches. Includes modded sunflower seeds.
+  - Wild hamsters now have a 50% chance to spawn with scavenged items (seeds, nuggets, etc.) in their cheek pouches. Includes modded sunflower seeds (highly configurable).
   - **Lopsided Cheeks**: There is a 60% chance the loot will spawn in only one cheek, creating a cute, asymmetrical look.
-  - **Logic**: These items drop on death (configurable), or persist when tamed— meaning if you tame a wild hamster with full cheeks, you get to keep the loot once you unlock the pouch.
+  - **Logic**: These items drop on death (also configurable), or persist when tamed— meaning if you tame a wild hamster with full cheeks, you get to keep the loot once you unlock the pouch.
+- **Hamster Tips Guidebook Expansion**
+  - **New "Acorn Armor" Entry:** Explains how to throw your pet at a tree for profit, and how to forge nuts into armor.
+  - **New Category:** "Loot & Scavenging" – detailing the new loot locations and configurability.
 - **Sunflower Farming**
   - **Plantable Seeds**: `Sunflower Seeds` can now be planted to grow the custom 2-block tall Sunflower.
   - **Bonemeal Duplication**: Right-clicking a fully grown custom Sunflower with Bonemeal now drops a vanilla Sunflower item, matching vanilla tall-flower behavior.

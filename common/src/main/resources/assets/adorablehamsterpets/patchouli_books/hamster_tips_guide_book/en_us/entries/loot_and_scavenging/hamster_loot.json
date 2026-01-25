@@ -1,0 +1,20 @@
+{
+  "name": "book.adorablehamsterpets.entry.hamster_loot",
+  "icon": "minecraft:gold_nugget",
+  "category": "adorablehamsterpets:loot_and_scavenging",
+  "entry_color": "00AAAA",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "adorablehamsterpets:page",
+      "header": "book.adorablehamsterpets.entry.hamster_loot",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.hamster_loot.page1.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "book.adorablehamsterpets.entry.hamster_loot.page2.body"
+    }
+  ]
+}

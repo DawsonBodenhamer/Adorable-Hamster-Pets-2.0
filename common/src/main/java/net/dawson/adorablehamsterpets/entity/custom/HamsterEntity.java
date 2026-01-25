@@ -106,6 +106,7 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 import static net.dawson.adorablehamsterpets.sound.ModSounds.HAMSTER_CELEBRATE_SOUNDS;
 import static net.dawson.adorablehamsterpets.sound.ModSounds.getRandomSoundFrom;
@@ -158,16 +159,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             PathNodeType.DANGER_OTHER,
             PathNodeType.DAMAGE_CAUTIOUS,
             PathNodeType.WATER
-    );
-
-    // --- Wild Loot Tables ---
-    // A simplified list of items wild hamsters might scavenge
-    private static final List<Item> WILD_CHEEK_LOOT_TABLE = List.of(
-            Items.WHEAT_SEEDS, Items.PUMPKIN_SEEDS, Items.MELON_SEEDS,
-            Items.BEETROOT_SEEDS, Items.CARROT, Items.POTATO, Items.POISONOUS_POTATO,
-            Items.APPLE, Items.STICK, Items.FEATHER, Items.STRING, Items.GOLD_NUGGET,
-            Items.IRON_NUGGET, Items.FLINT
-            // Mod items added dynamically in initialize() to avoid classloading issues
     );
 
     private static final List<HamsterVariant> ORANGE_VARIANTS = List.of(
@@ -4096,46 +4087,62 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     /**
      * Helper method to generate random loot in the cheek pouches of wild hamsters.
      * Includes a check to ensure we don't overwrite existing items or fill tamed hamsters.
+     * Supports configurable loot lists and chances.
      */
     private void generateWildLoot() {
         // Only generate if untamed and inventory is empty (safety check)
         if (this.isTamed() || !this.items.get(0).isEmpty()) return;
 
-        // 50% chance to have scavenged something
-        if (this.random.nextFloat() < 0.5f) {
-            // Determine quantity: 60% chance for 1 cheek (lopsided), 40% for both
-            boolean fillBothCheeks = this.random.nextFloat() < 0.4f;
+        // --- 1. Determine which cheeks to fill ---
+        // 60% chance for 1 cheek (lopsided), 40% for both
+        boolean fillBothCheeks = this.random.nextFloat() < 0.4f;
 
-            // Build effective loot list including mod items
-            List<Item> effectiveLoot = new ArrayList<>(WILD_CHEEK_LOOT_TABLE);
-            effectiveLoot.add(ModItems.SUNFLOWER_SEEDS.get());
-            effectiveLoot.add(ModItems.CUCUMBER_SEEDS.get());
-            effectiveLoot.add(ModItems.GREEN_BEAN_SEEDS.get());
-            effectiveLoot.add(ModItems.ACORN.get());
+        // Helper to fill a cheek (3 slots)
+        BiConsumer<Integer, Boolean> fillCheek = (startSlot, isCustom) -> {
+            // Random count 1-3
+            int count = 1 + this.random.nextInt(3);
+            // Put it in a random slot within the cheek (0-2 or 3-5)
+            int specificSlot = startSlot + this.random.nextInt(3);
 
-            // Helper to fill a cheek (3 slots)
-            java.util.function.Consumer<Integer> fillCheek = (startSlot) -> {
-                // Pick one random item type for this cheek
-                Item item = effectiveLoot.get(this.random.nextInt(effectiveLoot.size()));
-                // Random count 1-3
-                int count = 1 + this.random.nextInt(3);
-                // Put it in a random slot within the cheek (0-2 or 3-5)
-                int specificSlot = startSlot + this.random.nextInt(3);
+            // Pick item based on source
+            Item item = isCustom
+                    ? ConfigDataCache.getRandomCustomLootItem(this.random)
+                    : ConfigDataCache.getRandomDefaultLootItem(this.random);
 
-                // Safety check for disallowed items
+            if (item != Items.AIR) {
                 ItemStack stack = new ItemStack(item, count);
+                // Respect pouch restrictions
                 if (!isItemDisallowed(stack)) {
-                    this.items.set(specificSlot, stack);
+                    // Only set if slot is empty
+                    if (this.items.get(specificSlot).isEmpty()) {
+                        this.setStack(specificSlot, stack);
+                    }
                 }
-            };
+            }
+        };
 
+        // --- 2. Process Default Loot Pool ---
+        float defaultChance = Configs.AHP_WORLDGEN.defaultCheekLootChance.get();
+        if (this.random.nextFloat() < defaultChance) {
             // Fill Left Cheek (Slots 0-2) or Right Cheek (Slots 3-5)
-            // If lopsided, pick left or right randomly
             if (fillBothCheeks) {
-                fillCheek.accept(0); // Left
-                fillCheek.accept(3); // Right
+                fillCheek.accept(0, false); // Left
+                fillCheek.accept(3, false); // Right
             } else {
-                fillCheek.accept(this.random.nextBoolean() ? 0 : 3);
+                fillCheek.accept(this.random.nextBoolean() ? 0 : 3, false);
+            }
+        }
+
+        // --- 3. Process Custom Loot Pool ---
+        float customChance = Configs.AHP_WORLDGEN.extraCheekLootChance.get();
+        // Only run custom logic if the list isn't empty
+        if (!Configs.AHP_WORLDGEN.extraCheekLootList.isEmpty() && this.random.nextFloat() < customChance) {
+            // Fill Left Cheek (Slots 0-2) or Right Cheek (Slots 3-5)
+            if (fillBothCheeks) {
+                fillCheek.accept(0, true); // Left
+                fillCheek.accept(3, true); // Right
+            } else {
+                fillCheek.accept(this.random.nextBoolean() ? 0 : 3, true);
             }
         }
     }
