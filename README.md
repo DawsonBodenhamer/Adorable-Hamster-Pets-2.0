@@ -98,9 +98,9 @@ Does enough damage by default to kill a creeper, which is... really convenient. 
 
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_wander_mode_hamster_beds.png" alt="Tamed Wander Mode & Hamster Beds" width="100%"></p>
 
-Tired of your hamsters treating your feet like a personal jungle gym?
+Tired of your hamsters treating your feet like a personal jungle gym? Craft a **Hamster Bed** (available in all vanilla wood flavors, because aesthetics) from some wood planks and **Hamster Bedding**. **Right-click** your tamed hamster with the bed to link them, then place the bed in the world. Boom. Your hamster is now a free-range rodent, happily wandering within a set radius of its new home base.
 
-Craft a **Hamster Bed** (available in all vanilla wood flavors, because aesthetics) from some wood planks and **Hamster Bedding**. **Right-click** your tamed hamster with the bed to link them, then place the bed in the world. Boom. Your hamster is now a free-range rodent, happily wandering within a set radius of its new home base.
+Hamster stuck/lost while wandering? No problem. As of version 3.5.0, you can simply go to sleep in your own bed. During the night, they will utilize 'rodent determination' (i.e. teleportation) to sneak home. You'll wake up to find them sound asleep, pretending they didn't just phase through a solid wall.
 
 <p align="center">
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_sleeping_in_bed.gif" alt="A hamster sleeping in its linked bed." width="48%">

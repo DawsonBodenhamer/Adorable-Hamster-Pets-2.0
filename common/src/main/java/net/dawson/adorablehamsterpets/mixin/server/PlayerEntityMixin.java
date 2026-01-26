@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
+import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.SunflowerBlock;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
@@ -23,8 +24,10 @@ import net.dawson.adorablehamsterpets.networking.payload.PlayGuidebookEffectsPay
 import net.dawson.adorablehamsterpets.networking.payload.SyncShoulderDataPayload;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -54,69 +57,89 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
 
 import java.util.*;
 
 @Mixin(PlayerEntity.class)
 public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEntityAccessor {
 
-    // --- 1. Data Storage ---
-    @Unique
-    private NbtCompound ahp$shoulderData = new NbtCompound();
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constants and Static Utilities
+     * ────────────────────────────────────────────────────────────────────────────*/
 
-    @Unique
-    private transient ClientShoulderHamsterData adorablehamsterpets$clientShoulderData;
-
-    // --- Constants and Static Utilities ---
     @Unique private static final int CHECK_INTERVAL_TICKS = 20;
-    @Unique private static final List<String> DISMOUNT_MESSAGE_KEYS = Arrays.asList(
+    @Unique private static final int AHP_GUIDEBOOK_CHECK_INTERVAL_TICKS = 20;
+    @Unique private static final long HEIST_MEMORY_DURATION = 24000L; // 1 Minecraft Day
+    @Unique private static final String AHP_NBT_GUIDEBOOK_HAS_KEY = "AHPHasGuideBook";
+    @Unique private static final String AHP_NBT_GUIDEBOOK_INIT_KEY = "AHPGuideBookTrackingInit";
+
+    @Unique
+    private static final List<String> DISMOUNT_MESSAGE_KEYS = Arrays.asList(
             "message.adorablehamsterpets.dismount.1", "message.adorablehamsterpets.dismount.2",
             "message.adorablehamsterpets.dismount.3", "message.adorablehamsterpets.dismount.4",
             "message.adorablehamsterpets.dismount.5", "message.adorablehamsterpets.dismount.6"
     );
-    @Unique private static final int AHP_GUIDEBOOK_CHECK_INTERVAL_TICKS = 20;
-    @Unique private static final String AHP_NBT_GUIDEBOOK_HAS_KEY = "AHPHasGuideBook";
-    @Unique private static final String AHP_NBT_GUIDEBOOK_INIT_KEY = "AHPGuideBookTrackingInit";
 
-    // --- Fields ---
+    @Unique
+    private record ScheduledTask(long executionTick, Runnable action) {}
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Instance Fields
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    // --- Shoulder Data ---
+    @Unique private NbtCompound ahp$shoulderData = new NbtCompound();
+    @Unique private transient ClientShoulderHamsterData adorablehamsterpets$clientShoulderData;
+    @Unique private final transient ArrayDeque<ShoulderLocation> adorablehamsterpets$mountOrderQueue = new ArrayDeque<>();
+
+    // --- Timers & Cooldowns ---
     @Unique private int adorablehamsterpets$diamondCheckTimer = 0;
     @Unique private int adorablehamsterpets$creeperCheckTimer = 0;
     @Unique private int adorablehamsterpets$diamondSoundCooldownTicks = 0;
     @Unique private int adorablehamsterpets$creeperSoundCooldownTicks = 0;
-    @Unique private String adorablehamsterpets$lastDismountMessageKey = "";
-    @Unique private boolean adorablehamsterpets$isDiamondAlertConditionMet = false;
-    @Unique private int adorablehamsterpets$lastGoldMessageIndex = -1;
-    @Unique private final transient ArrayDeque<ShoulderLocation> adorablehamsterpets$mountOrderQueue = new ArrayDeque<>();
-    @Unique private final List<ScheduledTask> adorablehamsterpets$scheduledTasks = new ArrayList<>();
-    @Unique private record ScheduledTask(long executionTick, Runnable action) {}
-    @Unique private static final long HEIST_MEMORY_DURATION = 24000L; // 1 Minecraft Day (20 mins)
-    @Unique private final List<TreeHeistUtil.HeistRecord> ahp$heistHistory = new ArrayList<>();
-    @Unique private boolean ahp$cachedHasGuideBook = false;
-    @Unique private boolean ahp$guideBookTrackingInitialized = false;
     @Unique private int ahp$guideBookCheckTimer = 0;
     @Unique private int ahp$sunflowerCheckTimer = 0;
 
-    // --- Constructor Injection ---
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void adorablehamsterpets$onInit(World world, BlockPos pos, float yaw, GameProfile gameProfile, CallbackInfo ci) {
-        if (world.isClient) {
-            this.adorablehamsterpets$clientShoulderData = new ClientShoulderHamsterData();
-        }
-    }
+    // --- State Flags & Trackers ---
+    @Unique private String adorablehamsterpets$lastDismountMessageKey = "";
+    @Unique private boolean adorablehamsterpets$isDiamondAlertConditionMet = false;
+    @Unique private int adorablehamsterpets$lastGoldMessageIndex = -1;
+    @Unique private boolean ahp$cachedHasGuideBook = false;
+    @Unique private boolean ahp$guideBookTrackingInitialized = false;
+
+    // --- Collections ---
+    @Unique private final List<ScheduledTask> adorablehamsterpets$scheduledTasks = new ArrayList<>();
+    @Unique private final List<TreeHeistUtil.HeistRecord> ahp$heistHistory = new ArrayList<>();
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructors & Initialization
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, World world) {
         super(entityType, world);
     }
 
-    // --- 2. NBT Read/Write ---
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void adorablehamsterpets$onInit(World world, BlockPos pos, float yaw, GameProfile gameProfile, CallbackInfo ci) {
+        // Client-side visual setup
+        if (world.isClient) {
+            this.adorablehamsterpets$clientShoulderData = new ClientShoulderHamsterData();
+        }
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Lifecycle Hooks (Mixin Injections)
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     @Inject(method = "writeCustomDataToNbt", at = @At("TAIL"))
     private void adorablehamsterpets$writeNbt(NbtCompound nbt, CallbackInfo ci) {
-        // Save from local field
+        // --- 1. Save Shoulder Data ---
         if (!this.ahp$shoulderData.isEmpty()) {
             nbt.put("ShoulderHamsters", this.ahp$shoulderData);
         }
 
-        // Save Mount Order Queue
+        // --- 2. Save Mount Queue ---
         if (!this.adorablehamsterpets$mountOrderQueue.isEmpty()) {
             NbtList mountOrderList = new NbtList();
             for (ShoulderLocation location : this.adorablehamsterpets$mountOrderQueue) {
@@ -125,11 +148,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             nbt.put("MountOrderQueue", mountOrderList);
         }
 
+        // --- 3. Save History & State ---
         if (this.adorablehamsterpets$lastGoldMessageIndex != -1) {
             nbt.putInt("LastGoldMessageIndex", this.adorablehamsterpets$lastGoldMessageIndex);
         }
 
-        // Save Tree Heist History
+        // Tree Heist memory
         if (!this.ahp$heistHistory.isEmpty()) {
             NbtList historyList = new NbtList();
             long currentTime = this.getWorld().getTime();
@@ -149,45 +173,40 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
-        // Save Guidebook tracking info
+        // Guidebook tracking
         nbt.putBoolean(AHP_NBT_GUIDEBOOK_HAS_KEY, this.ahp$cachedHasGuideBook);
         nbt.putBoolean(AHP_NBT_GUIDEBOOK_INIT_KEY, this.ahp$guideBookTrackingInitialized);
     }
 
     @Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
     private void adorablehamsterpets$readNbt(NbtCompound nbt, CallbackInfo ci) {
-        // --- Backward Compatibility: Check for old single hamster data ---
+        // --- 1. Migration from Legacy Data ---
         if (nbt.contains("ShoulderHamster", NbtElement.COMPOUND_TYPE)) {
             NbtCompound oldHamsterNbt = nbt.getCompound("ShoulderHamster");
             if (!oldHamsterNbt.isEmpty()) {
                 NbtCompound newShoulderPetsNbt = new NbtCompound();
                 newShoulderPetsNbt.put(ShoulderLocation.RIGHT_SHOULDER.name(), oldHamsterNbt);
-                this.ahp$shoulderData = newShoulderPetsNbt; // Update local field
+                this.ahp$shoulderData = newShoulderPetsNbt;
                 this.adorablehamsterpets$mountOrderQueue.clear();
                 this.adorablehamsterpets$mountOrderQueue.add(ShoulderLocation.RIGHT_SHOULDER);
-                nbt.remove("ShoulderHamster"); // Remove old tag to complete migration
+                nbt.remove("ShoulderHamster"); // remove old tag to complete migration
                 AdorableHamsterPets.LOGGER.info("Migrated legacy shoulder hamster data for player {}.", this.getDisplayName().getString());
             }
         } else if (nbt.contains("ShoulderHamsters", NbtElement.COMPOUND_TYPE)) {
-            // Standard Read
+            // standard Read
             this.ahp$shoulderData = nbt.getCompound("ShoulderHamsters");
         }
 
-        // Read Mount Order Queue with Auto-Sanitization
+        // --- 2. Queue Sanitization ---
         this.adorablehamsterpets$mountOrderQueue.clear();
         if (nbt.contains("MountOrderQueue", NbtElement.LIST_TYPE)) {
             NbtList mountOrderList = nbt.getList("MountOrderQueue", NbtElement.STRING_TYPE);
-
-            // Track seen locations to prevent duplicates
             Set<ShoulderLocation> seenLocations = new HashSet<>();
 
             for (NbtElement element : mountOrderList) {
                 try {
                     ShoulderLocation location = ShoulderLocation.valueOf(element.asString());
-
-                    // Sanitize: Only add if:
-                    // 1. Haven't added this location already (Deduplication)
-                    // 2. The shoulder slot actually contains data (Ghost cleanup)
+                    // Deduplicate and ensure data actually exists for this slot
                     if (!seenLocations.contains(location) && !this.getShoulderHamster(location).isEmpty()) {
                         this.adorablehamsterpets$mountOrderQueue.add(location);
                         seenLocations.add(location);
@@ -198,7 +217,22 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
-        // Read Tree Heist History
+        // --- 3. Self-Healing ---
+        // If data exists but queue is empty (corruption), rebuild it
+        if (this.adorablehamsterpets$mountOrderQueue.isEmpty() && this.hasAnyShoulderHamster()) {
+            AdorableHamsterPets.LOGGER.info("Player {} has shoulder hamsters but empty mount queue. Rebuilding...", this.getDisplayName().getString());
+            for (ShoulderLocation location : ShoulderLocation.values()) {
+                if (!this.getShoulderHamster(location).isEmpty()) {
+                    this.adorablehamsterpets$mountOrderQueue.addLast(location);
+                }
+            }
+        }
+
+        // --- 4. History & State ---
+        this.adorablehamsterpets$lastGoldMessageIndex = nbt.contains("LastGoldMessageIndex", NbtElement.INT_TYPE)
+                ? nbt.getInt("LastGoldMessageIndex")
+                : -1;
+
         this.ahp$heistHistory.clear();
         if (nbt.contains("AHPHeistHistory", NbtElement.LIST_TYPE)) {
             NbtList historyList = nbt.getList("AHPHeistHistory", NbtElement.COMPOUND_TYPE);
@@ -210,25 +244,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
-        // --- Self-Healing Logic for Potential Corrupted State ---
-        // If sanitization cleared everything but there's still data, rebuild cleanly.
-        if (this.adorablehamsterpets$mountOrderQueue.isEmpty() && this.hasAnyShoulderHamster()) {
-            AdorableHamsterPets.LOGGER.info("Player {} has shoulder hamsters but an empty mount queue. Rebuilding queue...", this.getDisplayName().getString());
-            for (ShoulderLocation location : ShoulderLocation.values()) {
-                if (!this.getShoulderHamster(location).isEmpty()) {
-                    this.adorablehamsterpets$mountOrderQueue.addLast(location);
-                }
-            }
-            AdorableHamsterPets.LOGGER.info("Successfully rebuilt mount queue for player {}. New queue: {}", this.getDisplayName().getString(), this.adorablehamsterpets$mountOrderQueue);
-        }
-
-        if (nbt.contains("LastGoldMessageIndex", NbtElement.INT_TYPE)) {
-            this.adorablehamsterpets$lastGoldMessageIndex = nbt.getInt("LastGoldMessageIndex");
-        } else {
-            this.adorablehamsterpets$lastGoldMessageIndex = -1;
-        }
-
-        // Read Guidebook tracking info
         if (nbt.contains(AHP_NBT_GUIDEBOOK_HAS_KEY, NbtElement.BYTE_TYPE)) {
             this.ahp$cachedHasGuideBook = nbt.getBoolean(AHP_NBT_GUIDEBOOK_HAS_KEY);
         }
@@ -237,131 +252,16 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
     }
 
-    /**
-     * Injects the start tracking logic using the vanilla/Yarn mapped method.
-     * This fires when another player starts tracking this player entity.
-     * We use this moment to send the shoulder data to the watcher so they can render the hamsters.
-     */
-    @Override
-    public void onStartedTrackingBy(ServerPlayerEntity player) {
-        // Call super first (vanilla logic)
-        super.onStartedTrackingBy(player);
-
-        // If this player has shoulder data, send it to the player who just started watching
-        if (!this.ahp$shoulderData.isEmpty()) {
-            SyncShoulderDataPayload packet = new SyncShoulderDataPayload(this.getId(), this.ahp$shoulderData);
-            NetworkManager.sendToPlayer(player, packet);
-        }
-    }
-
-    @Inject(method = "remove(Lnet/minecraft/entity/Entity$RemovalReason;)V", at = @At("HEAD"))
-    private void adorablehamsterpets$onRemove(Entity.RemovalReason reason, CallbackInfo ci) {
-        if (!this.getWorld().isClient()) {
-            net.dawson.adorablehamsterpets.util.HamsterRenderTracker.onPlayerDisconnect(this.getUuid());
-        }
-    }
-
-    // --- 3. Public Accessors ---
-    /**
-     * Checks whether the given player currently has at least one Hamster Guide Book anywhere in their inventory.
-     */
-    @Unique
-    @Override
-    public boolean ahp$computeHasGuideBook(PlayerEntity player) {
-        var inv = player.getInventory();
-        for (int i = 0; i < inv.size(); i++) {
-            ItemStack stack = inv.getStack(i);
-            if (!stack.isEmpty() && stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Initializes the server-side guidebook possession cache for this player.
-     * Call after join (or any time book is removed/granted via code) to seed the cached state
-     * without triggering acquisition effects.
-     */
-    @Unique
-    @Override
-    public void ahp$initGuideBookTracking(boolean currentlyHasGuideBook) {
-        this.ahp$cachedHasGuideBook = currentlyHasGuideBook;
-        this.ahp$guideBookTrackingInitialized = true;
-        this.ahp$guideBookCheckTimer = 0;
-    }
-
-    @Unique
-    @Override
-    public NbtCompound getShoulderHamster(ShoulderLocation location) {
-        return this.ahp$shoulderData.getCompound(location.name());
-    }
-
-    @Unique
-    @Override
-    public void setShoulderHamster(ShoulderLocation location, NbtCompound nbt) {
-        // Update local NBT
-        if (nbt == null || nbt.isEmpty()) {
-            this.ahp$shoulderData.remove(location.name());
-        } else {
-            this.ahp$shoulderData.put(location.name(), nbt);
-        }
-
-        // Sync with clients manually
-        if (!this.getWorld().isClient()) {
-            SyncShoulderDataPayload packet = new SyncShoulderDataPayload(this.getId(), this.ahp$shoulderData);
-            PlayerEntity self = (PlayerEntity) (Object) this;
-
-            // Send to self
-            if (self instanceof ServerPlayerEntity serverSelf) {
-                NetworkManager.sendToPlayer(serverSelf, packet);
-            }
-
-            // Send to tracking players
-            if (self.getWorld() instanceof ServerWorld serverWorld) {
-                for (ServerPlayerEntity otherPlayer : serverWorld.getPlayers()) {
-                    // Standard tracking range is usually 64 blocks squared
-                    if (otherPlayer != self && otherPlayer.squaredDistanceTo(self) < 4096) {
-                        NetworkManager.sendToPlayer(otherPlayer, packet);
-                    }
-                }
-            }
-        }
-    }
-
-    @Unique
-    @Override
-    public void adorablehamsterpets$setRawShoulderData(NbtCompound nbt) {
-        // Called by client packet handler to update local state
-        this.ahp$shoulderData = nbt;
-    }
-
-    @Unique
-    @Override
-    public void adorablehamsterpets$syncShoulderData() {
-        // Called via PlayerEvent.PLAYER_JOIN to ensure connection is ready before sending
-        if (!this.getWorld().isClient() && !this.ahp$shoulderData.isEmpty()) {
-            PlayerEntity self = (PlayerEntity) (Object) this;
-            if (self instanceof ServerPlayerEntity serverPlayer) {
-                SyncShoulderDataPayload packet = new SyncShoulderDataPayload(this.getId(), this.ahp$shoulderData);
-                NetworkManager.sendToPlayer(serverPlayer, packet);
-            }
-        }
-    }
-
-    // --- 4. Tick Logic ---
     @Inject(method = "tick", at = @At("TAIL"))
     private void adorablehamsterpets$onTick(CallbackInfo ci) {
-        // Initial Setup and Server-Side Check
         PlayerEntity self = (PlayerEntity) (Object) this;
         World world = self.getWorld();
-        if (world.isClient) {
-            return;
-        }
+        if (world.isClient) return;
+
         Random random = world.getRandom();
         final AhpConfig config = AdorableHamsterPets.CONFIG;
 
-        // Process Scheduled Tasks
+        // --- 1. Process Tasks & Cooldowns ---
         long currentTime = world.getTime();
         adorablehamsterpets$scheduledTasks.removeIf(task -> {
             if (currentTime >= task.executionTick()) {
@@ -371,41 +271,34 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             return false;
         });
 
-        // Cooldown Decrement
         if (adorablehamsterpets$diamondSoundCooldownTicks > 0) adorablehamsterpets$diamondSoundCooldownTicks--;
         if (adorablehamsterpets$creeperSoundCooldownTicks > 0) adorablehamsterpets$creeperSoundCooldownTicks--;
 
-        // Tick Guidebook tracking
+        // --- 2. Feature Ticks ---
         tickGuideBookTracking();
 
-        // Glowing Sunflower Discovery (Easter Egg)
-        // Only run on server once per second
-        if (!world.isClient && ++this.ahp$sunflowerCheckTimer >= 20) {
+        // Glowing Sunflower Easter Egg (Server side only, low frequency)
+        if (++this.ahp$sunflowerCheckTimer >= 20) {
             this.ahp$sunflowerCheckTimer = 0;
-            // Feature must be enabled and must be night
             if (Configs.AHP_WORLDGEN.enableGlowingSunflowers && !world.isDay()) {
                 BlockPos playerPos = self.getBlockPos();
-                // Scan small 5 block radius
                 for (BlockPos pos : BlockPos.iterate(playerPos.add(-5, -3, -5), playerPos.add(5, 3, 5))) {
                     BlockState state = world.getBlockState(pos);
-                    if (state.isOf(ModBlocks.SUNFLOWER_BLOCK.get())
-                            && state.get(SunflowerBlock.LIT)) {
+                    if (state.isOf(ModBlocks.SUNFLOWER_BLOCK.get()) && state.get(SunflowerBlock.LIT)) {
                         ModCriteria.WITNESS_GLOWING_SUNFLOWER.get().trigger((ServerPlayerEntity) self);
-                        break; // Trigger once per check is sufficient
+                        break;
                     }
                 }
             }
         }
 
-        // Shoulder Pet Logic
+        // --- 3. Shoulder Hamster Sensing ---
         if (this.hasAnyShoulderHamster()) {
-
-            // Shoulder Diamond Detection
+            // Diamond Detection
             if (config.enableShoulderDiamondDetection) {
                 adorablehamsterpets$diamondCheckTimer++;
                 if (adorablehamsterpets$diamondCheckTimer >= CHECK_INTERVAL_TICKS) {
                     adorablehamsterpets$diamondCheckTimer = 0;
-                    // The isCelebrationOreNearby method internally prioritizes exposed ore.
                     if (isCelebrationOreNearby(self, config.shoulderDiamondDetectionRadius.get())) {
                         this.adorablehamsterpets$isDiamondAlertConditionMet = true;
                         if (adorablehamsterpets$diamondSoundCooldownTicks == 0) {
@@ -422,7 +315,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 }
             }
 
-            // Shoulder Creeper Detection
+            // Creeper Detection
             if (config.enableShoulderCreeperDetection) {
                 adorablehamsterpets$creeperCheckTimer++;
                 if (adorablehamsterpets$creeperCheckTimer >= CHECK_INTERVAL_TICKS) {
@@ -442,24 +335,160 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
     }
 
-    // --- Dismount Logic ---
-    /**
-     * Executes the server-side logic to dismount a hamster from the player's shoulder.
-     * This method is triggered upon receiving a {@code DismountHamsterPayload} from the client.
-     * It handles choosing which hamster to dismount if there are more than one,
-     * spawning the hamster entity from its stored data, clearing the player's
-     * shoulder data, and playing the necessary sounds and messages.
-     */
+    @Inject(method = "remove(Lnet/minecraft/entity/Entity$RemovalReason;)V", at = @At("HEAD"))
+    private void adorablehamsterpets$onRemove(Entity.RemovalReason reason, CallbackInfo ci) {
+        if (!this.getWorld().isClient()) {
+            net.dawson.adorablehamsterpets.util.HamsterRenderTracker.onPlayerDisconnect(this.getUuid());
+        }
+    }
+
+    @Inject(method = "wakeUp(ZZ)V", at = @At("RETURN"))
+    private void adorablehamsterpets$onWakeUp(boolean skipSleepTimer, boolean updateSleepingPlayers, CallbackInfo ci) {
+        PlayerEntity self = (PlayerEntity) (Object) this;
+        // Server side only. skipSleepTimer is false for natural wakeup.
+        if (!self.getWorld().isClient && !skipSleepTimer) {
+            ServerWorld serverWorld = (ServerWorld) self.getWorld();
+            UUID ownerUuid = self.getUuid();
+
+            // --- 1. Scan for Stuck Hamsters ---
+            List<HamsterEntity> stuckHamsters = new ArrayList<>();
+            for (Entity entity : serverWorld.getEntitiesByType(ModEntities.HAMSTER.get(), Entity::isAlive)) {
+                if (entity instanceof HamsterEntity hamster) {
+                    if (hamster.isTamed() && ownerUuid.equals(hamster.getOwnerUuid()) && hamster.isStuckSearchingForBed()) {
+                        stuckHamsters.add(hamster);
+                    }
+                }
+            }
+
+            // --- 2. Rescue Protocol ---
+            for (HamsterEntity hamster : stuckHamsters) {
+                hamster.getLinkedBedPos().ifPresent(globalPos -> {
+                    if (serverWorld.getRegistryKey() == globalPos.dimension()) {
+                        BlockPos bedPos = globalPos.pos();
+                        BlockState bedState = serverWorld.getBlockState(bedPos);
+
+                        // Validate Bed availability
+                        if (bedState.getBlock() instanceof HamsterBedBlock && !bedState.get(HamsterBedBlock.OCCUPIED)) {
+                            // Teleport and force sleep
+                            Vec3d targetCenter = Vec3d.ofCenter(bedPos).add(0, 0.1, 0);
+                            hamster.refreshPositionAndAngles(targetCenter.x, targetCenter.y, targetCenter.z, 0f, 0f);
+
+                            hamster.setDozingPhase(HamsterEntity.DozingPhase.DEEP_SLEEP);
+                            hamster.setSleeping(true);
+                            hamster.setRescueSleeping(true);
+                            hamster.setInSittingPose(true);
+
+                            serverWorld.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
+
+                            // Match personality pose
+                            int personality = hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+                            int poseIndex = (personality >= 1 && personality <= 3) ? personality : 1;
+                            hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, "anim_hamster_sleep_pose" + poseIndex);
+                            hamster.startNapTimer();
+
+                            // Cleanup flags
+                            hamster.setStuckSearchingForBed(false);
+                            hamster.setWanderModeActive(true);
+
+                            AdorableHamsterPets.LOGGER.info("Rescued stuck hamster {} to bed at {}", hamster.getId(), bedPos);
+                        } else {
+                            // Bed useless, stop checking
+                            hamster.setStuckSearchingForBed(false);
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Public API (PlayerEntityAccessor)
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    @Unique
+    @Override
+    public boolean ahp$computeHasGuideBook(PlayerEntity player) {
+        var inv = player.getInventory();
+        for (int i = 0; i < inv.size(); i++) {
+            ItemStack stack = inv.getStack(i);
+            if (!stack.isEmpty() && stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Unique
+    @Override
+    public void ahp$initGuideBookTracking(boolean currentlyHasGuideBook) {
+        this.ahp$cachedHasGuideBook = currentlyHasGuideBook;
+        this.ahp$guideBookTrackingInitialized = true;
+        this.ahp$guideBookCheckTimer = 0;
+    }
+
+    @Unique
+    @Override
+    public NbtCompound getShoulderHamster(ShoulderLocation location) {
+        return this.ahp$shoulderData.getCompound(location.name());
+    }
+
+    @Unique
+    @Override
+    public void setShoulderHamster(ShoulderLocation location, NbtCompound nbt) {
+        // Update local
+        if (nbt == null || nbt.isEmpty()) {
+            this.ahp$shoulderData.remove(location.name());
+        } else {
+            this.ahp$shoulderData.put(location.name(), nbt);
+        }
+
+        // Sync logic
+        if (!this.getWorld().isClient()) {
+            SyncShoulderDataPayload packet = new SyncShoulderDataPayload(this.getId(), this.ahp$shoulderData);
+            PlayerEntity self = (PlayerEntity) (Object) this;
+
+            // Send to self
+            if (self instanceof ServerPlayerEntity serverSelf) {
+                NetworkManager.sendToPlayer(serverSelf, packet);
+            }
+
+            // Send to watchers
+            if (self.getWorld() instanceof ServerWorld serverWorld) {
+                for (ServerPlayerEntity otherPlayer : serverWorld.getPlayers()) {
+                    if (otherPlayer != self && otherPlayer.squaredDistanceTo(self) < 4096) {
+                        NetworkManager.sendToPlayer(otherPlayer, packet);
+                    }
+                }
+            }
+        }
+    }
+
+    @Unique
+    @Override
+    public void adorablehamsterpets$setRawShoulderData(NbtCompound nbt) {
+        this.ahp$shoulderData = nbt;
+    }
+
+    @Unique
+    @Override
+    public void adorablehamsterpets$syncShoulderData() {
+        if (!this.getWorld().isClient() && !this.ahp$shoulderData.isEmpty()) {
+            PlayerEntity self = (PlayerEntity) (Object) this;
+            if (self instanceof ServerPlayerEntity serverPlayer) {
+                SyncShoulderDataPayload packet = new SyncShoulderDataPayload(this.getId(), this.ahp$shoulderData);
+                NetworkManager.sendToPlayer(serverPlayer, packet);
+            }
+        }
+    }
+
     @Unique
     @Override
     public void adorablehamsterpets$dismountShoulderHamster(boolean isThrow) {
         PlayerEntity self = (PlayerEntity) (Object) this;
         World world = self.getWorld();
-        if (world.isClient) {
-            return;
-        }
+        if (world.isClient) return;
 
-        // Self-Healing: Rebuild Queue if Desynced
+        // --- 1. Queue Validation & Rebuild ---
         if (this.adorablehamsterpets$mountOrderQueue.isEmpty() && this.hasAnyShoulderHamster()) {
             AdorableHamsterPets.LOGGER.warn("[HamsterDismount] Player {} has shoulder hamsters but empty queue. Rebuilding...", self.getName().getString());
             for (ShoulderLocation location : ShoulderLocation.values()) {
@@ -469,14 +498,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
-        if (this.adorablehamsterpets$mountOrderQueue.isEmpty()) {
-            return;
-        }
+        if (this.adorablehamsterpets$mountOrderQueue.isEmpty()) return;
 
         final AhpConfig config = AdorableHamsterPets.CONFIG;
         Random random = world.getRandom();
 
-        // Determine which hamster to dismount/throw
+        // Peek next hamster
         ShoulderLocation locationToProcess = config.dismountOrder.get() == DismountOrder.LIFO
                 ? this.adorablehamsterpets$mountOrderQueue.peekLast()
                 : this.adorablehamsterpets$mountOrderQueue.peekFirst();
@@ -485,40 +512,35 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         NbtCompound shoulderNbt = this.getShoulderHamster(locationToProcess);
         if (shoulderNbt.isEmpty()) {
-            AdorableHamsterPets.LOGGER.warn("Dismount queue pointed to an empty slot ({}). This may indicate a desync.", locationToProcess);
-            // Remove the bad entry from the queue
+            AdorableHamsterPets.LOGGER.warn("Dismount queue pointed to an empty slot ({}). Desync probable.", locationToProcess);
             if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
             else this.adorablehamsterpets$mountOrderQueue.pollFirst();
             return;
         }
 
-        // Create Hamster Instance for Validation
+        // Validate entity creation before altering state
         HamsterEntity hamster = HamsterEntity.createFromNbt((ServerWorld) world, self, shoulderNbt);
         if (hamster == null) {
             this.setShoulderHamster(locationToProcess, new NbtCompound());
-            // Remove from queue
             if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
             else this.adorablehamsterpets$mountOrderQueue.pollFirst();
             return;
         }
 
-        // --- Tree Heist Trigger (Targeted Dismount) ---
-        // If looking at Oak Leaves within 5 blocks, trigger the heist instead of dismounting normally.
+        // --- 2. Tree Heist Trigger ---
+        // If looking at oak leaves, check for heist start
         HitResult hitResult = self.raycast(5.0, 0.0f, false);
         if (hitResult.getType() == HitResult.Type.BLOCK) {
             BlockPos hitPos = ((BlockHitResult) hitResult).getBlockPos();
             if (world.getBlockState(hitPos).isOf(Blocks.OAK_LEAVES)) {
 
-                // 1. Scan for tree structure
                 TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, hitPos);
 
-                // 2. Check if occupied
                 if (HamsterTreeSearcherEntity.isTreeBlocked(world, scanResult.treeId())) {
-                    // Send message and abort dismount
                     self.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist.occupied").formatted(Formatting.RED), true);
-                    return; // Prevent the hamster from dismounting
+                    return; // Abort
                 } else {
-                    // Tree is free, proceed with Heist
+                    // Start Heist
                     HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(world);
                     if (searcher != null) {
                         hamster.triggerLeafPopEffects(hitPos, false);
@@ -526,21 +548,20 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                         hamster.writeNbt(fullNbt);
 
                         searcher.initializeSearch(hitPos, scanResult, fullNbt);
-
                         world.spawnEntity(searcher);
 
-                        // Cleanup Shoulder Data
+                        // Clear Data
                         if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
                         else this.adorablehamsterpets$mountOrderQueue.pollFirst();
                         this.setShoulderHamster(locationToProcess, new NbtCompound());
 
-                        return; // Skip standard spawn logic
+                        return; // Bypass standard spawn
                     }
                 }
             }
         }
 
-        // Handle Throw-Specific Logic
+        // --- 3. Throw Logic ---
         if (isThrow) {
             if (hamster.isBaby()) {
                 self.sendMessage(Text.translatable("message.adorablehamsterpets.baby_throw_refusal").formatted(Formatting.RED), true);
@@ -551,24 +572,20 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             if (hamster.throwCooldownEndTick > currentTime) {
                 long remainingTicks = hamster.throwCooldownEndTick - currentTime;
                 long totalSecondsRemaining = Math.max(1, remainingTicks / 20);
-
                 self.sendMessage(Text.translatable("message.adorablehamsterpets.throw_cooldown", totalSecondsRemaining).formatted(Formatting.RED), true);
                 return;
             }
 
-            // Set the initial position to the player's eye level
+            // Prep for launch
             hamster.refreshPositionAndAngles(self.getX(), self.getEyeY() - 0.1, self.getZ(), self.getYaw(), self.getPitch());
-
-            // Set Throw States
             hamster.setThrown(true);
             hamster.interactionCooldown = 10;
             hamster.throwCooldownEndTick = currentTime + config.hamsterThrowCooldown.get();
 
-            // Dynamic Velocity Logic
+            // Calculate Yeet Speed
             boolean isBuffed = hamster.hasGreenBeanBuff();
             float throwSpeed = isBuffed ? config.hamsterThrowVelocityBuffed.get().floatValue() : config.hamsterThrowVelocity.get().floatValue();
 
-            // Iron Armor speed boost
             ItemStack armorStack = hamster.getArmorStack();
             if (!armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
                 if (config.enableArmorPerks.get() && armorItem.getMaterial() == HamsterArmorItem.HamsterArmorMaterial.IRON) {
@@ -582,23 +599,19 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             hamster.velocityDirty = true;
         }
 
-        // Finalize Dismount/Throw
+        // --- 4. Finalize Dismount ---
         if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
         else this.adorablehamsterpets$mountOrderQueue.pollFirst();
 
-        // Clear the data and trigger the manual sync packet
         this.setShoulderHamster(locationToProcess, new NbtCompound());
 
-        // Spawn and Play Effects
+        // Spawn & Alert check
         HamsterEntity.spawnFromNbt((ServerWorld) world, self, shoulderNbt, this.adorablehamsterpets$isDiamondAlertConditionMet, hamster);
         this.adorablehamsterpets$isDiamondAlertConditionMet = false;
 
         if (isThrow) {
-            // --- Throw-Specific Effects ---
-            // Play throw sound at the player's location
             world.playSound(null, self.getX(), self.getY(), self.getZ(), ModSounds.HAMSTER_THROW.get(), SoundCategory.PLAYERS, 1.0f, 1.0f);
-
-            // Schedule airborne celebration sound with a 3-tick delay
+            // Delayed celebration squeak
             this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(world.getTime() + 3, () -> {
                 SoundEvent celebrationSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_FLYING_SOUNDS, random);
                 if (celebrationSound != null) {
@@ -607,7 +620,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }));
             ModCriteria.HAMSTER_THROWN.get().trigger((ServerPlayerEntity) self);
         } else {
-            // --- Standard Dismount Effects ---
             world.playSound(null, self.getBlockPos(), ModSounds.HAMSTER_DISMOUNT.get(), SoundCategory.PLAYERS, 0.7f, 1.0f + random.nextFloat() * 0.2f);
             if (config.enableShoulderDismountMessages && !DISMOUNT_MESSAGE_KEYS.isEmpty()) {
                 String chosenKey;
@@ -622,97 +634,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 this.adorablehamsterpets$lastDismountMessageKey = chosenKey;
             }
         }
-    }
-
-    // --- Helper Methods ---
-    /**
-     * Server-side edge detector for the Hamster Guide Book.
-     * Plays the guidebook FX exactly once when the player transitions from not-having → having the book.
-     */
-    @Unique
-    private void tickGuideBookTracking() {
-        PlayerEntity self = (PlayerEntity) (Object) this;
-        if (self.getWorld().isClient) return;
-        if (!(self instanceof ServerPlayerEntity player)) return;
-
-        // --- Periodic Scanning ---
-        if (++this.ahp$guideBookCheckTimer < AHP_GUIDEBOOK_CHECK_INTERVAL_TICKS) {
-            return;
-        }
-        this.ahp$guideBookCheckTimer = 0;
-
-        // --- Init Guard ---
-        // If something skipped init (fake players, weird lifecycle edge), seed silently and bail.
-        if (!this.ahp$guideBookTrackingInitialized) {
-            this.ahp$initGuideBookTracking(this.ahp$computeHasGuideBook(player));
-            return;
-        }
-
-        boolean hasNow = ahp$computeHasGuideBook(player);
-
-        // --- Edge: No -> Yes (play FX once) ---
-        if (hasNow && !this.ahp$cachedHasGuideBook) {
-            NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(false));
-        }
-
-        // --- State Commit ---
-        this.ahp$cachedHasGuideBook = hasNow;
-    }
-
-    /**
-     * Scans a spherical area around the player for "Desirable" ore blocks (configured via Config), prioritizing exposed ores.
-     *
-     * @param player The player to check around.
-     * @param radius The radius of the sphere to scan, in blocks.
-     * @return {@code true} if any desirable ore is found (with exposed ones taking precedence), otherwise {@code false}.
-     */
-    @Unique
-    private boolean isCelebrationOreNearby(PlayerEntity player, double radius) {
-        World world = player.getWorld();
-        BlockPos center = player.getBlockPos();
-        int intRadius = (int) Math.ceil(radius);
-
-        List<BlockPos> exposedOres = new ArrayList<>();
-        List<BlockPos> buriedOres = new ArrayList<>();
-
-        for (BlockPos checkPos : BlockPos.iterate(center.add(-intRadius, -intRadius, -intRadius), center.add(intRadius, intRadius, intRadius))) {
-            if (checkPos.getSquaredDistance(center) <= radius * radius) {
-                BlockState state = world.getBlockState(checkPos);
-
-                // Use the ConfigDataCache to check against the user-configured list of "Desirable Ores" that cause celebration upon being found
-                if (ConfigDataCache.isCelebrationOre(state)) {
-                    // Use public static helper from HamsterSniffForOreGoal
-                    if (HamsterSniffForOreGoal.isOreExposed(checkPos, world)) {
-                        exposedOres.add(checkPos.toImmutable());
-                    } else {
-                        buriedOres.add(checkPos.toImmutable());
-                    }
-                }
-            }
-        }
-        // Prioritize exposed ores. If any are found, the condition is met.
-        // If not, check if any buried ores were found as a fallback.
-        return !exposedOres.isEmpty() || !buriedOres.isEmpty();
-    }
-
-    /**
-     * Checks for nearby creepers that are actively targeting the player.
-     * This is used for the shoulder hamster's creeper alert feature.
-     *
-     * @param player The player being targeted.
-     * @param radius The search radius for creepers.
-     * @return {@code true} if at least one creeper is found with the player as its current attack target, otherwise {@code false}.
-     */
-    @Unique
-    private boolean creeperSeesPlayer(PlayerEntity player, double radius) {
-        World world = player.getWorld();
-        Box searchBox = new Box(player.getPos().subtract(radius, radius, radius), player.getPos().add(radius, radius, radius));
-        List<CreeperEntity> nearbyCreepers = world.getEntitiesByClass(
-                CreeperEntity.class,
-                searchBox,
-                creeper -> creeper.isAlive() && creeper.getTarget() == player && EntityPredicates.VALID_ENTITY.test(creeper)
-        );
-        return !nearbyCreepers.isEmpty();
     }
 
     @Unique
@@ -744,20 +665,18 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public ClientShoulderHamsterData adorablehamsterpets$getClientShoulderData() {
-        // Lazy initialization to support shader/fake players
+        // Lazy init for safety
         if (this.adorablehamsterpets$clientShoulderData == null && this.getWorld().isClient) {
             this.adorablehamsterpets$clientShoulderData = new ClientShoulderHamsterData();
         }
         return this.adorablehamsterpets$clientShoulderData;
     }
 
-    // --- Tree Heist Logic ---
     @Unique
     @Override
     public void ahp$registerTreeHeist(BlockPos treeId) {
         long time = this.getWorld().getTime();
         this.ahp$heistHistory.add(new TreeHeistUtil.HeistRecord(treeId, time));
-        // Simple cleanup
         this.ahp$heistHistory.removeIf(r -> time - r.timestamp() > HEIST_MEMORY_DURATION);
     }
 
@@ -767,11 +686,11 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         long time = this.getWorld().getTime();
         int initialSize = this.ahp$heistHistory.size();
 
-        // 1. Prune expired first
+        // Prune expired
         this.ahp$heistHistory.removeIf(r -> time - r.timestamp() > HEIST_MEMORY_DURATION);
         int prunedSize = this.ahp$heistHistory.size();
 
-        // 2. Count nearby recent heists
+        // Calculate saturation
         int matchCount = 0;
         List<Long> matchAges = new ArrayList<>();
 
@@ -782,11 +701,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
-        // 3. Calculate sliding scale
-        // 0 nearby = 100%
-        // 1 nearby = 60%
-        // 2 nearby = 30%
-        // 3+ nearby = 0%
+        // Sliding scale
         float multiplier;
         if (matchCount == 0) multiplier = 1.0f;
         else if (matchCount == 1) multiplier = 0.6f;
@@ -818,7 +733,92 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     public void ahp$clearHeistHistory() {
         this.ahp$heistHistory.clear();
         AdorableHamsterPets.LOGGER.info("[TreeHeist] Cleared heist history for player {}.", this.getName().getString());
-        // Cast to PlayerEntity to access the 2-argument sendMessage method
         ((PlayerEntity)(Object)this).sendMessage(Text.translatable("message.adorablehamsterpets.heist_history_reset").formatted(Formatting.WHITE), true);
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Overrides
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    @Override
+    public void onStartedTrackingBy(ServerPlayerEntity player) {
+        super.onStartedTrackingBy(player);
+
+        // Sync shoulder data to the watcher immediately
+        if (!this.ahp$shoulderData.isEmpty()) {
+            SyncShoulderDataPayload packet = new SyncShoulderDataPayload(this.getId(), this.ahp$shoulderData);
+            NetworkManager.sendToPlayer(player, packet);
+        }
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    // Detects when player gets a book. Plays FX once.
+    @Unique
+    private void tickGuideBookTracking() {
+        PlayerEntity self = (PlayerEntity) (Object) this;
+        if (self.getWorld().isClient) return;
+        if (!(self instanceof ServerPlayerEntity player)) return;
+
+        if (++this.ahp$guideBookCheckTimer < AHP_GUIDEBOOK_CHECK_INTERVAL_TICKS) {
+            return;
+        }
+        this.ahp$guideBookCheckTimer = 0;
+
+        // Init guard
+        if (!this.ahp$guideBookTrackingInitialized) {
+            this.ahp$initGuideBookTracking(this.ahp$computeHasGuideBook(player));
+            return;
+        }
+
+        boolean hasNow = ahp$computeHasGuideBook(player);
+
+        // Edge: No -> Yes
+        if (hasNow && !this.ahp$cachedHasGuideBook) {
+            NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(false));
+        }
+
+        this.ahp$cachedHasGuideBook = hasNow;
+    }
+
+    // Check for yummy rocks. Prioritize exposed ones.
+    @Unique
+    private boolean isCelebrationOreNearby(PlayerEntity player, double radius) {
+        World world = player.getWorld();
+        BlockPos center = player.getBlockPos();
+        int intRadius = (int) Math.ceil(radius);
+
+        List<BlockPos> exposedOres = new ArrayList<>();
+        List<BlockPos> buriedOres = new ArrayList<>();
+
+        for (BlockPos checkPos : BlockPos.iterate(center.add(-intRadius, -intRadius, -intRadius), center.add(intRadius, intRadius, intRadius))) {
+            if (checkPos.getSquaredDistance(center) <= radius * radius) {
+                BlockState state = world.getBlockState(checkPos);
+
+                if (ConfigDataCache.isCelebrationOre(state)) {
+                    if (HamsterSniffForOreGoal.isOreExposed(checkPos, world)) {
+                        exposedOres.add(checkPos.toImmutable());
+                    } else {
+                        buriedOres.add(checkPos.toImmutable());
+                    }
+                }
+            }
+        }
+        return !exposedOres.isEmpty() || !buriedOres.isEmpty();
+    }
+
+    // Is green explody thing looking at player?
+    @Unique
+    private boolean creeperSeesPlayer(PlayerEntity player, double radius) {
+        World world = player.getWorld();
+        Box searchBox = new Box(player.getPos().subtract(radius, radius, radius), player.getPos().add(radius, radius, radius));
+        List<CreeperEntity> nearbyCreepers = world.getEntitiesByClass(
+                CreeperEntity.class,
+                searchBox,
+                creeper -> creeper.isAlive() && creeper.getTarget() == player && EntityPredicates.VALID_ENTITY.test(creeper)
+        );
+        return !nearbyCreepers.isEmpty();
     }
 }

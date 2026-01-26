@@ -12,11 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The hamsters were too squishy. This update introduces military-grade protection for your rodents and a questionable, overengineered new method of deforestation.
 
 ### Added
-- **Configurable Action Bar Duration**
-  - Added a new setting in "UI & Quality of Life" to adjust how long action bar messages stay on screen so now you can actually read them. I couldn't find a mod that did this so I just added it myself. Defaults to 5 seconds (vanilla is 3 seconds), adjustable up to 15 seconds.
-- **Hamster Tips Guide Book to Custom Creative Tab**
-  - Registered the guide book item in the Adorable Hamster Pets creative menu group.
-  - Linked my custom Advancements tree to the Guidebook with a star-shaped button on the landing page.
 - **Hamster Armor System**
   - **Acorn Armor:** The biodegradable base tier. Crafted from Acorn Shards and an Acorn Hat. It works like Wolf Armor— completely negating damage until it breaks.
   - **Tiered Upgrades:** Use the Smithing Table to plate your Acorn Armor with Iron, Gold, Diamond, or Netherite using new **Smithing Templates** found in places where normal smithing templates are usually found.
@@ -35,6 +30,15 @@ The hamsters were too squishy. This update introduces military-grade protection 
     - **Reactive Foliage:** A deterministically randomized physics simulation makes the leaves physically jiggle and shudder as the proxy moves through them. Each block has a unique oscillation pattern derived from its coordinates, further selling the "scurrying" effect.
     - **Dynamic Audio:** Sound sources track the invisible proxy's position, meaning you can hear exactly where your hamster is inside the canopy.
   - **The Economy:** Trees possess persistent "profitability" memory. Over-farming the same coordinates depletes yields until your hamster finds nothing and pouts.
+- **"Night Shift" Fail-Safe Protocol**
+  - Added a new quality-of-life feature for wander mode. If a hamster gets stuck outside and cannot find a path back to its bed, simply go to sleep in your own bed.
+  - When you wake up, any of your stuck hamsters will have "found their way" (teleported) back to their beds and will be sound asleep.
+  - Requires the hamster to be loaded and the bed to be unoccupied.
+- **Configurable Action Bar Duration**
+  - Added a new setting in "UI & Quality of Life" to adjust how long action bar messages stay on screen so now you can actually read them. I couldn't find a mod that did this so I just added it myself. Defaults to 5 seconds (vanilla is 3 seconds), adjustable up to 15 seconds.
+- **Hamster Tips Guide Book to Custom Creative Tab**
+  - Registered the guide book item in the Adorable Hamster Pets creative menu group.
+  - Linked my custom Advancements tree to the Guidebook with a star-shaped button on the landing page.
 - **New Accessory**
   - **Acorn Hat:** Increases Tree Heist profitability by 2x, yielding more acorns. Fashionable and functional.
 - **New Ingredient**
