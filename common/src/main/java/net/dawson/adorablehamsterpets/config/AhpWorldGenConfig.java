@@ -334,7 +334,7 @@ public class AhpWorldGenConfig extends Config {
     public ValidatedFloat seedLootChance = new ValidatedFloat(0.60f, 1.0f, 0.0f);
 
     @Translatable.Name("Standard Armor Chance")
-    @Translatable.Desc("Chance (0.0 to 1.0) to find Acorn, Iron, or Gold hamster armor in standard Dungeons, Temples, Mineshafts, etc.).")
+    @Translatable.Desc("Chance (0.0 to 1.0) to find Acorn, Iron, or Gold hamster armor in standard Dungeons, Temples, Mineshafts, etc.")
     public ValidatedFloat standardArmorLootChance = new ValidatedFloat(0.30f, 1.0f, 0.0f);
 
     @Translatable.Name("High-Tier Armor Chance")
