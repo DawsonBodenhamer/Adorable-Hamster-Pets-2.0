@@ -344,16 +344,17 @@ Translating technical jargon is hard. Translating "Hamster Yeet" into another la
 
 [![Crowdin Translations](https://img.shields.io/badge/crowdin-Adorable_Hamster_Pets-orange?color=c37301&label=crowdin&logo=crowdin&style=for-the-badge)](https://crowdin.com/project/adorable-hamster-pets/invite?h=f0c9693f50d4006be56b7ea9115fc2672501384)
 
-| Language                | Progress | Translators                                                                                         |
-|:------------------------|:---------|:----------------------------------------------------------------------------------------------------|
-| **Chinese Simplified**  | 100%     | [**@SnowCutieOwO**](https://github.com/SnowCutieOwO)                                                |
-| **Chinese Traditional** | 100%     | [**@創造Creative**](https://portaly.cc/creativeyoo)                                                   |
-| **Russian**             | 100%     | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer)                                  |
-| **Japanese**            | 100%     | [**@SAGA**](https://github.com/saga5368965-dev)                                                     |
-| **Spanish**             | ~46%     | [**@The Retro Stitcher**](https://theretrostitcher.com/)                                            |
-| **Polish**              | ~26%     | (Pending credits)                                                                                   |
-| **Korean**              | ~25%     | [@na6ie](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) |
-| **German**              | ~7%      | [**@glitchyboy**](https://crowdin.com/profile/glitchyboy)                                           |
+| Language                | Progress | Translators                                                                                                                                                                                                                    |
+|:------------------------|:---------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Russian**             | 100%     | [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer)                                                                                                                                                             |
+| **French**              | ~87%     | **[@Maconov](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)**, **[@Les Arts de Naeda](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)** |
+| **Chinese Simplified**  | ~70%     | [**@SnowCutieOwO**](https://github.com/SnowCutieOwO)                                                                                                                                                                           |
+| **Chinese Traditional** | ~70%     | [**@創造Creative**](https://portaly.cc/creativeyoo)                                                                                                                                                                              |
+| **Japanese**            | ~70%     | [**@SAGA**](https://github.com/saga5368965-dev)                                                                                                                                                                                |
+| **Spanish**             | ~31%     | [**@The Retro Stitcher**](https://theretrostitcher.com/), [**@SweetRaccon**](https://www.curseforge.com/members/sweetraccon/projects)                                                                                          |
+| **Polish**              | ~16%     | (Pending credits)                                                                                                                                                                                                              |
+| **Korean**              | ~17%     | [@na6ie](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)                                                                                                                            |
+| **German**              | ~7%      | [**@glitchyboy**](https://crowdin.com/profile/glitchyboy)                                                                                                                                                                      |
 
 ### <span style="color: #169179;"><strong>Collaborators & Conspirators</strong></span>
 
@@ -376,10 +377,12 @@ I'd like to claim I did this all by myself while meditating on a mountain peak, 
 
 These generous souls contributed to the project to keep the lights on and the hamster wheels spinning. They are awesome and, yes, fully awesome. Did I say they are awesome?
 
-| Name                                                     | Fun Fact                                                                |
-|:---------------------------------------------------------|:------------------------------------------------------------------------|
-| [**@The Retro Stitcher**](https://theretrostitcher.com/) | Rumored to dream exclusively in pixel art with a precise color palette. |
-| [**@Slicktopia**](https://ko-fi.com/slicktopia)          | Single-handedly influencing the global virtual cheese economy.          |
+| Name                                                                                                           | Fun Fact                                                                                     |
+|:---------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------|
+| [**@The Retro Stitcher**](https://theretrostitcher.com/)                                                       | Rumored to dream exclusively in pixel art with a precise color palette.                      |
+| [**@Slicktopia**](https://ko-fi.com/slicktopia)                                                                | Single-handedly influencing the global virtual cheese economy.                               |
+| [**@Saint_Victus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) | Frequently rides hamsters into battle after shrinking themselves down to the size of an ant. |
+| [**@OmuriceSuki**](https://www.twitch.tv/omuricesuki)                                                          | Digitally reincarnated her hammies, Fuwa & Fuyu. They are now blocky, eternal, and hungry.   |
 
 
 ### <span style="color: #169179;"><strong>Dependencies</strong></span>
