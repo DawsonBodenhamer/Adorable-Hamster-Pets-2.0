@@ -67,7 +67,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
     - **Locations:** Woodland Mansions, Buried Treasure, Stronghold Libraries, Ominous Trial Spawners.
   - **Configuration:** Check the **World Gen & Loot** config to adjust the drop chance for every single category listed above, or disable them entirely. Requires a restart to take effect, which is why I put it in the World Gen & Loot config so you can modify it before loading into the world.
 - **Wild Cheek Pouch Loot**
-  - Wild hamsters now have a 50% chance to spawn with scavenged items (seeds, nuggets, etc.) in their cheek pouches. Includes modded sunflower seeds (highly configurable).
+  - Wild hamsters now have a chance (Default 50%, Configurable) to spawn with scavenged items (seeds, nuggets, etc.) in their cheek pouches.
+  - **Context-Aware Scavenging**: Hamsters found in caves have a unique loot pool containing raw ores, glowing berries, and other subterranean treasures. I did not add Diamonds to the list, but you can certainly do that yourself in the config.
   - **Lopsided Cheeks**: There is a 60% chance the loot will spawn in only one cheek, creating a cute, asymmetrical look.
   - **Logic**: These items drop on death (also configurable), or persist when tamed— meaning if you tame a wild hamster with full cheeks, you get to keep the loot once you unlock the pouch.
 - **Hamster Tips Guidebook Expansion**
@@ -154,8 +155,13 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Thanks to [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) for giving the textures for Wild Green Bean and Wild Cucumber bushes a fresh new look!
 - **Dynamic Bed Tooltips**
   - The Hamster Bed item and Jade tooltips now dynamically display the names of the configured Lure and Repellent items, ensuring the text matches your config settings.
+- **Hamster Spawning**:
+  - Black hamsters now spawn in Lush Caves and Dripstone Caves.
 
 ### Fixed
+- **Biome Spawning Logic**
+  - Refactored the internal configuration to use custom union tags instead of raw convention tags (e.g., `adorablehamsterpets:is_cave` instead of `c:is_cave`). I had already made my own internal union tags months ago (which point to the Fabric's convention tags for 1.21.1 and Forge tags for 1.20.1), but forgotten to actually point to them in the config.
+  - This fixes a long-standing issue where some hamster variants were not spawning correctly in certain biomes, despite the config saying otherwise. I discovered this when I noticed black hamsters were not spawning in caves, but there were probably other spawn variant issues as well which will now be resolved.
 - **Guidebook Entry Index Overflow**
   - Refactored my custom text-wrapping and pagination mixin logic in the Hamster Tips guidebook index.
   - Entry titles in the Entry Index now correctly flow into new pages instead of overflowing off the bottom of the book interface.

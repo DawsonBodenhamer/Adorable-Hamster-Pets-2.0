@@ -27,6 +27,7 @@ import net.dawson.adorablehamsterpets.networking.payload.PlayDistantSoundPayload
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.tag.ModBiomeTags;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
 import net.dawson.adorablehamsterpets.util.HamsterSeatOffsets;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
@@ -4099,24 +4100,33 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * Supports configurable loot lists and chances.
      */
     private void generateWildLoot() {
-        // Only generate if untamed and inventory is empty (safety check)
+        // Only generate if untamed and inventory is empty
         if (this.isTamed() || !this.items.get(0).isEmpty()) return;
 
-        // --- 1. Determine which cheeks to fill ---
+        // --- 1. Global Chance Check ---
+        float globalChance = Configs.AHP_WORLDGEN.globalCheekLootChance.get();
+        if (this.random.nextFloat() > globalChance) {
+            return;
+        }
+
+        // --- 2. Determine which cheeks to fill ---
         // 60% chance for 1 cheek (lopsided), 40% for both
         boolean fillBothCheeks = this.random.nextFloat() < 0.4f;
 
         // Helper to fill a cheek (3 slots)
-        BiConsumer<Integer, Boolean> fillCheek = (startSlot, isCustom) -> {
+        // mode: 0 = default, 1 = extra, 2 = cave
+        BiConsumer<Integer, Integer> fillCheek = (startSlot, mode) -> {
             // Random count 1-3
             int count = 1 + this.random.nextInt(3);
             // Put it in a random slot within the cheek (0-2 or 3-5)
             int specificSlot = startSlot + this.random.nextInt(3);
 
             // Pick item based on source
-            Item item = isCustom
-                    ? ConfigDataCache.getRandomCustomLootItem(this.random)
-                    : ConfigDataCache.getRandomDefaultLootItem(this.random);
+            Item item = switch (mode) {
+                case 1 -> ConfigDataCache.getRandomCustomLootItem(this.random);
+                case 2 -> ConfigDataCache.getRandomCaveLootItem(this.random);
+                default -> ConfigDataCache.getRandomDefaultLootItem(this.random);
+            };
 
             if (item != Items.AIR) {
                 ItemStack stack = new ItemStack(item, count);
@@ -4130,28 +4140,58 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         };
 
-        // --- 2. Process Default Loot Pool ---
-        float defaultChance = Configs.AHP_WORLDGEN.defaultCheekLootChance.get();
-        if (this.random.nextFloat() < defaultChance) {
-            // Fill Left Cheek (Slots 0-2) or Right Cheek (Slots 3-5)
-            if (fillBothCheeks) {
-                fillCheek.accept(0, false); // Left
-                fillCheek.accept(3, false); // Right
-            } else {
-                fillCheek.accept(this.random.nextBoolean() ? 0 : 3, false);
+        // --- 3. Check for Cave Context ---
+        boolean isCaveHamster = false;
+        if (!this.getWorld().isClient()) {
+            RegistryEntry<Biome> biomeEntry = this.getWorld().getBiome(this.getBlockPos());
+            // It is a cave hamster if:
+            // A) It spawned in a biome tagged as a cave
+            // B) It spawned deep underground (below Y=50) AND cannot see the sky.
+            boolean isCaveBiome = biomeEntry.isIn(ModBiomeTags.IS_CAVE); // Use my union tag
+            boolean isDeepAndDark = this.getY() < 50 && !this.getWorld().isSkyVisible(this.getBlockPos());
+
+            if (isCaveBiome || isDeepAndDark) {
+                isCaveHamster = true;
             }
         }
 
-        // --- 3. Process Custom Loot Pool ---
-        float customChance = Configs.AHP_WORLDGEN.extraCheekLootChance.get();
-        // Only run custom logic if the list isn't empty
-        if (!Configs.AHP_WORLDGEN.extraCheekLootList.isEmpty() && this.random.nextFloat() < customChance) {
-            // Fill Left Cheek (Slots 0-2) or Right Cheek (Slots 3-5)
+        // --- 4. Cave Loot Logic (Priority) ---
+        if (isCaveHamster) {
+            float caveChance = Configs.AHP_WORLDGEN.caveCheekLootChance.get();
+            if (this.random.nextFloat() < caveChance) {
+                // Determine cheeks
+                if (fillBothCheeks) {
+                    fillCheek.accept(0, 2); // Left
+                    fillCheek.accept(3, 2); // Right,
+                } else {
+                    fillCheek.accept(this.random.nextBoolean() ? 0 : 3, 2);
+                }
+                // If successfully rolled for cave loot, stop here
+                // Cave hamsters don't fall back to normal loot
+                return;
+            }
+        }
+
+        // --- 5. Standard Loot Logic ---
+        // A. Process Default Loot Pool
+        float defaultChance = Configs.AHP_WORLDGEN.defaultCheekLootChance.get();
+        if (this.random.nextFloat() < defaultChance) {
             if (fillBothCheeks) {
-                fillCheek.accept(0, true); // Left
-                fillCheek.accept(3, true); // Right
+                fillCheek.accept(0, 0); // Left
+                fillCheek.accept(3, 0); // Right
             } else {
-                fillCheek.accept(this.random.nextBoolean() ? 0 : 3, true);
+                fillCheek.accept(this.random.nextBoolean() ? 0 : 3, 0);
+            }
+        }
+
+        // B. Process Custom Loot Pool
+        float customChance = Configs.AHP_WORLDGEN.extraCheekLootChance.get();
+        if (!Configs.AHP_WORLDGEN.extraCheekLootList.isEmpty() && this.random.nextFloat() < customChance) {
+            if (fillBothCheeks) {
+                fillCheek.accept(0, 1); // Left
+                fillCheek.accept(3, 1); // Right
+            } else {
+                fillCheek.accept(this.random.nextBoolean() ? 0 : 3, 1);
             }
         }
     }
