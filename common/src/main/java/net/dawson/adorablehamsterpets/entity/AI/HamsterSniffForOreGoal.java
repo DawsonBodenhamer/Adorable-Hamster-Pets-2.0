@@ -11,14 +11,10 @@ import net.minecraft.advancement.Advancement;
 import net.dawson.adorablehamsterpets.util.ParticleBreadcrumbHelper;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.ai.pathing.PathNode;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -39,7 +35,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class HamsterSeekDiamondGoal extends Goal {
+public class HamsterSniffForOreGoal extends Goal {
 
     private final HamsterEntity hamster;
     private final World world;
@@ -64,7 +60,7 @@ public class HamsterSeekDiamondGoal extends Goal {
     private static final int SNIFF_SOUND_INTERVAL_MOVING = 30; // Less than 2 seconds
     private static final int SNIFF_SOUND_INTERVAL_WAITING = 160; // Approx 8 seconds
 
-    public HamsterSeekDiamondGoal(HamsterEntity hamster) {
+    public HamsterSniffForOreGoal(HamsterEntity hamster) {
         this.hamster = hamster;
         this.world = hamster.getWorld();
         this.setControls(EnumSet.of(Goal.Control.MOVE, Goal.Control.LOOK));

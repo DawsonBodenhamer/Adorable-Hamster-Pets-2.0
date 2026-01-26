@@ -485,6 +485,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int IS_SHOULDER_PET_FLAG = 1 << 17;
     public static final int IS_WANDER_MODE_ACTIVE_FLAG = 1 << 18;
     public static final int ON_THE_WAY_TO_BED_FLAG = 1 << 19;
+    public static final int STUCK_SEARCHING_FOR_BED_FLAG = 1 << 21;
+    public static final int RESCUE_SLEEPING_FLAG = 1 << 22;
 
     // --- Data Trackers ---
     private static final TrackedData<Integer> HAMSTER_FLAGS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -761,6 +763,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public Optional<GlobalPos> getLinkedBedPos() { return this.linkedBedPos; }
     public void setLinkedBedPos(Optional<GlobalPos> pos) { this.linkedBedPos = pos; }
     public int getGoToBedCooldown() { return this.goToBedCooldown; }
+    public boolean isStuckSearchingForBed() { return getHamsterFlag(STUCK_SEARCHING_FOR_BED_FLAG); }
+    public void setStuckSearchingForBed(boolean stuck) { setHamsterFlag(STUCK_SEARCHING_FOR_BED_FLAG, stuck); }
+    public boolean isRescueSleeping() { return getHamsterFlag(RESCUE_SLEEPING_FLAG); }
+    public void setRescueSleeping(boolean rescueSleeping) { setHamsterFlag(RESCUE_SLEEPING_FLAG, rescueSleeping); }
     public void wakeUpFromBed(boolean isManualWakeUp) {
         // Wakes the hamster up from its bed, setting the bed block to unoccupied
         // and applying a cooldown to prevent it from immediately going back to sleep.
@@ -770,6 +776,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         triggerWakeUpFromSleepAnimation(isManualWakeUp); // Pass in the context
 
         this.setSleeping(false);
+        this.setRescueSleeping(false); // Clear the rescue flag so normal logic resumes
         this.setInSittingPose(false); // Explicitly re-enable AI movement
         // Apply a configurable cooldown if woken up by player interaction,
         // preventing the hamster from immediately getting back in bed.
@@ -1492,6 +1499,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             result.result().ifPresent(tag -> nbt.put("LinkedBedPos", tag));
         });
         nbt.putBoolean("BypassNextSleepDelay", this.bypassNextSleepDelay);
+        nbt.putBoolean("StuckSearchingForBed", this.isStuckSearchingForBed());
+        nbt.putBoolean("IsRescueSleeping", this.isRescueSleeping());
 
         // --- 7. Write Flight Data ---
         nbt.putBoolean("HasPlayedIncomingSound", this.hasPlayedIncomingSound);
@@ -1589,6 +1598,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.linkedBedPos = Optional.empty();
         }
         this.bypassNextSleepDelay = nbt.getBoolean("BypassNextSleepDelay");
+        this.setStuckSearchingForBed(nbt.getBoolean("StuckSearchingForBed"));
+        this.setRescueSleeping(nbt.getBoolean("IsRescueSleeping"));
 
         // --- 7. Read Flight Data ---
         this.hasPlayedIncomingSound = nbt.getBoolean("HasPlayedIncomingSound");
@@ -2975,20 +2986,26 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     this.getLinkedBedPos().isPresent() &&
                     this.napInBedDurationTimer == 0)
             {
-                wakeUpFromBed(false); // Natural wake-up
+                // Don't wake up if this is a rescue sleep waiting for player interaction
+                if (!this.isRescueSleeping()) {
+                    wakeUpFromBed(false); // Natural wake-up
+                }
             }
 
             // --- Day/Night Cycle Wake-Up Logic ---
             if (!Configs.AHP.circadianChaos.get() && this.isSleeping() && this.getLinkedBedPos().isPresent()) {
-                boolean isSleepTime = Configs.AHP.sleepDuringDay.get() ? world.isDay() : world.isNight();
-                if (!isSleepTime) {
-                    // If it's wake-up time, and delay timer has not yet been started
-                    if (this.wakeUpFromBedDelay == 0 && this.goToBedCooldown == 0) {
-                        this.wakeUpFromBedDelay = this.random.nextBetween(5, 60); // Set the random 0.25s to 3s delay
+                // If rescued, bypass time check entirely. Hamster stays asleep
+                if (!this.isRescueSleeping()) {
+                    boolean isSleepTime = Configs.AHP.sleepDuringDay.get() ? world.isDay() : world.isNight();
+                    if (!isSleepTime) {
+                        // If it's wake-up time, and delay timer has not yet been started
+                        if (this.wakeUpFromBedDelay == 0 && this.goToBedCooldown == 0) {
+                            this.wakeUpFromBedDelay = this.random.nextBetween(5, 60); // Set random 0.25s to 3s delay
+                        }
+                    } else {
+                        // If time flips back to sleep time while the timer is counting down, cancel the wake-up.
+                        this.wakeUpFromBedDelay = 0;
                     }
-                } else {
-                    // If time flips back to sleep time while the timer is counting down, cancel the wake-up.
-                    this.wakeUpFromBedDelay = 0;
                 }
             }
             // Check if the wake-up timer has just expired
@@ -3428,7 +3445,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // --- Seeking/Wanting to Seek Diamond/Ore State ---
             boolean isSeekingGoalActive = false;
             String activeGoalName = this.getActiveCustomGoalDebugName();
-            if (activeGoalName.startsWith(HamsterSeekDiamondGoal.class.getSimpleName())) {
+            if (activeGoalName.startsWith(HamsterSniffForOreGoal.class.getSimpleName())) {
                 isSeekingGoalActive = true;
             }
             if (isSeekingGoalActive) {
@@ -3666,7 +3683,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 this.getId(), this.getWorld().isClient ? "ClientTick?" : this.getWorld().getTime(), this.isSleeping(), this.isInSittingPose());
         // --- 1. Initialize Goals ---
         this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new HamsterSeekDiamondGoal(this));
+        this.goalSelector.add(1, new HamsterSniffForOreGoal(this));
         this.goalSelector.add(1, new HamsterPlayWithItemGoal(this));
         this.goalSelector.add(2, new HamsterGoToBedAndSleepGoal(this));
         this.goalSelector.add(2, new HamsterMeleeAttackGoal(this, 1.5D, true));

@@ -23,14 +23,10 @@ import java.util.EnumSet;
 import java.util.Optional;
 
 public class HamsterGoToBedAndSleepGoal extends Goal {
-    private final HamsterEntity hamster;
-    private final World world;
-    private int pounceTicks;
-    @Nullable
-    private Vec3d pounceStartPos;
-    private int startDelay = 0;
-    private boolean wasLured = false;
-    private int awakeTimer = 0;
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constants & Enums
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     private static final int MIN_START_DELAY_TICKS = 5;
     private static final int MAX_START_DELAY_TICKS = 100;
@@ -40,13 +36,35 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
         POUNCING_INTO_BED
     }
 
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Instance Fields
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private final HamsterEntity hamster;
+    private final World world;
+
+    // State tracking
     private State currentState = State.MOVING_TO_BED;
+    private int pounceTicks;
+    @Nullable
+    private Vec3d pounceStartPos;
+    private int startDelay = 0;
+    private boolean wasLured = false;
+    private int awakeTimer = 0;
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructor
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     public HamsterGoToBedAndSleepGoal(HamsterEntity hamster) {
         this.hamster = hamster;
         this.world = hamster.getWorld();
         this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
     }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Goal Lifecycle
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
     public boolean canStart() {
@@ -101,13 +119,34 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
     }
 
     @Override
+    public boolean shouldContinue() {
+        // --- 1. Basic state checks ---
+        if (this.hamster.isSitting() || !this.hamster.isWanderModeActive()) {
+            return false;
+        }
+
+        // --- 2. Bed validity checks ---
+        Optional<GlobalPos> bedPosOptional = this.hamster.getLinkedBedPos();
+        if (bedPosOptional.isEmpty() || this.world.getRegistryKey() != bedPosOptional.get().getDimension()) {
+            return false;
+        }
+        BlockPos bedPos = bedPosOptional.get().getPos();
+        BlockState bedState = this.world.getBlockState(bedPos);
+        if (!(bedState.getBlock() instanceof HamsterBedBlock) || bedState.get(HamsterBedBlock.OCCUPIED)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
     public void start() {
         this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
         this.hamster.setOnTheWayToBed(true); // Set the flag for the debug overlay
 
         // Reset random sleep cooldown if Circadian Chaos is enabled
         if (Configs.AHP.circadianChaos.get()) {
-            int min = Configs.AHP.minNapInBedIntervalSeconds .get() * 20;
+            int min = Configs.AHP.minNapInBedIntervalSeconds.get() * 20;
             int max = Configs.AHP.maxNapInBedIntervalSeconds.get() * 20;
             this.awakeTimer = this.hamster.getRandom().nextBetween(min, max);
         }
@@ -156,28 +195,6 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
         }
         this.hamster.setOnTheWayToBed(false); // Clear the flag on the debug overlay
         this.hamster.setGoToBedDelayTicks(this.startDelay); // Reset delay for the debug overlay
-    }
-
-    @Override
-    public boolean shouldContinue() {
-        // --- 1. Basic state checks ---
-        if (this.hamster.isSitting() || !this.hamster.isWanderModeActive()) {
-            return false;
-        }
-
-        // --- 2. Bed validity checks ---
-        Optional<GlobalPos> bedPosOptional = this.hamster.getLinkedBedPos();
-        if (bedPosOptional.isEmpty() || this.world.getRegistryKey() != bedPosOptional.get().getDimension()) {
-            return false;
-        }
-        BlockPos bedPos = bedPosOptional.get().getPos();
-        BlockState bedState = this.world.getBlockState(bedPos);
-        if (!(bedState.getBlock() instanceof HamsterBedBlock) || bedState.get(HamsterBedBlock.OCCUPIED)) {
-            return false;
-        }
-
-        // --- 3. If all checks pass, continue the goal ---
-        return true;
     }
 
     @Override
