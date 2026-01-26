@@ -60,15 +60,15 @@ public class AhpWorldGenConfig extends Config {
     ));
 
     @Translatable.Name("Convention Biome Tags")
-    @Translatable.Desc("A list of 'c:' convention biome tags where hamsters can spawn. Used for broad mod compatibility. By default, this includes most overworld tags as a 'catch-all', and the filtering for different hamster variants in each biome is hard coded.")
+    @Translatable.Desc("A list of convention biome tags where hamsters can spawn. Used for broad mod compatibility.")
     public List<String> spawnBiomeConventionTags = new ArrayList<>(List.of(
-            "c:is_cold",
-            "c:is_hot",
-            "c:is_temperate",
-            "c:is_dry",
-            "c:is_wet",
-            "c:is_dense_vegetation",
-            "c:is_sparse_vegetation"
+            "adorablehamsterpets:is_cold",
+            "adorablehamsterpets:is_hot",
+            "adorablehamsterpets:is_temperate",
+            "adorablehamsterpets:is_dry",
+            "adorablehamsterpets:is_wet",
+            "adorablehamsterpets:is_dense_vegetation",
+            "adorablehamsterpets:is_sparse_vegetation"
     ));
 
     @Translatable.Name("Include Specific Biomes")
@@ -148,7 +148,7 @@ public class AhpWorldGenConfig extends Config {
     ));
     @Translatable.Name("Included Tags")
     public List<String> blueTags = new ArrayList<>(List.of(
-            "c:is_icy"
+            "adorablehamsterpets:is_icy"
     ));
     @Translatable.Name("Excluded Biomes")
     public List<String> blueExclusionBiomes = new ArrayList<>(List.of(
@@ -169,7 +169,7 @@ public class AhpWorldGenConfig extends Config {
     ));
     @Translatable.Name("Included Tags")
     public List<String> lavenderTags = new ArrayList<>(List.of(
-            "c:is_magical", "c:is_mushroom", "terralith:mystical"
+            "adorablehamsterpets:is_magical", "adorablehamsterpets:is_mushroom", "terralith:mystical"
     ));
     @Translatable.Name("Excluded Biomes")
     public List<String> lavenderExclusionBiomes = new ArrayList<>(List.of(
@@ -190,7 +190,7 @@ public class AhpWorldGenConfig extends Config {
     ));
     @Translatable.Name("Included Tags")
     public List<String> whiteTags = new ArrayList<>(List.of(
-            "c:is_cold", "c:is_snowy"
+            "adorablehamsterpets:is_cold", "adorablehamsterpets:is_snowy"
     ));
     @Translatable.Name("Excluded Biomes")
     public List<String> whiteExclusionBiomes = new ArrayList<>(List.of(
@@ -213,7 +213,7 @@ public class AhpWorldGenConfig extends Config {
     ));
     @Translatable.Name("Included Tags")
     public List<String> grayTags = new ArrayList<>(List.of(
-            "c:is_mountain", "c:is_sparse_vegetation", "terralith:cliffs"
+            "adorablehamsterpets:is_mountain", "adorablehamsterpets:is_sparse_vegetation", "terralith:cliffs"
     ));
     @Translatable.Name("Excluded Biomes")
     public List<String> grayExclusionBiomes = new ArrayList<>(List.of(
@@ -234,11 +234,10 @@ public class AhpWorldGenConfig extends Config {
     ));
     @Translatable.Name("Included Tags")
     public List<String> blackTags = new ArrayList<>(List.of(
-            "c:is_wet", "c:is_cave"
+            "adorablehamsterpets:is_wet", "adorablehamsterpets:is_cave"
     ));
     @Translatable.Name("Excluded Biomes")
     public List<String> blackExclusionBiomes = new ArrayList<>(List.of(
-            "minecraft:dripstone_caves", "minecraft:lush_caves"
     ));
     @ConfigGroup.Pop
     @Translatable.Name("Excluded Tags")
@@ -256,7 +255,7 @@ public class AhpWorldGenConfig extends Config {
     ));
     @Translatable.Name("Included Tags")
     public List<String> creamTags = new ArrayList<>(List.of(
-            "c:is_sandy"
+            "adorablehamsterpets:is_sandy"
     ));
     @Translatable.Name("Excluded Biomes")
     public List<String> creamExclusionBiomes = new ArrayList<>(List.of(
@@ -278,7 +277,7 @@ public class AhpWorldGenConfig extends Config {
     ));
     @Translatable.Name("Included Tags")
     public List<String> chocolateTags = new ArrayList<>(List.of(
-            "c:is_forest", "c:is_dense_vegetation"
+            "adorablehamsterpets:is_forest", "adorablehamsterpets:is_dense_vegetation"
     ));
     @Translatable.Name("Excluded Biomes")
     public List<String> chocolateExclusionBiomes = new ArrayList<>(List.of(
@@ -302,6 +301,10 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Configure the contents and rarity of wild hamster cheek pouch loot. Requires a world reload to apply.")
     public ConfigGroup cheekPouchLoot = new ConfigGroup("cheekPouchLoot", true);
 
+    @Translatable.Name("Global Loot Chance")
+    @Translatable.Desc("The overall probability (0.0 to 1.0) that ANY wild hamster has stuffed something in its face. Set to 0.0 to enforce strict economic austerity.")
+    public ValidatedFloat globalCheekLootChance = new ValidatedFloat(0.5f, 1.0f, 0.0f);
+
     @Translatable.Name("Default Loot")
     @Translatable.Desc("The curated selection of pocket lint, seeds, and snacks that hamsters naturally forage. Edit this if you think hamsters should naturally forage for diamonds.")
     public List<String> defaultCheekLootList = new ArrayList<>(List.of(
@@ -320,10 +323,23 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("A list of item IDs (e.g. 'minecraft:cookie') or tags (e.g. '#c:fruits') that wild hamsters can spawn with. If you want them to spawn with Nether Stars, this is where you make that bad decision.")
     public List<String> extraCheekLootList = new ArrayList<>();
 
-    @ConfigGroup.Pop
     @Translatable.Name("Extra Loot Chance")
     @Translatable.Desc("The chance (0.0 to 1.0) that a wild hamster spawns with items from your Extra Loot list above. Independent of the default loot check.")
     public ValidatedFloat extraCheekLootChance = new ValidatedFloat(0.5f, 1.0f, 0.0f);
+
+    @Translatable.Name("Cave Hamster Loot")
+    @Translatable.Desc("The shiny rocks, glowing berries, and industrial debris found in the cheeks of cave-dwelling hamsters. Spelunking rodents have expensive tastes.")
+    public List<String> caveCheekLootList = new ArrayList<>(List.of(
+            "minecraft:raw_iron", "minecraft:raw_copper", "minecraft:raw_gold",
+            "minecraft:coal", "minecraft:amethyst_shard", "minecraft:glow_berries",
+            "minecraft:redstone", "minecraft:lapis_lazuli", "minecraft:flint",
+            "minecraft:clay_ball"
+    ));
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Cave Loot Chance")
+    @Translatable.Desc("The chance (0.0 to 1.0) that a hamster spawning in a cave actually found something cool instead of just a rock. Applies ONLY to hamsters spawning in valid cave biomes or deep underground.")
+    public ValidatedFloat caveCheekLootChance = new ValidatedFloat(0.5f, 1.0f, 0.0f);
 
     @Translatable.Name("Chest & World Loot")
     @Translatable.Desc("Control the economy of hamster-related trash. Adjust chest loot rarities and define exactly what wild hamsters are stuffing in their faces. Requires a world reload to apply.\n\nWondering where each loot type spawns? Check the mod page or the Hamster Tips guidebook.")
@@ -394,12 +410,12 @@ public class AhpWorldGenConfig extends Config {
     public ValidatedDouble sunflowerRegrowthModifier = new ValidatedDouble(1.0, 5.0, 0.1);
 
     @Translatable.Name("Convention Biome Tags")
-    @Translatable.Desc("A list of biome tags where these custom Sunflowers can replace vanilla ones. The 'c:is_plains' tag provides wide compatibility with modded biomes.")
+    @Translatable.Desc("A list of biome tags where these custom Sunflowers can replace vanilla ones. My custom union tag 'adorablehamsterpets:is_plains' points to 'c:is_plains', which provides wide compatibility with modded biomes.")
     public List<String> sunflowerBiomeTags = new ArrayList<>(List.of(
-            "c:is_plains",
-            "c:is_temperate",
-            "c:is_hot",
-            "c:is_dry"
+            "adorablehamsterpets:is_plains",
+            "adorablehamsterpets:is_temperate",
+            "adorablehamsterpets:is_hot",
+            "adorablehamsterpets:is_dry"
     ));
 
     @Translatable.Name("Specific Biomes")
@@ -430,11 +446,11 @@ public class AhpWorldGenConfig extends Config {
     public List<String> cucumberBushTags = new ArrayList<>(List.of("minecraft:is_jungle"));
 
     @Translatable.Name("Convention Biome Tags")
-    @Translatable.Desc("Convention tags for maximum mod-pack harmony. Format: 'c:tag_name', for example: 'c:is_temperate'.")
+    @Translatable.Desc("Convention tags for maximum mod-pack harmony. Format: 'namespace:tag_name', for example: 'adorablehamsterpets:is_temperate', which points to the 'c:is_temperate' convention tag.")
     public List<String> cucumberBushConventionTags = new ArrayList<>(List.of(
-            "c:is_temperate",
-            "c:is_hot",
-            "c:is_dry"
+            "adorablehamsterpets:is_temperate",
+            "adorablehamsterpets:is_hot",
+            "adorablehamsterpets:is_dry"
     ));
 
     @Translatable.Name("Specific Biomes")
@@ -480,10 +496,10 @@ public class AhpWorldGenConfig extends Config {
     public List<String> greenBeanBushTags = new ArrayList<>(List.of("mod_id:biome_name"));
 
     @Translatable.Name("Convention Biome Tags")
-    @Translatable.Desc("Convention tags for mod-friendly bean spam. Format: 'c:tag_name', for example: 'c:is_wet'.")
+    @Translatable.Desc("Convention tags for mod-friendly bean spam. Format: 'namespace:tag_name', for example: 'adorablehamsterpets:is_wet', which points to the 'c:is_wet' convention tag.")
     public List<String> greenBeanBushConventionTags = new ArrayList<>(List.of(
-            "c:is_wet",
-            "c:is_temperate"
+            "adorablehamsterpets:is_wet",
+            "adorablehamsterpets:is_temperate"
     ));
 
     @Translatable.Name("Specific Biomes")

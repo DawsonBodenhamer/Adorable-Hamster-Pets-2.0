@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "#c:is_dry", "required": false },
+    { "id": "#forge:is_dry", "required": false }
+  ]
+}

@@ -97,7 +97,8 @@ public class ConfigDataCache {
     // --- Cached Lists for Loot Generation ---
     // Tags are expanded into individual items for generation logic
     private static final List<Item> flattenedDefaultCheekLoot = new ArrayList<>();
-    private static final List<Item> flattenedCustomCheekLoot = new ArrayList<>();
+    private static final List<Item> flattenedExtraCheekLoot = new ArrayList<>();
+    private static final List<Item> flattenedCaveCheekLoot = new ArrayList<>();
 
 
     /**
@@ -125,7 +126,8 @@ public class ConfigDataCache {
         parseItemList(Configs.AHP.autoHealFoods, autoHealFoodItems, autoHealFoodTags, "autoHealFoods");
         parseItemList(Configs.AHP.resurrectionTributes, resurrectionTributeItems, resurrectionTributeTags, "resurrectionTributes");
         parseLootGenerationList(Configs.AHP_WORLDGEN.defaultCheekLootList, flattenedDefaultCheekLoot, "defaultCheekLootList");
-        parseLootGenerationList(Configs.AHP_WORLDGEN.extraCheekLootList, flattenedCustomCheekLoot, "extraCheekLootList");
+        parseLootGenerationList(Configs.AHP_WORLDGEN.extraCheekLootList, flattenedExtraCheekLoot, "extraCheekLootList");
+        parseLootGenerationList(Configs.AHP_WORLDGEN.caveCheekLootList, flattenedCaveCheekLoot, "caveCheekLootList");
 
         // --- Parse Block Lists ---
         parseBlockList(Configs.AHP.celebrationOres, celebrationOreBlocks, celebrationOreTags, "celebrationOres");
@@ -185,7 +187,8 @@ public class ConfigDataCache {
     public static boolean isPouchDisallowed(ItemStack stack) { return matchesItem(stack, pouchDisallowedItems, pouchDisallowedTags); }
     public static boolean isResurrectionTribute(ItemStack stack) { return matchesItem(stack, resurrectionTributeItems, resurrectionTributeTags); }
     public static Item getRandomDefaultLootItem(net.minecraft.util.math.random.Random random) {if (flattenedDefaultCheekLoot.isEmpty()) return Items.AIR;return flattenedDefaultCheekLoot.get(random.nextInt(flattenedDefaultCheekLoot.size()));}
-    public static Item getRandomCustomLootItem(net.minecraft.util.math.random.Random random) {if (flattenedCustomCheekLoot.isEmpty()) return Items.AIR;return flattenedCustomCheekLoot.get(random.nextInt(flattenedCustomCheekLoot.size()));}
+    public static Item getRandomCustomLootItem(net.minecraft.util.math.random.Random random) {if (flattenedExtraCheekLoot.isEmpty()) return Items.AIR;return flattenedExtraCheekLoot.get(random.nextInt(flattenedExtraCheekLoot.size()));}
+    public static Item getRandomCaveLootItem(net.minecraft.util.math.random.Random random) {if (flattenedCaveCheekLoot.isEmpty()) return Items.AIR;return flattenedCaveCheekLoot.get(random.nextInt(flattenedCaveCheekLoot.size()));}
 
     // --- Public Block Checker Methods ---
     public static boolean isCelebrationOre(BlockState state) { return matchesBlock(state, celebrationOreBlocks, celebrationOreTags); }
@@ -365,7 +368,8 @@ public class ConfigDataCache {
         resurrectionTributeItems.clear();
         resurrectionTributeTags.clear();
         flattenedDefaultCheekLoot.clear();
-        flattenedCustomCheekLoot.clear();
+        flattenedExtraCheekLoot.clear();
+        flattenedCaveCheekLoot.clear();
     }
 
     private static void clearAllBlockSets() {

@@ -8,7 +8,7 @@ import net.minecraft.world.biome.Biome;
 
 /**
  * Centralizes all custom "union" biome tags for the mod.
- * Each tag aggregates vanilla, 'c', and 'forge' tags for maximum cross-loader compatibility.
+ * Each tag aggregates vanilla, 'c', and 'forge' tags for maximum compatibility across Minecraft versions.
  */
 public class ModBiomeTags {
 
@@ -24,6 +24,10 @@ public class ModBiomeTags {
     public static final TagKey<Biome> IS_SANDY = of("is_sandy");
     public static final TagKey<Biome> IS_FOREST = of("is_forest");
     public static final TagKey<Biome> IS_DENSE_VEGETATION = of("is_dense_vegetation");
+    public static final TagKey<Biome> IS_HOT = of("is_hot");
+    public static final TagKey<Biome> IS_TEMPERATE = of("is_temperate");
+    public static final TagKey<Biome> IS_DRY = of("is_dry");
+    public static final TagKey<Biome> IS_PLAINS = of("is_plains");
 
     private static TagKey<Biome> of(String path) {
         return TagKey.of(RegistryKeys.BIOME, Identifier.of(AdorableHamsterPets.MOD_ID, path));
