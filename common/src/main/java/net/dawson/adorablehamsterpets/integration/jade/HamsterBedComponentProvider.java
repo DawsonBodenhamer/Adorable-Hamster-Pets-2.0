@@ -41,9 +41,13 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.linked_to", hamsterName).formatted(Formatting.GREEN));
             }
 
-            // Wander Mode Status and Distance
+            // --- Wander Mode Status and Distance ---
             boolean isWanderActive = serverData.getBoolean("WanderModeActive");
-            Text wanderStatus = isWanderActive ? Text.literal("ACTIVE").formatted(Formatting.GREEN) : Text.literal("INACTIVE").formatted(Formatting.RED);
+
+            Text wanderStatus = isWanderActive
+                    ? Text.translatable("tooltip.adorablehamsterpets.jade.wander_status.active").formatted(Formatting.GREEN)
+                    : Text.translatable("tooltip.adorablehamsterpets.jade.wander_status.inactive").formatted(Formatting.RED);
+
             WanderDistance distance = WanderDistance.valueOf(serverData.getString("WanderDistance").toUpperCase());
             int radius = switch (distance) {
                 case NEAR -> Configs.AHP.wanderDistanceNear.get();
@@ -87,7 +91,7 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.label", statusText));
                 tooltip.add(hintText);
 
-                // --- 3. Static Interaction Tips
+                // --- 3. Static Interaction Tips ---
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls1").formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls2").formatted(Formatting.GRAY));
 
