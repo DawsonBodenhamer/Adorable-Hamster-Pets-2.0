@@ -250,11 +250,7 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
         nbt.putString("WanderDistance", wanderDistance.asString());
         nbt.putBoolean("IsNewlyPlaced", this.isNewlyPlaced);
         nbt.putBoolean("RespawnEnabled", this.respawnEnabled);
-
-        // If an upside down bed is broken and replaced right-side up, set "AllowSleep" to true
-        if (!this.getCachedState().get(HamsterBedBlock.UPSIDE_DOWN)) {
-            nbt.putBoolean("AllowSleep", this.allowSleep);
-        }
+        nbt.putBoolean("AllowSleep", this.allowSleep);
     }
 
     @Override
@@ -276,6 +272,10 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
         this.isNewlyPlaced = nbt.contains("IsNewlyPlaced") ? nbt.getBoolean("IsNewlyPlaced") : false;
         this.allowSleep = !nbt.contains("AllowSleep") || nbt.getBoolean("AllowSleep");
         this.respawnEnabled = nbt.getBoolean("RespawnEnabled");
+        // Safety: If bed is upside down, force sleep to false
+        if (this.getCachedState().contains(HamsterBedBlock.UPSIDE_DOWN) && this.getCachedState().get(HamsterBedBlock.UPSIDE_DOWN)) {
+            this.allowSleep = false;
+        }
     }
 
     public static void tick(World world, BlockPos pos, BlockState state, HamsterBedBlockEntity be) {
