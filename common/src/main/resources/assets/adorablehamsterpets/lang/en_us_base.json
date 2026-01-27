@@ -126,6 +126,8 @@
   "tooltip.adorablehamsterpets.jade.wander_mode": "Wander Mode: %s",
   "tooltip.adorablehamsterpets.jade.unlinked": "Unlinked. Right-click a hamster with this bed in hand to link.",
   "tooltip.adorablehamsterpets.jade.wander_status": "Wander: %s (%s, %s blocks)",
+  "tooltip.adorablehamsterpets.jade.wander_status.active": "ACTIVE",
+  "tooltip.adorablehamsterpets.jade.wander_status.inactive": "INACTIVE",
   "tooltip.adorablehamsterpets.jade.sleep_status.label": "Sleeping in Bed: %s",
   "tooltip.adorablehamsterpets.jade.sleep_status.allowed": "§aALLOWED",
   "tooltip.adorablehamsterpets.jade.sleep_status.prevented": "§cDISABLED",
