@@ -1,0 +1,26 @@
+{
+  "parent": "adorablehamsterpets:husbandry/industrial_nutcracking",
+  "display": {
+    "icon": {
+      "item": "adorablehamsterpets:hamster_armor_acorn"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.hardened_salad.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.hardened_salad.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "crafted_acorn_armor": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "adorablehamsterpets:hamster_armor_acorn"
+      }
+    }
+  }
+}

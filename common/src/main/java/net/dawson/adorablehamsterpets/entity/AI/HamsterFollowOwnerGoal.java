@@ -36,7 +36,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
                 this.hamster.isKnockedOut() ||
                 this.hamster.isSulking() ||
                 this.hamster.isCelebratingDiamond() ||
-                this.hamster.isCelebratingChase() ||
+                this.hamster.isCelebratingRetrieval() ||
                 this.hamster.isWanderModeActive()) {
             return false;
         }
@@ -55,9 +55,12 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
 
     @Override
     public boolean shouldContinue() {
-        // Custom state checks that should stop the goal immediately.
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() ||
-                this.hamster.isSulking() || this.hamster.isCelebratingDiamond() || this.hamster.isCelebratingChase()) {
+        if (this.hamster.isSitting() ||
+                this.hamster.isSleeping() ||
+                this.hamster.isKnockedOut() ||
+                this.hamster.isSulking() ||
+                this.hamster.isCelebratingDiamond() ||
+                this.hamster.isCelebratingRetrieval()) {
             return false;
         }
 

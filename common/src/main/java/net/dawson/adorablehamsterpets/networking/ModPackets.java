@@ -38,6 +38,7 @@ public class ModPackets {
     public record UpdateRenderStateC2SPacket(int entityId, boolean isRendering) {}
     public record RequestGuidebookC2SPacket() {}
     public record RequestHamsterMountC2SPacket(int entityId) {}
+    public record ResetHeistHistoryC2SPacket() {}
 
     // S2C (Server-to-Client)
     public record PlayGuidebookEffectsS2CPacket() {}
@@ -113,6 +114,16 @@ public class ModPackets {
                             // Use the 1.20.1 version of tryShoulderMount (check signature)
                             hamster.tryShoulderMount(player, net.minecraft.item.ItemStack.EMPTY);
                         }
+                    }
+                })
+        );
+
+        CHANNEL.register(ResetHeistHistoryC2SPacket.class,
+                (packet, buf) -> {},
+                (buf) -> new ResetHeistHistoryC2SPacket(),
+                (packet, context) -> context.get().queue(() -> {
+                    if (context.get().getPlayer() instanceof PlayerEntityAccessor accessor) {
+                        accessor.ahp$clearHeistHistory();
                     }
                 })
         );

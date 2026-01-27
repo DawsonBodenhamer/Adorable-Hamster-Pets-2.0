@@ -1,0 +1,37 @@
+{
+  "parent": "adorablehamsterpets:husbandry/return_on_investnut",
+  "display": {
+    "icon": {
+      "item": "adorablehamsterpets:acorn_hat"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.squirrel_cosplay.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.squirrel_cosplay.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "equipped_hat": {
+      "trigger": "minecraft:player_interacted_with_entity",
+      "conditions": {
+        "item": {
+          "items": ["adorablehamsterpets:acorn_hat"]
+        },
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "adorablehamsterpets:hamster"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

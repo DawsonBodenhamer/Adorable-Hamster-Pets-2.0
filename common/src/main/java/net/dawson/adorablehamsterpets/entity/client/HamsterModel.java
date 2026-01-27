@@ -1,16 +1,19 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.item.ModItems;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animatable.model.CoreGeoBone;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoRenderer;
 
 @SuppressWarnings("removal") // Suppress deprecation warnings for the old abstract methods
-
 public class HamsterModel extends GeoModel<HamsterEntity> {
 
     // --- 1. Constants for Scaling and Positioning ---
@@ -47,6 +50,12 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         CoreGeoBone rightCheekDefBone = this.getAnimationProcessor().getBone("right_cheek_deflated");
         CoreGeoBone leftCheekInfBone = this.getAnimationProcessor().getBone("left_cheek_inflated");
         CoreGeoBone rightCheekInfBone = this.getAnimationProcessor().getBone("right_cheek_inflated");
+        CoreGeoBone rightEarBone = this.getAnimationProcessor().getBone("right_ear");
+        CoreGeoBone acornHatBone = this.getAnimationProcessor().getBone("acorn_hat");
+        CoreGeoBone petalHeadBone = this.getAnimationProcessor().getBone("pink_petal_head");
+        CoreGeoBone petalSideBone = this.getAnimationProcessor().getBone("pink_petal_side");
+        CoreGeoBone petalBackBone = this.getAnimationProcessor().getBone("pink_petal_lower_back");
+
 
         // --- Cheek Pouch Visibility Logic ---
         if (leftCheekDefBone != null && leftCheekInfBone != null) {
@@ -58,6 +67,36 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             boolean rightFull = entity.isRightCheekFull();
             rightCheekDefBone.setHidden(rightFull);
             rightCheekInfBone.setHidden(!rightFull);
+        }
+
+        // --- Armor/Accessory Visual Logic ---
+        if (rightEarBone != null) {
+            boolean shouldHideEar = false;
+            boolean shouldShowHat = false;
+
+            // 1. Check Bling Slot (Slot 6) - Highest Priority
+            ItemStack blingStack = entity.getAccessoryStack();
+            if (blingStack.isOf(ModItems.ACORN_HAT.get())) {
+                shouldHideEar = true; // Prevent clipping through hat
+                shouldShowHat = true;
+            }
+
+            // 2. Check Armor Slot (Slot 7) + Config
+            // Only check if we haven't already decided to show the hat (bling overrides armor)
+            ItemStack armorStack = entity.getArmorStack();
+            if (armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP.renderAcornHat.get()) {
+                // If wearing Acorn Armor AND config enables hat, hide ear and show hat.
+                shouldHideEar = true;
+                shouldShowHat = true;
+            }
+
+            // Apply visibility states
+            rightEarBone.setHidden(shouldHideEar);
+
+            if (acornHatBone != null) {
+                // Default the hat bone to hidden unless specifically enabled.
+                acornHatBone.setHidden(!shouldShowHat);
+            }
         }
 
         // --- Scaling & Rotation Logic ---
@@ -83,8 +122,8 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             headParentBone.setScaleZ(headScale);
 
             // --- Dynamic Throw Pitch ---
-            // Rotates the root bone to match the flight trajectory
-            if (entity.isThrown()) {
+            // Rotates the root bone to match the trajectory
+            if (entity.shouldRenderFlying()) {
                 double dx = entity.getX() - entity.prevX;
                 double dy = entity.getY() - entity.prevY;
                 double dz = entity.getZ() - entity.prevZ;
@@ -97,7 +136,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
                     rootBone.setRotX(pitchRadians);
                 }
             } else {
-                // Ensure rotation is reset when landing/not thrown
+                // Ensure rotation is reset when landing
                 rootBone.setRotX(0);
             }
         }

@@ -1,0 +1,30 @@
+{
+  "parent": "adorablehamsterpets:husbandry/return_on_investnut",
+  "display": {
+    "icon": {
+      "item": "adorablehamsterpets:acorn_shard"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.industrial_nutcracking.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.industrial_nutcracking.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_shards": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": ["adorablehamsterpets:acorn_shard"]
+          }
+        ]
+      }
+    }
+  }
+}

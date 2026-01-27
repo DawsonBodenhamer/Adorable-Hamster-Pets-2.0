@@ -4,6 +4,7 @@ import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.registry.RegistryKeys;
@@ -20,6 +21,12 @@ public class ModEntities {
                     .build("hamster")
     );
 
+    public static final RegistrySupplier<EntityType<HamsterTreeSearcherEntity>> HAMSTER_TREE_SEARCHER = ENTITY_TYPES.register("hamster_tree_searcher", () ->
+            EntityType.Builder.<HamsterTreeSearcherEntity>create(HamsterTreeSearcherEntity::new, SpawnGroup.MISC)
+                    .setDimensions(0.01F, 0.01F) // Tiny, invisible
+                    .build("hamster_tree_searcher"));
+
+    // --- 3. Main Registration Call ---
     public static void register() {
         ENTITY_TYPES.register();
     }

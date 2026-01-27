@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/throw_hamster",
+  "display": {
+    "icon": {
+      "item": "minecraft:oak_sapling"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.tree_heist.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.tree_heist.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "heist_started": {
+      "trigger": "adorablehamsterpets:tree_heist_started"
+    }
+  }
+}

@@ -3,6 +3,8 @@ package net.dawson.adorablehamsterpets.entity.client;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.client.sound.HamsterCleaningSoundInstance;
+import net.dawson.adorablehamsterpets.entity.client.layer.HamsterAcornHatLayer;
+import net.dawson.adorablehamsterpets.entity.client.layer.HamsterArmorLayer;
 import net.dawson.adorablehamsterpets.entity.client.layer.HamsterOverlayLayer;
 import net.dawson.adorablehamsterpets.entity.client.layer.HamsterPinkPetalOverlayLayer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
@@ -39,7 +41,6 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import java.util.HashMap;
 import java.util.Map;
 
-
 public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
     private final float adultShadowRadius;
@@ -50,8 +51,13 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         this.adultShadowRadius = 0.2F;
         this.shadowRadius = this.adultShadowRadius;
 
+        // --- Physical Attributes ---
         addRenderLayer(new HamsterOverlayLayer(this));
+
+        // --- Armor & Accessories ---
+        addRenderLayer(new HamsterArmorLayer(this));
         addRenderLayer(new HamsterPinkPetalOverlayLayer(this));
+        addRenderLayer(new HamsterAcornHatLayer(this));
     }
 
     @Override
@@ -229,10 +235,10 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
 
         // Get the stolen item stack directly from the animatable entity
-        ItemStack stolenStack = animatable.getStolenItemStack();
+        ItemStack itemHeldInMouthStack = animatable.getInterestItemStack();
 
         // Now, check if this is the bone we want to attach our item to
-        if (bone.getName().equals("nose") && animatable.isStealingDiamond()) {
+        if (bone.getName().equals("nose") && animatable.isHoldingInterestItem()) {
             ItemRenderer itemRenderer = MinecraftClient.getInstance().getItemRenderer();
 
             poseStack.push();
@@ -250,9 +256,9 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             // poseStack.translate(X, Y, Z): Moves the item.
             // X: Positive values move it to the hamster's right. Negative to the left.
             // Y: Positive values move it up. Negative moves it down.
-            // Z: Positive values move it TOWARDS THE HAMSTER'S TAIL. Negative values move it FORWARD, AWAY FROM THE FACE.
-            // To fix the diamond appearing at the tail, you need a negative Z value.
-            poseStack.translate(0, 0.22F, -0.4F);
+            // Z: Positive values move it towards the hamster's tail. Negative values move it forward, away from the tail.
+            // Using negative Z value to fix the item appearing at the tail.
+            poseStack.translate(0, 0.13F, -0.2F); // If Math.toRadians = 90 (top of item pointing out), use (0, 0.22F, -0.4F) instead.
 
             // poseStack.scale(X, Y, Z): Resizes the item.
             // Values > 1.0 make it bigger. Values < 1.0 make it smaller.
@@ -260,11 +266,11 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
 
             // poseStack.multiply(...): Rotates the item. This is complex.
-            // Rotates the item 90 degrees on its X-axis, which makes it stand upright as if held, rather than lying flat.
-            poseStack.multiply(new Quaternionf(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0)));
+            // Rotates the item -90 degrees on its X-axis, which makes it lay flat as if the hamster is holding the top part of the item in its mouth, with the "bottom" of the item pointing out.
+            poseStack.multiply(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-90), 1, 0, 0)));
 
             // Render the item from the DataTracker
-            itemRenderer.renderItem(stolenStack, ModelTransformationMode.THIRD_PERSON_RIGHT_HAND, packedLight, packedOverlay, poseStack, bufferSource, animatable.getWorld(), animatable.getId());
+            itemRenderer.renderItem(itemHeldInMouthStack, ModelTransformationMode.THIRD_PERSON_RIGHT_HAND, packedLight, packedOverlay, poseStack, bufferSource, animatable.getWorld(), animatable.getId());
 
             poseStack.pop();
         }

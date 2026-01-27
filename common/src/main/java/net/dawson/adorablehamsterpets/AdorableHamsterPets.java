@@ -21,6 +21,7 @@ import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.ModLootTableModifiers;
 import net.dawson.adorablehamsterpets.world.ModSpawnPlacements;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
@@ -82,6 +83,7 @@ public class AdorableHamsterPets {
 			ModEntitySpawns.parseConfig();
 			ModWorldGeneration.parseConfig();
 			ConfigDataCache.parseConfig();
+			ModLootTableModifiers.init();
 
 			// --- Networking Registration ---
 			// On 1.20.1, register all  packets on both sides using the safe common method.

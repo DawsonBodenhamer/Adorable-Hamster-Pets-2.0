@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/return_on_investnut",
+  "display": {
+    "icon": {
+      "item": "minecraft:dead_bush"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.ecological_menace.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.ecological_menace.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "depleted": {
+      "trigger": "adorablehamsterpets:tree_heist_depletion"
+    }
+  }
+}

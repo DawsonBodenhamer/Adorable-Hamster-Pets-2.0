@@ -1,0 +1,30 @@
+{
+  "parent": "adorablehamsterpets:husbandry/expensive_therapy",
+  "display": {
+    "icon": {
+      "item": "adorablehamsterpets:hamster_armor_netherite"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.immovable_object.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.immovable_object.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_netherite_armor": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": ["adorablehamsterpets:hamster_armor_netherite"]
+          }
+        ]
+      }
+    }
+  }
+}

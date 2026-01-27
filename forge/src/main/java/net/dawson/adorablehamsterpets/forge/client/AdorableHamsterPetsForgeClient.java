@@ -7,13 +7,17 @@ import net.dawson.adorablehamsterpets.block.ModBlockEntities;
 import net.dawson.adorablehamsterpets.block.client.HamsterBedRenderer;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
+import net.dawson.adorablehamsterpets.client.render.LeafJiggleRenderer;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.client.feature.HamsterShoulderFeatureRenderer;
+import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterTreeSearcherRenderer;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.particle.DefaultParticleType;
 import net.minecraftforge.api.distmarker.Dist;
@@ -21,6 +25,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -46,7 +52,12 @@ public final class AdorableHamsterPetsForgeClient {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         // General Architectury/fabric-style init that must run on the main thread.
-        event.enqueueWork(AdorableHamsterPetsClient::init);
+        event.enqueueWork(() -> {
+            AdorableHamsterPetsClient.init();
+
+            // Register world render hook on the game bus
+            MinecraftForge.EVENT_BUS.addListener(AdorableHamsterPetsForgeClient::onRenderLevelStage);
+        });
 
         // Register the hamster-inventory screen with its ScreenHandler type.
         event.enqueueWork(() ->
@@ -54,6 +65,26 @@ public final class AdorableHamsterPetsForgeClient {
                         ModScreenHandlers.HAMSTER_INVENTORY_SCREEN_HANDLER.get(),
                         HamsterInventoryScreen::new
                 )
+        );
+    }
+
+    /**
+     * Renders jiggling leaves during the world rendering stage.
+     */
+    private static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
+
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        // Retrieve the buffer source from the client's buffer builders
+        VertexConsumerProvider consumers = client.getBufferBuilders().getEntityVertexConsumers();
+
+        LeafJiggleRenderer.render(
+                client,
+                event.getPoseStack(),
+                consumers,
+                event.getCamera().getPos(),
+                event.getPartialTick() // tickDelta logic handled in renderer, just pass partial tick here
         );
     }
 
@@ -85,6 +116,7 @@ public final class AdorableHamsterPetsForgeClient {
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.HAMSTER.get(), HamsterRenderer::new);
+        event.registerEntityRenderer(ModEntities.HAMSTER_TREE_SEARCHER.get(), HamsterTreeSearcherRenderer::new);
     }
 
     @SubscribeEvent

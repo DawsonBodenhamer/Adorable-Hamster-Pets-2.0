@@ -366,5 +366,13 @@
   "gentle_breeze": {
     "subtitle": "subtitles.adorablehamsterpets.gentle_breeze",
     "sounds": [ "adorablehamsterpets:gentle_breeze" ]
+  },
+  "hamster_acorn_search_in_leaves": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_acorn_search_in_leaves",
+    "sounds": [ "adorablehamsterpets:hamster_acorn_search_in_leaves" ]
+  },
+  "ding": {
+    "subtitle": "subtitles.adorablehamsterpets.ding",
+    "sounds": [ "adorablehamsterpets:ding" ]
   }
 }

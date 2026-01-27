@@ -79,7 +79,7 @@ public class HamsterSeekDiamondGoal extends Goal {
         if (!this.hamster.isPrimedToSeekDiamonds) {
             return false;
         }
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isCelebratingChase()|| this.hamster.isSulking()) {
+        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isCelebratingRetrieval()|| this.hamster.isSulking()) {
             return false;
         }
         if (this.hamster.getTarget() != null) { // In combat

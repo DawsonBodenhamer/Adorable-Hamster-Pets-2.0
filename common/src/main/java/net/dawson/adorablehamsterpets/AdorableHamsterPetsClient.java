@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
+import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
@@ -21,10 +22,14 @@ import net.dawson.adorablehamsterpets.client.event.AHPClientScreenEvents;
 import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconAnimator;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
+import net.dawson.adorablehamsterpets.client.render.LeafJiggleManager;
+import net.dawson.adorablehamsterpets.client.sound.HamsterTreeLoopSoundInstance;
 import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
+import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterTreeSearcherRenderer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
@@ -48,10 +53,7 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class AdorableHamsterPetsClient {
 
@@ -70,6 +72,9 @@ public class AdorableHamsterPetsClient {
     private static final AnnouncementHudRenderer announcementHudRenderer = new AnnouncementHudRenderer();
     private static List<AnnouncementManager.PendingNotification> pendingNotifications = Collections.emptyList();
     private static int nextRefreshTicks = 6000; // 5 minutes
+
+    // --- Tree Heist Feature ---
+    private static final Map<Integer, HamsterTreeLoopSoundInstance> activeTreeSounds = new HashMap<>();
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       1. Initialization & Registration
@@ -112,6 +117,24 @@ public class AdorableHamsterPetsClient {
         ClientTickEvent.CLIENT_POST.register(AdorableHamsterPetsClient::onEndClientTick);
         ClientGuiEvent.RENDER_HUD.register((context, tickDelta) -> announcementHudRenderer.render(context, tickDelta));
 
+        // --- Register Tree Heist Sound & Jiggle Logic ---
+        EntityEvent.ADD.register((entity, world) -> {
+            if (world.isClient() && entity instanceof HamsterTreeSearcherEntity searcher) {
+                MinecraftClient client = MinecraftClient.getInstance();
+
+                // 1. Sound Logic
+                if (!activeTreeSounds.containsKey(searcher.getId())) {
+                    HamsterTreeLoopSoundInstance sound = new HamsterTreeLoopSoundInstance(searcher);
+                    client.getSoundManager().play(sound);
+                    activeTreeSounds.put(searcher.getId(), sound);
+                }
+
+                // 2. Leaf Jiggle Tracking
+                LeafJiggleManager.INSTANCE.onSearcherAdded(searcher);
+            }
+            return EventResult.pass();
+        });
+
         // --- Force-Mount Keybind Interaction ---
         InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
             // Ensure we are on client and main hand to avoid double firing
@@ -149,6 +172,7 @@ public class AdorableHamsterPetsClient {
      */
     public static void initEntityRenderers() {
         EntityRendererRegistry.register(ModEntities.HAMSTER, HamsterRenderer::new);
+        EntityRendererRegistry.register(ModEntities.HAMSTER_TREE_SEARCHER, HamsterTreeSearcherRenderer::new);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -163,7 +187,10 @@ public class AdorableHamsterPetsClient {
      * @param client The Minecraft client instance.
      */
     private static void onEndClientTick(MinecraftClient client) {
-        // --- 1. Announcement System Tick Logic ---
+        // --- 1. Leaf Jiggle Manager ---
+        LeafJiggleManager.INSTANCE.clientTick(client);
+
+        // --- 2. Announcement System Logic ---
         boolean isGuiOpen = client.currentScreen != null;
         AnnouncementIconAnimator.INSTANCE.tick(isGuiOpen);
 
@@ -188,7 +215,7 @@ public class AdorableHamsterPetsClient {
             AdorableHamsterPets.LOGGER.debug("[AHP Client Tick] Triggered periodic manifest refresh.");
         }
 
-        // --- 2. Input & Game Logic ---
+        // --- 3. Input & Game Logic ---
         if (client.player == null || client.world == null) {
             renderedHamsterIdsThisTick.clear();
             renderedHamsterIdsLastTick.clear();
@@ -211,7 +238,7 @@ public class AdorableHamsterPetsClient {
             }
         }
 
-        // --- 3. Render State Tracking ---
+        // --- 4. Render State Tracking ---
         // Determines which hamsters stopped rendering this tick (went off-screen)
         Set<Integer> stoppedRendering = new HashSet<>(renderedHamsterIdsLastTick);
         stoppedRendering.removeAll(renderedHamsterIdsThisTick);
@@ -230,7 +257,7 @@ public class AdorableHamsterPetsClient {
         renderedHamsterIdsLastTick.addAll(renderedHamsterIdsThisTick);
         renderedHamsterIdsThisTick.clear();
 
-        // --- 4. Dismount Logic ---
+        // --- 5. Dismount Logic ---
         handleDismountKeyPress(client);
     }
 

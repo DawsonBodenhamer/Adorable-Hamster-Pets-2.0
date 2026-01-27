@@ -156,6 +156,12 @@ public class ModSounds {
     public static final RegistrySupplier<SoundEvent> HAMSTER_BED_LEAVES_RUSTLE2 = registerSoundEvent("hamster_bed_leaves_rustle2");
     public static final RegistrySupplier<SoundEvent> HAMSTER_BED_LEAVES_RUSTLE3 = registerSoundEvent("hamster_bed_leaves_rustle3");
 
+    // --- Tree Heist Sounds ---
+    public static final RegistrySupplier<SoundEvent> HAMSTER_ACORN_SEARCH_LOOP = registerSoundEvent("hamster_acorn_search_in_leaves");
+
+    // --- Generic Misc Sounds ---
+    public static final RegistrySupplier<SoundEvent> HAMSTER_DING = registerSoundEvent("ding");
+
     // --- 3. Public Sound Lists (using RegistrySuppliers) ---
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_ATTACK_SOUNDS = List.of(HAMSTER_ATTACK1, HAMSTER_ATTACK2, HAMSTER_ATTACK3, HAMSTER_ATTACK4);
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_IDLE_SOUNDS = List.of(HAMSTER_IDLE1, HAMSTER_IDLE2, HAMSTER_IDLE3, HAMSTER_IDLE4, HAMSTER_IDLE5, HAMSTER_IDLE6, HAMSTER_IDLE7, HAMSTER_IDLE8, HAMSTER_IDLE9, HAMSTER_IDLE10, HAMSTER_IDLE11);
@@ -213,7 +219,7 @@ public class ModSounds {
         );
 
         List<String> woodKeywords = List.of(
-                "log", "wood", "planks", "stick", "sapling", "door", "trapdoor", "sign",
+                "log", "wood", "acorn", "planks", "stick", "sapling", "door", "trapdoor", "sign",
                 "boat", "bowl", "chest", "table", "lectern", "loom", "composter", "barrel", "ladder",
                 "fence", "gate", "plate", "button", "torch", "arrow", "bow", "scaffolding", "bamboo",
                 "propagule", "roots", "cherry", "acacia", "birch", "dark_oak", "jungle", "oak", "spruce"
