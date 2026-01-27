@@ -2,10 +2,16 @@ package net.dawson.adorablehamsterpets.event;
 
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
+import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
+import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.SlotAccessor;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
@@ -13,6 +19,7 @@ import net.minecraft.entity.passive.AbstractHorseEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.world.ServerWorld;
@@ -35,6 +42,42 @@ public class AHPCommonEvents {
     public static void init() {
         PlayerEvent.OPEN_MENU.register(AHPCommonEvents::onOpenMenu);
         EntityEvent.LIVING_HURT.register(AHPCommonEvents::onLivingHurt);
+        InteractionEvent.RIGHT_CLICK_BLOCK.register(AHPCommonEvents::onRightClickBlock);
+    }
+
+    /**
+     * Intercepts block right-clicks to handle specific Hamster Bed interactions that vanilla logic
+     * might otherwise skip.
+     * <p>
+     * Specifically, this forces the "Unlink Bed" logic (Sneak + Rotten Flesh) to execute
+     * instead of the player eating the item.
+     */
+    private static EventResult onRightClickBlock(PlayerEntity player, net.minecraft.util.Hand hand, net.minecraft.util.math.BlockPos pos, net.minecraft.util.math.Direction face) {
+        // --- 1. Validate Context ---
+        ItemStack stack = player.getStackInHand(hand);
+
+        // Only care about specific "Unlink" combination: Sneaking + Holding Repellent
+        if (!player.isSneaking() || !ConfigDataCache.isBedAvoidanceFood(stack)) {
+            return EventResult.pass();
+        }
+
+        // --- 2. Check Block Target ---
+        BlockState state = player.getWorld().getBlockState(pos);
+        if (!(state.getBlock() instanceof HamsterBedBlock)) {
+            return EventResult.pass();
+        }
+
+        // --- 3. Execute Logic ---
+        // If here, the player is sneaking and is holding repellent while looking at a bed
+        if (!player.getWorld().isClient()) {
+            BlockEntity be = player.getWorld().getBlockEntity(pos);
+            if (be instanceof HamsterBedBlockEntity bedEntity) {
+                bedEntity.unlinkHamster(player);
+            }
+        }
+
+        // Return interruptTrue to indicate success and stop vanilla processing
+        return EventResult.interruptTrue();
     }
 
     /**
