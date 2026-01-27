@@ -1,0 +1,37 @@
+{
+	"type": "botanypots:block_derived_crop",
+	"block": "adorablehamsterpets:wild_cucumber_bush",
+	"input": {
+		"item": "adorablehamsterpets:wild_cucumber_bush"
+		},
+	"grow_time": 6000,
+	"drops": [
+		{
+		  "type": "botanypots:loot_table",
+		  "table_id": "botanypots:botanypots/adorablehamsterpets/crop/wild_cucumber_bush"
+		}
+	  ],
+	"display": {
+		"type": "botanypots:transitional",
+		"phases": [
+			{
+				"type": "botanypots:simple",
+				"block_state": {
+					"block": "adorablehamsterpets:wild_cucumber_bush",
+					"properties": {
+						"seeded": "false"
+					}
+				}
+			},
+			{
+				"type": "botanypots:simple",
+				"block_state": {
+					"block": "adorablehamsterpets:wild_cucumber_bush",
+					"properties": {
+						"seeded": "true"
+					}
+				}
+			}
+		]
+	}
+}

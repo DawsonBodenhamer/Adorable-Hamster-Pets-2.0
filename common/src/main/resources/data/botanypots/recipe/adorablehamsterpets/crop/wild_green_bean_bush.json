@@ -1,0 +1,37 @@
+{
+	"type": "botanypots:block_derived_crop",
+	"block": "adorablehamsterpets:wild_green_bean_bush",
+	"input": {
+		"item": "adorablehamsterpets:wild_green_bean_bush"
+		},
+	"grow_time": 6000,
+	"drops": [
+		{
+		  "type": "botanypots:loot_table",
+		  "table_id": "botanypots:botanypots/adorablehamsterpets/crop/wild_green_bean_bush"
+		}
+	  ],
+	"display": {
+		"type": "botanypots:transitional",
+		"phases": [
+			{
+				"type": "botanypots:simple",
+				"block_state": {
+					"block": "adorablehamsterpets:wild_green_bean_bush",
+					"properties": {
+						"seeded": "false"
+					}
+				}
+			},
+			{
+				"type": "botanypots:simple",
+				"block_state": {
+					"block": "adorablehamsterpets:wild_green_bean_bush",
+					"properties": {
+						"seeded": "true"
+					}
+				}
+			}
+		]
+	}
+}
