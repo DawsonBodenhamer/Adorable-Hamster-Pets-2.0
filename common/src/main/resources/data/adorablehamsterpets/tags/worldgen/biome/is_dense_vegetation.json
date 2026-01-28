@@ -2,6 +2,8 @@
   "replace": false,
   "values": [
     { "id": "#c:is_dense_vegetation", "required": false },
-    { "id": "#forge:is_dense_vegetation", "required": false }
+    { "id": "#forge:is_dense_vegetation", "required": false },
+    { "id": "#c:vegetation_dense", "required": false },
+    { "id": "#forge:is_dense", "required": false }
   ]
 }

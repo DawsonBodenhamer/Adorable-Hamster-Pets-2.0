@@ -2,6 +2,8 @@
   "replace": false,
   "values": [
     { "id": "#c:is_wet", "required": false },
-    { "id": "#forge:is_wet", "required": false }
+    { "id": "#forge:is_wet", "required": false },
+    { "id": "#c:climate_wet", "required": false },
+    { "id": "#c:swamp", "required": false }
   ]
 }

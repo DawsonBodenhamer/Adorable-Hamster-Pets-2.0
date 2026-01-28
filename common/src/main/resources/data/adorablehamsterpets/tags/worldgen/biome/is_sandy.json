@@ -2,6 +2,11 @@
   "replace": false,
   "values": [
     { "id": "#c:is_sandy", "required": false },
-    { "id": "#forge:is_sandy", "required": false }
+    { "id": "#forge:is_sandy", "required": false },
+    { "id": "#c:is_desert", "required": false },
+    { "id": "#c:is_beach", "required": false },
+    { "id": "#c:is_badlands", "required": false },
+    "minecraft:desert",
+    "minecraft:beach"
   ]
 }
