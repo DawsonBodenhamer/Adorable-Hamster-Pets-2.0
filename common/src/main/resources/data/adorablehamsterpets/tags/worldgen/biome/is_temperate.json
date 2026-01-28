@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     { "id": "#c:is_temperate", "required": false },
-    { "id": "#forge:is_temperate", "required": false }
+    { "id": "#forge:is_temperate", "required": false },
+    { "id": "#c:climate_temperate", "required": false }
   ]
 }

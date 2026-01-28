@@ -222,7 +222,8 @@ public class AhpWorldGenConfig extends Config {
     @ConfigGroup.Pop
     @Translatable.Name("Excluded Tags")
     public List<String> grayExclusionTags = new ArrayList<>(List.of(
-            "minecraft:is_badlands", "minecraft:is_jungle", "minecraft:is_savanna"
+            "minecraft:is_badlands", "minecraft:is_jungle", "minecraft:is_savanna",
+            "minecraft:is_beach", "adorablehamsterpets:is_sandy"
     ));
 
     @Translatable.Name("Priority 5: Black Variants")
@@ -283,13 +284,12 @@ public class AhpWorldGenConfig extends Config {
     public List<String> chocolateExclusionBiomes = new ArrayList<>(List.of(
             "namespace:id"
     ));
-
     @ConfigGroup.Pop
     @ConfigGroup.Pop
     @ConfigGroup.Pop
     @Translatable.Name("Excluded Tags")
     public List<String> chocolateExclusionTags = new ArrayList<>(List.of(
-            "c:tag_name"
+            "adorablehamsterpets:is_plains"
     ));
 
     // --- Cheek Pouch & World Loot Settings ---
