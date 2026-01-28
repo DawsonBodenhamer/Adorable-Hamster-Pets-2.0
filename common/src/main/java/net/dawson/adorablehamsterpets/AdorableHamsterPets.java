@@ -37,11 +37,13 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
+import net.minecraft.world.World;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -105,6 +107,7 @@ public class AdorableHamsterPets {
 			AHPCommonEvents.init();
 			PlayerEvent.PLAYER_JOIN.register(AdorableHamsterPets::onPlayerJoin);
 			PlayerEvent.PLAYER_CLONE.register(AdorableHamsterPets::onPlayerClone);
+			PlayerEvent.CHANGE_DIMENSION.register(AdorableHamsterPets::onPlayerChangeDimension);
 			CommandRegistrationEvent.EVENT.register(ModCommands::register);
 		}
 	}
@@ -186,12 +189,17 @@ public class AdorableHamsterPets {
 	}
 
 	/**
-	 * An event handler that is called when a player entity is "cloned," which is observed to
-	 * fire reliably upon respawn after death.
+	 * An event handler called when a player changes dimensions.
+	 * Forces a resync of shoulder data (only necessary on 1.20.1).
+	 */
+	private static void onPlayerChangeDimension(ServerPlayerEntity player, RegistryKey<World> oldWorld, RegistryKey<World> newWorld) {
+		((PlayerEntityAccessor) player).adorablehamsterpets$syncShoulderData();
+	}
+
+	/**
+	 * An event handler that is called when a player entity is cloned upon respawn after death.
 	 * <p>
-	 * NOTE: This event does not fire for dimension travel (e.g., Nether/End portals).
-	 * In those cases, the same PlayerEntity instance is reused, preserving transient data like the
-	 * mount order queue automatically.
+	 * NOTE: This event does not fire for dimension travel.
 	 * <p>
 	 *
 	 * @param oldPlayer The player entity instance before death.
