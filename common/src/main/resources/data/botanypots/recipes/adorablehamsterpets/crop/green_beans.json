@@ -1,4 +1,19 @@
 {
+	"conditions": [
+		{
+			"type": "forge:mod_loaded", "modid": "botanypots"
+		}
+	],
+	"neoforge:conditions": [
+		{
+			"type": "neoforge:mod_loaded", "modid": "botanypots"
+		}
+	],
+	"fabric:load_conditions": [
+		{
+			"condition": "fabric:all_mods_loaded", "values": ["botanypots"]
+		}
+	],
 	"type": "botanypots:crop",
 	"seed": {
 		"item": "adorablehamsterpets:green_bean_seeds"
