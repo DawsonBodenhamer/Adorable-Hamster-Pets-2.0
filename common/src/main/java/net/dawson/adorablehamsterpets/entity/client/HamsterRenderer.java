@@ -10,11 +10,11 @@ import net.dawson.adorablehamsterpets.entity.client.layer.HamsterPinkPetalOverla
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterVariant;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.HamsterMouthItemOffsets;
 import net.dawson.adorablehamsterpets.util.HamsterSeatOffsets;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
@@ -41,9 +41,10 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
-import java.lang.Math;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -140,9 +141,9 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         // Prevents animations from shoulder-pet dummies (FeatureRenderer)
         // from "bleeding" onto in-world hamsters during Flashback replays
         if (!entity.isShoulderPet()) {
-            software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache cache = entity.getAnimatableInstanceCache();
+            AnimatableInstanceCache cache = entity.getAnimatableInstanceCache();
             if (cache != null) {
-                software.bernie.geckolib.core.animation.AnimatableManager<?> manager = cache.getManagerForId(entity.getId());
+                AnimatableManager<?> manager = cache.getManagerForId(entity.getId());
                 if (manager != null) {
                     manager.updatedAt(0.0);
                 }
@@ -173,12 +174,19 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             });
         }
 
-        // --- 2. Handle Keyframe Particles ---
+        // --- 2. Handle Item in Mouth ---
+        if (animatable.isHoldingInterestItem()) {
+            model.getBone("nose").ifPresent(bone -> {
+                renderItemForBone(poseStack, animatable, bone, bufferSource, packedLight, packedOverlay);
+            });
+        }
+
+        // --- 3. Handle Keyframe Particles ---
         if (animatable.particleEffectId != null) {
             handleParticleKeyframes(animatable, model);
         }
 
-        // --- 3. Handle Keyframe Sounds ---
+        // --- 4. Handle Keyframe Sounds ---
         if (animatable.soundEffectId != null) {
             handleSoundKeyframes(animatable);
         }
@@ -284,6 +292,51 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         }
     }
 
+    /**
+     * Renders an item held in the hamster's mouth, locked to the "nose" bone.
+     * Mimics passenger rendering, but keeps the bone's scale logic intact.
+     */
+    private void renderItemForBone(MatrixStack matrices,
+                                   HamsterEntity hamster,
+                                   GeoBone bone,
+                                   VertexConsumerProvider bufferSource,
+                                   int packedLight,
+                                   int packedOverlay) {
+
+        ItemStack itemStack = hamster.getInterestItemStack();
+        if (itemStack.isEmpty()) return;
+
+        ItemRenderer itemRenderer = MinecraftClient.getInstance().getItemRenderer();
+
+        // --- Base Pose: Hamster Render Space ---
+        final Matrix4f modelBase = new Matrix4f(this.modelRenderTranslations);
+        final Matrix3f modelBaseNormal = new Matrix3f(modelBase).invert().transpose();
+
+        matrices.push();
+        try {
+            // 1. Jump Into Hamster's Model Render-Space
+            matrices.peek().getPositionMatrix().set(modelBase);
+            matrices.peek().getNormalMatrix().set(modelBaseNormal);
+
+            // 2. Apply Full Bone Transform (T, R, S)
+            // Using getModelSpaceMatrix() applies T, R, and S relative to the entity root.
+            Matrix4f bonePose = new Matrix4f(bone.getModelSpaceMatrix());
+            matrices.peek().getPositionMatrix().mul(bonePose);
+
+            // 3. Keep normals correct
+            matrices.peek().getNormalMatrix().set(new Matrix3f(matrices.peek().getPositionMatrix()).invert().transpose());
+
+            // 4. Apply Manual Adjustments
+            HamsterMouthItemOffsets.applyMouthItemTransforms(matrices);
+
+            // 5. Render Item
+            itemRenderer.renderItem(itemStack, ModelTransformationMode.THIRD_PERSON_RIGHT_HAND, packedLight, packedOverlay, matrices, bufferSource, hamster.getWorld(), hamster.getId());
+
+        } finally {
+            matrices.pop();
+        }
+    }
+
 
     private void handleParticleKeyframes(HamsterEntity animatable, BakedGeoModel model) {
         Random random = animatable.getRandom();
@@ -361,50 +414,5 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                 break;
         }
         animatable.soundEffectId = null;
-    }
-
-    @Override
-    public void renderRecursively(MatrixStack poseStack, HamsterEntity animatable, GeoBone bone, RenderLayer renderType, VertexConsumerProvider bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-        // First, call the super method to render the bone itself, passing the correct 14 arguments
-        super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
-
-        // --- 2. Get the Item ---
-        ItemStack itemHeldInMouthStack = animatable.getInterestItemStack();
-
-        // --- 3. Attach Item to Bone ---
-        if (bone.getName().equals("nose") && animatable.isHoldingInterestItem()) {
-            ItemRenderer itemRenderer = MinecraftClient.getInstance().getItemRenderer();
-
-            poseStack.push();
-            // Move matrix to the bone's position and apply its transformations
-            poseStack.translate(bone.getPosX(), bone.getPosY(), bone.getPosZ());
-            poseStack.multiply(new Quaternionf().rotateZ(bone.getRotZ()));
-            poseStack.multiply(new Quaternionf().rotateY(bone.getRotY()));
-            poseStack.multiply(new Quaternionf().rotateX(bone.getRotX()));
-            poseStack.scale(bone.getScaleX(), bone.getScaleY(), bone.getScaleZ());
-
-            // --- Manual Adjustments ---
-            // Transformations applied relative to the nose bone's pivot point
-
-            // --- Translation ---
-            // X: Positive values move it to the hamster's right. Negative to the left
-            // Y: Positive values move it up. Negative moves it down
-            // Z: Positive values move it towards the hamster's tail. Negative values move it forward, away from the tail
-            // Using negative Z value to fix the item appearing at the tail
-            poseStack.translate(0, 0.125F, -0.18F); // If Math.toRadians = 90 (top of item pointing out), use (0, 0.22F, -0.4F) instead
-
-            // --- Scaling ---
-            poseStack.scale(0.7f, 0.7f, 0.7f);
-
-            // --- Rotation ---
-            // Rotates the item -90 degrees on its X-axis, which makes it lay flat as if the hamster is
-            // holding the top part of the item in its mouth, with the "bottom" of the item sticking out.
-            poseStack.multiply(new Quaternionf(new AxisAngle4f((float) Math.toRadians(-90), 1, 0, 0)));
-
-            // --- 4. Render Item ---
-            itemRenderer.renderItem(itemHeldInMouthStack, ModelTransformationMode.THIRD_PERSON_RIGHT_HAND, packedLight, packedOverlay, poseStack, bufferSource, animatable.getWorld(), animatable.getId());
-
-            poseStack.pop();
-        }
     }
 }
