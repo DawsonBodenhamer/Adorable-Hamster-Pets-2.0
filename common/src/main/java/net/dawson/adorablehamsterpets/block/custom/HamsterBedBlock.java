@@ -58,12 +58,18 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvider {
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constants and Static Utilities
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    // Block State Properties
     public static final BooleanProperty OCCUPIED = BooleanProperty.of("occupied");
     public static final BooleanProperty UPSIDE_DOWN = BooleanProperty.of("upside_down");
     public static final DirectionProperty ORIENTATION = DirectionProperty.of("orientation", dir -> dir.getAxis().isHorizontal());
     public static final EnumProperty<WoodVariant> WOOD_VARIANT = EnumProperty.of("wood_variant", WoodVariant.class);
 
-    // --- VoxelShape Definitions ---
+    // Voxel Shapes
     private static final VoxelShape SHAPE_NORMAL = Stream.of(
             Block.createCuboidShape(1, 0, 1, 15, 1, 15), // Floor
             Block.createCuboidShape(1, 0, 1, 15, 3, 2),   // North Wall
@@ -80,15 +86,9 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
             Block.createCuboidShape(14, 13, 2, 15, 16, 14)  // Flipped East Wall
     ).reduce(VoxelShapes::union).get();
 
-    @Override
-    public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-        return state.get(UPSIDE_DOWN) ? SHAPE_UPSIDE_DOWN : SHAPE_NORMAL;
-    }
-
-    @Override
-    public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-        return state.get(UPSIDE_DOWN) ? SHAPE_UPSIDE_DOWN : SHAPE_NORMAL;
-    }
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructors
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     public HamsterBedBlock(Settings settings) {
         super(settings);
@@ -99,14 +99,24 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                 .with(WOOD_VARIANT, WoodVariant.OAK));
     }
 
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Public Methods
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    @Override
+    public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+        return state.get(UPSIDE_DOWN) ? SHAPE_UPSIDE_DOWN : SHAPE_NORMAL;
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+        return state.get(UPSIDE_DOWN) ? SHAPE_UPSIDE_DOWN : SHAPE_NORMAL;
+    }
+
     @Nullable
     @Override
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
         return new HamsterBedBlockEntity(pos, state);
-    }
-
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        builder.add(OCCUPIED, UPSIDE_DOWN, ORIENTATION, WOOD_VARIANT);
     }
 
     // Pick a random but deterministic orientation when the block is placed
@@ -444,5 +454,14 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
             nbt.putString(ModNbtKeys.WANDER_DISTANCE, bedEntity.getWanderDistance().asString());
         }
         return List.of(stack);
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Protected Methods
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(OCCUPIED, UPSIDE_DOWN, ORIENTATION, WOOD_VARIANT);
     }
 }
