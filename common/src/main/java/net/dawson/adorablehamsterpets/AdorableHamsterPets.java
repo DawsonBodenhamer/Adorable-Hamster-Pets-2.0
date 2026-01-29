@@ -21,6 +21,7 @@ import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
 import net.dawson.adorablehamsterpets.util.ModLootTableModifiers;
 import net.dawson.adorablehamsterpets.world.ModSpawnPlacements;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
@@ -226,8 +227,8 @@ public class AdorableHamsterPets {
 			HamsterEntity hamster = HamsterEntity.createFromNbt(world, oldPlayer, modifiedNbt);
 			if (hamster == null) continue;
 
-			// Find a unique, safe spawn position
-			Optional<BlockPos> safePosOpt = hamster.findSafeSpawnPosition(deathPos, world, 5, occupiedSpawnPositions);
+			// Determine pos with safe spawning algorithm
+			Optional<BlockPos> safePosOpt = HamsterPlacementUtil.findSafeSpawnPosition(deathPos, world, 5, occupiedSpawnPositions, hamster);
 
 			BlockPos finalSpawnPos = safePosOpt.orElse(deathPos);
 			occupiedSpawnPositions.add(finalSpawnPos); // Add chosen position to the set for the next hamster
