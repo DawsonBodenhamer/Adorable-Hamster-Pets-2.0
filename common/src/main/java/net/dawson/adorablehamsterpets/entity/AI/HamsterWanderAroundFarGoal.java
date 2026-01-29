@@ -5,6 +5,7 @@ import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.ai.FuzzyTargeting;
 import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
@@ -191,7 +192,7 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
         // Use the hamster's own safe spawn finder to locate a valid spot near our ideal point.
 
         // --- LOGGING ---
-        Optional<BlockPos> finalTargetPos = this.hamster.findSafeSpawnPosition(idealPos, this.hamster.getWorld(), 2);
+        Optional<BlockPos> finalTargetPos = HamsterPlacementUtil.findSafeSpawnPosition(idealPos, this.hamster.getWorld(), 2, this.hamster);
         AdorableHamsterPets.LOGGER.trace(
                 "[WanderGoal-{}] getPreciseZoomiesTarget:\n  - IsClockwise: {}\n  - LastAngle(rad): {}\n  - AngleStep(rad): {}\n  - NewAngle(rad): {}\n  - Radius: {}\n  - IdealPos: {}\n  - FinalTarget: {}",
                 this.hamster.getId(),
@@ -204,7 +205,7 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
                 finalTargetPos.map(BlockPos::toString).orElse("null")
         );
 
-        return this.hamster.findSafeSpawnPosition(idealPos, this.hamster.getWorld(), 2);
+        return finalTargetPos;
     }
 
 

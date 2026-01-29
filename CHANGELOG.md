@@ -198,6 +198,9 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Duplicated tag folders to resolve structural differences between 1.20.1 (plural directories) and 1.21.1 (singular directories).
   - Corrected the Cloche and Insolator compatibility recipe paths for 1.20.1.
   - Fixed load conditions for Thermal Expansion integration to ensure recipes only load when the mod is present.
+- **Suffocation**:
+  - Hamsters now automatically trigger their "self-rescue" teleport logic whenever they start taking suffocation damage, regardless of the cause.
+  - This resolves issues where hamsters would occasionally take suffocation damage while pouncing on an item. It became more of a problem once the retrieval feature was added since the hamster does not run away from the player.
 - Fixed **Biome Detection** (1.20.1)
   - Updated internal biome tags to match Minecraft 1.20.1 standards (e.g., `c:plains` instead of `c:is_plains`).
   - This resolves issues where hamsters spawned in incorrect biomes (e.g., Gray hamsters in Deserts, Chocolate hamsters in Sunflower Plains) because the game didn't recognize those biomes correctly.
@@ -206,6 +209,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Added a forced data sync (only necessary on 1.20.1) to ensure the client immediately recognizes your shoulder hamsters after your player is re-created.
 - **Item Rendering Visual Glitch** (1.20.1)
   - Fixed a visual glitch on 1.20.1 where the hamster's body would turn black when holding an item (e.g., fetching an acorn) by moving item rendering to the post-render phase.
+- **Safe Dismounting**
+  - Hamsters will no longer agree to dismount directly into lava or water, even if there is a solid block underneath. The safety check now correctly verifies that the space the hamster will occupy is free of hazards.
 
 ---
 
