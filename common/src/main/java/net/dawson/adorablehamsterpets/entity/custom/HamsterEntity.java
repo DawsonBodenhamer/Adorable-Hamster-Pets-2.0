@@ -28,10 +28,7 @@ import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.tag.ModBiomeTags;
-import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
-import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
-import net.dawson.adorablehamsterpets.util.HamsterSeatOffsets;
-import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
+import net.dawson.adorablehamsterpets.util.*;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -612,6 +609,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
     // --- Animation ---
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final HamsterAnimationScheduler animScheduler = new HamsterAnimationScheduler();
 
     // --- State Variables ---
     private int refuseTimer = 0;
@@ -2416,15 +2414,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void tick() {
         // --- Triggerable Animation Cancellation Scheduler ---
         if (!this.getWorld().isClient()) {
-            long currentTime = this.getWorld().getTime();
-            // Use removeIf for safe concurrent modification while iterating
-            scheduledTasks.removeIf(task -> {
-                if (currentTime >= task.executionTick()) {
-                    task.action().run();
-                    return true; // Remove the task
-                }
-                return false;
-            });
+            this.animScheduler.tick(this.getWorld().getTime());
         }
 
         // --- 1. Decrement Simple Timers ---
@@ -3516,24 +3506,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.triggerAnim(controllerName, animName);
             AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Triggered server-side animation: Controller='{}', Anim='{}'", this.getId(), controllerName, animName);
 
-            // --- 2. Schedule the cancellation task ---
-            Integer duration = TRIGGERABLE_ANIM_DURATIONS.get(animName);
-            if (duration != null) {
-                long executionTick = this.getWorld().getTime() + duration;
-                // Lambda that calls stopTriggeredAnim for the specific animation.
-                Runnable cancellationAction = () -> {
-                    this.stopTriggeredAnim(controllerName, animName);
-                    AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Executed scheduled stop for animation: '{}'", this.getId(), animName);
-                };
-                scheduledTasks.add(new ScheduledTask(executionTick, animName, cancellationAction));
-                AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Scheduled stop for animation '{}' in {} ticks (at tick {}).", this.getId(), animName, duration, executionTick);
-            } else {
-                AdorableHamsterPets.LOGGER.warn("[HamsterEntity {}] No duration found for triggerable animation '{}'. Cancellation not scheduled.", this.getId(), animName);
-            }
+            // --- 2. Schedule cancellation task via Utility ---
+            this.animScheduler.scheduleAnimationStop(this.getWorld().getTime(), controllerName, animName, this);
         }
     }
-
-
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *                           5. Protected Methods
@@ -4172,12 +4148,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void scheduleTreeHeistCelebration() {
         if (!this.getWorld().isClient()) {
             // Schedule sound 20 ticks (1 second) later
-            this.scheduledTasks.add(new ScheduledTask(this.getWorld().getTime() + 20, "heist_celebration", () -> {
+            this.animScheduler.scheduleTask(this.getWorld().getTime() + 20, "heist_celebration", () -> {
                 SoundEvent sparkleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, this.random);
                 if (sparkleSound != null) {
                     this.playSound(sparkleSound, 1.0F, 1.0F);
                 }
-            }));
+            });
         }
     }
 
@@ -4436,46 +4412,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             simPos = nextPos;
         }
     }
-
-    /**
-     * A simple server-side task scheduler to handle delayed actions, primarily for animation cleanup.
-     * When a triggerable animation is fired, a corresponding "stop" task is scheduled to run
-     * after the animation's expected duration. This prevents animations that were triggered while
-     * the entity was off-screen from playing belatedly when the entity is rendered again.
-     */
-    // --- Animation Cancellation Scheduler ---
-    private record ScheduledTask(long executionTick, String animName, Runnable action) {}
-    private final List<ScheduledTask> scheduledTasks = new ArrayList<>();
-
-    private static final Map<String, Integer> TRIGGERABLE_ANIM_DURATIONS = new HashMap<>();
-    static {
-        // Durations are in ticks (Animation Length + small 3 tick buffer)
-        TRIGGERABLE_ANIM_DURATIONS.put("crash", 32);
-        TRIGGERABLE_ANIM_DURATIONS.put("wakeup_from_ko", 18);
-        TRIGGERABLE_ANIM_DURATIONS.put("standing_headshake", 25);
-        TRIGGERABLE_ANIM_DURATIONS.put("sitting_headshake", 25);
-        TRIGGERABLE_ANIM_DURATIONS.put("moving_headshake", 25);
-        TRIGGERABLE_ANIM_DURATIONS.put("attack", 23);
-        TRIGGERABLE_ANIM_DURATIONS.put("sit1", 13);
-        TRIGGERABLE_ANIM_DURATIONS.put("sit2", 13);
-        TRIGGERABLE_ANIM_DURATIONS.put("sit3", 13);
-        TRIGGERABLE_ANIM_DURATIONS.put("standup1", 13);
-        TRIGGERABLE_ANIM_DURATIONS.put("standup2", 13);
-        TRIGGERABLE_ANIM_DURATIONS.put("standup3", 13);
-        TRIGGERABLE_ANIM_DURATIONS.put("wakeup1", 13);
-        TRIGGERABLE_ANIM_DURATIONS.put("wakeup2", 13);
-        TRIGGERABLE_ANIM_DURATIONS.put("wakeup3", 13);
-        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_sit_settle_sleep1", 23);
-        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_sit_settle_sleep2", 23);
-        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_sit_settle_sleep3", 23);
-        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_stand_settle_sleep1", 35);
-        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_stand_settle_sleep2", 35);
-        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_stand_settle_sleep3", 35);
-        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_sulk", 63);
-        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_pounce_on_item", 23);
-        TRIGGERABLE_ANIM_DURATIONS.put("anim_hamster_celebrate_chase", 33);
-    }
-
 
     /**
      * Gets the value of a specific boolean flag from the packed integer.
