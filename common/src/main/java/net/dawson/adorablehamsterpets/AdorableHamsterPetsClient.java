@@ -41,6 +41,7 @@ import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.ClientParticleManager;
+import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
@@ -601,21 +602,24 @@ public class AdorableHamsterPetsClient {
         client.world.playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.PLAYERS, 0.5f, 1.2f, false);
         client.world.playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, 0.7f, 1.5f, false);
 
-        // Particles
-        for (int i = 0; i < 50; i++) {
-            client.world.addParticle(ParticleTypes.ENCHANT,
-                    player.getParticleX(0.6), player.getRandomBodyY(), player.getParticleZ(0.6),
-                    (client.world.random.nextDouble() - 0.5) * 0.5,
-                    (client.world.random.nextDouble() - 0.5) * 0.5,
-                    (client.world.random.nextDouble() - 0.5) * 0.5);
-        }
-        for (int i = 0; i < 20; i++) {
-            client.world.addParticle(ParticleTypes.HAPPY_VILLAGER,
-                    player.getParticleX(1.0), player.getRandomBodyY(), player.getParticleZ(1.0),
-                    (client.world.random.nextDouble() - 0.5) * 0.5,
-                    (client.world.random.nextDouble() - 0.5) * 0.5,
-                    (client.world.random.nextDouble() - 0.5) * 0.5);
-        }
+        ParticleEffectsUtil.spawnParticlesOnEntity(
+                player,
+                ParticleTypes.ENCHANT,
+                50,
+                0.6,
+                1.0,
+                0.5,
+                0.0
+        );
+        ParticleEffectsUtil.spawnParticlesOnEntity(
+                player,
+                ParticleTypes.HAPPY_VILLAGER,
+                20,
+                1.0,
+                1.0,
+                0.5,
+                0.0
+        );
     }
 
     /**

@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.ai.FuzzyTargeting;
 import net.minecraft.entity.ai.goal.Goal;
@@ -414,8 +415,23 @@ public class HamsterPlayWithItemGoal extends Goal {
                     this.world.playSound(null, this.hamster.getBlockPos(), pounceSound, SoundCategory.NEUTRAL, volume, 1.7f);
 
                     if (!this.world.isClient) {
-                        ((ServerWorld)this.world).spawnParticles(ParticleTypes.END_ROD, this.hamster.getX(), this.hamster.getY() + 0.5, this.hamster.getZ(), 5, 0.1, 0.1, 0.1, 0.05);
-                        ((ServerWorld)this.world).spawnParticles(new ItemStackParticleEffect(ParticleTypes.ITEM, stackToSteal), this.hamster.getX(), this.hamster.getY() + 0.5, this.hamster.getZ(), 18, 0.2, 0.2, 0.2, 0.1);
+                        ParticleEffectsUtil.spawnParticles(
+                                this.world,
+                                new Vec3d(this.hamster.getX(), this.hamster.getY() + 0.5, this.hamster.getZ()),
+                                ParticleTypes.END_ROD,
+                                5,
+                                new Vec3d(0.1, 0.1, 0.1),
+                                0.05
+                        );
+
+                        ParticleEffectsUtil.spawnParticles(
+                                this.world,
+                                new Vec3d(this.hamster.getX(), this.hamster.getY() + 0.5, this.hamster.getZ()),
+                                new ItemStackParticleEffect(ParticleTypes.ITEM, stackToSteal),
+                                18,
+                                new Vec3d(0.2, 0.2, 0.2),
+                                0.1
+                        );
                     }
 
                     // --- Branch based on Friendly vs Theft ---

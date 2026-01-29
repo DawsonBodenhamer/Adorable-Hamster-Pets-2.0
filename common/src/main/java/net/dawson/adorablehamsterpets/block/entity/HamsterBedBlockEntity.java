@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -197,12 +198,17 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
 
                 hamster.lureToBed();
 
-                // Play dynamic sound and particles
+                // Feedback
                 SoundEvent lureSound = ModSounds.getDynamicItemSound(lureItem);
                 world.playSound(null, getPos(), lureSound, SoundCategory.BLOCKS, 1.0f, 1.0f);
-                ((ServerWorld)world).spawnParticles(new ItemStackParticleEffect(ParticleTypes.ITEM, lureItem),
-                        getPos().getX() + 0.5, getPos().getY() + 0.7, getPos().getZ() + 0.5,
-                        8, 0.25D, 0.25D, 0.25D, 0.05);
+                ParticleEffectsUtil.spawnParticles(
+                        world,
+                        getPos(),
+                        0.7,
+                        new ItemStackParticleEffect(ParticleTypes.ITEM, lureItem),
+                        8,
+                        0.25, 0.25, 0.25, 0.05
+                );
 
                 return true;
             }

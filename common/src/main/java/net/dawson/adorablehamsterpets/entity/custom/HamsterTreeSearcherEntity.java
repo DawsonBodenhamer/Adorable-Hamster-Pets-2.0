@@ -9,6 +9,7 @@ import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -348,20 +349,24 @@ public class HamsterTreeSearcherEntity extends Entity {
         // Teleport entity (moves sound source)
         this.setPosition(targetPos.getX() + 0.5, targetPos.getY() + 0.5, targetPos.getZ() + 0.5);
 
-        // Spawn Particles (BAMBOO variant for green leaves)
-        if (this.getWorld() instanceof ServerWorld serverWorld) {
-            serverWorld.spawnParticles(
-                    ModParticles.getForVariant(WoodVariant.BAMBOO),
-                    this.getX(), this.getY(), this.getZ(),
-                    50, 0.4, 0.4, 0.4, 0.0
-            );
+        // Effects
+        ParticleEffectsUtil.spawnParticles(
+                this.getWorld(),
+                new Vec3d(this.getX(), this.getY(), this.getZ()),
+                ModParticles.getForVariant(WoodVariant.BAMBOO), // BAMBOO variant for green leaves
+                50,
+                new Vec3d(0.4, 0.4, 0.4),
+                0.0
+        );
 
-            serverWorld.spawnParticles(
-                    ParticleTypes.WHITE_ASH, // Simulate dust
-                    this.getX() + 0.5, this.getY() + 0.5, this.getZ() + 0.5,
-                    7, 0.4, 0.4, 0.4, 0.1
-            );
-        }
+        ParticleEffectsUtil.spawnParticles(
+                this.getWorld(),
+                new Vec3d(this.getX() + 0.5, this.getY() + 0.5, this.getZ() + 0.5),
+                ParticleTypes.WHITE_ASH,
+                7,
+                new Vec3d(0.4, 0.4, 0.4),
+                0.1
+        );
 
         // --- Acorn Tossing ---
         float dropChance = Configs.AHP.acornDropChance.get() * this.dropChanceMultiplier;

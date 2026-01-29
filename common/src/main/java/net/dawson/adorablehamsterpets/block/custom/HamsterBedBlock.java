@@ -13,6 +13,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
@@ -207,9 +208,14 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
             }
 
             // Spawn Particles with wood variant
-            ((ServerWorld)world).spawnParticles(ModParticles.getForVariant(state.get(WOOD_VARIANT)),
-                    pos.getX() + 0.5, pos.getY() + 0.2, pos.getZ() + 0.5,
-                    30, 0.1, 0.1, 0.1, 0.0);
+            ParticleEffectsUtil.spawnParticles(
+                    world,
+                    pos,
+                    0.2,
+                    ModParticles.getForVariant(state.get(WOOD_VARIANT)),
+                    30,
+                    0.1, 0.1, 0.1, 0.0
+            );
 
             SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, world.getRandom());
             if (rustleSound != null) {
@@ -240,7 +246,14 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                 bedEntity.applyRepellentEffect();
                 player.sendMessage(Text.translatable("message.adorablehamsterpets.bed_repellent_applied").formatted(Formatting.RED), true);
                 world.playSound(null, pos, SoundEvents.BLOCK_HONEY_BLOCK_SLIDE, SoundCategory.BLOCKS, 1.2f, 0.8f);
-                ((ServerWorld)world).spawnParticles(ParticleTypes.SMOKE, pos.getX() + 0.5, pos.getY() + 0.7, pos.getZ() + 0.5, 15, 0.4, 0.3, 0.4, 0.01);
+                ParticleEffectsUtil.spawnParticles(
+                        world,
+                        pos,
+                        0.7,
+                        ParticleTypes.SMOKE,
+                        15,
+                        0.4, 0.3, 0.4, 0.01
+                );
                 if (!player.getAbilities().creativeMode) {
                     heldStack.decrement(1);
                 }
@@ -298,12 +311,34 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
 
                     // Spawn Totem particles if it's a totem, otherwise generic happy particles + item particles
                     if (heldStack.isOf(Items.TOTEM_OF_UNDYING)) {
-                        ((ServerWorld)world).spawnParticles(ParticleTypes.TOTEM_OF_UNDYING, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 50, 0.3, 0.3, 0.3, 0);
+                        ParticleEffectsUtil.spawnParticles(
+                                world,
+                                pos,
+                                0.5,
+                                ParticleTypes.TOTEM_OF_UNDYING,
+                                50,
+                                0.3, 0.3, 0.3, 0.0
+                        );
                     } else {
-                        ((ServerWorld)world).spawnParticles(ParticleTypes.HAPPY_VILLAGER, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 25, 0.3, 0.3, 0.3, 0);
+                        ParticleEffectsUtil.spawnParticles(
+                                world,
+                                pos,
+                                0.5,
+                                ParticleTypes.HAPPY_VILLAGER,
+                                25,
+                                0.3, 0.3, 0.3, 0.0
+                        );
                         // Use a copy of the stack for particles since it may have just been emptied
                         ItemStack particleStack = heldStack.isEmpty() ? new ItemStack(heldStack.getItem()) : heldStack;
-                        ((ServerWorld)world).spawnParticles(new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 25, 0.2, 0.2, 0.2, 0);
+
+                        ParticleEffectsUtil.spawnParticles(
+                                world,
+                                pos,
+                                0.5,
+                                new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack),
+                                25,
+                                0.2, 0.2, 0.2, 0.0
+                        );
                     }
 
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.respawn.activated").formatted(Formatting.GREEN), true);
@@ -346,9 +381,14 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                 if (rustleSound != null) {
                     world.playSound(null, pos, rustleSound, SoundCategory.BLOCKS, 0.3f, 1.5f);
                 }
-                ((ServerWorld)world).spawnParticles(ModParticles.getForVariant(state.get(WOOD_VARIANT)),
-                        pos.getX() + 0.5, pos.getY() + 0.2, pos.getZ() + 0.5,
-                        30, 0.1, 0.1, 0.1, 0.0);
+                ParticleEffectsUtil.spawnParticles(
+                        world,
+                        pos,
+                        0.2,
+                        ModParticles.getForVariant(state.get(WOOD_VARIANT)),
+                        30,
+                        0.1, 0.1, 0.1, 0.0
+                );
 
                 BlockEntity blockEntity = world.getBlockEntity(pos);
                 if (blockEntity instanceof HamsterBedBlockEntity bedEntity) {

@@ -1,14 +1,198 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.ai.pathing.Path;
+import net.minecraft.entity.ai.pathing.PathNode;
 import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Centralized utility for spawning fancy particle formations.
+ * Centralized utility for spawning particle effects.
+ * <p>
+ * Handles the logic difference between ServerWorld (broadcasting packets) and ClientWorld (rendering locally).
+ * Includes overloads for convenience to avoid creating temporary Vec3d objects for spreads.
  */
 public class ParticleEffectsUtil {
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Core Spawning Methods
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Spawns particles with a random spread around a central point.
+     * <p>
+     * On <b>Server</b>: Sends a packet to all nearby players.
+     * <br>
+     * On <b>Client</b>: Iterates and spawns individual particles with random offsets.
+     *
+     * @param world    The world to spawn in.
+     * @param center   The center position.
+     * @param particle The particle type/data.
+     * @param count    Number of particles.
+     * @param spread   The maximum random offset (radius) on each axis (X, Y, Z).
+     * @param speed    The speed/velocity multiplier for the particles.
+     */
+    public static <T extends ParticleEffect> void spawnParticles(World world, Vec3d center, T particle, int count, Vec3d spread, double speed) {
+        spawnParticles(world, center, particle, count, spread.x, spread.y, spread.z, speed);
+    }
+
+    /**
+     * Spawns particles with a random spread around a central point.
+     * (8 Arguments: Uses individual doubles for spread).
+     */
+    public static <T extends ParticleEffect> void spawnParticles(World world, Vec3d center, T particle, int count, double spreadX, double spreadY, double spreadZ, double speed) {
+        if (world instanceof ServerWorld serverWorld) {
+            serverWorld.spawnParticles(particle, center.x, center.y, center.z, count, spreadX, spreadY, spreadZ, speed);
+        } else {
+            Random random = world.getRandom();
+            for (int i = 0; i < count; i++) {
+                double offsetX = (random.nextDouble() - 0.5) * 2.0 * spreadX;
+                double offsetY = (random.nextDouble() - 0.5) * 2.0 * spreadY;
+                double offsetZ = (random.nextDouble() - 0.5) * 2.0 * spreadZ;
+
+                // For client-side addParticle, roughly map 'speed' to velocity magnitude with random direction
+                double vx = (random.nextDouble() - 0.5) * speed;
+                double vy = (random.nextDouble() - 0.5) * speed;
+                double vz = (random.nextDouble() - 0.5) * speed;
+
+                world.addParticle(particle, center.x + offsetX, center.y + offsetY, center.z + offsetZ, vx, vy, vz);
+            }
+        }
+    }
+
+    /**
+     * Spawns particles at the **center** of a BlockPos.
+     * (8 Arguments).
+     */
+    public static <T extends ParticleEffect> void spawnParticles(World world, BlockPos pos, T particle, int count, double spreadX, double spreadY, double spreadZ, double speed) {
+        spawnParticles(world, Vec3d.ofCenter(pos), particle, count, spreadX, spreadY, spreadZ, speed);
+    }
+
+    /**
+     * Spawns particles at a specific **Y-offset** from the bottom-center of a BlockPos.
+     * (9 Arguments).
+     */
+    public static <T extends ParticleEffect> void spawnParticles(World world, BlockPos pos, double yOffset, T particle, int count, double spreadX, double spreadY, double spreadZ, double speed) {
+        spawnParticles(world, Vec3d.ofBottomCenter(pos).add(0, yOffset, 0), particle, count, spreadX, spreadY, spreadZ, speed);
+    }
+
+    /**
+     * Spawns particles centered on a specific Entity, scaling the spread to match the entity's size.
+     *
+     * @param entity      The target entity.
+     * @param particle    The particle effect.
+     * @param count       Number of particles.
+     * @param widthScale  Multiplier for the entity's width (spread X/Z).
+     * @param heightScale Multiplier for the entity's height (spread Y).
+     * @param yOffset     Vertical offset from the center of the entity.
+     * @param speed       Particle speed.
+     */
+    public static <T extends ParticleEffect> void spawnParticlesOnEntity(Entity entity, T particle, int count, double widthScale, double heightScale, double speed, double yOffset) {
+        // Calculate spread based on entity dimensions
+        double spreadX = (entity.getWidth() * widthScale) / 2.0;
+        double spreadY = (entity.getHeight() * heightScale) / 2.0;
+        double spreadZ = (entity.getWidth() * widthScale) / 2.0;
+
+        // Center Y = middle of the body
+        double centerY = entity.getY() + (entity.getHeight() / 2.0) + yOffset;
+        Vec3d center = new Vec3d(entity.getX(), centerY, entity.getZ());
+
+        spawnParticles(entity.getWorld(), center, particle, count, spreadX, spreadY, spreadZ, speed);
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Specialized Effect Methods
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Spawns a "Motion Trail" effect behind a moving entity.
+     * <p>
+     * This calculates a spawn position behind the entity based on its velocity and applies
+     * a calculated velocity to the particles to create a trailing effect.
+     *
+     * @param entity            The entity leaving the trail.
+     * @param particle          The particle effect to spawn.
+     * @param countPerTick      Number of particles to spawn per call.
+     * @param offsetMultiplier  Multiplies the entity's velocity to determine spawn offset behind the entity. Higher values spawn particles further back.
+     * @param scatter           Random spread applied to both spawn position and particle velocity.
+     * @param velocityScale     Multiplier for the backward velocity of the particles relative to the entity's movement.
+     * @param downwardVelocity  Constant downward velocity applied to particles (useful for dust/smoke).
+     */
+    public static <T extends ParticleEffect> void spawnMotionTrail(Entity entity, T particle, int countPerTick, double offsetMultiplier, double scatter, double velocityScale, double downwardVelocity) {
+        World world = entity.getWorld();
+        Vec3d velocity = entity.getVelocity();
+
+        // Only spawn if moving
+        if (velocity.horizontalLengthSquared() < 1.0E-6) return;
+
+        Random random = world.getRandom();
+
+        for (int i = 0; i < countPerTick; ++i) {
+            // 1. Calculate base spawn position (Behind the entity)
+            double baseX = entity.getX() - (velocity.x * offsetMultiplier);
+            double baseY = entity.getY() + (entity.getHeight() / 2.0) - (velocity.y * offsetMultiplier);
+            double baseZ = entity.getZ() - (velocity.z * offsetMultiplier);
+
+            // 2. Apply random scatter
+            double spawnX = baseX + (random.nextDouble() - 0.5) * (entity.getWidth() * 0.8);
+            double spawnY = baseY + (random.nextDouble() - 0.5) * (entity.getHeight() * 0.05);
+            double spawnZ = baseZ + (random.nextDouble() - 0.5) * (entity.getWidth() * 0.8);
+
+            // 3. Calculate particle velocity (Opposite to entity movement)
+            Vec3d backwardsVel = velocity.multiply(-1.0 * velocityScale);
+            double finalVelX = backwardsVel.x + (random.nextGaussian() * scatter);
+            double finalVelY = backwardsVel.y + (random.nextGaussian() * scatter) - downwardVelocity;
+            double finalVelZ = backwardsVel.z + (random.nextGaussian() * scatter);
+
+            world.addParticle(particle, spawnX, spawnY, spawnZ, finalVelX, finalVelY, finalVelZ);
+        }
+    }
+
+    /**
+     * Spawns "Breadcrumb" particles along a navigation path.
+     * Useful for visualizing AI paths or leading players to objectives.
+     *
+     * @param world The ServerWorld to spawn particles in.
+     * @param path  The navigation path to visualize. If null, nothing happens.
+     */
+    public static void spawnBreadcrumbs(ServerWorld world, @Nullable Path path) {
+        if (path == null) return;
+
+        int currentNodeIndex = path.getCurrentNodeIndex();
+        int pathLength = path.getLength();
+
+        // Iterate from the current node to the end of the path
+        for (int i = currentNodeIndex; i < pathLength; i++) {
+            PathNode node = path.getNode(i);
+            Vec3d directionVector = Vec3d.ZERO;
+
+            // 1. Determine the direction to the next node in the path.
+            if (i + 1 < pathLength) {
+                PathNode nextNode = path.getNode(i + 1);
+                // Create a normalized (length of 1) vector pointing from the current node to the next.
+                directionVector = new Vec3d(nextNode.x - node.x, 0, nextNode.z - node.z).normalize();
+            }
+            // For the very last node, directionVector will remain (0,0,0), so particles will cluster around it.
+
+            // Loop to spawn multiple particles with randomized origins
+            for (int p = 0; p < 3; p++) {
+                // 2. Calculate a random distance to spread the particle along the direction vector.
+                double distanceAlongPath = world.getRandom().nextDouble();
+                Vec3d pathOffset = directionVector.multiply(distanceAlongPath);
+                double offsetY = (world.getRandom().nextDouble() - 0.5) * 0.1;
+
+                // Use flat-double overload
+                spawnParticles(world, new Vec3d(node.x + 0.5 + pathOffset.x, (node.y + 0.5) - 0.38 + offsetY, node.z + 0.5 + pathOffset.z),
+                        ParticleTypes.MYCELIUM, 1, 0.2, 0.0, 0.2, 3);
+            }
+        }
+    }
 
     /**
      * Spawns a ring of particles that spins around a center point and bobs up and down.
@@ -64,6 +248,54 @@ public class ParticleEffectsUtil {
             } else {
                 // Client-side spawning
                 world.addParticle(particle, x, y, z, 0.0, upwardVelocity, 0.0);
+            }
+        }
+    }
+
+    /**
+     * Spawns particles in a spherical shell pattern around a center point.
+     * Useful for highlighting block boundaries or creating magic shields.
+     *
+     * @param world          The world to spawn in.
+     * @param center         The center position.
+     * @param particle       The particle effect.
+     * @param count          Number of particles to spawn.
+     * @param baseRadius     The base radius of the shell.
+     * @param radiusVariance The variance in radius (random 0.0 to variance added to base).
+     */
+    public static <T extends ParticleEffect> void spawnSphericalShell(World world, Vec3d center, T particle, int count, double baseRadius, double radiusVariance) {
+        Random random = world.getRandom();
+        for (int i = 0; i < count; i++) {
+            // Generate random direction vector
+            double rX = random.nextDouble() - 0.5;
+            double rY = random.nextDouble() - 0.5;
+            double rZ = random.nextDouble() - 0.5;
+
+            // Normalize
+            double dist = Math.sqrt(rX * rX + rY * rY + rZ * rZ);
+            if (dist < 0.0001) dist = 1.0;
+
+            // Calculate radius (Base + Random variance)
+            double radius = baseRadius + (random.nextDouble() * radiusVariance);
+
+            // Calculate final offset
+            double offsetX = (rX / dist) * radius;
+            double offsetY = (rY / dist) * radius;
+            double offsetZ = (rZ / dist) * radius;
+
+            // Spawn using centralized logic
+            if (world instanceof ServerWorld serverWorld) {
+                serverWorld.spawnParticles(particle,
+                        center.x + offsetX,
+                        center.y + offsetY,
+                        center.z + offsetZ,
+                        1, 0, 0, 0, 0);
+            } else {
+                world.addParticle(particle,
+                        center.x + offsetX,
+                        center.y + offsetY,
+                        center.z + offsetZ,
+                        0, 0, 0);
             }
         }
     }

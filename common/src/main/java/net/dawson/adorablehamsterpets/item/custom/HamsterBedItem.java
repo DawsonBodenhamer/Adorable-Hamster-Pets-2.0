@@ -12,6 +12,7 @@ import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -65,9 +66,14 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
 
                 // Spawn particles with the wood variant
                 WoodVariant variant = stack.getOrDefault(ModDataComponentTypes.WOOD_VARIANT.get(), this.variant);
-                ((ServerWorld)world).spawnParticles(ModParticles.getForVariant(variant),
-                        pos.getX() + 0.5, pos.getY() + 0.3, pos.getZ() + 0.5,
-                        30, 0.1, 0.2, 0.1, 0.0);
+                ParticleEffectsUtil.spawnParticles(
+                        world,
+                        pos,
+                        0.3,
+                        ModParticles.getForVariant(variant),
+                        30,
+                        0.1, 0.2, 0.1, 0.0
+                );
             }
         }
         // Set the block state with the correct wood variant after it has been placed.
