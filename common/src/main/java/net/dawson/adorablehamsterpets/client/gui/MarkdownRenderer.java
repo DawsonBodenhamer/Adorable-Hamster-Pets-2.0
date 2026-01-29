@@ -17,6 +17,7 @@ public class MarkdownRenderer {
     // --- 1. Constants and Patterns ---
     private static final Pattern BOLD_PATTERN = Pattern.compile("\\*\\*(.*?)\\*\\*");
     private static final Pattern ITALIC_PATTERN = Pattern.compile("\\*(.*?)\\*");
+    private static final Pattern STRIKETHROUGH_PATTERN = Pattern.compile("~~(.*?)~~");
     private static final Pattern CODE_PATTERN = Pattern.compile("`(.*?)`");
     private static final Pattern LINK_PATTERN = Pattern.compile("\\[(.*?)]\\((.*?)\\)");
     public static final int LINE_SPACING = 2;
@@ -169,6 +170,7 @@ public class MarkdownRenderer {
         while (!remaining.isEmpty()) {
             Matcher boldMatcher = BOLD_PATTERN.matcher(remaining);
             Matcher italicMatcher = ITALIC_PATTERN.matcher(remaining);
+            Matcher strikethroughMatcher = STRIKETHROUGH_PATTERN.matcher(remaining);
             Matcher codeMatcher = CODE_PATTERN.matcher(remaining);
             Matcher linkMatcher = LINK_PATTERN.matcher(remaining);
 
@@ -177,6 +179,7 @@ public class MarkdownRenderer {
 
             if (boldMatcher.find(0) && boldMatcher.start() < nextMatchPos) { nextMatchPos = boldMatcher.start(); nextMatcher = boldMatcher; }
             if (italicMatcher.find(0) && italicMatcher.start() < nextMatchPos) { nextMatchPos = italicMatcher.start(); nextMatcher = italicMatcher; }
+            if (strikethroughMatcher.find(0) && strikethroughMatcher.start() < nextMatchPos) { nextMatchPos = strikethroughMatcher.start(); nextMatcher = strikethroughMatcher; }
             if (codeMatcher.find(0) && codeMatcher.start() < nextMatchPos) { nextMatchPos = codeMatcher.start(); nextMatcher = codeMatcher; }
             if (linkMatcher.find(0) && linkMatcher.start() < nextMatchPos) { nextMatchPos = linkMatcher.start(); nextMatcher = linkMatcher; }
 
@@ -189,6 +192,8 @@ public class MarkdownRenderer {
                     result.append(Text.literal(boldMatcher.group(1)).setStyle(Style.EMPTY.withBold(true)));
                 } else if (nextMatcher == italicMatcher) {
                     result.append(Text.literal(italicMatcher.group(1)).setStyle(Style.EMPTY.withItalic(true)));
+                } else if (nextMatcher == strikethroughMatcher) {
+                    result.append(Text.literal(strikethroughMatcher.group(1)).setStyle(Style.EMPTY.withStrikethrough(true)));
                 } else if (nextMatcher == codeMatcher) {
                     result.append(Text.literal(codeMatcher.group(1)).setStyle(Style.EMPTY.withFont(Identifier.of("minecraft", "uniform")).withColor(Formatting.BLACK)));
                 } else if (nextMatcher == linkMatcher) {
