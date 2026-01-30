@@ -69,12 +69,15 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - **Legendary Loot**
     - **Items:** Accessories (just the Acorn Hat for now) and Advanced Upgrade Templates (Diamond, Netherite).
     - **Locations:** Woodland Mansions, Buried Treasure, Stronghold Libraries, Ominous Trial Spawners.
-  - **Configuration:** Check the **World Gen & Loot** config to adjust the drop chance for every single category listed above, or disable them entirely. Requires a restart to take effect, which is why I put it in the World Gen & Loot config so you can modify it before loading into the world.
+  - **Configuration:**
+    - Check the **World Gen & Loot** config to adjust the drop chance for every single category listed above, or disable them entirely. Requires a restart to take effect, which is why I put it in the World Gen & Loot config so you can modify it before loading into the world.
 - **Wild Cheek Pouch Loot**
   - Wild hamsters now have a chance (Default 50%, Configurable) to spawn with scavenged items (seeds, nuggets, etc.) in their cheek pouches.
   - **Context-Aware Scavenging**: Hamsters found in caves have a unique loot pool containing raw ores, glowing berries, and other subterranean treasures. I did not add Diamonds to the list, but you can certainly do that yourself in the config.
   - **Lopsided Cheeks**: There is a 60% chance the loot will spawn in only one cheek, creating a cute, asymmetrical look.
   - **Logic**: These items drop on death (also configurable), or persist when tamed— meaning if you tame a wild hamster with full cheeks, you get to keep the loot once you unlock the pouch.
+  - **Configuration**
+    - The **World Gen & Loot** config includes an "Extra Loot" list. You can define exactly what items wild hamsters spawn with (even items from other mods) and tweak their rarity separately from the default loot list, which is also configurable. Requires a restart to take effect.
 - **Hamster Tips Guidebook Expansion**
   - **New "Acorn Armor" Entry:** Explains how to throw your pet at a tree for profit, and how to forge nuts into armor.
   - **New Category:** "Loot & Scavenging" – detailing the new loot locations and configurability.
