@@ -5,7 +5,7 @@ import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.util.ParticleBreadcrumbHelper;
+import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -259,7 +259,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
 
                 // particle breadcrumbs for debugging/visuals
                 if (this.wasLured && !this.world.isClient() && !this.hamster.getNavigation().isIdle()) {
-                    ParticleBreadcrumbHelper.spawnBreadcrumbs((ServerWorld) this.world, this.hamster.getNavigation().getCurrentPath());
+                    ParticleEffectsUtil.spawnBreadcrumbs((ServerWorld) this.world, this.hamster.getNavigation().getCurrentPath());
                 }
 
                 if (this.hamster.getNavigation().isIdle()) {

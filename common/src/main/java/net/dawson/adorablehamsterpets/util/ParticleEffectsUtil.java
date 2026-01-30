@@ -3,7 +3,9 @@ package net.dawson.adorablehamsterpets.util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.ai.pathing.PathNode;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleType;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -16,9 +18,22 @@ import org.jetbrains.annotations.Nullable;
  * Centralized utility for spawning particle effects.
  * <p>
  * Handles the logic difference between ServerWorld (broadcasting packets) and ClientWorld (rendering locally).
- * Includes overloads for convenience to avoid creating temporary Vec3d objects for spreads.
+ * Includes overloads for convenience to avoid creating temporary Vec3d objects for spreads, and backport
+ * compatibility logic for colored entity effects in 1.20.1.
  */
 public class ParticleEffectsUtil {
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Factory Methods
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Creates a particle effect definition for colored entity particles (like smoke/potions).
+     * In 1.20.1, this returns a custom holder that is intercepted by spawnParticles.
+     */
+    public static ParticleEffect createColoredEffect(float r, float g, float b) {
+        return new ColoredEffect(r, g, b);
+    }
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Core Spawning Methods
@@ -48,8 +63,33 @@ public class ParticleEffectsUtil {
      */
     public static <T extends ParticleEffect> void spawnParticles(World world, Vec3d center, T particle, int count, double spreadX, double spreadY, double spreadZ, double speed) {
         if (world instanceof ServerWorld serverWorld) {
+
+            // --- 1.20.1 Backport Logic: Intercept ColoredEffect ---
+            if (particle instanceof ColoredEffect colored) {
+                // In 1.20.1, colored particles use count=0 and delta fields for RGB
+                // Loop manually because count must be 0 for the color logic to activate
+                for (int i = 0; i < count; i++) {
+                    double offsetX = (serverWorld.random.nextDouble() - 0.5) * 2.0 * spreadX;
+                    double offsetY = (serverWorld.random.nextDouble() - 0.5) * 2.0 * spreadY;
+                    double offsetZ = (serverWorld.random.nextDouble() - 0.5) * 2.0 * spreadZ;
+
+                    serverWorld.spawnParticles(
+                            ParticleTypes.ENTITY_EFFECT,
+                            center.x + offsetX, center.y + offsetY, center.z + offsetZ,
+                            0,                  // Count 0 triggers color mode
+                            colored.r,          // Red (0-1)
+                            colored.g,          // Green (0-1)
+                            colored.b,          // Blue (0-1)
+                            1.0                 // Brightness/Speed
+                    );
+                }
+                return;
+            }
+
+            // Standard Vanilla Logic
             serverWorld.spawnParticles(particle, center.x, center.y, center.z, count, spreadX, spreadY, spreadZ, speed);
         } else {
+            // Client-side Logic
             Random random = world.getRandom();
             for (int i = 0; i < count; i++) {
                 double offsetX = (random.nextDouble() - 0.5) * 2.0 * spreadX;
@@ -80,6 +120,27 @@ public class ParticleEffectsUtil {
      */
     public static <T extends ParticleEffect> void spawnParticles(World world, BlockPos pos, double yOffset, T particle, int count, double spreadX, double spreadY, double spreadZ, double speed) {
         spawnParticles(world, Vec3d.ofBottomCenter(pos).add(0, yOffset, 0), particle, count, spreadX, spreadY, spreadZ, speed);
+    }
+
+    /**
+     * Spawns particles relative to an entity's position using absolute values.
+     * <p>
+     * Unlike {@link #spawnParticlesOnEntity}, this method does <b>not</b> scale the spread
+     * based on the entity's width/height, and the {@code yOffset} is added directly
+     * to the entity's Y coordinate (feet), not the body center.
+     *
+     * @param entity   The target entity.
+     * @param particle The particle effect.
+     * @param count    Number of particles.
+     * @param spreadX  Absolute spread range X.
+     * @param spreadY  Absolute spread range Y.
+     * @param spreadZ  Absolute spread range Z.
+     * @param speed    Particle speed.
+     * @param yOffset  Absolute Y offset from the entity's feet.
+     */
+    public static <T extends ParticleEffect> void spawnParticlesWithOffset(Entity entity, T particle, int count, double spreadX, double spreadY, double spreadZ, double speed, double yOffset) {
+        Vec3d center = new Vec3d(entity.getX(), entity.getY() + yOffset, entity.getZ());
+        spawnParticles(entity.getWorld(), center, particle, count, spreadX, spreadY, spreadZ, speed);
     }
 
     /**
@@ -297,6 +358,29 @@ public class ParticleEffectsUtil {
                         center.z + offsetZ,
                         0, 0, 0);
             }
+        }
+    }
+
+
+    /**
+     * Internal holder for 1.20.1 colored particle data.
+     * Acts as a "fake" ParticleEffect that is intercepted by spawnParticles.
+     */
+    private record ColoredEffect(float r, float g, float b) implements ParticleEffect {
+        @Override
+        public ParticleType<?> getType() {
+            return ParticleTypes.ENTITY_EFFECT;
+        }
+
+        @Override
+        public void write(PacketByteBuf buf) {
+            // No-op: This object is never sent over network directly.
+            // It is unwrapped into a standard ENTITY_EFFECT spawn packet in spawnParticles.
+        }
+
+        @Override
+        public String asString() {
+            return "ahp_colored_effect";
         }
     }
 }

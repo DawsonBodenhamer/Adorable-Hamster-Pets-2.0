@@ -13,6 +13,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import java.util.*;
@@ -312,28 +313,15 @@ public class TreeHeistUtil {
                 long leafPosLong = leafLongs.get(world.getRandom().nextInt(leafLongs.size()));
                 BlockPos leafPos = BlockPos.fromLong(leafPosLong);
 
-                // Spherical Shell Distribution: Generate a random direction vector from the center
-                double rX = world.getRandom().nextDouble() - 0.5;
-                double rY = world.getRandom().nextDouble() - 0.5;
-                double rZ = world.getRandom().nextDouble() - 0.5;
-
-                // Normalize the vector (give it a length of 1.0)
-                double dist = Math.sqrt(rX * rX + rY * rY + rZ * rZ);
-                if (dist < 0.0001) dist = 1.0; // Prevent divide by zero
-
-                // Scale radius. 0.5 is the block surface. Using 0.7 to create a "shell"
-                // that hovers slightly outside the block but stays tight to the shape.
-                double radius = 0.7 + (world.getRandom().nextDouble() * 0.2);
-
-                double offsetX = (rX / dist) * radius;
-                double offsetY = (rY / dist) * radius;
-                double offsetZ = (rZ / dist) * radius;
-
-                serverWorld.spawnParticles(ParticleTypes.WAX_OFF, // Using WAX_OFF on 1.20.1
-                        leafPos.getX() + 0.5 + offsetX,
-                        leafPos.getY() + 0.5 + offsetY,
-                        leafPos.getZ() + 0.5 + offsetZ,
-                        1, 0, 0, 0, 0);
+                ParticleEffectsUtil.spawnSphericalShell(
+                        world,
+                        Vec3d.ofCenter(leafPos),
+                        // Using WAX_OFF for 1.20.1
+                        ParticleTypes.WAX_OFF,
+                        1,
+                        0.7,
+                        0.2
+                );
             }
         }
     }

@@ -21,7 +21,6 @@ import net.dawson.adorablehamsterpets.entity.control.HamsterBodyControl;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.item.custom.HamsterBedItem;
-import net.dawson.adorablehamsterpets.mixin.accessor.LandPathNodeMakerInvoker;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
@@ -32,7 +31,6 @@ import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.*;
@@ -68,6 +66,7 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.particle.ItemStackParticleEffect;
+import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryOps;
 import net.minecraft.registry.RegistryWrapper;
@@ -156,7 +155,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         DEEP_SLEEP             // Looping one of the anim_hamster_sleep_poseX animations
     }
 
-    public static final int CELEBRATION_PARTICLE_DURATION_TICKS = 600;    // 3 seconds
+    public static final int CELEBRATION_PARTICLE_DURATION_TICKS = 600;
     private static final float DEFAULT_FOOTSTEP_VOLUME = 0.10F;
     private static final float GRAVEL_VOLUME_MODIFIER = 0.60F;
 
@@ -780,11 +779,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 BlockState bedState = this.getWorld().getBlockState(bedPos);
 
                 // Spawn Wake-Up Particles with wood type
-                if (!this.getWorld().isClient()) {
-                    ((ServerWorld)this.getWorld()).spawnParticles(ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
-                            bedPos.getX() + 0.5, bedPos.getY() + 0.3, bedPos.getZ() + 0.5,
-                            50, 0.2, 0.5, 0.2, 0.0);
-                }
+                ParticleEffectsUtil.spawnParticles(
+                        this.getWorld(),
+                        Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
+                        ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
+                        50,
+                        new Vec3d(0.2, 0.5, 0.2),
+                        0.0
+                );
 
                 // Play Leaf Rustling Sound
                 SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, this.random);
@@ -975,10 +977,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 SoundEvent mountLureSound = ModSounds.getDynamicItemSound(stack);
                 this.getWorld().playSound(null, hamsterPosForMountSound, mountLureSound, SoundCategory.PLAYERS, 1.0f, 1.0f);
 
-                // Use stack.copy() to prevent "Failed to encode packet" crashes if decrement empties the stack
-                ((ServerWorld)this.getWorld()).spawnParticles(new ItemStackParticleEffect(ParticleTypes.ITEM, stack.copy()),
-                        hamsterPosForMountSound.getX() + 0.5, hamsterPosForMountSound.getY() + 0.5, hamsterPosForMountSound.getZ() + 0.5,
-                        8, 0.25D, 0.25D, 0.25D, 0.05);
+                ParticleEffectsUtil.spawnParticles(
+                        this.getWorld(),
+                        Vec3d.ofCenter(hamsterPosForMountSound),
+                        new ItemStackParticleEffect(ParticleTypes.ITEM, stack.copy()),
+                        8,
+                        new Vec3d(0.25, 0.25, 0.25),
+                        0.05
+                );
 
                 if (!player.getAbilities().creativeMode && Configs.AHP.consumeLureItem) {
                     stack.decrement(1);
@@ -1039,15 +1045,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
                 // 4. Check for Breakage
                 if (realArmorStack.isEmpty()) {
-                    // Play break sound immediately
+                    // Feedback
                     // 1.20.1: Use Shield Break sound
                     this.playSound(SoundEvents.ITEM_SHIELD_BREAK, 0.5f, 1.2f);
-
-                    // Spawn particles using the snapshot
-                    ((ServerWorld) this.getWorld()).spawnParticles(
+                    ParticleEffectsUtil.spawnParticles(
+                            this.getWorld(),
+                            new Vec3d(this.getX(), this.getBodyY(0.5), this.getZ()),
                             new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack),
-                            this.getX(), this.getBodyY(0.5), this.getZ(),
-                            15, 0.2, 0.2, 0.2, 0.1
+                            15,
+                            new Vec3d(0.2, 0.2, 0.2),
+                            0.1
                     );
 
                     // Flag slot to be cleared in the next tick.
@@ -1058,14 +1065,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     // 1.20.1 Fix: Use Shield Block sound
                     this.playSound(SoundEvents.ITEM_SHIELD_BLOCK, 0.5f, 1.2f);
 
-                    // Spawn absorption particles
-                    if (this.getWorld() instanceof ServerWorld serverWorld) {
-                        serverWorld.spawnParticles(
-                                new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack),
-                                this.getX(), this.getBodyY(0.5), this.getZ(),
-                                5, 0.2, 0.2, 0.2, 0.05
-                        );
-                    }
+                    ParticleEffectsUtil.spawnParticles(
+                            this.getWorld(),
+                            new Vec3d(this.getX(), this.getBodyY(0.5), this.getZ()),
+                            new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack),
+                            5,
+                            new Vec3d(0.2, 0.2, 0.2),
+                            0.05
+                    );
                 }
 
                 // Completely negate the health damage by not calling super.applyDamage
@@ -1884,8 +1891,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
                     player.setStackInHand(hand, newStack);
 
+                    // Feedback
                     world.playSound(null, this.getBlockPos(), SoundEvents.BLOCK_BAMBOO_WOOD_PLACE, SoundCategory.PLAYERS, 1.0f, 1.2f);
-                    ((ServerWorld) world).spawnParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getBodyY(0.5), this.getZ(), 10, 0.5, 0.5, 0.5, 0.0);
+                    ParticleEffectsUtil.spawnParticles(
+                            world,
+                            new Vec3d(this.getX(), this.getBodyY(0.5), this.getZ()),
+                            ParticleTypes.HAPPY_VILLAGER,
+                            10,
+                            new Vec3d(0.5, 0.5, 0.5),
+                            0.0
+                    );
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.bed_linked", this.getName()), true);
 
                     // Trigger advancement
@@ -1910,6 +1925,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
                     stackNbt.putString(ModNbtKeys.WANDER_DISTANCE, nextDistance.asString());
 
+                    // Feedback
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.wander_distance_set", this.getName(), nextDistance.asString()), true);
                     world.playSound(null, this.getBlockPos(), SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.PLAYERS, 0.5f, 1.0f);
 
@@ -1924,8 +1940,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
                     player.setStackInHand(hand, newStack);
 
+                    // Feedback
                     world.playSound(null, this.getBlockPos(), SoundEvents.BLOCK_BAMBOO_WOOD_PLACE, SoundCategory.PLAYERS, 1.0f, 1.2f);
-                    ((ServerWorld) world).spawnParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getBodyY(0.5), this.getZ(), 10, 0.5, 0.5, 0.5, 0.0);
+                    ParticleEffectsUtil.spawnParticles(
+                            world,
+                            new Vec3d(this.getX(), this.getBodyY(0.5), this.getZ()),
+                            ParticleTypes.HAPPY_VILLAGER,
+                            10,
+                            new Vec3d(0.5, 0.5, 0.5),
+                            0.0
+                    );
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.bed_linked", this.getName()), true);
                 }
                 // If UUID is present but doesn't match, do nothing.
@@ -1999,19 +2023,20 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     this.setCelebratingRetrieval(true);
                     this.celebrationRetrievalTicks = 30; // 1.5 second duration
                     this.triggerAnimOnServer("mainController", "anim_hamster_celebrate_chase");
-                    // Play a happy/affectionate sound + dynamiic physical touch sound
-                    world.playSound(null, this.getBlockPos(), ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, this.random), SoundCategory.NEUTRAL, 1.0f, this.getSoundPitch());
 
+                    // Feedback
+                    world.playSound(null, this.getBlockPos(), ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, this.random), SoundCategory.NEUTRAL, 1.0f, this.getSoundPitch());
                     if (!retrievedStack.isEmpty()) {
                         SoundEvent pounceSound = ModSounds.getDynamicItemSound(retrievedStack);
                         float volume = (pounceSound == SoundEvents.ENTITY_GENERIC_EAT) ? 0.35f : 1.0f;
                         world.playSound(null, this.getBlockPos(), pounceSound, SoundCategory.NEUTRAL, volume, 1.7f);
-
-                        // Spawn Particles
-                        ((ServerWorld) world).spawnParticles(
+                        ParticleEffectsUtil.spawnParticles(
+                                world,
+                                new Vec3d(this.getX(), this.getBodyY(0.5), this.getZ()),
                                 new ItemStackParticleEffect(ParticleTypes.ITEM, retrievedStack),
-                                this.getX(), this.getBodyY(0.5), this.getZ(),
-                                10, 0.2, 0.2, 0.2, 0.05
+                                10,
+                                new Vec3d(0.2, 0.2, 0.2),
+                                0.05
                         );
                     }
                     AdorableHamsterPets.LOGGER.trace("[InteractMob-{}] Item returned to player and goal stopped.", this.getId());
@@ -2075,12 +2100,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                         int nextPetalType = (currentPetalType % 3) + 1; // Cycles 1->2->3->1
                         this.dataTracker.set(PINK_PETAL_TYPE, nextPetalType);
 
+                        // Feedback
                         world.playSound(null, this.getBlockPos(), SoundEvents.BLOCK_PINK_PETALS_PLACE, SoundCategory.PLAYERS, 0.7f, 1.0f + random.nextFloat() * 0.2f);
-                        if (world instanceof ServerWorld serverWorld) {
-                            serverWorld.spawnParticles(ParticleTypes.FALLING_SPORE_BLOSSOM,
-                                    this.getX(), this.getY() + this.getHeight() * 0.75, this.getZ(),
-                                    7, (this.getWidth() / 2.0F), (this.getHeight() / 2.0F), (this.getWidth() / 2.0F), 0.0);
-                        }
+                        ParticleEffectsUtil.spawnParticles(
+                                world,
+                                new Vec3d(this.getX(), this.getY() + this.getHeight() * 0.75, this.getZ()),
+                                ParticleTypes.FALLING_SPORE_BLOSSOM,
+                                7,
+                                new Vec3d(this.getWidth() / 2.0, this.getHeight() / 2.0, this.getWidth() / 2.0),
+                                0.0
+                        );
                         AdorableHamsterPets.LOGGER.trace("[InteractMob {}] Cycled pink petal to type {}.", this.getId(), nextPetalType);
                         // Do not consume item for cycling
                     }
@@ -2097,17 +2126,18 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                             this.dropStack(toReturn);
                         }
 
-                        // Play Equip Sound
+                        // Feedback
                         world.playSound(null, this.getBlockPos(), SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                        ParticleEffectsUtil.spawnParticles(
+                                world,
+                                new Vec3d(this.getX(), this.getY() + this.getHeight() * 0.75, this.getZ()),
+                                new ItemStackParticleEffect(ParticleTypes.ITEM, toEquip),
+                                7,
+                                new Vec3d(this.getWidth() / 2.0, this.getHeight() / 2.0, this.getWidth() / 2.0),
+                                0.0
+                        );
 
-                        // Spawn Dynamic Equip Particles
-                        if (world instanceof ServerWorld serverWorld) {
-                            serverWorld.spawnParticles(new ItemStackParticleEffect(ParticleTypes.ITEM, toEquip),
-                                    this.getX(), this.getY() + this.getHeight() * 0.75, this.getZ(),
-                                    7, (this.getWidth() / 2.0F), (this.getHeight() / 2.0F), (this.getWidth() / 2.0F), 0.0);
-                        }
-
-                        // Specific Trigger for Petals Advancement
+                        // Trigger for Petals Advancement
                         if (toEquip.isOf(Items.PINK_PETALS) && player instanceof ServerPlayerEntity serverPlayer) {
                             ModCriteria.APPLIED_PINK_PETAL.trigger(serverPlayer, this);
                         }
@@ -2155,14 +2185,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                         // Force update trackers immediately to ensure visuals clear
                         this.updateAccessoryState();
 
+                        // Feedback
                         world.playSound(null, this.getBlockPos(), SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.PLAYERS, 0.9f, 1.0f + random.nextFloat() * 0.1f);
-
-                        // Dynamic particles: use the stack that was just removed
-                        if (world instanceof ServerWorld serverWorld) {
-                            serverWorld.spawnParticles(new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack),
-                                    this.getX(), this.getY() + this.getHeight() * 0.5, this.getZ(),
-                                    5, (this.getWidth() / 2.0F), (this.getHeight() / 2.0F), (this.getWidth() / 2.0F), 0.05);
-                        }
+                        ParticleEffectsUtil.spawnParticles(
+                                world,
+                                new Vec3d(this.getX(), this.getY() + this.getHeight() * 0.5, this.getZ()),
+                                new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack),
+                                5,
+                                new Vec3d(this.getWidth() / 2.0, this.getHeight() / 2.0, this.getWidth() / 2.0),
+                                0.05
+                        );
 
                         if (!player.getAbilities().creativeMode) {
                             // For 1.20.1 - Determine EquipmentSlot based on the hand used.
@@ -2507,9 +2539,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 if (particleCount > 0 && this.getLinkedBedPos().isPresent()) {
                     BlockPos bedPos = this.getLinkedBedPos().get().getPos();
                     BlockState bedState = this.getWorld().getBlockState(bedPos);
-                    ((ServerWorld)this.getWorld()).spawnParticles(ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
-                            bedPos.getX() + 0.5, bedPos.getY() + 0.3, bedPos.getZ() + 0.5,
-                            particleCount, 0.2, 0.3, 0.2, 1);
+                    ParticleEffectsUtil.spawnParticles(
+                            this.getWorld(),
+                            Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
+                            ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
+                            particleCount,
+                            new Vec3d(0.2, 0.3, 0.2),
+                            1.0
+                    );
                 }
             }
             // Decrement the timer after processing the current tick's effect.
@@ -2669,13 +2706,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     }
 
                     if (playEffects) {
-                        // Play impact sound (Main + Armor if applicable) via custom packet logic
+                        // Feedback
                         broadcastImpactSound(ModSounds.HAMSTER_IMPACT.get(), 1.0f);
-
-                        // Spawn particles
-                        if (!world.isClient()) {
-                            ((ServerWorld)world).spawnParticles(ParticleTypes.POOF, this.getX(), this.getY() + this.getHeight() / 2.0, this.getZ(), 50, 0.4, 0.4, 0.4, 0.1);
-                        }
+                        ParticleEffectsUtil.spawnParticles(
+                                world,
+                                new Vec3d(this.getX(), this.getY() + this.getHeight() / 2.0, this.getZ()),
+                                ParticleTypes.POOF,
+                                50,
+                                new Vec3d(0.4, 0.4, 0.4),
+                                0.1
+                        );
                     }
 
                     // Determine pos with safe spawning algorithm
@@ -2731,10 +2771,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                         double spawnY = this.prevY + (this.getHeight() / 2.0) - (currentVelocity.y * offsetMultiplier);
                         double spawnZ = this.prevZ - (currentVelocity.z * offsetMultiplier);
 
-                        ((ServerWorld)world).spawnParticles(
-                                ParticleTypes.CLOUD,
-                                spawnX, spawnY, spawnZ,
-                                1, 0.1, 0.1, 0.1, 0.0
+                        // Effects
+                        ParticleEffectsUtil.spawnParticles(
+                                world,
+                                new Vec3d(spawnX, spawnY, spawnZ),
+                                ParticleTypes.CLOUD, // CLOUD instead of GUST on 1.20.1
+                                1,
+                                new Vec3d(0.1, 0.1, 0.1),
+                                0.0
                         );
                     }
                 }
@@ -3012,16 +3056,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     this.isAutoEating = true; // Use the boolean flag for the eating animation state
                     this.autoEatProgressTicks = 60; // 3 seconds eating time
 
+                    // Feedback
                     this.playSound(SoundEvents.ENTITY_GENERIC_EAT, 0.7F, 1.3F);
-                    if (world instanceof ServerWorld serverWorld) {
-                        serverWorld.spawnParticles(
-                                new ItemStackParticleEffect(ParticleTypes.ITEM, foodToEat.split(1)), // Consume one for particles
-                                this.getX() + this.random.nextGaussian() * 0.1,
-                                this.getY() + this.getHeight() / 2.0 + this.random.nextGaussian() * 0.1,
-                                this.getZ() + this.random.nextGaussian() * 0.1,
-                                5, 0.1, 0.1, 0.1, 0.02
-                        );
-                    }
+                    ParticleEffectsUtil.spawnParticles(
+                            world,
+                            new Vec3d(this.getX(), this.getY() + this.getHeight() / 2.0, this.getZ()),
+                            new ItemStackParticleEffect(ParticleTypes.ITEM, foodToEat.split(1)),
+                            5,
+                            new Vec3d(0.1, 0.1, 0.1),
+                            0.02
+                    );
                     if (foodToEat.isEmpty()) { // If split made it empty
                         this.items.set(foodSlot, ItemStack.EMPTY);
                     }
@@ -3063,30 +3107,29 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
                     // Particle Spawning
                     if (this.celebrationParticleTicks > 0) {
-                            ((ServerWorld)this.getWorld()).spawnParticles(
-                                    ParticleTypes.COMPOSTER,        // 1. Particle Type
-                                    this.getX(),                    // 2. Center X-coordinate
-                                    this.getY() + 1.8,              // 3. Center Y-coordinate
-                                    this.getZ(),                    // 4. Center Z-coordinate
-                                    2,                              // 5. Count
-                                    0.12,                           // 6. Delta X (Spread X)
-                                    0.25,                           // 7. Delta Y (Spread Y)
-                                    0.12,                           // 8. Delta Z (Spread Z)
-                                    0.15                            // 9. Speed
-                            );
+                        // 1. Ominous Particles on Hamster
+                        // Use COMPOSTER and absolute offset method on 1.20.1
+                        ParticleEffectsUtil.spawnParticlesWithOffset(
+                                this,
+                                ParticleTypes.COMPOSTER,
+                                2,
+                                0.12,
+                                0.25,
+                                0.12,
+                                0.15,
+                                1.8
+                        );
 
+                        // 2. Firework Particles above Ore
                         if (this.currentOreTarget != null && this.random.nextInt(4) == 0) {
-                            BlockPos particlePos = this.currentOreTarget.up(); // Spawn above the diamond ore
-                            ((ServerWorld)this.getWorld()).spawnParticles(
-                                    ParticleTypes.FIREWORK,         // 1. Particle Type
-                                    particlePos.getX() + 0.5,       // 2. Center X-coordinate
-                                    particlePos.getY() + 0.5,       // 3. Center Y-coordinate
-                                    particlePos.getZ() + 0.5,       // 4. Center Z-coordinate
-                                    1,                              // 5. Count
-                                    0.2,                            // 6. Delta X (Spread X)
-                                    0.35,                           // 7. Delta Y (Spread Y)
-                                    0.2,                            // 8. Delta Z (Spread Z)
-                                    0.003                           // 9. Speed
+                            BlockPos particlePos = this.currentOreTarget.up();
+                            ParticleEffectsUtil.spawnParticles(
+                                    this.getWorld(),
+                                    Vec3d.ofCenter(particlePos), // Center of block above
+                                    ParticleTypes.FIREWORK,
+                                    1,
+                                    new Vec3d(0.2, 0.35, 0.2),
+                                    0.003
                             );
                         }
                     }
@@ -3114,40 +3157,34 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     this.getWorld().playSound(null, this.getBlockPos(), ModSounds.HAMSTER_SHOCKED.get(), SoundCategory.NEUTRAL, 1.0F, 1.0F);
                 }
 
-
                 // Angry Smoke Particles above Gold Ore
                 if (this.sulkFailParticleTicks > 0 && this.currentOreTarget != null) {
                     if (this.random.nextInt(3) == 0) {
                         BlockPos particlePos = this.currentOreTarget.up();
-                        ((ServerWorld)this.getWorld()).spawnParticles(
-                                ParticleTypes.SMOKE,          // 1. Particle Type
-                                particlePos.getX() + 0.5,     // 2. Center X-coordinate
-                                particlePos.getY() + 0.5,     // 3. Center Y-coordinate
-                                particlePos.getZ() + 0.5,     // 4. Center Z-coordinate
-                                2,                            // 5. Count
-                                0.3,                          // 6. Delta X (Spread X)
-                                0.3,                          // 7. Delta Y (Spread Y)
-                                0.3,                          // 8. Delta Z (Spread Z)
-                                0.005                         // 9. Speed
+                        ParticleEffectsUtil.spawnParticles(
+                                this.getWorld(),
+                                Vec3d.ofCenter(particlePos),
+                                ParticleTypes.SMOKE,
+                                2,
+                                new Vec3d(0.3, 0.3, 0.3),
+                                0.005
                         );
                     }
                 }
 
                 // Black Entity Effect Particles on Hamster
                 if (this.sulkEntityEffectTicks > 0) {
-                    if (this.random.nextInt(5) == 0) { // Spawn periodically
-                        // In 1.20.1, colored ENTITY_EFFECT particles are spawned by setting count to 0
-                        // and using the delta parameters for RGB color.
-                        ((ServerWorld)this.getWorld()).spawnParticles(
-                                ParticleTypes.ENTITY_EFFECT,             // The particle type
-                                this.getParticleX(0.3),        // Center X (preserves main spread)
-                                this.getRandomBodyY(),                   // Center Y (preserves main spread)
-                                this.getParticleZ(0.3),        // Center Z (preserves main spread)
-                                0,                                       // Count = 0 enables color mode
-                                0.3,                                     // Red component (0.0 to 1.0)
-                                0.3,                                     // Green component
-                                0.3,                                     // Blue component
-                                1.0                                      // Speed parameter is used for brightness/intensity
+                    if (this.random.nextInt(5) == 0) {
+                        ParticleEffect darkGrayEffect = ParticleEffectsUtil.createColoredEffect(0.3f, 0.3f, 0.3f);
+
+                        ParticleEffectsUtil.spawnParticlesOnEntity(
+                                this,
+                                darkGrayEffect,
+                                1,
+                                0.6,
+                                0.5,
+                                0.005,
+                                0.1
                         );
                     }
                 }
@@ -3155,60 +3192,34 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- 5. Client-Side Logic ---
-        // --- 5.1 Buff Particle Logic ---
+        // --- 5.1 Buff Particle Logic (Zoomies) ---
         if (world.isClient && this.hasGreenBeanBuff()) {
-            // Only spawn particles if the hamster is actually moving.
-            if (this.getVelocity().horizontalLengthSquared() > 1.0E-6) {
-                // --- Constants for Particle Physics ---
-                final double backwardsSpeed = 1.7;
-                final double scatterStrength = 0.025;
-                final double downwardVelocity = 0.17;
-                final double positionOffsetMultiplier = 1.4;
-
-                // Spawn particles frequently, but not every single tick, to avoid being overwhelming.
-                if (this.random.nextInt(2) == 0) {
-                    for (int i = 0; i < 3; ++i) {
-                        // 1. Calculate the base spawn position using the hamster's PREVIOUS tick's location.
-                        Vec3d currentVelocity = this.getVelocity();
-                        double baseX = this.prevX - (currentVelocity.x * positionOffsetMultiplier);
-                        double baseY = this.prevY + (this.getHeight() / 2.0) - (currentVelocity.y * positionOffsetMultiplier);
-                        double baseZ = this.prevZ - (currentVelocity.z * positionOffsetMultiplier);
-
-                        // 2. Apply the random spread to the base position.
-                        // This maintains spread relative to the calculated "previous" point.
-                        double spawnX = baseX + (this.random.nextDouble() - 0.5) * (this.getWidth() * 0.8);
-                        double spawnY = baseY + (this.random.nextDouble() - 0.5) * (this.getHeight() * 0.05);
-                        double spawnZ = baseZ + (this.random.nextDouble() - 0.5) * (this.getWidth() * 0.8);
-
-                        // 3. Calculate the particle's velocity for the "zoomies" effect.
-                        Vec3d hamsterMovementVec = this.getVelocity();
-                        Vec3d backwardsBaseVel = hamsterMovementVec.multiply(-1.0 * backwardsSpeed);
-                        double finalVelX = backwardsBaseVel.x + (this.random.nextGaussian() * scatterStrength);
-                        double finalVelY = backwardsBaseVel.y + (this.random.nextGaussian() * scatterStrength) - downwardVelocity;
-                        double finalVelZ = backwardsBaseVel.z + (this.random.nextGaussian() * scatterStrength);
-
-                        // 4. Add the particle to the world with the calculated position and velocity.
-                        world.addParticle(ParticleTypes.CLOUD, spawnX, spawnY, spawnZ, finalVelX, finalVelY, finalVelZ);
-                    }
-                }
+            if (this.random.nextInt(2) == 0) {
+                // Use CLOUD instead of WHITE_SMOKE on 1.20.1
+                ParticleEffectsUtil.spawnMotionTrail(
+                        this,
+                        ParticleTypes.CLOUD,
+                        3,
+                        1.4,
+                        0.025,
+                        1.7,
+                        0.17
+                );
             }
         }
 
         // --- 5.2 Taunting Particle Logic ---
         if (this.isTauntingWithItem()) {
-            // Only spawn particles occasionally
-            if (this.random.nextInt(7) == 0) { // Spawn roughly 2.86 times per second
-                // Spawn energetic "instant effect" particles randomly around the hamster
-                for (int i = 0; i < 2; ++i) { // Spawn three particles each time for a noticeable effect
-                    world.addParticle(ParticleTypes.INSTANT_EFFECT,
-                            this.getParticleX(0.6), // Spawn on the body
-                            this.getRandomBodyY(),
-                            this.getParticleZ(0.6),
-                            (this.random.nextDouble() - 0.5) * 0.5, // dx (energetic outward motion)
-                            (this.random.nextDouble() - 0.5) * 0.5, // dy
-                            (this.random.nextDouble() - 0.5) * 0.5  // dz
-                    );
-                }
+            if (this.random.nextInt(7) == 0) {
+                ParticleEffectsUtil.spawnParticlesOnEntity(
+                        this,
+                        ParticleTypes.INSTANT_EFFECT,
+                        2,
+                        1.2,
+                        0.5,
+                        0.5,
+                        0.2
+                );
             }
         }
 
@@ -3712,9 +3723,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (this.getWorld().getRegistryKey() == globalPos.getDimension()) {
                 BlockPos bedPos = globalPos.getPos();
                 BlockState bedState = this.getWorld().getBlockState(bedPos);
-                ((ServerWorld)this.getWorld()).spawnParticles(ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
-                        bedPos.getX() + 0.5, bedPos.getY() + 0.3, bedPos.getZ() + 0.5,
-                        70, 0.2, 0.5, 0.2, 1);
+                ParticleEffectsUtil.spawnParticles(
+                        this.getWorld(),
+                        Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
+                        ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
+                        70,
+                        new Vec3d(0.2, 0.5, 0.2),
+                        1.0
+                );
             }
         });
 
@@ -3982,8 +3998,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         // Effects
         bedWorld.playSound(null, bedPos, SoundEvents.BLOCK_AMETHYST_BLOCK_RESONATE, SoundCategory.NEUTRAL, 1.0f, 1.0f);
-        bedWorld.spawnParticles(ParticleTypes.REVERSE_PORTAL, bedPos.getX() + 0.5, bedPos.getY() + 0.5, bedPos.getZ() + 0.5, 20, 0.3, 0.3, 0.3, 0.1);
-
+        ParticleEffectsUtil.spawnParticles(
+                bedWorld,
+                Vec3d.ofCenter(bedPos),
+                ParticleTypes.REVERSE_PORTAL,
+                20,
+                new Vec3d(0.3, 0.3, 0.3),
+                0.1
+        );
         if (this.getOwner() instanceof PlayerEntity owner) {
             owner.sendMessage(Text.translatable("message.adorablehamsterpets.respawn.success").formatted(Formatting.GOLD), true);
         }
@@ -4176,16 +4198,22 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
 
             // --- Visuals ---
-            ((ServerWorld)this.getWorld()).spawnParticles(
+            ParticleEffectsUtil.spawnParticles(
+                    this.getWorld(),
+                    Vec3d.ofCenter(pos),
                     ModParticles.getForVariant(WoodVariant.BAMBOO),
-                    pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-                    50, 0.4, 0.4, 0.4, 0
+                    50,
+                    new Vec3d(0.4, 0.4, 0.4),
+                    0.0
             );
 
-            ((ServerWorld)this.getWorld()).spawnParticles(
+            ParticleEffectsUtil.spawnParticles(
+                    this.getWorld(),
+                    Vec3d.ofCenter(pos),
                     net.minecraft.particle.ParticleTypes.POOF,
-                    pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-                    50, 0.5, 0.75, 0.5, 0
+                    50,
+                    new Vec3d(0.5, 0.75, 0.5),
+                    0.0
             );
         }
     }
@@ -4620,7 +4648,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * @return {@code true} if a feeding action was successfully processed.
      */
     private boolean tryFeedingAsTamed(PlayerEntity player, ItemStack stack) {
-        // --- 1. Initial Setup & Logging ---
+        // --- 1. Initial Setup ---
         boolean isFood = ConfigDataCache.isStandardFood(stack);
         boolean isBuffItem = ConfigDataCache.isBuffFood(stack);
         boolean isPouchUnlockFood = ConfigDataCache.isPouchUnlockFood(stack);
@@ -4633,21 +4661,24 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         AdorableHamsterPets.LOGGER.debug("[FeedAttempt {} Tick {}] Entering tryFeedingAsTamed. Item: {}, isFood={}, isBuff={}, canHeal={}, breedingAge={}, isInCustomLove={}, readyToBreed={}",
                 this.getId(), world.getTime(), stack.getItem(), isFood, isBuffItem, canHeal, this.getBreedingAge(), this.isInCustomLove(), readyToBreed);
 
-        // --- 2. Check for Pouch Unlock First (Highest Priority Feeding Action) ---
+        // --- 2. Check for Pouch Unlock (Highest Priority) ---
         if (isPouchUnlockFood && !getHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG)) {
             setHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG, true);
             AdorableHamsterPets.LOGGER.debug("Hamster {} cheek pouch unlocked by {}.", this.getId(), stack.getItem());
             if (player instanceof ServerPlayerEntity serverPlayer) {
                 ModCriteria.CHEEK_POUCH_UNLOCKED.trigger(serverPlayer, this);
             }
+
+            // Feedback
             world.playSound(null, this.getBlockPos(), SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.NEUTRAL, 0.5f, 1.5f);
-            if (!world.isClient) {
-                ((ServerWorld) world).spawnParticles(
-                        new ItemStackParticleEffect(ParticleTypes.ITEM, stack.copy()),
-                        this.getX(), this.getBodyY(0.2D), this.getZ(),
-                        25, 0.25D, 0.15D, 0.25D, 0.0D
-                );
-            }
+            ParticleEffectsUtil.spawnParticles(
+                    world,
+                    new Vec3d(this.getX(), this.getBodyY(0.2D), this.getZ()),
+                    new ItemStackParticleEffect(ParticleTypes.ITEM, stack.copy()),
+                    25,
+                    new Vec3d(0.25, 0.15, 0.25),
+                    0.0
+            );
             return true;
         }
 

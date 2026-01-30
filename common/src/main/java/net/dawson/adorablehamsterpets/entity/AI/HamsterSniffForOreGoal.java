@@ -8,7 +8,7 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.advancement.Advancement;
-import net.dawson.adorablehamsterpets.util.ParticleBreadcrumbHelper;
+import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.block.BlockState;
@@ -222,7 +222,7 @@ public class HamsterSniffForOreGoal extends Goal {
 
                 // Particle Breadcrumb Logic
                 if (!this.world.isClient()) {
-                    ParticleBreadcrumbHelper.spawnBreadcrumbs((ServerWorld) this.world, this.path);
+                    ParticleEffectsUtil.spawnBreadcrumbs((ServerWorld) this.world, this.path);
                 }
 
                 if (this.hamster.getNavigation().isIdle() || this.hamster.getBlockPos().isWithinDistance(this.targetOrePos, 1.5)) {
@@ -284,7 +284,6 @@ public class HamsterSniffForOreGoal extends Goal {
             if (bounceSound != null) {
                 this.world.playSound(null, this.hamster.getBlockPos(), bounceSound, SoundCategory.NEUTRAL, 0.6f, this.hamster.getSoundPitch());
             }
-            // --- End Startled Jump & Sound Logic ---
 
             this.hamster.setSulking(true);
             this.hamster.triggerAnimOnServer("mainController", "anim_hamster_sulk");
