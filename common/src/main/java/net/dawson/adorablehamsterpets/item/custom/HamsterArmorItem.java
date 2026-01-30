@@ -40,22 +40,29 @@ public class HamsterArmorItem extends Item {
         return entityTexture;
     }
 
+    @Override
+    public int getEnchantability() {
+        return this.material.getEnchantability();
+    }
+
     /**
-     * Defines the tiers of hamster armor, their durability, and internal names.
+     * Defines the tiers of hamster armor, their internal names, durability, and enchantability.
      */
     public enum HamsterArmorMaterial {
-        ACORN("acorn", 120),          // Standard durability
-        IRON("iron", 350),            // High durability
-        GOLD("gold", 100),            // Low durability (but offers Speed)
-        DIAMOND("diamond", 900),      // Very High durability
-        NETHERITE("netherite", 1800); // Extreme durability (offers Knockback Resistance)
+        ACORN("acorn", 120, 15),          // Standard durability, Leather-like enchantability
+        IRON("iron", 350, 9),             // High durability, Iron-like enchantability
+        GOLD("gold", 100, 25),            // Low durability, Gold-like enchantability
+        DIAMOND("diamond", 900, 10),      // Very High durability, Diamond-like enchantability
+        NETHERITE("netherite", 1800, 15); // Extreme durability, Netherite-like enchantability
 
         private final String name;
         private final int durability;
+        private final int enchantability;
 
-        HamsterArmorMaterial(String name, int durability) {
+        HamsterArmorMaterial(String name, int durability, int enchantability) {
             this.name = name;
             this.durability = durability;
+            this.enchantability = enchantability;
         }
 
         public String getName() {
@@ -64,6 +71,10 @@ public class HamsterArmorItem extends Item {
 
         public int getDurability() {
             return durability;
+        }
+
+        public int getEnchantability() {
+            return enchantability;
         }
     }
 }

@@ -1310,6 +1310,32 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.riderSprintHeld = sprint;
     }
 
+    // --- Vanilla Equipment Mapping ---
+    // Map the custom ARMOR_SLOT_INDEX to the vanilla FEET slot
+    // Allows vanilla systems (Frost Walker, Thorns) to see the armor and execute their logic automatically
+    @Override
+    public ItemStack getEquippedStack(EquipmentSlot slot) {
+        if (slot == EquipmentSlot.FEET) {
+            return this.items.get(ARMOR_SLOT_INDEX);
+        }
+        return super.getEquippedStack(slot);
+    }
+
+    @Override
+    public void equipStack(EquipmentSlot slot, ItemStack stack) {
+        if (slot == EquipmentSlot.FEET) {
+            this.setStack(ARMOR_SLOT_INDEX, stack);
+            return;
+        }
+        super.equipStack(slot, stack);
+    }
+
+    @Override
+    public Iterable<ItemStack> getArmorItems() {
+        // Only one armor piece, mapped to FEET
+        return List.of(this.items.get(ARMOR_SLOT_INDEX));
+    }
+
     // --- Inventory Implementation ---
     @Override
     public DefaultedList<ItemStack> getItems() {
