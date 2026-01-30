@@ -89,6 +89,10 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
     public void preRender(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel model, @Nullable VertexConsumerProvider bufferSource, @Nullable VertexConsumer buffer,
                           boolean isReRender, float partialTick, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
 
+        // Restore super.preRender
+        // Captures the modelRenderTranslations matrix needed for bone.getWorldPosition() to work on 1.20.1
+        super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
+
         // Track matrices for bones to which I need post-render access
         model.getBone("left_foot").ifPresent(bone -> bone.setTrackingMatrices(true));
         model.getBone("nose").ifPresent(bone -> bone.setTrackingMatrices(true));
