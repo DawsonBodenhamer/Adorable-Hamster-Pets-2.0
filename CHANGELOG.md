@@ -20,6 +20,10 @@ The hamsters were too squishy. This update introduces military-grade protection 
     - **Gold:** Lightweight; grants extra movement speed.
     - **Diamond:** Shiny; cures kleptomania. Hamsters wearing diamond armor will **fetch** valuables instead of stealing them.
     - **Netherite:** Dense; grants increased throw inertia and knockback resistance.
+  - **Enchantment Support**
+    -   Hamster Armor can accept **Frost Walker**, **Mending**, and **Unbreaking**.
+    -   *Note: Protection, Thorns, and Feather Falling are intentionally excluded because hamsters don't take fall damage and Hamster Armor negates 100% of incoming damage until it breaks.*
+    -   Got any ideas for other enchantments that should be supported? Let me know on **[Discord](https://discord.gg/w54mk5bqdf)**.
 - **New Tree Heist Mechanic**
   - **The Trigger:** Throw your hamster at an Oak Tree (or dismount them while staring at Oak Leaves) to initiate a heist.
   - **The Simulation Architecture:**

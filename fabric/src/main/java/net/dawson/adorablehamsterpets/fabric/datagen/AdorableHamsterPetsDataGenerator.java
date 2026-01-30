@@ -21,6 +21,7 @@ public class AdorableHamsterPetsDataGenerator implements DataGeneratorEntrypoint
 		pack.addProvider(ModModelProvider::new);
 		pack.addProvider(ModRecipeProvider::new);
 		pack.addProvider(ModWorldGenerator::new);
+		pack.addProvider(ModItemTagProvider::new);
 	}
 
 	private static class ModWorldGenerator extends FabricDynamicRegistryProvider {
