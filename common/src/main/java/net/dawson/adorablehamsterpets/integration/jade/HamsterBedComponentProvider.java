@@ -54,7 +54,8 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
                 case FAR -> Configs.AHP.wanderDistanceFar.get();
                 default -> Configs.AHP.wanderDistanceMedium.get();
             };
-            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_status", wanderStatus, distance.asString(), radius));
+
+            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_status", wanderStatus, Text.translatable(distance.translationKey()), radius));
 
             if (player.isSneaking()) {
                 // --- Expanded Tooltip (Sneaking) ---
