@@ -33,6 +33,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.control.BodyControl;
 import net.minecraft.entity.ai.goal.AttackWithOwnerGoal;
@@ -1022,14 +1024,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     protected void applyDamage(DamageSource source, float amount) {
         // --- Armor Protection Logic ---
-        // Overrides the actual application of damage to the entity's health, thus
-        // intercepting the damage after the game has decided the entity was hit.
+        // Intercepts damage after the game has decided the entity was hit (so still shows visual feedback)
         // 1.20.1: Use BYPASSES_ARMOR instead of BYPASSES_WOLF_ARMOR
         if (!this.getWorld().isClient && !source.isIn(DamageTypeTags.BYPASSES_ARMOR)) {
-            // We need to modify the actual item stack that lives in the server's inventory.
+            // Modify the actual item stack that lives in the server's inventory
             ItemStack realArmorStack = this.items.get(ARMOR_SLOT_INDEX);
 
-            if (!realArmorStack.isEmpty() && realArmorStack.getItem() instanceof HamsterArmorItem) {
+            // Check if armor exists and if it should absorb this specific damage source
+            if (!realArmorStack.isEmpty()
+                    && realArmorStack.getItem() instanceof HamsterArmorItem
+                    && shouldArmorAbsorb(source, realArmorStack)) {
+
                 // Flag handling this damage
                 this.armorAbsorbedDamage = true;
 
@@ -1080,7 +1085,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // If no armor or damage bypasses armor, apply health damage normally
+        // If checks fail, apply health damage normally
         super.applyDamage(source, amount);
     }
     @Override
@@ -3913,6 +3918,29 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       6. Private Helper Methods
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Determines if the hamster armor should completely absorb the incoming damage.
+     * <p>
+     * <ul>
+     *     <li><b>Fire Damage:</b> Only absorbed if the armor has the <b>Fire Protection</b> enchantment.
+     *     Otherwise, the damage passes through to the hamster (though standard armor reduction still applies).</li>
+     *     <li><b>Other Damage:</b> Always absorbed.</li>
+     * </ul>
+     */
+    private boolean shouldArmorAbsorb(DamageSource source, ItemStack armorStack) {
+        if (source.isIn(DamageTypeTags.IS_FIRE)) {
+            return getFireProtectionLevel(armorStack) > 0;
+        }
+        return true;
+    }
+
+    /**
+     * Gets the level of Fire Protection on the stack.
+     */
+    private int getFireProtectionLevel(ItemStack stack) {
+        return EnchantmentHelper.getLevel(Enchantments.FIRE_PROTECTION, stack);
+    }
 
     /**
      * Attempts to respawn the hamster at its linked bed.
