@@ -15,7 +15,8 @@
     "accessor.FollowOwnerGoalAccessor",
     "accessor.TemptGoalAccessor",
     "accessor.ValidatedFieldAccessor",
-    "enchantment.EnchantmentMixin"
+    "enchantment.EnchantmentMixin",
+    "enchantment.EnchantmentHelperMixin"
   ],
   "client": [
     "client.GuiBookLandingMixin",
