@@ -21,10 +21,22 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
             Identifier.of(AdorableHamsterPets.MOD_ID, "enchantable/hamster_armor")
     );
 
-    // Wrapper for Frost Walker (Vanilla Foot Armor + Hamster Armor)
+    // Frost Walker (Vanilla Foot Armor + Hamster Armor)
     public static final TagKey<Item> FROST_WALKER_SUPPORTED = TagKey.of(
             RegistryKeys.ITEM,
             Identifier.of(AdorableHamsterPets.MOD_ID, "enchantable/frost_walker_supported")
+    );
+
+    // Fire Protection (Vanilla Armor + Hamster Armor)
+    public static final TagKey<Item> FIRE_PROTECTION_SUPPORTED = TagKey.of(
+            RegistryKeys.ITEM,
+            Identifier.of(AdorableHamsterPets.MOD_ID, "enchantable/fire_protection_supported")
+    );
+
+    // Soul Speed (Vanilla Foot Armor + Hamster Armor)
+    public static final TagKey<Item> SOUL_SPEED_SUPPORTED = TagKey.of(
+            RegistryKeys.ITEM,
+            Identifier.of(AdorableHamsterPets.MOD_ID, "enchantable/soul_speed_supported")
     );
 
     public ModItemTagProvider(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> completableFuture) {
@@ -45,9 +57,18 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
         getOrCreateTagBuilder(ItemTags.DURABILITY_ENCHANTABLE)
                 .addTag(HAMSTER_ARMOR_ENCHANTABLE);
 
-        // 3. Build Frost Walker Wrapper
-        // Contains vanilla foot armor AND hamster armor
+        // 3. Frost Walker Wrapper
         getOrCreateTagBuilder(FROST_WALKER_SUPPORTED)
+                .forceAddTag(ItemTags.FOOT_ARMOR_ENCHANTABLE)
+                .addTag(HAMSTER_ARMOR_ENCHANTABLE);
+
+        // 4. Fire Protection Wrapper
+        getOrCreateTagBuilder(FIRE_PROTECTION_SUPPORTED)
+                .forceAddTag(ItemTags.ARMOR_ENCHANTABLE)
+                .addTag(HAMSTER_ARMOR_ENCHANTABLE);
+
+        // 5. Soul Speed Wrapper
+        getOrCreateTagBuilder(SOUL_SPEED_SUPPORTED)
                 .forceAddTag(ItemTags.FOOT_ARMOR_ENCHANTABLE)
                 .addTag(HAMSTER_ARMOR_ENCHANTABLE);
     }
