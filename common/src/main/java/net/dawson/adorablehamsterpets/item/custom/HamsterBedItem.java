@@ -182,7 +182,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                                     case FAR -> Configs.AHP.wanderDistanceFar.get();
                                     default -> Configs.AHP.wanderDistanceMedium.get();
                                 };
-                                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.wander_distance", wanderDistance.asString(), radius).formatted(Formatting.AQUA));
+                                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.wander_distance", Text.translatable(wanderDistance.translationKey()), radius).formatted(Formatting.AQUA));
                             } catch (IllegalArgumentException ignored) {}
                         }
                     }
