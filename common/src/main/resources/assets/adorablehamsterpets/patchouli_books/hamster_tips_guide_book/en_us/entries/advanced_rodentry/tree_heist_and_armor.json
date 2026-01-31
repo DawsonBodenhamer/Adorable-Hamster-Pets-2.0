@@ -34,14 +34,7 @@
         "adorablehamsterpets:patchouli_books/hamster_tips_guide_book/images/acorn_armor/hamster_wearing_armor.png"
       ],
       "border": false,
-      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.armor_image1.body"
-    },
-    {
-      "type": "patchouli:smithing",
-      "recipe": "adorablehamsterpets:hamster_armor_netherite_smithing",
-      "title": "book.adorablehamsterpets.entry.tree_heist_and_armor.page4.header",
-      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page4.body",
-      "anchor": "upgrades"
+      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page4_image_caption"
     },
     {
       "type": "adorablehamsterpets:page",
@@ -49,13 +42,36 @@
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page5.body",
       "text_color": "000000",
-      "anchor": "perks"
+      "anchor": "enchanting"
     },
     {
       "type": "adorablehamsterpets:page",
       "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page6.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page6.body",
+      "text_color": "000000",
+      "anchor": "enchanting_advanced"
+    },
+    {
+      "type": "patchouli:smithing",
+      "recipe": "adorablehamsterpets:hamster_armor_netherite_smithing",
+      "title": "book.adorablehamsterpets.entry.tree_heist_and_armor.page7.header",
+      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page7.body",
+      "anchor": "upgrades"
+    },
+    {
+      "type": "adorablehamsterpets:page",
+      "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page8.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page8.body",
+      "text_color": "000000",
+      "anchor": "perks"
+    },
+    {
+      "type": "adorablehamsterpets:page",
+      "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page9.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page9.body",
       "text_color": "000000",
       "anchor": "diamond_perk"
     },
@@ -66,21 +82,21 @@
         "adorablehamsterpets:patchouli_books/hamster_tips_guide_book/images/acorn_armor/hamsters_wearing_diamond_armor.png"
       ],
       "border": false,
-      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.armor_image2.body"
+      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page10_image_caption"
     },
     {
       "type": "adorablehamsterpets:page",
-      "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page7.header",
+      "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page11.header",
       "header_color": "00AAAA",
-      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page7.body",
+      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page11.body",
       "text_color": "000000",
       "anchor": "economy"
     },
     {
       "type": "adorablehamsterpets:page",
-      "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page8.header",
+      "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page12.header",
       "header_color": "00AAAA",
-      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page8.body",
+      "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page12.body",
       "text_color": "000000",
       "anchor": "config"
     }
