@@ -9,8 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # The Tactical Fluff & Tree Heist Update
 
-The hamsters were too squishy. This update introduces military-grade protection for your rodents and a questionable, overengineered new method of deforestation.
-
+The hamsters were too squishy. This update introduces military-grade protection for your rodents and a questionable, overengineered new method of deforestation. I also may have accidentally overhauled the entire loot system, farming mechanics, and quality-of-life features while I was at it... and TONS of other stuff. It’s a big one. Brace yourself.
 ### Added
 - **Hamster Armor System**
   - **Acorn Armor:** The biodegradable base tier. Crafted from Acorn Shards and an Acorn Hat. It works like Wolf Armor— completely negating damage until it breaks.
@@ -24,7 +23,7 @@ The hamsters were too squishy. This update introduces military-grade protection 
     -   Hamster Armor can accept **Frost Walker**, **Fire Protection**, **Soul Speed**, **Mending**, and **Unbreaking**.
     -   *Note: Protection, Thorns and Feather Falling are intentionally excluded because hamsters don't take fall damage and Hamster Armor negates 100% of incoming damage until it breaks.*
     -   Got any ideas for other enchantments that should be supported? Let me know on **[Discord](https://discord.gg/w54mk5bqdf)**.
-- **New Tree Heist Mechanic**
+- **Tree Heist Mechanic**
   - **The Trigger:** Throw your hamster at an Oak Tree (or dismount them while staring at Oak Leaves) to initiate a heist.
   - **The Simulation Architecture:**
     - **Intelligent Canopy Mapping Algorithm:** Upon impact, a Gradient Descent Scan locates the trunk anchor. Then a Breadth-First Search utilizes leaf distance gradients to intelligently segment overlapping foliage, allowing the system to isolate and map the specific 3D shape of a single tree, even within a dense forest where the leaves are all touching.
@@ -34,8 +33,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
     - **Reactive Foliage:** A deterministically randomized physics simulation makes the leaves physically jiggle and shudder as the proxy moves through them. Each block has a unique oscillation pattern derived from its coordinates, further selling the "scurrying" effect.
     - **Dynamic Audio:** Sound sources track the invisible proxy's position, meaning you can hear exactly where your hamster is inside the canopy.
   - **The Economy:** Trees possess persistent "profitability" memory. Over-farming the same coordinates depletes yields until your hamster finds nothing and pouts.
-- **"Night Shift" Fail-Safe Protocol**
-  - Added a new quality-of-life feature for wander mode. If a hamster gets stuck outside and cannot find a path back to its bed, simply go to sleep in your own bed.
+- **Lost Hamster Rescue Protocol**
+  - Added a new quality-of-life feature for wander mode. If a hamster is unable to find a path back to its bed while wandering, simply go to sleep in your own bed.
   - When you wake up, any of your stuck hamsters will have "found their way" (teleported) back to their beds and will be sound asleep.
   - Requires the hamster to be loaded and the bed to be unoccupied.
 - **Configurable Action Bar Duration**
@@ -43,13 +42,16 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Hamster Tips Guide Book to Custom Creative Tab**
   - Registered the guide book item in the Adorable Hamster Pets creative menu group.
   - Linked my custom Advancements tree to the Guidebook with a star-shaped button on the landing page.
-- **New Accessory**
-  - **Acorn Hat:** Increases Tree Heist profitability by 2x, yielding more acorns. Fashionable and functional.
-- **New Ingredient**
-  - **Acorn Shards:** Processed Acorns used to construct the base armor.
+- **Hamster Tips Guidebook Chapters**
+  - **New "Acorn Armor" Entry:** Explains how to throw your pet at a tree for profit, and how to forge nuts into armor.
+  - **New Category/Chapter:** "Loot & Scavenging" – detailing the new loot locations and configurability.
+- **Acorn Hat Accessory**
+  - Increases Tree Heist profitability by 2x, yielding more acorns. Fashionable and functional.
+- **Acorn Shards Ingredient**
+  - Processed Acorns used to construct the base armor.
 - **New Inventory Slots**
   - Added dedicated **"Bling"** and **"Armor"** slots with interactive UI sounds.
-- **10 New Advancements**
+- **10 Advancements**
   - "Tree Heist" (Start a Tree Heist)
   - "Return on Investnut" (Obtain an Acorn)
   - "Ecological Menace" (Exaust a tree's supply)
@@ -60,6 +62,14 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - "The Immovable Object" (Craft Netherite-Plated Acorn Armor)
   - "MURDERER" (Kill a hamster)
   - "Rodent Reckoning" (Be killed by a hamster)
+- **Hamster Bed Respawning**
+  - Added a configuration toggle (`enableRespawnInBed`) to allow hamsters linked to a bed to respawn there upon death. Disabled by default so fit the mod's vanilla-friendly theme.
+  - Respawning hamsters retain their inventory, name, and owner. They may not retain other attributes added by external mods.
+  - Added tooltips to the Hamster Bed item and Jade overlay indicating if respawn is active.
+  - Added a new page to the Hamster Bed entry in the Hamster Tips guidebook explaining the feature.
+- **Dynamic Aerodynamics**
+  - Hamsters now react to gravity with appropriate drama. The "Flying" animation and dynamic nose-dive rotation logic are no longer exclusive to the Hamster Yeet.
+  - Any significant fall— whether it's jumping off a ledge or popping out of a tree— will now automatically trigger the flight pose and dynamic pitch rotation (uses smooth cosine interpolation), ensuring they always look like they are falling.
 - **Global Loot Table Injection**
   - **Common Loot**
     - **Items:** Cucumber, Green Bean, and Sunflower **Seeds**.
@@ -82,9 +92,6 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - **Logic**: These items drop on death (also configurable), or persist when tamed— meaning if you tame a wild hamster with full cheeks, you get to keep the loot once you unlock the pouch.
   - **Configuration**
     - The **World Gen & Loot** config includes an "Extra Loot" list. You can define exactly what items wild hamsters spawn with (even items from other mods) and tweak their rarity separately from the default loot list, which is also configurable. Requires a restart to take effect.
-- **Hamster Tips Guidebook Expansion**
-  - **New "Acorn Armor" Entry:** Explains how to throw your pet at a tree for profit, and how to forge nuts into armor.
-  - **New Category:** "Loot & Scavenging" – detailing the new loot locations and configurability.
 - **Sunflower Farming**
   - **Plantable Seeds**: `Sunflower Seeds` can now be planted to grow the custom 2-block tall Sunflower.
   - **Bonemeal Duplication**: Right-clicking a fully grown custom Sunflower with Bonemeal now drops a vanilla Sunflower item, matching vanilla tall-flower behavior.
@@ -93,10 +100,6 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - You can now configure hamsters to prioritize the **Head** slot before filling the shoulders, allowing a single hamster to be mounted on the head. It's kind of my new favorite thing to do. I'm even considering making it the default lol. Let me know your thoughts in the **[Discord server](https://discord.gg/w54mk5bqdf)**!
 - **Gust Volume**
   - Added a volume slider for the "Gentle Breeze" sound effect used by Hamster Bedding particles. In some modded environments with mods like **Sound Physics Remastered**, the gust SFX was not loud enough to be audible.
-- **Legacy Forge Support** (Thanks to [@Konkeeztador](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!)
-  - Added data structures and loading conditions to ensure the mod tags/recipes load correctly on the legacy Forge loader.
-- **Mod Compatibility Improvements** (Thanks to [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
-  - Added conventional `c` tags for Cheese to improve cross-mod compatibility.
 - **Configurable Ore Seeking**
   - Added new `celebrationOres` (Desirable Ores) and `sulkingOres` (Disappointing Ores) lists to the config.
   - You can now define exactly which blocks your hamster gets excited about (or disappointed by) using Block IDs or Tags.
@@ -104,29 +107,28 @@ The hamsters were too squishy. This update introduces military-grade protection 
 - **Sitting Headshake**
   - Added `anim_hamster_sitting_headshake` for when a hamster refuses food while sitting.
   - The food refusal logic now intelligently selects between sitting, standing, and moving headshake animations.
-- **Hamster Riding (Commissioned by [@Saint_Victus](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com))**
-  - Added a new configuration option: "Enable Hamster Riding" under a new "Commissioned Features" category.
-  - Adds a keybind (`Ride Hamster`, unbound by default) that allows you to mount a hamster.
-  - **Dynamic Rider Visuals**
-    - Players riding a hamster physically attach to the `body_parent` bone.
-    - This means riders will bob, sway, and rotate in perfect sync with the hamster's running animations instead of floating statically on top.
-  - **Mechanics**
-    - You can ride *any* hamster (even wild ones), but you can only steer hamsters you own.
-    - Riding an unowned hamster (or if you are not the owner) results in an uncontrolled ride (like a pig without a carrot).
-    - Riding your own hamster disables its Wander Mode to give you full control.
-  - **Unofficial capacity**
-    - This commissioned feature doesn't fit the theme of the mod, so this changelog is the only place you'll find it mentioned.
 - **Missing Guidebook Warning**
   - Added a client-side check that runs 3 minutes after joining a world (configurable).
   - If the player is missing the guidebook, a dramatic, clickable chat message appears, offering to open the config screen to reclaim it.
   - Includes a solemn oath to read the manual before asking questions in Discord.
-  - It cannot be disabled. Too many players have come to the Discord asking questions that are answered in the guidebook, and upon further investigation, I find they did not get the guidebook and didn't know about it, because the creator of their modpack turned off auto-delivery.
-  - This warning persists across servers/worlds so it only triggers once per client installation (unless reset in config).
-- **Hamster Bed Respawn**
-  - Added a configuration toggle (`enableRespawnInBed`) to allow hamsters linked to a bed to respawn there upon death. Off by default so fit the mod's vanilla-friendly theme.
-  - Respawning hamsters retain their inventory, name, and owner. They may not retain other attributes added by external mods.
-  - Added tooltips to the Hamster Bed item and Jade overlay indicating if respawn is active.
-  - Added a new page to the Hamster Bed entry in the Hamster Tips guidebook explaining the feature.
+  - It cannot be disabled. Too many players have come to the Discord asking questions that are answered directly in the guidebook. Upon further investigation, I find they did not get the guidebook and didn't know about it, because the creator of their modpack turned off auto-delivery.
+  - This warning persists across servers/worlds so it only triggers once per person on single player, and once per person per server on multiplayer (unless reset in config).
+- **Hamster Riding (Commissioned by [@Saint_Victus](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com))**
+  - Added a new configuration option: "Enable Hamster Riding" under a new "Commissioned Features" category.
+  - Adds a keybind (`Ride Hamster`, unbound by default) that allows you to mount a hamster.
+  - **Dynamic Rider Visuals**
+    - I hooked into the Geckolib rendering pipeline so players riding a hamster physically attach to the `body_child` bone.
+    - This means riders will bob, sway, and rotate in perfect sync with the hamster's running animations instead of floating statically on top.
+  - **Mechanics**
+    - You can ride *any* hamster (even wild ones), but you can only _control_ hamsters you own (includes jumping!)
+    - Riding an unowned hamster results in an uncontrolled ride (like a pig without a carrot).
+    - Riding your own hamster disables its Wander Mode to give you full control.
+  - **Unofficial capacity**
+    - This commissioned feature doesn't fit the theme of the mod, so this changelog is the only place you'll find it mentioned.
+- **Legacy Forge Support** (Thanks to [@Konkeeztador](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!)
+  - Added data structures and loading conditions to ensure the mod tags/recipes load correctly on the legacy Forge loader.
+- **Mod Compatibility Improvements** (Thanks to [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer)!)
+  - Added conventional `c` tags for Cheese to improve cross-mod compatibility.
 - **Supplementaries Compatibility**
   - Hamsters can now be caught in Cages from the [**Supplementaries**](https://modrinth.com/mod/supplementaries) mod. (Thanks to [**@just_a_cricket**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)  for the built-in datapack!)
   - To enable catching of wild hamsters, go to `config > supplementaries-common.json > functional > cage > require_taming` and turn it off.
@@ -139,7 +141,7 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Added a rare event where my custom sunflowers will emit light at night, accompanied by magical particles. Rare enough that it is highly unlikely for it to affect multiple sunflowers simultaneously.
   - Includes a hidden advancement ("It Can't Be True!") for players who witness the phenomenon up close.
   - Configurable via the 'Sunflower Settings' in the World Gen config.
-  - This is a reference to the Kikoriki cartoon, '[**It Can't Be True**](https://youtu.be/ztwAY6308zY?t=201)' episode, around the 3:22 mark. Added upon request as a thank-you to [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) for their massive help with mod compatibility and bug fixing.
+  - This is a reference to the Kikoriki cartoon, '[**It Can't Be True**](https://youtu.be/ztwAY6308zY?t=201)' episode, around the 3:22 mark. This feature wasn't really on my agenda, but [**@CasualAnimalEnjoyer**](https://github.com/CasualAnimalEnjoyer) requested it and I added it as a personal thank-you to them for their massive help with mod compatibility and bug fixing.
 
 ### Changed
 - **Animations**
@@ -152,9 +154,6 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Attempting to open a locked cheek pouch now triggers the same new intelligent headshake animations (sitting/standing/moving) used for food refusal.
 - **Item Stealing**
   - Hamsters now use their sprinting animation/speed (1.5D) when running towards a diamond to steal it, matching their flee speed. Originally I had them walking at normal speed so as not to alert the player that they were about to steal the diamond, but I changed my mind and I think it's a lot cuter if they sprint over to it.
-- **Dynamic Aerodynamics**
-  -   Hamsters now react to gravity with appropriate drama. The "Flying" animation and dynamic nose-dive rotation logic are no longer exclusive to the Hamster Yeet.
-  -   Any significant fall— whether it's jumping off a ledge or popping out of a tree— will now automatically trigger the flight pose and dynamic pitch rotation (uses smooth cosine interpolation), ensuring they always look like they are falling.
 - **Yeet Physics**
   - Thrown hamsters now apply **Knockback** to the entities they hit. The force is calculated based on the hamster's velocity, so faster throws = harder hits.
 - **Pink Petal Accessories**
