@@ -486,6 +486,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final TrackedData<Integer> SHOULDER_ANIMATION_STATE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<ItemStack> TRACKED_ACCESSORY_STACK = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     private static final TrackedData<ItemStack> TRACKED_ARMOR_STACK = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
+    private static final TrackedData<Boolean> FALL_IMMUNITY_ACTIVE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     // --- Animation Constants ---
     private static final RawAnimation CRASH_ANIM = RawAnimation.begin().thenPlay("anim_hamster_crash");
@@ -601,7 +602,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique private boolean riderJumpHeld = false;
     @Unique private boolean riderJumpQueued = false;
     @Unique private boolean riderSprintHeld = false;
-    @Unique private transient int fallFlyImmunityTicks = 60;
+    @Unique private int localSpawnImmunityTicks = 60;
 
     // --- Inventory ---
     private final DefaultedList<ItemStack> items = ImplementedInventory.create(INVENTORY_SIZE);
@@ -751,6 +752,20 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void setStuckSearchingForBed(boolean stuck) { setHamsterFlag(STUCK_SEARCHING_FOR_BED_FLAG, stuck); }
     public boolean isRescueSleeping() { return getHamsterFlag(RESCUE_SLEEPING_FLAG); }
     public void setRescueSleeping(boolean rescueSleeping) { setHamsterFlag(RESCUE_SLEEPING_FLAG, rescueSleeping); }
+    public void setFallFlyImmunityTicks(int ticks) {
+        // Sets the fall fly immunity state.
+        // Used when spawning a hamster in mid-air (e.g. Tree Heist exit) to ensure
+        // falling animations play immediately instead of waiting for the grace period
+        if (ticks <= 0) {
+            // Disable immunity logic entirely for this entity
+            this.dataTracker.set(FALL_IMMUNITY_ACTIVE, false);
+            this.localSpawnImmunityTicks = 0;
+        } else {
+            // Enable immunity and set local timer
+            this.dataTracker.set(FALL_IMMUNITY_ACTIVE, true);
+            this.localSpawnImmunityTicks = ticks;
+        }
+    }
     public void wakeUpFromBed(boolean isManualWakeUp) {
         // Wakes the hamster up from its bed, setting the bed block to unoccupied
         // and applying a cooldown to prevent it from immediately going back to sleep.
@@ -1160,9 +1175,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // Thrown state overrides immunity
         if (this.isThrown()) return true;
 
-        // Prevent visual glitch where entities loading in
-        // apparently have enough downward velocity to trigger flying
-        if (this.fallFlyImmunityTicks > 0) return false;
+        // Prevent visual glitch where entities loading in apparently have enough downward velocity to trigger flying
+        if (this.dataTracker.get(FALL_IMMUNITY_ACTIVE) && this.localSpawnImmunityTicks > 0) return false;
 
         return !this.isOnGround() && this.getVelocity().y < -0.01; // Extremely high sensitivity
     }
@@ -2518,7 +2532,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         if (this.lureToBedTimer > 0) this.lureToBedTimer--;
         if (this.wakeUpFromBedDelay > 0) this.wakeUpFromBedDelay--;
         if (this.napInBedDurationTimer > 0) this.napInBedDurationTimer--;
-        if (this.fallFlyImmunityTicks > 0) this.fallFlyImmunityTicks--;
+        if (this.localSpawnImmunityTicks > 0) this.localSpawnImmunityTicks--;
 
         // --- Settle "Thump" Sound Effect ---
         if (this.thumpSoundDelayTicks > 0) {
@@ -3584,6 +3598,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         builder.add(SHOULDER_ANIMATION_STATE, ShoulderAnimationState.STANDING.ordinal());
         builder.add(TRACKED_ACCESSORY_STACK, ItemStack.EMPTY);
         builder.add(TRACKED_ARMOR_STACK, ItemStack.EMPTY);
+        builder.add(FALL_IMMUNITY_ACTIVE, true);
 
     }
 
