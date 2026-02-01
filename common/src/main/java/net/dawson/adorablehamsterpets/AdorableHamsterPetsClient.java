@@ -149,10 +149,12 @@ public class AdorableHamsterPetsClient {
                 MinecraftClient client = MinecraftClient.getInstance();
 
                 // 1. Sound Logic
-                if (!activeTreeSounds.containsKey(searcher.getId())) {
-                    HamsterTreeLoopSoundInstance sound = new HamsterTreeLoopSoundInstance(searcher);
-                    client.getSoundManager().play(sound);
-                    activeTreeSounds.put(searcher.getId(), sound);
+                HamsterTreeLoopSoundInstance existingSound = activeTreeSounds.get(searcher.getId());
+
+                if (existingSound == null || existingSound.isDone()) {
+                    HamsterTreeLoopSoundInstance newSound = new HamsterTreeLoopSoundInstance(searcher);
+                    client.getSoundManager().play(newSound);
+                    activeTreeSounds.put(searcher.getId(), newSound);
                 }
 
                 // 2. Leaf Jiggle Tracking
