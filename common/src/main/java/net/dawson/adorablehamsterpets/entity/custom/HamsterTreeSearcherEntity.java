@@ -30,6 +30,7 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -326,26 +327,49 @@ public class HamsterTreeSearcherEntity extends Entity {
 
     private void rummage() {
         BlockPos currentPos = this.getBlockPos();
-        BlockPos targetPos;
+        BlockPos targetPos = null;
 
-        // --- 1. Simulate Realistic Movement ---
-        // Find nearby leaves from our valid set
-        List<BlockPos> nearbyLeaves = new ArrayList<>();
+        // --- 1. Simulate Realistic Movement with Surface Bias ---
+        List<BlockPos> nearbyExposed = new ArrayList<>();
+        List<BlockPos> nearbyBuried = new ArrayList<>();
+
         for (Long posLong : this.validLeafPositions) {
             BlockPos p = BlockPos.fromLong(posLong);
-            // Check distance (not self, and close enough)
+            // Check distance (not self, and close enough to scurry to)
             if (!p.equals(currentPos) && p.getManhattanDistance(currentPos) <= 2) {
-                nearbyLeaves.add(p);
+                if (isLeafExposed(this.getWorld(), p)) {
+                    nearbyExposed.add(p);
+                } else {
+                    nearbyBuried.add(p);
+                }
             }
         }
 
-        if (!nearbyLeaves.isEmpty()) {
-            // Move to a nearby block
-            targetPos = nearbyLeaves.get(this.random.nextInt(nearbyLeaves.size()));
-        } else {
-            // Fallback: If isolated or stuck, jump to random position to keep feature working
-            long posLong = this.validLeafPositions.get(this.random.nextInt(this.validLeafPositions.size()));
-            targetPos = BlockPos.fromLong(posLong);
+        // Priority 1: Nearby exposed leaves
+        if (!nearbyExposed.isEmpty()) {
+            targetPos = nearbyExposed.get(this.random.nextInt(nearbyExposed.size()));
+        }
+        // Priority 2: Nearby buried leaves
+        else if (!nearbyBuried.isEmpty()) {
+            targetPos = nearbyBuried.get(this.random.nextInt(nearbyBuried.size()));
+        }
+        // Priority 3: Any exposed leaves
+        else {
+            List<BlockPos> allExposed = new ArrayList<>();
+            for (Long posLong : this.validLeafPositions) {
+                BlockPos p = BlockPos.fromLong(posLong);
+                if (isLeafExposed(this.getWorld(), p)) {
+                    allExposed.add(p);
+                }
+            }
+
+            if (!allExposed.isEmpty()) {
+                targetPos = allExposed.get(this.random.nextInt(allExposed.size()));
+            } else {
+                // Fallback: If isolated or stuck, jump to random position to keep feature working
+                long posLong = this.validLeafPositions.get(this.random.nextInt(this.validLeafPositions.size()));
+                targetPos = BlockPos.fromLong(posLong);
+            }
         }
 
         // Teleport entity (moves sound source)
@@ -403,6 +427,15 @@ public class HamsterTreeSearcherEntity extends Entity {
         }
     }
 
+    private boolean isLeafExposed(World world, BlockPos pos) {
+        for (Direction dir : Direction.values()) {
+            if (world.isAir(pos.offset(dir))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void popOut(boolean success) {
         if (this.getWorld().isClient) return;
         ServerWorld serverWorld = (ServerWorld) this.getWorld();
@@ -419,6 +452,9 @@ public class HamsterTreeSearcherEntity extends Entity {
         if (newHamster != null) {
             // Restore state
             newHamster.readNbt(this.hamsterNbt); // Read full NBT to restore Owner/Variant/Attributes
+
+            // Disable fall immunity so dynamic pitch/flying kick in immediately upon exit
+            newHamster.setFallFlyImmunityTicks(0);
 
             // Set Position/Pitch
             newHamster.refreshPositionAndAngles(
