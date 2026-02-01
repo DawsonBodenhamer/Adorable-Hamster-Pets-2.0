@@ -1469,6 +1469,11 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
         nbt.putBoolean("KnockedOut", getHamsterFlag(KNOCKED_OUT_FLAG));
         nbt.putBoolean("CheekPouchUnlocked", getHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG));
+        if (this.isTamed()) {
+            nbt.putBoolean("IsSleeping", getHamsterFlag(SLEEPING_FLAG));
+        } else {
+            nbt.putBoolean("IsSleeping", false);
+        }
 
         nbt.putLong("ThrowCooldownEnd", this.throwCooldownEndTick);
         nbt.putLong("GreenBeanBuffDuration", this.getDataTracker().get(GREEN_BEAN_BUFF_DURATION));
@@ -1537,6 +1542,11 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         setHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG, nbt.getBoolean("CheekPouchUnlocked"));
         setHamsterFlag(SULKING_FLAG, nbt.getBoolean("IsSulking"));
         setHamsterFlag(CELEBRATING_DIAMOND_FLAG, nbt.getBoolean("IsCelebratingDiamond"));
+        boolean loadedSleeping = nbt.getBoolean("IsSleeping");
+        if (!this.isTamed()) {
+            loadedSleeping = false;
+        }
+        setHamsterFlag(SLEEPING_FLAG, loadedSleeping);
 
         this.throwCooldownEndTick = nbt.getLong("ThrowCooldownEnd");
         this.getDataTracker().set(GREEN_BEAN_BUFF_DURATION, nbt.getLong("GreenBeanBuffDuration"));
@@ -1559,7 +1569,11 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         if (nbt.contains("DozingPhase", NbtElement.INT_TYPE)) {
             int phaseOrdinal = nbt.getInt("DozingPhase");
             if (phaseOrdinal >= 0 && phaseOrdinal < DozingPhase.values().length) {
-                this.setDozingPhase(DozingPhase.values()[phaseOrdinal]);
+                DozingPhase phase = DozingPhase.values()[phaseOrdinal];
+                this.setDozingPhase(phase);
+                if (phase == DozingPhase.DEEP_SLEEP) {
+                    setHamsterFlag(SLEEPING_FLAG, true);
+                }
             } else {
                 this.setDozingPhase(DozingPhase.NONE);
             }
@@ -1615,6 +1629,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.bypassNextSleepDelay = nbt.getBoolean("BypassNextSleepDelay");
         this.setStuckSearchingForBed(nbt.getBoolean("StuckSearchingForBed"));
         this.setRescueSleeping(nbt.getBoolean("IsRescueSleeping"));
+        if (this.isRescueSleeping()) {
+            setHamsterFlag(SLEEPING_FLAG, true);
+        }
 
         // --- 7. Read Flight Data ---
         this.hasPlayedIncomingSound = nbt.getBoolean("HasPlayedIncomingSound");
