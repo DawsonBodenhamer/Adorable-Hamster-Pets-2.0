@@ -62,7 +62,18 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
             AdorableHamsterPets.LOGGER.trace("[WanderGoal-{}] canStart (Zoomies): SUCCEEDED. Target: ({}, {}, {})", this.hamster.getId(), String.format("%.2f", target.x), String.format("%.2f", target.y), String.format("%.2f", target.z));
             return true; // A valid target was found.
         } else {
-            // For normal wandering, defer to the superclass, which includes the 120-tick cooldown.
+            // --- Normal Wandering ---
+            int interval = Configs.AHP.wanderInterval.get();
+
+            // If configured to 0, disable wandering entirely.
+            if (interval <= 0) {
+                return false;
+            }
+
+            // Dynamically update the chance based on config
+            this.setChance(interval);
+
+            // Defer to the superclass, which includes the cooldown and random chance check.
             boolean canStartNormal = super.canStart();
             AdorableHamsterPets.LOGGER.trace("[WanderGoal-{}] canStart (Normal): Result: {}", this.hamster.getId(), canStartNormal);
             return canStartNormal;
