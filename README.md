@@ -34,23 +34,25 @@ These hamsters like to bounce, shoulder-surf, hoard snacks, sniff for things, an
 
 # <font color="orange">TL;DR Features, for the Impatient</font>
 
-*   #### **73 Fur Variants** – <font color="gray">*(genetics! science! questionable breeding decisions!)*</font>
-*   #### **Hyper-Configurable** – <font color="gray">*customize everything, from spawning to yeet velocity*</font>
-*   #### **Widely-Compatible** – <font color="gray">*all interactions & mechanics based on configurable c:tags*</font>
-*   #### **Dynamic Naps, Personalities, Sleepy-time & Shoulder Animations** – <font color="gray">*because realism*</font>
-*   #### **Wear Up to Three Hamsters** – <font color="gray">*mount them on your shoulders & head, jiggle physics included*</font>
-*   #### **Shoulder-Surfing Perks** – <font color="gray">*portable creeper radar & diamond divination, powered by cheese*</font>
-*   #### **Hamster Yeet™ (press G)** – <font color="gray">*turns your shoulder buddies into furry, squeaky missiles*</font>
-*   #### **Tamed Wander Mode & Hamster Beds** – <font color="gray">*because even hamster lovers need personal space*</font>
-*   #### **Item Stealing** – <font color="gray">*hamsters play high-stakes keep-away with your valuables; highly configurable*</font>
-*   #### **Potent Vegetables** – <font color="gray">*stuff their face with Steamed Green Beans and witness the chaotic zoomies*</font>
-*   #### **Diamond Sniffing** – <font color="gray">*complete with dramatic sulking animations if they accidentally find gold instead*</font>
-*   #### **Cheek Pouches of Holding** – <font color="gray">*six inventory slots *inside the hamster* (cheeks visibly expand when full)*</font>
-*   #### **Automatic Eating From Cheeks** – <font color="gray">*they can snack on their own if they have Hamster Food Mix*</font>
-*   #### **Wild Cucumber & Green Bean Bushes** – <font color="gray">*use them for rodent bribes... or decor, if you're into that*</font>
-*   #### **Cheese Crafting** – <font color="gray">*surprisingly moist snack for players; hamsters find it intoxicating*</font>
-*   #### **In-Game Guidebook** – <font color="gray">*a wealth of ancient hamster knowledge, plus cozy illustrations*</font>
-*   #### **Custom Advancement Tree** – <font color="gray">*gamify your rodent wrangling*</font>
+* **73 Fur Variants** – <font color="gray">*(genetics! science! questionable breeding decisions!)*</font>
+* **Acorn Armor** – <font color="gray">*from biodegradable Acorn shells to Netherite plating*</font>
+* **Dynamic Naps, Personalities, Sleepy-time & Shoulder Animations** – <font color="gray">*because realism*</font>
+* **Wear Up to Three Hamsters** – <font color="gray">*mount them on your shoulders & head, jiggle physics included*</font>
+* **Shoulder-Surfing Perks** – <font color="gray">*portable creeper radar & diamond divination, powered by cheese*</font>
+* **Hamster Yeet™ (press G)** – <font color="gray">*turns your shoulder buddies into furry, squeaky missiles*</font>
+* **Tamed Wander Mode & Hamster Beds** – <font color="gray">*because even hamster lovers need personal space*</font>
+* **Item Stealing** – <font color="gray">*hamsters play high-stakes keep-away with your valuables; highly configurable*</font>
+* **Potent Vegetables** – <font color="gray">*stuff their face with Steamed Green Beans and witness the chaotic zoomies*</font>
+* **Diamond Sniffing** – <font color="gray">*complete with dramatic sulking animations if they accidentally find gold instead*</font>
+* **Cheek Pouches of Holding** – <font color="gray">*six inventory slots *inside the hamster* (cheeks visibly expand when full)*</font>
+* **Automatic Eating From Cheeks** – <font color="gray">*they can snack on their own if they have Hamster Food Mix*</font>
+* **Wild Cucumber & Green Bean Bushes** – <font color="gray">*use them for rodent bribes... or decor, if you're into that*</font>
+* **Cheese Crafting** – <font color="gray">*surprisingly moist snack for players; hamsters find it intoxicating*</font>
+* **In-Game Guidebook** – <font color="gray">*a wealth of ancient hamster knowledge, plus cozy illustrations*</font>
+* **Custom Advancement Tree** – <font color="gray">*gamify your rodent wrangling*</font>
+* **Global Loot Injection** – <font color="gray">*find hamster gear in ancient ruins; archaeologists baffled*</font>  
+* **Hyper-Configurable** – <font color="gray">*customize everything, from spawning to yeet velocity*</font>
+* **Widely-Compatible** – <font color="gray">*all interactions & mechanics based on configurable c:tags*</font>
 
 # <font color="orange">Or If You Prefer Juicy Details</font>
 
@@ -95,6 +97,19 @@ For when words fail and you need a furry, surprisingly aerodynamic solution— p
 </p>
 
 Does enough damage by default to kill a creeper, which is... really convenient. Gentle interaction (a pat, a click, whatever) required for post-impact recovery.
+
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_tree_heist.png" alt="The Tree Heist" width="100%"></p>
+
+Throw your hamster at any **Oak Tree** (or dismount them while staring at leaves) to initiate a **Tree Heist**.
+
+Your hamster will vanish into the canopy, utilizing a complex navigation algorithm to physically rustle the leaves of that specific tree (jiggle physics included) and toss down **Acorns**.
+
+<p align="center">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/the_tree_heist_part1.gif" alt="The tree heist part 1" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/the_tree_heist_part2.gif" alt="The tree heist part 2" width="48%">
+</p>
+
+You can use the Acorns to craft **Acorn Armor** or the stylish **Acorn Hat** accessory.
 
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_wander_mode_hamster_beds.png" alt="Tamed Wander Mode & Hamster Beds" width="100%"></p>
 
@@ -175,12 +190,35 @@ The only way to retrieve your property is to catch the furry thief and right-cli
 
 They'll energetically implement hamster kung fu on enemies (yours or theirs). Essentially, they like round-house kicks. Complete with particles effects on their tiny kicking feet!
 
-Note: to record this footage, I increased their health to 200 per hamster in the config. Normally a single hamster wouldn't be able to defeat a Stray on its own (but I'm planning on adding Acorn Armor in the future to help with that!)
+Note: *Since I recorded this footage before the addition of **Acorn Armor** (added in v3.5.0), I increased their health to 200 per hamster in the config so they wouldn't die.*
 
 <p align="center">
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_fighting_stray.gif" alt="A hamster fighting a stray" width="48%">
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamsters_fighting_husks.gif" alt="Hamsters fighting husks" width="48%">
 </p>
+
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_hamster_armor.png" alt="Hamster Armor" width="100%"></p>
+
+Hamsters are naturally squishy. This is a problem when you are using them as attack rodents.
+
+The solution? **Acorn Armor**. Crafted from **Acorn Shards** (obtained via Tree Heists), this biodegradable shell acts like Wolf Armor—completely negating damage until it breaks. It's basically a hardened salad.
+
+But why stop there? Find **Hamster Smithing Templates** in loot chests to plate your rodent in metal:
+*   **Iron:** Aerodynamic. Reduces wind resistance for a faster throw.
+*   **Gold:** Lightweight. Grants a permanent movement speed buff.
+*   **Netherite:** Dense. Grants Knockback Resistance and massive throw impact damage.
+*   **Diamond:** The "Expensive Therapy" upgrade. **Cures kleptomania.** A diamond-clad hamster is so satisfied with its own shininess that it will **fetch** items for you instead of stealing them.
+
+<p align="center">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_wearing_base_armor.gif" alt="Hamster wearing base acorn armor" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/frost_walker_demo.gif" alt="Frost walker enchanted armor demo" width="48%">
+</p>
+
+**Enchantments:**
+*   **Unbreaking / Mending:** Essential for keeping your armor intact.
+*   **Fire Protection:** Unlike wolf armor, armored hamsters will take fire damage unless they have this enchantment.
+*   **Frost Walker / Soul Speed:** They have tiny feet, but the magic still works.
+*   Some other enchantments like Protection and Feather Falling are disabled because the armor already blocks 100% of damage and hamsters don't take fall damage.
 
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_biome_variants_genetics.png" alt="Biome Variants & Genetics" width="100%"></p>
 
@@ -222,9 +260,27 @@ Hamsters found shivering in snowy plains look different from those basking in de
 Yes, inventory... *in their face*. Feed them **Hamster Food Mix** once to earn their trust (and cheek access!), then Sneak + Right-click a tamed hamster for 6 slots of prime real estate. No, you can't stuff a Netherite block in there. They'll even automatically scarf down **Hamster Food Mix** from their cheeks if they take a tumble, after a brief, dramatic pause to consider their options. Can't make them *too* overpowered.
 
 <p align="center">
- <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_inventory_gui.png" alt="Hamster inventory GUI" width="29%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_inventory_gui_full.png" alt="Hamster inventory GUI" width="29%">
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/hamster_with_full_cheeks.jpg" alt="Hamster with full cheeks" width="65%">
 </p>
+
+### Scavenging & World Loot
+Wild hamsters have a 50% chance to spawn with random debris stuffed in their cheeks, and chests contain hamster-specific gear.
+
+
+| **Loot Source** | **Potential Findings**                                      |
+| :--- |:------------------------------------------------------------|
+| **Surface Hamsters** | Seeds, nuggets, feathers, sticks, and general pocket lint.  |
+| **Cave Hamsters** | Raw ore (Iron/Gold/Copper), glow berries, flint, and clay.  |
+| **Common Chests**<br>*(Villages, Mineshafts, Shipwrecks)* | **Seeds** (Cucumber, Green Bean, Sunflower).                |
+| **Uncommon Chests**<br>*(Dungeons, Temples, Pyramids)* | **Standard Armor** (Acorn, Iron, Gold).                     |
+| **High-Tier Chests**<br>*(Nether Fortress, End City)* | **Diamond Armor** and basic **Smithing Templates**.         |
+| **Legendary Chests**<br>*(Ancient City, Mansion)* | **Armor**, **Accessories** and advanced **Smithing Templates**. |
+
+### Fully Configurable
+The config lets you define **exactly** what items wild hamsters spawn with (including modded items) and their drop rates. You can also customize the **Pouch Whitelist/Blacklist** to strictly control what they are allowed to pick up. If you want them to carry only dirt blocks, that is your prerogative. Weird though.
+
+You can also configure the rarity of world generated loot (like chests and trial chamber vaults).
 
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_spider_ravager_psych_warfare.png" alt="Spider/Ravager Psychological Warfare" width="100%"></p>
 
@@ -313,7 +369,7 @@ These are subject to change! Got a genius idea for the next hamster accessory th
 
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_hamster_tips_guide_book.png" alt="The Hamster Tips Guide Book" width="100%"></p>
 
-You get one automatically the first time you join a world (unless you turned that off in the config, you rebel). It contains *hints*. Read it. Or use it as kindling. See if I care. Lost it? Craft another with a Book and some Sliced Cucumber. Don't ask why Sliced Cucumber. It's a long story.
+You get one automatically the first time you join a world (unless you turned that off in the config, you rebel). It contains *hints*. Read it. Or use it as kindling. See if I care. Lost it? Craft another with a Book and some Sliced Cucumber. Don't ask why Sliced Cucumber. It's a long story. You can also grab it from the Creative Mode tab if you're lazy.
 
 <p align="center">
   <img src="https://i.imgur.com/xBzE69F.jpeg" alt="The Hamster Tips Guide Book screenshot" width="32%">
