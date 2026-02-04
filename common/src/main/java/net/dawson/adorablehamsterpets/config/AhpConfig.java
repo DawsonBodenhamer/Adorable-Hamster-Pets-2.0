@@ -559,6 +559,14 @@ public class AhpConfig extends Config {
     @Translatable.Desc("How beefy your tamed fuzzball is. Defaults to double its wild health, because love makes you stronger. Or something. Vanilla wolves have 20 (10 hearts).")
     public ValidatedDouble tamedMaxHealth = new ValidatedDouble(16.0, 200.0, 1.0);
 
+    @Translatable.Name("Wander Interval")
+    @Translatable.Desc("Controls how frequently your hamster feels the urge to walk around. The higher the number, the lazier the hamster (1 in X chance to wander per tick; 20 ticks = 1 second). Set to 0 to disable wandering entirely— perfect for keeping them still for photoshoots or interrogation. Vanilla's default chance for Wolves is 1 in 120 ticks.")
+    public ValidatedInt wanderInterval = new ValidatedInt(110, 10000, 0);
+
+    @Translatable.Name("Look-At Duration")
+    @Translatable.Desc("The minimum time (in ticks) your hamster stares into your soul. Actual duration = this value + a random extra 0 to 4 seconds. Default is 40. Increase to simulate deep contemplation (or emptiness).")
+    public ValidatedInt lookAtDuration = new ValidatedInt(20, 600, 20);
+
     @Translatable.Name("Taming Chance")
     @Translatable.Desc("Convince a hamster to love you. Taming difficulty (1 in X chance). Higher = more cucumbers sacrificed to fuzzy freeloaders.")
     public ValidatedInt tamingChanceDenominator = new ValidatedInt(3, 20, 1);

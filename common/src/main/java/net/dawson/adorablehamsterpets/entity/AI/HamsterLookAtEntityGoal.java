@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.AI;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.LookAtEntityGoalAccessor;
 import net.minecraft.entity.Entity;
@@ -11,15 +12,14 @@ import net.minecraft.entity.mob.MobEntity;
 public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
 
     // --- 1. Fields ---
-    private final MobEntity hamsterMob; // Store our own reference
-    private final float chance; // Initialize with default vanilla chance
-    // --- End 1. Fields ---
+    private final MobEntity hamsterMob;
+    private final float chance;
 
     // --- 2. Constructors ---
     public HamsterLookAtEntityGoal(MobEntity mob, Class<? extends LivingEntity> targetType, float range) {
         super(mob, targetType, range);
-        this.hamsterMob = mob; // Initialize our reference
-        this.chance = 0.02F; // Initialize the chance
+        this.hamsterMob = mob;
+        this.chance = 0.02F;
     }
 
     public HamsterLookAtEntityGoal(MobEntity mob, Class<? extends LivingEntity> targetType, float range, float chance) {
@@ -33,12 +33,11 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
         this.hamsterMob = mob; // Initialize our reference
         this.chance = chance; // Initialize the chance
     }
-    // --- End 2. Constructors ---
 
     // --- 3. Overridden Methods ---
     @Override
     public boolean canStart() {
-        // --- 1. Hamster State Check (Perform this FIRST for efficiency) ---
+        // --- 1. Hamster State Check ---
         if (this.hamsterMob instanceof HamsterEntity hamster) {
             if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isHoldingInterestItem()
                     || hamster.getActiveCustomGoalDebugName().equals(HamsterWanderAroundFarGoal.class.getSimpleName())) {
@@ -61,10 +60,18 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
     @Override
     public void start() {
         super.start();
+
+        int baseDuration = Configs.AHP.lookAtDuration.get();
+        // Logic: Base + (0 to 4 seconds) with a constant variance of 80 ticks
+        int calculatedDuration = baseDuration + this.mob.getRandom().nextInt(80);
+
+        // Adjust for tick rates if necessary
+        ((LookAtEntityGoalAccessor) this).setLookTime(this.getTickCount(calculatedDuration));
+
         if (this.mob instanceof HamsterEntity he) {
             he.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
             he.getDataTracker().set(HamsterEntity.CURRENT_LOOK_UP_ANIM_ID, he.getRandom().nextBetween(1, 3));
-            AdorableHamsterPets.LOGGER.trace("[AI Goal Start] Hamster {} started LookAtEntityGoal.", he.getId());
+            AdorableHamsterPets.LOGGER.trace("[AI Goal Start] Hamster {} started LookAtEntityGoal with duration {} ticks (Base: {} + Random).", he.getId(), calculatedDuration, baseDuration);
         }
     }
 
@@ -77,7 +84,6 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
                 return false;
             }
         }
-        // --- End 1. Check Hamster State ---
         return super.shouldContinue();
     }
 
@@ -103,5 +109,4 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
             accessor.setLookTime(accessor.getLookTime() - 1);
         }
     }
-    // --- End 3. Overridden Methods ---
 }

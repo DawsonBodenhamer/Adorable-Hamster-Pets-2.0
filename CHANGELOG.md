@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # The Tactical Fluff & Tree Heist Update
 
 The hamsters were too squishy. This update introduces military-grade protection for your rodents and a questionable, overengineered new method of deforestation. I also may have accidentally overhauled the entire loot system, farming mechanics, and quality-of-life features while I was at it... and TONS of other stuff. It’s a big one. Brace yourself.
+
 ### Added
 - **Hamster Armor System**
   - **Acorn Armor:** The biodegradable base tier. Crafted from Acorn Shards and an Acorn Hat. It works like Wolf Armor— completely negating damage until it breaks.
@@ -113,6 +114,15 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - Includes a solemn oath to read the manual before asking questions in Discord.
   - It cannot be disabled. Too many players have come to the Discord asking questions that are answered directly in the guidebook. Upon further investigation, I find they did not get the guidebook and didn't know about it, because the creator of their modpack turned off auto-delivery.
   - This warning persists across servers/worlds so it only triggers once per person on single player, and once per person per server on multiplayer (unless reset in config).
+- **Configurable Wander Interval**
+  -   Added a slider to the Config to control the probability of a hamster deciding to wander.
+  -   Setting this to **0** completely disables idle wandering, useful for keeping them stationary for photos or specific builds.
+  -   For now, this will affect all hamsters. I'll add a specific photo shoot feature later.
+- **Configurable Look At Player Duration**
+  -   Added a "Look-At Duration" slider to the config.
+  -   Controls how long hamsters stare at you before getting distracted.
+  -   **The Math:** Actual duration = `Config Value` + `Random(0 to 4 seconds)`.
+  -   Example: If set to 60 ticks (3s), they will look for anywhere between 3 and 7 seconds.
 - **Hamster Riding (Commissioned by [@Saint_Victus](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com))**
   - Added a new configuration option: "Enable Hamster Riding" under a new "Commissioned Features" category.
   - Adds a keybind (`Ride Hamster`, unbound by default) that allows you to mount a hamster.
