@@ -219,6 +219,8 @@ The hamsters were too squishy. This update introduces military-grade protection 
   - This resolves issues where hamsters would occasionally take suffocation damage while pouncing on an item. It became more of a problem once the retrieval feature was added since the hamster does not run away from the player.
 - **Sleeping Hamster Pushability**
   -   Fixed an issue where hamsters sleeping in beds would become pushable after closing and reopening the world.
+- **Texture Mipmapping Issue**
+  - Resized Hamster Bed textures from 35x69 to 64x128 while maintaining their original look. This resolves a rendering issue where non-power-of-two textures forced Minecraft to disable mipmapping, causing all blocks in the game to appear grainy.
 - **Safe Dismounting**
   - Hamsters will no longer agree to dismount directly into lava or water, even if there is a solid block underneath. The safety check now correctly verifies that the space the hamster will occupy is free of hazards.
 - Fixed **Biome Detection** (1.20.1)
