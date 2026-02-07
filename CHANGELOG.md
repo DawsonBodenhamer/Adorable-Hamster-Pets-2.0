@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # The Tactical Fluff & Tree Heist Update
 
-The hamsters were too squishy. This update introduces military-grade protection for your rodents and a questionable, overengineered new method of deforestation. I also may have accidentally overhauled the entire loot system, farming mechanics, and quality-of-life features while I was at it... and TONS of other stuff. It’s a big one. Brace yourself.
+The hamsters were too squishy. This update introduces enchantable armor, a new accessory, and configurable bed respawning. I may have also added a questionable, overengineered method of deforestation, configurable loot injection, farming mechanics, and quality-of-life features while I was at it... and TONS of other stuff. It’s a big one. Brace yourself.
 
 ### Added
 - **Hamster Armor System**
