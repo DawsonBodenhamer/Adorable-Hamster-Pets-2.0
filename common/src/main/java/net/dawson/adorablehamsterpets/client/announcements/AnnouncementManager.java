@@ -36,7 +36,12 @@ public class AnnouncementManager {
     // --- 1. Constants, Static Fields, and Nested Types ---
     public static final AnnouncementManager INSTANCE = new AnnouncementManager();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final String GITHUB_RAW_URL = "https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Public/main/announcements/";
+
+    // Active development repository
+    private static final String PRIMARY_URL = "https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/announcements/";
+
+    // FDeprecated public repository
+    private static final String FALLBACK_URL = "https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Public/main/announcements/";
 
     /**
      * A record representing a pending notification, containing the reason it's pending and the announcement itself.
@@ -114,6 +119,11 @@ public class AnnouncementManager {
 
     /**
      * Asynchronously fetches the markdown content for a specific announcement.
+     * <p>
+     * Logic:
+     * 1. Try fetching from the Primary Source (Active Dev Repo).
+     * 2. If 404/Error, try fetching from the Fallback Source (Old Public Repo).
+     * 3. If both fail, return the offline error message.
      *
      * @param relativePath The path to the markdown file relative to the announcements directory.
      * @return A CompletableFuture containing the markdown content as a string.
@@ -121,37 +131,55 @@ public class AnnouncementManager {
     public CompletableFuture<String> fetchMarkdown(String relativePath) {
         ensureInitialized();
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(GITHUB_RAW_URL + relativePath))
+        HttpRequest primaryRequest = HttpRequest.newBuilder()
+                .uri(URI.create(PRIMARY_URL + relativePath))
                 .GET()
                 .build();
 
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(response -> {
+        // --- Step 1: Try Primary Source ---
+        return httpClient.sendAsync(primaryRequest, HttpResponse.BodyHandlers.ofString())
+                .thenCompose(response -> {
                     if (response.statusCode() == 200) {
-                        return response.body();
+                        // Success on Primary
+                        return CompletableFuture.completedFuture(response.body());
+                    } else {
+                        // Primary failed (probably 404), Log warning and try fallback
+                        AdorableHamsterPets.LOGGER.warn("Failed to fetch markdown from Primary '{}' (Status {}). Attempting fallback...", relativePath, response.statusCode());
+
+                        HttpRequest fallbackRequest = HttpRequest.newBuilder()
+                                .uri(URI.create(FALLBACK_URL + relativePath))
+                                .GET()
+                                .build();
+
+                        // --- Step 2: Try Fallback Source ---
+                        return httpClient.sendAsync(fallbackRequest, HttpResponse.BodyHandlers.ofString())
+                                .thenApply(fallbackResponse -> {
+                                    if (fallbackResponse.statusCode() == 200) {
+                                        AdorableHamsterPets.LOGGER.info("Successfully fetched markdown from Fallback '{}'.", relativePath);
+                                        return fallbackResponse.body();
+                                    } else {
+                                        // Fallback failed too
+                                        AdorableHamsterPets.LOGGER.warn("Failed to fetch markdown from Fallback '{}' (Status {}).", relativePath, fallbackResponse.statusCode());
+                                        return getOfflineMessage();
+                                    }
+                                });
                     }
-                    AdorableHamsterPets.LOGGER.warn("Failed to fetch markdown from '{}', status code: {}", relativePath, response.statusCode());
-                    // Return the user-friendly offline message for non-200 responses too
-                    return """
-                    # Oops! Looks like you're offline.
-                    
-                    There was supposed to be a really fancy announcement message here, but that requires a teensy bit of internet connection.
-                    
-                    You can always [join the Discord](https://discord.gg/w54mk5bqdf) to see the latest announcements there!
-                    """;
                 })
                 .exceptionally(e -> {
-                    AdorableHamsterPets.LOGGER.error("Exception while fetching markdown from '" + relativePath + "'", e);
-                    // Return the user-friendly offline message on network exception
-                    return """
-                    # Oops! Looks like you're offline.
-                    
-                    There was supposed to be a really fancy announcement message here, but that requires a teensy bit of internet connection.
-                    
-                    You can always [join the Discord](https://discord.gg/w54mk5bqdf) to see the latest announcements there!
-                    """;
+                    // Network error on either request
+                    AdorableHamsterPets.LOGGER.error("Exception while fetching markdown (Primary or Fallback) for '" + relativePath + "'", e);
+                    return getOfflineMessage();
                 });
+    }
+
+    private String getOfflineMessage() {
+        return """
+        # Oops! Looks like this doesn't exist.
+        
+        There was supposed to be a really fancy announcement message here, so either you've misplaced your internet connection, or I misplaced the message.
+        
+        You can always [join the Discord](https://discord.gg/w54mk5bqdf) to see the latest announcements there!
+        """;
     }
 
     // --- State Querying ---
@@ -175,32 +203,14 @@ public class AnnouncementManager {
         }
 
         Semver installedVersion = Semver.parse(Platform.getMod(AdorableHamsterPets.MOD_ID).getVersion().toString());
-        Semver latestVersion = Semver.parse(manifest.latest_version());
         Semver lastAckVersion = Semver.parse(clientState.last_acknowledged_update());
         Instant now = Instant.now();
 
-        AdorableHamsterPets.LOGGER.trace("[Announcements] -> Versions: Installed={}, Latest={}, LastAck={}", installedVersion, latestVersion, lastAckVersion);
+        AdorableHamsterPets.LOGGER.trace("[Announcements] -> Versions: Installed={}, LastAck={}", installedVersion, lastAckVersion);
         AdorableHamsterPets.LOGGER.trace("[Announcements] -> Snooze IDs: {}.", clientState.snoozed_ids());
 
-        // --- 2. Check for Update Available Announcements ---
-        boolean newUpdateAvailable = installedVersion.compareTo(latestVersion) < 0;
-        if (newUpdateAvailable) {
-            manifest.messages().stream()
-                    .filter(a -> "update".equals(a.kind()) && latestVersion.toString().equals(a.semver()))
-                    // Check if it has been seen, snoozed (days), or snoozed (session)
-                    .filter(a -> !clientState.seen_ids().contains(a.id())
-                            && !clientState.snoozed_ids().getOrDefault(a.id(), Instant.EPOCH).isAfter(now)
-                            && !sessionSnoozedIds.contains(a.id()))
-                    .findFirst()
-                    .ifPresent(announcement -> {
-                        pending.add(new PendingNotification(PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT, announcement));
-                        AdorableHamsterPets.LOGGER.trace("[Announcements] -> ADDED (Update Available): id='{}', semver='{}'", announcement.id(), announcement.semver());
-                    });
-        }
-
-        // --- 3. Check for All Other Messages (Regular Announcements and Missed "What's New") ---
-        AdorableHamsterPets.LOGGER.trace("[Announcements] -> Scanning all {} messages for other notifications...", manifest.messages().size());
         for (Announcement message : manifest.messages()) {
+            // Check if it has been seen, snoozed (days), or snoozed (session)
             if (clientState.seen_ids().contains(message.id())
                     || clientState.snoozed_ids().getOrDefault(message.id(), Instant.EPOCH).isAfter(now)
                     || sessionSnoozedIds.contains(message.id())) {
@@ -208,29 +218,40 @@ public class AnnouncementManager {
             }
 
             Semver messageVersion = Semver.parse(message.semver());
+            String kind = message.kind();
 
-            // --- 3a. Regular Announcements ---
-            if ("announcement".equals(message.kind())) {
-                pending.add(new PendingNotification(PendingNotification.REGULAR_ANNOUNCEMENT, message));
-                AdorableHamsterPets.LOGGER.trace("[Announcements] -> ADDED (Optional Announcement): id='{}'", message.id());
-                continue;
+            // --- Backwards Compatibility Shim ---
+            // If JSON says "update", resolve it to specific types based on version comparison
+            if ("update".equals(kind)) {
+                if (message.id().startsWith("update-")) {
+                    kind = "update_available";
+                } else {
+                    kind = messageVersion.compareTo(installedVersion) > 0 ? "update_available" : "patch_notes";
+                }
             }
 
-            // --- 3b. "What's New" Announcements for Current or Past Versions ---
-            if ("update".equals(message.kind())) {
-                boolean versionIsRelevant = messageVersion.compareTo(installedVersion) <= 0;
-                boolean isUnacknowledged = messageVersion.compareTo(lastAckVersion) > 0;
-
-                if (versionIsRelevant && isUnacknowledged) {
-                    // Don't add it if it's already pending as the main "update available" notification
-                    boolean alreadyPendingAsUpdate = newUpdateAvailable && message.semver().equals(latestVersion.toString());
-                    if (!alreadyPendingAsUpdate) {
-                        pending.add(new PendingNotification(PendingNotification.WHATS_NEW_ANNOUNCEMENT, message));
-                        AdorableHamsterPets.LOGGER.trace("[Announcements] -> ADDED (What's New): id='{}', semver='{}'", message.id(), message.semver());
-                    } else {
-                        AdorableHamsterPets.LOGGER.trace("[Announcements] -> SKIPPED (Duplicate Update): id='{}'", message.id());
-                    }
+            // --- 1. Update Available ---
+            // Only show if the message version is strictly newer than installed
+            if ("update_available".equals(kind)) {
+                if (messageVersion.compareTo(installedVersion) > 0) {
+                    pending.add(new PendingNotification(PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT, message));
+                    AdorableHamsterPets.LOGGER.trace("[Announcements] -> ADDED (Update Available): id='{}', semver='{}'", message.id(), message.semver());
                 }
+            }
+
+            // --- 2. Patch Notes (What's New) ---
+            // Only show if the message version = the current installed version and is newer than the last acknowledged version
+            else if ("patch_notes".equals(kind)) {
+                if (messageVersion.compareTo(installedVersion) <= 0 && messageVersion.compareTo(lastAckVersion) > 0) {
+                    pending.add(new PendingNotification(PendingNotification.WHATS_NEW_ANNOUNCEMENT, message));
+                    AdorableHamsterPets.LOGGER.trace("[Announcements] -> ADDED (What's New): id='{}', semver='{}'", message.id(), message.semver());
+                }
+            }
+
+            // --- 3. Regular Announcement ---
+            else if ("announcement".equals(kind)) {
+                pending.add(new PendingNotification(PendingNotification.REGULAR_ANNOUNCEMENT, message));
+                AdorableHamsterPets.LOGGER.trace("[Announcements] -> ADDED (Regular): id='{}'", message.id());
             }
         }
 
@@ -285,21 +306,29 @@ public class AnnouncementManager {
         Announcement announcement = getAnnouncementById(announcementId);
         if (announcement == null) return "unknown"; // Fallback for safety
 
-        Semver installedVersion = Semver.parse(Platform.getMod(AdorableHamsterPets.MOD_ID).getVersion().toString());
-        Semver latestVersion = Semver.parse(manifest.latest_version());
+        String kind = announcement.kind();
 
-        // --- 1. Check for "Update Available" ---
-        if (installedVersion.compareTo(latestVersion) < 0 && announcement.semver().equals(latestVersion.toString())) {
+        // --- Backwards Compatibility Shim ---
+        if ("update".equals(kind)) {
+            if (announcement.id().startsWith("update-")) {
+                kind = "update_available";
+            } else {
+                // Safety check: verify it is actually an update
+                Semver installedVersion = Semver.parse(Platform.getMod(AdorableHamsterPets.MOD_ID).getVersion().toString());
+                Semver messageVersion = Semver.parse(announcement.semver());
+                kind = messageVersion.compareTo(installedVersion) > 0 ? "update_available" : "patch_notes";
+            }
+        }
+
+        if ("update_available".equals(kind)) {
             return PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT;
         }
 
-        // --- 2. Check for Regular Announcements ---
-        if ("announcement".equals(announcement.kind())) {
-            return PendingNotification.REGULAR_ANNOUNCEMENT;
+        if ("patch_notes".equals(kind)) {
+            return PendingNotification.WHATS_NEW_ANNOUNCEMENT;
         }
 
-        // --- 3. Fallback ---
-        return announcement.kind();
+        return PendingNotification.REGULAR_ANNOUNCEMENT;
     }
 
     /**
@@ -355,8 +384,8 @@ public class AnnouncementManager {
                 changed = true;
             }
 
-            // Acknowledge any update-related messages
-            if ("update".equals(announcement.kind())) {
+            // Acknowledge both types of update-related messages
+            if ("update_available".equals(announcement.kind()) || "patch_notes".equals(announcement.kind())) {
                 setLastAcknowledgedUpdate(announcement.semver());
             }
 
@@ -549,8 +578,9 @@ public class AnnouncementManager {
             return activeRefreshFuture;
         }
 
+        // If the user is on the latest version of the mod, they should be pulling from the source repo
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(URI.create(GITHUB_RAW_URL + "manifest.json"))
+                .uri(URI.create(PRIMARY_URL + "manifest.json"))
                 .GET();
 
         clientState.manifest_etag().ifPresent(etag -> requestBuilder.header("If-None-Match", etag));
@@ -618,9 +648,9 @@ public class AnnouncementManager {
      * Loads the client's announcement state from announcements.json.
      */
     private void loadState() {
-        AdorableHamsterPets.LOGGER.trace("[Announcements] Attempting to load state from {}...", stateFilePath.toAbsolutePath()); // LOG 4: Load Start
+        AdorableHamsterPets.LOGGER.trace("[Announcements] Attempting to load state from {}...", stateFilePath.toAbsolutePath());
         if (Files.exists(stateFilePath)) {
-            AdorableHamsterPets.LOGGER.trace("[Announcements] announcements.json found. Reading file."); // LOG 5a: File Found
+            AdorableHamsterPets.LOGGER.trace("[Announcements] announcements.json found. Reading file.");
             try (FileReader reader = new FileReader(stateFilePath.toFile())) {
                 ClientAnnouncementState.CODEC.parse(JsonOps.INSTANCE, GSON.fromJson(reader, com.google.gson.JsonElement.class))
                         .resultOrPartial(AdorableHamsterPets.LOGGER::error)
@@ -629,7 +659,7 @@ public class AnnouncementManager {
                 AdorableHamsterPets.LOGGER.error("[Announcements] CRITICAL: Failed to load announcement state from existing file.", e);
             }
         } else {
-            AdorableHamsterPets.LOGGER.trace("[Announcements] announcements.json not found. Creating default state file."); // LOG 5b: File Not Found
+            AdorableHamsterPets.LOGGER.trace("[Announcements] announcements.json not found. Creating default state file.");
             saveState(); // Create default file if it doesn't exist
         }
     }
@@ -638,16 +668,16 @@ public class AnnouncementManager {
      * Saves the current client state to announcements.json.
      */
     private void saveState() {
-        AdorableHamsterPets.LOGGER.trace("[Announcements] Attempting to save state..."); // LOG 6: Save Start
+        AdorableHamsterPets.LOGGER.trace("[Announcements] Attempting to save state...");
         ClientAnnouncementState.CODEC.encodeStart(JsonOps.INSTANCE, this.clientState)
-                .resultOrPartial(error -> AdorableHamsterPets.LOGGER.error("[Announcements] CRITICAL: Failed to encode client state to JSON: {}", error)) // LOG 7: Encode Error
+                .resultOrPartial(error -> AdorableHamsterPets.LOGGER.error("[Announcements] CRITICAL: Failed to encode client state to JSON: {}", error))
                 .ifPresent(jsonElement -> {
-                    AdorableHamsterPets.LOGGER.trace("[Announcements] State encoded successfully. Writing to file: {}", stateFilePath.toAbsolutePath()); // LOG 8: Writing
+                    AdorableHamsterPets.LOGGER.trace("[Announcements] State encoded successfully. Writing to file: {}", stateFilePath.toAbsolutePath());
                     try (FileWriter writer = new FileWriter(stateFilePath.toFile())) {
                         GSON.toJson(jsonElement, writer);
-                        AdorableHamsterPets.LOGGER.trace("[Announcements] Successfully saved announcement state."); // LOG 9: Success
+                        AdorableHamsterPets.LOGGER.trace("[Announcements] Successfully saved announcement state.");
                     } catch (IOException e) {
-                        AdorableHamsterPets.LOGGER.error("[Announcements] CRITICAL: FAILED TO SAVE ANNOUNCEMENT STATE TO FILE.", e); // LOG 10: Write Error
+                        AdorableHamsterPets.LOGGER.error("[Announcements] CRITICAL: FAILED TO SAVE ANNOUNCEMENT STATE TO FILE.", e);
                     }
                 });
     }
