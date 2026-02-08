@@ -177,6 +177,8 @@ The hamsters were too squishy. This update introduces enchantable armor, a new a
   - The Hamster Bed item and Jade tooltips now dynamically display the names of the configured Lure and Repellent items, ensuring the text matches your config settings.
 - **Hamster Spawning**:
   - Black hamsters now spawn in Lush Caves and Dripstone Caves.
+- **Update Notifications**
+  - Migrated the update notification system to pull from the primary source repository, deprecating the legacy public asset repo.
 
 ### Fixed
 - **Biome Spawning Logic**

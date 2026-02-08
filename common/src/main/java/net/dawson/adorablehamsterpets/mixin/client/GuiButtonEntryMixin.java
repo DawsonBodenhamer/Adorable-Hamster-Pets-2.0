@@ -87,7 +87,7 @@ public abstract class GuiButtonEntryMixin extends ButtonWidget {
                     ? Text.translatable("patchouli.gui.lexicon.locked")
                     : this.entry.getName().copy();
             if (!locked && this.entry.isPriority()) {
-                name.formatted(Formatting.ITALIC);
+                name.formatted(Formatting.DARK_AQUA);
             }
             name.fillStyle(this.entry.getBook().getFontStyle());
 
