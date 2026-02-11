@@ -22,10 +22,8 @@
   ],
   "result": [
     {
-      "item": {
-        "item": "adorablehamsterpets:sliced_cucumber",
-        "count": 5
-      }
+      "item": "adorablehamsterpets:sliced_cucumber",
+      "count": 5
     }
   ],
   "tool": {
