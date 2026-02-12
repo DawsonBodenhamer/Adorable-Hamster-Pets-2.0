@@ -251,31 +251,24 @@ Need a new one? Craft it with `minecraft:book` + `adorablehamsterpets:sliced_cuc
     <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_wild_crops_and_cuisine.png" alt="Crops & Cuisine" width="100%">
 </p>
 
-### <span style="color: #16a085;"><strong>Cucumber Bushes</strong></span>
+### <span style="color: #16a085;"><strong>Cucumber and Green Bean Bushes</strong></span>
 
-Found in warm or dry biomes (Plains, Savannas, Jungles). Right-click seeded bushes to harvest. Essential for crafting **Sliced Cucumber**, the only currency wild hamsters accept for taming.
-
-<p style="text-align: center;">
- <img src="https://i.imgur.com/wam5Vqt.jpeg" alt="Wild Cucumber Bush" width="48%">
- <img src="https://i.imgur.com/9pwc5hk.jpeg" alt="Cucumber Crop" width="48%">
-</p>
-
-### <span style="color: #16a085;"><strong>Green Bean Bushes</strong></span>
-
-Found in wet or temperate areas (Swamps, Lush Caves, Flower Forests). Harvest these to craft **Steamed Green Beans**, a potent performance-enhancing drug for small rodents.
+- **Cucumbers**: Found in warm or dry biomes (Plains, Savannas, Jungles). Right-click seeded bushes to harvest. Essential for crafting **Sliced Cucumber**, the only currency wild hamsters accept for taming.
+- **Green Beans**: Found in wet or temperate areas (Swamps, Lush Caves, Flower Forests). Harvest these to craft **Steamed Green Beans**, a potent performance-enhancing drug for small rodents.
 
 <p style="text-align: center;">
- <img src="https://i.imgur.com/7TfzYj5.jpeg" alt="Wild Green Bean Bush" width="48%">
- <img src="https://i.imgur.com/Wo4fzuK.jpeg" alt="Green Bean Crop" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_wild_cucumber_bushes.jpg" alt="Wild Cucumber Bushes" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_wild_green_bean_bushes.jpg" alt="Wild Green Bean Bushes" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_farm_crops.jpg" alt="Cucumber and Green Bean Crops" width="96%">
 </p>
 
 ### <span style="color: #16a085;"><strong>Slightly Less Useless Sunflowers</strong></span>
 
 Vanilla sunflowers merely exist; mine *produce*. Right-click the head to harvest **Sunflower Seeds** (used for food mix). They naturally replace vanilla sunflowers in valid biomes. They can be farmed and will regrow seeds eventually. Be patient.
 
-<p style="text-align: center;">
- <img src="https://i.imgur.com/RhiCTKf.jpeg" alt="Seeded Sunflower" width="48%">
- <img src="https://i.imgur.com/LJmPjlo.jpeg" alt="Sunflower Seeds" width="48%">
+<p align="center">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_sunflowers_in_field.jpg" alt="Seeded Sunflowers" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_sunflowers_picking_seeds.jpg" alt="Sunflower Seeds" width="48%">
 </p>
 
 ### <span style="color: #16a085;"><strong>New Food Stuffs</strong></span>
@@ -320,7 +313,10 @@ P.S. - Remember, don't place your hamster bed upside down. Don't even think abou
 
 Hamsters have a dedicated **Bling** inventory slot. Right-click them (or use their inventory) to equip accessories. Use **Pink Petals** for pure style points, or the **Acorn Hat** to boost yields during Tree Heists. Many more fashion items are planned for future updates!
 
-<img align="right" src="https://i.imgur.com/2BLTcMY.png" alt="Pink Petal Accessory" width="50%">
+<p align="center">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/GIF_pink_petal_accessory.gif" alt="Pink Petal Accessory" width="48%">
+ <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/GIF_acorn_hat_accessory.gif" alt="Acorn Hat Accessory" width="48%">
+</p>
 
 ### <span style="color: #16a085;"><strong>Future Accessory Plans</strong></span>
 
