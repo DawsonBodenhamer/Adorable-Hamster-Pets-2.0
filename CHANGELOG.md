@@ -5,7 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.5.0] - 2025-12-19
+## [3.5.1] - 2025-02-12
+
+# **The Teensy-Weensy Patch**
+
+### Added
+- **Updated Spanish Localization**
+  -  Some strings in the Hamster Tips guidebook were still outdated (i.e., the Accessories and Sunflower pages).
+
+### Changed
+- **Mod Page/README**
+  - The README was functioning as a marketing poster, a technical manual, a credits roll, and a tutorial. That is too many jobs for one file.
+  - It was getting too large, so I have reorganized it, reworded it, and split a few things off into other easily accessible files, so the README only has one job now.
+
+### Fixed
+- **Malformed Recipe**
+  -   The `sliced_cucumber_from_cutting_board.json` recipe for compatibility with Farmers Delight failed to load on 1.20.1 due to a typo.
+
+---
+
+## [3.5.0] - 2025-02-08
 
 # The Tactical Fluff & Tree Heist Update
 
