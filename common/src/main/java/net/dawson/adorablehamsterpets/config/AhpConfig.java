@@ -784,8 +784,8 @@ public class AhpConfig extends Config {
 
     @NonSync
     @Translatable.Name("Mount Priority")
-    @Translatable.Desc("Where should the hamster go first? 'Shoulders First' fills Right then Left then Head. 'Head First' fills Head then Right then Left.")
-    public ValidatedEnum<MountPriority> mountPriority = new ValidatedEnum<>(MountPriority.SHOULDERS_FIRST);
+    @Translatable.Desc("Where should the hamster go first? 'Shoulders First' fills the Right Shoulder, then Left, then Head. 'Head First' fills Head, then Right, then Left.")
+    public ValidatedEnum<MountPriority> mountPriority = new ValidatedEnum<>(MountPriority.HEAD_FIRST);
 
     @Translatable.Name("Retain Shoulder Mounts")
     @Translatable.Desc("If true, any hamsters on your shoulder will remain there when you respawn. If false (default), they will remain at your death location, passed out from the sheer shock of seeing you die. They may need a quick pat to wake them up when you return.")

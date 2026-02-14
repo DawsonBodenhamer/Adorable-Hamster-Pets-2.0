@@ -12,11 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Updated Spanish Localization**
   -  Some strings in the Hamster Tips guidebook were still outdated (i.e., the Accessories and Sunflower pages).
+- **Advancement: Carat Confusion**
+  - Triggers when a hamster leads you to Gold Ore instead of Diamond.
+- **Advancement: Load-Bearing Human**
+  - Triggers when you mount 3 hamsters simultaneously (Right, Left, Head).
 
 ### Changed
 - **Mod Page/README**
   - The README was functioning as a marketing poster, a technical manual, a credits roll, and a tutorial. That is too many jobs for one file.
   - It was getting too large, so I have reorganized it, reworded it, and split a few things off into other easily accessible files, so the README only has one job now.
+- **Mount Priority**
+  - Changed default config value to `HEAD_FIRST`.
+- **Guidebook**
+  - Updated Hamster Bed entry to explicitly mention the Totem of Undying requirement for respawning.
 
 ### Fixed
 - **Malformed Recipe**
