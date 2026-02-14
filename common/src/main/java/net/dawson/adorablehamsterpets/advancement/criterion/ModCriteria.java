@@ -27,6 +27,7 @@ public class ModCriteria {
     public static final TreeHeistDepletionCriterion TREE_HEIST_DEPLETION = new TreeHeistDepletionCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "tree_heist_depletion"));
     public static final TreeHeistStartedCriterion TREE_HEIST_STARTED = new TreeHeistStartedCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "tree_heist_started"));
     public static final WitnessGlowingSunflowerCriterion WITNESS_GLOWING_SUNFLOWER = new WitnessGlowingSunflowerCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "witness_glowing_sunflower"));
+    public static final MaxShoulderHamstersCriterion MAX_SHOULDER_HAMSTERS = new MaxShoulderHamstersCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "max_shoulder_hamsters"));
 
     /**
      * Registers a criterion with Minecraft's advancement system.
@@ -60,6 +61,7 @@ public class ModCriteria {
         register(TREE_HEIST_DEPLETION);
         register(TREE_HEIST_STARTED);
         register(WITNESS_GLOWING_SUNFLOWER);
+        register(MAX_SHOULDER_HAMSTERS);
 
         AdorableHamsterPets.LOGGER.info("Registering Mod Criteria for " + AdorableHamsterPets.MOD_ID);
     }

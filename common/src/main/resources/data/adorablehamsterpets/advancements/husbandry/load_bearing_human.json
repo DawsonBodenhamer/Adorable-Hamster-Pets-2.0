@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/shoulder_hamster",
+  "display": {
+    "icon": {
+      "item": "minecraft:anvil"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.load_bearing_human.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.load_bearing_human.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "max_shoulders": {
+      "trigger": "adorablehamsterpets:max_shoulder_hamsters"
+    }
+  }
+}

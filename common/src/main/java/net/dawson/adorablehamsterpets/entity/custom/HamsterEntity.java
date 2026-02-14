@@ -981,6 +981,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // Trigger Generic Events and Play Mount Sound
             if (player instanceof ServerPlayerEntity serverPlayer) {
                 ModCriteria.HAMSTER_ON_SHOULDER.trigger(serverPlayer);
+
+                // Check for Hamster Tower Advancement
+                if (!playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty() &&
+                        !playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty() &&
+                        !playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) {
+                    ModCriteria.MAX_SHOULDER_HAMSTERS.trigger(serverPlayer);
+                }
             }
             player.sendMessage(Text.translatable("message.adorablehamsterpets.shoulder_mount_success"), true);
 
