@@ -389,7 +389,7 @@ public class AhpWorldGenConfig extends Config {
     @ConfigGroup.Pop
     @Translatable.Name("Oak Leaf Acorn Chance")
     @Translatable.Desc("Chance (0.0 to 1.0) for an Oak Leaf block to drop an Acorn when broken. Default is low, similar to Apples.")
-    public ValidatedFloat oakLeavesAcornChance = new ValidatedFloat(0.05f, 1.0f, 0.0f);
+    public ValidatedFloat oakLeavesAcornChance = new ValidatedFloat(0.005f, 1.0f, 0.0f);
 
     // --- Worldgen: Bush & Sunflower Stuff ---
     @Translatable.Name("Worldgen: Bush & Sunflower Stuff")

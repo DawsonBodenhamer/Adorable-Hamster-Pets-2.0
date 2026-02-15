@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # **The Teensy-Weensy Patch**
 
+**Config Update Required:** If you played version 3.5.0, your config is still set to the wrong value for **Oak Leaf Acorn Drop Chance**. To fix it without wiping your other settings:
+  1. Open the Config screen.
+  2. Go to `World Gen & Loot` -> `Cheek Pouch and World Loot Settings` -> `Chest & World Loot`.
+  3. **Right-click** `Oak Leaf Acorn Chance` and select **"Restore Defaults"**. This will switch it from 5% to the intended value of 0.5%.
+
 ### Added
 - **Updated Spanish Localization**
   -  Some strings in the Hamster Tips guidebook were still outdated (i.e., the Accessories and Sunflower pages).
@@ -29,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Malformed Recipe**
   -   The `sliced_cucumber_from_cutting_board.json` recipe for compatibility with Farmers Delight failed to load on 1.20.1 due to a typo.
+- **Acorn Inflation**
+  - Fixed a decimal point error where Oak Leaves dropped Acorns at a 5% rate instead of the intended 0.5% (now it correctly matches vanilla Apple rarity).
 
 ---
 
