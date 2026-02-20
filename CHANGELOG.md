@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.5.1] - 2025-02-12
 
-# **The Teensy-Weensy Patch**
+# **The "Tag, You're It" Update**
+
+A bit of bug-squashing and typo-fixing, some new advancements, plus your hamsters have now developed a new, exhausting habit: playing tag. Gaze into their eyes for too long, and they might challenge you to a high-stakes footrace. If you catch them, they might give you a gift.
 
 ### Added
 - **Tag Mini-Game**
