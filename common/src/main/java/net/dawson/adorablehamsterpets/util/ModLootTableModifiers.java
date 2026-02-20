@@ -87,7 +87,7 @@ public class ModLootTableModifiers {
 
             // --- 1. Acorns from Oak Leaves ---
             if (OAK_LEAVES_ID.equals(tableId)) {
-                float chance = config.oakLeavesAcornChance.get();
+                float chance = config.oakLeavesAcornDropChance.get();
                 // 1.20.1: Use .pool() instead of .addPool() on the Builder
                 context.addPool(LootPool.builder()
                         .rolls(ConstantLootNumberProvider.create(1))

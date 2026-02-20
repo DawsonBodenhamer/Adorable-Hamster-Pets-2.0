@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.entity.AI;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.FollowOwnerGoalAccessor;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.LeavesBlock;
 import net.minecraft.entity.LivingEntity;
@@ -37,6 +38,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
                 this.hamster.isSulking() ||
                 this.hamster.isCelebratingDiamond() ||
                 this.hamster.isCelebratingRetrieval() ||
+                this.hamster.isPlayingTag() ||
                 this.hamster.isWanderModeActive()) {
             return false;
         }
@@ -60,6 +62,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
                 this.hamster.isKnockedOut() ||
                 this.hamster.isSulking() ||
                 this.hamster.isCelebratingDiamond() ||
+                this.hamster.isPlayingTag() ||
                 this.hamster.isCelebratingRetrieval()) {
             return false;
         }
@@ -81,19 +84,27 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
         LivingEntity owner = accessor.getOwner();
         if (owner == null) return;
 
-        this.hamster.getLookControl().lookAt(owner, 10.0F, this.hamster.getMaxLookPitchChange());
+        // 1. Evaluate teleport condition (vanilla default: 12 blocks distance squared)
+        boolean shouldTeleport = this.hamster.squaredDistanceTo(owner) >= 144.0;
 
+        // --- 2. Handle Looking ---
+        // Always look at the owner if not about to teleport.
+        if (!shouldTeleport) {
+            HamsterMovementUtil.faceEntity(this.hamster, owner);
+        }
+
+        // --- 3. Use Vanilla Update Timer via Accessor ---
         int currentTicks = accessor.getUpdateCountdownTicks() - 1;
         accessor.setUpdateCountdownTicks(currentTicks);
 
         if (currentTicks <= 0) {
             accessor.setUpdateCountdownTicks(this.getTickCount(10));
 
-            // --- Replicated Vanilla Teleport Logic ---
-            if (this.hamster.squaredDistanceTo(owner) >= 144.0) {
+            // --- 4. Replicated Vanilla Teleport Logic ---
+            if (shouldTeleport) {
                 this.tryTeleport();
             } else {
-                // --- Custom Pathfinding Logic ---
+                // --- 5. Custom Pathfinding Logic ---
                 if (this.hamster.hasGreenBeanBuff()) {
                     // "Zoomies" pathfinding
                     Vec3d targetPos = FuzzyTargeting.findTo(this.hamster, 8, 5, Vec3d.ofCenter(owner.getBlockPos()));

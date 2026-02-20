@@ -310,7 +310,7 @@ public class AhpWorldGenConfig extends Config {
     public List<String> defaultCheekLootList = new ArrayList<>(List.of(
             "minecraft:wheat_seeds", "minecraft:pumpkin_seeds", "minecraft:melon_seeds",
             "minecraft:beetroot_seeds", "minecraft:carrot", "minecraft:potato", "minecraft:poisonous_potato",
-            "minecraft:apple", "minecraft:stick", "minecraft:feather", "minecraft:string", "minecraft:gold_nugget",
+            "minecraft:apple", "minecraft:feather", "minecraft:string", "minecraft:gold_nugget",
             "minecraft:iron_nugget", "minecraft:flint", "adorablehamsterpets:sunflower_seeds",
             "adorablehamsterpets:cucumber_seeds", "adorablehamsterpets:green_bean_seeds", "adorablehamsterpets:acorn"
     ));
@@ -389,7 +389,7 @@ public class AhpWorldGenConfig extends Config {
     @ConfigGroup.Pop
     @Translatable.Name("Oak Leaf Acorn Chance")
     @Translatable.Desc("Chance (0.0 to 1.0) for an Oak Leaf block to drop an Acorn when broken. Default is low, similar to Apples.")
-    public ValidatedFloat oakLeavesAcornChance = new ValidatedFloat(0.005f, 1.0f, 0.0f);
+    public ValidatedFloat oakLeavesAcornDropChance = new ValidatedFloat(0.005f, 1.0f, 0.0f);
 
     // --- Worldgen: Bush & Sunflower Stuff ---
     @Translatable.Name("Worldgen: Bush & Sunflower Stuff")

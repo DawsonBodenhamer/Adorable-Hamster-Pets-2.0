@@ -46,6 +46,7 @@ public class HamsterAnimationScheduler {
         ANIMATION_DURATIONS.put("anim_hamster_sulk", 63);
         ANIMATION_DURATIONS.put("anim_hamster_pounce_on_item", 23);
         ANIMATION_DURATIONS.put("anim_hamster_celebrate_chase", 33);
+        ANIMATION_DURATIONS.put("anim_hamster_cheek_unload", 43);
     }
 
     /**
@@ -54,13 +55,25 @@ public class HamsterAnimationScheduler {
      * @param currentTime The current world time.
      */
     public void tick(long currentTime) {
+        // 1. Identify and remove tasks to run
+        List<ScheduledTask> tasksToRun = new ArrayList<>();
+
         tasks.removeIf(task -> {
             if (currentTime >= task.executionTick()) {
-                task.action().run();
+                tasksToRun.add(task);
                 return true;
             }
             return false;
         });
+
+        // 2. Execute collected tasks
+        for (ScheduledTask task : tasksToRun) {
+            try {
+                task.action().run();
+            } catch (Exception e) {
+                AdorableHamsterPets.LOGGER.error("Error executing scheduled animation task '{}'", task.debugName(), e);
+            }
+        }
     }
 
     /**
@@ -83,7 +96,7 @@ public class HamsterAnimationScheduler {
 
             AdorableHamsterPets.LOGGER.trace("[HamsterEntity {}] Scheduled stop for animation '{}' in {} ticks (at tick {}).", entity.getId(), animName, duration, executionTick);
         } else {
-            AdorableHamsterPets.LOGGER.warn("[HamsterEntity {}] No duration found for triggerable animation '{}'. Cancellation not scheduled.", entity.getId(), animName);
+            AdorableHamsterPets.LOGGER.debug("[HamsterEntity {}] No duration found for triggerable animation '{}'. Cancellation not scheduled.", entity.getId(), animName);
         }
     }
 

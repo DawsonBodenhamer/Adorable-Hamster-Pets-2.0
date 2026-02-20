@@ -4,6 +4,8 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.LookAtEntityGoalAccessor;
+import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.goal.LookAtEntityGoal;
@@ -39,7 +41,7 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
     public boolean canStart() {
         // --- 1. Hamster State Check ---
         if (this.hamsterMob instanceof HamsterEntity hamster) {
-            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isHoldingInterestItem()
+            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isHoldingMouthItem() || hamster.isCelebratingRetrieval()
                     || hamster.getActiveCustomGoalDebugName().equals(HamsterWanderAroundFarGoal.class.getSimpleName())) {
                 return false;
             }
@@ -80,7 +82,7 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
         // --- 1. Check Hamster State ---
         // Use our stored 'hamsterMob' reference
         if (this.hamsterMob instanceof HamsterEntity hamster) {
-            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isHoldingInterestItem()) {
+            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isHoldingMouthItem() || hamster.isCelebratingRetrieval()) {
                 return false;
             }
         }
@@ -104,9 +106,24 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
 
         if (target != null && target.isAlive()) {
             double targetY = accessor.getLookForward() ? this.mob.getEyeY() : target.getEyeY();
-            // Use our centralized constants for rotation speed
-            this.mob.getLookControl().lookAt(target.getX(), targetY, target.getZ(), HamsterEntity.FAST_YAW_CHANGE, HamsterEntity.FAST_PITCH_CHANGE);
-            accessor.setLookTime(accessor.getLookTime() - 1);
+
+            // Fast turn speed
+            HamsterMovementUtil.facePosition(
+                    this.mob,
+                    target.getX(),
+                    targetY,
+                    target.getZ()
+            );
+
+            // --- Dynamic Gaze Logic ---
+            // If player's crosshair is on hamster, sustain eye contact
+            if (target instanceof LivingEntity livingTarget && EntityTargetingUtil.isLookingAt(livingTarget, this.mob, 5.0)) {
+                // Reset timer to 60 ticks to sustain gaze
+                accessor.setLookTime(60);
+            } else {
+                // Count down normally
+                accessor.setLookTime(accessor.getLookTime() - 1);
+            }
         }
     }
 }

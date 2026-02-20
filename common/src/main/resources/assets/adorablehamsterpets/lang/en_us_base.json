@@ -398,6 +398,7 @@
   "config.adorablehamsterpets.condition.armor_perks_enabled": "Only available when 'Enable Armor Perks' is TRUE.",
   "config.adorablehamsterpets.condition.riding_enabled": "Only available when 'Enable Hamster Riding' is TRUE.",
   "config.adorablehamsterpets.condition.netherite_loot_enabled": "Only available when 'Allow Netherite Loot' is TRUE.",
+  "config.adorablehamsterpets.condition.tag_limit_enabled": "Only available when 'Enable Player Daily Limit' is TRUE.",
 
   "book.adorablehamsterpets.hamster_guide_book.title": "§f§lHamster Tips§r",
   "book.adorablehamsterpets.hamster_guide_book.subtitle": "§6§o Guidebook to the Tiny, Furry Heart§r",

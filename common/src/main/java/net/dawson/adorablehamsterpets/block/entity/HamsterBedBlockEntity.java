@@ -199,7 +199,8 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
 
                 // Feedback
                 SoundEvent lureSound = ModSounds.getDynamicItemSound(lureItem);
-                world.playSound(null, getPos(), lureSound, SoundCategory.BLOCKS, 1.0f, 1.0f);
+                float volume = ModSounds.getDynamicSoundVolume(lureSound);
+                world.playSound(null, getPos(), lureSound, SoundCategory.BLOCKS, volume, 1.0f);
                 ParticleEffectsUtil.spawnParticles(
                         world,
                         getPos(),

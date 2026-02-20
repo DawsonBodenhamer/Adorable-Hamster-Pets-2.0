@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.entity.AI;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.LookAroundGoalAccessor;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.minecraft.entity.ai.goal.LookAroundGoal;
 import net.minecraft.entity.mob.MobEntity;
 
@@ -34,7 +35,7 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
         // Use our stored 'hamsterMob' reference
         if (this.hamsterMob instanceof HamsterEntity hamster) {
             return !hamster.isSitting() && !hamster.isSleeping() && !hamster.isKnockedOut() && !hamster.isSulking()
-                    && !hamster.isHoldingInterestItem() && !hamster.isCelebratingRetrieval()
+                    && !hamster.isHoldingMouthItem() && !hamster.isCelebratingRetrieval()
                     && !hamster.getActiveCustomGoalDebugName().equals(HamsterWanderAroundFarGoal.class.getSimpleName());
         }
         return true;
@@ -54,7 +55,7 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
         // --- 1. Check Hamster State ---
         // Use our stored 'hamsterMob' reference
         if (this.hamsterMob instanceof HamsterEntity hamster) {
-            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isHoldingInterestItem() || hamster.isCelebratingRetrieval()) {
+            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isHoldingMouthItem() || hamster.isCelebratingRetrieval()) {
                 return false;
             }
         }
@@ -80,13 +81,12 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
         // Replicate the vanilla logic of decrementing the timer
         accessor.setLookTime(accessor.getLookTime() - 1);
 
-        // Use our centralized constants for rotation speed
-        mob.getLookControl().lookAt(
+        // Fast turn speed
+        HamsterMovementUtil.facePosition(
+                mob,
                 mob.getX() + accessor.getDeltaX(),
                 mob.getEyeY(),
-                mob.getZ() + accessor.getDeltaZ(),
-                HamsterEntity.FAST_YAW_CHANGE,
-                HamsterEntity.FAST_PITCH_CHANGE
+                mob.getZ() + accessor.getDeltaZ()
         );
     }
     // --- End 3. Overridden Methods ---

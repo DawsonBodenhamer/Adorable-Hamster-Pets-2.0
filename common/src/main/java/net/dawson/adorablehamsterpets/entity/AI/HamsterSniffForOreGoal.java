@@ -8,6 +8,7 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.advancement.Advancement;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
@@ -211,7 +212,13 @@ public class HamsterSniffForOreGoal extends Goal {
             return;
         }
 
-        this.hamster.getLookControl().lookAt(this.targetOrePos.getX() + 0.5, this.targetOrePos.getY() + 0.5, this.targetOrePos.getZ() + 0.5, HamsterEntity.FAST_YAW_CHANGE, HamsterEntity.FAST_PITCH_CHANGE);
+        // Fast turn speed
+        HamsterMovementUtil.facePosition(
+                this.hamster,
+                this.targetOrePos.getX() + 0.5,
+                this.targetOrePos.getY() + 0.5,
+                this.targetOrePos.getZ() + 0.5
+        );
 
         if (this.soundTimer > 0) {
             this.soundTimer--;
@@ -267,7 +274,7 @@ public class HamsterSniffForOreGoal extends Goal {
             this.currentState = SeekingState.SULKING_AT_GOLD;
             if (this.hamster.getOwner() instanceof ServerPlayerEntity owner) {
                 if (this.hamster.squaredDistanceTo(owner) < 36.0) {
-                    this.hamster.getLookControl().lookAt(owner, HamsterEntity.FAST_YAW_CHANGE, HamsterEntity.FAST_PITCH_CHANGE);
+                    HamsterMovementUtil.faceEntity(this.hamster, owner);
                 }
                 // Send message to the owner
                 sendMessageToOwner(owner);

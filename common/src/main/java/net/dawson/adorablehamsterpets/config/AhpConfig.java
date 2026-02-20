@@ -387,6 +387,14 @@ public class AhpConfig extends Config {
     @Translatable.Desc("For when you need some personal space. Allows tamed hamsters to be linked to a Hamster Bed, letting them wander freely within a set radius instead of clinging to you like melted duct-tape. You're welcome.")
     public ValidatedBoolean enableWanderMode = new ValidatedBoolean(true);
 
+    @Translatable.Name("Enable Stealing/Fetching")
+    @Translatable.Desc("Permits hamsters to engage in spontaneous, high-stakes games of keep-away with your valuables.")
+    public boolean enableItemStealing = true;
+
+    @Translatable.Name("Enable Tag Game")
+    @Translatable.Desc("Master switch. If false, hamsters will suppress their playful urges and remain stoic professionals.")
+    public boolean enableTagGame = true;
+
     @Translatable.Name("Enable Armor Perks")
     @Translatable.Desc("If true, upgraded armor grants special perks. If false (because you hate fun?), armor acts only as a damage shield/visual. Each perk can also be individually configured in 'Armor Settings.'")
     public ValidatedBoolean enableArmorPerks = new ValidatedBoolean(true);
@@ -446,8 +454,12 @@ public class AhpConfig extends Config {
     public ValidatedInt independentOreSeekCooldownTicks = new ValidatedInt(2400, 6000, 20);
 
     @Translatable.Name("Item Thievery Cooldown")
-    @Translatable.Desc("Mandatory time-out after a successful heist to prevent serial kleptomania. (20 ticks = 1s). WARNING: Increasing this cooldown can dramatically change the item stealing mechanic, since that AI goal sometimes re-runs multiple times in a row when the hamster has trouble pathfinding to the item that it wants to steal. So instead of increasing this, you should probably just stop dropping your diamonds on the ground everywhere, butter fingers.")
+    @Translatable.Desc("Mandatory time-out after a successful heist to prevent serial kleptomania. (20 ticks = 1 second). WARNING: Increasing this cooldown can dramatically change the item stealing mechanic, since that AI goal sometimes re-runs multiple times in a row when the hamster has trouble pathfinding to the item that it wants to steal. So instead of increasing this, you should probably just stop dropping your diamonds on the ground everywhere, butter fingers.")
     public ValidatedInt stealCooldownTicks = new ValidatedInt(100, 6000, 20);
+
+    @Translatable.Name("Tag Game Cooldown")
+    @Translatable.Desc("How long a specific hamster needs to recover after being chased. Remember, they have tiny lungs. (20 ticks = 1 second; default is 10 minutes.")
+    public ValidatedInt tagGameCooldown = new ValidatedInt(12000, 36000, 160);
 
     @ConfigGroup.Pop
     @Translatable.Name("Breeding Cooldown")
@@ -1047,35 +1059,64 @@ public class AhpConfig extends Config {
             "minecraft:gold_ore", "minecraft:deepslate_gold_ore"
     ));
 
-    // --- Chase/Retrieval Settings---
-    @Translatable.Name("Chase/Retrieval Settings")
-    @Translatable.Desc("For when your hamster develops a taste for the finer things in life. Can be configured so they steal or fetch any item— even from other mods. They steal diamonds and fetch acorns by default.")
-    public ConfigGroup itemInterest = new ConfigGroup("itemInterest", true);
-
-    @Translatable.Name("Enable Stealing/Fetching")
-    @Translatable.Desc("Permits hamsters to engage in spontaneous, high-stakes games of keep-away with your valuables, or they might fetch items for you.")
-    public boolean enableItemCarrying = true;
-
-    @Translatable.Name("Thievery Pounce Chance")
-    @Translatable.Desc("Probability (0.1 to 1.0) a hamster will succumb to temptation. High by default. You shouldn't leave your diamonds lying around anyway. Does not apply to retrieval.")
-    public ValidatedFloat itemThieveryChance = new ValidatedFloat(0.75f, 1.0f, 0.1f);
+    // --- Mini-Game Settings ---
+    @Translatable.Name("Mini-Game Settings")
+    @Translatable.Desc("Rules for when your hamster gets bored and decides to create its own entertainment.")
+    public ConfigGroup miniGames = new ConfigGroup("miniGames", true);
 
     @Translatable.Name("Minimum Flee Distance")
-    @Translatable.Desc("The hamster's personal space bubble (in blocks) when stealing your shinies. The discrepancy between the minimum and maximum flee distance determines the randomness.")
-    public ValidatedInt minFleeDistance = new ValidatedInt(5, 20, 1);
+    @Translatable.Desc("The personal space bubble (in blocks) hamsters maintain while running away.")
+    public ValidatedInt minMiniGameFleeDistance = new ValidatedInt(7, 20, 1);
 
     @Translatable.Name("Maximum Flee Distance")
-    @Translatable.Desc("The maximum distance (in blocks) before the hamster gets bored and stops running to taunt you with the stolen goods. The discrepancy between the minimum and maximum flee distance determines the randomness.")
-    public ValidatedInt maxFleeDistance = new ValidatedInt(20, 40, 5);
+    @Translatable.Desc("The maximum distance (in blocks) before hamsters stop running from you and start taunting. If they get further than this, they will wait for you to catch up.")
+    public ValidatedInt maxMiniGameFleeDistance = new ValidatedInt(10, 30, 5);
 
-    @Translatable.Name("Minimum Interest Duration")
-    @Translatable.Desc("The shortest amount of time (in seconds) the hamster will entertain interest in an item before getting bored and dropping it. The discrepancy between the minimum and maximum duration determines the randomness.")
-    public ValidatedInt minStealDurationSeconds = new ValidatedInt(5, 240, 1);
+    @Translatable.Name("Minimum Game Duration")
+    @Translatable.Desc("The shortest amount of time (in seconds) a chase lasts before hamsters get bored. Randomly chosen between Min and Max.")
+    public ValidatedInt minMiniGameFleeDurationSeconds = new ValidatedInt(5, 240, 1);
+
+    @Translatable.Name("Maximum Game Duration")
+    @Translatable.Desc("The longest amount of time (in seconds) a chase lasts.")
+    public ValidatedInt maxMiniGameFleeDurationSeconds = new ValidatedInt(15, 300, 5);
+
+    @Translatable.Name("Item Stealing")
+    @Translatable.Desc("For when your hamster develops a taste for the finer things in life. Can be configured so they steal or fetch any item— even from other mods. They steal diamonds and fetch acorns by default.")
+    public ConfigGroup itemStealing = new ConfigGroup("itemStealing", true);
 
     @ConfigGroup.Pop
-    @Translatable.Name("Maximum Interest Duration")
-    @Translatable.Desc("The longest amount of time (in seconds) the hamster will entertain interest in an item before getting bored and dropping it. The discrepancy between the minimum and maximum duration determines the randomness.")
-    public ValidatedInt maxStealDurationSeconds = new ValidatedInt(15, 300, 5);
+    @Translatable.Name("Thievery Pounce Chance")
+    @Translatable.Desc("Probability (0.1 to 1.0) a hamster will succumb to temptation when seeing a stealable item. High by default, since the only default stealable item is a diamond.")
+    public ValidatedFloat itemThieveryChance = new ValidatedFloat(0.75f, 1.0f, 0.1f);
+
+    @Translatable.Name("Tag Game")
+    @Translatable.Desc("Hamsters get bored. Sometimes they want to play. Configure the rules of engagement here.")
+    public ConfigGroup tagGame = new ConfigGroup("tagGame", true);
+
+    @Translatable.Name("Allow Stranger Danger")
+    @Translatable.Desc("If true, hamsters can ask anyone to play. If false, they can only ask their owners.")
+    public boolean allowStrangerTag = true;
+
+    @Translatable.Name("Game Initiation Chance")
+    @Translatable.Desc("The 1-in-X chance per tick a hamster will start a game. Since the game runs at 20 ticks per second, a 1-in-170-tick chance means you'll need to maintain eye contact for about 7-10 seconds on average. Set to 1 if you want the game to start instantly.")
+    public ValidatedInt tagGameChanceDenominator = new ValidatedInt(170, 1200, 1);
+
+    @Translatable.Name("Enable Player Daily Limit")
+    @Translatable.Desc("If true, players are capped on how many games they can play per day. If false, you can play until your legs fall off.")
+    public boolean enableTagGamePlayerLimit = true;
+
+    private final ValidatedField<Boolean> isTagLimitEnabled = new ValidatedBoolean(true).map(b -> b, b -> enableTagGamePlayerLimit);
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Max Games Per Day")
+    @Translatable.Desc("How many times a single player can be 'It' per Minecraft day before telling the rodents to go find a hobby. Prevents infinite reward farming.")
+    public ValidatedCondition<Integer> maxDailyTagGamesPerPlayer = new ValidatedInt(3, 100, 0)
+            .toCondition(
+                    isTagLimitEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.tag_limit_enabled"),
+                    () -> 3
+            );
 
     @Translatable.Name("Commissioned Features")
     @Translatable.Desc("Specialized, unofficial mechanics that don't necessarily fit the theme of the mod, but were funded by various individuals in the community. Purposefully tucked away in the config to ensure most people don't notice them.")
