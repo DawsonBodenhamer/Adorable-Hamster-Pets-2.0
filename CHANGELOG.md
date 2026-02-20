@@ -9,14 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # **The Teensy-Weensy Patch**
 
-**Config Update Required:** If you played version 3.5.0, your config is still set to the wrong value for **Oak Leaf Acorn Drop Chance**. To fix it without wiping your other settings:
-  1. Open the Config screen.
-  2. Go to `World Gen & Loot` -> `Cheek Pouch and World Loot Settings` -> `Chest & World Loot`.
-  3. **Right-click** `Oak Leaf Acorn Chance` and select **"Restore Defaults"**. This will switch it from 5% to the intended value of 0.5%.
-
 ### Added
-- **Updated Spanish Localization**
-  -  Some strings in the Hamster Tips guidebook were still outdated (i.e., the Accessories and Sunflower pages).
+- **Tag Mini-Game**
+  - Hamsters can now initiate a playful game of tag. If you maintain eye contact with a hamster for a few seconds, it will squeak and excitedly run away.
+  - **The Chase:** The hamster will flee if you get too close and stop to playfully taunt you if you fall too far behind.
+  - **The Reward:** Successfully "catching" (right-clicking) the hamster before it gets bored ends the game triggers a celebration. The hamster will then spit out a random item from its cheek pouches as a gift (pulling from the configurable cheek pouch loot lists).
+  - **Stranger Danger:** By default, you can play tag with wild hamsters and hamsters owned by other players. (Can be disabled in config).
+  - **Configurable Limits:** Added configs to control how often they want to play, the cooldown between games, and an anti-abuse cap on how many times a single player can play the game per in-game day (so they can't farm rewards).
+- **Dynamic Gaze**
+  - Hamsters will now sustain eye contact with you indefinitely, provided you continue looking back at them, and they don't start a game of tag.
+- **New Audio & Visuals**
+  - Added a brand new `anim_hamster_cheek_unload` animation used for gifting items, complete with item and spit particle effects.
+  - Added 4 new scratching sound variations for the cleaning animation, and switched to keyframes for the SFX to make it less repetitive and more realistic. This also has the side effect of muting the sound effect if the hamster is not on screen, and thus not being rendered. This means you will no longer hear nearby hamsters cleaning unless you can also see them.
+  - Added dynamic item sounds (clink, squish, thud, etc.) to the new gifting sequence.
 - **Advancement: Carat Confusion**
   - Triggers when a hamster leads you to Gold Ore instead of Diamond.
 - **Advancement: Load-Bearing Human**
@@ -32,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated Hamster Bed entry to explicitly mention the Totem of Undying requirement for respawning.
 
 ### Fixed
+- **Spanish Localization**
+  -  Some strings in the Hamster Tips guidebook were still outdated (i.e., the Accessories and Sunflower pages).
 - **Malformed Recipe**
   -   The `sliced_cucumber_from_cutting_board.json` recipe for compatibility with Farmers Delight failed to load on 1.20.1 due to a typo.
 - **Acorn Inflation**

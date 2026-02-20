@@ -4,6 +4,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterVariant;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.server.world.ServerWorld;
 
@@ -62,7 +63,7 @@ public class HamsterMateGoal extends Goal {
     @Override
     public void tick() {
         this.hamster.getNavigation().startMovingTo(this.targetMate, this.speed);
-        this.hamster.getLookControl().lookAt(this.targetMate, HamsterEntity.FAST_YAW_CHANGE, HamsterEntity.FAST_PITCH_CHANGE);
+        HamsterMovementUtil.faceEntity(this.hamster, this.targetMate);
         this.timer++;
 
         if (this.timer >= 60) {

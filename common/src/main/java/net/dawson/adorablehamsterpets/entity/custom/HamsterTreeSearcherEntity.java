@@ -415,7 +415,8 @@ public class HamsterTreeSearcherEntity extends Entity {
 
             // Play Sounds
             SoundEvent acornPopSound = ModSounds.getDynamicItemSound(acornStack);
-            this.getWorld().playSound(null, spawnPos.getX() + 0.5, spawnPos.getY() + 0.5, spawnPos.getZ() + 0.5, acornPopSound, SoundCategory.NEUTRAL, 0.5f, 1.8f);
+            float baseVol = ModSounds.getDynamicSoundVolume(acornPopSound);
+            this.getWorld().playSound(null, spawnPos.getX() + 0.5, spawnPos.getY() + 0.5, spawnPos.getZ() + 0.5, acornPopSound, SoundCategory.NEUTRAL, baseVol * 0.5f, 1.8f);
             this.getWorld().playSound(null, spawnPos.getX() + 0.5, spawnPos.getY() + 0.5, spawnPos.getZ() + 0.5, ModSounds.HAMSTER_DING.get(), SoundCategory.NEUTRAL, 0.7f, 1.0f + (this.random.nextFloat() - 0.5f) * 0.2f);
 
             this.getWorld().spawnEntity(acornEntity);
@@ -475,10 +476,10 @@ public class HamsterTreeSearcherEntity extends Entity {
                 // --- SUCCESS ---
                 // Give an acorn if the area wasn't exhausted
                 ItemStack prize = new ItemStack(ModItems.ACORN.get());
-                newHamster.setInterestItemStack(prize);
-                newHamster.setHoldingInterestItem(true);
+                newHamster.setMouthItemStack(prize);
+                newHamster.setHoldingMouthItem(true);
                 // Set the interest timer so the AI doesn't immediately drop the item.
-                newHamster.setItemInterestTimer(1200); // 60 seconds
+                newHamster.setGenericInteractionTimer(1200); // 60 seconds
                 // HamsterPlayWithItemGoal will automatically detect this and switch to RETURNING
 
                 // Only play sparkle if successful

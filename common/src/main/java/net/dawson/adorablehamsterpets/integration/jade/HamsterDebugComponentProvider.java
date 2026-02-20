@@ -131,14 +131,14 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
 
         // --- Stealing/Fetching States ---
         tooltip.add(Text.literal("--- Item Stealing/Fetching ---").formatted(Formatting.GRAY));
-        boolean isHolding = hamster.isHoldingInterestItem();
+        boolean isHolding = hamster.isHoldingMouthItem();
         tooltip.add(fText("Is Interested in Item: %s", isHolding ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED)));
 
         if (isHolding) {
-            int remainingTicks = hamster.getItemInterestTimer();
+            int remainingTicks = hamster.getGenericInteractionTimer();
             tooltip.add(fText("  Time Remaining: %s sec", Text.literal(String.format("%.1f", remainingTicks / 20.0)).formatted(Formatting.YELLOW)));
 
-            if (hamster.isTauntingWithItem()) {
+            if (hamster.isTaunting()) {
                 tooltip.add(fText("  Action: %s", Text.literal("Taunting").formatted(Formatting.GOLD)));
             } else if (hamster.isPresentingItem()) {
                 tooltip.add(fText("  Action: %s", Text.literal("Presenting").formatted(Formatting.AQUA)));

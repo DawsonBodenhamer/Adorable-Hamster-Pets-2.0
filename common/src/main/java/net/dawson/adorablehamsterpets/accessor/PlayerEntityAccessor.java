@@ -67,4 +67,16 @@ public interface PlayerEntityAccessor {
      * Intended for seeding and polling guidebook tracking logic.
      */
     boolean ahp$computeHasGuideBook(PlayerEntity player);
+
+    /**
+     * Checks if the player is eligible to start a game of tag based on the
+     * "Max Games Per Day" config. Automatically resets the counter if a new
+     * Minecraft day has started since the last check.
+     */
+    boolean ahp$canPlayTagGame();
+
+    /**
+     * Increments the daily tag game counter and updates the last played timestamp.
+     */
+    void ahp$incrementTagGameCount();
 }

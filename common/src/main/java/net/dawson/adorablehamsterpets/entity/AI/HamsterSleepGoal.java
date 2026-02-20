@@ -34,7 +34,8 @@ public class HamsterSleepGoal extends Goal {
         if (this.hamster.isTamed() ||
                 this.hamster.isSleeping() ||
                 this.hamster.isSitting() ||
-                this.hamster.isKnockedOut()) {
+                this.hamster.isKnockedOut() ||
+                this.hamster.isPlayingTag()) {
             return false;
         }
         if (!this.hamster.getWorld().isDay()) {

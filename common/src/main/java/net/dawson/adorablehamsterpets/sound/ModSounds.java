@@ -127,8 +127,11 @@ public class ModSounds {
     public static final RegistrySupplier<SoundEvent> HAMSTER_MOUNT3 = registerSoundEvent("hamster_mount3");
     public static final RegistrySupplier<SoundEvent> HAMSTER_DISMOUNT = registerSoundEvent("hamster_dismount");
 
-    // --- Cleaning Sound ---
-    public static final RegistrySupplier<SoundEvent> HAMSTER_SCRATCH = registerSoundEvent("hamster_scratch");
+    // --- Cleaning/Scratching Sounds ---
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SCRATCH1 = registerSoundEvent("hamster_scratch1");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SCRATCH2 = registerSoundEvent("hamster_scratch2");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SCRATCH3 = registerSoundEvent("hamster_scratch3");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SCRATCH4 = registerSoundEvent("hamster_scratch4");
 
     // --- Shocked Sounds (for when the hamster accidentally finds gold ore instead of diamond) ---
     public static final RegistrySupplier<SoundEvent> ALARM_ORCHESTRA_HIT = registerSoundEvent("alarm_orchestra_hit");
@@ -177,6 +180,7 @@ public class ModSounds {
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_WAKE_UP_SOUNDS = List.of(HAMSTER_WAKE_UP1, HAMSTER_WAKE_UP2, HAMSTER_WAKE_UP3);
     public static final List<RegistrySupplier<SoundEvent>> CHEESE_EAT_SOUNDS = List.of(CHEESE_EAT1, CHEESE_EAT2, CHEESE_EAT3);
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_SHOULDER_MOUNT_SOUNDS = List.of(HAMSTER_MOUNT1, HAMSTER_MOUNT2, HAMSTER_MOUNT3);
+    public static final List<RegistrySupplier<SoundEvent>> HAMSTER_SCRATCH_SOUNDS = List.of(HAMSTER_SCRATCH1, HAMSTER_SCRATCH2, HAMSTER_SCRATCH3, HAMSTER_SCRATCH4);
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_BOUNCE_SOUNDS = List.of(HAMSTER_BOUNCE);
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_AFFECTION_SOUNDS = List.of(HAMSTER_AFFECTION1, HAMSTER_AFFECTION2, HAMSTER_AFFECTION3);
     public static final List<RegistrySupplier<SoundEvent>> DIAMOND_SPARKLE_SOUNDS = List.of(DIAMOND_SPARKLE1, DIAMOND_SPARKLE2, DIAMOND_SPARKLE3);
@@ -206,7 +210,7 @@ public class ModSounds {
 
         // --- Keyword Lists for Sound Categories ---
         List<String> clinkKeywords = List.of(
-                "diamond", "emerald", "amethyst", "lapis", "quartz", "raw_", "coal",
+                "diamond", "emerald", "amethyst", "lapis", "quartz", "raw", "coal",
                 "ingot", "nugget", "netherite", "gold", "iron", "copper", "scrap", "shard",
                 "brick", "sherd", "flint", "prismarine", "rod", "glass", "bottle", "spyglass",
                 "tear", "pearl", "eye", "bell", "trim", "charcoal", "bucket", "shears", "hoe",
@@ -227,9 +231,9 @@ public class ModSounds {
         );
 
         List<String> squishKeywords = List.of(
-                "cheese", "flesh", "slime", "magma", "honey", "kelp", "moss", "fungus", "wart",
-                "guts", "ink", "moist", "wet", "leaf", "lily", "pad", "vine", "pickle", "cucumber", "beans",
-                "chorus_fruit", "berries", "cabbage", "tomato", "rice", "pumpkin", "corn", "egg", "pork",
+                "cheese", "flesh", "slime", "magma", "honey", "kelp", "moss", "fungus", "wart", "guts",
+                 "ink", "moist", "wet", "leaf", "lily", "pad", "vine", "pickle", "cucumber", "beans", "rice",
+                "chorus_fruit", "berries", "cabbage", "tomato", "pumpkin", "corn", "egg", "pork", "poisonous",
                 "beef", "mutton", "chicken", "rabbit", "cod", "salmon", "spore", "dripleaf", "warped", "stem"
         );
 
@@ -259,6 +263,19 @@ public class ModSounds {
         }
         // --- Fallback for everything else ---
         return SoundEvents.BLOCK_WOOL_PLACE; // "Fump" (for generic/soft items)
+    }
+
+    /**
+     * Returns the normalized volume for a dynamic sound event.
+     * <p>
+     * Specifically handles {@link SoundEvents#ENTITY_GENERIC_EAT}, which is naturally much louder
+     * than other sound effects, scaling it down to 0.35f. All other sounds return 1.0f.
+     *
+     * @param sound The sound event to check.
+     * @return The normalized volume multiplier.
+     */
+    public static float getDynamicSoundVolume(SoundEvent sound) {
+        return (sound == SoundEvents.ENTITY_GENERIC_EAT) ? 0.35f : 1.0f;
     }
 
     // --- 5. Main Registration Call ---

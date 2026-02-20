@@ -100,6 +100,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private int adorablehamsterpets$creeperSoundCooldownTicks = 0;
     @Unique private int ahp$guideBookCheckTimer = 0;
     @Unique private int ahp$sunflowerCheckTimer = 0;
+    @Unique private int ahp$tagGamesPlayedToday = 0;
+    @Unique private long ahp$lastTagGameDayTime = 0;
 
     // --- State Flags & Trackers ---
     @Unique private String adorablehamsterpets$lastDismountMessageKey = "";
@@ -173,6 +175,10 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
+        // Tag Game Tracking
+        nbt.putInt("AHPTagGamesPlayed", this.ahp$tagGamesPlayedToday);
+        nbt.putLong("AHPLastTagTime", this.ahp$lastTagGameDayTime);
+
         // Guidebook tracking
         nbt.putBoolean(AHP_NBT_GUIDEBOOK_HAS_KEY, this.ahp$cachedHasGuideBook);
         nbt.putBoolean(AHP_NBT_GUIDEBOOK_INIT_KEY, this.ahp$guideBookTrackingInitialized);
@@ -244,6 +250,11 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
+        // Tag Game Tracking
+        this.ahp$tagGamesPlayedToday = nbt.getInt("AHPTagGamesPlayed");
+        this.ahp$lastTagGameDayTime = nbt.getLong("AHPLastTagTime");
+
+        // Guide Book Tracking
         if (nbt.contains(AHP_NBT_GUIDEBOOK_HAS_KEY, NbtElement.BYTE_TYPE)) {
             this.ahp$cachedHasGuideBook = nbt.getBoolean(AHP_NBT_GUIDEBOOK_HAS_KEY);
         }
@@ -404,6 +415,38 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Public API (PlayerEntityAccessor)
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    @Unique
+    @Override
+    public boolean ahp$canPlayTagGame() {
+        // --- 1. Check Config Toggle ---
+        if (!Configs.AHP.enableTagGamePlayerLimit) {
+            return true;
+        }
+
+        // --- 2. Check Daily Limit ---
+        World world = ((PlayerEntity) (Object) this).getWorld();
+        long currentTime = world.getTime();
+
+        // Calculate days passed (24000 ticks per day)
+        long currentDay = currentTime / 24000L;
+        long lastPlayedDay = this.ahp$lastTagGameDayTime / 24000L;
+
+        // If new day, reset counter
+        if (currentDay > lastPlayedDay) {
+            this.ahp$tagGamesPlayedToday = 0;
+            this.ahp$lastTagGameDayTime = currentTime;
+        }
+
+        return this.ahp$tagGamesPlayedToday < Configs.AHP.maxDailyTagGamesPerPlayer.get();
+    }
+
+    @Unique
+    @Override
+    public void ahp$incrementTagGameCount() {
+        this.ahp$tagGamesPlayedToday++;
+        this.ahp$lastTagGameDayTime = ((PlayerEntity) (Object) this).getWorld().getTime();
+    }
 
     @Unique
     @Override

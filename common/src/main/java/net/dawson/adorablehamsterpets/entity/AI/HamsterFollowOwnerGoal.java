@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.entity.AI;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.FollowOwnerGoalAccessor;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.FuzzyTargeting;
 import net.minecraft.entity.ai.goal.FollowOwnerGoal;
@@ -32,6 +33,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
                 this.hamster.isSulking() ||
                 this.hamster.isCelebratingDiamond() ||
                 this.hamster.isCelebratingRetrieval() ||
+                this.hamster.isPlayingTag() ||
                 this.hamster.isWanderModeActive()) {
             return false;
         }
@@ -59,6 +61,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
                 this.hamster.isKnockedOut() ||
                 this.hamster.isSulking() ||
                 this.hamster.isCelebratingDiamond() ||
+                this.hamster.isPlayingTag() ||
                 this.hamster.isCelebratingRetrieval()) {
             return false;
         }
@@ -98,7 +101,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
         // --- 2. Handle Looking ---
         // Always look at the owner if not about to teleport.
         if (!shouldTeleport) {
-            this.hamster.getLookControl().lookAt(owner, HamsterEntity.FAST_YAW_CHANGE, HamsterEntity.FAST_PITCH_CHANGE);
+            HamsterMovementUtil.faceEntity(this.hamster, owner);
         }
 
         // --- 4. Use Vanilla Update Timer via Accessor ---
