@@ -127,7 +127,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final int CHEEK_POUCH_SIZE = 6;
     public static final int ACCESSORY_SLOT_INDEX = 6;
     public static final int ARMOR_SLOT_INDEX = 7;
-    private static final int REFUSE_FOOD_TIMER_TICKS = 40;            // 2 seconds
     private static final int CUSTOM_LOVE_TICKS = 600;                 // 30 seconds
     private static final double THROWN_GRAVITY = -0.05;
     private static final double HAMSTER_ATTACK_BOX_EXPANSION = 0.70D;  // Expand by 0.7 blocks horizontally (vanilla is 0.83 blocks, so really this is shrinking it)
@@ -561,6 +560,22 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * ────────────────────────────────────────────────────────────────────────────*/
 
     // --- Data Tracker Getters/Setters ---
+    public void enableZoomies(PlayerEntity player) {
+        this.zoomiesIsClockwise = this.random.nextBoolean();
+        this.zoomiesRadiusModifier = this.random.nextBetween(-2, 4);
+        // Calculate and set initial angle based on where the player is.
+        double dx = this.getX() - player.getX();
+        double dz = this.getZ() - player.getZ();
+        this.lastZoomiesAngle = Math.atan2(dz, dx);
+    }
+
+    public ItemStack getLastFoodItem() { return this.lastFoodItem; }
+    public void setLastFoodItem(ItemStack stack) { this.lastFoodItem = stack; }
+    public long getGreenBeanBuffEndTick() { return this.greenBeanBuffEndTick; }
+    public void setGreenBeanBuffEndTick(long tick) { this.greenBeanBuffEndTick = tick; }
+    public void setRefuseTimer(int ticks) { this.refuseTimer = ticks; }
+    public boolean isCheekPouchUnlocked() { return getHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG); }
+    public void setCheekPouchUnlocked(boolean unlocked) { setHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG, unlocked); }
     public int getVariant() { return this.dataTracker.get(VARIANT); }
     public void setVariant(int variantId) { this.dataTracker.set(VARIANT, variantId); }
     public boolean isSleeping() { return getHamsterFlag(SLEEPING_FLAG); }
@@ -2186,9 +2201,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
 
             // --- Shoulder Mounting Logic ---
-            boolean isUsingItem = ConfigDataCache.isLureItem(stack);
-
-            // Only check item here. Force-Mount Keybind handled by client event + packet.
             if (ConfigDataCache.isLureItem(stack)) {
                 if (!world.isClient) {
                     tryShoulderMount(player, stack);
@@ -2214,26 +2226,20 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- Feeding Logic ---
             boolean isPotentialFood = ConfigDataCache.isStandardFood(stack) || ConfigDataCache.isBuffFood(stack) || ConfigDataCache.isPouchUnlockFood(stack);
+
             if (!world.isClient() && !isSneaking && isPotentialFood) {
-                AdorableHamsterPets.LOGGER.trace("[InteractMob {} Tick {}] Owner not sneaking, holding potential food. Checking refusal.", this.getId(), world.getTime());
-                if (checkRepeatFoodRefusal(stack, player)) {
-                    AdorableHamsterPets.LOGGER.trace("[InteractMob {} Tick {}] Food refused. Consuming interaction.", this.getId(), world.getTime());
-                    return ActionResult.CONSUME; // Consume refusal action
+                // Reject consecutive identical food items
+                if (HamsterDietUtil.checkAndHandleRefusal(this, player, stack)) {
+                    return ActionResult.CONSUME;
                 }
-                AdorableHamsterPets.LOGGER.trace("[InteractMob {} Tick {}] Attempting feeding via tryFeedingAsTamed.", this.getId(), world.getTime());
-                boolean feedingOccurred = tryFeedingAsTamed(player, stack); // Calls the method with detailed logging
-                if (feedingOccurred) {
-                    AdorableHamsterPets.LOGGER.trace("[InteractMob {} Tick {}] tryFeedingAsTamed returned true. Setting last food, decrementing stack.", this.getId(), world.getTime());
-                    this.lastFoodItem = stack.copy(); // Track last food *only* if feeding was successful
+
+                // Attempt to process feeding
+                if (HamsterDietUtil.tryFeeding(this, player, stack)) {
+                    this.setLastFoodItem(stack.copy());
                     if (!player.getAbilities().creativeMode) {
                         stack.decrement(1);
                     }
-                    return ActionResult.CONSUME; // Consume successful feeding action
-                } else {
-                    // If tryFeedingAsTamed returned false (e.g., cooldown, full health+no breed),
-                    // We might still want to allow vanilla interaction or sitting.
-                    // Let's PASS for now to allow super.interactMob to run.
-                    AdorableHamsterPets.LOGGER.trace("[InteractMob {} Tick {}] tryFeedingAsTamed returned false. Passing to vanilla/sitting.", this.getId(), world.getTime());
+                    return ActionResult.CONSUME;
                 }
             }
 
@@ -4626,149 +4632,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
         }
-    }
-
-    /**
-     * Checks if the hamster should refuse being fed the same item twice consecutively.
-     * Uses {@link #playRefusalAnimation()} to trigger the visual response.
-     */
-    private boolean checkRepeatFoodRefusal(ItemStack currentStack, PlayerEntity player) {
-        if (ConfigDataCache.isRepeatableFood(currentStack)) return false;
-
-        if (!this.lastFoodItem.isEmpty() && ItemStack.areItemsEqual(this.lastFoodItem, currentStack)) {
-            this.setRefusingFood(true);
-            this.refuseTimer = REFUSE_FOOD_TIMER_TICKS;
-            player.sendMessage(Text.translatable("message.adorablehamsterpets.food_refusal"), true);
-
-            // Use shared helper
-            this.playRefusalAnimation();
-
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Attempts to feed the hamster, handling healing, breeding, buffs, and pouch unlocking.
-     * This logic is driven by user-configurable item lists from {@link ConfigDataCache},
-     * such as {@code standardFoods}, {@code buffFoods}, and {@code pouchUnlockFoods}.
-     *
-     * @param player The player feeding the hamster.
-     * @param stack  The ItemStack being used.
-     * @return {@code true} if a feeding action was successfully processed.
-     */
-    private boolean tryFeedingAsTamed(PlayerEntity player, ItemStack stack) {
-        // --- 1. Initial Setup ---
-        boolean isFood = ConfigDataCache.isStandardFood(stack);
-        boolean isBuffItem = ConfigDataCache.isBuffFood(stack);
-        boolean isPouchUnlockFood = ConfigDataCache.isPouchUnlockFood(stack);
-        boolean canHeal = this.getHealth() < this.getMaxHealth();
-        boolean readyToBreed = this.getBreedingAge() == 0 && !this.isInCustomLove(); // Check custom love timer
-        World world = this.getWorld();
-        final AhpConfig config = AdorableHamsterPets.CONFIG;
-        boolean actionTaken = false; // Initialize return value
-
-        AdorableHamsterPets.LOGGER.debug("[FeedAttempt {} Tick {}] Entering tryFeedingAsTamed. Item: {}, isFood={}, isBuff={}, canHeal={}, breedingAge={}, isInCustomLove={}, readyToBreed={}",
-                this.getId(), world.getTime(), stack.getItem(), isFood, isBuffItem, canHeal, this.getBreedingAge(), this.isInCustomLove(), readyToBreed);
-
-        // --- 2. Check for Pouch Unlock (Highest Priority) ---
-        if (isPouchUnlockFood && !getHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG)) {
-            setHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG, true);
-            AdorableHamsterPets.LOGGER.debug("Hamster {} cheek pouch unlocked by {}.", this.getId(), stack.getItem());
-            if (player instanceof ServerPlayerEntity serverPlayer) {
-                ModCriteria.CHEEK_POUCH_UNLOCKED.get().trigger(serverPlayer, this);
-            }
-
-            // Feedback
-            world.playSound(null, this.getBlockPos(), SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.NEUTRAL, 0.5f, 1.5f);
-            ParticleEffectsUtil.spawnParticles(
-                    world,
-                    new Vec3d(this.getX(), this.getBodyY(0.2D), this.getZ()),
-                    new ItemStackParticleEffect(ParticleTypes.ITEM, stack.copy()),
-                    25,
-                    new Vec3d(0.25, 0.15, 0.25),
-                    0.0
-            );
-            return true;
-        }
-
-        // --- 3. Check for Buff Food (Steamed Green Beans Logic) ---
-        if (isBuffItem) {
-            long currentTime = world.getTime();
-            if (this.greenBeanBuffEndTick > currentTime) {
-                // Still on cooldown
-                long remainingTicks = this.greenBeanBuffEndTick - currentTime;
-                long totalSecondsRemaining = remainingTicks / 20;
-                long minutes = totalSecondsRemaining / 60;
-                long seconds = totalSecondsRemaining % 60;
-                player.sendMessage(Text.translatable("message.adorablehamsterpets.beans_cooldown", minutes, seconds).formatted(Formatting.RED), true);
-                AdorableHamsterPets.LOGGER.debug("[FeedAttempt {} Tick {}] Buff item used, but on cooldown ({} ticks remaining). Returning false.", this.getId(), world.getTime(), remainingTicks);
-                return false; // Action failed due to cooldown
-            } else {
-                // Apply Buffs
-                int duration = config.greenBeanBuffDuration.get();
-                int speedAmplifier = config.greenBeanBuffAmplifierSpeed.get();
-                int strengthAmplifier = config.greenBeanBuffAmplifierStrength.get();
-                int absorptionAmplifier = config.greenBeanBuffAmplifierAbsorption.get();
-                int regenAmplifier = config.greenBeanBuffAmplifierRegen.get();
-
-                // --- Set "zoomies" state ---
-                this.zoomiesIsClockwise = this.random.nextBoolean();
-                this.lastZoomiesAngle = 0.0; // Reset angle on new buff application
-
-                // Set Status Effects
-                this.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, duration, speedAmplifier));
-                this.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, duration, strengthAmplifier));
-                this.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, duration, absorptionAmplifier));
-                this.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, duration, regenAmplifier));
-
-                // --- Set up zoomies state ---
-                this.zoomiesIsClockwise = this.random.nextBoolean();
-                this.zoomiesRadiusModifier = this.random.nextBetween(-2, 4);
-                // Calculate and set the initial angle.
-                double dx = this.getX() - player.getX();
-                double dz = this.getZ() - player.getZ();
-                this.lastZoomiesAngle = Math.atan2(dz, dx);
-
-                // Play sound
-                SoundEvent buffSound = getRandomSoundFrom(HAMSTER_CELEBRATE_SOUNDS, this.random);
-                world.playSound(null, this.getBlockPos(), buffSound, SoundCategory.NEUTRAL, 1.0F, 1.0F);
-
-                // Set cooldown and duration
-                long buffDurationEnd = currentTime + config.greenBeanBuffDuration.get();
-                this.getDataTracker().set(GREEN_BEAN_BUFF_DURATION, buffDurationEnd);
-                this.greenBeanBuffEndTick = currentTime + config.steamedGreenBeansBuffCooldown.get();
-
-                actionTaken = true; // Action was successful
-                AdorableHamsterPets.LOGGER.trace("[FeedAttempt {} Tick {}] Applied buffs. Duration ends at tick {}. Cooldown ends at tick {}.", this.getId(), world.getTime(), buffDurationEnd, this.greenBeanBuffEndTick);
-
-                // Trigger Fed Steamed Beans Criterion
-                if (player instanceof ServerPlayerEntity serverPlayer) {
-                    ModCriteria.FED_HAMSTER_STEAMED_BEANS.get().trigger(serverPlayer, this);
-                }
-            }
-        }
-
-        // --- 4. Handle Standard Food (Healing/Breeding) ---
-        else if (ConfigDataCache.isStandardFood(stack)) {
-            if (canHeal) {
-                this.heal(config.standardFoodHealing.get());
-                actionTaken = true;
-                AdorableHamsterPets.LOGGER.debug("[FeedAttempt {}] Healed with standard food.", this.getId());
-            } else if (readyToBreed) {
-                this.setSitting(false, true);
-                this.setCustomInLove(player);
-                this.setInLove(true);
-                actionTaken = true;
-                AdorableHamsterPets.LOGGER.debug("[FeedAttempt {}] Entered love mode with standard food.", this.getId());
-            }
-        }
-        // If no other action was taken, it wasn't a valid feeding interaction in this context.
-        if (!actionTaken) {
-            AdorableHamsterPets.LOGGER.debug("[FeedAttempt {} Tick {}] Item {} was not a valid food for any action.",
-                    this.getId(), world.getTime(), stack.getItem());
-        }
-        return actionTaken;
     }
 
     // --- Tamed Sleep Sequence Helper Methods ---
