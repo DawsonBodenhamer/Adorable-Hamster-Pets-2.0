@@ -150,100 +150,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final float DEFAULT_FOOTSTEP_VOLUME = 0.10F;
     private static final float GRAVEL_VOLUME_MODIFIER = 0.60F;
 
-    private static final List<HamsterVariant> ORANGE_VARIANTS = List.of(
-            HamsterVariant.ORANGE, HamsterVariant.ORANGE_OVERLAY1, HamsterVariant.ORANGE_OVERLAY2,
-            HamsterVariant.ORANGE_OVERLAY3, HamsterVariant.ORANGE_OVERLAY4, HamsterVariant.ORANGE_OVERLAY5,
-            HamsterVariant.ORANGE_OVERLAY6, HamsterVariant.ORANGE_OVERLAY7, HamsterVariant.ORANGE_OVERLAY8
-    );
-    private static final List<HamsterVariant> BLUE_VARIANTS = List.of(
-            HamsterVariant.BLUE, HamsterVariant.BLUE_OVERLAY1, HamsterVariant.BLUE_OVERLAY2,
-            HamsterVariant.BLUE_OVERLAY3, HamsterVariant.BLUE_OVERLAY4, HamsterVariant.BLUE_OVERLAY5,
-            HamsterVariant.BLUE_OVERLAY6, HamsterVariant.BLUE_OVERLAY7, HamsterVariant.BLUE_OVERLAY8
-    );
-    private static final List<HamsterVariant> CHOCOLATE_VARIANTS = List.of(
-            HamsterVariant.CHOCOLATE, HamsterVariant.CHOCOLATE_OVERLAY1, HamsterVariant.CHOCOLATE_OVERLAY2,
-            HamsterVariant.CHOCOLATE_OVERLAY3, HamsterVariant.CHOCOLATE_OVERLAY4, HamsterVariant.CHOCOLATE_OVERLAY5,
-            HamsterVariant.CHOCOLATE_OVERLAY6, HamsterVariant.CHOCOLATE_OVERLAY7, HamsterVariant.CHOCOLATE_OVERLAY8
-    );
-    private static final List<HamsterVariant> CREAM_VARIANTS = List.of(
-            HamsterVariant.CREAM, HamsterVariant.CREAM_OVERLAY1, HamsterVariant.CREAM_OVERLAY2,
-            HamsterVariant.CREAM_OVERLAY3, HamsterVariant.CREAM_OVERLAY4, HamsterVariant.CREAM_OVERLAY5,
-            HamsterVariant.CREAM_OVERLAY6, HamsterVariant.CREAM_OVERLAY7, HamsterVariant.CREAM_OVERLAY8
-    );
-    private static final List<HamsterVariant> DARK_GRAY_VARIANTS = List.of(
-            HamsterVariant.DARK_GRAY, HamsterVariant.DARK_GRAY_OVERLAY1, HamsterVariant.DARK_GRAY_OVERLAY2,
-            HamsterVariant.DARK_GRAY_OVERLAY3, HamsterVariant.DARK_GRAY_OVERLAY4, HamsterVariant.DARK_GRAY_OVERLAY5,
-            HamsterVariant.DARK_GRAY_OVERLAY6, HamsterVariant.DARK_GRAY_OVERLAY7, HamsterVariant.DARK_GRAY_OVERLAY8
-    );
-    private static final List<HamsterVariant> LAVENDER_VARIANTS = List.of(
-            HamsterVariant.LAVENDER, HamsterVariant.LAVENDER_OVERLAY1, HamsterVariant.LAVENDER_OVERLAY2,
-            HamsterVariant.LAVENDER_OVERLAY3, HamsterVariant.LAVENDER_OVERLAY4, HamsterVariant.LAVENDER_OVERLAY5,
-            HamsterVariant.LAVENDER_OVERLAY6, HamsterVariant.LAVENDER_OVERLAY7, HamsterVariant.LAVENDER_OVERLAY8
-    );
-    private static final List<HamsterVariant> LIGHT_GRAY_VARIANTS = List.of(
-            HamsterVariant.LIGHT_GRAY, HamsterVariant.LIGHT_GRAY_OVERLAY1, HamsterVariant.LIGHT_GRAY_OVERLAY2,
-            HamsterVariant.LIGHT_GRAY_OVERLAY3, HamsterVariant.LIGHT_GRAY_OVERLAY4, HamsterVariant.LIGHT_GRAY_OVERLAY5,
-            HamsterVariant.LIGHT_GRAY_OVERLAY6, HamsterVariant.LIGHT_GRAY_OVERLAY7, HamsterVariant.LIGHT_GRAY_OVERLAY8
-    );
-
-    /**
-     * Determines the appropriate HamsterVariant for a given biome, using a prioritized, "hamster-centric" approach.
-     * This method checks for variants from most specific/rare to most common, ensuring exclusive variants
-     * like BLUE and LAVENDER are assigned correctly before falling back to more general, tag-based assignments.
-     *
-     * @param biomeEntry The RegistryEntry of the biome to check.
-     * @param random     A Random instance for variant selection.
-     * @return The chosen HamsterVariant.
-     */
-    private static HamsterVariant determineVariantForBiome(RegistryEntry<Biome> biomeEntry, net.minecraft.util.math.random.Random random) {
-        String biomeName = biomeEntry.getKey().map(k -> k.getValue().toString()).orElse("unknown");
-        AdorableHamsterPets.LOGGER.debug("[AHP Spawn Debug] determineVariantForBiome called for biome: {}", biomeName);
-
-        HamsterVariant result;
-
-        // --- Check from most specific/rare to most common ---
-        if (canSpawnBlue(biomeEntry)) {
-            // Ice Spikes has a 70% chance for Blue, 30% for White.
-            result = random.nextInt(10) < 7 ? getRandomVariant(BLUE_VARIANTS, random) : HamsterVariant.WHITE;
-        } else if (canSpawnLavender(biomeEntry)) {
-            result = getRandomVariant(LAVENDER_VARIANTS, random);
-        } else if (canSpawnWhite(biomeEntry)) {
-            result = HamsterVariant.WHITE; // White has no overlays.
-        } else if (canSpawnGray(biomeEntry)) {
-            result = random.nextBoolean() ? getRandomVariant(LIGHT_GRAY_VARIANTS, random) : getRandomVariant(DARK_GRAY_VARIANTS, random);
-        } else if (canSpawnBlack(biomeEntry)) {
-            // Black hamsters should not spawn with overlays in the wild (breaks the camouflage effect)
-            result = HamsterVariant.BLACK;
-        } else if (canSpawnCream(biomeEntry)) {
-            result = getRandomVariant(CREAM_VARIANTS, random);
-        } else if (canSpawnChocolate(biomeEntry)) {
-            result = getRandomVariant(CHOCOLATE_VARIANTS, random);
-        } else {
-            // Default Fallback: Orange is the most common, covering Plains, Savanna, etc.
-            result = getRandomVariant(ORANGE_VARIANTS, random);
-        }
-
-        AdorableHamsterPets.LOGGER.debug("[AHP Spawn Debug] Determined variant for {} is {}", biomeName, result.name());
-        return result;
-    }
-
-    // --- "Hamster-Centric" Helper Methods for Variant Spawning ---
-    private static boolean canSpawnBlue(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isBlueBiome(biomeEntry);}
-    private static boolean canSpawnLavender(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isLavenderBiome(biomeEntry);}
-    private static boolean canSpawnWhite(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isWhiteBiome(biomeEntry);}
-    private static boolean canSpawnGray(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isGrayBiome(biomeEntry);}
-    private static boolean canSpawnBlack(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isBlackBiome(biomeEntry);}
-    private static boolean canSpawnCream(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isCreamBiome(biomeEntry);}
-    private static boolean canSpawnChocolate(RegistryEntry<Biome> biomeEntry) {return ConfigDataCache.isChocolateBiome(biomeEntry);}
-
-    private static HamsterVariant getRandomVariant(List<HamsterVariant> variantPool, net.minecraft.util.math.random.Random random) {
-        if (variantPool == null || variantPool.isEmpty()) {
-            // Fallback
-            return HamsterVariant.ORANGE;
-        }
-        return variantPool.get(random.nextInt(variantPool.size()));
-    }
-
     /**
      * Creates the attribute container for the Hamster entity.
      * @return The attribute container builder.
@@ -2430,96 +2336,18 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         return HamsterVariant.byId(this.getVariant());
     }
 
-    /**
-     * Creates a baby hamster, inheriting traits from its parents.
-     * <p>
-     * The baby's base color is randomly chosen from one of its parents. The overlay (white markings)
-     * follows specific inheritance rules to promote diversity:
-     * <ul>
-     *     <li>If both parents have an overlay, the baby is guaranteed to have one. The system first
-     *         tries to assign an overlay pattern that is different from both parents. If no different
-     *         overlay is available for the baby's inherited base color, it will pick any available
-     *         overlay for that color, potentially matching a parent's pattern.</li>
-     *     <li>If only one or neither parent has an overlay, the baby has a chance to inherit any
-     *         eligible overlay for its base color or to have no overlay at all (just the base color).</li>
-     *     <li>The {@code WHITE} base color is a special case and never receives an overlay.</li>
-     * </ul>
-     * The baby inherits the owner of the parent instance that initiated the breeding.
-     *
-     * @param world The server world where the child will be created.
-     * @param mate The other parent entity.
-     * @return A new {@code HamsterEntity} instance representing the baby, or {@code null} if creation fails.
-     */
     @Nullable
     @Override
     public PassiveEntity createChild(ServerWorld world, PassiveEntity mate) {
         HamsterEntity baby = ModEntities.HAMSTER.get().create(world);
         if (baby == null) return null;
 
-        if (!(mate instanceof HamsterEntity mother)) {
-            int randomVariantId = this.random.nextInt(HamsterVariant.values().length);
-            baby.setVariant(randomVariantId);
-            baby.setBaby(true);
-            AdorableHamsterPets.LOGGER.warn("Hamster breeding attempted with non-hamster mate. Assigning random variant to baby.");
-            return baby;
-        }
+        // Calculate variant using utility
+        int babyVariantId = HamsterGeneticsUtil.calculateBabyVariant(this, mate, this.random);
+        baby.setVariant(babyVariantId);
 
-        HamsterEntity father = this;
-        HamsterVariant parentProvidingBaseColor = this.random.nextBoolean() ? father.getVariantEnum() : mother.getVariantEnum();
-        HamsterVariant babyBaseColorEnum = parentProvidingBaseColor.getBaseVariant();
-
-        @Nullable String fatherOverlayName = father.getVariantEnum().getOverlayTextureName();
-        @Nullable String motherOverlayName = mother.getVariantEnum().getOverlayTextureName();
-
-        List<HamsterVariant> allVariantsForBabyBase = HamsterVariant.getVariantsForBase(babyBaseColorEnum);
-
-        // Build a list of overlay names that are NOT used by either parent.
-        List<@Nullable String> eligibleOverlayNames = new ArrayList<>();
-        for (HamsterVariant variant : allVariantsForBabyBase) {
-            @Nullable String candidateOverlay = variant.getOverlayTextureName();
-            boolean matchesFather = fatherOverlayName != null && fatherOverlayName.equals(candidateOverlay);
-            boolean matchesMother = motherOverlayName != null && motherOverlayName.equals(candidateOverlay);
-            if (!matchesFather && !matchesMother) {
-                eligibleOverlayNames.add(candidateOverlay);
-            }
-        }
-
-        List<@Nullable String> finalSelectableOverlayNames = new ArrayList<>();
-        boolean fatherHasOverlay = fatherOverlayName != null;
-        boolean motherHasOverlay = motherOverlayName != null;
-
-        if (fatherHasOverlay && motherHasOverlay) {
-            // Baby MUST have an overlay. Prioritize overlays different from parents.
-            for (@Nullable String overlayName : eligibleOverlayNames) {
-                if (overlayName != null) {
-                    finalSelectableOverlayNames.add(overlayName);
-                }
-            }
-            // If no different overlay is available, relax the rule and allow any overlay for that base color.
-            if (finalSelectableOverlayNames.isEmpty() && babyBaseColorEnum != HamsterVariant.WHITE) {
-                for (HamsterVariant variant : allVariantsForBabyBase) {
-                    if (variant.getOverlayTextureName() != null) {
-                        finalSelectableOverlayNames.add(variant.getOverlayTextureName());
-                    }
-                }
-            }
-        } else {
-            // If one or neither parent has an overlay, the baby can have no overlay.
-            finalSelectableOverlayNames.addAll(eligibleOverlayNames);
-        }
-
-        HamsterVariant babyFinalVariant;
-        if (!finalSelectableOverlayNames.isEmpty()) {
-            @Nullable String chosenOverlayName = finalSelectableOverlayNames.get(this.random.nextInt(finalSelectableOverlayNames.size()));
-            babyFinalVariant = HamsterVariant.getVariantByBaseAndOverlay(babyBaseColorEnum, chosenOverlayName);
-        } else {
-            // Fallback case
-            babyFinalVariant = babyBaseColorEnum;
-        }
-
-        baby.setVariant(babyFinalVariant.getId());
-
-        UUID ownerUUID = father.getOwnerUuid();
+        // Retain owner copying logic since it relies on entity state
+        UUID ownerUUID = this.getOwnerUuid();
         if (ownerUUID != null) {
             baby.setOwnerUuid(ownerUUID);
             baby.setTamed(true, true);
@@ -3902,7 +3730,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             String biomeKeyStr = biomeEntry.getKey().map(key -> key.getValue().toString()).orElse("UNKNOWN");
             AdorableHamsterPets.LOGGER.trace("[HamsterInit] SpawnReason: {}, BiomeKey: {}", spawnReason, biomeKeyStr);
 
-            HamsterVariant chosenVariant = determineVariantForBiome(biomeEntry, this.random);
+            HamsterVariant chosenVariant = HamsterGeneticsUtil.determineVariantForBiome(biomeEntry, this.random);
             this.setVariant(chosenVariant.getId());
             AdorableHamsterPets.LOGGER.trace("[HamsterInit] Assigned variant: {}", chosenVariant.name());
 
