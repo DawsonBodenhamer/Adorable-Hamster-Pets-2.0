@@ -4,6 +4,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.screen.slot.HamsterSlot;
+import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
@@ -189,7 +190,7 @@ public class HamsterInventoryScreenHandler extends ScreenHandler {
                 }
                 // Priority 3: Cheek Pouches
                 else {
-                    if (this.hamsterEntityInstance != null && this.hamsterEntityInstance.isItemDisallowed(sourceStack)) {
+                    if (!HamsterInventoryUtil.canInsertIntoPouch(sourceStack)) {
                         return ItemStack.EMPTY;
                     }
                     if (!insertIntoPouches(sourceStack)) {
