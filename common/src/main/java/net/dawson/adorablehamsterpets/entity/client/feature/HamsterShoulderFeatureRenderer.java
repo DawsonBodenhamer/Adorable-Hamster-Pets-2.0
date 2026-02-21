@@ -7,6 +7,7 @@ import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.client.renderer.ShoulderHamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
@@ -135,7 +136,7 @@ public class HamsterShoulderFeatureRenderer
             Inventories.readNbt(data.inventoryNbt(), dummyHamster.getItems(), registries);
 
             // Force update the tracked data fields so the RenderLayers can see the items
-            dummyHamster.updateEquipmentTrackers();
+            HamsterInventoryUtil.syncEquipmentTrackers(dummyHamster);
         }
 
         // --- Set Ownership for Animation Logic ---

@@ -9,6 +9,7 @@ import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.minecraft.block.Blocks;
@@ -198,7 +199,7 @@ public class HamsterTreeSearcherEntity extends Entity {
                 for (int i = 0; i < itemsList.size(); ++i) {
                     NbtCompound itemTag = itemsList.getCompound(i);
                     int slot = itemTag.getByte("Slot") & 255;
-                    if (slot == HamsterEntity.ACCESSORY_SLOT_INDEX) {
+                    if (slot == HamsterInventoryUtil.ACCESSORY_SLOT_INDEX) {
                         ItemStack stack = ItemStack.fromNbt(this.getRegistryManager(), itemTag).orElse(ItemStack.EMPTY);
                         if (stack.isOf(ModItems.ACORN_HAT.get())) {
                             this.hasAcornHat = true;

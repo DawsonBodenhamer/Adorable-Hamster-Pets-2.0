@@ -26,7 +26,6 @@ import net.dawson.adorablehamsterpets.networking.payload.PlayDistantSoundPayload
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.tag.ModBiomeTags;
 import net.dawson.adorablehamsterpets.util.*;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.Block;
@@ -34,7 +33,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.component.DataComponentTypes;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
@@ -65,7 +63,9 @@ import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.inventory.Inventories;
-import net.minecraft.item.*;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -107,7 +107,6 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 
 import static net.dawson.adorablehamsterpets.sound.ModSounds.HAMSTER_CELEBRATE_SOUNDS;
 import static net.dawson.adorablehamsterpets.sound.ModSounds.getRandomSoundFrom;
@@ -123,10 +122,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     // --- Constants ---
     private static final double WALK_TO_RUN_THRESHOLD_SQUARED = 0.002;
     private static final double RUN_TO_SPRINT_THRESHOLD_SQUARED = 0.008;
-    private static final int INVENTORY_SIZE = 8;
-    private static final int CHEEK_POUCH_SIZE = 6;
-    public static final int ACCESSORY_SLOT_INDEX = 6;
-    public static final int ARMOR_SLOT_INDEX = 7;
     private static final int CUSTOM_LOVE_TICKS = 600;                 // 30 seconds
     private static final double THROWN_GRAVITY = -0.05;
     private static final double HAMSTER_ATTACK_BOX_EXPANSION = 0.70D;  // Expand by 0.7 blocks horizontally (vanilla is 0.83 blocks, so really this is shrinking it)
@@ -211,9 +206,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // --- 3. Load Inventory ---
             RegistryWrapper.WrapperLookup registries = world.getRegistryManager();
             if (!data.inventoryNbt().isEmpty()) {
-                Inventories.readNbt(data.inventoryNbt(), hamster.items, registries);
-                hamster.updateCheekTrackers();
-                hamster.updateEquipmentTrackers();
+                Inventories.readNbt(data.inventoryNbt(), hamster.getItems(), registries);
+                HamsterInventoryUtil.updateCheekStates(hamster);
+                HamsterInventoryUtil.syncEquipmentTrackers(hamster);
             }
 
             // --- 4. Load Green Bean Buff Data/Status Effects ---
@@ -512,7 +507,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique public long tagGameCooldownEndTick = 0L;
 
     // --- Inventory ---
-    private final DefaultedList<ItemStack> items = ImplementedInventory.create(INVENTORY_SIZE);
+    private final DefaultedList<ItemStack> items = ImplementedInventory.create(HamsterInventoryUtil.INVENTORY_SIZE);
 
     // --- Armor Tracking ---
     private ItemStack lastArmorStack = ItemStack.EMPTY;
@@ -970,7 +965,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // Intercepts damage after the game has decided the entity was hit (so still shows visual feedback)
         if (!this.getWorld().isClient && !source.isIn(DamageTypeTags.BYPASSES_WOLF_ARMOR)) {
             // Modify the actual item stack that lives in the server's inventory
-            ItemStack realArmorStack = this.items.get(ARMOR_SLOT_INDEX);
+            ItemStack realArmorStack = this.items.get(HamsterInventoryUtil.ARMOR_SLOT_INDEX);
 
             // Check if armor exists and if it should absorb this specific damage source
             if (!realArmorStack.isEmpty()
@@ -1041,62 +1036,41 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
     @Override
     public void setStack(int slot, ItemStack stack) {
-        // 1. Capture previous state
-        ItemStack oldStack = this.items.get(slot).copy(); // Use direct list access for old state
-
-        // 2. Call super implementation directly to update the inventory list
+        ItemStack oldStack = this.items.get(slot).copy();
         this.getItems().set(slot, stack);
 
-        // 3. Sync Trackers if equipment slots changed
         if (!this.getWorld().isClient) {
-            if (slot == ACCESSORY_SLOT_INDEX || slot == ARMOR_SLOT_INDEX) {
-                updateEquipmentTrackers();
+            if (slot == HamsterInventoryUtil.ACCESSORY_SLOT_INDEX || slot == HamsterInventoryUtil.ARMOR_SLOT_INDEX) {
+                HamsterInventoryUtil.syncEquipmentTrackers(this);
             }
         }
 
-        // 4. Trigger sounds, check suppression flag
         if (!this.getWorld().isClient && !this.isLoadingNbt && !this.isSilentInventoryUpdate) {
-            handleSlotUpdateSounds(slot, oldStack, stack);
+            HamsterInventoryUtil.handleSlotUpdateSounds(this, slot, oldStack, stack);
         }
 
-        // 5. Mark Dirty
         this.markDirty();
     }
     @Override
     public ItemStack removeStack(int slot) {
-        // Intercepts item removal (e.g. taking item from GUI) to trigger sound effects.
-        // 1. Capture state BEFORE removal
         ItemStack oldStack = this.getStack(slot).copy();
-
-        // 2. Perform removal using the interface's default logic
         ItemStack result = ImplementedInventory.super.removeStack(slot);
-
-        // 3. Capture state AFTER removal (should be empty)
         ItemStack newStack = this.getStack(slot);
 
-        // 4. Trigger sounds, check suppression flag
         if (!this.getWorld().isClient && !this.isLoadingNbt && !this.isSilentInventoryUpdate) {
-            handleSlotUpdateSounds(slot, oldStack, newStack);
+            HamsterInventoryUtil.handleSlotUpdateSounds(this, slot, oldStack, newStack);
         }
         return result;
     }
     @Override
     public ItemStack removeStack(int slot, int amount) {
-        // Intercepts split stack removal to trigger sound effects.
-        // 1. Capture state BEFORE removal
         ItemStack oldStack = this.getStack(slot).copy();
-
-        // 2. Perform removal
         ItemStack result = ImplementedInventory.super.removeStack(slot, amount);
-
-        // 3. Capture state AFTER removal
         ItemStack newStack = this.getStack(slot);
 
-        // 4. Trigger sounds, check suppression flag
         if (!this.getWorld().isClient && !this.isLoadingNbt && !this.isSilentInventoryUpdate) {
-            handleSlotUpdateSounds(slot, oldStack, newStack);
+            HamsterInventoryUtil.handleSlotUpdateSounds(this, slot, oldStack, newStack);
         }
-
         return result;
     }
     /**
@@ -1259,7 +1233,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     public ItemStack getEquippedStack(EquipmentSlot slot) {
         if (slot == EquipmentSlot.FEET) {
-            return this.items.get(ARMOR_SLOT_INDEX);
+            return this.items.get(HamsterInventoryUtil.ARMOR_SLOT_INDEX);
         }
         return super.getEquippedStack(slot);
     }
@@ -1267,7 +1241,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     public void equipStack(EquipmentSlot slot, ItemStack stack) {
         if (slot == EquipmentSlot.FEET) {
-            this.setStack(ARMOR_SLOT_INDEX, stack);
+            this.setStack(HamsterInventoryUtil.ARMOR_SLOT_INDEX, stack);
             return;
         }
         super.equipStack(slot, stack);
@@ -1276,7 +1250,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     public Iterable<ItemStack> getArmorItems() {
         // Only one armor piece, mapped to FEET
-        return List.of(this.items.get(ARMOR_SLOT_INDEX));
+        return List.of(this.items.get(HamsterInventoryUtil.ARMOR_SLOT_INDEX));
     }
 
     // --- Inventory Implementation ---
@@ -1288,21 +1262,15 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     public void markDirty() {
         if (!this.getWorld().isClient()) {
-            this.updateCheekTrackers();
+            HamsterInventoryUtil.updateCheekStates(this);
             this.updateAccessoryState();
         }
     }
-    public ItemStack getArmorStack() {
-        return this.dataTracker.get(TRACKED_ARMOR_STACK);
-    }
-
-    public ItemStack getAccessoryStack() {
-        return this.dataTracker.get(TRACKED_ACCESSORY_STACK);
-    }
-
-    public void setArmorStack(ItemStack stack) {
-        this.setStack(ARMOR_SLOT_INDEX, stack); // Use setStack to trigger sync
-    }
+    public ItemStack getArmorStack() { return this.dataTracker.get(TRACKED_ARMOR_STACK); }
+    public ItemStack getAccessoryStack() { return this.dataTracker.get(TRACKED_ACCESSORY_STACK); }
+    public void setArmorStack(ItemStack stack) { this.setStack(HamsterInventoryUtil.ARMOR_SLOT_INDEX, stack); }
+    public void setTrackedAccessoryStack(ItemStack stack) { this.dataTracker.set(TRACKED_ACCESSORY_STACK, stack); }
+    public void setTrackedArmorStack(ItemStack stack) { this.dataTracker.set(TRACKED_ARMOR_STACK, stack); }
 
     /**
      * Gets the display name for the hamster.
@@ -1328,79 +1296,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
 
-    // --- Override isValid for Hopper Interaction ---
     @Override
     public boolean isValid(int slot, ItemStack stack) {
-        // --- 1. Cheek Pouches (Slots 0-5) ---
-        if (slot < CHEEK_POUCH_SIZE) {
-            return !this.isItemDisallowed(stack);
-        }
-        // --- 2. Accessory Slot (Slot 6) ---
-        if (slot == ACCESSORY_SLOT_INDEX) {
-            return stack.isOf(ModItems.ACORN_HAT.get()) || stack.isOf(Items.PINK_PETALS);
-        }
-        // --- 3. Armor Slot (Slot 7) ---
-        if (slot == ARMOR_SLOT_INDEX) {
-            return stack.getItem() instanceof HamsterArmorItem;
-        }
-        return false;
-    }
-
-    /**
-     * Updates the DataTrackers for cheek fullness based on the inventory content.
-     * Only checks the cheek pouch slots (0-5).
-     */
-    public void updateCheekTrackers() {
-        // --- Update Left Cheek (Slots 0, 1, 2) ---
-        boolean leftFull = false;
-        for (int i = 0; i < 3; i++) {
-            if (!this.items.get(i).isEmpty()) {
-                leftFull = true;
-                break;
-            }
-        }
-
-        // --- Update Right Cheek (Slots 3, 4, 5) ---
-        boolean rightFull = false;
-        for (int i = 3; i < CHEEK_POUCH_SIZE; i++) { // Stop at index 5
-            if (!this.items.get(i).isEmpty()) {
-                rightFull = true;
-                break;
-            }
-        }
-
-        // --- Set Data Trackers ---
-        if (this.isLeftCheekFull() != leftFull) this.setLeftCheekFull(leftFull);
-        if (this.isRightCheekFull() != rightFull) this.setRightCheekFull(rightFull);
-
-        // --- Trigger "Chipmunk Aspirations" Advancement ---
-        if (!this.getWorld().isClient() && this.getOwner() instanceof ServerPlayerEntity serverPlayerOwner) {
-            boolean allSlotsFilled = true;
-            for (int i = 0; i < CHEEK_POUCH_SIZE; i++) {
-                if (this.items.get(i).isEmpty()) {
-                    allSlotsFilled = false;
-                    break;
-                }
-            }
-            if (allSlotsFilled) {
-                ModCriteria.HAMSTER_POUCH_FILLED.get().trigger(serverPlayerOwner, this);
-            }
-        }
-    }
-
-    /**
-     * Synchronizes the internal inventory equipment slots with the DataTracker.
-     * Allowed on client ONLY if this is a shoulder pet (dummy entity).
-     */
-    public void updateEquipmentTrackers() {
-        // Allow if server OR if it's a client-side shoulder dummy
-        if (this.getWorld().isClient() && !this.isShoulderPet()) return;
-
-        ItemStack accessory = this.items.get(ACCESSORY_SLOT_INDEX);
-        ItemStack armor = this.items.get(ARMOR_SLOT_INDEX);
-
-        this.dataTracker.set(TRACKED_ACCESSORY_STACK, accessory);
-        this.dataTracker.set(TRACKED_ARMOR_STACK, armor);
+        return HamsterInventoryUtil.isValidForSlot(slot, stack);
     }
 
     // --- NBT Saving/Loading ---
@@ -1546,10 +1444,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
         // If the NBT from a command or save file doesn't specify wild loot, generate it.
         if (!hasInventoryData(nbt) && !this.isTamed()) {
-            generateWildLoot();
+            HamsterInventoryUtil.generateWildLoot(this, this.random);
         }
-        this.updateCheekTrackers();
-        this.updateEquipmentTrackers();
+        HamsterInventoryUtil.updateCheekStates(this);
+        HamsterInventoryUtil.syncEquipmentTrackers(this);
 
         // --- 4. Read Seeking Data ---
         this.isPrimedToSeekDiamonds = nbt.getBoolean("IsPrimedToSeekDiamonds");
@@ -1608,7 +1506,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      */
     public HamsterShoulderData saveToShoulderData() {
         // --- 1. Update Trackers and Prepare NBT ---
-        this.updateCheekTrackers();
+        HamsterInventoryUtil.updateCheekStates(this);
         NbtCompound inventoryNbt = new NbtCompound();
         if (this.getWorld() instanceof ServerWorld serverWorld) {
             Inventories.writeNbt(inventoryNbt, this.items, serverWorld.getRegistryManager());
@@ -2083,9 +1981,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
 
             // --- Accessory Application/Cycling ---
-            if (this.isValid(ACCESSORY_SLOT_INDEX, stack) && !player.isSneaking()) {
+            if (this.isValid(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX, stack) && !player.isSneaking()) {
                 if (!world.isClient) {
-                    ItemStack currentAccessory = this.items.get(ACCESSORY_SLOT_INDEX);
+                    ItemStack currentAccessory = this.items.get(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX);
 
                     // Case 1: Cycling Pink Petals
                     if (stack.isOf(Items.PINK_PETALS) && currentAccessory.isOf(Items.PINK_PETALS)) {
@@ -2112,7 +2010,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                         ItemStack toReturn = currentAccessory.copy(); // Capture old item
 
                         // Equip new item
-                        this.setStack(ACCESSORY_SLOT_INDEX, toEquip);
+                        this.setStack(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX, toEquip);
 
                         // Drop old item if it existed
                         if (!toReturn.isEmpty()) {
@@ -2161,7 +2059,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
 
                 // 2. Secondary: Remove Accessory (Bling Slot)
-                ItemStack accessoryStack = this.items.get(ACCESSORY_SLOT_INDEX);
+                ItemStack accessoryStack = this.items.get(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX);
                 if (!actionTaken && !accessoryStack.isEmpty()) {
                     if (!world.isClient) {
                         // Capture a copy for the particle effect
@@ -2171,7 +2069,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
                         // Suppress generic inventory sound
                         this.isSilentInventoryUpdate = true;
-                        this.setStack(ACCESSORY_SLOT_INDEX, ItemStack.EMPTY);
+                        this.setStack(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX, ItemStack.EMPTY);
                         this.isSilentInventoryUpdate = false;
 
                         // Force update trackers immediately to ensure visuals clear
@@ -2883,27 +2781,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // --- 4b. Ejection Logic ---
             if (this.ejectionCheckCooldown <= 0) {
                 this.ejectionCheckCooldown = 100; // Reset cooldown (check every 5 seconds)
-                boolean inventoryChanged = false; // Track if needing to sync changes
-
-                for (int i = 0; i < this.items.size(); ++i) {
-                    ItemStack stack = this.items.get(i);
-                    // Check !isValid instead of isItemDisallowed.
-                    // isValid handles slot-specific rules (like allowing BlockItems in the Bling slot).
-                    if (!stack.isEmpty() && !this.isValid(i, stack)) {
-                        AdorableHamsterPets.LOGGER.warn("[HamsterTick {}] Ejecting invalid item {} from slot {}.", this.getId(), stack.getItem(), i);
-
-                        // Drop the item at the hamster's feet
-                        ItemScatterer.spawn(world, this.getX(), this.getY(), this.getZ(), stack.copy());
-
-                        // Remove it from the inventory
-                        this.items.set(i, ItemStack.EMPTY);
-
-                        inventoryChanged = true;
-                    }
-                }
-
-                // Update trackers and sync once if any items were ejected
-                if (inventoryChanged) {
+                if (HamsterInventoryUtil.enforceInventoryRules(this)) {
                     this.markDirty();
                 }
             }
@@ -2966,7 +2844,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     if (foodToEat.isEmpty()) { // If split made it empty
                         this.items.set(foodSlot, ItemStack.EMPTY);
                     }
-                    this.updateCheekTrackers();
+                    HamsterInventoryUtil.updateCheekStates(this);
                 } else {
                     AdorableHamsterPets.LOGGER.trace("[HamsterTick {}] Pre-eat delay finished, but food no longer available.", this.getId());
                     // No food, so don't proceed to eating state. Cooldowns remain 0.
@@ -3174,7 +3052,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
             this.items.clear();
-            this.updateCheekTrackers();
+            HamsterInventoryUtil.updateCheekStates(this);
         }
 
         // Call the superclass method after dropping items
@@ -3757,7 +3635,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- Wild Hamster Loot Generation ---
-        generateWildLoot();
+        HamsterInventoryUtil.generateWildLoot(this, this.random);
 
         return super.initialize(world, difficulty, spawnReason, entityData);
     }
@@ -4097,108 +3975,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     /**
-     * Helper method to generate random loot in the cheek pouches of wild hamsters.
-     * Includes a check to ensure we don't overwrite existing items or fill tamed hamsters.
-     * Supports configurable loot lists and chances.
-     */
-    private void generateWildLoot() {
-        // Only generate if untamed and inventory is empty
-        if (this.isTamed() || !this.items.get(0).isEmpty()) return;
-
-        // --- 1. Global Chance Check ---
-        float globalChance = Configs.AHP_WORLDGEN.globalCheekLootChance.get();
-        if (this.random.nextFloat() > globalChance) {
-            return;
-        }
-
-        // --- 2. Determine which cheeks to fill ---
-        // 60% chance for 1 cheek (lopsided), 40% for both
-        boolean fillBothCheeks = this.random.nextFloat() < 0.4f;
-
-        // Helper to fill a cheek (3 slots)
-        // mode: 0 = default, 1 = extra, 2 = cave
-        BiConsumer<Integer, Integer> fillCheek = (startSlot, mode) -> {
-            // Random count 1-3
-            int count = 1 + this.random.nextInt(3);
-            // Put it in a random slot within the cheek (0-2 or 3-5)
-            int specificSlot = startSlot + this.random.nextInt(3);
-
-            // Pick item based on source
-            Item item = switch (mode) {
-                case 1 -> ConfigDataCache.getRandomCustomLootItem(this.random);
-                case 2 -> ConfigDataCache.getRandomCaveLootItem(this.random);
-                default -> ConfigDataCache.getRandomDefaultLootItem(this.random);
-            };
-
-            if (item != Items.AIR) {
-                ItemStack stack = new ItemStack(item, count);
-                // Respect pouch restrictions
-                if (!isItemDisallowed(stack)) {
-                    // Only set if slot is empty
-                    if (this.items.get(specificSlot).isEmpty()) {
-                        this.setStack(specificSlot, stack);
-                    }
-                }
-            }
-        };
-
-        // --- 3. Check for Cave Context ---
-        boolean isCaveHamster = false;
-        if (!this.getWorld().isClient()) {
-            RegistryEntry<Biome> biomeEntry = this.getWorld().getBiome(this.getBlockPos());
-            // It is a cave hamster if:
-            // A) It spawned in a biome tagged as a cave
-            // B) It spawned deep underground (below Y=50) AND cannot see the sky.
-            boolean isCaveBiome = biomeEntry.isIn(ModBiomeTags.IS_CAVE); // Use my union tag
-            boolean isDeepAndDark = this.getY() < 50 && !this.getWorld().isSkyVisible(this.getBlockPos());
-
-            if (isCaveBiome || isDeepAndDark) {
-                isCaveHamster = true;
-            }
-        }
-
-        // --- 4. Cave Loot Logic (Priority) ---
-        if (isCaveHamster) {
-            float caveChance = Configs.AHP_WORLDGEN.caveCheekLootChance.get();
-            if (this.random.nextFloat() < caveChance) {
-                // Determine cheeks
-                if (fillBothCheeks) {
-                    fillCheek.accept(0, 2); // Left
-                    fillCheek.accept(3, 2); // Right,
-                } else {
-                    fillCheek.accept(this.random.nextBoolean() ? 0 : 3, 2);
-                }
-                // If successfully rolled for cave loot, stop here
-                // Cave hamsters don't fall back to normal loot
-                return;
-            }
-        }
-
-        // --- 5. Standard Loot Logic ---
-        // A. Process Default Loot Pool
-        float defaultChance = Configs.AHP_WORLDGEN.defaultCheekLootChance.get();
-        if (this.random.nextFloat() < defaultChance) {
-            if (fillBothCheeks) {
-                fillCheek.accept(0, 0); // Left
-                fillCheek.accept(3, 0); // Right
-            } else {
-                fillCheek.accept(this.random.nextBoolean() ? 0 : 3, 0);
-            }
-        }
-
-        // B. Process Custom Loot Pool
-        float customChance = Configs.AHP_WORLDGEN.extraCheekLootChance.get();
-        if (!Configs.AHP_WORLDGEN.extraCheekLootList.isEmpty() && this.random.nextFloat() < customChance) {
-            if (fillBothCheeks) {
-                fillCheek.accept(0, 1); // Left
-                fillCheek.accept(3, 1); // Right
-            } else {
-                fillCheek.accept(this.random.nextBoolean() ? 0 : 3, 1);
-            }
-        }
-    }
-
-    /**
      * Triggers the visual and auditory effects of a hamster entering a tree canopy.
      *
      * @param pos The position where the effects should play.
@@ -4255,7 +4031,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * Synchronizes the visual state (DataTrackers) with the Accessory Slot inventory.
      */
     public void updateAccessoryState() {
-        ItemStack accessory = this.items.get(ACCESSORY_SLOT_INDEX);
+        ItemStack accessory = this.items.get(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX);
 
         // Handle Pink Petal Tracker
         if (accessory.isOf(Items.PINK_PETALS)) {
@@ -4267,49 +4043,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // If slot is empty or has a different item (e.g. Hat), reset petal tracker
             if (this.dataTracker.get(PINK_PETAL_TYPE) != 0) {
                 this.dataTracker.set(PINK_PETAL_TYPE, 0);
-            }
-        }
-    }
-
-    /**
-     * plays appropriate equip/unequip sounds when items change in the Armor or Bling slots.
-     *
-     * @param slot The slot index changing.
-     * @param oldStack The item stack previously in the slot.
-     * @param newStack The new item stack in the slot.
-     */
-    private void handleSlotUpdateSounds(int slot, ItemStack oldStack, ItemStack newStack) {
-        boolean isEmpty = newStack.isEmpty();
-        boolean wasEmpty = oldStack.isEmpty();
-
-        // If nothing changed effectively (e.g. swapping same item), return
-        if (ItemStack.areEqual(oldStack, newStack)) return;
-
-        // Armor Slot (7)
-        if (slot == ARMOR_SLOT_INDEX) {
-            if (wasEmpty && !isEmpty) {
-                // Equip
-                this.playSound(SoundEvents.ITEM_ARMOR_EQUIP_WOLF.value(), 0.6f, 1.2f);
-            } else if (!wasEmpty && isEmpty) {
-                // Unequip
-                this.playSound(SoundEvents.ITEM_ARMOR_EQUIP_WOLF.value(), 0.4f, 0.8f);
-            } else if (!wasEmpty && !isEmpty) {
-                // Swap
-                this.playSound(SoundEvents.ITEM_ARMOR_EQUIP_WOLF.value(), 0.6f, 1.2f);
-            }
-        }
-
-        // Bling Slot (6)
-        if (slot == ACCESSORY_SLOT_INDEX) {
-            if (wasEmpty && !isEmpty) {
-                // Equip
-                this.playSound(SoundEvents.ITEM_ARMOR_EQUIP_GENERIC.value(), 0.6f, 1.2f);
-            } else if (!wasEmpty && isEmpty) {
-                // Unequip (Lower pitch)
-                this.playSound(SoundEvents.ITEM_ARMOR_EQUIP_GENERIC.value(), 0.4f, 0.8f);
-            } else if (!wasEmpty && !isEmpty) {
-                // Swap
-                this.playSound(SoundEvents.ITEM_ARMOR_EQUIP_GENERIC.value(), 0.6f, 1.2f);
             }
         }
     }
@@ -4400,8 +4133,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         SoundEvent armorSound = null;
         float armorPitch = 1.0f;
 
-        if (this.items.size() > ARMOR_SLOT_INDEX) {
-            ItemStack armorStack = this.items.get(ARMOR_SLOT_INDEX);
+        if (this.items.size() > HamsterInventoryUtil.ARMOR_SLOT_INDEX) {
+            ItemStack armorStack = this.items.get(HamsterInventoryUtil.ARMOR_SLOT_INDEX);
             if (!armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
                 // Play metallic clang for anything that isn't the base Acorn armor
                 if (armorItem.getMaterial() != HamsterArmorItem.HamsterArmorMaterial.ACORN) {
@@ -4528,52 +4261,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         } else {
             this.dataTracker.set(HAMSTER_FLAGS, currentFlags & ~flag);
         }
-    }
-
-    /**
-     * Checks if the given item stack is disallowed in the hamster's inventory.
-     *
-     * @param stack The ItemStack to check.
-     * @return True if the item is disallowed, false otherwise.
-     */
-    public boolean isItemDisallowed(ItemStack stack) {
-        if (stack.isEmpty()) return false;
-
-        // 1. Explicit allow list has highest priority.
-        if (ConfigDataCache.isPouchAllowed(stack)) {
-            return false; // It's allowed, so override everything else.
-        }
-
-        // 2. Check the disallow lists from config.
-        if (ConfigDataCache.isPouchDisallowed(stack)) {
-            return true;
-        }
-
-        // 3. Mod Food Logic
-        // If the mod considers it food or bait, the hamster can hold it, even if it's a block item.
-        if (ConfigDataCache.isStandardFood(stack) ||
-                ConfigDataCache.isTamingFood(stack) ||
-                ConfigDataCache.isBuffFood(stack) ||
-                ConfigDataCache.isPouchUnlockFood(stack) ||
-                ConfigDataCache.isAutoHealFood(stack)) {
-            return false;
-        }
-
-        // 4. Allow any item that is considered food by vanilla.
-        if (stack.get(DataComponentTypes.FOOD) != null) {
-            return false;
-        }
-
-        Item item = stack.getItem();
-
-        // 5. Global block-item rule
-        if (item instanceof BlockItem) {
-            // Any block is disallowed by default unless it was on the allowlist or was food.
-            return true;
-        }
-
-        // 6. Spawn eggs always disallowed.
-        return item instanceof SpawnEggItem;
     }
 
     private RegistryWrapper.WrapperLookup getRegistryLookup() {
