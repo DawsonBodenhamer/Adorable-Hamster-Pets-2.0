@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
-import dev.architectury.networking.NetworkManager;
 import dev.architectury.registry.menu.MenuRegistry;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
@@ -22,7 +21,6 @@ import net.dawson.adorablehamsterpets.entity.control.HamsterBodyControl;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.item.custom.HamsterBedItem;
-import net.dawson.adorablehamsterpets.networking.payload.PlayDistantSoundPayload;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
@@ -44,8 +42,6 @@ import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.ai.goal.TrackOwnerAttackerGoal;
 import net.minecraft.entity.ai.pathing.*;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributeInstance;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.damage.DamageTypes;
@@ -56,7 +52,6 @@ import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.CreeperEntity;
-import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.TameableEntity;
@@ -85,7 +80,10 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
-import net.minecraft.util.*;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
+import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
@@ -123,10 +121,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final double WALK_TO_RUN_THRESHOLD_SQUARED = 0.002;
     private static final double RUN_TO_SPRINT_THRESHOLD_SQUARED = 0.008;
     private static final int CUSTOM_LOVE_TICKS = 600;                 // 30 seconds
-    private static final double THROWN_GRAVITY = -0.05;
     private static final double HAMSTER_ATTACK_BOX_EXPANSION = 0.70D;  // Expand by 0.7 blocks horizontally (vanilla is 0.83 blocks, so really this is shrinking it)
-    private static final Identifier ARMOR_SPEED_BOOST_ID = Identifier.of(AdorableHamsterPets.MOD_ID, "armor_speed_boost");
-    private static final Identifier ARMOR_KNOCKBACK_RESISTANCE_ID = Identifier.of(AdorableHamsterPets.MOD_ID, "armor_knockback_resistance");
     private static final int NORMAL_FALL_PITCH_DURATION = 15;
     private static final int PITCH_RESET_DURATION = 3;
     private static final int RIDER_JUMP_COOLDOWN_TICKS = 8;
@@ -563,6 +558,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         double dz = this.getZ() - player.getZ();
         this.lastZoomiesAngle = Math.atan2(dz, dx);
     }
+    public boolean hasPlayedIncomingSound() { return this.hasPlayedIncomingSound; }
+    public void setHasPlayedIncomingSound(boolean value) { this.hasPlayedIncomingSound = value; }
     public int getQuiescentSitTimer() { return this.quiescentSitDurationTimer; }
     public void setQuiescentSitTimer(int ticks) { this.quiescentSitDurationTimer = ticks; }
     public int getDriftingOffTimer() { return this.driftingOffTimer; }
@@ -2450,7 +2447,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 this.setThrown(false);
 
                 // Play impact sound (Main + Armor if applicable) via custom packet logic
-                broadcastImpactSound(SoundEvents.ENTITY_GENERIC_SMALL_FALL, 1.2f);
+                HamsterPhysicsUtil.broadcastImpactSound(this, SoundEvents.ENTITY_GENERIC_SMALL_FALL, 1.2f);
 
                 this.setKnockedOut(true);
                 this.setInSittingPose(true);
@@ -2473,21 +2470,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     } else if (hitEntity instanceof LivingEntity livingHit) {
 
                         // --- Throw Damage Logic ---
-                        // 1. Create a DamageSource where the thrown hamster is the attacker.
+                        // 1. Calculate Damage
+                        float damageAmount = HamsterPhysicsUtil.calculateThrowDamage(this, this.getArmorStack());
+
+                        // 2. Create a DamageSource where the thrown hamster is the attacker.
                         DamageSource damageSource = this.getDamageSources().mobAttack(this);
-                        // 2. Get the damage amount from the config.
-                        float damageAmount = Configs.AHP.hamsterThrowDamage.get().floatValue();
 
-                        // 3. Apply Netherite Armor Bonus
-                        ItemStack armorStack = this.getArmorStack();
-                        if (!armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
-                            // Check config boolean before applying bonus
-                            if (Configs.AHP.enableArmorPerks.get() && armorItem.getMaterial() == HamsterArmorItem.HamsterArmorMaterial.NETHERITE) {
-                                damageAmount += Configs.AHP.netheriteArmorThrowDamageBonus.get().floatValue();
-                            }
-                        }
-
-                        // 4. Deal the damage to the target using the correct source.
+                        // 3. Deal the damage to the target using the correct source.
                         boolean damaged = livingHit.damage(damageSource, damageAmount);
 
                         if (damaged) {
@@ -2507,7 +2496,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
                     if (playEffects) {
                         // Feedback
-                        broadcastImpactSound(ModSounds.HAMSTER_IMPACT.get(), 1.0f);
+                        HamsterPhysicsUtil.broadcastImpactSound(this, ModSounds.HAMSTER_IMPACT.get(), 1.0f);
                         ParticleEffectsUtil.spawnParticles(
                                 world,
                                 new Vec3d(this.getX(), this.getY() + this.getHeight() / 2.0, this.getZ()),
@@ -2543,11 +2532,11 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // Apply gravity, update position, simulate trajectory audio, and spawn trail particles if still thrown
             if (this.isThrown() && !stopped) {
                 if (!this.getWorld().isClient() && !this.hasPlayedIncomingSound) {
-                    simulateTrajectoryAndCheckSound();
+                    HamsterPhysicsUtil.simulateTrajectoryAndCheckSound(this);
                 }
 
                 if (!this.hasNoGravity()) {
-                    this.setVelocity(this.getVelocity().add(0.0, THROWN_GRAVITY, 0.0));
+                    this.setVelocity(this.getVelocity().add(0.0, HamsterPhysicsUtil.THROWN_GRAVITY, 0.0));
                 }
 
                 Vec3d currentVelocity = this.getVelocity();
@@ -2602,7 +2591,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         if (!this.getWorld().isClient) {
             ItemStack currentArmor = this.getArmorStack();
             if (!ItemStack.areEqual(currentArmor, this.lastArmorStack)) {
-                this.updateArmorModifiers(currentArmor);
+                HamsterPhysicsUtil.updateArmorModifiers(this, currentArmor);
                 this.lastArmorStack = currentArmor.copy();
             }
         }
@@ -2612,7 +2601,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.updateNavigation();
 
             // Periodically validate armor attributes to catch Config changes
-            this.updateArmorModifiers(this.getArmorStack());
+            HamsterPhysicsUtil.updateArmorModifiers(this, this.getArmorStack());
         }
 
         // --- Apply extra gravity during sulking jump ---
@@ -3473,8 +3462,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
     }
-
-    protected boolean canHitEntity(Entity entity) {
+    public boolean canHitEntity(Entity entity) {
         // --- 1. Check if Entity Can Be Hit ---
         // Allow hitting armor stands specifically
         if (entity instanceof net.minecraft.entity.decoration.ArmorStandEntity) {
@@ -3940,199 +3928,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (this.dataTracker.get(PINK_PETAL_TYPE) != 0) {
                 this.dataTracker.set(PINK_PETAL_TYPE, 0);
             }
-        }
-    }
-
-    /**
-     * Updates the entity's attribute modifiers based on the currently equipped armor item.
-     * <p>
-     * This method is <b>state-aware (idempotent)</b>. It compares the <i>current</i> attribute modifiers
-     * against the <i>expected</i> state (defined by the item + config). Modifiers are added or removed
-     * only when a discrepancy is found. This allows safe, periodic execution to sync with config changes.
-     *
-     * @param armorStack The ItemStack currently residing in the armor slot.
-     */
-    private void updateArmorModifiers(ItemStack armorStack) {
-        EntityAttributeInstance speedAttribute = this.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
-        EntityAttributeInstance knockbackAttribute = this.getAttributeInstance(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE);
-
-        // --- 1. Calculate Expected State ---
-        // Determine which buffs should be active based on the global config and the specific armor material.
-        boolean perksEnabled = Configs.AHP.enableArmorPerks.get();
-        boolean shouldHaveSpeed = false;
-        boolean shouldHaveKnockback = false;
-
-        if (perksEnabled && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
-            HamsterArmorItem.HamsterArmorMaterial material = armorItem.getMaterial();
-            if (material == HamsterArmorItem.HamsterArmorMaterial.GOLD) {
-                shouldHaveSpeed = true;
-            } else if (material == HamsterArmorItem.HamsterArmorMaterial.NETHERITE) {
-                shouldHaveKnockback = true;
-            }
-        }
-
-        // --- 2. Reconcile Speed Attribute ---
-        if (speedAttribute != null) {
-            boolean hasSpeed = speedAttribute.hasModifier(ARMOR_SPEED_BOOST_ID);
-
-            if (shouldHaveSpeed && !hasSpeed) {
-                // Case: Buff is required but missing -> ADD IT
-                double boost = Configs.AHP.goldArmorSpeedBoost.get();
-                speedAttribute.addTemporaryModifier(new EntityAttributeModifier(
-                        ARMOR_SPEED_BOOST_ID, boost, EntityAttributeModifier.Operation.ADD_MULTIPLIED_BASE
-                ));
-            } else if (!shouldHaveSpeed && hasSpeed) {
-                // Case: Buff is present but forbidden -> REMOVE IT
-                speedAttribute.removeModifier(ARMOR_SPEED_BOOST_ID);
-            }
-        }
-
-        // --- 3. Reconcile Knockback Attribute ---
-        if (knockbackAttribute != null) {
-            boolean hasKnockback = knockbackAttribute.hasModifier(ARMOR_KNOCKBACK_RESISTANCE_ID);
-
-            if (shouldHaveKnockback && !hasKnockback) {
-                // Case: Buff is required but missing -> ADD IT
-                double resist = Configs.AHP.netheriteArmorKnockbackResist.get();
-                knockbackAttribute.addTemporaryModifier(new EntityAttributeModifier(
-                        ARMOR_KNOCKBACK_RESISTANCE_ID, resist, EntityAttributeModifier.Operation.ADD_VALUE
-                ));
-            } else if (!shouldHaveKnockback && hasKnockback) {
-                // Case: Buff is present but forbidden -> REMOVE IT
-                knockbackAttribute.removeModifier(ARMOR_KNOCKBACK_RESISTANCE_ID);
-            }
-        }
-    }
-
-    /**
-     * Plays an impact sound for all players within range, bypassing vanilla attenuation to ensure
-     * consistent audibility across distances. Uses a custom volume gradient to mimic natural falloff
-     * while maintaining clarity at long ranges. Checks for non-organic armor and plays a shield block sound if present.
-     * <p>
-     * <b>Volume Curve:</b>
-     * <ul>
-     *     <li><b>0 - 16 Blocks:</b> Linear decrease from 1.0 to 0.18.</li>
-     *     <li><b>16 - 50 Blocks:</b> Linear decrease from 0.18 to 0.10.</li>
-     * </ul>
-     *
-     * @param sound The main sound event to play (e.g., small fall or hamster impact).
-     * @param pitch The pitch at which to play the main sound.
-     */
-    private void broadcastImpactSound(SoundEvent sound, float pitch) {
-        if (this.getWorld().isClient()) return;
-
-        double impactX = this.getX();
-        double impactY = this.getY();
-        double impactZ = this.getZ();
-
-        // Check for armor
-        SoundEvent armorSound = null;
-        float armorPitch = 1.0f;
-
-        if (this.items.size() > HamsterInventoryUtil.ARMOR_SLOT_INDEX) {
-            ItemStack armorStack = this.items.get(HamsterInventoryUtil.ARMOR_SLOT_INDEX);
-            if (!armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
-                // Play metallic clang for anything that isn't the base Acorn armor
-                if (armorItem.getMaterial() != HamsterArmorItem.HamsterArmorMaterial.ACORN) {
-                    armorSound = SoundEvents.BLOCK_BELL_USE;
-                    armorPitch = 2.0f + this.random.nextFloat() * 0.5f;
-                }
-            }
-        }
-
-        for (ServerPlayerEntity player : ((ServerWorld) this.getWorld()).getPlayers()) {
-            double distSq = player.squaredDistanceTo(impactX, impactY, impactZ);
-
-            if (distSq <= 2500) { // 50 blocks squared
-                double distance = Math.sqrt(distSq);
-                float volume;
-
-                if (distance <= 16.0) {
-                    // Stage 1: Close range (0 to 16 blocks) - Linear 1.0 -> 0.18
-                    volume = 1.0F - (0.82F * (float) (distance / 16.0));
-                } else {
-                    // Stage 2: Distant range (16 to 50 blocks) - Linear 0.18 -> 0.10
-                    float remainingProgress = (float) (distance - 16.0) / 34.0F;
-                    volume = 0.18F - (0.08F * remainingProgress);
-                }
-
-                // Clamp to safe bounds
-                volume = MathHelper.clamp(volume, 0.10F, 1.0F);
-
-                // Send packet for Main Sound
-                NetworkManager.sendToPlayer(player, new PlayDistantSoundPayload(sound.getId(), volume, pitch));
-
-                // Send packet for Armor Sound if applicable
-                if (armorSound != null) {
-                    // Reduce armor volume by 50% relative to main sound
-                    float armorVolume = Math.min(1.0f, volume * 0.5f);
-                    NetworkManager.sendToPlayer(player, new PlayDistantSoundPayload(armorSound.getId(), armorVolume, armorPitch));
-                }
-            }
-        }
-    }
-
-    /**
-     * Simulates the hamster's trajectory 1 second (20 ticks) into the future.
-     * If an impact (block or entity) is predicted within that window, and the total
-     * throw time will have been at least 1 second, it plays the "Incoming" sound
-     * at the target location.
-     */
-    private void simulateTrajectoryAndCheckSound() {
-        Vec3d simPos = this.getPos();
-        Vec3d simVel = this.getVelocity();
-
-        // Simulate up to 20 ticks ahead
-        for (int i = 1; i <= 20; i++) {
-            // Apply physics matching the actual tick logic
-            if (!this.hasNoGravity()) {
-                simVel = simVel.add(0.0, THROWN_GRAVITY, 0.0);
-            }
-
-            Vec3d nextPos = simPos.add(simVel);
-
-            // 1. Block Collision Check
-            HitResult blockHit = this.getWorld().raycast(new RaycastContext(
-                    simPos,
-                    nextPos,
-                    RaycastContext.ShapeType.COLLIDER,
-                    RaycastContext.FluidHandling.NONE,
-                    this
-            ));
-
-            // 2. Entity Collision Check
-            // We use the same logic as ProjectileUtil to check for entities along the path segment
-            EntityHitResult entityHit = ProjectileUtil.getEntityCollision(
-                    this.getWorld(),
-                    this,
-                    simPos,
-                    nextPos,
-                    this.getBoundingBox().stretch(simVel).expand(1.0),
-                    this::canHitEntity
-            );
-
-            Vec3d impactPos = null;
-
-            if (entityHit != null) {
-                impactPos = entityHit.getPos();
-            } else if (blockHit.getType() != HitResult.Type.MISS) {
-                impactPos = blockHit.getPos();
-            }
-
-            if (impactPos != null) {
-                // Collision predicted in 'i' ticks.
-                // Only play sound if the TOTAL time (elapsed + future) is >= 20 ticks.
-                if (this.throwTicks + i >= 20) {
-                    this.getWorld().playSound(null, impactPos.x, impactPos.y, impactPos.z, ModSounds.HAMSTER_INCOMING.get(), SoundCategory.NEUTRAL, 1.0f, 1.0f);
-                    AdorableHamsterPets.LOGGER.debug("Played Incoming sound at target: {}", impactPos);
-                }
-                // Mark as handled regardless of whether we played it (to prevent spamming checks for short throws)
-                this.hasPlayedIncomingSound = true;
-                return;
-            }
-
-            // Update simulation position for next tick
-            simPos = nextPos;
         }
     }
 
