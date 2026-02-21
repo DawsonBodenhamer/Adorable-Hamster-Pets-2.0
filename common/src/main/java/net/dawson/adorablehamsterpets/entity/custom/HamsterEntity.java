@@ -54,7 +54,6 @@ import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.CreeperEntity;
-import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.TameableEntity;
@@ -569,7 +568,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         double dz = this.getZ() - player.getZ();
         this.lastZoomiesAngle = Math.atan2(dz, dx);
     }
-
+    public int getQuiescentSitTimer() { return this.quiescentSitDurationTimer; }
+    public void setQuiescentSitTimer(int ticks) { this.quiescentSitDurationTimer = ticks; }
+    public int getDriftingOffTimer() { return this.driftingOffTimer; }
+    public void setDriftingOffTimer(int ticks) { this.driftingOffTimer = ticks; }
+    public int getSettleSleepCooldown() { return this.settleSleepAnimationCooldown; }
+    public void setSettleSleepCooldown(int ticks) { this.settleSleepAnimationCooldown = ticks; }
+    public void setCurrentDeepSleepAnimId(String animId) { this.dataTracker.set(CURRENT_DEEP_SLEEP_ANIM_ID, animId); }
     public ItemStack getLastFoodItem() { return this.lastFoodItem; }
     public void setLastFoodItem(ItemStack stack) { this.lastFoodItem = stack; }
     public long getGreenBeanBuffEndTick() { return this.greenBeanBuffEndTick; }
@@ -1635,7 +1640,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         // --- 2. Reset Sleep Sequence if Standing Up from a Doze/Sleep ---
         if (!sitting && this.isTamed() && this.getDozingPhase() != DozingPhase.NONE) {
-            resetSleepSequence("Player commanded hamster to stand up.");
+            HamsterSleepUtil.resetSleepState(this);
         }
 
         // --- 3. Update Core Sitting State ---
@@ -1925,7 +1930,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- Reset Sleep Sequence if Dozing (not in a bed) ---
             if (this.getDozingPhase() != DozingPhase.NONE) {
-                resetSleepSequence("Player interacted with hamster.");
+                HamsterSleepUtil.resetSleepState(this);
             }
 
             // --- Handle Item Interest Interaction ---
@@ -2628,118 +2633,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- 3. Tamed Hamster "Path to Slumber" State Machine ---
-        // This logic only applies to tamed hamsters and runs on the server.
+        // This logic only applies to tamed hamsters and runs on the server
         if (!this.getWorld().isClient() && this.isTamed() && !this.isKnockedOut()) {
-            boolean canInitiateDrowsiness = checkConditionsForInitiatingDrowsiness(); // Helper method call
-            boolean canSustainSlumber = checkConditionsForSustainingSlumber();       // Helper method call
-
-            switch (currentPhase) {
-                case NONE:
-                    // If commanded to sit and conditions are right, start Phase 1
-                    if (this.isSitting() && canInitiateDrowsiness) {
-                        // Check if quiescentSitDurationTimer is 0, meaning we can start a new cycle
-                        if (this.quiescentSitDurationTimer == 0) {
-                            this.setDozingPhase(DozingPhase.QUIESCENT_SITTING);
-
-                            // Calculate random duration based on config
-                            int minSeconds = Configs.AHP.tamedQuiescentSitMinSeconds.get();
-                            int maxSeconds = Configs.AHP.tamedQuiescentSitMaxSeconds.get();
-
-                            // Safety rail: ensure min is not greater than max
-                            if (minSeconds > maxSeconds) {
-                                AdorableHamsterPets.LOGGER.info("Config issue: tamedQuiescentSitMinSeconds ({}) > tamedQuiescentSitMaxSeconds ({}). Swapping.", minSeconds, maxSeconds);
-                                int temp = minSeconds;
-                                minSeconds = maxSeconds;
-                                maxSeconds = temp;
-                            }
-                            // Safety rail: ensure max is not less than min after potential swap
-                            if (maxSeconds < minSeconds) maxSeconds = minSeconds;
-
-                            int durationTicks = this.random.nextBetween(minSeconds * 20, maxSeconds * 20 + 1);
-                            this.quiescentSitDurationTimer = durationTicks;
-                            AdorableHamsterPets.LOGGER.debug("Hamster {} entering QUIESCENT_SITTING for {} ticks.", this.getId(), durationTicks);
-                        }
-                    }
-                    break;
-
-                case QUIESCENT_SITTING:
-                    if (!this.isSitting() || !canInitiateDrowsiness) {
-                        // Interrupted (stood up, conditions changed, etc.)
-                        resetSleepSequence("Quiescent sitting interrupted: no longer sitting or conditions unfavorable.");
-                        break;
-                    }
-                    if (this.quiescentSitDurationTimer > 0) {
-                        this.quiescentSitDurationTimer--;
-                    } else {
-                        // Timer expired, attempt to move to Drifting Off
-                        this.setDozingPhase(DozingPhase.DRIFTING_OFF);
-                        this.driftingOffTimer = 90 * 20; // 90 seconds for the animation
-                        // Animation controller will pick up anim_hamster_drifting_off
-                        AdorableHamsterPets.LOGGER.debug("Hamster {} entering DRIFTING_OFF for {} ticks.", this.getId(), this.driftingOffTimer);
-                    }
-                    break;
-
-                case DRIFTING_OFF:
-                    if (!canSustainSlumber) { // Check sustain conditions
-                        resetSleepSequence("Drifting off interrupted: conditions for slumber no longer met.");
-                        break;
-                    }
-                    if (this.driftingOffTimer > 0) {
-                        this.driftingOffTimer--;
-                    } else {
-                        // Drifting off animation completed
-                        this.setDozingPhase(DozingPhase.SETTLING_INTO_SLUMBER);
-                        // Randomly select a settle animation and corresponding deep sleep pose
-                        int choice = this.random.nextInt(3);
-                        String settleAnimId;
-                        String deepSleepAnimIdForTracker = switch (choice) {
-                            case 0 -> {
-                                settleAnimId = "anim_hamster_settle_sleep1";
-                                yield "anim_hamster_sleep_pose1";
-                            }
-                            case 1 -> {
-                                settleAnimId = "anim_hamster_settle_sleep2";
-                                yield "anim_hamster_sleep_pose2";
-                            }
-                            default -> {
-                                settleAnimId = "anim_hamster_settle_sleep3";
-                                yield "anim_hamster_sleep_pose3";
-                            }
-                        }; // Temporary variable for clarity
-                        this.dataTracker.set(CURRENT_DEEP_SLEEP_ANIM_ID, deepSleepAnimIdForTracker); // Set DataTracker
-                        this.triggerAnimOnServer("mainController", settleAnimId);
-                        this.settleSleepAnimationCooldown = 20;
-
-                        // Trigger "swish" and set "thump" sound effect timer
-                        triggerSettleEffects(0.22f, 5, 0.24f);
-
-                        AdorableHamsterPets.LOGGER.debug("Hamster {} entering SETTLING_INTO_SLUMBER, triggering {}, target deep sleep anim ID: {}.", this.getId(), settleAnimId, deepSleepAnimIdForTracker);
-                    }
-                    break;
-
-                case SETTLING_INTO_SLUMBER:
-                    if (!canSustainSlumber) {
-                        resetSleepSequence("Settling into slumber interrupted: conditions for slumber no longer met.");
-                        break;
-                    }
-                    if (this.settleSleepAnimationCooldown > 0) {
-                        this.settleSleepAnimationCooldown--;
-                    } else {
-                        // Settle animation finished, transition to deep sleep
-                        this.setDozingPhase(DozingPhase.DEEP_SLEEP);
-                        // Animation controller will now loop currentDeepSleepAnimationId
-                        AdorableHamsterPets.LOGGER.debug("Hamster {} entering DEEP_SLEEP, playing {}.", this.getId(), this.dataTracker.get(CURRENT_DEEP_SLEEP_ANIM_ID));
-                    }
-                    break;
-
-                case DEEP_SLEEP:
-                    if (!canSustainSlumber) {
-                        triggerWakeUpFromSleepAnimation(false); // Trigger natural wakeup animation and sound
-                        resetSleepSequence("Deep sleep interrupted: conditions for slumber no longer met.");
-                    }
-                    // Hamster remains in deep sleep, looping animation, until interrupted
-                    break;
-            }
+            HamsterSleepUtil.tickTamedSleepLogic(this);
         }
 
         // Call super.tick() *after* processing thrown state and timers
@@ -4377,58 +4273,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
         }
-    }
-
-    // --- Tamed Sleep Sequence Helper Methods ---
-    /**
-     * Checks if the conditions are met for a tamed, sitting hamster to potentially start becoming drowsy.
-     * Conditions: Daytime (if configured), no nearby hostile entities, on solid ground, not in love mode.
-     * @return True if conditions are met, false otherwise.
-     */
-    @Unique
-    private boolean checkConditionsForInitiatingDrowsiness() {
-        if (!this.isSitting()) return false; // Must be player-commanded to sit
-
-        World world = this.getWorld();
-        if (Configs.AHP.requireDaytimeForTamedSleep && !world.isDay()) {
-            return false; // Must be daytime if config requires it
-        }
-        if (this.isInLove()) return false; // Cannot sleep if in love mode
-
-        // Check for nearby hostile entities
-        double threatRadius = Configs.AHP.tamedSleepThreatDetectionRadiusBlocks.get();
-        List<LivingEntity> nearbyHostiles = world.getEntitiesByClass(
-                LivingEntity.class,
-                this.getBoundingBox().expand(threatRadius),
-                entity -> entity instanceof HostileEntity && entity.isAlive() && !entity.isSpectator()
-        );
-        return nearbyHostiles.isEmpty(); // No hostiles nearby
-    }
-
-    /**
-     * Checks if the conditions are met to sustain any phase of the slumber sequence (Drifting, Settling, Deep Sleep).
-     * These are generally the same as initiating, but crucially, the hamster must *remain* sitting.
-     * @return True if conditions are met, false otherwise.
-     */
-    @Unique
-    private boolean checkConditionsForSustainingSlumber() {
-        // Includes all checks from initiating, plus ensures it's still in a sitting pose.
-        // The IS_SITTING datatracker is the primary driver for player-commanded sitting.
-        return this.isSitting() && checkConditionsForInitiatingDrowsiness();
-    }
-
-    /**
-     * Resets the hamster's sleep sequence state to NONE and clears associated timers.
-     * Called when the sleep sequence is interrupted.
-     * @param reason A debug message explaining why the sequence was reset.
-     */
-    @Unique
-    private void resetSleepSequence(String reason) {
-        AdorableHamsterPets.LOGGER.debug("Hamster {} resetting sleep sequence: {}. Current phase was: {}", this.getId(), reason, this.getDozingPhase());
-        this.setDozingPhase(DozingPhase.NONE);
-        this.quiescentSitDurationTimer = 0;
-        this.driftingOffTimer = 0;
-        this.settleSleepAnimationCooldown = 0;
     }
 
     /**
