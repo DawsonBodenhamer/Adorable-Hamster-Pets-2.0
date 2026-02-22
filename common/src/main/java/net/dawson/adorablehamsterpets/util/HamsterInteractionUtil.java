@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.component.ModDataComponentTypes;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
+import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
@@ -118,9 +119,9 @@ public final class HamsterInteractionUtil {
                     }
                 } else {
                     // Re-configuring distance of already linked bed
-                    net.dawson.adorablehamsterpets.config.WanderDistance currentDistance = stack.getOrDefault(ModDataComponentTypes.WANDER_DISTANCE.get(), AdorableHamsterPets.CONFIG.defaultWanderDistance.get());
-                    net.dawson.adorablehamsterpets.config.WanderDistance[] values = net.dawson.adorablehamsterpets.config.WanderDistance.values();
-                    net.dawson.adorablehamsterpets.config.WanderDistance nextDistance = values[(currentDistance.ordinal() + 1) % values.length];
+                    WanderDistance currentDistance = stack.getOrDefault(ModDataComponentTypes.WANDER_DISTANCE.get(), AdorableHamsterPets.CONFIG.defaultWanderDistance.get());
+                    WanderDistance[] values = WanderDistance.values();
+                    WanderDistance nextDistance = values[(currentDistance.ordinal() + 1) % values.length];
                     stack.set(ModDataComponentTypes.WANDER_DISTANCE.get(), nextDistance);
 
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.wander_distance_set", hamster.getName(), nextDistance.asString()), true);
