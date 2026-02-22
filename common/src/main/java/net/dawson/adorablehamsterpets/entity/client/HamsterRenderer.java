@@ -411,7 +411,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                 SoundEvent scratchSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SCRATCH_SOUNDS, animatable.getRandom());
                 if (scratchSound != null) {
                     client.getSoundManager().play(new PositionedSoundInstance(
-                            scratchSound, SoundCategory.NEUTRAL, 0.3f, 1.0f,
+                            scratchSound, SoundCategory.NEUTRAL, 0.2f, 0.8f,
                             animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                     ));
                 }
