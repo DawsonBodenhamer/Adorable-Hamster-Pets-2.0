@@ -30,6 +30,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -95,7 +96,7 @@ public final class HamsterInteractionUtil {
 
     // --- 4. Bed Linking ---
     public static ActionResult handleBedLinking(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
-        if (hamster.isTamed() && hamster.isOwner(player) && stack.getItem() instanceof HamsterBedItem) {
+        if (stack.getItem() instanceof HamsterBedItem) {
             if (!hamster.getWorld().isClient()) {
                 UUID linkedUuid = null;
                 // 1.20.1: parse existing nbt
@@ -113,7 +114,7 @@ public final class HamsterInteractionUtil {
 
                     nbt.putUuid(ModNbtKeys.LINKED_HAMSTER_UUID, hamster.getUuid());
                     nbt.putString(ModNbtKeys.LINKED_HAMSTER_NAME, nameJson);
-                    nbt.putString(ModNbtKeys.WANDER_DISTANCE, AdorableHamsterPets.CONFIG.defaultWanderDistance.get().asString());
+                    nbt.putString(ModNbtKeys.WANDER_DISTANCE, AdorableHamsterPets.CONFIG.defaultWanderDistance.get().name());
 
                     player.setStackInHand(hand, newStack);
 
@@ -132,14 +133,14 @@ public final class HamsterInteractionUtil {
 
                     if (stackNbt.contains(ModNbtKeys.WANDER_DISTANCE)) {
                         try {
-                            currentDistance = WanderDistance.valueOf(stackNbt.getString(ModNbtKeys.WANDER_DISTANCE));
+                            currentDistance = WanderDistance.valueOf(stackNbt.getString(ModNbtKeys.WANDER_DISTANCE).toUpperCase(Locale.ROOT));
                         } catch (IllegalArgumentException ignored) {}
                     }
 
                     WanderDistance[] values = WanderDistance.values();
                     WanderDistance nextDistance = values[(currentDistance.ordinal() + 1) % values.length];
 
-                    stackNbt.putString(ModNbtKeys.WANDER_DISTANCE, nextDistance.asString());
+                    stackNbt.putString(ModNbtKeys.WANDER_DISTANCE, nextDistance.name());
 
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.wander_distance_set", hamster.getName(), nextDistance.asString()), true);
                     hamster.getWorld().playSound(null, hamster.getBlockPos(), SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.PLAYERS, 0.5f, 1.0f);
