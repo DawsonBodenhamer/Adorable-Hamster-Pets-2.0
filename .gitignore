@@ -60,3 +60,6 @@ Adorable_Hamster_Pets_Tech_Spec_*_Backup.md
 # Ignore compiled Python files
 __pycache__/
 *.py[cod]
+/common/bin/.gitignore
+/fabric/bin/.gitignore
+/neoforge/bin/.gitignore
