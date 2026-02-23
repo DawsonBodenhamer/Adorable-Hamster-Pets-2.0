@@ -35,24 +35,29 @@ public final class EntityTargetingUtil {
     }
 
     /**
-     * Checks if the observer's crosshair (look ray) physically intersects the target's hitbox.
+     * Checks if the observer's crosshair intersects the target's hitbox, with an optional padding
+     * to make the detection more forgiving.
      * <p>
      * <b>Use Case:</b> Player interaction checks (e.g., is Player looking directly at Mob?).
      *
      * @param observer    The entity doing the looking.
      * @param target      The entity being looked at.
      * @param maxDistance The maximum distance to check (e.g., 4.0 for interaction range, 32.0 for line of sight).
+     * @param padding     The amount to expand the target's bounding box by.
      * @return True if the observer's look ray intersects the target's bounding box.
      */
-    public static boolean isLookingAt(LivingEntity observer, LivingEntity target, double maxDistance) {
+    public static boolean isLookingAt(LivingEntity observer, LivingEntity target, double maxDistance, double padding) {
         if (observer == null || target == null) return false;
 
         Vec3d eyePos = observer.getEyePos();
         Vec3d lookVec = observer.getRotationVec(1.0F);
         Vec3d endPos = eyePos.add(lookVec.multiply(maxDistance));
 
-        // Get target box
+        // Get target box and apply optional padding
         Box targetBox = target.getBoundingBox();
+        if (padding > 0.0) {
+            targetBox = targetBox.expand(padding);
+        }
 
         // Calculate intersection
         Optional<Vec3d> hit = targetBox.raycast(eyePos, endPos);

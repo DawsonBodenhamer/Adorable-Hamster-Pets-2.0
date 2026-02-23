@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.networking;
 import dev.architectury.networking.NetworkChannel;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
+import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
@@ -93,19 +94,12 @@ public class ModPackets {
                 (buf) -> new RequestGuidebookC2SPacket(),
                 (packet, context) -> context.get().queue(() -> {
                     ServerPlayerEntity player = (ServerPlayerEntity) context.get().getPlayer();
-                    ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
 
-                    // In 1.20.1, add the Patchouli ID to NBT
-                    NbtCompound nbt = bookStack.getOrCreateNbt();
-                    nbt.putString("patchouli:book", "adorablehamsterpets:hamster_tips_guide_book");
-
-                    player.getInventory().offerOrDrop(bookStack);
+                    // Deliver guidebook: no advancement, no chat message, close the config screen
+                    AdorableHamsterPets.deliverGuidebook(player, false, false, true);
 
                     // Set cache
                     ((PlayerEntityAccessor) player).ahp$initGuideBookTracking(true);
-
-                    // TRUE = Close the screen (since they clicked the button in the config menu)
-                    CHANNEL.sendToPlayer(player, new PlayGuidebookEffectsS2CPacket(true));
                 })
         );
 

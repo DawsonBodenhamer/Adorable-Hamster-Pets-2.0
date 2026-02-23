@@ -1,7 +1,6 @@
 package net.dawson.adorablehamsterpets;
 
 import dev.architectury.event.events.common.CommandRegistrationEvent;
-import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.registry.level.entity.EntityAttributeRegistry;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
@@ -37,6 +36,8 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
@@ -145,20 +146,8 @@ public class AdorableHamsterPets {
 			if (flagAdvancement != null) {
 				AdvancementProgress flagProgress = advancementTracker.getProgress(flagAdvancement);
 				if (!flagProgress.isDone()) {
-					// --- 1. Create the Book ItemStack Directly ---
-					ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
-
-					// In 1.20.1, use NBT tags to set the Patchouli book ID
-					NbtCompound nbt = bookStack.getOrCreateNbt();
-					nbt.putString("patchouli:book", "adorablehamsterpets:hamster_tips_guide_book");
-
-					// --- 2. Give the Item to the Player ---
-					player.getInventory().offerOrDrop(bookStack);
-
-					// --- 3. Grant the Flag Advancement ---
-					for (String criterion : flagAdvancement.getCriteria().keySet()) {
-						advancementTracker.grantCriterion(flagAdvancement, criterion);
-					}
+					// Deliver guidebook (grant advancement, no chat message, don't close screen)
+					deliverGuidebook(player, true, false, false);
 					LOGGER.info("Gave 'Hamster Tips' guide book to player {}.", player.getName().getString());
 				}
 			} else {
@@ -267,6 +256,47 @@ public class AdorableHamsterPets {
 			);
 			return knockedOutData.toNbt();
 		}).orElse(originalNbt); // Fallback to original NBT if deserialization fails
+	}
+
+	/**
+	 * Centralized utility for delivering the Hamster Tips guidebook to a player.
+	 * Handles item creation, Patchouli NBT assignment, inventory insertion,
+	 * advancement granting, and visual/audio effects.
+	 *
+	 * @param player The player receiving the book.
+	 * @param grantInitialAdvancement If true, grants the 'has_received_initial_guidebook' flag.
+	 * @param sendFallbackMessage If true, sends the introductory chat message.
+	 * @param closeScreen If true, tells the client to close their current GUI screen.
+	 */
+	public static void deliverGuidebook(ServerPlayerEntity player, boolean grantInitialAdvancement, boolean sendFallbackMessage, boolean closeScreen) {
+		// --- 1. Create the Book ItemStack Directly on 1.20.1 ---
+		ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
+		NbtCompound nbt = bookStack.getOrCreateNbt();
+		nbt.putString("patchouli:book", "adorablehamsterpets:hamster_tips_guide_book");
+
+		// --- 2. Give the Item to the Player ---
+		player.getInventory().offerOrDrop(bookStack);
+
+		// --- 3. Grant Flag Advancement ---
+		if (grantInitialAdvancement) {
+			PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
+			Identifier flagAdvId = Identifier.of(MOD_ID, "technical/has_received_initial_guidebook");
+			Advancement flagAdvancement = player.server.getAdvancementLoader().get(flagAdvId);
+
+			if (flagAdvancement != null) {
+				for (String criterion : flagAdvancement.getCriteria().keySet()) {
+					advancementTracker.grantCriterion(flagAdvancement, criterion);
+				}
+			}
+		}
+
+		// --- 4. Send Fallback Message ---
+		if (sendFallbackMessage) {
+			player.sendMessage(Text.translatable("message.adorablehamsterpets.guidebook_fallback_delivery").formatted(Formatting.GOLD), false);
+		}
+
+		// --- 5. Trigger Client Effects ---
+		ModPackets.CHANNEL.sendToPlayer(player, new ModPackets.PlayGuidebookEffectsS2CPacket(closeScreen));
 	}
 
 	/**
