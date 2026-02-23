@@ -23,11 +23,16 @@ import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.networking.payload.PlayGuidebookEffectsPayload;
 import net.dawson.adorablehamsterpets.networking.payload.SyncShoulderDataPayload;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
+import net.minecraft.advancement.AdvancementEntry;
+import net.minecraft.advancement.AdvancementProgress;
+import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.component.ComponentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -39,12 +44,14 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
@@ -798,32 +805,74 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    // Detects when player gets a book. Plays FX once.
+    /**
+     * Detects when player gets the Hamster Tips guidebook. Plays FX once
+     */
     @Unique
     private void tickGuideBookTracking() {
         PlayerEntity self = (PlayerEntity) (Object) this;
-        if (self.getWorld().isClient) return;
-        if (!(self instanceof ServerPlayerEntity player)) return;
+        if (self.getWorld().isClient || !(self instanceof ServerPlayerEntity player)) return;
 
-        if (++this.ahp$guideBookCheckTimer < AHP_GUIDEBOOK_CHECK_INTERVAL_TICKS) {
-            return;
-        }
+        if (++this.ahp$guideBookCheckTimer < AHP_GUIDEBOOK_CHECK_INTERVAL_TICKS) return;
         this.ahp$guideBookCheckTimer = 0;
+
+        boolean hasNow = this.ahp$computeHasGuideBook(player);
 
         // Init guard
         if (!this.ahp$guideBookTrackingInitialized) {
-            this.ahp$initGuideBookTracking(this.ahp$computeHasGuideBook(player));
+            this.ahp$initGuideBookTracking(hasNow);
             return;
         }
-
-        boolean hasNow = ahp$computeHasGuideBook(player);
 
         // Edge: No -> Yes
         if (hasNow && !this.ahp$cachedHasGuideBook) {
             NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(false));
         }
+        // Fallback: Check if they are looking at a wild hamster to deliver the book
+        else if (!hasNow && Configs.AHP.enableAutoGuidebookDeliveryFallback) {
+            if (adorablehamsterpets$tryFallbackDelivery(player)) {
+                hasNow = true;
+            }
+        }
 
         this.ahp$cachedHasGuideBook = hasNow;
+    }
+
+    /**
+     * Executes a visual scan for a hamster to trigger fallback guidebook delivery.
+     */
+    @Unique
+    private boolean adorablehamsterpets$tryFallbackDelivery(ServerPlayerEntity player) {
+        PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
+        Identifier flagAdvId = Identifier.of(AdorableHamsterPets.MOD_ID, "technical/has_received_initial_guidebook");
+        AdvancementEntry flagAdvancementEntry = player.server.getAdvancementLoader().get(flagAdvId);
+
+        // Abort if they've already received the initial delivery at some point
+        if (flagAdvancementEntry == null || advancementTracker.getProgress(flagAdvancementEntry).isDone()) {
+            return false;
+        }
+
+        double searchRadius = 10.0;
+        Box searchBox = player.getBoundingBox().expand(searchRadius);
+        List<HamsterEntity> nearbyHamsters = player.getWorld().getEntitiesByClass(
+                HamsterEntity.class,
+                searchBox,
+                EntityPredicates.VALID_ENTITY
+        );
+
+        for (HamsterEntity hamster : nearbyHamsters) {
+            // Check if looking at the hamster with a 1-block padding to make it forgiving
+            if (EntityTargetingUtil.isLookingAt(player, hamster, searchRadius, 1.0)) {
+
+                // Deliver guidebook: (grant advancement, send chat message, don't close screen)
+                AdorableHamsterPets.deliverGuidebook(player, true, true, false);
+
+                AdorableHamsterPets.LOGGER.info("Delivered 'Hamster Tips' guidebook to player {} via visual fallback.", player.getName().getString());
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Check for yummy rocks. Prioritize exposed ones.

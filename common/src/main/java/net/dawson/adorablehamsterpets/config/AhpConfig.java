@@ -132,9 +132,14 @@ public class AhpConfig extends Config {
     public ConfigGroup guidebookSettings = new ConfigGroup("guidebookSettings", true);
 
     @NonSync
-    @Translatable.Name("Auto Guidebook Delivery")
+    @Translatable.Name("Auto Delivery")
     @Translatable.Desc("Hand-delivers the sacred texts on first login.")
     public boolean enableAutoGuidebookDelivery = true;
+
+    @NonSync
+    @Translatable.Name("Auto Delivery Fallback")
+    @Translatable.Desc("If Auto Delivery is disabled (like in most modpacks), give the guidebook the first time the player actually spots a wild hamster from 10 blocks away. This will only trigger once, and only if the player has never received the guidebook before.")
+    public boolean enableAutoGuidebookDeliveryFallback = true;
 
     @NonSync
     @Translatable.Name("Seen Warning Players")

@@ -58,21 +58,13 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, RequestGuidebookPayload.ID, RequestGuidebookPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
-                    // Cast to ServerPlayerEntity explicitly
                     ServerPlayerEntity player = (ServerPlayerEntity) context.getPlayer();
-                    ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
-                    @SuppressWarnings("unchecked")
-                    ComponentType<Identifier> bookComponent = (ComponentType<Identifier>) Registries.DATA_COMPONENT_TYPE.get(Identifier.of("patchouli", "book"));
-                    if (bookComponent != null) {
-                        bookStack.set(bookComponent, Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
-                        player.getInventory().offerOrDrop(bookStack);
 
-                        // Set cache
-                        ((PlayerEntityAccessor) player).ahp$initGuideBookTracking(true);
+                    // Deliver guidebook: no advancement, no chat message, close the config screen
+                    AdorableHamsterPets.deliverGuidebook(player, false, false, true);
 
-                        // TRUE = Close the screen (since they clicked the button in the config menu)
-                        NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(true));
-                    }
+                    // Set cache
+                    ((PlayerEntityAccessor) player).ahp$initGuideBookTracking(true);
                 })
         );
 

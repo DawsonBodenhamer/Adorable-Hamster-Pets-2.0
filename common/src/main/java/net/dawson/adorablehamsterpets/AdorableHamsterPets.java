@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
+import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.level.entity.EntityAttributeRegistry;
 import dev.architectury.utils.Env;
@@ -21,6 +22,7 @@ import net.dawson.adorablehamsterpets.event.AHPCommonEvents;
 import net.dawson.adorablehamsterpets.item.ModItemGroups;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
+import net.dawson.adorablehamsterpets.networking.payload.PlayGuidebookEffectsPayload;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
@@ -41,6 +43,8 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
@@ -153,23 +157,8 @@ public class AdorableHamsterPets {
 			if (flagAdvancementEntry != null) {
 				AdvancementProgress flagProgress = advancementTracker.getProgress(flagAdvancementEntry);
 				if (!flagProgress.isDone()) {
-					// --- 1. Create the Book ItemStack Directly ---
-					ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
-					@SuppressWarnings("unchecked")
-					ComponentType<Identifier> bookComponent = (ComponentType<Identifier>) Registries.DATA_COMPONENT_TYPE.get(Identifier.of("patchouli", "book"));
-					if (bookComponent != null) {
-						bookStack.set(bookComponent, Identifier.of(MOD_ID, "hamster_tips_guide_book"));
-					} else {
-						LOGGER.error("Could not find Patchouli's book component type! Guidebook will not be functional.");
-					}
-
-					// --- 2. Give the Item to the Player ---
-					player.getInventory().offerOrDrop(bookStack);
-
-					// --- 3. Grant the Flag Advancement ---
-					for (String criterion : flagAdvancementEntry.value().criteria().keySet()) {
-						advancementTracker.grantCriterion(flagAdvancementEntry, criterion);
-					}
+					// Deliver guidebook (grant advancement, no chat message, don't close screen)
+					deliverGuidebook(player, true, false, false);
 					LOGGER.info("Gave 'Hamster Tips' guide book to player {}.", player.getName().getString());
 				}
 			} else {
@@ -278,6 +267,52 @@ public class AdorableHamsterPets {
 			);
 			return knockedOutData.toNbt();
 		}).orElse(originalNbt); // Fallback to original NBT if deserialization fails
+	}
+
+	/**
+	 * Centralized utility for delivering the Hamster Tips guidebook to a player.
+	 * Handles item creation, Patchouli component assignment, inventory insertion,
+	 * advancement granting, and visual/audio effects.
+	 *
+	 * @param player The player receiving the book.
+	 * @param grantInitialAdvancement If true, grants the 'has_received_initial_guidebook' flag.
+	 * @param sendFallbackMessage If true, sends the introductory chat message.
+	 * @param closeScreen If true, tells the client to close their current GUI screen.
+	 */
+	public static void deliverGuidebook(ServerPlayerEntity player, boolean grantInitialAdvancement, boolean sendFallbackMessage, boolean closeScreen) {
+		// --- 1. Create the Book ItemStack Directly ---
+		ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
+		@SuppressWarnings("unchecked")
+		ComponentType<Identifier> bookComponent = (ComponentType<Identifier>) Registries.DATA_COMPONENT_TYPE.get(Identifier.of("patchouli", "book"));
+		if (bookComponent != null) {
+			bookStack.set(bookComponent, Identifier.of(MOD_ID, "hamster_tips_guide_book"));
+		} else {
+			LOGGER.error("Could not find Patchouli's book component type! Guidebook will not be functional.");
+		}
+
+		// --- 2. Give Item to Player ---
+		player.getInventory().offerOrDrop(bookStack);
+
+		// --- 3. Grant Flag Advancement ---
+		if (grantInitialAdvancement) {
+			PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
+			Identifier flagAdvId = Identifier.of(MOD_ID, "technical/has_received_initial_guidebook");
+			net.minecraft.advancement.AdvancementEntry flagAdvancementEntry = player.server.getAdvancementLoader().get(flagAdvId);
+
+			if (flagAdvancementEntry != null) {
+				for (String criterion : flagAdvancementEntry.value().criteria().keySet()) {
+					advancementTracker.grantCriterion(flagAdvancementEntry, criterion);
+				}
+			}
+		}
+
+		// --- 4. Send Fallback Message ---
+		if (sendFallbackMessage) {
+			player.sendMessage(Text.translatable("message.adorablehamsterpets.guidebook_fallback_delivery").formatted(Formatting.GOLD), false);
+		}
+
+		// --- 5. Trigger Client Effects ---
+		NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(closeScreen));
 	}
 
 	/**

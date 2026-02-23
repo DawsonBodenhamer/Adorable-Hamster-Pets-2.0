@@ -341,8 +341,8 @@ public class AdorableHamsterPetsClient {
         final AhpConfig config = AdorableHamsterPets.CONFIG;
         String username = client.player.getGameProfile().getName();
 
-        // Fast exit if globally disabled via secret key, or if already seen by this player
-        if (config.playersWhoHaveSeenGuidebookWarning.contains("secret_disable_key") ||
+        // Fast exit if globally disabled via secret key ("john_wayne"), or if already seen by this player
+        if (config.playersWhoHaveSeenGuidebookWarning.contains("john_wayne") ||
                 config.playersWhoHaveSeenGuidebookWarning.contains(username)) {
             return;
         }

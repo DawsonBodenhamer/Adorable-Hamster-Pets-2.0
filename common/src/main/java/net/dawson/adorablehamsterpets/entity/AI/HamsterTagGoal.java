@@ -76,7 +76,7 @@ public class HamsterTagGoal extends Goal {
         // Hamster must be facing player
         if (!EntityTargetingUtil.isFacing(this.hamster, player, 0.8)) return false;
         // Player must be looking at hamster
-        if (!EntityTargetingUtil.isLookingAt(player, this.hamster, 5.0)) return false;
+        if (!EntityTargetingUtil.isLookingAt(player, this.hamster, 5.0, 0.0)) return false;
 
         // --- 9. RNG Check ---
         return this.hamster.getRandom().nextInt(Configs.AHP.tagGameChanceDenominator.get()) == 0;

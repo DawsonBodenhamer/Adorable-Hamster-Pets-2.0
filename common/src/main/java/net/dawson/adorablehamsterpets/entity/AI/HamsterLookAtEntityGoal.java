@@ -117,7 +117,7 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
 
             // --- Dynamic Gaze Logic ---
             // If player's crosshair is on hamster, sustain eye contact
-            if (target instanceof LivingEntity livingTarget && EntityTargetingUtil.isLookingAt(livingTarget, this.mob, 5.0)) {
+            if (target instanceof LivingEntity livingTarget && EntityTargetingUtil.isLookingAt(livingTarget, this.mob, 5.0, 0.0)) {
                 // Reset timer to 60 ticks to sustain gaze
                 accessor.setLookTime(60);
             } else {

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # **The "Tag, You're It" Update**
 
-A bit of bug-squashing and typo-fixing, some new advancements, plus your hamsters have now developed a new, exhausting habit: playing tag. Gaze into their eyes for too long, and they might challenge you to a high-stakes footrace. If you catch them, they might give you a gift.
+A bit of bug-squashing and typo-fixing, some new advancements and improvements, plus your hamsters have now developed a new, exhausting habit: playing tag. Gaze into their eyes for too long, and they might challenge you to a high-stakes footrace. If you catch them, they might give you a gift.
 
 ### Added
 - **Tag Mini-Game**
@@ -28,6 +28,11 @@ A bit of bug-squashing and typo-fixing, some new advancements, plus your hamster
   - Triggers when a hamster leads you to Gold Ore instead of Diamond.
 - **Advancement: Load-Bearing Human**
   - Triggers when you mount 3 hamsters simultaneously (Right, Left, Head).
+- **Guidebook Delivery Fallback**
+  - Added a new configuration option that acts as a fallback for modpacks that disable auto-guidebook delivery on login.
+  - If enabled (default), players will automatically be given the Hamster Tips guidebook and receive a chat prompt the very first time they spot a wild hamster from <=10 blocks away.
+  - Targeting calculation includes wiggle room to ensure the event triggers even if the player's crosshair isn't perfectly on the hamster's hit box.
+  - Only triggers once, and only if the player has never yet received the guidebook (regardless of current inventory status).
 
 ### Changed
 - **Mod Page/README**
