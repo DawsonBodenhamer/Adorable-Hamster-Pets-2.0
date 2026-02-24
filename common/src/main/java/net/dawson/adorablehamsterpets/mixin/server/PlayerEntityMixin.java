@@ -99,6 +99,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private int adorablehamsterpets$diamondSoundCooldownTicks = 0;
     @Unique private int adorablehamsterpets$creeperSoundCooldownTicks = 0;
     @Unique private int ahp$guideBookCheckTimer = 0;
+    @Unique private int ahp$guideBookCheckGracePeriodTimer = 0;
     @Unique private int ahp$sunflowerCheckTimer = 0;
     @Unique private int ahp$tagGamesPlayedToday = 0;
     @Unique private long ahp$lastTagGameDayTime = 0;
@@ -452,6 +453,15 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public boolean ahp$computeHasGuideBook(PlayerEntity player) {
+        // --- 1. Check Cursor Stack ---
+        if (player.currentScreenHandler != null) {
+            ItemStack cursorStack = player.currentScreenHandler.getCursorStack();
+            if (!cursorStack.isEmpty() && cursorStack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+                return true;
+            }
+        }
+
+        // --- 2. Check Standard Inventory ---
         var inv = player.getInventory();
         for (int i = 0; i < inv.size(); i++) {
             ItemStack stack = inv.getStack(i);
@@ -809,6 +819,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         PlayerEntity self = (PlayerEntity) (Object) this;
         if (self.getWorld().isClient || !(self instanceof ServerPlayerEntity player)) return;
 
+        // Once per second
         if (++this.ahp$guideBookCheckTimer < AHP_GUIDEBOOK_CHECK_INTERVAL_TICKS) return;
         this.ahp$guideBookCheckTimer = 0;
 
@@ -817,28 +828,46 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         // Init guard
         if (!this.ahp$guideBookTrackingInitialized) {
             this.ahp$initGuideBookTracking(hasNow);
+            this.ahp$guideBookCheckGracePeriodTimer = 0;
             return;
         }
 
-        // Edge: No -> Yes
-        if (hasNow && !this.ahp$cachedHasGuideBook) {
-            ModPackets.CHANNEL.sendToPlayer(player, new ModPackets.PlayGuidebookEffectsS2CPacket(false));
-        }
-        // Fallback: Check if they are looking at a wild hamster to deliver the book
-        else if (!hasNow && Configs.AHP.enableAutoGuidebookDeliveryFallback) {
-            if (adorablehamsterpets$tryFallbackDelivery(player)) {
-                hasNow = true;
+        if (hasNow) {
+            // Book is present. Reset grace timer
+            this.ahp$guideBookCheckGracePeriodTimer = 0;
+
+            // Edge: No -> Yes
+            if (!this.ahp$cachedHasGuideBook) {
+                ModPackets.CHANNEL.sendToPlayer(player, new ModPackets.PlayGuidebookEffectsS2CPacket(false));
+                this.ahp$cachedHasGuideBook = true;
+            }
+        } else {
+            // Book is missing
+            if (this.ahp$cachedHasGuideBook) {
+                // Start/continue grace period
+                this.ahp$guideBookCheckGracePeriodTimer++;
+
+                // 30 seconds = 30 checks (runs once per second)
+                if (this.ahp$guideBookCheckGracePeriodTimer >= 30) {
+                    this.ahp$cachedHasGuideBook = false;
+                }
+            } else {
+                // Consider the guidebook officially lost
+                if (Configs.AHP.enableAutoGuidebookDeliveryFallback) {
+                    if (ahp$tryFallbackDelivery(player)) {
+                        this.ahp$cachedHasGuideBook = true;
+                        this.ahp$guideBookCheckGracePeriodTimer = 0;
+                    }
+                }
             }
         }
-
-        this.ahp$cachedHasGuideBook = hasNow;
     }
 
     /**
      * Executes a visual scan for a hamster to trigger fallback guidebook delivery.
      */
     @Unique
-    private boolean adorablehamsterpets$tryFallbackDelivery(ServerPlayerEntity player) {
+    private boolean ahp$tryFallbackDelivery(ServerPlayerEntity player) {
         PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
         Identifier flagAdvId = Identifier.of(AdorableHamsterPets.MOD_ID, "technical/has_received_initial_guidebook");
         Advancement flagAdvancement = player.server.getAdvancementLoader().get(flagAdvId);
@@ -860,8 +889,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             // Check if looking at the hamster with a 1-block padding to make it forgiving
             if (EntityTargetingUtil.isLookingAt(player, hamster, searchRadius, 1.0)) {
 
-                // Deliver guidebook: (grant advancement, send chat message, don't close screen)
-                AdorableHamsterPets.deliverGuidebook(player, true, true, false);
+                // Deliver guidebook: (grant advancement, send fallback message, play effects, don't close screen)
+                AdorableHamsterPets.deliverGuidebook(player, true, true, true, false);
 
                 AdorableHamsterPets.LOGGER.info("Delivered 'Hamster Tips' guidebook to player {} via visual fallback.", player.getName().getString());
                 return true;

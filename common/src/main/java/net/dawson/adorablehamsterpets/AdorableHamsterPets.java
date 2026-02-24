@@ -146,8 +146,8 @@ public class AdorableHamsterPets {
 			if (flagAdvancement != null) {
 				AdvancementProgress flagProgress = advancementTracker.getProgress(flagAdvancement);
 				if (!flagProgress.isDone()) {
-					// Deliver guidebook (grant advancement, no chat message, don't close screen)
-					deliverGuidebook(player, true, false, false);
+					// Deliver guidebook (grant advancement, no fallback message, don't play effects, don't close screen)
+					deliverGuidebook(player, true, false, false, false);
 					LOGGER.info("Gave 'Hamster Tips' guide book to player {}.", player.getName().getString());
 				}
 			} else {
@@ -266,9 +266,10 @@ public class AdorableHamsterPets {
 	 * @param player The player receiving the book.
 	 * @param grantInitialAdvancement If true, grants the 'has_received_initial_guidebook' flag.
 	 * @param sendFallbackMessage If true, sends the introductory chat message.
+	 * @param playEffects If true, triggers the client-side 'rediscovered' effects.
 	 * @param closeScreen If true, tells the client to close their current GUI screen.
 	 */
-	public static void deliverGuidebook(ServerPlayerEntity player, boolean grantInitialAdvancement, boolean sendFallbackMessage, boolean closeScreen) {
+    public static void deliverGuidebook(ServerPlayerEntity player, boolean grantInitialAdvancement, boolean sendFallbackMessage, boolean playEffects, boolean closeScreen) {
 		// --- 1. Create the Book ItemStack Directly on 1.20.1 ---
 		ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
 		NbtCompound nbt = bookStack.getOrCreateNbt();
@@ -277,7 +278,7 @@ public class AdorableHamsterPets {
 		// --- 2. Give the Item to the Player ---
 		player.getInventory().offerOrDrop(bookStack);
 
-		// --- 3. Grant Flag Advancement ---
+		// --- 3. Grant the Flag Advancement ---
 		if (grantInitialAdvancement) {
 			PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
 			Identifier flagAdvId = Identifier.of(MOD_ID, "technical/has_received_initial_guidebook");
@@ -292,7 +293,7 @@ public class AdorableHamsterPets {
 
 		// --- 4. Send Fallback Message ---
 		if (sendFallbackMessage) {
-			player.sendMessage(Text.translatable("message.adorablehamsterpets.guidebook_fallback_delivery").formatted(Formatting.GOLD), false);
+			player.sendMessage(Text.translatable("message.adorablehamsterpets.guidebook_obtained_fallback").formatted(Formatting.GOLD), false);
 		}
 
 		// --- 5. Trigger Client Effects ---

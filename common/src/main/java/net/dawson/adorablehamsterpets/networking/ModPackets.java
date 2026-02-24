@@ -95,8 +95,8 @@ public class ModPackets {
                 (packet, context) -> context.get().queue(() -> {
                     ServerPlayerEntity player = (ServerPlayerEntity) context.get().getPlayer();
 
-                    // Deliver guidebook: no advancement, no chat message, close the config screen
-                    AdorableHamsterPets.deliverGuidebook(player, false, false, true);
+                    // Deliver guidebook: no advancement, no fallback message, play effect, close the config screen
+                    AdorableHamsterPets.deliverGuidebook(player, false, false, true, true);
 
                     // Set cache
                     ((PlayerEntityAccessor) player).ahp$initGuideBookTracking(true);
@@ -187,7 +187,7 @@ public class ModPackets {
                 (packet, buf) -> buf.writeBoolean(packet.closeScreen()),
                 (buf) -> new PlayGuidebookEffectsS2CPacket(buf.readBoolean()),
                 (packet, context) -> context.get().queue(() ->
-                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handlePlayGuidebookEffects(packet))
+                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.queueGuidebookEffects(packet))
                 )
         );
 
