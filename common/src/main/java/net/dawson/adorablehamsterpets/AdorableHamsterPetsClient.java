@@ -63,14 +63,16 @@ import java.util.*;
 
 public class AdorableHamsterPetsClient {
 
-    // --- Rendering State ---
+    // --- Rendering ---
     private static final Set<Integer> renderedHamsterIdsThisTick = new HashSet<>();
     private static final Set<Integer> renderedHamsterIdsLastTick = new HashSet<>();
 
-    // --- Guidebook Warning State ---
+    // --- Guidebook ---
     private static int clientSessionTimer = 0;
+    private static boolean pendingGuidebookEffects = false;
+    private static int pendingGuidebookEffectsTimer = 0;
 
-    // --- Input & Dismount Logic ---
+    // --- Input & Dismount ---
     private static long lastSneakPressTime = 0;
     private static boolean isWaitingForSecondSneakPress = false;
     private static boolean hadShoulderHamsterLastTick = false;
@@ -82,7 +84,7 @@ public class AdorableHamsterPetsClient {
     private static List<AnnouncementManager.PendingNotification> pendingNotifications = Collections.emptyList();
     private static int nextRefreshTicks = 6000; // 5 minutes
 
-    // --- Tree Heist Feature ---
+    // --- Tree Heist ---
     private static final Map<Integer, HamsterTreeLoopSoundInstance> activeTreeSounds = new HashMap<>();
 
     // --- Hamster Riding ---
@@ -136,10 +138,9 @@ public class AdorableHamsterPetsClient {
 
         // --- Timers Reset ---
         ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(player -> {
-            // Reset guidebook warning timer
             clientSessionTimer = 0;
-            // Clear particle manager
             ClientParticleManager.INSTANCE.clear();
+            pendingGuidebookEffects = false;
         });
 
         // --- Register Tree Heist Sound & Jiggle Logic ---
@@ -324,6 +325,19 @@ public class AdorableHamsterPetsClient {
         // --- 7. Tick Particle Manager ---
         if (client.world != null && !client.isPaused()) {
             ClientParticleManager.INSTANCE.tick(client.world);
+        }
+
+        // --- 8. Deferred Guidebook Effects ---
+        if (pendingGuidebookEffects) {
+            pendingGuidebookEffectsTimer--;
+            if (client.currentScreen == null) {
+                // GUI closed in time, play effects
+                playGuidebookEffects(client);
+                pendingGuidebookEffects = false;
+            } else if (pendingGuidebookEffectsTimer <= 0) {
+                // Took too long, cancel effects
+                pendingGuidebookEffects = false;
+            }
         }
     }
 
@@ -588,22 +602,36 @@ public class AdorableHamsterPetsClient {
 
     /**
      * Handles the {@link PlayGuidebookEffectsPayload} packet.
-     * Plays sound effects, particles, and an action bar message when the guidebook is retrieved.
+     * Queues effects and an action bar message when the guidebook is retrieved.
      */
-    public static void handlePlayGuidebookEffects(PlayGuidebookEffectsPayload payload) {
+    public static void queueGuidebookEffects(PlayGuidebookEffectsPayload payload) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null) return;
 
         // Close config screen only if requested
         if (payload.closeScreen()) {
             client.setScreen(null);
+            playGuidebookEffects(client);
+        } else if (client.currentScreen != null) {
+            // A GUI is open. Defer effects for up to 5 seconds
+            pendingGuidebookEffects = true;
+            pendingGuidebookEffectsTimer = 100;
+        } else {
+            // No GUI open, play immediately
+            playGuidebookEffects(client);
         }
+    }
 
+    /**
+     * Executes feedback for discovering the guidebook.
+     * Plays sound effects, particles, and an action bar message
+     */
+    private static void playGuidebookEffects(MinecraftClient client) {
         PlayerEntity player = client.player;
         if (player == null || client.world == null) return;
 
         // Feedback
-        player.sendMessage(Text.translatable("message.adorablehamsterpets.guidebook_rediscovered").formatted(Formatting.GOLD), true);
+        player.sendMessage(Text.translatable("message.adorablehamsterpets.guidebook_obtained").formatted(Formatting.GOLD), true);
         client.world.playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.PLAYERS, 0.5f, 1.2f, false);
         client.world.playSound(player.getX(), player.getY(), player.getZ(), SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, 0.7f, 1.5f, false);
 
@@ -611,9 +639,9 @@ public class AdorableHamsterPetsClient {
                 player,
                 ParticleTypes.ENCHANT,
                 50,
-                0.6,
                 1.0,
-                0.5,
+                1.0,
+                0.05,
                 0.0
         );
         ParticleEffectsUtil.spawnParticlesOnEntity(

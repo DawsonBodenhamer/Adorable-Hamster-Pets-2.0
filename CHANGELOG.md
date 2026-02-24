@@ -42,6 +42,9 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - Changed default config value to `HEAD_FIRST`.
 - **Guidebook**
   - Updated Hamster Bed entry to explicitly mention the Totem of Undying requirement for respawning.
+- **Guidebook Effects**
+  - If you obtain the Hamster Tips guidebook while viewing a chest or crafting screen, the "rediscovered" visual and audio effects will now be postponed until you close the screen, ensuring the effects do not play while you're looking at your inventory.
+  - If you keep the screen open for longer than 5 seconds after obtaining the book, the effects are silently cancelled.
 
 ### Fixed
 - **Spanish Localization**
@@ -50,6 +53,9 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   -   The `sliced_cucumber_from_cutting_board.json` recipe for compatibility with Farmers Delight failed to load on 1.20.1 due to a typo.
 - **Acorn Inflation**
   - Fixed a decimal point error where Oak Leaves dropped Acorns at a 5% rate instead of the intended 0.5% (now it correctly matches vanilla Apple rarity).
+- **Guidebook Effects**
+  - Fixed an issue where moving the Hamster Tips guidebook around in your own inventory would sometimes re-trigger the "rediscovered" sound and particle effects.
+  - Added a 30-second grace period to the guidebook tracking system. Prevents the effects from spamming if you move it between inventories, or drop it and pick it back up.
 
 ---
 

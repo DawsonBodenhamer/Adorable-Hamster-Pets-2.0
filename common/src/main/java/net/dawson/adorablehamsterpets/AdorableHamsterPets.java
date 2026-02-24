@@ -157,8 +157,8 @@ public class AdorableHamsterPets {
 			if (flagAdvancementEntry != null) {
 				AdvancementProgress flagProgress = advancementTracker.getProgress(flagAdvancementEntry);
 				if (!flagProgress.isDone()) {
-					// Deliver guidebook (grant advancement, no chat message, don't close screen)
-					deliverGuidebook(player, true, false, false);
+					// Deliver guidebook (grant advancement, no fallback message, don't play effects, don't close screen)
+					deliverGuidebook(player, true, false, false, false);
 					LOGGER.info("Gave 'Hamster Tips' guide book to player {}.", player.getName().getString());
 				}
 			} else {
@@ -277,9 +277,10 @@ public class AdorableHamsterPets {
 	 * @param player The player receiving the book.
 	 * @param grantInitialAdvancement If true, grants the 'has_received_initial_guidebook' flag.
 	 * @param sendFallbackMessage If true, sends the introductory chat message.
+	 * @param playEffects If true, triggers the client-side 'rediscovered' effects.
 	 * @param closeScreen If true, tells the client to close their current GUI screen.
 	 */
-	public static void deliverGuidebook(ServerPlayerEntity player, boolean grantInitialAdvancement, boolean sendFallbackMessage, boolean closeScreen) {
+	public static void deliverGuidebook(ServerPlayerEntity player, boolean grantInitialAdvancement, boolean sendFallbackMessage, boolean playEffects, boolean closeScreen) {
 		// --- 1. Create the Book ItemStack Directly ---
 		ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
 		@SuppressWarnings("unchecked")
@@ -290,10 +291,10 @@ public class AdorableHamsterPets {
 			LOGGER.error("Could not find Patchouli's book component type! Guidebook will not be functional.");
 		}
 
-		// --- 2. Give Item to Player ---
+		// --- 2. Give the Item to the Player ---
 		player.getInventory().offerOrDrop(bookStack);
 
-		// --- 3. Grant Flag Advancement ---
+		// --- 3. Grant the Flag Advancement ---
 		if (grantInitialAdvancement) {
 			PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
 			Identifier flagAdvId = Identifier.of(MOD_ID, "technical/has_received_initial_guidebook");
@@ -308,11 +309,13 @@ public class AdorableHamsterPets {
 
 		// --- 4. Send Fallback Message ---
 		if (sendFallbackMessage) {
-			player.sendMessage(Text.translatable("message.adorablehamsterpets.guidebook_fallback_delivery").formatted(Formatting.GOLD), false);
+			player.sendMessage(Text.translatable("message.adorablehamsterpets.guidebook_obtained_fallback").formatted(Formatting.GOLD), false);
 		}
 
 		// --- 5. Trigger Client Effects ---
-		NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(closeScreen));
+		if (playEffects) {
+			NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(closeScreen));
+		}
 	}
 
 	/**

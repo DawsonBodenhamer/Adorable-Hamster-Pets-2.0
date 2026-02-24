@@ -26,13 +26,10 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.component.ComponentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -44,7 +41,6 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.predicate.entity.EntityPredicates;
-import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -64,7 +60,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import software.bernie.geckolib.animatable.GeoBlockEntity;
 
 import java.util.*;
 
@@ -106,6 +101,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private int adorablehamsterpets$diamondSoundCooldownTicks = 0;
     @Unique private int adorablehamsterpets$creeperSoundCooldownTicks = 0;
     @Unique private int ahp$guideBookCheckTimer = 0;
+    @Unique private int ahp$guideBookCheckGracePeriodTimer = 0;
     @Unique private int ahp$sunflowerCheckTimer = 0;
     @Unique private int ahp$tagGamesPlayedToday = 0;
     @Unique private long ahp$lastTagGameDayTime = 0;
@@ -458,6 +454,15 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public boolean ahp$computeHasGuideBook(PlayerEntity player) {
+        // --- 1. Check Cursor Stack ---
+        if (player.currentScreenHandler != null) {
+            ItemStack cursorStack = player.currentScreenHandler.getCursorStack();
+            if (!cursorStack.isEmpty() && cursorStack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+                return true;
+            }
+        }
+
+        // --- 2. Check Standard Inventory ---
         var inv = player.getInventory();
         for (int i = 0; i < inv.size(); i++) {
             ItemStack stack = inv.getStack(i);
@@ -813,6 +818,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         PlayerEntity self = (PlayerEntity) (Object) this;
         if (self.getWorld().isClient || !(self instanceof ServerPlayerEntity player)) return;
 
+        // Once per second
         if (++this.ahp$guideBookCheckTimer < AHP_GUIDEBOOK_CHECK_INTERVAL_TICKS) return;
         this.ahp$guideBookCheckTimer = 0;
 
@@ -821,21 +827,39 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         // Init guard
         if (!this.ahp$guideBookTrackingInitialized) {
             this.ahp$initGuideBookTracking(hasNow);
+            this.ahp$guideBookCheckGracePeriodTimer = 0;
             return;
         }
 
-        // Edge: No -> Yes
-        if (hasNow && !this.ahp$cachedHasGuideBook) {
-            NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(false));
-        }
-        // Fallback: Check if they are looking at a wild hamster to deliver the book
-        else if (!hasNow && Configs.AHP.enableAutoGuidebookDeliveryFallback) {
-            if (adorablehamsterpets$tryFallbackDelivery(player)) {
-                hasNow = true;
+        if (hasNow) {
+            // Book is present. Reset grace timer
+            this.ahp$guideBookCheckGracePeriodTimer = 0;
+
+            // Edge: No -> Yes
+            if (!this.ahp$cachedHasGuideBook) {
+                NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(false));
+                this.ahp$cachedHasGuideBook = true;
+            }
+        } else {
+            // Book is missing
+            if (this.ahp$cachedHasGuideBook) {
+                // Start/continue grace period
+                this.ahp$guideBookCheckGracePeriodTimer++;
+
+                // 30 seconds = 30 checks (runs once per second)
+                if (this.ahp$guideBookCheckGracePeriodTimer >= 30) {
+                    this.ahp$cachedHasGuideBook = false;
+                }
+            } else {
+                // Consider the guidebook officially lost
+                if (Configs.AHP.enableAutoGuidebookDeliveryFallback) {
+                    if (adorablehamsterpets$tryFallbackDelivery(player)) {
+                        this.ahp$cachedHasGuideBook = true;
+                        this.ahp$guideBookCheckGracePeriodTimer = 0;
+                    }
+                }
             }
         }
-
-        this.ahp$cachedHasGuideBook = hasNow;
     }
 
     /**
@@ -864,8 +888,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             // Check if looking at the hamster with a 1-block padding to make it forgiving
             if (EntityTargetingUtil.isLookingAt(player, hamster, searchRadius, 1.0)) {
 
-                // Deliver guidebook: (grant advancement, send chat message, don't close screen)
-                AdorableHamsterPets.deliverGuidebook(player, true, true, false);
+                // Deliver guidebook: (grant advancement, send fallback message, play effects, don't close screen)
+                AdorableHamsterPets.deliverGuidebook(player, true, true, true, false);
 
                 AdorableHamsterPets.LOGGER.info("Delivered 'Hamster Tips' guidebook to player {} via visual fallback.", player.getName().getString());
                 return true;

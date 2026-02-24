@@ -60,8 +60,8 @@ public class ModPackets {
                 (payload, context) -> context.queue(() -> {
                     ServerPlayerEntity player = (ServerPlayerEntity) context.getPlayer();
 
-                    // Deliver guidebook: no advancement, no chat message, close the config screen
-                    AdorableHamsterPets.deliverGuidebook(player, false, false, true);
+                    // Deliver guidebook: no advancement, no fallback message, play effect, close the config screen
+                    AdorableHamsterPets.deliverGuidebook(player, false, false, true, true);
 
                     // Set cache
                     ((PlayerEntityAccessor) player).ahp$initGuideBookTracking(true);
@@ -129,7 +129,7 @@ public class ModPackets {
         );
 
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, PlayGuidebookEffectsPayload.ID, PlayGuidebookEffectsPayload.CODEC,
-                (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handlePlayGuidebookEffects(payload))
+                (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.queueGuidebookEffects(payload))
         );
 
         // Handle the Shoulder Data Sync
