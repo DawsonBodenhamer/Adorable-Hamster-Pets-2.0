@@ -55,14 +55,11 @@ import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileUtil;
-import net.minecraft.inventory.Inventories;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.particle.EntityEffectParticleEffect;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
@@ -151,99 +148,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     /**
-     * Creates a HamsterEntity instance from NBT data, typically from a player's shoulder.
-     * This method loads the hamster's variant, health, age, inventory, effects, and custom name.
-     * It does NOT set the entity's position or spawn it in the world.
-     *
-     * @param world The server world to create the entity in.
-     * @param player The player who owns the hamster.
-     * @param nbt The NbtCompound containing the hamster's data, usually from the player's DataTracker.
-     * @return A fully configured, but not yet spawned, HamsterEntity instance, or null if creation fails.
-     */
-    @Nullable
-    public static HamsterEntity createFromNbt(ServerWorld world, PlayerEntity player, NbtCompound nbt) {
-        Optional<HamsterShoulderData> dataOpt = HamsterShoulderData.fromNbt(nbt);
-        if (dataOpt.isEmpty()) {
-            AdorableHamsterPets.LOGGER.error("Failed to deserialize HamsterShoulderData from NBT: {}", nbt);
-            return null;
-        }
-        HamsterShoulderData data = dataOpt.get();
-
-        AdorableHamsterPets.LOGGER.debug("[HamsterEntity] createFromNbt called for player {} with data: {}", player.getName().getString(), data);
-        HamsterEntity hamster = ModEntities.HAMSTER.get().create(world);
-
-        if (hamster != null) {
-            // --- 1. Load Core Data ---
-            hamster.setUuid(data.entityUuid());
-            hamster.setVariant(data.variantId());
-            hamster.setHealth(data.health());
-            hamster.setOwnerUuid(player.getUuid());
-            hamster.setTamed(true, true);
-            hamster.setBreedingAge(data.breedingAge());
-            hamster.throwCooldownEndTick = data.throwCooldownEndTick();
-            hamster.autoEatCooldownTicks = data.autoEatCooldownTicks();
-            hamster.getDataTracker().set(PINK_PETAL_TYPE, data.pinkPetalType());
-            hamster.getDataTracker().set(ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
-            hamster.getDataTracker().set(HAMSTER_FLAGS, data.hamsterFlags());
-
-            // Explicitly clear the sitting flag to ensure the hamster always dismounts standing.
-            hamster.setHamsterFlag(SITTING_FLAG, false);
-
-            // --- 2. Load Custom Name ---
-            data.customName().ifPresent(name -> {
-                if (!name.isEmpty()) {
-                    hamster.setCustomName(Text.literal(name));
-                }
-            });
-
-            // --- 3. Load Inventory ---
-            RegistryWrapper.WrapperLookup registries = world.getRegistryManager();
-            if (!data.inventoryNbt().isEmpty()) {
-                Inventories.readNbt(data.inventoryNbt(), hamster.getItems(), registries);
-                HamsterInventoryUtil.updateCheekStates(hamster);
-                HamsterInventoryUtil.syncEquipmentTrackers(hamster);
-            }
-
-            // --- 4. Load Green Bean Buff Data/Status Effects ---
-            HamsterShoulderData.GreenBeanBuffData buffData = data.greenBeanBuffData();
-            hamster.greenBeanBuffEndTick = buffData.greenBeanBuffEndTick();
-            hamster.getDataTracker().set(GREEN_BEAN_BUFF_DURATION, buffData.greenBeanBuffDuration());
-            NbtCompound effectsNbt = buffData.activeEffectsNbt();
-            if (effectsNbt.contains("active_effects", NbtElement.LIST_TYPE)) {
-                NbtList effectsList = effectsNbt.getList("active_effects", NbtElement.COMPOUND_TYPE);
-                for (NbtElement effectElement : effectsList) {
-                    if (effectElement instanceof NbtCompound effectInstanceNbt) {
-                        StatusEffectInstance effectInstance = StatusEffectInstance.fromNbt(effectInstanceNbt);
-                        if (effectInstance != null) {
-                            hamster.addStatusEffect(effectInstance);
-                        }
-                    }
-                }
-            }
-
-            // --- 5. Load Diamond Seeking Data ---
-            HamsterShoulderData.SeekingBehaviorData seekingData = data.seekingBehaviorData();
-            hamster.isPrimedToSeekDiamonds = seekingData.isPrimedToSeekDiamonds();
-            hamster.foundOreCooldownEndTick = seekingData.foundOreCooldownEndTick();
-            hamster.currentOreTarget = seekingData.currentOreTarget().orElse(null);
-
-            // --- 6. Load Wander Mode/Bed Data ---
-            HamsterShoulderData.WanderModeData wanderData = data.wanderModeData();
-            hamster.linkedBedPos = wanderData.linkedBedPos();
-            hamster.bypassNextSleepDelay = wanderData.bypassNextSleepDelay();
-
-            // --- 7. Reset Transient States ---
-            hamster.isAutoEating = false;
-            hamster.autoEatProgressTicks = 0;
-
-            // Explicitly reset transient action flags to prevent stuck states.
-            hamster.setHamsterFlag(CLEANING_FLAG, false);
-            hamster.setDozingPhase(DozingPhase.NONE);
-        }
-        return hamster;
-    }
-
-    /**
      * Spawns a HamsterEntity from NBT data near the player, handling position and spawning.
      * This is typically called when a player dismounts a hamster or respawns. It can accept a
      * pre-configured hamster instance (for throws) or create one from NBT (for dismounts/respawns).
@@ -256,7 +160,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      */
     public static void spawnFromNbt(ServerWorld world, PlayerEntity player, NbtCompound nbt, boolean wasDiamondAlertActive, @Nullable HamsterEntity preconfiguredHamster) {
         // --- 1. Use Pre-configured Hamster or Create from NBT ---
-        HamsterEntity hamster = preconfiguredHamster != null ? preconfiguredHamster : createFromNbt(world, player, nbt);
+        HamsterEntity hamster = preconfiguredHamster != null ? preconfiguredHamster : HamsterNbtUtil.createFromNbt(world, player, nbt);
         if (hamster == null) {
             return;
         }
@@ -364,13 +268,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int IS_PLAYING_TAG_FLAG = 1 << 23;
 
     // --- Data Trackers ---
-    private static final TrackedData<Integer> HAMSTER_FLAGS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Integer> VARIANT = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    public static final TrackedData<Integer> HAMSTER_FLAGS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    public static final TrackedData<Integer> VARIANT = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
     public static final TrackedData<Integer> ANIMATION_PERSONALITY_ID = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
     public static final TrackedData<Integer> PINK_PETAL_TYPE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
     public static final TrackedData<Integer> DOZING_PHASE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
     public static final TrackedData<String> CURRENT_DEEP_SLEEP_ANIM_ID = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static final TrackedData<String> ACTIVE_CUSTOM_GOAL_NAME_DEBUG = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.STRING);
     public static final TrackedData<Integer> GENERIC_INTERACTION_TIMER = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
     public static final TrackedData<ItemStack> MOUTH_ITEM_STACK = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     public static final TrackedData<Long> GREEN_BEAN_BUFF_DURATION = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.LONG);
@@ -379,6 +282,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final TrackedData<ItemStack> TRACKED_ACCESSORY_STACK = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     private static final TrackedData<ItemStack> TRACKED_ARMOR_STACK = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     private static final TrackedData<Boolean> FALL_IMMUNITY_ACTIVE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<String> ACTIVE_CUSTOM_GOAL_NAME_DEBUG = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.STRING);
 
     // --- Animation Constants ---
     private static final RawAnimation CRASH_ANIM = RawAnimation.begin().thenPlay("anim_hamster_crash");
@@ -579,6 +483,11 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void setVariant(int variantId) { this.dataTracker.set(VARIANT, variantId); }
     public boolean isSleeping() { return getHamsterFlag(SLEEPING_FLAG); }
     public void setSleeping(boolean sleeping) { setHamsterFlag(SLEEPING_FLAG, sleeping); }
+    public int getAutoEatCooldownTicks() { return this.autoEatCooldownTicks; }
+    public void setAutoEatCooldownTicks(int ticks) { this.autoEatCooldownTicks = ticks; }
+    public int getEjectionCheckCooldown() { return this.ejectionCheckCooldown; }
+    public void setEjectionCheckCooldown(int ticks) { this.ejectionCheckCooldown = ticks; }
+    public void setLoadingNbt(boolean loading) { this.isLoadingNbt = loading; }
     @Override
     public boolean isSitting() {
         return getHamsterFlag(SITTING_FLAG)
@@ -1008,7 +917,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.setWanderModeActive(false);
 
             // Save, Set, and Update Queue
-            HamsterShoulderData data = this.saveToShoulderData();
+            HamsterShoulderData data = HamsterNbtUtil.saveToShoulderData(this);
             playerAccessor.setShoulderHamster(availableSlot, data.toNbt());
             playerAccessor.adorablehamsterpets$getMountOrderQueue().addLast(availableSlot);
 
@@ -1426,260 +1335,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     // --- NBT Saving/Loading ---
     @Override
     public void writeCustomDataToNbt(NbtCompound nbt) {
-        // --- 1. Write Core Data & Flags ---
         super.writeCustomDataToNbt(nbt);
-        nbt.putInt("HamsterVariant", this.getVariant());
-
-        // For backward compatibility, write the flags out as individual booleans.
-        if (this.isTamed()) {
-            nbt.putBoolean("Sitting", getHamsterFlag(SITTING_FLAG));
-        }
-        nbt.putBoolean("KnockedOut", getHamsterFlag(KNOCKED_OUT_FLAG));
-        nbt.putBoolean("CheekPouchUnlocked", getHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG));
-        if (this.isTamed()) {
-            nbt.putBoolean("IsSleeping", getHamsterFlag(SLEEPING_FLAG));
-        } else {
-            nbt.putBoolean("IsSleeping", false);
-        }
-
-        nbt.putLong("ThrowCooldownEnd", this.throwCooldownEndTick);
-        nbt.putLong("GreenBeanBuffDuration", this.getDataTracker().get(GREEN_BEAN_BUFF_DURATION));
-        nbt.putInt("AutoEatCooldown", this.autoEatCooldownTicks);
-        nbt.putInt("EjectionCheckCooldown", this.ejectionCheckCooldown);
-        nbt.putInt("PinkPetalType", this.dataTracker.get(PINK_PETAL_TYPE));
-        nbt.putInt("AnimationPersonalityId", this.dataTracker.get(ANIMATION_PERSONALITY_ID));
-
-        // --- 2. Write Sleep State Data ---
-        nbt.putInt("DozingPhase", this.getDozingPhase().ordinal());
-        nbt.putString("CurrentDeepSleepAnimId", this.dataTracker.get(CURRENT_DEEP_SLEEP_ANIM_ID));
-        nbt.putInt("QuiescentSitTimer", this.quiescentSitDurationTimer);
-        nbt.putInt("DriftingOffTimer", this.driftingOffTimer);
-        nbt.putInt("SettleSleepCooldown", this.settleSleepAnimationCooldown);
-
-        // --- 3. Write Inventory ---
-        RegistryWrapper.WrapperLookup registries = getRegistryLookup();
-        NbtCompound inventoryWrapperNbt = new NbtCompound();
-        Inventories.writeNbt(inventoryWrapperNbt, this.items, registries);
-        nbt.put("Inventory", inventoryWrapperNbt);
-
-        // --- 4. Write Seeking and Sulking Data ---
-        nbt.putBoolean("IsPrimedToSeekDiamonds", this.isPrimedToSeekDiamonds);
-        nbt.putLong("FoundOreCooldownEndTick", this.foundOreCooldownEndTick);
-        if (this.currentOreTarget != null) {
-            nbt.putInt("OreTargetX", this.currentOreTarget.getX());
-            nbt.putInt("OreTargetY", this.currentOreTarget.getY());
-            nbt.putInt("OreTargetZ", this.currentOreTarget.getZ());
-        }
-        nbt.putBoolean("IsSulking", getHamsterFlag(SULKING_FLAG));
-        nbt.putBoolean("IsCelebratingDiamond", getHamsterFlag(CELEBRATING_DIAMOND_FLAG));
-
-        // --- 5. Write Interaction & Mini-Game Data ---
-        nbt.putLong("TagGameCooldownEnd", this.tagGameCooldownEndTick);
-        nbt.putLong("StealingCooldownEnd", this.stealingCooldownEndTick);
-
-        if (this.getGenericInteractionTimer() > 0) {
-            nbt.putInt("GenericInteractionTimer", this.getGenericInteractionTimer());
-        }
-
-        if (this.isHoldingMouthItem()) {
-            nbt.putBoolean("IsHoldingMouthItem", true);
-            if (!this.getMouthItemStack().isEmpty()) {
-                nbt.put("MouthItemStack", this.getMouthItemStack().encode(getRegistryLookup()));
-            }
-        }
-
-        // --- 7. Write Wander Mode Data ---
-        nbt.putBoolean("IsWanderModeActive", this.isWanderModeActive());
-        this.linkedBedPos.ifPresent(globalPos ->
-                nbt.put("LinkedBedPos", GlobalPos.CODEC.encodeStart(this.getWorld().getRegistryManager().getOps(NbtOps.INSTANCE), globalPos).getOrThrow()));
-        nbt.putBoolean("BypassNextSleepDelay", this.bypassNextSleepDelay);
-        nbt.putBoolean("StuckSearchingForBed", this.isStuckSearchingForBed());
-        nbt.putBoolean("IsRescueSleeping", this.isRescueSleeping());
-
-        // --- 8. Write Flight Data ---
-        nbt.putBoolean("HasPlayedIncomingSound", this.hasPlayedIncomingSound);
-
+        HamsterNbtUtil.writeCustomDataToNbt(this, nbt);
     }
 
     @Override
     public void readCustomDataFromNbt(NbtCompound nbt) {
-        this.isLoadingNbt = true; // Suppress sounds
-        // --- 1. Read Core Data ---
         super.readCustomDataFromNbt(nbt);
-        this.setVariant(nbt.getInt("HamsterVariant"));
-
-        // --- Read individual booleans and set flags for backward compatibility ---
-        boolean wasSittingNbt = this.isTamed() && nbt.getBoolean("Sitting");
-        this.setSitting(wasSittingNbt, true); // This will correctly set the SITTING_FLAG
-        setHamsterFlag(KNOCKED_OUT_FLAG, nbt.getBoolean("KnockedOut"));
-        setHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG, nbt.getBoolean("CheekPouchUnlocked"));
-        setHamsterFlag(SULKING_FLAG, nbt.getBoolean("IsSulking"));
-        setHamsterFlag(CELEBRATING_DIAMOND_FLAG, nbt.getBoolean("IsCelebratingDiamond"));
-        boolean loadedSleeping = nbt.getBoolean("IsSleeping");
-        if (!this.isTamed()) {
-            loadedSleeping = false;
-        }
-        setHamsterFlag(SLEEPING_FLAG, loadedSleeping);
-
-        this.throwCooldownEndTick = nbt.getLong("ThrowCooldownEnd");
-        this.getDataTracker().set(GREEN_BEAN_BUFF_DURATION, nbt.getLong("GreenBeanBuffDuration"));
-        this.autoEatCooldownTicks = nbt.getInt("AutoEatCooldown");
-        this.ejectionCheckCooldown = nbt.contains("EjectionCheckCooldown", NbtElement.INT_TYPE) ? nbt.getInt("EjectionCheckCooldown") : 20;
-        this.dataTracker.set(PINK_PETAL_TYPE, nbt.getInt("PinkPetalType"));
-
-        // If the NBT from a command or save file doesn't specify an ID, assign one.
-        // This covers /summon and ensures the ID persists through saves.
-        if (!nbt.contains("AnimationPersonalityId", NbtElement.INT_TYPE)) {
-            int personalityId = this.random.nextBetween(1, 3);
-            this.dataTracker.set(ANIMATION_PERSONALITY_ID, personalityId);
-            AdorableHamsterPets.LOGGER.debug("[NBT READ] Hamster ID {}: NBT had no personality, assigned new ID {}", this.getId(), personalityId);
-        } else {
-            // If it does contain one (e.g., from a saved world), read it normally.
-            this.dataTracker.set(ANIMATION_PERSONALITY_ID, nbt.getInt("AnimationPersonalityId"));
-        }
-
-        // --- 2. Read Sleep State Data ---
-        if (nbt.contains("DozingPhase", NbtElement.INT_TYPE)) {
-            int phaseOrdinal = nbt.getInt("DozingPhase");
-            if (phaseOrdinal >= 0 && phaseOrdinal < DozingPhase.values().length) {
-                DozingPhase phase = DozingPhase.values()[phaseOrdinal];
-                this.setDozingPhase(phase);
-                if (phase == DozingPhase.DEEP_SLEEP) {
-                    setHamsterFlag(SLEEPING_FLAG, true);
-                }
-            } else {
-                this.setDozingPhase(DozingPhase.NONE);
-            }
-        } else {
-            this.setDozingPhase(DozingPhase.NONE);
-        }
-        this.dataTracker.set(CURRENT_DEEP_SLEEP_ANIM_ID, nbt.getString("CurrentDeepSleepAnimId"));
-        this.quiescentSitDurationTimer = nbt.getInt("QuiescentSitTimer");
-        this.driftingOffTimer = nbt.getInt("DriftingOffTimer");
-        this.settleSleepAnimationCooldown = nbt.getInt("SettleSleepCooldown");
-
-        // --- 3. Read Inventory ---
-        this.items.clear();
-        RegistryWrapper.WrapperLookup registries = getRegistryLookup();
-        if (nbt.contains("Inventory", NbtElement.COMPOUND_TYPE)) {
-            Inventories.readNbt(nbt.getCompound("Inventory"), this.items, registries);
-        }
-        // If the NBT from a command or save file doesn't specify wild loot, generate it.
-        if (!hasInventoryData(nbt) && !this.isTamed()) {
-            HamsterInventoryUtil.generateWildLoot(this, this.random);
-        }
-        HamsterInventoryUtil.updateCheekStates(this);
-        HamsterInventoryUtil.syncEquipmentTrackers(this);
-
-        // --- 4. Read Seeking Data ---
-        this.isPrimedToSeekDiamonds = nbt.getBoolean("IsPrimedToSeekDiamonds");
-        this.foundOreCooldownEndTick = nbt.getLong("FoundOreCooldownEndTick");
-        if (nbt.contains("OreTargetX") && nbt.contains("OreTargetY") && nbt.contains("OreTargetZ")) {
-            this.currentOreTarget = new BlockPos(nbt.getInt("OreTargetX"), nbt.getInt("OreTargetY"), nbt.getInt("OreTargetZ"));
-        } else {
-            this.currentOreTarget = null;
-        }
-
-        // --- 5. Read Interaction & Mini-Game Data ---
-        this.tagGameCooldownEndTick = nbt.getLong("TagGameCooldownEnd");
-        this.stealingCooldownEndTick = nbt.getLong("StealingCooldownEnd");
-
-        this.setGenericInteractionTimer(nbt.getInt("GenericInteractionTimer"));
-
-        boolean holding = nbt.getBoolean("IsHoldingMouthItem");
-        this.setHoldingMouthItem(holding);
-
-        if (holding) {
-            if (nbt.contains("MouthItemStack", NbtElement.COMPOUND_TYPE)) {
-                ItemStack.fromNbt(registries, nbt.getCompound("MouthItemStack")).ifPresent(this::setMouthItemStack);
-            }
-        } else {
-            // Clear stack if flag isn't set just to be safe
-            this.setMouthItemStack(ItemStack.EMPTY);
-        }
-
-        // --- 7. Read Wander Mode Data if Relevant ---
-        setWanderModeActive(nbt.getBoolean("IsWanderModeActive"));
-        if (nbt.contains("LinkedBedPos")) {
-            this.linkedBedPos = GlobalPos.CODEC.parse(this.getWorld().getRegistryManager().getOps(NbtOps.INSTANCE), nbt.get("LinkedBedPos")).result();
-        } else {
-            this.linkedBedPos = Optional.empty();
-        }
-        this.bypassNextSleepDelay = nbt.getBoolean("BypassNextSleepDelay");
-        this.setStuckSearchingForBed(nbt.getBoolean("StuckSearchingForBed"));
-        this.setRescueSleeping(nbt.getBoolean("IsRescueSleeping"));
-        if (this.isRescueSleeping()) {
-            setHamsterFlag(SLEEPING_FLAG, true);
-        }
-
-        // --- 8. Read Flight Data ---
-        this.hasPlayedIncomingSound = nbt.getBoolean("HasPlayedIncomingSound");
-
-        this.isLoadingNbt = false;
-    }
-
-
-    // --- Shoulder Riding Data Handling ---
-    /**
-     * Captures the current state of this hamster into a {@link HamsterShoulderData} record.
-     * This record can then be serialized to NBT and stored on the player's DataTracker.
-     *
-     * @return A {@link HamsterShoulderData} record containing the hamster's current data.
-     */
-    public HamsterShoulderData saveToShoulderData() {
-        // --- 1. Update Trackers and Prepare NBT ---
-        HamsterInventoryUtil.updateCheekStates(this);
-        NbtCompound inventoryNbt = new NbtCompound();
-        if (this.getWorld() instanceof ServerWorld serverWorld) {
-            Inventories.writeNbt(inventoryNbt, this.items, serverWorld.getRegistryManager());
-        }
-
-        // --- 2. Save Active Status Effects to NBT ---
-        NbtCompound effectsNbt = new NbtCompound();
-        if (!this.getStatusEffects().isEmpty()) {
-            NbtList effectsList = new NbtList();
-            for (StatusEffectInstance effectInstance : this.getStatusEffects()) {
-                effectsList.add(effectInstance.writeNbt());
-            }
-            effectsNbt.put("active_effects", effectsList);
-        }
-
-        // --- 3. Get Custom Name ---
-        Optional<String> nameOptional = Optional.ofNullable(this.getCustomName()).map(Text::getString);
-
-        // --- 4. Create Inner Data Record Instances ---
-        HamsterShoulderData.SeekingBehaviorData seekingData = new HamsterShoulderData.SeekingBehaviorData(
-                this.isPrimedToSeekDiamonds,
-                this.foundOreCooldownEndTick,
-                Optional.ofNullable(this.currentOreTarget)
-        );
-        HamsterShoulderData.GreenBeanBuffData buffData = new HamsterShoulderData.GreenBeanBuffData(
-                this.greenBeanBuffEndTick,
-                this.getDataTracker().get(GREEN_BEAN_BUFF_DURATION),
-                effectsNbt
-        );
-        HamsterShoulderData.WanderModeData wanderData = new HamsterShoulderData.WanderModeData(
-                this.linkedBedPos,
-                this.bypassNextSleepDelay
-        );
-
-        // --- 5. Create and Return the Main Data Record ---
-        return new HamsterShoulderData(
-                this.getUuid(),
-                this.getVariant(),
-                this.getHealth(),
-                inventoryNbt,
-                this.getBreedingAge(),
-                this.throwCooldownEndTick,
-                buffData,
-                this.autoEatCooldownTicks,
-                nameOptional,
-                this.dataTracker.get(PINK_PETAL_TYPE),
-                this.dataTracker.get(ANIMATION_PERSONALITY_ID),
-                seekingData,
-                wanderData,
-                this.dataTracker.get(HAMSTER_FLAGS) // Pass the entire packed integer
-        );
+        HamsterNbtUtil.readCustomDataFromNbt(this, nbt);
     }
 
     // --- Entity Behavior ---
@@ -3510,13 +3173,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     /**
-     * Checks if the provided NBT compound contains valid inventory data.
-     */
-    private boolean hasInventoryData(NbtCompound nbt) {
-        return nbt.contains("Inventory", NbtElement.COMPOUND_TYPE);
-    }
-
-    /**
      * Triggers the visual and auditory effects of a hamster entering a tree canopy.
      *
      * @param pos The position where the effects should play.
@@ -3594,7 +3250,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * @param flag The bitmask of the flag to check (e.g., SLEEPING_FLAG).
      * @return True if the bit for the flag is set, false otherwise.
      */
-    private boolean getHamsterFlag(int flag) {
+    public boolean getHamsterFlag(int flag) {
         return (this.dataTracker.get(HAMSTER_FLAGS) & flag) != 0;
     }
 
@@ -3603,7 +3259,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * @param flag The bitmask of the flag to modify (e.g., SLEEPING_FLAG).
      * @param value True to set the bit, false to clear it.
      */
-    private void setHamsterFlag(int flag, boolean value) {
+    public void setHamsterFlag(int flag, boolean value) {
         int currentFlags = this.dataTracker.get(HAMSTER_FLAGS);
         if (value) {
             this.dataTracker.set(HAMSTER_FLAGS, currentFlags | flag);
