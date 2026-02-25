@@ -1,4 +1,4 @@
-package net.dawson.adorablehamsterpets.component;
+package net.dawson.adorablehamsterpets.util;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 // Data-holder record
-public record HamsterShoulderData(
+public record HamsterState(
         UUID entityUuid,
         int variantId,
         float health,
@@ -100,27 +100,27 @@ public record HamsterShoulderData(
     }
 
     // --- Lazy Initialized Main Codec ---
-    private static Codec<HamsterShoulderData> CODEC;
+    private static Codec<HamsterState> CODEC;
 
-    public static Codec<HamsterShoulderData> getCodec() {
+    public static Codec<HamsterState> getCodec() {
         if (CODEC == null) {
             CODEC = RecordCodecBuilder.create(instance ->
                     instance.group(
-                    Uuids.CODEC.fieldOf("entityUuid").forGetter(HamsterShoulderData::entityUuid),
-                    Codec.INT.fieldOf("variantId").forGetter(HamsterShoulderData::variantId),
-                    Codec.FLOAT.fieldOf("health").forGetter(HamsterShoulderData::health),
-                    NBT_COMPOUND_CODEC.fieldOf("inventoryNbt").forGetter(HamsterShoulderData::inventoryNbt),
-                    Codec.INT.fieldOf("breedingAge").forGetter(HamsterShoulderData::breedingAge),
-                    Codec.LONG.fieldOf("throwCooldownEndTick").forGetter(HamsterShoulderData::throwCooldownEndTick),
-                    GreenBeanBuffData.CODEC.fieldOf("greenBeanBuffData").orElse(GreenBeanBuffData.empty()).forGetter(HamsterShoulderData::greenBeanBuffData),
-                    Codec.INT.fieldOf("autoEatCooldownTicks").forGetter(HamsterShoulderData::autoEatCooldownTicks),
-                    Codec.STRING.optionalFieldOf("customName").forGetter(HamsterShoulderData::customName),
-                    Codec.INT.fieldOf("pinkPetalType").orElse(0).forGetter(HamsterShoulderData::pinkPetalType),
-                    Codec.INT.fieldOf("animationPersonalityId").orElse(1).forGetter(HamsterShoulderData::animationPersonalityId),
-                    SeekingBehaviorData.CODEC.fieldOf("seekingBehaviorData").orElse(SeekingBehaviorData.empty()).forGetter(HamsterShoulderData::seekingBehaviorData),
-                    WanderModeData.CODEC.fieldOf("wanderModeData").orElse(WanderModeData.empty()).forGetter(HamsterShoulderData::wanderModeData),
-                    Codec.INT.fieldOf("hamsterFlags").orElse(0).forGetter(HamsterShoulderData::hamsterFlags)
-            ).apply(instance, HamsterShoulderData::new)
+                    Uuids.CODEC.fieldOf("entityUuid").forGetter(HamsterState::entityUuid),
+                    Codec.INT.fieldOf("variantId").forGetter(HamsterState::variantId),
+                    Codec.FLOAT.fieldOf("health").forGetter(HamsterState::health),
+                    NBT_COMPOUND_CODEC.fieldOf("inventoryNbt").forGetter(HamsterState::inventoryNbt),
+                    Codec.INT.fieldOf("breedingAge").forGetter(HamsterState::breedingAge),
+                    Codec.LONG.fieldOf("throwCooldownEndTick").forGetter(HamsterState::throwCooldownEndTick),
+                    GreenBeanBuffData.CODEC.fieldOf("greenBeanBuffData").orElse(GreenBeanBuffData.empty()).forGetter(HamsterState::greenBeanBuffData),
+                    Codec.INT.fieldOf("autoEatCooldownTicks").forGetter(HamsterState::autoEatCooldownTicks),
+                    Codec.STRING.optionalFieldOf("customName").forGetter(HamsterState::customName),
+                    Codec.INT.fieldOf("pinkPetalType").orElse(0).forGetter(HamsterState::pinkPetalType),
+                    Codec.INT.fieldOf("animationPersonalityId").orElse(1).forGetter(HamsterState::animationPersonalityId),
+                    SeekingBehaviorData.CODEC.fieldOf("seekingBehaviorData").orElse(SeekingBehaviorData.empty()).forGetter(HamsterState::seekingBehaviorData),
+                    WanderModeData.CODEC.fieldOf("wanderModeData").orElse(WanderModeData.empty()).forGetter(HamsterState::wanderModeData),
+                    Codec.INT.fieldOf("hamsterFlags").orElse(0).forGetter(HamsterState::hamsterFlags)
+            ).apply(instance, HamsterState::new)
             );
         }
         return CODEC;
@@ -132,15 +132,15 @@ public record HamsterShoulderData(
      */
     public NbtCompound toNbt() {
         return (NbtCompound) getCodec().encodeStart(NbtOps.INSTANCE, this)
-                .getOrThrow(error -> new IllegalStateException("Could not encode HamsterShoulderData: " + error));
+                .getOrThrow(error -> new IllegalStateException("Could not encode HamsterState: " + error));
     }
 
     /**
-     * Deserializes an NbtCompound into a HamsterShoulderData record.
+     * Deserializes an NbtCompound into a HamsterState record.
      * @param nbt The NbtCompound to read from.
      * @return An Optional containing the deserialized data, or empty if deserialization fails.
      */
-    public static Optional<HamsterShoulderData> fromNbt(NbtCompound nbt) {
+    public static Optional<HamsterState> fromNbt(NbtCompound nbt) {
         return getCodec().parse(NbtOps.INSTANCE, nbt)
                 .resultOrPartial(AdorableHamsterPets.LOGGER::error);
     }

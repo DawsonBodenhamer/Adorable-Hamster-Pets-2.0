@@ -22,7 +22,7 @@ public abstract class AbstractClientPlayerEntityMixin {
         AbstractClientPlayerEntity thisPlayer = (AbstractClientPlayerEntity) (Object) this;
         // The tick method can be called on the integrated server thread, so we must check.
         if (thisPlayer.getWorld().isClient) {
-            ClientShoulderHamsterData clientData = ((PlayerEntityAccessor) thisPlayer).adorablehamsterpets$getClientShoulderData();
+            ClientShoulderHamsterData clientData = ((PlayerEntityAccessor) thisPlayer).adorablehamsterpets$getClientHamsterState();
             if (clientData != null) {
                 clientData.clientTick(thisPlayer);
             }

@@ -31,7 +31,7 @@ public class ModPackets {
         // This is a crucial step for the server. It learns what these packets are.
         NetworkManager.registerS2CPayloadType(SpawnBeddingParticlesPayload.ID, SpawnBeddingParticlesPayload.CODEC);
         NetworkManager.registerS2CPayloadType(PlayGuidebookEffectsPayload.ID, PlayGuidebookEffectsPayload.CODEC);
-        NetworkManager.registerS2CPayloadType(SyncShoulderDataPayload.ID, SyncShoulderDataPayload.CODEC);
+        NetworkManager.registerS2CPayloadType(SyncHamsterStatePayload.ID, SyncHamsterStatePayload.CODEC);
         NetworkManager.registerS2CPayloadType(PlayDistantSoundPayload.ID, PlayDistantSoundPayload.CODEC);
     }
 
@@ -133,7 +133,7 @@ public class ModPackets {
         );
 
         // Handle the Shoulder Data Sync
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SyncShoulderDataPayload.ID, SyncShoulderDataPayload.CODEC,
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SyncHamsterStatePayload.ID, SyncHamsterStatePayload.CODEC,
                 (payload, context) -> context.queue(() -> {
                     // Client-side logic to apply the NBT
                     MinecraftClient client = MinecraftClient.getInstance();
@@ -141,7 +141,7 @@ public class ModPackets {
                         Entity entity = client.world.getEntityById(payload.entityId());
                         // Check if the entity is a player and has my accessor
                         if (entity instanceof PlayerEntity && entity instanceof PlayerEntityAccessor accessor) {
-                            accessor.adorablehamsterpets$setRawShoulderData(payload.data());
+                            accessor.adorablehamsterpets$setRawHamsterState(payload.data());
                         }
                     }
                 })

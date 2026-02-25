@@ -2,7 +2,7 @@ package net.dawson.adorablehamsterpets.entity.client.feature;
 
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
-import net.dawson.adorablehamsterpets.component.HamsterShoulderData;
+import net.dawson.adorablehamsterpets.util.HamsterState;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.client.renderer.ShoulderHamsterRenderer;
@@ -68,7 +68,7 @@ public class HamsterShoulderFeatureRenderer
         // do not have fully initialized DataTrackers. Attempting to access my custom data
         // on them can crash the game (NPE or IllegalArgumentException).
         // Catch these exceptions to safely skip rendering for these specific entities.
-        if (!hasShoulderDataSafe(playerAccessor)) {
+        if (!hasHamsterStateSafe(playerAccessor)) {
             return;
         }
 
@@ -78,15 +78,15 @@ public class HamsterShoulderFeatureRenderer
         }
 
         // --- Get the per-player data holder ---
-        ClientShoulderHamsterData clientData = playerAccessor.adorablehamsterpets$getClientShoulderData();
+        ClientShoulderHamsterData clientData = playerAccessor.adorablehamsterpets$getClientHamsterState();
         if (clientData == null) return; // Safety check
 
         // --- Render Hamster for Each Occupied Slot ---
         for (ShoulderLocation location : ShoulderLocation.values()) {
             NbtCompound shoulderNbt = playerAccessor.getShoulderHamster(location);
             if (!shoulderNbt.isEmpty()) {
-                HamsterShoulderData.fromNbt(shoulderNbt).ifPresent(shoulderData ->
-                        renderShoulderHamster(matrices, vertexConsumers, light, player, shoulderData, tickDelta, clientData, location)
+                HamsterState.fromNbt(shoulderNbt).ifPresent(hamsterState ->
+                        renderShoulderHamster(matrices, vertexConsumers, light, player, hamsterState, tickDelta, clientData, location)
                 );
             }
         }
@@ -98,7 +98,7 @@ public class HamsterShoulderFeatureRenderer
      * Wraps the DataTracker access in a try-catch block to prevent crashes when rendering
      * malformed entities (e.g., shader shadows or uninitialized fake players).
      */
-    private boolean hasShoulderDataSafe(PlayerEntityAccessor playerAccessor) {
+    private boolean hasHamsterStateSafe(PlayerEntityAccessor playerAccessor) {
         try {
             return playerAccessor.hasAnyShoulderHamster();
         } catch (RuntimeException e) {
@@ -112,7 +112,7 @@ public class HamsterShoulderFeatureRenderer
      * Applies visual data from the stored shoulder NBT to a specific dummy entity.
      * This ensures the rendered model has the correct appearance (variant, age, cheeks, etc.).
      */
-    private void applyShoulderData(HamsterEntity dummyHamster, HamsterShoulderData data, PlayerEntity owner) {
+    private void applyHamsterState(HamsterEntity dummyHamster, HamsterState data, PlayerEntity owner) {
         // --- Mark this as a shoulder pet for the animation controller ---
         dummyHamster.setShoulderPet(true);
 
@@ -149,7 +149,7 @@ public class HamsterShoulderFeatureRenderer
      */
     private void renderShoulderHamster(
             MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light,
-            AbstractClientPlayerEntity player, HamsterShoulderData shoulderData, float tickDelta,
+            AbstractClientPlayerEntity player, HamsterState hamsterState, float tickDelta,
             ClientShoulderHamsterData clientData, ShoulderLocation location
     ) {
         // --- 1. Get the correct dummy and renderer for this specific location ---
@@ -158,7 +158,7 @@ public class HamsterShoulderFeatureRenderer
         if (dummyHamster == null || hamsterRenderer == null) return;
 
         // --- 2. Update Dummy Entity State from Pre-Ticked Data ---
-        updateDummyState(dummyHamster, shoulderData, clientData, location, player);
+        updateDummyState(dummyHamster, hamsterState, clientData, location, player);
 
         // Manually reset the animation manager's update timer.
         // This forces GeckoLib to perform a full animation update for this specific dummy instance,
@@ -256,9 +256,9 @@ public class HamsterShoulderFeatureRenderer
      * Applies all pre-calculated state to the dummy entity right before rendering.
      * This is the final step that bridges the client-thread logic with the render-thread object.
      */
-    private void updateDummyState(HamsterEntity dummyHamster, HamsterShoulderData nbtData, ClientShoulderHamsterData clientData, ShoulderLocation location, PlayerEntity owner) {
+    private void updateDummyState(HamsterEntity dummyHamster, HamsterState nbtData, ClientShoulderHamsterData clientData, ShoulderLocation location, PlayerEntity owner) {
         // --- 1. Apply visual data from NBT ---
-        applyShoulderData(dummyHamster, nbtData, owner);
+        applyHamsterState(dummyHamster, nbtData, owner);
 
         // --- 2. Apply animation clock from client data ---
         dummyHamster.age = clientData.getAnimationAge(location);
