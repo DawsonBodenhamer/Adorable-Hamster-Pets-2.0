@@ -853,7 +853,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             } else {
                 // Consider the guidebook officially lost
                 if (Configs.AHP.enableAutoGuidebookDeliveryFallback) {
-                    if (adorablehamsterpets$tryFallbackDelivery(player)) {
+                    if (ahp$tryFallbackDelivery(player)) {
                         this.ahp$cachedHasGuideBook = true;
                         this.ahp$guideBookCheckGracePeriodTimer = 0;
                     }
@@ -866,7 +866,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
      * Executes a visual scan for a hamster to trigger fallback guidebook delivery.
      */
     @Unique
-    private boolean adorablehamsterpets$tryFallbackDelivery(ServerPlayerEntity player) {
+    private boolean ahp$tryFallbackDelivery(ServerPlayerEntity player) {
         PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
         Identifier flagAdvId = Identifier.of(AdorableHamsterPets.MOD_ID, "technical/has_received_initial_guidebook");
         AdvancementEntry flagAdvancementEntry = player.server.getAdvancementLoader().get(flagAdvId);
