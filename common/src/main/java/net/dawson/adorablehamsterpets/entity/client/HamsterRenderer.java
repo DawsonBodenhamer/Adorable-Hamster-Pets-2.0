@@ -10,7 +10,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterVariant;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterMouthItemOffsets;
-import net.dawson.adorablehamsterpets.util.HamsterSeatOffsets;
+import net.dawson.adorablehamsterpets.util.HamsterRidingUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -45,9 +45,6 @@ import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
@@ -256,7 +253,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
                     // --- 5. Apply Seat Offsets ---
                     // Use centralized logic to position rider correctly on hamster's back
-                    Vec3d seat = HamsterSeatOffsets.visualSeatOffset(living, hamster.getScale());
+                    Vec3d seat = HamsterRidingUtil.HamsterSeatOffsets.visualSeatOffset(living, hamster.getScale());
                     matrices.translate(seat.x, seat.y, seat.z);
 
                     // --- 6. Neutralize Vanilla Yaw ---
