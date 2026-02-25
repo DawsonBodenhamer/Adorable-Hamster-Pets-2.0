@@ -118,8 +118,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final double HAMSTER_ATTACK_BOX_EXPANSION = 0.70D;  // Expand by 0.7 blocks horizontally (vanilla is 0.83 blocks, so really this is shrinking it)
     private static final int NORMAL_FALL_PITCH_DURATION = 15;
     private static final int PITCH_RESET_DURATION = 3;
-    private static final int RIDER_JUMP_COOLDOWN_TICKS = 8;
-    private static final double RIDER_JUMP_VELOCITY = 0.6D; // ~2 blocks
 
     public enum DozingPhase {
         NONE,                  // Not in any part of the sleep sequence
@@ -554,6 +552,25 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.getWorld().sendEntityStatus(this, (byte) 6);
             return false;
         }
+    }
+    // --- Riding State Accessors ---
+    public int getRiderJumpCooldown() { return this.riderJumpCooldown; }
+    public void setRiderJumpCooldown(int ticks) { this.riderJumpCooldown = ticks; }
+    public boolean isRiderJumpHeld() { return this.riderJumpHeld; }
+    public void setRiderJumpHeld(boolean held) { this.riderJumpHeld = held; }
+    public boolean isRiderJumpQueued() { return this.riderJumpQueued; }
+    public void setRiderJumpQueued(boolean queued) { this.riderJumpQueued = queued; }
+    public boolean isRiderSprintHeld() { return this.riderSprintHeld; }
+    public void setRiderSprintHeld(boolean held) { this.riderSprintHeld = held; }
+    // --- Riding Protected Wrappers ---
+    public void delegateTravel(Vec3d movementInput) {
+        super.travel(movementInput);
+    }
+    public void delegateSetRotation(float yaw, float pitch) {
+        this.setRotation(yaw, pitch);
+    }
+    public void executeJump() {
+        this.jump();
     }
     /**
      * Handles the logic when a player successfully right-clicks a hamster playing tag.
@@ -1117,144 +1134,22 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         return !this.isOnGround() && this.getVelocity().y < -0.01; // Extremely high sensitivity
     }
-    /**
-     * Mounts the player onto the hamster and configures the state for riding.
-     * Called by the server-side packet handler.
-     * @param player The player to mount.
-     */
     public void putPlayerOnBack(PlayerEntity player) {
-        if (!this.hasPassenger(player)) {
-            player.startRiding(this);
-            // Force stand up to allow movement
-            this.setSitting(false, false);
-
-            // If the owner mounts, disable wander mode to give them full control.
-            if (this.isOwner(player)) {
-                this.setWanderModeActive(false);
-            }
-        }
+        HamsterRidingUtil.putPlayerOnBack(this, player);
     }
-    /**
-     * Determines the entity controlling this mob.
-     * <p>
-     * Only allows the passenger to steer if the hamster is tamed and the passenger
-     * is the verified owner.
-     */
     @Nullable
     @Override
     public LivingEntity getControllingPassenger() {
-        // Only allow steering if tamed and the passenger is the owner
-        if (this.isTamed()) {
-            Entity firstPassenger = this.getFirstPassenger();
-            if (firstPassenger instanceof LivingEntity passenger && this.isOwner(passenger)) {
-                return passenger;
-            }
-        }
-        return null;
+        return HamsterRidingUtil.getControllingPassenger(this);
     }
-    /**
-     * Manages movement physics and rider inputs.
-     * <p>
-     * If ridden by the owner, this method synchronizes rotation, calculates speed based on config settings,
-     * and executes jump logic on both the Client (for prediction) and Server (for sound/authority).
-     */
     @Override
     public void travel(Vec3d movementInput) {
-        if (this.isAlive()) {
-            LivingEntity passenger = this.getControllingPassenger();
-            if (this.isTamed() && passenger instanceof PlayerEntity player) {
-
-                // --- 1. Sync Mount Rotation to Rider ---
-                this.setYaw(player.getYaw());
-                this.prevYaw = this.getYaw();
-                this.setPitch(player.getPitch() * 0.5F);
-                this.setRotation(this.getYaw(), this.getPitch());
-                this.bodyYaw = this.getYaw();
-                this.headYaw = this.bodyYaw;
-
-                // --- 2. Read Rider Movement Input ---
-                float forwardSpeed = player.forwardSpeed;
-                float sidewaysSpeed = player.sidewaysSpeed;
-
-                // Backward movement penalty
-                if (forwardSpeed <= 0.0F) {
-                    forwardSpeed *= 0.25F;
-                }
-
-                // --- 3. Configuration & Speed Calculation ---
-                // Perform this on both Client and Server to ensure attributes are synced.
-                final AhpConfig config = AdorableHamsterPets.CONFIG;
-
-                // A. Calculate Sprint State
-                // Check 'riderSprintHeld' (Input) AND actual movement (Physics)
-                // Prevents "Toggle Sprint" from keeping hamster in a sprint state while standing still
-                boolean hasMovement = Math.abs(forwardSpeed) > 1.0e-5 || Math.abs(sidewaysSpeed) > 1.0e-5;
-                boolean isSprinting = this.riderSprintHeld && hasMovement;
-
-                // Sync the visual sprinting state (particles/FOV)
-                this.setSprinting(isSprinting);
-
-                // B. Select Config Multiplier
-                double speedMultiplier = isSprinting
-                        ? config.ridingSprintSpeedMultiplier.get()
-                        : config.ridingBaseSpeedMultiplier.get();
-
-                // C. Get Attribute Base (Includes Gold Armor buff automatically)
-                float attributeSpeed = (float) this.getAttributeValue(EntityAttributes.GENERIC_MOVEMENT_SPEED);
-
-                // D. Apply Multiplier
-                float finalSpeed = (float) (attributeSpeed * speedMultiplier);
-
-                // E. Apply Potion Effects (Additive on top of multiplier)
-                if (this.hasStatusEffect(StatusEffects.SPEED)) {
-                    finalSpeed += 0.1f;
-                }
-
-                this.setMovementSpeed(finalSpeed);
-
-                // --- 4. Jump Logic ---
-                // Apply BEFORE travel so it participates in the same tick's movement integration
-                if (this.riderJumpCooldown > 0) {
-                    this.riderJumpCooldown--;
-                } else if (this.riderJumpQueued) {
-                    this.riderJumpQueued = false; // consume
-                    this.tryRiderJump();
-                }
-
-                // --- 5. Movement Execution ---
-                if (this.isLogicalSideForUpdatingMovement()) {
-                    // Logic: Server controlling mob (e.g. no rider, or rider not a player)
-                    super.travel(new Vec3d(sidewaysSpeed, 0.0, forwardSpeed));
-                } else if (player instanceof ClientPlayerEntity) {
-                    // Logic: Physical Client controlling mob
-                    super.travel(new Vec3d(sidewaysSpeed, 0.0, forwardSpeed));
-                } else {
-                    // Logic: Server when mob is controlled by client player.
-                    // We DO NOT call super.travel() here.
-                    // The client sends position packets. Calling travel() here causes rubberbanding.
-                    // However, we successfully ran Step 4 (Jump Logic) above, so the Sound plays and cooldown resets!
-                }
-                return;
-            }
+        if (!HamsterRidingUtil.handleTravel(this, movementInput)) {
+            super.travel(movementInput);
         }
-        // Default movement
-        super.travel(movementInput);
     }
-    /**
-     * Updates the input state from the rider.
-     * Called by both the Server (via packet) and Client (via prediction).
-     */
     public void setRiderInput(boolean jump, boolean sprint) {
-        // Rising edge logic for jump
-        if (jump && !this.riderJumpHeld) {
-            this.riderJumpQueued = true;
-            // Only log on server to avoid spam
-            if (!this.getWorld().isClient()) {
-                AdorableHamsterPets.LOGGER.info("[AHP JUMP][SERVER] hamsterId={} queuedJump=true", this.getId());
-            }
-        }
-        this.riderJumpHeld = jump;
-        this.riderSprintHeld = sprint;
+        HamsterRidingUtil.setRiderInput(this, jump, sprint);
     }
 
     // --- Vanilla Equipment Mapping ---
@@ -2758,7 +2653,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         // Passenger-size compensation (applying scaleFactor again causes scale^2 offsets).
         double riderAdjustY = passenger instanceof LivingEntity living
-                ? HamsterSeatOffsets.physicsSeatAdjustY(living, this.getScale())
+                ? HamsterRidingUtil.HamsterSeatOffsets.physicsSeatAdjustY(living, this.getScale())
                 : 0.0;
 
         return new Vec3d(0.0, baseY + riderAdjustY, 0.0);
@@ -3113,62 +3008,11 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         return true;
     }
 
-    /**
-     * Called when a passenger is removed.
-     * <p>
-     * Overridden to explicitly reset all rider input state to prevent
-     * "sticky" inputs or visual glitches after dismounting.
-     */
     @Override
     protected void removePassenger(Entity passenger) {
         Entity controller = this.getControllingPassenger();
         super.removePassenger(passenger);
-
-        // If the driver dismounted, reset all driving state
-        if (passenger == controller) {
-            this.riderJumpCooldown = 0;
-            this.riderJumpHeld = false;
-            this.riderSprintHeld = false;
-            this.riderJumpQueued = false;
-            this.setSprinting(false);
-        }
-    }
-
-    /**
-     * Executes the jump logic for a ridden hamster.
-     * <p>
-     * Validates ground state, applies vertical velocity, triggers the
-     * jump cooldown, and plays a bounce sound.
-     */
-    private void tryRiderJump() {
-        if (!this.isOnGround()) {
-            return;
-        }
-
-        if (this.isTouchingWater() || this.isInLava()) return;
-
-        this.jump();
-
-        // Enforce exact jump height
-        Vec3d v = this.getVelocity();
-        this.setVelocity(v.x, RIDER_JUMP_VELOCITY, v.z);
-        this.velocityDirty = true;
-        this.fallDistance = 0.0F;
-
-        // --- Sound Logic ---
-        PlayerEntity rider = (this.getControllingPassenger() instanceof PlayerEntity p) ? p : null;
-
-        // Randomize pitch: Base 1.2 with a variance of +/- 0.2 (Result: 1.0 to 1.4)
-        float randomPitch = 1.2f + (this.random.nextFloat() * 0.4f - 0.2f);
-
-        this.getWorld().playSound(rider, this.getX(), this.getY(), this.getZ(),
-                ModSounds.HAMSTER_BOUNCE.get(),
-                net.minecraft.sound.SoundCategory.PLAYERS,
-                0.6f,
-                randomPitch
-        );
-
-        this.riderJumpCooldown = RIDER_JUMP_COOLDOWN_TICKS;
+        HamsterRidingUtil.onPassengerRemoved(this, passenger, controller);
     }
 
     /**
