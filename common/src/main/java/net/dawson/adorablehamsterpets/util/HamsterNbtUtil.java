@@ -215,6 +215,9 @@ public final class HamsterNbtUtil {
         // --- 8. Read Flight Data ---
         hamster.setHasPlayedIncomingSound(nbt.getBoolean("HasPlayedIncomingSound"));
 
+        // --- 9. Reconcile Accessory State ---
+        hamster.updateAccessoryState();
+
         hamster.setLoadingNbt(false);
     }
 
@@ -361,6 +364,9 @@ public final class HamsterNbtUtil {
             // --- 7. Reset Transient Action Flags ---
             hamster.setHamsterFlag(HamsterEntity.CLEANING_FLAG, false);
             hamster.setDozingPhase(HamsterEntity.DozingPhase.NONE);
+
+            // --- 8. Reconcile Accessory State ---
+            hamster.updateAccessoryState();
         }
         return hamster;
     }
