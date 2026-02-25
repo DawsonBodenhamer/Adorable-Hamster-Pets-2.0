@@ -57,6 +57,10 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         CoreGeoBone petalSideBone = this.getAnimationProcessor().getBone("pink_petal_side");
         CoreGeoBone petalBackBone = this.getAnimationProcessor().getBone("pink_petal_lower_back");
 
+        // 1.20.1: Hide petal bones by default to prevent rendering state leaks
+        if (petalHeadBone != null) petalHeadBone.setHidden(true);
+        if (petalSideBone != null) petalSideBone.setHidden(true);
+        if (petalBackBone != null) petalBackBone.setHidden(true);
 
         // --- Cheek Pouch Visibility Logic ---
         if (leftCheekDefBone != null && leftCheekInfBone != null) {
