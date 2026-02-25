@@ -28,17 +28,17 @@ public interface PlayerEntityAccessor {
         adorablehamsterpets$dismountShoulderHamster(false);
     }
 
-    void adorablehamsterpets$setRawShoulderData(net.minecraft.nbt.NbtCompound nbt);
+    void adorablehamsterpets$setRawHamsterState(net.minecraft.nbt.NbtCompound nbt);
 
     /**
      * Triggers the synchronization of shoulder data to the client.
      * This must be called AFTER the player has fully joined and the connection is established.
      */
-    void adorablehamsterpets$syncShoulderData();
+    void adorablehamsterpets$syncHamsterState();
 
     ArrayDeque<ShoulderLocation> adorablehamsterpets$getMountOrderQueue();
 
-    ClientShoulderHamsterData adorablehamsterpets$getClientShoulderData();
+    ClientShoulderHamsterData adorablehamsterpets$getClientHamsterState();
 
     /**
      * Registers a new tree heist for a specific Tree ID (Anchor position).

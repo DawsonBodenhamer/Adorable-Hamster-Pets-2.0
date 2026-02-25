@@ -7,7 +7,7 @@ import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
-import net.dawson.adorablehamsterpets.component.HamsterShoulderData;
+import net.dawson.adorablehamsterpets.util.HamsterState;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
@@ -922,7 +922,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.setWanderModeActive(false);
 
             // Save, Set, and Update Queue
-            HamsterShoulderData data = HamsterNbtUtil.saveToShoulderData(this);
+            HamsterState data = HamsterNbtUtil.saveToHamsterState(this);
             playerAccessor.setShoulderHamster(availableSlot, data.toNbt());
             playerAccessor.adorablehamsterpets$getMountOrderQueue().addLast(availableSlot);
 

@@ -48,7 +48,7 @@ public class ModPackets {
     // S2C (Server-to-Client)
     public record PlayGuidebookEffectsS2CPacket(boolean closeScreen) {}
     public record SpawnBeddingParticlesS2CPacket(BlockPos pos, Direction direction, WoodVariant variant) {}
-    public record SyncShoulderDataS2CPacket(int entityId, NbtCompound data) {}
+    public record SyncHamsterStateS2CPacket(int entityId, NbtCompound data) {}
     public record PlayDistantSoundS2CPacket(Identifier soundId, float volume, float pitch) {}
 
     /**
@@ -191,14 +191,14 @@ public class ModPackets {
                 )
         );
 
-        CHANNEL.register(SyncShoulderDataS2CPacket.class,
+        CHANNEL.register(SyncHamsterStateS2CPacket.class,
                 (packet, buf) -> {
                     buf.writeInt(packet.entityId());
                     buf.writeNbt(packet.data());
                 },
-                (buf) -> new SyncShoulderDataS2CPacket(buf.readInt(), buf.readNbt()),
+                (buf) -> new SyncHamsterStateS2CPacket(buf.readInt(), buf.readNbt()),
                 (packet, context) -> context.get().queue(() ->
-                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handleSyncShoulderData(packet.entityId(), packet.data()))
+                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handleSyncHamsterState(packet.entityId(), packet.data()))
                 )
         );
 

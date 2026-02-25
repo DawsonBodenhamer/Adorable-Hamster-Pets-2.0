@@ -588,14 +588,14 @@ public class AdorableHamsterPetsClient {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
-     * Handles the SyncShoulderData packet on the client.
+     * Handles the SyncHamsterState packet on the client.
      */
-    public static void handleSyncShoulderData(int entityId, net.minecraft.nbt.NbtCompound data) {
+    public static void handleSyncHamsterState(int entityId, net.minecraft.nbt.NbtCompound data) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world != null) {
             net.minecraft.entity.Entity entity = client.world.getEntityById(entityId);
             if (entity instanceof net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor accessor) {
-                accessor.adorablehamsterpets$setRawShoulderData(data);
+                accessor.adorablehamsterpets$setRawHamsterState(data);
             }
         }
     }

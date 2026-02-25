@@ -2,7 +2,6 @@ package net.dawson.adorablehamsterpets.util;
 
 import com.mojang.serialization.DataResult;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.dawson.adorablehamsterpets.component.HamsterShoulderData;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -225,9 +224,9 @@ public final class HamsterNbtUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
-     * Captures the current state of this hamster into a {@link HamsterShoulderData} record.
+     * Captures the current state of this hamster into a {@link HamsterState} record.
      */
-    public static HamsterShoulderData saveToShoulderData(HamsterEntity hamster) {
+    public static HamsterState saveToHamsterState(HamsterEntity hamster) {
         // --- 1. Update Trackers and Prepare NBT ---
         HamsterInventoryUtil.updateCheekStates(hamster);
         NbtCompound inventoryNbt = new NbtCompound();
@@ -243,23 +242,23 @@ public final class HamsterNbtUtil {
         Optional<String> nameOptional = Optional.ofNullable(hamster.getCustomName()).map(Text::getString);
 
         // --- 4. Create Inner Data Record Instances ---
-        HamsterShoulderData.SeekingBehaviorData seekingData = new HamsterShoulderData.SeekingBehaviorData(
+        HamsterState.SeekingBehaviorData seekingData = new HamsterState.SeekingBehaviorData(
                 hamster.isPrimedToSeekDiamonds,
                 hamster.foundOreCooldownEndTick,
                 Optional.ofNullable(hamster.currentOreTarget)
         );
-        HamsterShoulderData.GreenBeanBuffData buffData = new HamsterShoulderData.GreenBeanBuffData(
+        HamsterState.GreenBeanBuffData buffData = new HamsterState.GreenBeanBuffData(
                 hamster.getGreenBeanBuffEndTick(),
                 hamster.getDataTracker().get(HamsterEntity.GREEN_BEAN_BUFF_DURATION),
                 effectsList
         );
-        HamsterShoulderData.WanderModeData wanderData = new HamsterShoulderData.WanderModeData(
+        HamsterState.WanderModeData wanderData = new HamsterState.WanderModeData(
                 hamster.getLinkedBedPos(),
                 hamster.shouldBypassNextSleepDelay()
         );
 
         // --- 5. Create and Return the Main Data Record ---
-        return new HamsterShoulderData(
+        return new HamsterState(
                 hamster.getUuid(),
                 hamster.getVariant(),
                 hamster.getHealth(),
@@ -284,12 +283,12 @@ public final class HamsterNbtUtil {
      */
     @Nullable
     public static HamsterEntity createFromNbt(ServerWorld world, PlayerEntity player, NbtCompound nbt) {
-        Optional<HamsterShoulderData> dataOpt = HamsterShoulderData.fromNbt(nbt);
+        Optional<HamsterState> dataOpt = HamsterState.fromNbt(nbt);
         if (dataOpt.isEmpty()) {
-            AdorableHamsterPets.LOGGER.error("Failed to deserialize HamsterShoulderData from NBT: {}", nbt);
+            AdorableHamsterPets.LOGGER.error("Failed to deserialize HamsterState from NBT: {}", nbt);
             return null;
         }
-        HamsterShoulderData data = dataOpt.get();
+        HamsterState data = dataOpt.get();
 
         AdorableHamsterPets.LOGGER.debug("[HamsterNbtUtil] createFromNbt called for player {} with data: {}", player.getName().getString(), data);
         HamsterEntity hamster = ModEntities.HAMSTER.get().create(world);
@@ -326,7 +325,7 @@ public final class HamsterNbtUtil {
             }
 
             // --- 4. Load Green Bean Buff Data/Status Effects ---
-            HamsterShoulderData.GreenBeanBuffData buffData = data.greenBeanBuffData();
+            HamsterState.GreenBeanBuffData buffData = data.greenBeanBuffData();
             hamster.setGreenBeanBuffEndTick(buffData.greenBeanBuffEndTick());
             hamster.getDataTracker().set(HamsterEntity.GREEN_BEAN_BUFF_DURATION, buffData.greenBeanBuffDuration());
 
@@ -340,13 +339,13 @@ public final class HamsterNbtUtil {
             }
 
             // --- 5. Load Diamond Seeking Data ---
-            HamsterShoulderData.SeekingBehaviorData seekingData = data.seekingBehaviorData();
+            HamsterState.SeekingBehaviorData seekingData = data.seekingBehaviorData();
             hamster.isPrimedToSeekDiamonds = seekingData.isPrimedToSeekDiamonds();
             hamster.foundOreCooldownEndTick = seekingData.foundOreCooldownEndTick();
             hamster.currentOreTarget = seekingData.currentOreTarget().orElse(null);
 
             // --- 6. Load Wander Mode/Bed Data ---
-            HamsterShoulderData.WanderModeData wanderData = data.wanderModeData();
+            HamsterState.WanderModeData wanderData = data.wanderModeData();
             hamster.setLinkedBedPos(wanderData.linkedBedPos());
             hamster.setBypassNextSleepDelay(wanderData.bypassNextSleepDelay());
 

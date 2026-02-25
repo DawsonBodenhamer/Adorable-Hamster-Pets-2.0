@@ -8,7 +8,7 @@ import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.ModBlockEntities;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.command.ModCommands;
-import net.dawson.adorablehamsterpets.component.HamsterShoulderData;
+import net.dawson.adorablehamsterpets.util.HamsterState;
 import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
@@ -157,7 +157,7 @@ public class AdorableHamsterPets {
 		}
 
 		// Sync initial shoulder data
-		((PlayerEntityAccessor) player).adorablehamsterpets$syncShoulderData();
+		((PlayerEntityAccessor) player).adorablehamsterpets$syncHamsterState();
 
 		// Upgrade any old hamster tips guide books in the player's inventory
 		replaceOldBooksInInventory(player.getInventory());
@@ -173,7 +173,7 @@ public class AdorableHamsterPets {
 	 * Forces a resync of shoulder data (only necessary on 1.20.1).
 	 */
 	private static void onPlayerChangeDimension(ServerPlayerEntity player, RegistryKey<World> oldWorld, RegistryKey<World> newWorld) {
-		((PlayerEntityAccessor) player).adorablehamsterpets$syncShoulderData();
+		((PlayerEntityAccessor) player).adorablehamsterpets$syncHamsterState();
 	}
 
 	/**
@@ -247,9 +247,9 @@ public class AdorableHamsterPets {
 	 * @return A new NbtCompound with the KNOCKED_OUT_FLAG set.
 	 */
 	private static NbtCompound setKnockedOutInNbt(NbtCompound originalNbt) {
-		return HamsterShoulderData.fromNbt(originalNbt).map(data -> {
+		return HamsterState.fromNbt(originalNbt).map(data -> {
 			int newFlags = data.hamsterFlags() | HamsterEntity.KNOCKED_OUT_FLAG;
-			HamsterShoulderData knockedOutData = new HamsterShoulderData(
+			HamsterState knockedOutData = new HamsterState(
 					data.entityUuid(), data.variantId(), data.health(), data.inventoryNbt(),
 					data.breedingAge(), data.throwCooldownEndTick(), data.greenBeanBuffData(),
 					data.autoEatCooldownTicks(), data.customName(), data.pinkPetalType(),

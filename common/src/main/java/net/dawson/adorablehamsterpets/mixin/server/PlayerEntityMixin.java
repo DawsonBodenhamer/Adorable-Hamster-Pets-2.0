@@ -90,8 +90,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
      * ────────────────────────────────────────────────────────────────────────────*/
 
     // --- Shoulder Data ---
-    @Unique private NbtCompound ahp$shoulderData = new NbtCompound();
-    @Unique private transient ClientShoulderHamsterData adorablehamsterpets$clientShoulderData;
+    @Unique private NbtCompound ahp$hamsterState = new NbtCompound();
+    @Unique private transient ClientShoulderHamsterData adorablehamsterpets$clientHamsterState;
     @Unique private final transient ArrayDeque<ShoulderLocation> adorablehamsterpets$mountOrderQueue = new ArrayDeque<>();
 
     // --- Timers & Cooldowns ---
@@ -128,7 +128,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     private void adorablehamsterpets$onInit(World world, BlockPos pos, float yaw, GameProfile gameProfile, CallbackInfo ci) {
         // Client-side visual setup
         if (world.isClient) {
-            this.adorablehamsterpets$clientShoulderData = new ClientShoulderHamsterData();
+            this.adorablehamsterpets$clientHamsterState = new ClientShoulderHamsterData();
         }
     }
 
@@ -139,8 +139,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Inject(method = "writeCustomDataToNbt", at = @At("TAIL"))
     private void adorablehamsterpets$writeNbt(NbtCompound nbt, CallbackInfo ci) {
         // --- 1. Save Shoulder Data ---
-        if (!this.ahp$shoulderData.isEmpty()) {
-            nbt.put("ShoulderHamsters", this.ahp$shoulderData);
+        if (!this.ahp$hamsterState.isEmpty()) {
+            nbt.put("ShoulderHamsters", this.ahp$hamsterState);
         }
 
         // --- 2. Save Mount Queue ---
@@ -194,7 +194,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             if (!oldHamsterNbt.isEmpty()) {
                 NbtCompound newShoulderPetsNbt = new NbtCompound();
                 newShoulderPetsNbt.put(ShoulderLocation.RIGHT_SHOULDER.name(), oldHamsterNbt);
-                this.ahp$shoulderData = newShoulderPetsNbt;
+                this.ahp$hamsterState = newShoulderPetsNbt;
                 this.adorablehamsterpets$mountOrderQueue.clear();
                 this.adorablehamsterpets$mountOrderQueue.add(ShoulderLocation.RIGHT_SHOULDER);
                 nbt.remove("ShoulderHamster"); // remove old tag to complete migration
@@ -202,7 +202,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         } else if (nbt.contains("ShoulderHamsters", NbtElement.COMPOUND_TYPE)) {
             // standard Read
-            this.ahp$shoulderData = nbt.getCompound("ShoulderHamsters");
+            this.ahp$hamsterState = nbt.getCompound("ShoulderHamsters");
         }
 
         // --- 2. Queue Sanitization ---
@@ -484,7 +484,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public NbtCompound getShoulderHamster(ShoulderLocation location) {
-        return this.ahp$shoulderData.getCompound(location.name());
+        return this.ahp$hamsterState.getCompound(location.name());
     }
 
     @Unique
@@ -492,14 +492,14 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     public void setShoulderHamster(ShoulderLocation location, NbtCompound nbt) {
         // Update local
         if (nbt == null || nbt.isEmpty()) {
-            this.ahp$shoulderData.remove(location.name());
+            this.ahp$hamsterState.remove(location.name());
         } else {
-            this.ahp$shoulderData.put(location.name(), nbt);
+            this.ahp$hamsterState.put(location.name(), nbt);
         }
 
         // Sync logic
         if (!this.getWorld().isClient()) {
-            ModPackets.SyncShoulderDataS2CPacket packet = new ModPackets.SyncShoulderDataS2CPacket(this.getId(), this.ahp$shoulderData);
+            ModPackets.SyncHamsterStateS2CPacket packet = new ModPackets.SyncHamsterStateS2CPacket(this.getId(), this.ahp$hamsterState);
             PlayerEntity self = (PlayerEntity) (Object) this;
 
             // Send to self
@@ -521,18 +521,18 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     @Unique
     @Override
-    public void adorablehamsterpets$setRawShoulderData(NbtCompound nbt) {
-        this.ahp$shoulderData = nbt;
+    public void adorablehamsterpets$setRawHamsterState(NbtCompound nbt) {
+        this.ahp$hamsterState = nbt;
     }
 
     @Unique
     @Override
-    public void adorablehamsterpets$syncShoulderData() {
-        if (!this.getWorld().isClient() && !this.ahp$shoulderData.isEmpty()) {
+    public void adorablehamsterpets$syncHamsterState() {
+        if (!this.getWorld().isClient() && !this.ahp$hamsterState.isEmpty()) {
             PlayerEntity self = (PlayerEntity) (Object) this;
             if (self instanceof ServerPlayerEntity serverPlayer) {
                 // On 1.20.1, use ModPackets.CHANNEL and the inner record class
-                var packet = new ModPackets.SyncShoulderDataS2CPacket(this.getId(), this.ahp$shoulderData);
+                var packet = new ModPackets.SyncHamsterStateS2CPacket(this.getId(), this.ahp$hamsterState);
                 ModPackets.CHANNEL.sendToPlayer(serverPlayer, packet);
             }
         }
@@ -721,12 +721,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     @Unique
     @Override
-    public ClientShoulderHamsterData adorablehamsterpets$getClientShoulderData() {
+    public ClientShoulderHamsterData adorablehamsterpets$getClientHamsterState() {
         // Lazy init for safety
-        if (this.adorablehamsterpets$clientShoulderData == null && this.getWorld().isClient) {
-            this.adorablehamsterpets$clientShoulderData = new ClientShoulderHamsterData();
+        if (this.adorablehamsterpets$clientHamsterState == null && this.getWorld().isClient) {
+            this.adorablehamsterpets$clientHamsterState = new ClientShoulderHamsterData();
         }
-        return this.adorablehamsterpets$clientShoulderData;
+        return this.adorablehamsterpets$clientHamsterState;
     }
 
     @Unique
@@ -802,8 +802,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         super.onStartedTrackingBy(player);
 
         // Sync shoulder data to the watcher immediately
-        if (!this.ahp$shoulderData.isEmpty()) {
-            ModPackets.SyncShoulderDataS2CPacket packet = new ModPackets.SyncShoulderDataS2CPacket(this.getId(), this.ahp$shoulderData);
+        if (!this.ahp$hamsterState.isEmpty()) {
+            ModPackets.SyncHamsterStateS2CPacket packet = new ModPackets.SyncHamsterStateS2CPacket(this.getId(), this.ahp$hamsterState);
             ModPackets.CHANNEL.sendToPlayer(player, packet);
         }
     }
