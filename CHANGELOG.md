@@ -56,6 +56,8 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
 - **Guidebook Effects**
   - Fixed an issue where moving the Hamster Tips guidebook around in your own inventory would sometimes re-trigger the "rediscovered" sound and particle effects.
   - Added a 30-second grace period to the guidebook tracking system. Prevents the effects from spamming if you move it between inventories, or drop it and pick it back up.
+- **Pink Petals Bug (1.20.1 only)**
+  - Fixed an issue where Pink Petals would visually apply to all three locations simultaneously when first equipping them or reloading a world.
 
 ---
 
