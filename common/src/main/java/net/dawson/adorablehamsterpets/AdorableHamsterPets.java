@@ -20,6 +20,7 @@ import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.HamsterNbtUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
 import net.dawson.adorablehamsterpets.util.ModLootTableModifiers;
 import net.dawson.adorablehamsterpets.world.ModSpawnPlacements;
@@ -213,7 +214,7 @@ public class AdorableHamsterPets {
 
 			// Modify NBT to set the knocked-out state before spawning
 			NbtCompound modifiedNbt = setKnockedOutInNbt(shoulderNbt);
-			HamsterEntity hamster = HamsterEntity.createFromNbt(world, oldPlayer, modifiedNbt);
+			HamsterEntity hamster = HamsterNbtUtil.createFromNbt(world, oldPlayer, modifiedNbt);
 			if (hamster == null) continue;
 
 			// Determine pos with safe spawning algorithm

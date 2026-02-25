@@ -22,6 +22,7 @@ import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
+import net.dawson.adorablehamsterpets.util.HamsterNbtUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.minecraft.advancement.Advancement;
 import net.minecraft.advancement.PlayerAdvancementTracker;
@@ -575,7 +576,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
 
         // Validate entity creation before altering state
-        HamsterEntity hamster = HamsterEntity.createFromNbt((ServerWorld) world, self, shoulderNbt);
+        HamsterEntity hamster = HamsterNbtUtil.createFromNbt((ServerWorld) world, self, shoulderNbt);
         if (hamster == null) {
             this.setShoulderHamster(locationToProcess, new NbtCompound());
             if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
