@@ -5,6 +5,7 @@ import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -336,7 +337,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
                     this.hamster.setInSittingPose(true);
                     this.world.setBlockState(bedPos, this.world.getBlockState(bedPos).with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
 
-                    this.hamster.startNapTimer();
+                    HamsterBedUtil.startNapTimer(this.hamster);
 
                     // trigger bed anim
                     BlockEntity be = this.world.getBlockEntity(bedPos);
@@ -344,7 +345,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
                         geoBlockEntity.triggerAnim("hamster_bed_controller", "anim_bed_becoming_occupied");
                     }
 
-                    this.hamster.startBedSleepEffects();
+                    HamsterBedUtil.startBedSleepEffects(hamster);
 
                     if (be instanceof HamsterBedBlockEntity bedEntity) {
                         bedEntity.markAsUsed();

@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.entity.AI.navigation;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.pathing.MobNavigation;
 import net.minecraft.entity.ai.pathing.Path;
@@ -146,7 +147,7 @@ public class HamsterNavigation extends MobNavigation {
         AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] planPathWithWaypoint target={}", targetPos);
 
         Path direct = super.findPathTo(targetPos, 0);
-        boolean directUnsafe = direct != null && hamster.isPathThroughUnlinkedBed(direct);
+        boolean directUnsafe = direct != null && HamsterBedUtil.isPathThroughUnlinkedBed(this.hamster, direct);
 
         // If the direct path is safe, reset everything.
         if (!directUnsafe) {
@@ -183,7 +184,7 @@ public class HamsterNavigation extends MobNavigation {
             BlockPos alt = targetPos.add(dx, 0, dz);
 
             Path altPath = super.findPathTo(alt, 0);
-            boolean altUnsafe = altPath == null || hamster.isPathThroughUnlinkedBed(altPath);
+            boolean altUnsafe = altPath == null || HamsterBedUtil.isPathThroughUnlinkedBed(this.hamster, altPath);
             AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Alt attempt {}: {} → {} unsafe={}", i + 1, alt, (altPath == null ? "null" : ("len=" + altPath.getLength())), altUnsafe);
 
             if (!altUnsafe) {
@@ -224,7 +225,7 @@ public class HamsterNavigation extends MobNavigation {
 
         // If a direct path to the current target is now safe, drop the waypoint
         Path directNow = super.findPathTo(currentTargetPos, 0);
-        if (directNow != null && !hamster.isPathThroughUnlinkedBed(directNow)) {
+        if (directNow != null && !HamsterBedUtil.isPathThroughUnlinkedBed(this.hamster, directNow)) {
             AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Direct path became safe; clearing waypoint {}", avoidanceWaypoint);
             clearWaypoint();
             return false;

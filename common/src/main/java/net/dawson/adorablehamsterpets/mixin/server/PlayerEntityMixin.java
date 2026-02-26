@@ -22,6 +22,7 @@ import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
+import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
 import net.dawson.adorablehamsterpets.util.HamsterNbtUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.minecraft.advancement.Advancement;
@@ -398,7 +399,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                             int personality = hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
                             int poseIndex = (personality >= 1 && personality <= 3) ? personality : 1;
                             hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, "anim_hamster_sleep_pose" + poseIndex);
-                            hamster.startNapTimer();
+                            HamsterBedUtil.startNapTimer(hamster);
 
                             // Cleanup flags
                             hamster.setStuckSearchingForBed(false);
