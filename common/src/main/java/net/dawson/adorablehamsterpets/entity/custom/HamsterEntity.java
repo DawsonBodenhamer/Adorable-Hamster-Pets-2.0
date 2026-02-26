@@ -7,7 +7,6 @@ import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
-import net.dawson.adorablehamsterpets.util.HamsterState;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
@@ -28,7 +27,6 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
@@ -2643,7 +2641,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     /**
      * Calculates the position where the passenger sits.
      * <p>
-     * Uses {@link HamsterSeatOffsets} to ensure the rider remains visually anchored
+     * Uses {@link HamsterRidingUtil.HamsterSeatOffsets} to ensure the rider remains visually anchored
      * to the hamster's back, dynamically compensating for the entity's scale factor.
      */
     @Override
