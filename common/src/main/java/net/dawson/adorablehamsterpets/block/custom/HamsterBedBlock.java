@@ -13,6 +13,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
@@ -237,7 +238,7 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                     bedEntity.getLinkedHamsterUuid().ifPresent(uuid -> {
                         Entity entity = ((ServerWorld) world).getEntity(uuid);
                         if (entity instanceof HamsterEntity hamster && hamster.isSleeping()) {
-                            hamster.wakeUpFromBed(true); // Categorize as manual wake-up
+                            HamsterBedUtil.wakeUpFromBed(hamster, true); // Manual wakeup
                         }
                     });
                 }
@@ -399,7 +400,7 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                             hamster.setWanderModeActive(false);
                             hamster.setLinkedBedPos(Optional.empty());
                             if (hamster.isSleeping()) {
-                                hamster.wakeUpFromBed(true); // Manual wake-up
+                                HamsterBedUtil.wakeUpFromBed(hamster, true); // Manual wakeup
                             }
                             if (hamster.getOwner() instanceof PlayerEntity owner) {
                                 if (Configs.AHP.enableBedBreakMessage) {

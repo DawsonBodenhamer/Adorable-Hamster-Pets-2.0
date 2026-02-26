@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -14,9 +15,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryWrapper;
@@ -28,7 +26,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoBlockEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -162,7 +159,7 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
 
                 // If disabling wander mode while hamster is in bed, wake it up
                 if (!newMode && getCachedState().get(HamsterBedBlock.OCCUPIED) && hamster.isSleeping()) {
-                    hamster.wakeUpFromBed(true);
+                    HamsterBedUtil.wakeUpFromBed(hamster, true); // Manual wakeup
                 }
 
                 Text status = newMode ? Text.literal("ENABLED") : Text.literal("DISABLED");
@@ -226,7 +223,7 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
             if (getCachedState().get(HamsterBedBlock.OCCUPIED)) {
                 Entity entity = serverWorld.getEntity(uuidToUnlink);
                 if (entity instanceof HamsterEntity hamster && hamster.isSleeping()) {
-                    hamster.wakeUpFromBed(true);
+                    HamsterBedUtil.wakeUpFromBed(hamster, true); // Manual wakeup
                 }
             }
 

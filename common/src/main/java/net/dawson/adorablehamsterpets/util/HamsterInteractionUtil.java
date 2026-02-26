@@ -159,7 +159,7 @@ public final class HamsterInteractionUtil {
         World world = hamster.getWorld();
 
         if (hamster.isSleeping()) {
-            if (!world.isClient()) hamster.wakeUpFromBed(true);
+            if (!world.isClient()) HamsterBedUtil.wakeUpFromBed(hamster, true); // Manual wakeup
             return ActionResult.success(world.isClient());
         }
 
