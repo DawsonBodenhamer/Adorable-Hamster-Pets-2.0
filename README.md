@@ -22,9 +22,9 @@
 
 </div>
 
-<a href="https://youtube.com/shorts/YEBDFItiOXA?si=lgGFLeAcsdrMn7qD">
+<a href="https://youtu.be/QCzbNhzo1mg">
 <img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/crimsongaming_showcase_thumbnail.png"
-     alt="Watch the Adorable Hamster Pets Crimson Gaming Showcase"
+     alt="Watch the Showcase"
      width="55%">
 </a>
 
