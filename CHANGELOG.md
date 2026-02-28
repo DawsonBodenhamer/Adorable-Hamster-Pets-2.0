@@ -58,6 +58,9 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - Added a 30-second grace period to the guidebook tracking system. Prevents the effects from spamming if you move it between inventories, or drop it and pick it back up.
 - **Pink Petals Bug (1.20.1 only)**
   - Fixed an issue where Pink Petals would visually apply to all three locations simultaneously when first equipping them or reloading a world.
+- **Dismount Bug**
+  -   Fixed an issue where holding the sneak key down would ignore the double-tap config setting, causing unplanned dismounts.
+  -   This bug has existed ever since the double tap setting was added, but I never found it because I play with Sneak set to "Toggle" (which means I have no reason to hold it down for extended periods).
 
 ---
 
