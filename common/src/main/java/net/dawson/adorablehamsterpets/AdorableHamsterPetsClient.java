@@ -79,6 +79,7 @@ public class AdorableHamsterPetsClient {
     private static boolean hadShoulderHamsterLastTick = false;
     private static int dismountDebounceTicks = 0;
     private static final int DISMOUNT_DEBOUNCE_DEFAULT = 5;
+    private static boolean wasDismountKeyDownLastTick = false;
 
     // --- Announcement System ---
     private static final AnnouncementHudRenderer announcementHudRenderer = new AnnouncementHudRenderer();
@@ -490,7 +491,19 @@ public class AdorableHamsterPetsClient {
     private static void handleDismountKeyPress(MinecraftClient client) {
         if (client.player == null || client.world == null) return;
 
-        // --- 1. Shoulder state ---
+        // --- 1. Choose Key & Track State Transition (Always runs to prevent stuck states) ---
+        KeyBinding keyToListenFor;
+        if (Configs.AHP.dismountTriggerType == DismountTriggerType.CUSTOM_KEYBIND) {
+            keyToListenFor = ModKeyBindings.DISMOUNT_HAMSTER_KEY;
+        } else {
+            keyToListenFor = client.options.sneakKey;
+        }
+
+        boolean isKeyDown = keyToListenFor != null && keyToListenFor.isPressed();
+        boolean wasKeyPressed = isKeyDown && !wasDismountKeyDownLastTick;
+        wasDismountKeyDownLastTick = isKeyDown;
+
+        // --- 2. Shoulder state ---
         boolean hasShoulderHamster;
         try {
             hasShoulderHamster = ((PlayerEntityAccessor) client.player).hasAnyShoulderHamster();
@@ -539,19 +552,8 @@ public class AdorableHamsterPetsClient {
 
         final AhpConfig config = AdorableHamsterPets.CONFIG;
 
-        // --- 2. Choose Key ---
-        KeyBinding keyToListenFor;
-        if (Configs.AHP.dismountTriggerType == DismountTriggerType.CUSTOM_KEYBIND) {
-            keyToListenFor = ModKeyBindings.DISMOUNT_HAMSTER_KEY;
-        } else { // SNEAK_KEY
-            keyToListenFor = client.options.sneakKey;
-        }
-
-        // --- 3. Detect Press ---
-        boolean wasKeyPressed = keyToListenFor != null && keyToListenFor.wasPressed();
-
+        // --- 3. Apply Press Type Logic ---
         if (wasKeyPressed) {
-            // --- 4. Apply Press Type Logic ---
             if (config.dismountPressType.get() == DismountPressType.SINGLE_PRESS) {
                 // Single press always triggers the dismount
                 // Send a typed packet for 1.20.1
@@ -573,7 +575,7 @@ public class AdorableHamsterPetsClient {
             }
         }
 
-        // --- 5. Timeout for Double Tap ---
+        // --- 4. Timeout for Double Tap ---
         if (isWaitingForSecondSneakPress) {
             long currentTime = System.currentTimeMillis();
             long delayMillis = config.doubleTapDelayTicks.get() * 50L;
