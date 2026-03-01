@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
-import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.entity.client.layer.HamsterAcornHatLayer;
 import net.dawson.adorablehamsterpets.entity.client.layer.HamsterArmorLayer;
@@ -75,11 +74,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
     @Override
     public Identifier getTextureLocation(HamsterEntity entity) {
         HamsterVariant variant = HamsterVariant.byId(entity.getVariant());
-        String baseTextureName = variant.getBaseTextureName();
-        return Identifier.of(
-                AdorableHamsterPets.MOD_ID,
-                "textures/entity/hamster/" + baseTextureName + ".png"
-        );
+        return variant.getBaseTextureId();
     }
 
     @Override

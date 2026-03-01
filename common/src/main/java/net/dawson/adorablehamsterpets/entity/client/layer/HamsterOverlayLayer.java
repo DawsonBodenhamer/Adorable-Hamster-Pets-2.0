@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.entity.client.layer;
 
-import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterVariant;
 import net.minecraft.client.render.OverlayTexture;
@@ -25,12 +24,7 @@ public class HamsterOverlayLayer extends GeoRenderLayer<HamsterEntity> {
     @Nullable
     private Identifier getOverlayTexture(HamsterEntity entity) {
         HamsterVariant variant = HamsterVariant.byId(entity.getVariant());
-        String overlayName = variant.getOverlayTextureName();
-
-        if (overlayName != null) {
-            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/" + overlayName + ".png");
-        }
-        return null;
+        return variant.getOverlayTextureId();
     }
 
     @Override
