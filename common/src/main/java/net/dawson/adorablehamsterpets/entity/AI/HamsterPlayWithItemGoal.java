@@ -278,24 +278,24 @@ public class HamsterPlayWithItemGoal extends Goal {
     public void stop() {
         AdorableHamsterPets.LOGGER.trace("[PlayWithItemGoal-{}] Goal stopped. Final state was: {}.", this.hamster.getId(), this.currentState);
 
-        // Apply cooldown regardless of how the goal ended.
+        // Apply cooldown regardless of how goal ended
         this.hamster.stealingCooldownEndTick = this.world.getTime() + Configs.AHP.stealCooldownTicks.get();
 
-        // Only drop the item if the goal is stopping because the timer ran out.
-        // If it stops for any other reason (like player interaction), the timer will be > 0.
-        if (this.hamster.isHoldingMouthItem() && this.itemInterestTimer <= 0) {
+        // Drop item if goal stops while hamster is still holding it
+        if (this.hamster.isHoldingMouthItem()) {
             ItemStack itemHeldInMouthStack = this.hamster.getMouthItemStack();
             if (!itemHeldInMouthStack.isEmpty()) {
                 this.world.spawnEntity(new ItemEntity(this.world, this.hamster.getX(), this.hamster.getY(), this.hamster.getZ(), itemHeldInMouthStack.copy()));
                 this.hamster.playSound(ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_HURT_SOUNDS, this.hamster.getRandom()), 1.0f, 1.0f);
 
-                // Get and play the dynamic sound
+                // Get and play dynamic sound
                 SoundEvent pounceSound = ModSounds.getDynamicItemSound(itemHeldInMouthStack);
                 float volume = ModSounds.getDynamicSoundVolume(pounceSound);
                 this.world.playSound(null, this.hamster.getBlockPos(), pounceSound, SoundCategory.NEUTRAL, volume, 1.7f);
             }
         }
-        this.hamster.setMouthItemStack(ItemStack.EMPTY); // Clear the stored item stack
+
+        this.hamster.setMouthItemStack(ItemStack.EMPTY); // Clear stored item stack
         this.hamster.setGenericInteractionTimer(0);
         this.hamster.setTaunting(false); // Stop animation
         this.hamster.setPresentingItem(false);
@@ -304,6 +304,7 @@ public class HamsterPlayWithItemGoal extends Goal {
         this.targetItem = null;
         this.owner = null;
         this.currentState = State.SCANNING;
+
         if (this.hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
             this.hamster.setActiveCustomGoalDebugName("None");
         }
