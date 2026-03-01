@@ -47,6 +47,8 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - If you keep the screen open for longer than 5 seconds after obtaining the book, the effects are silently cancelled.
 
 ### Fixed
+- **Memory Optimization**
+  - Implemented pre-caching for texture identifiers and simplified rotation math in the render loop to eliminate extra memory objects being generated every frame.
 - **Spanish Localization**
   -  Some strings in the Hamster Tips guidebook were still outdated (i.e., the Accessories and Sunflower pages).
 - **Malformed Recipe**

@@ -10,51 +10,62 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animation.AnimationState;
-import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoRenderer;
 
-@SuppressWarnings("removal") // Suppress deprecation warnings for the old abstract methods
+@SuppressWarnings("removal")
 public class HamsterModel extends GeoModel<HamsterEntity> {
 
-    // --- 1. Constants ---
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constants
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     private static final float ADULT_SCALE = 0.8f;
     private static final float ADULT_HEAD_SCALE = 1.0f;
     private static final float BABY_SCALE = 0.5f;
     private static final float BABY_HEAD_SCALE = 1.2f;
 
+    private static final Identifier MODEL_RESOURCE = Identifier.of(AdorableHamsterPets.MOD_ID, "geo/hamster.geo.json");
+    private static final Identifier ANIMATION_RESOURCE = Identifier.of(AdorableHamsterPets.MOD_ID, "animations/anim_hamster.animation.json");
+    private static final Identifier FALLBACK_TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/orange.png");
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Overrides
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     @Override
     public Identifier getModelResource(HamsterEntity animatable, @Nullable GeoRenderer<HamsterEntity> renderer) {
-        return Identifier.of(AdorableHamsterPets.MOD_ID, "geo/hamster.geo.json");
+        return MODEL_RESOURCE;
     }
 
     @Override
     public Identifier getTextureResource(HamsterEntity animatable, @Nullable GeoRenderer<HamsterEntity> renderer) {
-        // Fallback texture; actual texture is handled by the Renderer
-        return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/orange.png");
+        // Fallback texture; actual texture handled by renderer
+        return FALLBACK_TEXTURE;
     }
 
     @Override
     public Identifier getAnimationResource(HamsterEntity animatable) {
-        return Identifier.of(AdorableHamsterPets.MOD_ID, "animations/anim_hamster.animation.json");
+        return ANIMATION_RESOURCE;
     }
 
     @Override
     public void setCustomAnimations(HamsterEntity entity, long instanceId, AnimationState<HamsterEntity> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
-        // --- Bone References ---
-        GeoBone rootBone = this.getAnimationProcessor().getBone("root");
-        GeoBone headParentBone = this.getAnimationProcessor().getBone("head_parent");
-        GeoBone leftCheekDefBone = this.getAnimationProcessor().getBone("left_cheek_deflated");
-        GeoBone rightCheekDefBone = this.getAnimationProcessor().getBone("right_cheek_deflated");
-        GeoBone leftCheekInfBone = this.getAnimationProcessor().getBone("left_cheek_inflated");
-        GeoBone rightCheekInfBone = this.getAnimationProcessor().getBone("right_cheek_inflated");
-        GeoBone rightEarBone = this.getAnimationProcessor().getBone("right_ear");
-        GeoBone acornHatBone = this.getAnimationProcessor().getBone("acorn_hat");
-        GeoBone petalHeadBone = this.getAnimationProcessor().getBone("pink_petal_head");
-        GeoBone petalSideBone = this.getAnimationProcessor().getBone("pink_petal_side");
-        GeoBone petalBackBone = this.getAnimationProcessor().getBone("pink_petal_lower_back");
+        // --- Bone references ---
+        var processor = this.getAnimationProcessor();
+        var rootBone = processor.getBone("root");
+        var headParentBone = processor.getBone("head_parent");
+        var leftCheekDefBone = processor.getBone("left_cheek_deflated");
+        var rightCheekDefBone = processor.getBone("right_cheek_deflated");
+        var leftCheekInfBone = processor.getBone("left_cheek_inflated");
+        var rightCheekInfBone = processor.getBone("right_cheek_inflated");
+        var rightEarBone = processor.getBone("right_ear");
+        var acornHatBone = processor.getBone("acorn_hat");
+        var petalHeadBone = processor.getBone("pink_petal_head");
+        var petalSideBone = processor.getBone("pink_petal_side");
+        var petalBackBone = processor.getBone("pink_petal_lower_back");
 
         // --- Pink Petal Visibility Defaults ---
         if (petalHeadBone != null) petalHeadBone.setHidden(true);
@@ -78,49 +89,42 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             boolean shouldHideEar = false;
             boolean shouldShowHat = false;
 
-            // 1. Check Bling Slot (Slot 6) - Highest Priority
+            // Check bling slot 6 for highest priority
             ItemStack blingStack = entity.getAccessoryStack();
             if (blingStack.isOf(ModItems.ACORN_HAT.get())) {
                 shouldHideEar = true; // Prevent clipping through hat
                 shouldShowHat = true;
             }
 
-            // 2. Check Armor Slot (Slot 7) + Config
-            // Only check if we haven't already decided to show the hat (bling overrides armor)
+            // Check armor slot 7 and config if not already showing hat
             ItemStack armorStack = entity.getArmorStack();
-            if (armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP.renderAcornHat.get()) {
-                // If wearing Acorn Armor AND config enables hat, hide ear and show hat.
+            if (!shouldShowHat && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP.renderAcornHat.get()) {
                 shouldHideEar = true;
                 shouldShowHat = true;
             }
 
-            // Apply visibility states
             rightEarBone.setHidden(shouldHideEar);
 
             if (acornHatBone != null) {
-                // Default the hat bone to hidden unless specifically enabled.
                 acornHatBone.setHidden(!shouldShowHat);
             }
         }
 
         // --- Scaling & Rotation Logic ---
-        // bodyParentBone scale is intentionally not set here, allowing JSON breathing anims to work proportionally.
+        // bodyParentBone scale intentionally not set here so json breathing anims scale proportionally
         if (rootBone != null && headParentBone != null) {
-            // 1. Determine the base scale for the entire model and the head.
             float baseScale = entity.isBaby() ? BABY_SCALE : ADULT_SCALE;
             float headScale = entity.isBaby() ? BABY_HEAD_SCALE : ADULT_HEAD_SCALE;
 
-            // 2. Start with the base scale for all axes.
             rootBone.setScaleX(baseScale);
             rootBone.setScaleY(baseScale);
             rootBone.setScaleZ(baseScale);
 
-            // 3. If it's a shoulder pet, apply the dynamic squash/stretch by overriding just the Y-axis scale.
+            // override y scale for dynamic squash and stretch if shoulder pet
             if (entity.isShoulderPet()) {
                 rootBone.setScaleY(baseScale * entity.dynamicScaleY);
             }
 
-            // 4. Set the head scale independently.
             headParentBone.setScaleX(headScale);
             headParentBone.setScaleY(headScale);
             headParentBone.setScaleZ(headScale);
@@ -136,20 +140,14 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
                 rootBone.setRotX(targetPitch);
 
             } else if (entity.clientFallPitchProgress > 0.0f || entity.prevClientFallPitchProgress > 0.0f) {
-                // Interpolate between ticks for smooth rendering
                 float partialTick = animationState.getPartialTick();
                 float lerpedProgress = MathHelper.lerp(partialTick, entity.prevClientFallPitchProgress, entity.clientFallPitchProgress);
 
                 // Natural Fall Mode: Procedural Nose Dive (Cosine Interpolation)
-                // Formula: (1 - cos(t * π)) / 2
-                float t = entity.clientFallPitchProgress;
                 float interpolated = (1.0f - MathHelper.cos(lerpedProgress * (float) Math.PI)) * 0.5f;
 
-                // Map to Target Angle (-90 degrees / -PI/2 radians)
-                // Rotates the model to face downward
+                // Rotate to face downward
                 float targetPitch = (float) (-Math.PI / 2.0);
-                rootBone.setRotX(targetPitch * interpolated);
-
                 rootBone.setRotX(targetPitch * interpolated);
             } else {
                 // Not falling -> Reset to neutral
