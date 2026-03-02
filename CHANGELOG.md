@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.5.1] - 2025-02-12
 
-# **The "Tag, You're It" Update**
+# **The Tag You're It Update**
 
 A bit of bug-squashing and typo-fixing, some new advancements and improvements, plus your hamsters have now developed a new, exhausting habit: playing tag. Gaze into their eyes for too long, and they might challenge you to a high-stakes footrace. If you catch them, they might give you a gift.
 
@@ -33,6 +33,9 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - If enabled (default), players will automatically be given the Hamster Tips guidebook and receive a chat prompt the very first time they spot a wild hamster from <=10 blocks away.
   - Targeting calculation includes wiggle room to ensure the event triggers even if the player's crosshair isn't perfectly on the hamster's hit box.
   - Only triggers once, and only if the player has never yet received the guidebook (regardless of current inventory status).
+- **Configurable Cuisine:**
+  - You can now configure the nutrition and saturation values for all food items added by the mod (Cucumbers, Green Beans, Food Mix).
+  - Changed nutrition/saturation values are dynamically reflected in AppleSkin's "on-eat" HUD preview. **Unfortunately due to major API changes between MC versions, this only works on 1.21.1.*
 
 ### Changed
 - **Mod Page/README**
@@ -45,6 +48,8 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
 - **Guidebook Effects**
   - If you obtain the Hamster Tips guidebook while viewing a chest or crafting screen, the "rediscovered" visual and audio effects will now be postponed until you close the screen, ensuring the effects do not play while you're looking at your inventory.
   - If you keep the screen open for longer than 5 seconds after obtaining the book, the effects are silently cancelled.
+- **Cucumber Rebalance:**
+  - Sliced Cucumbers are no longer inexplicably nutritious. Their default food value has been dropped from 2 hearts to 0.5 hearts to match items like Dried Kelp.
 
 ### Fixed
 - **Memory Optimization**

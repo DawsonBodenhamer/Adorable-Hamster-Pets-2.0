@@ -1006,13 +1006,37 @@ public class AhpConfig extends Config {
     public ValidatedFloat cheeseSaturation = new ValidatedFloat(0.8f, 2.0f, 0.0f);
 
     @Translatable.Name("Sliced Cucumber Nutrition")
-    @Translatable.Desc("How many little hunger shanks a slice restores. Vanilla dried kelp is 1 (0.5 hearts).")
+    @Translatable.Desc("Vanilla dried kelp is 1 (0.5 hearts).")
     public ValidatedInt slicedCucumberNutrition = new ValidatedInt(1, 20, 0);
 
-    @ConfigGroup.Pop
     @Translatable.Name("Sliced Cucumber Saturation")
-    @Translatable.Desc("How long the hunger effect lasts. Dried kelp is 0.3.")
+    @Translatable.Desc("Dried kelp is 0.3.")
     public ValidatedFloat slicedCucumberSaturation = new ValidatedFloat(0.3f, 2.0f, 0.0f);
+
+    @Translatable.Name("Cucumber Nutrition")
+    public ValidatedInt cucumberNutrition = new ValidatedInt(2, 20, 0);
+
+    @Translatable.Name("Cucumber Saturation")
+    public ValidatedFloat cucumberSaturation = new ValidatedFloat(0.3f, 2.0f, 0.0f);
+
+    @Translatable.Name("Green Beans Nutrition")
+    public ValidatedInt greenBeansNutrition = new ValidatedInt(2, 20, 0);
+
+    @Translatable.Name("Green Beans Saturation")
+    public ValidatedFloat greenBeansSaturation = new ValidatedFloat(0.3f, 2.0f, 0.0f);
+
+    @Translatable.Name("Steamed Green Beans Nutrition")
+    public ValidatedInt steamedGreenBeansNutrition = new ValidatedInt(3, 20, 0);
+
+    @Translatable.Name("Steamed Green Beans Saturation")
+    public ValidatedFloat steamedGreenBeansSaturation = new ValidatedFloat(0.6f, 2.0f, 0.0f);
+
+    @Translatable.Name("Hamster Food Mix Nutrition")
+    public ValidatedInt hamsterFoodMixNutrition = new ValidatedInt(4, 20, 0);
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Hamster Food Mix Saturation")
+    public ValidatedFloat hamsterFoodMixSaturation = new ValidatedFloat(0.4f, 2.0f, 0.0f);
 
     // --- Green Bean Buff Settings ---
     @Translatable.Name("Green Bean Buff Settings")
@@ -1039,7 +1063,7 @@ public class AhpConfig extends Config {
     @ConfigGroup.Pop
     @Translatable.Name("Regen Level")
     @Translatable.Desc("Heals minor paper-cuts (and fragile egos).")
-    public ValidatedInt greenBeanBuffAmplifierRegen = new ValidatedInt(0, 4, 0);
+    public ValidatedInt greenBeanBuffAmplifierRegen = new ValidatedInt(1, 4, 0);
 
     // --- Independent Diamond Seeking Settings ---
     @Translatable.Name("Independent Diamond Seeking Settings")
