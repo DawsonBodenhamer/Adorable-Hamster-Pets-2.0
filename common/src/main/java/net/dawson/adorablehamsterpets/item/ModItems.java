@@ -83,74 +83,29 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> CUCUMBER = registerItem("cucumber",
-            () -> new Item(new Item.Settings().food(ModFoodComponents.CUCUMBER)) {
-                @Override
-                public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
-                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cucumber.hint1").formatted(Formatting.GOLD));
-                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cucumber.hint2").formatted(Formatting.GRAY));
-                    } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
-                    }
-                    super.appendTooltip(stack, world, tooltip, context);
-                }
-            });
+            () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.CUCUMBER),
+                    Configs.AHP.cucumberNutrition, Configs.AHP.cucumberSaturation,
+                    "tooltip.adorablehamsterpets.cucumber"));
 
     public static final RegistrySupplier<Item> SLICED_CUCUMBER = registerItem("sliced_cucumber",
-            () -> new Item(new Item.Settings().food(ModFoodComponents.SLICED_CUCUMBER)) {
-                @Override
-                public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
-                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sliced_cucumber.hint1").formatted(Formatting.GOLD));
-                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sliced_cucumber.hint2").formatted(Formatting.GRAY));
-                    } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
-                    }
-                    super.appendTooltip(stack, world, tooltip, context);
-                }
-            });
+            () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.SLICED_CUCUMBER),
+                    Configs.AHP.slicedCucumberNutrition, Configs.AHP.slicedCucumberSaturation,
+                    "tooltip.adorablehamsterpets.sliced_cucumber"));
 
     public static final RegistrySupplier<Item> GREEN_BEANS = registerItem("green_beans",
-            () -> new Item(new Item.Settings().food(ModFoodComponents.GREEN_BEANS)) {
-                @Override
-                public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
-                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.green_beans.hint1").formatted(Formatting.GOLD));
-                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.green_beans.hint2").formatted(Formatting.GRAY));
-                    } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
-                    }
-                    super.appendTooltip(stack, world, tooltip, context);
-                }
-            });
+            () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.GREEN_BEANS),
+                    Configs.AHP.greenBeansNutrition, Configs.AHP.greenBeansSaturation,
+                    "tooltip.adorablehamsterpets.green_beans"));
 
     public static final RegistrySupplier<Item> STEAMED_GREEN_BEANS = registerItem("steamed_green_beans",
-            () -> new Item(new Item.Settings().food(ModFoodComponents.STEAMED_GREEN_BEANS)) {
-                @Override
-                public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
-                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.steamed_green_beans.hint1").formatted(Formatting.GOLD));
-                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.steamed_green_beans.hint2").formatted(Formatting.GRAY));
-                    } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
-                    }
-                    super.appendTooltip(stack, world, tooltip, context);
-                }
-            });
+            () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.STEAMED_GREEN_BEANS),
+                    Configs.AHP.steamedGreenBeansNutrition, Configs.AHP.steamedGreenBeansSaturation,
+                    "tooltip.adorablehamsterpets.steamed_green_beans"));
 
     public static final RegistrySupplier<Item> HAMSTER_FOOD_MIX = registerItem("hamster_food_mix",
-            () -> new Item(new Item.Settings().food(ModFoodComponents.HAMSTER_FOOD_MIX).maxCount(16)) {
-                @Override
-                public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
-                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_food_mix.hint1").formatted(Formatting.GOLD));
-                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_food_mix.hint2").formatted(Formatting.GRAY));
-                    } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
-                    }
-                    super.appendTooltip(stack, world, tooltip, context);
-                }
-            });
+            () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.HAMSTER_FOOD_MIX).maxCount(16),
+                    Configs.AHP.hamsterFoodMixNutrition, Configs.AHP.hamsterFoodMixSaturation,
+                    "tooltip.adorablehamsterpets.hamster_food_mix"));
 
     public static final RegistrySupplier<Item> CHEESE = registerItem("cheese",
             () -> new CheeseItem(new Item.Settings().food(ModFoodComponents.CHEESE)));

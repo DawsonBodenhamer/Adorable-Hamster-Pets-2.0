@@ -10,8 +10,8 @@ public class ModFoodComponents {
             .build();
 
     public static final FoodComponent SLICED_CUCUMBER = new FoodComponent.Builder()
-            .hunger(4)
-            .saturationModifier(0.6F)
+            .hunger(1)
+            .saturationModifier(0.3F)
             .build();
 
     public static final FoodComponent GREEN_BEANS = new FoodComponent.Builder()
@@ -30,7 +30,7 @@ public class ModFoodComponents {
             .build();
 
     public static final FoodComponent CHEESE = new FoodComponent.Builder()
-            .hunger(8) // Like cooked porkchop
-            .saturationModifier(0.8F) // Like cooked porkchop
+            .hunger(8)
+            .saturationModifier(0.8F)
             .build();
 }

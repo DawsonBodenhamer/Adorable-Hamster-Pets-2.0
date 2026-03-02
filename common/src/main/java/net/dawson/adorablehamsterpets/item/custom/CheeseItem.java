@@ -1,12 +1,9 @@
 package net.dawson.adorablehamsterpets.item.custom;
 
-import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.stat.Stats;
@@ -14,14 +11,11 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.UseAction;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-public class CheeseItem extends Item {
+public class CheeseItem extends ConfigurableFoodItem {
 
     public CheeseItem(Settings settings) {
-        super(settings);
+        super(settings, Configs.AHP.cheeseNutrition, Configs.AHP.cheeseSaturation, "tooltip.adorablehamsterpets.cheese");
     }
 
     /**
@@ -30,27 +24,6 @@ public class CheeseItem extends Item {
     @Override
     public Text getName(ItemStack stack) {
         return super.getName(stack).copy().formatted(Formatting.GOLD);
-    }
-
-    @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        if (Configs.AHP.enableItemTooltips) {
-            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cheese.hint1").formatted(Formatting.GOLD));
-            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cheese.hint2").formatted(Formatting.GRAY));
-
-            boolean appleSkinLoaded = Platform.isModLoaded("appleskin");
-            if (appleSkinLoaded) {
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cheese.appleskin_warning").formatted(Formatting.DARK_GRAY));
-            } else {
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cheese.hint3",
-                        Configs.AHP.cheeseNutrition.get(),
-                        String.format("%.1f", Configs.AHP.cheeseSaturation.get() * Configs.AHP.cheeseNutrition.get() * 2.0F)
-                ).formatted(Formatting.DARK_GRAY));
-            }
-        }  else if (!Platform.isModLoaded("emi")) {
-            tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
-        }
-        super.appendTooltip(stack, world, tooltip, context);
     }
 
     @Override
