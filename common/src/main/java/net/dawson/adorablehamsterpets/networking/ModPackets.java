@@ -10,6 +10,7 @@ import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
+import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -112,8 +113,7 @@ public class ModPackets {
                     if (entity instanceof HamsterEntity hamster && hamster.isOwner(player)) {
                         // Distance check for security
                         if (hamster.squaredDistanceTo(player) < 64.0) {
-                            // Use the 1.20.1 version of tryShoulderMount (check signature)
-                            hamster.tryShoulderMount(player, net.minecraft.item.ItemStack.EMPTY);
+                            HamsterInteractionUtil.executeShoulderMount(hamster, player, ItemStack.EMPTY); // Pass empty stack for force-mount
                         }
                     }
                 })

@@ -70,10 +70,11 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
         // Adjust for tick rates if necessary
         ((LookAtEntityGoalAccessor) this).setLookTime(this.getTickCount(calculatedDuration));
 
-        if (this.mob instanceof HamsterEntity he) {
-            he.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
-            he.getDataTracker().set(HamsterEntity.CURRENT_LOOK_UP_ANIM_ID, he.getRandom().nextBetween(1, 3));
-            AdorableHamsterPets.LOGGER.trace("[AI Goal Start] Hamster {} started LookAtEntityGoal with duration {} ticks (Base: {} + Random).", he.getId(), calculatedDuration, baseDuration);
+        if (this.mob instanceof HamsterEntity hamster) {
+            hamster.isLookAtEntityGoalActive = true;
+            hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
+            hamster.getDataTracker().set(HamsterEntity.CURRENT_LOOK_UP_ANIM_ID, hamster.getRandom().nextBetween(1, 3));
+            AdorableHamsterPets.LOGGER.trace("[AI Goal Start] Hamster {} started LookAtEntityGoal with duration {} ticks (Base: {} + Random).", hamster.getId(), calculatedDuration, baseDuration);
         }
     }
 
@@ -92,9 +93,10 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
     @Override
     public void stop() {
         super.stop();
-        if (this.mob instanceof HamsterEntity he) {
-            if (he.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
-                he.setActiveCustomGoalDebugName("None");
+        if (this.mob instanceof HamsterEntity hamster) {
+            hamster.isLookAtEntityGoalActive = false;
+            if (hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
+                hamster.setActiveCustomGoalDebugName("None");
             }
         }
     }
