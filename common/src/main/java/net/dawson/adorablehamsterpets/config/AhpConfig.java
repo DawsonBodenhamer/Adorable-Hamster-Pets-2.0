@@ -980,41 +980,48 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Maximum seconds before the inevitable deep snooze.")
     public ValidatedInt tamedQuiescentSitMaxSeconds = new ValidatedInt(180, 600, 2);
 
-    // --- Food Healing Settings ---
-    @Translatable.Name("Food Healing Settings")
-    @Translatable.Desc("Nutrition— isn't it wonderful. Tweaks to snacks.")
+    // --- Food Settings ---
+    @Translatable.Name("Food Settings")
+    @Translatable.Desc("Nutrition— isn't it wonderful. Tweaks to snacks. Includes settings for hamster's and player's food.")
     public ConfigGroup foodHealing = new ConfigGroup("foodHealing", true);
 
-    @Translatable.Name("Food Mix")
+    @Translatable.Name("Hamster Food Mix")
     @Translatable.Desc("Healing amount from Hamster Food Mix. The good stuff.")
     public ValidatedFloat hamsterFoodMixHealing = new ValidatedFloat(4.0f, 10.0f, 0.0f);
 
-    @ConfigGroup.Pop
-    @Translatable.Name("Standard Food")
+    @Translatable.Name("Standard Hamster Food")
     @Translatable.Desc("Healing from basic seeds/crops. Better than nothing… probably.")
     public ValidatedFloat standardFoodHealing = new ValidatedFloat(2.0f, 5.0f, 0.0f);
 
-    // --- Cheese Food Settings ---
-    @Translatable.Name("Cheese Settings")
-    @Translatable.Desc("Cheese... the gooey wonder. Some people think it's overpowered. I disagree. Obviously.")
-    public ConfigGroup cheeseHealing = new ConfigGroup("cheeseHealing", true);
+    // --- Nutrition and Saturation Settings ---
+    @Translatable.Name("Nutrition and Saturation Settings")
+    @Translatable.Desc("Some people think cheese is overpowered. Here's where you can flex your disagreement.")
+    public ConfigGroup playerFood = new ConfigGroup("playerFood", true);
 
     @Translatable.Name("Cheese Nutrition")
     @Translatable.Desc("How many little hunger shanks the cheese restores. Vanilla cooked steak is 8. I know you're thinking of moving it to 20, you monster.")
     public ValidatedInt cheeseNutrition = new ValidatedInt(8, 20, 0);
 
-    @ConfigGroup.Pop
     @Translatable.Name("Cheese Saturation")
     @Translatable.Desc("How long the hunger effect lasts. Cooked steak is 0.8. Don't get too crazy. Or do. I'm not your conscience.")
     public ValidatedFloat cheeseSaturation = new ValidatedFloat(0.8f, 2.0f, 0.0f);
 
+    @Translatable.Name("Sliced Cucumber Nutrition")
+    @Translatable.Desc("How many little hunger shanks a slice restores. Vanilla dried kelp is 1 (0.5 hearts).")
+    public ValidatedInt slicedCucumberNutrition = new ValidatedInt(1, 20, 0);
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Sliced Cucumber Saturation")
+    @Translatable.Desc("How long the hunger effect lasts. Dried kelp is 0.3.")
+    public ValidatedFloat slicedCucumberSaturation = new ValidatedFloat(0.3f, 2.0f, 0.0f);
+
     // --- Green Bean Buff Settings ---
     @Translatable.Name("Green Bean Buff Settings")
-    @Translatable.Desc("Nutrition, but make it dramatic. Tweaks to caffeine-bean highs.")
+    @Translatable.Desc("Nutrition, but make it dramatic. Tweaks to caffeine-bean highs for hamsters.")
     public ConfigGroup greenBeanBuffs = new ConfigGroup("greenBeanBuffs", true);
 
     @Translatable.Name("Duration")
-    @Translatable.Desc("Steamed beans: power that fades faster than your attention span. (20 ticks = 1 second)")
+    @Translatable.Desc("Steamed beans: power that fades faster than their attention span. (20 ticks = 1 second)")
     public ValidatedInt greenBeanBuffDuration = new ValidatedInt(3600, 20 * 60 * 10, 20);
 
     @Translatable.Name("Speed Level")
@@ -1029,6 +1036,7 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Extra fluff padding for those daring dives.")
     public ValidatedInt greenBeanBuffAmplifierAbsorption = new ValidatedInt(1, 4, 0);
 
+    @ConfigGroup.Pop
     @ConfigGroup.Pop
     @Translatable.Name("Regen Level")
     @Translatable.Desc("Heals minor paper-cuts (and fragile egos).")
