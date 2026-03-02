@@ -5,6 +5,7 @@ import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.ai.FuzzyTargeting;
@@ -41,6 +42,12 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
             return false;
         }
 
+        // Prevent wandering if LookAtEntityGoal is active and player is looking back (unless zooming)
+        PlayerEntity closestPlayer = this.hamster.getWorld().getClosestPlayer(this.hamster, 5.0);
+        if (this.hamster.isLookAtEntityGoalActive && closestPlayer != null && EntityTargetingUtil.isLookingAt(closestPlayer, this.hamster, 5.0, 0.0) && !this.hamster.hasGreenBeanBuff()) {
+            return false;
+        }
+
         // --- 2. "Zoomies" vs. Normal Activation Logic ---
         if (this.hamster.hasGreenBeanBuff()) {
 
@@ -63,7 +70,7 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
             return true; // A valid target was found.
         } else {
             // --- Normal Wandering ---
-            int interval = Configs.AHP.wanderInterval.get();
+            int interval = Configs.AHP.wanderChanceInterval.get();
 
             // If configured to 0, disable wandering entirely.
             if (interval <= 0) {
@@ -88,6 +95,11 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
             return !(this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut())
                     && !this.mob.getNavigation().isIdle();
         } else {
+            // Stop wandering if mutual eye contact is established
+            PlayerEntity closestPlayer = this.hamster.getWorld().getClosestPlayer(this.hamster, 5.0);
+            if (this.hamster.isLookAtEntityGoalActive && closestPlayer != null && EntityTargetingUtil.isLookingAt(closestPlayer, this.hamster, 5.0, 0.0)) {
+                return false;
+            }
             // For normal wandering, use the default behavior.
             return super.shouldContinue();
         }

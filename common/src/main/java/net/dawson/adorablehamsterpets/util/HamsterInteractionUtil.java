@@ -2,19 +2,23 @@ package net.dawson.adorablehamsterpets.util;
 
 import dev.architectury.registry.menu.MenuRegistry;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.component.ModDataComponentTypes;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
-import net.dawson.adorablehamsterpets.config.ConfigDataCache;
-import net.dawson.adorablehamsterpets.config.WanderDistance;
+import net.dawson.adorablehamsterpets.config.*;
+import net.dawson.adorablehamsterpets.entity.AI.HamsterTagGoal;
+import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.item.custom.HamsterBedItem;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.minecraft.advancement.criterion.Criteria;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.particle.ItemStackParticleEffect;
@@ -27,9 +31,12 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -39,13 +46,14 @@ import java.util.UUID;
  */
 public final class HamsterInteractionUtil {
 
-    private HamsterInteractionUtil() {}
+    private HamsterInteractionUtil() {
+    }
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *                          Global Interactions
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    // --- 1. Debug Toggle ---
+    // --- Debug Toggle ---
     public static ActionResult handleDebugToggle(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         if (player.isSneaking() && stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
             if (!hamster.getWorld().isClient()) {
@@ -65,12 +73,92 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
-    // --- 2. Tag Game ---
+    // --- Tag Game ---
     public static ActionResult handleTagGame(HamsterEntity hamster, PlayerEntity player) {
         if (hamster.isPlayingTag()) {
             if (hamster.isOwner(player) || AdorableHamsterPets.CONFIG.allowStrangerTag) {
                 if (!hamster.getWorld().isClient()) {
-                    hamster.concludeTagGame(player);
+                    // 1. Stop Goal & Clear State
+                    hamster.setPlayingTag(false);
+                    hamster.setTaunting(false);
+                    hamster.getNavigation().stop();
+
+                    // Clear debug name
+                    if (hamster.getActiveCustomGoalDebugName().equals(HamsterTagGoal.class.getSimpleName())) {
+                        hamster.setActiveCustomGoalDebugName("None");
+                    }
+
+                    // 2. Set Cooldowns
+                    // Hamster cooldown
+                    hamster.tagGameCooldownEndTick = hamster.getWorld().getTime() + Configs.AHP.tagGameCooldown.get();
+                    // Player daily limit increment
+                    if (player instanceof PlayerEntityAccessor accessor) {
+                        accessor.ahp$incrementTagGameCount();
+                    }
+
+                    // 3. Start Celebration Phase
+                    // Store the player who interacted as the rotation target
+                    hamster.setCelebrationTarget(player);
+                    HamsterMovementUtil.faceEntity(hamster, player);
+
+                    // Lock rotation to target (Owner or Stranger) for the duration of both animations
+                    hamster.setCelebratingRetrieval(true);
+                    hamster.setCelebrationRetrievalTicks(80);
+                    hamster.interactionCooldown = 80;
+
+                    // Visuals & Audio
+                    hamster.getWorld().playSound(null, hamster.getBlockPos(), ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, hamster.getRandom()), SoundCategory.NEUTRAL, 1.0f, 1.0f);
+                    ParticleEffectsUtil.spawnParticles(
+                            hamster.getWorld(),
+                            new Vec3d(hamster.getX(), hamster.getBodyY(0.8), hamster.getZ()),
+                            ParticleTypes.HEART,
+                            3,
+                            new Vec3d(0.3, 0.2, 0.3),
+                            0.2
+                    );
+
+                    // Trigger Celebration Animation
+                    hamster.triggerAnimOnServer("mainController", "anim_hamster_celebrate_chase");
+
+                    // 4. Schedule Gifting Sequence
+                    long baseTime = hamster.getWorld().getTime();
+                    long giftSequenceStart = baseTime + 32;
+
+                    hamster.scheduleTask(giftSequenceStart, "start_gift_anim", () -> {
+                        Item giftItem = getRandomTagGameReward(hamster);
+                        if (giftItem != net.minecraft.item.Items.AIR) {
+                            ItemStack giftStack = new ItemStack(giftItem);
+
+                            // Trigger Unload Animation
+                            hamster.triggerAnimOnServer("mainController", "anim_hamster_cheek_unload");
+
+                            // T+10 (relative to start of gift sequence): Hamster "moves item" from cheek to mouth
+                            hamster.scheduleTask(giftSequenceStart + 10, "gift_appear", () -> {
+                                hamster.setMouthItemStack(giftStack);
+                                hamster.setHoldingMouthItem(true);
+                                hamster.setGenericInteractionTimer(0);
+                            });
+
+                            // T+33 (relative to start of gift sequence): Hamster spits out the item
+                            hamster.scheduleTask(giftSequenceStart + 33, "gift_spit", () -> {
+                                if (hamster.isHoldingMouthItem() && !hamster.getMouthItemStack().isEmpty()) {
+                                    Vec3d look = hamster.getRotationVec(1.0f);
+                                    ItemEntity itemEntity = new ItemEntity(hamster.getWorld(),
+                                            hamster.getX() + look.x * 0.5,
+                                            hamster.getY() + 0.3,
+                                            hamster.getZ() + look.z * 0.5,
+                                            hamster.getMouthItemStack().copy()
+                                    );
+                                    // Forward velocity to item
+                                    itemEntity.setVelocity(look.x * 0.2, 0.2, look.z * 0.2);
+                                    hamster.getWorld().spawnEntity(itemEntity);
+                                }
+                                // Cleanup
+                                hamster.setMouthItemStack(ItemStack.EMPTY);
+                                hamster.setHoldingMouthItem(false);
+                            });
+                        }
+                    });
                 }
                 return ActionResult.success(hamster.getWorld().isClient());
             }
@@ -78,11 +166,36 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
-    // --- 3. Taming ---
+    // --- Taming ---
     public static ActionResult handleTaming(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         if (!hamster.isTamed() && player.isSneaking() && ConfigDataCache.isTamingFood(stack)) {
             if (!hamster.getWorld().isClient()) {
-                hamster.tryTame(player, stack);
+                if (!player.getAbilities().creativeMode) {
+                    stack.decrement(1);
+                }
+
+                // Use config value for taming chance
+                final AhpConfig config = AdorableHamsterPets.CONFIG;
+                int denominator = Math.max(1, config.tamingChanceDenominator.get()); // Ensure denominator is at least 1
+                if (hamster.getRandom().nextInt(denominator) == 0) {
+                    hamster.setOwnerUuid(player.getUuid());
+                    hamster.setTamed(true, true);
+                    hamster.getNavigation().stop();
+                    hamster.setSitting(false, true);
+                    hamster.setSleeping(false);
+                    hamster.setTarget(null);
+                    hamster.getWorld().sendEntityStatus(hamster, (byte) 7);
+
+                    // Play celebrate sound only on success
+                    SoundEvent celebrateSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, hamster.getRandom());
+                    hamster.getWorld().playSound(null, hamster.getBlockPos(), celebrateSound, SoundCategory.NEUTRAL, 0.7F, 1.0F);
+
+                    if (player instanceof ServerPlayerEntity serverPlayer) {
+                        Criteria.TAME_ANIMAL.trigger(serverPlayer, hamster);
+                    }
+                } else {
+                    hamster.getWorld().sendEntityStatus(hamster, (byte) 6);
+                }
             }
             return ActionResult.success(hamster.getWorld().isClient());
         }
@@ -93,7 +206,7 @@ public final class HamsterInteractionUtil {
      *                           Owner Interactions
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    // --- 4. Bed Linking ---
+    // --- Bed Linking ---
     public static ActionResult handleBedLinking(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
         if (stack.getItem() instanceof HamsterBedItem) {
             if (!hamster.getWorld().isClient()) {
@@ -133,7 +246,7 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
-    // --- 5. Armor Equipment ---
+    // --- Armor Equipment ---
     public static ActionResult handleArmorEquip(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         if (!player.isSneaking() && stack.getItem() instanceof HamsterArmorItem) {
             if (!hamster.getWorld().isClient()) {
@@ -154,19 +267,20 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
-    // --- 6. State Restorations (Sleep, KO, Celebration, Sulk) ---
+    // --- State Restorations ---
     public static ActionResult handleStateRestoration(HamsterEntity hamster, PlayerEntity player) {
         World world = hamster.getWorld();
 
         if (hamster.isSleeping()) {
-            if (!world.isClient()) HamsterBedUtil.wakeUpFromBed(hamster, true); // Manual wakeup
+            if (!world.isClient()) HamsterBedUtil.wakeUpFromBed(hamster, true);
             return ActionResult.success(world.isClient());
         }
 
         if (hamster.isKnockedOut()) {
             if (!world.isClient()) {
                 SoundEvent wakeUpSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_WAKE_UP_SOUNDS, hamster.getRandom());
-                if (wakeUpSound != null) world.playSound(null, hamster.getBlockPos(), wakeUpSound, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+                if (wakeUpSound != null)
+                    world.playSound(null, hamster.getBlockPos(), wakeUpSound, SoundCategory.NEUTRAL, 1.0F, 1.0F);
                 hamster.setKnockedOut(false);
                 hamster.setSitting(false, true);
                 hamster.triggerAnimOnServer("mainController", "wakeup_from_ko");
@@ -197,7 +311,7 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
-    // --- 7. Mouth Item Return ---
+    // --- Mouth Item Return ---
     public static ActionResult handleMouthItemReturn(HamsterEntity hamster, PlayerEntity player) {
         if (hamster.isHoldingMouthItem()) {
             if (!hamster.getWorld().isClient()) {
@@ -226,7 +340,7 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
-    // --- 8. Accessory Application & Cycling ---
+    // --- Accessory Application ---
     public static ActionResult handleAccessoryInteraction(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         if (hamster.isValid(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX, stack) && !player.isSneaking()) {
             if (!hamster.getWorld().isClient()) {
@@ -262,7 +376,7 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
-    // --- 9. Shearing (Armor & Accessory Removal) ---
+    // --- Shearing ---
     public static ActionResult handleShearing(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
         if (stack.isOf(Items.SHEARS) && !player.isSneaking()) {
             boolean actionTaken = false;
@@ -314,11 +428,11 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
-    // --- 10. Shoulder Mount ---
+    // --- Shoulder Mounting ---
     public static ActionResult handleShoulderMount(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
         if (ConfigDataCache.isLureItem(stack)) {
             if (!hamster.getWorld().isClient()) {
-                hamster.tryShoulderMount(player, stack);
+                executeShoulderMount(hamster, player, stack);
             } else {
                 player.swingHand(hand);
             }
@@ -327,7 +441,7 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
-    // --- 11. Inventory Open ---
+    // --- Inventory Open ---
     public static ActionResult handleInventoryOpen(HamsterEntity hamster, PlayerEntity player) {
         if (player.isSneaking()) {
             if (!hamster.getWorld().isClient()) {
@@ -343,7 +457,7 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
-    // --- 12. Feeding ---
+    // --- Feeding ---
     public static ActionResult handleFeeding(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         boolean isPotentialFood = ConfigDataCache.isStandardFood(stack) || ConfigDataCache.isBuffFood(stack) || ConfigDataCache.isPouchUnlockFood(stack);
 
@@ -361,5 +475,115 @@ public final class HamsterInteractionUtil {
             }
         }
         return ActionResult.PASS;
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                           Public/Private Utilities
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Executes the logic to mount a hamster to a player's shoulder.
+     * Accessible by both right-click interactions and force-mount keybinds.
+     */
+    public static void executeShoulderMount(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
+        PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
+
+        // --- Mount Priority Logic ---
+        ShoulderLocation availableSlot = null;
+        MountPriority priority = Configs.AHP.mountPriority.get();
+
+        if (priority == MountPriority.HEAD_FIRST) {
+            // Check Head -> Right -> Left
+            if (playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty()) {
+                availableSlot = ShoulderLocation.HEAD;
+            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty()) {
+                availableSlot = ShoulderLocation.RIGHT_SHOULDER;
+            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) {
+                availableSlot = ShoulderLocation.LEFT_SHOULDER;
+            }
+        } else {
+            // Default: Shoulders -> Head
+            if (playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty()) {
+                availableSlot = ShoulderLocation.RIGHT_SHOULDER;
+            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) {
+                availableSlot = ShoulderLocation.LEFT_SHOULDER;
+            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty()) {
+                availableSlot = ShoulderLocation.HEAD;
+            }
+        }
+
+        // --- Mounting Logic ---
+        if (availableSlot != null) {
+            // Disable wander mode before saving
+            hamster.setWanderModeActive(false);
+
+            // Save, set, and update queue
+            HamsterState data = HamsterNbtUtil.saveToHamsterState(hamster);
+            playerAccessor.setShoulderHamster(availableSlot, data.toNbt());
+            playerAccessor.adorablehamsterpets$getMountOrderQueue().addLast(availableSlot);
+
+            BlockPos hamsterPosForMountSound = hamster.getBlockPos();
+            hamster.discard(); // Remove hamster from world
+
+            // --- Universal Feedback ---
+            if (player instanceof ServerPlayerEntity serverPlayer) {
+                ModCriteria.HAMSTER_ON_SHOULDER.get().trigger(serverPlayer);
+
+                // Check for Hamster Tower Advancement
+                if (!playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty() &&
+                        !playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty() &&
+                        !playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) {
+                    ModCriteria.MAX_SHOULDER_HAMSTERS.get().trigger(serverPlayer);
+                }
+            }
+            player.sendMessage(Text.translatable("message.adorablehamsterpets.shoulder_mount_success"), true);
+
+            SoundEvent mountSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SHOULDER_MOUNT_SOUNDS, hamster.getRandom());
+            if (mountSound != null) {
+                hamster.getWorld().playSound(null, player.getBlockPos(), mountSound, SoundCategory.PLAYERS, 1.0f, hamster.getSoundPitch());
+            }
+
+            // --- Item-Specific Feedback ---
+            if (ConfigDataCache.isLureItem(stack)) {
+                SoundEvent mountLureSound = ModSounds.getDynamicItemSound(stack);
+                float volume = ModSounds.getDynamicSoundVolume(mountLureSound);
+                hamster.getWorld().playSound(null, hamsterPosForMountSound, mountLureSound, SoundCategory.PLAYERS, volume, 1.0f);
+
+                ParticleEffectsUtil.spawnParticles(
+                        hamster.getWorld(),
+                        Vec3d.ofCenter(hamsterPosForMountSound),
+                        new ItemStackParticleEffect(ParticleTypes.ITEM, stack.copy()),
+                        8,
+                        new Vec3d(0.25, 0.25, 0.25),
+                        0.05
+                );
+
+                if (!player.getAbilities().creativeMode && Configs.AHP.consumeLureItem) {
+                    stack.decrement(1);
+                }
+            }
+        } else {
+            player.sendMessage(Text.translatable("message.adorablehamsterpets.shoulder_occupied"), true);
+        }
+    }
+
+    /**
+     * Selects a random item from the Default or Extra cheek pouch loot lists.
+     * Prioritizes lists that actually contain items.
+     */
+    private static Item getRandomTagGameReward(HamsterEntity hamster) {
+        List<Integer> validPools = new ArrayList<>();
+        validPools.add(0); // Default is always valid
+
+        // Check if Extra Loot list has entries
+        if (!Configs.AHP_WORLDGEN.extraCheekLootList.isEmpty()) {
+            validPools.add(1);
+        }
+
+        int selectedPool = validPools.get(hamster.getRandom().nextInt(validPools.size()));
+
+        return (selectedPool == 1)
+                ? ConfigDataCache.getRandomCustomLootItem(hamster.getRandom())
+                : ConfigDataCache.getRandomDefaultLootItem(hamster.getRandom());
     }
 }

@@ -578,7 +578,7 @@ public class AhpConfig extends Config {
 
     @Translatable.Name("Wander Interval")
     @Translatable.Desc("Controls how frequently your hamster feels the urge to walk around. The higher the number, the lazier the hamster (1 in X chance to wander per tick; 20 ticks = 1 second). Set to 0 to disable wandering entirely— perfect for keeping them still for photoshoots or interrogation. Vanilla's default chance for Wolves is 1 in 120 ticks.")
-    public ValidatedInt wanderInterval = new ValidatedInt(110, 10000, 0);
+    public ValidatedInt wanderChanceInterval = new ValidatedInt(120, 10000, 0);
 
     @Translatable.Name("Look-At Duration")
     @Translatable.Desc("The minimum time (in ticks) your hamster stares into your soul. Actual duration = this value + a random extra 0 to 4 seconds. Default is 40. Increase to simulate deep contemplation (or emptiness).")
@@ -1134,8 +1134,8 @@ public class AhpConfig extends Config {
     public boolean allowStrangerTag = true;
 
     @Translatable.Name("Game Initiation Chance")
-    @Translatable.Desc("The 1-in-X chance per tick a hamster will start a game. Since the game runs at 20 ticks per second, a 1-in-200-tick chance means you'll need to maintain eye contact for about 8-10 seconds on average. Set to 1 if you want the game to start instantly.")
-    public ValidatedInt tagGameChanceDenominator = new ValidatedInt(200, 1200, 1);
+    @Translatable.Desc("The 1-in-X chance per tick a hamster will start a game of tag if you make too much eye contact. Since the game runs at 20 ticks per second, a 1-in-100-tick chance means you'll need to maintain eye contact for about 5-10 seconds on average. Set to 1 if you want the game to start instantly upon eye contact.")
+    public ValidatedInt tagGameChanceDenominator = new ValidatedInt(100, 1200, 1);
 
     @Translatable.Name("Enable Player Daily Limit")
     @Translatable.Desc("If true, players are capped on how many games they can play per day. If false, you can play until your legs fall off.")
