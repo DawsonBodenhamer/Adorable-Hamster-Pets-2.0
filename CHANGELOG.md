@@ -36,6 +36,8 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
 - **Configurable Cuisine:**
   - You can now configure the nutrition and saturation values for all food items added by the mod (Cucumbers, Green Beans, Food Mix).
   - Changed nutrition/saturation values are dynamically reflected in AppleSkin's "on-eat" HUD preview. **Unfortunately due to major API changes between MC versions, this only works on 1.21.1.*
+- **Lectern Reading:**
+  - Added code for placing the Hamster Tips guide book into a lectern and an event handler so you can read it. You can now display your rodent knowledge in your base or wherever.
 
 ### Changed
 - **Mod Page/README**

@@ -71,5 +71,9 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
         getOrCreateTagBuilder(SOUL_SPEED_SUPPORTED)
                 .forceAddTag(ItemTags.FOOT_ARMOR_ENCHANTABLE)
                 .addTag(HAMSTER_ARMOR_ENCHANTABLE);
+
+        // 6. Lectern Books Wrapper
+        getOrCreateTagBuilder(ItemTags.LECTERN_BOOKS)
+                .add(ModItems.HAMSTER_GUIDE_BOOK.get());
     }
 }
