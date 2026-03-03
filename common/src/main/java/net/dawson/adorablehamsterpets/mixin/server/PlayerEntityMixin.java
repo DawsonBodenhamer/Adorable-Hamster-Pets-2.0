@@ -32,6 +32,7 @@ import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -469,6 +470,15 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         for (int i = 0; i < inv.size(); i++) {
             ItemStack stack = inv.getStack(i);
             if (!stack.isEmpty() && stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+
+                // --- Eccentric Tomes Compat ---
+                // Don't trigger effects when morphing the Eccentric Tomes book into my guidebook
+                if (stack.contains(DataComponentTypes.CUSTOM_NAME)) {
+                    Text customName = stack.get(DataComponentTypes.CUSTOM_NAME);
+                    if (customName != null && customName.getString().contains("Eccentric Tome")) {
+                        continue;
+                    }
+                }
                 return true;
             }
         }
