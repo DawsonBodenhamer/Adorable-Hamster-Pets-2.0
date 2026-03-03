@@ -291,7 +291,7 @@ public class ModItems {
     static {
         for (WoodVariant variant : WoodVariant.values()) {
             HAMSTER_BED_ITEMS.put(variant, registerBlockItem("hamster_bed_" + variant.asString(),
-                    () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), variant, new Item.Settings())));
+                    () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), variant, new Item.Settings().maxCount(1))));
         }
     }
 

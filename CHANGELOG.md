@@ -71,6 +71,8 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - Added a 30-second grace period to the guidebook tracking system. Prevents the effects from spamming if you move it between inventories, or drop it and pick it back up.
 - **Pink Petals Bug (1.20.1 only)**
   - Fixed an issue where Pink Petals would visually apply to all three locations simultaneously when first equipping them or reloading a world.
+- **Hamster Bed Linking**
+  - Reduced the maximum stack size of Hamster Beds to 1. Not only does this feel like the way it always should have been, it resolves an issue where holding a stack of beds and right-clicking a hamster would link the entire stack simultaneously.
 
 ---
 
