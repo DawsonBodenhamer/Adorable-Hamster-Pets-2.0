@@ -289,7 +289,7 @@ public class ModItems {
         for (WoodVariant variant : WoodVariant.values()) {
             HAMSTER_BED_ITEMS.put(variant, registerBlockItem("hamster_bed_" + variant.asString(),
                     // 1.20.1 Pattern: Use factory method .create()
-                    () -> HamsterBedItem.create(ModBlocks.HAMSTER_BED.get(), variant, new Item.Settings())));
+                    () -> HamsterBedItem.create(ModBlocks.HAMSTER_BED.get(), variant, new Item.Settings().maxCount(1))));
         }
     }
 
