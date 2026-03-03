@@ -17,7 +17,7 @@ public class ModEntities {
     public static final RegistrySupplier<EntityType<HamsterEntity>> HAMSTER = ENTITY_TYPES.register(
             Identifier.of(AdorableHamsterPets.MOD_ID, "hamster"),
             () -> EntityType.Builder.create(HamsterEntity::new, SpawnGroup.CREATURE)
-                    .setDimensions(0.5F, 0.5F)
+                    .setDimensions(0.425F, 0.425F)
                     .build("hamster")
     );
 
