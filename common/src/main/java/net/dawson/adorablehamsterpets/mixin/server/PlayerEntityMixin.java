@@ -468,6 +468,15 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         for (int i = 0; i < inv.size(); i++) {
             ItemStack stack = inv.getStack(i);
             if (!stack.isEmpty() && stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+
+                // --- Eccentric Tomes Compat ---
+                // Don't trigger effects when morphing the Eccentric Tomes book into my guidebook
+                if (stack.hasCustomName()) {
+                    Text customName = stack.getName();
+                    if (customName != null && customName.getString().contains("Eccentric Tome")) {
+                        continue;
+                    }
+                }
                 return true;
             }
         }
