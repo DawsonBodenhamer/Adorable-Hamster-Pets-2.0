@@ -17,7 +17,7 @@ public class ModEntities {
     // --- 2. EntityType Registration as a RegistrySupplier ---
     public static final RegistrySupplier<EntityType<HamsterEntity>> HAMSTER = ENTITY_TYPES.register("hamster", () ->
             EntityType.Builder.create(HamsterEntity::new, SpawnGroup.CREATURE)
-                    .dimensions(0.5F, 0.5F).build("hamster"));
+                    .dimensions(0.425F, 0.425F).build("hamster"));
 
     public static final RegistrySupplier<EntityType<HamsterTreeSearcherEntity>> HAMSTER_TREE_SEARCHER = ENTITY_TYPES.register("hamster_tree_searcher", () ->
             EntityType.Builder.<HamsterTreeSearcherEntity>create(HamsterTreeSearcherEntity::new, SpawnGroup.MISC)

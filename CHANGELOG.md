@@ -52,6 +52,9 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - If you keep the screen open for longer than 5 seconds after obtaining the book, the effects are silently cancelled.
 - **Cucumber Rebalance:**
   - Sliced Cucumbers are no longer inexplicably nutritious. Their default food value has been dropped from 2 hearts to 0.5 hearts to match items like Dried Kelp.
+- **Hamster Hitbox Adjustment**
+  - Shrunk the physical hitbox of hamsters by 15% to more accurately match their actual visual model size.
+  - *Note: Because the bounding box is now smaller, you will need to aim slightly more accurately when trying to interact with a hamster.*
 
 ### Fixed
 - **Dismount Bug:**
