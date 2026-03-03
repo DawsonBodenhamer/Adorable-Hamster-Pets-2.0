@@ -9,9 +9,13 @@ import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.mixin.accessor.SlotAccessor;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LecternBlock;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.LecternBlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
@@ -22,9 +26,15 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+import vazkii.patchouli.api.PatchouliAPI;
 
 import java.lang.reflect.Method;
 import java.util.HashSet;
@@ -46,38 +56,52 @@ public class AHPCommonEvents {
     }
 
     /**
-     * Intercepts block right-clicks to handle specific Hamster Bed interactions that vanilla logic
-     * might otherwise skip.
-     * <p>
-     * Specifically, this forces the "Unlink Bed" logic (Sneak + Rotten Flesh) to execute
-     * instead of the player eating the item.
+     * Intercepts block right-clicks to handle specific mod interactions that vanilla logic
+     * might otherwise skip or mishandle.
      */
-    private static EventResult onRightClickBlock(PlayerEntity player, net.minecraft.util.Hand hand, net.minecraft.util.math.BlockPos pos, net.minecraft.util.math.Direction face) {
-        // --- 1. Validate Context ---
-        ItemStack stack = player.getStackInHand(hand);
+    private static EventResult onRightClickBlock(PlayerEntity player, Hand hand, BlockPos pos, Direction face) {
+        World world = player.getWorld();
+        BlockState state = world.getBlockState(pos);
 
-        // Only care about specific "Unlink" combination: Sneaking + Holding Repellent
-        if (!player.isSneaking() || !ConfigDataCache.isBedAvoidanceFood(stack)) {
-            return EventResult.pass();
-        }
+        // --- 1. Lectern Intercept ---
+        // Intercept the read action and route it through the Patchouli API
+        if (state.isOf(Blocks.LECTERN) && state.get(LecternBlock.HAS_BOOK)) {
+            // Let sneaking players take the book out normally via vanilla logic
+            if (!player.isSneaking()) {
+                BlockEntity be = world.getBlockEntity(pos);
+                if (be instanceof LecternBlockEntity lectern) {
+                    ItemStack bookStack = lectern.getBook();
 
-        // --- 2. Check Block Target ---
-        BlockState state = player.getWorld().getBlockState(pos);
-        if (!(state.getBlock() instanceof HamsterBedBlock)) {
-            return EventResult.pass();
-        }
-
-        // --- 3. Execute Logic ---
-        // If here, the player is sneaking and is holding repellent while looking at a bed
-        if (!player.getWorld().isClient()) {
-            BlockEntity be = player.getWorld().getBlockEntity(pos);
-            if (be instanceof HamsterBedBlockEntity bedEntity) {
-                bedEntity.unlinkHamster(player);
+                    // Check if the lectern is holding my guide book
+                    if (bookStack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+                        if (!world.isClient() && player instanceof ServerPlayerEntity serverPlayer) {
+                            PatchouliAPI.get().openBookGUI(serverPlayer, Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+                        }
+                        // Interrupt to avoid vanilla written book UI
+                        return EventResult.interruptTrue();
+                    }
+                }
             }
         }
 
-        // Return interruptTrue to indicate success and stop vanilla processing
-        return EventResult.interruptTrue();
+        // --- 2. Hamster Bed Unlink ---
+        ItemStack stack = player.getStackInHand(hand);
+
+        // Only care about specific "Unlink" combination: Sneaking + Holding Repellent
+        if (player.isSneaking() && ConfigDataCache.isBedAvoidanceFood(stack)) {
+            if (state.getBlock() instanceof HamsterBedBlock) {
+                if (!world.isClient()) {
+                    BlockEntity be = world.getBlockEntity(pos);
+                    if (be instanceof HamsterBedBlockEntity bedEntity) {
+                        bedEntity.unlinkHamster(player);
+                    }
+                }
+                // Return interruptTrue to indicate success and stop vanilla processing (eating)
+                return EventResult.interruptTrue();
+            }
+        }
+
+        return EventResult.pass();
     }
 
     /**
@@ -85,7 +109,7 @@ public class AHPCommonEvents {
      * It scans all unique inventories within the menu and upgrades any outdated guide books.
      *
      * @param player The player opening the menu.
-     * @param menu The menu being opened.
+     * @param menu   The menu being opened.
      */
     private static void onOpenMenu(PlayerEntity player, ScreenHandler menu) {
         if (player.getWorld().isClient()) {
@@ -119,7 +143,7 @@ public class AHPCommonEvents {
      * @param source The source of the damage.
      * @param amount The amount of damage.
      * @return {@link EventResult#interruptFalse()} to cancel the damage, or
-     *         {@link EventResult#pass()} to allow it.
+     * {@link EventResult#pass()} to allow it.
      */
     private static EventResult onLivingHurt(LivingEntity victim, DamageSource source, float amount) {
         // --- 1. Server-side guard ---
@@ -128,7 +152,7 @@ public class AHPCommonEvents {
         }
 
         // --- 2. Gather the direct and indirect sources of the damage ---
-        Entity direct   = source.getSource();     // Immediate cause (e.g., projectile / hamster body)
+        Entity direct = source.getSource();     // Immediate cause (e.g., projectile / hamster body)
         Entity attacker = source.getAttacker();   // Credited attacker (e.g., the mob that dealt it)
 
         // --- 3. Debug logging to verify what entities are involved ---
@@ -136,7 +160,7 @@ public class AHPCommonEvents {
                 victim.getType().toString(),
                 source.getName(),
                 attacker, attacker == null ? "null" : attacker.getClass().getSimpleName(),
-                direct,   direct   == null ? "null" : direct.getClass().getSimpleName(),
+                direct, direct == null ? "null" : direct.getClass().getSimpleName(),
                 amount
         );
 
@@ -163,7 +187,7 @@ public class AHPCommonEvents {
             AdorableHamsterPets.LOGGER.trace(
                     "hamster→pet owners: hamsterOwnerUuid={} victimOwnerUuid={}",
                     hamsterOwner == null ? "null" : hamsterOwner.getUuid(),
-                    victimOwner  == null ? "null" : victimOwner.getUuid()
+                    victimOwner == null ? "null" : victimOwner.getUuid()
             );
 
             if (hamsterOwner != null && victimOwner != null) {
@@ -176,12 +200,12 @@ public class AHPCommonEvents {
 
         // --- 6. Symmetric protection: pet (any) → hamster ---
         if (victim instanceof HamsterEntity victimHamster && victimHamster.isTamed()) {
-            LivingEntity victimOwner   = victimHamster.getOwner();
+            LivingEntity victimOwner = victimHamster.getOwner();
             LivingEntity attackerOwner = (attacker instanceof LivingEntity leAttacker) ? getPetOwner(leAttacker) : null;
 
             AdorableHamsterPets.LOGGER.trace(
                     "onLivingHurt: symm hamsterOwnerUuid={} attackerOwnerUuid={}",
-                    victimOwner   == null ? "null" : victimOwner.getUuid(),
+                    victimOwner == null ? "null" : victimOwner.getUuid(),
                     attackerOwner == null ? "null" : attackerOwner.getUuid()
             );
 

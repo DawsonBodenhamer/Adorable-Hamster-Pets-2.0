@@ -1,19 +1,17 @@
 package net.dawson.adorablehamsterpets.item.custom;
 
-import dev.architectury.platform.Platform;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LecternBlock;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsageContext;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.*;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import vazkii.patchouli.api.PatchouliAPI;
 
@@ -35,6 +33,27 @@ public class PatchouliGuideBookItem extends Item {
             PatchouliAPI.get().openBookGUI(serverPlayer, Identifier.of("adorablehamsterpets", "hamster_tips_guide_book"));
         }
         return TypedActionResult.success(stack);
+    }
+
+
+    /**
+     * Called when the player right-clicks a block with this item.
+     * Mimics 1.20.1 vanilla book behavior by explicitly placing the item into empty lecterns.
+     */
+    @Override
+    public ActionResult useOnBlock(ItemUsageContext context) {
+        World world = context.getWorld();
+        BlockPos blockPos = context.getBlockPos();
+        BlockState blockState = world.getBlockState(blockPos);
+
+        // If the block is a lectern, add my book to it
+        if (blockState.isOf(Blocks.LECTERN)) {
+            return LecternBlock.putBookIfAbsent(context.getPlayer(), world, blockPos, blockState, context.getStack())
+                    ? ActionResult.success(world.isClient())
+                    : ActionResult.PASS;
+        }
+
+        return super.useOnBlock(context);
     }
 
     /**
