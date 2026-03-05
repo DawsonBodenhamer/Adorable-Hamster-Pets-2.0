@@ -23,10 +23,7 @@ import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.networking.payload.PlayGuidebookEffectsPayload;
 import net.dawson.adorablehamsterpets.networking.payload.SyncHamsterStatePayload;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
-import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
-import net.dawson.adorablehamsterpets.util.HamsterNbtUtil;
-import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
+import net.dawson.adorablehamsterpets.util.*;
 import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.block.Block;
@@ -43,11 +40,15 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -57,6 +58,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
+import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -108,6 +110,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private int ahp$sunflowerCheckTimer = 0;
     @Unique private int ahp$tagGamesPlayedToday = 0;
     @Unique private long ahp$lastTagGameDayTime = 0;
+
+    // --- Teleport Tracking Fields ---
+    @Unique private Vec3d ahp$lastTickPos = null;
+    @Unique private RegistryKey<World> ahp$lastTickDimension = null;
+    @Unique private final List<NbtCompound> ahp$inTransitHamsters = new ArrayList<>();
+    @Unique private int ahp$transitTimer = 0;
 
     // --- State Flags & Trackers ---
     @Unique private String adorablehamsterpets$lastDismountMessageKey = "";
@@ -269,11 +277,74 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
     }
 
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void ahp$checkTeleport(CallbackInfo ci) {
+        PlayerEntity self = (PlayerEntity) (Object) this;
+
+        // Only run on the server for living players
+        if (self.getWorld().isClient() || !self.isAlive()) return;
+
+        Vec3d currentPos = self.getPos();
+        if (this.ahp$lastTickPos != null && this.ahp$lastTickDimension != null) {
+            boolean dimensionChanged = this.ahp$lastTickDimension != self.getWorld().getRegistryKey();
+            double distSq = this.ahp$lastTickPos.squaredDistanceTo(self.getPos());
+
+            // If dimension changed OR moved > 20 blocks in a single tick (400 sq dist)
+            if (dimensionChanged || distSq > 400.0) {
+                if (Configs.AHP.enableTeleportRescue) {
+                    this.ahp$pocketFollowingHamsters(this.ahp$lastTickPos, this.ahp$lastTickDimension);
+                }
+            }
+        }
+
+        // Update tracking variables for the next tick
+        this.ahp$lastTickPos = self.getPos();
+        this.ahp$lastTickDimension = self.getWorld().getRegistryKey();
+    }
+
     @Inject(method = "tick", at = @At("TAIL"))
     private void adorablehamsterpets$onTick(CallbackInfo ci) {
         PlayerEntity self = (PlayerEntity) (Object) this;
         World world = self.getWorld();
         if (world.isClient) return;
+
+        // --- Process In-Transit Hamsters ---
+        if (this.ahp$transitTimer > 0) {
+            // Play "incoming" shimmer sound 5 ticks after arrival
+            if (this.ahp$transitTimer == 10 && !this.ahp$inTransitHamsters.isEmpty()) {
+                world.playSound(null, this.getBlockPos(), ModSounds.MAGIC_SHIMMER.get(), SoundCategory.NEUTRAL, 1.5f, 1.2f);
+            }
+
+            this.ahp$transitTimer--;
+            if (this.ahp$transitTimer <= 0 && !this.ahp$inTransitHamsters.isEmpty()) {
+                ServerWorld newWorld = (ServerWorld) world;
+
+                for (NbtCompound nbt : this.ahp$inTransitHamsters) {
+                    HamsterEntity newHamster = ModEntities.HAMSTER.get().create(newWorld);
+                    if (newHamster != null) {
+                        newHamster.readNbt(nbt);
+
+                        Optional<BlockPos> safePos = HamsterPlacementUtil.findSafeSpawnPosition(self.getBlockPos(), newWorld, 3, newHamster);
+                        Vec3d targetPos = safePos.map(Vec3d::ofBottomCenter).orElse(self.getPos());
+
+                        newHamster.refreshPositionAndAngles(targetPos.x, targetPos.y, targetPos.z, newHamster.getYaw(), newHamster.getPitch());
+                        newHamster.setVelocity(Vec3d.ZERO);
+                        newHamster.getNavigation().stop();
+                        newHamster.setSitting(false);
+
+                        // Prevent flight animation upon spawning
+                        newHamster.setFallFlyImmunityTicks(20);
+
+                        newWorld.spawnEntity(newHamster);
+
+                        newWorld.playSound(null, BlockPos.ofFloored(targetPos), SoundEvents.ENTITY_FOX_TELEPORT, SoundCategory.NEUTRAL, 0.25f, 1.5f);
+                        ParticleEffectsUtil.spawnParticles(newWorld, targetPos.add(0, 0.5, 0), ParticleTypes.PORTAL, 50, new Vec3d(0.5, 0.5, 0.5), 0.0);
+                        ParticleEffectsUtil.spawnParticles(newWorld, targetPos.add(0, 0.5, 0), ParticleTypes.ENCHANT, 25, new Vec3d(0.5, 0.5, 0.5), 0.0);
+                    }
+                }
+                this.ahp$inTransitHamsters.clear();
+            }
+        }
 
         Random random = world.getRandom();
         final AhpConfig config = AdorableHamsterPets.CONFIG;
@@ -821,6 +892,55 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Scoops up all following hamsters when a player teleports. Grabs them from both
+     * the old chunk and the new chunk, serializes them into a transit pocket, and
+     * discards their bodies to prevent duplicate saving or rendering glitches.
+     */
+    @Unique
+    private void ahp$pocketFollowingHamsters(Vec3d oldPos, RegistryKey<World> oldDimension) {
+        MinecraftServer server = this.getServer();
+        if (server == null) return;
+
+        ServerWorld oldWorld = server.getWorld(oldDimension);
+        ServerWorld newWorld = (ServerWorld) this.getWorld();
+        if (oldWorld == null || newWorld == null) return;
+
+        List<HamsterEntity> toRescue = new ArrayList<>();
+
+        // 1. Grab hamsters left behind at the old location
+        Box oldSearchBox = new Box(oldPos.x - 32, oldPos.y - 32, oldPos.z - 32, oldPos.x + 32, oldPos.y + 32, oldPos.z + 32);
+        toRescue.addAll(oldWorld.getEntitiesByClass(HamsterEntity.class, oldSearchBox, this::ahp$isValidRescueTarget));
+
+        // 2. Grab hamsters who might have already teleported to the new location
+        Box newSearchBox = new Box(this.getX() - 32, this.getY() - 32, this.getZ() - 32, this.getX() + 32, this.getY() + 32, this.getZ() + 32);
+        List<HamsterEntity> newWorldHamsters = newWorld.getEntitiesByClass(HamsterEntity.class, newSearchBox, this::ahp$isValidRescueTarget);
+
+        for (HamsterEntity h : newWorldHamsters) {
+            if (!toRescue.contains(h)) toRescue.add(h);
+        }
+
+        if (toRescue.isEmpty()) return;
+
+        // Pocket them
+        for (HamsterEntity hamster : toRescue) {
+            NbtCompound nbt = new NbtCompound();
+            hamster.writeNbt(nbt); // Save complete state
+            this.ahp$inTransitHamsters.add(nbt);
+            hamster.discard(); // Remove from world
+        }
+
+        // Start transit timer (15 ticks to ensure client has loaded)
+        this.ahp$transitTimer = 15;
+    }
+
+    @Unique
+    private boolean ahp$isValidRescueTarget(HamsterEntity hamster) {
+        return hamster.isTamed() && this.getUuid().equals(hamster.getOwnerUuid())
+                && !hamster.isSitting() && !hamster.isWanderModeActive()
+                && !hamster.isShoulderPet();
+    }
 
     /**
      * Detects when player gets the Hamster Tips guidebook. Plays FX once

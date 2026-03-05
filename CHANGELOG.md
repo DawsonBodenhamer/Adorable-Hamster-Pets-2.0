@@ -33,10 +33,10 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - If enabled (default), players will automatically be given the Hamster Tips guidebook and receive a chat prompt the very first time they spot a wild hamster from <=10 blocks away.
   - Targeting calculation includes wiggle room to ensure the event triggers even if the player's crosshair isn't perfectly on the hamster's hit box.
   - Only triggers once, and only if the player has never yet received the guidebook (regardless of current inventory status).
-- **Configurable Cuisine:**
+- **Configurable Cuisine**
   - You can now configure the nutrition and saturation values for all food items added by the mod (Cucumbers, Green Beans, Food Mix).
   - Changed nutrition/saturation values are dynamically reflected in AppleSkin's "on-eat" HUD preview. **Unfortunately due to major API changes between MC versions, this only works on 1.21.1.*
-- **Lectern Reading:**
+- **Lectern Reading**
   - Added code for placing the Hamster Tips guide book into a lectern and an event handler so you can read it. You can now display your rodent knowledge in your base or wherever.
 
 ### Changed
@@ -50,14 +50,14 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
 - **Guidebook Effects**
   - If you obtain the Hamster Tips guidebook while viewing a chest or crafting screen, the "rediscovered" visual and audio effects will now be postponed until you close the screen, ensuring the effects do not play while you're looking at your inventory.
   - If you keep the screen open for longer than 5 seconds after obtaining the book, the effects are silently cancelled.
-- **Cucumber Rebalance:**
+- **Cucumber Rebalance**
   - Sliced Cucumbers are no longer inexplicably nutritious. Their default food value has been dropped from 2 hearts to 0.5 hearts to match items like Dried Kelp.
 - **Hamster Hitbox Adjustment**
   - Shrunk the physical hitbox of hamsters by 15% to more accurately match their actual visual model size.
   - *Note: Because the bounding box is now smaller, you will need to aim slightly more accurately when trying to interact with a hamster.*
 
 ### Fixed
-- **Dismount Bug:**
+- **Dismount Bug**
   - Fixed an issue where holding down the Sneak key for more than a second would cause the OS's auto-key-repeat feature to spam the game with inputs, dismounting all of your shoulder hamsters rapidly.
   - You can now safely hold Sneak without losing your friends.
   - This bug has existed ever since the double-tap setting was added, but I hadn't found it because I usually play with Sneak set to "Toggle" (which means I have no reason to hold it down for extended periods).
@@ -76,6 +76,9 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - Fixed an issue where Pink Petals would visually apply to all three locations simultaneously when first equipping them or reloading a world.
 - **Hamster Bed Linking**
   - Reduced the maximum stack size of Hamster Beds to 1. Not only does this feel like the way it always should have been, it resolves an issue where holding a stack of beds and right-clicking a hamster would link the entire stack simultaneously.
+- **Invisible Hamster Teleport Glitch**
+  - Dramatically overhauled how hamsters follow you when you teleport (even with mods like Waystones). Instead of relying on their own AI to catch up, the player will now safely scoop up any following hamsters, hold them in transit while the world loads, and drop them at your new location 0.75 seconds later.
+  - This solves the issue that all vanilla pets have where they will either get left behind in unloaded chunks and be unable to follow since their AI stops ticking, or 10% percent of the time they will successfully teleport but remain completely invisible to the client until you relog due to... *Minecraft*.
 
 ---
 
