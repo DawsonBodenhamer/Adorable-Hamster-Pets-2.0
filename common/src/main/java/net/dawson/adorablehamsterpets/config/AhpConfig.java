@@ -384,6 +384,10 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Fundamental hamster hijinks— fiddle at your own risk.")
     public ConfigGroup core = new ConfigGroup("core", true);
 
+    @Translatable.Name("Enable Teleport Rescue")
+    @Translatable.Desc("If true, hamsters that are actively following you (not sitting or wandering) will instantly teleport with you, across dimensions and even if their current chunk becomes unloaded. WARNING: do not turn this off unless you want to risk your hamsters being left behind on long teleports.")
+    public boolean enableTeleportRescue = true;
+
     @Translatable.Name("Enable Hamster Throwing")
     @Translatable.Desc("Do we yeet the hamster? ('G' by default).")
     public boolean enableHamsterThrowing = true;

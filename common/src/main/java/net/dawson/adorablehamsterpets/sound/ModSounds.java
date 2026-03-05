@@ -164,6 +164,7 @@ public class ModSounds {
 
     // --- Generic Misc Sounds ---
     public static final RegistrySupplier<SoundEvent> HAMSTER_DING = registerSoundEvent("ding");
+    public static final RegistrySupplier<SoundEvent> MAGIC_SHIMMER = registerSoundEvent("magic_shimmer");
 
     // --- 3. Public Sound Lists (using RegistrySuppliers) ---
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_ATTACK_SOUNDS = List.of(HAMSTER_ATTACK1, HAMSTER_ATTACK2, HAMSTER_ATTACK3, HAMSTER_ATTACK4);
