@@ -54,7 +54,7 @@ side = "BOTH"
 [[dependencies.adorablehamsterpets]]
 modId = "patchouli"
 type = "required"
-versionRange = "[1.21.1-92-NEOFORGE,)"
+versionRange = "[1.21.1-93-NEOFORGE,)"
 ordering = "NONE"
 side = "BOTH"
 

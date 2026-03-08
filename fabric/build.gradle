@@ -62,7 +62,7 @@ dependencies {
     modImplementation include("maven.modrinth:placeholder-api:2.4.2+1.21")
 
     // Patchouli (Fabric/Quilt) – required
-    modImplementation "vazkii.patchouli:Patchouli:1.21.1-92-FABRIC"
+    modImplementation "vazkii.patchouli:Patchouli:${rootProject.patchouli_version}-FABRIC"
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }

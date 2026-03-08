@@ -8,6 +8,7 @@ import net.dawson.adorablehamsterpets.client.announcements.Announcement;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
 import net.dawson.adorablehamsterpets.client.announcements.Semver;
 import net.dawson.adorablehamsterpets.mixin.accessor.BookContentsBuilderAccessor;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -77,17 +78,18 @@ public class BookContentsBuilderMixin {
         // --- 2. Get mutable maps from the builder ---
         Map<Identifier, BookCategory> categories = accessor.getCategories();
         Map<Identifier, BookEntry> entries = accessor.getEntries();
+        RegistryWrapper.WrapperLookup registries = level.getRegistryManager();
 
         // --- 3. Create and Add Virtual Categories ---
         Identifier updatesId = Identifier.of(AdorableHamsterPets.MOD_ID, "update_notes");
         if (!categories.containsKey(updatesId)) {
-            BookCategory updatesCategory = createVirtualCategory(hamsterBook, "book.adorablehamsterpets.category.update_notes", "minecraft:writable_book", 99, updatesId);
+            BookCategory updatesCategory = createVirtualCategory(hamsterBook, "book.adorablehamsterpets.category.update_notes", "minecraft:writable_book", 99, updatesId, registries);
             categories.put(updatesId, updatesCategory);
         }
 
         Identifier announcementsId = Identifier.of(AdorableHamsterPets.MOD_ID, "announcements");
         if (!categories.containsKey(announcementsId)) {
-            BookCategory announcementsCategory = createVirtualCategory(hamsterBook, "book.adorablehamsterpets.category.announcements", "adorablehamsterpets:announcement_bell_icon", 98, announcementsId);
+            BookCategory announcementsCategory = createVirtualCategory(hamsterBook, "book.adorablehamsterpets.category.announcements", "adorablehamsterpets:announcement_bell_icon", 98, announcementsId, registries);
             categories.put(announcementsId, announcementsCategory);
         }
 
@@ -174,7 +176,7 @@ public class BookContentsBuilderMixin {
                 }
 
                 // Pass loop index 'i' as the sortnum to enforce the sorted order in Patchouli
-                BookEntry entry = createVirtualEntry(hamsterBook, announcement.title(), icon, priority, categoryId, entryId, i);
+                BookEntry entry = createVirtualEntry(hamsterBook, announcement.title(), icon, priority, categoryId, entryId, i, registries);
 
                 entry.initCategory(entryId, categories::get);
                 entries.put(entryId, entry);
@@ -213,9 +215,10 @@ public class BookContentsBuilderMixin {
      * @param icon The resource location string for the category's icon.
      * @param sortnum The sorting number for ordering.
      * @param id The unique identifier for the category.
+     * @param registries The registry wrapper passed from the main build loop.
      * @return A new {@code BookCategory} instance.
      */
-    private BookCategory createVirtualCategory(Book book, String nameKey, String icon, int sortnum, Identifier id) {
+    private BookCategory createVirtualCategory(Book book, String nameKey, String icon, int sortnum, Identifier id, RegistryWrapper.WrapperLookup registries) {
         JsonObject json = new JsonObject();
         json.addProperty("name", nameKey);
         json.addProperty("description", nameKey + ".desc");
@@ -223,7 +226,7 @@ public class BookContentsBuilderMixin {
         json.addProperty("sortnum", sortnum);
         // Critical: An empty "parent" string designates this as a root category, making it appear on the landing page.
         json.addProperty("parent", "");
-        return new BookCategory(json, id, book);
+        return new BookCategory(json, id, book, registries);
     }
 
     /**
@@ -236,9 +239,10 @@ public class BookContentsBuilderMixin {
      * @param categoryId The ID of the parent category.
      * @param entryId The unique identifier for the entry.
      * @param sortnum The explicit sorting index for the entry within the category.
+     * @param registries The registry wrapper passed from the main build loop.
      * @return A new {@code BookEntry} instance.
      */
-    private BookEntry createVirtualEntry(Book book, String name, String icon, boolean priority, Identifier categoryId, Identifier entryId, int sortnum) {
+    private BookEntry createVirtualEntry(Book book, String name, String icon, boolean priority, Identifier categoryId, Identifier entryId, int sortnum, RegistryWrapper.WrapperLookup registries) {
         JsonObject json = new JsonObject();
         json.addProperty("name", name);
         json.addProperty("icon", icon);
@@ -247,6 +251,6 @@ public class BookContentsBuilderMixin {
         json.addProperty("category", categoryId.toString());
         // Pages array is empty because I'm intercepting the click event to show my own GUI
         json.add("pages", new JsonArray());
-        return new BookEntry(json, entryId, book, AdorableHamsterPets.MOD_ID);
+        return new BookEntry(json, entryId, book, AdorableHamsterPets.MOD_ID, registries);
     }
 }

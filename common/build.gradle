@@ -27,5 +27,5 @@ dependencies {
     modCompileOnly "curse.maven:jade-324717:${rootProject.jade_version_fabric}"
 
     // Patchouli API
-    modCompileOnly "vazkii.patchouli:Patchouli:1.21.1-92-FABRIC"
+    modCompileOnly "vazkii.patchouli:Patchouli:${rootProject.patchouli_version}-FABRIC"
 }

@@ -18,6 +18,9 @@ import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -183,7 +186,13 @@ public class AnnouncementIconWidget extends ButtonWidget {
                             json.addProperty("icon", "minecraft:writable_book");
                             json.addProperty("category", "adorablehamsterpets:update_notes");
                             json.add("pages", new JsonArray());
-                            BookEntry virtualEntry = new BookEntry(json, entryId, book, AdorableHamsterPets.MOD_ID);
+
+                            // Use fallback registry lookup if world is null (bc it is null on title screen)
+                            RegistryWrapper.WrapperLookup registries = client.world != null
+                                    ? client.world.getRegistryManager()
+                                    : DynamicRegistryManager.of(Registries.REGISTRIES);
+
+                            BookEntry virtualEntry = new BookEntry(json, entryId, book, AdorableHamsterPets.MOD_ID, registries);
 
                             // Open the screen with the TitleScreen as its parent
                             client.setScreen(new AnnouncementScreen(announcement, notification.reason(), this.parentScreen, virtualEntry));

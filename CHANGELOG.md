@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # **The Tag You're It Update**
 
-A bit of bug-squashing and typo-fixing, some new advancements and improvements, plus your hamsters have now developed a new, exhausting habit: playing tag. Gaze into their eyes for too long, and they might challenge you to a high-stakes footrace. If you catch them, they might give you a gift.
+A bit of bug-squashing and typo-fixing, some new advancements and improvements, plus your hamsters have now developed a new, exhausting habit: playing tag. Gaze into their eyes for too long, and they might challenge you to a high-stakes footrace. If you catch them, they might give you a gift. Also make sure you update Patchouli to the latest version or your game won't launch!
 
 ### Added
 - **Tag Mini-Game**
@@ -55,6 +55,9 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
 - **Hamster Hitbox Adjustment**
   - Shrunk the physical hitbox of hamsters by 15% to more accurately match their actual visual model size.
   - *Note: Because the bounding box is now smaller, you will need to aim slightly more accurately when trying to interact with a hamster.*
+- **Patchouli Version**
+  - Updated the internal guidebook generation logic to accommodate API breaking changes introduced in Patchouli version `1.21.1-93`.
+  - You must update Patchouli to the latest version or the game will not launch.
 
 ### Fixed
 - **Dismount Bug**

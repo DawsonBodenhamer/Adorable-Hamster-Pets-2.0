@@ -64,8 +64,8 @@ dependencies {
     modImplementation "me.fzzyhmstrs:fzzy_config:${rootProject.fzzy_config_version}+neoforge"
     modRuntimeOnly "maven.modrinth:kotlin-for-forge:${rootProject.kff_version}"
 
-    modCompileOnly "vazkii.patchouli:Patchouli:1.21.1-92-NEOFORGE:api"
-    modRuntimeOnly "vazkii.patchouli:Patchouli:1.21.1-92-NEOFORGE"
+    modCompileOnly "vazkii.patchouli:Patchouli:${rootProject.patchouli_version}-NEOFORGE:api"
+    modRuntimeOnly "vazkii.patchouli:Patchouli:${rootProject.patchouli_version}-NEOFORGE"
 
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
