@@ -122,7 +122,7 @@ public class ClientShoulderHamsterData {
 
             if (!shoulderNbt.isEmpty()) {
                 // --- 3.1. Standard State Ticking ---
-                ShoulderHamsterState state = this.hamsterStates.computeIfAbsent(location, l -> new ShoulderHamsterState());
+                ShoulderHamsterState state = this.hamsterStates.computeIfAbsent(location, ShoulderHamsterState::new);
                 state.tick(isSprinting, isWalking);
                 int currentAge = this.animationAges.getOrDefault(location, 0);
                 this.animationAges.put(location, currentAge + 1);

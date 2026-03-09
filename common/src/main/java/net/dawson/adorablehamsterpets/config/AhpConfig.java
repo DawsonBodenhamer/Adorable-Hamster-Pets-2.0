@@ -897,16 +897,38 @@ public class AhpConfig extends Config {
             );
 
     @NonSync
-    @Translatable.Name("Forced Animation State")
-    @Translatable.Desc("If dynamic animations are disabled, choose the single state shoulder pets should remain in. Sometimes this setting can have a delay before kicking in, but if it doesn't seem to be working at all, try switching the 'Forced State' from one option to another. Usually this just makes it \"work.\" I'm not sure why lol")
-    public ValidatedCondition<ForcedShoulderState> forcedShoulderState =
+    @Translatable.Name("Forced State (Head)")
+    @Translatable.Desc("If dynamic animations are disabled, choose the state for the hamster on your head. Sometimes this setting can have a delay before kicking in, but switching states back and forth usually fixes it.")
+    public ValidatedCondition<ForcedShoulderState> forcedHeadState =
             new ValidatedEnum<>(ForcedShoulderState.ALWAYS_STAND)
                     .toCondition(
-                            // use the inverted validated field as the gating condition
+                            // Use the inverted validated field as gating condition
                             dynamicShoulderDisabled,
-                            // message shown when the condition fails
+                            // Message shown when condition fails
                             Text.translatable("config.adorablehamsterpets.condition.dynamic_shoulder_off"),
-                            // fallback when the condition fails
+                            // Fallback
+                            () -> ForcedShoulderState.ALWAYS_STAND
+                    );
+
+    @NonSync
+    @Translatable.Name("Forced State (Right)")
+    @Translatable.Desc("See description for 'Forced State (Head)'.")
+    public ValidatedCondition<ForcedShoulderState> forcedRightShoulderState =
+            new ValidatedEnum<>(ForcedShoulderState.ALWAYS_STAND)
+                    .toCondition(
+                            dynamicShoulderDisabled,
+                            Text.translatable("config.adorablehamsterpets.condition.dynamic_shoulder_off"),
+                            () -> ForcedShoulderState.ALWAYS_STAND
+                    );
+
+    @NonSync
+    @Translatable.Name("Forced State (Left)")
+    @Translatable.Desc("See description for 'Forced State (Head)'.")
+    public ValidatedCondition<ForcedShoulderState> forcedLeftShoulderState =
+            new ValidatedEnum<>(ForcedShoulderState.ALWAYS_STAND)
+                    .toCondition(
+                            dynamicShoulderDisabled,
+                            Text.translatable("config.adorablehamsterpets.condition.dynamic_shoulder_off"),
                             () -> ForcedShoulderState.ALWAYS_STAND
                     );
 
