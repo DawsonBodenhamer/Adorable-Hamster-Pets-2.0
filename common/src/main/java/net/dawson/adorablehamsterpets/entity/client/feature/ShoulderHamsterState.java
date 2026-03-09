@@ -1,6 +1,8 @@
 package net.dawson.adorablehamsterpets.entity.client.feature;
 
 import net.dawson.adorablehamsterpets.config.Configs;
+import net.dawson.adorablehamsterpets.config.ForcedShoulderState;
+import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.client.MinecraftClient;
@@ -15,12 +17,14 @@ import net.minecraft.util.math.random.Random;
  */
 public class ShoulderHamsterState {
     private ShoulderAnimationState currentState;
+    private final ShoulderLocation location;
     private int timer; // Ticks remaining in the current state
     private final Random random = Random.create();
     private int sprintTransitionDelay = 0;
     private int idleSoundCooldown = 0;
 
-    public ShoulderHamsterState() {
+    public ShoulderHamsterState(ShoulderLocation location) {
+        this.location = location;
         // Start in a random state
         this.currentState = ShoulderAnimationState.values()[random.nextInt(ShoulderAnimationState.values().length)];
         this.timer = getNewRandomDuration();
@@ -72,10 +76,16 @@ public class ShoulderHamsterState {
                         nextState = ShoulderAnimationState.values()[random.nextInt(ShoulderAnimationState.values().length)];
                     } while (nextState == this.currentState);
                     this.currentState = nextState;
-                    this.timer = getNewRandomDuration(); // Reset with config duration.
+                    this.timer = getNewRandomDuration(); // Reset with config duration
                 } else {
-                    // NOT DYNAMIC: Snap to the forced state from config.
-                    this.currentState = switch (Configs.AHP.forcedShoulderState.get()) {
+                    // NOT DYNAMIC: Snap to the forced state from config based on location
+                    ForcedShoulderState forcedState = switch (this.location) {
+                        case RIGHT_SHOULDER -> Configs.AHP.forcedRightShoulderState.get();
+                        case LEFT_SHOULDER -> Configs.AHP.forcedLeftShoulderState.get();
+                        case HEAD -> Configs.AHP.forcedHeadState.get();
+                    };
+
+                    this.currentState = switch (forcedState) {
                         case ALWAYS_SIT -> ShoulderAnimationState.SITTING;
                         case ALWAYS_LAY_DOWN -> ShoulderAnimationState.LAYING_DOWN;
                         default -> ShoulderAnimationState.STANDING;

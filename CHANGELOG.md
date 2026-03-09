@@ -58,6 +58,8 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
 - **Patchouli Version**
   - Updated the internal guidebook generation logic to accommodate API breaking changes introduced in Patchouli version `1.21.1-93`.
   - You must update Patchouli to the latest version or the game will not launch.
+- **Shoulder Animation Configs**
+  - Replaced the single `Forced Animation State` setting with three distinct settings. You can now independently force the Head, Left Shoulder, and Right Shoulder hamsters into specific animation loops (when dynamic animations are disabled).
 
 ### Fixed
 - **Dismount Bug**
