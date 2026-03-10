@@ -200,30 +200,37 @@ public final class HamsterBedUtil {
                 BlockPos bedPos = globalPos.pos();
                 BlockState bedState = hamster.getWorld().getBlockState(bedPos);
 
-                // Spawn wake-up particles with wood type
-                ParticleEffectsUtil.spawnParticles(
-                        hamster.getWorld(),
-                        Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
-                        ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
-                        50,
-                        new Vec3d(0.2, 0.5, 0.2),
-                        0.0
-                );
+                // If bed still exists
+                if (bedState.isOf(ModBlocks.HAMSTER_BED.get())) {
+                    // Spawn wake-up particles with wood type
+                    ParticleEffectsUtil.spawnParticles(
+                            hamster.getWorld(),
+                            Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
+                            ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
+                            50,
+                            new Vec3d(0.2, 0.5, 0.2),
+                            0.0
+                    );
+
+                    if (bedState.get(HamsterBedBlock.OCCUPIED)) {
+                        hamster.getWorld().setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, false), Block.NOTIFY_ALL);
+                    }
+
+                    // Trigger bed animation
+                    BlockEntity be = hamster.getWorld().getBlockEntity(bedPos);
+                    if (be instanceof GeoBlockEntity geoBlockEntity) {
+                        geoBlockEntity.triggerAnim("hamster_bed_controller", "anim_bed_becoming_unoccupied");
+                    }
+                } else {
+                    // Bed is missing. Unlink
+                    hamster.setWanderModeActive(false);
+                    hamster.setLinkedBedPos(Optional.empty());
+                }
 
                 // Play leaf rustling sound
                 SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, hamster.getRandom());
                 if (rustleSound != null) {
                     hamster.getWorld().playSound(null, hamster.getBlockPos(), rustleSound, SoundCategory.NEUTRAL, 0.2f, 1.8f);
-                }
-
-                if (bedState.isOf(ModBlocks.HAMSTER_BED.get()) && bedState.get(HamsterBedBlock.OCCUPIED)) {
-                    hamster.getWorld().setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, false), Block.NOTIFY_ALL);
-                }
-
-                // Trigger bed animation
-                BlockEntity be = hamster.getWorld().getBlockEntity(bedPos);
-                if (be instanceof GeoBlockEntity geoBlockEntity) {
-                    geoBlockEntity.triggerAnim("hamster_bed_controller", "anim_bed_becoming_unoccupied");
                 }
 
                 // Find safe egress position and pathfind
@@ -254,14 +261,18 @@ public final class HamsterBedUtil {
             if (hamster.getWorld().getRegistryKey() == globalPos.dimension()) {
                 BlockPos bedPos = globalPos.pos();
                 BlockState bedState = hamster.getWorld().getBlockState(bedPos);
-                ParticleEffectsUtil.spawnParticles(
-                        hamster.getWorld(),
-                        Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
-                        ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
-                        70,
-                        new Vec3d(0.2, 0.5, 0.2),
-                        1.0
-                );
+
+                // If bed exists
+                if (bedState.isOf(ModBlocks.HAMSTER_BED.get())) {
+                    ParticleEffectsUtil.spawnParticles(
+                            hamster.getWorld(),
+                            Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
+                            ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
+                            70,
+                            new Vec3d(0.2, 0.5, 0.2),
+                            1.0
+                    );
+                }
             }
         });
 
@@ -345,14 +356,18 @@ public final class HamsterBedUtil {
                 if (particleCount > 0 && hamster.getLinkedBedPos().isPresent()) {
                     BlockPos bedPos = hamster.getLinkedBedPos().get().pos();
                     BlockState bedState = hamster.getWorld().getBlockState(bedPos);
-                    ParticleEffectsUtil.spawnParticles(
-                            hamster.getWorld(),
-                            Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
-                            ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
-                            particleCount,
-                            new Vec3d(0.2, 0.3, 0.2),
-                            1.0
-                    );
+
+                    // If bed exists
+                    if (bedState.isOf(ModBlocks.HAMSTER_BED.get())) {
+                        ParticleEffectsUtil.spawnParticles(
+                                hamster.getWorld(),
+                                Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
+                                ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
+                                particleCount,
+                                new Vec3d(0.2, 0.3, 0.2),
+                                1.0
+                        );
+                    }
                 }
             }
             // Decrement the timer after processing the current tick's effect

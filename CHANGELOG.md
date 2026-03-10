@@ -84,6 +84,8 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
 - **Invisible Hamster Teleport Glitch**
   - Dramatically overhauled how hamsters follow you when you teleport (even with mods like Waystones). Instead of relying on their own AI to catch up, the player will now safely scoop up any following hamsters, hold them in transit while the world loads, and drop them at your new location 0.75 seconds later.
   - This solves the issue that all vanilla pets have where they will either get left behind in unloaded chunks and be unable to follow since their AI stops ticking, or 10% percent of the time they will successfully teleport but remain completely invisible to the client until you relog due to... *Minecraft*.
+- **Ghost Bed Crash**
+  - Fixed a server crash that occurred when a hamster's linked bed was destroyed while the hamster was sleeping or unloaded. Hamsters will now detect the missing bed, cancel their sleep effects, and unlink themselves to prevent future issues.
 
 ---
 
