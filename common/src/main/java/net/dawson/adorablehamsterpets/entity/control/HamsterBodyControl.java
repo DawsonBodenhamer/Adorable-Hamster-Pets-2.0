@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.entity.control;
 
 import net.minecraft.entity.ai.control.BodyControl;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.util.math.MathHelper;
 
 /**
  * A custom BodyControl that overrides the vanilla logic to ensure instant, unified rotation
@@ -27,11 +28,11 @@ public class HamsterBodyControl extends BodyControl {
     public void tick() {
         // If the hamster is moving (pathfinding), its body should face the direction of movement.
         if (this.isMoving()) {
-            this.entity.bodyYaw = this.entity.getYaw();
+            this.entity.bodyYaw = MathHelper.wrapDegrees(this.entity.getYaw());
         } else {
             // If the hamster is standing still, its body should instantly face where its head is looking.
             // This allows LookControl and AI goals to turn the hamster in place without a slow delay.
-            this.entity.bodyYaw = this.entity.headYaw;
+            this.entity.bodyYaw = MathHelper.wrapDegrees(this.entity.headYaw);
         }
     }
 

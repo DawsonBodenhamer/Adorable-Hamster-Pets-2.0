@@ -44,6 +44,8 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - While a precision heist is active, right-clicking in the air with the lure item will set the hamster's exit direction to match your current view.
 - **Tree Heist History Command:**
   - Added `/ahp_reset_heist_history` for quick clearing of tree depletion memory without needing to open the config screen.
+- **Moonwalking Easter Egg**
+  - Name your hamster "Michael Jackson" or "Steve Irwin" and it will permanently rotate backwards.
 
 ### Changed
 - **Mod Page/README**
@@ -92,6 +94,10 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - This solves the issue that all vanilla pets have where they will either get left behind in unloaded chunks and be unable to follow since their AI stops ticking, or 10% percent of the time they will successfully teleport but remain completely invisible to the client until you relog due to... *Minecraft*.
 - **Ghost Bed Crash**
   - Fixed a server crash that occurred when a hamster's linked bed was destroyed while the hamster was sleeping or unloaded. Hamsters will now detect the missing bed, cancel their sleep effects, and unlink themselves to prevent future issues.
+- **Visual Rotation Glitch**
+  - Fixed (I think) an issue where using teleportation mods (like Waystones) or interrupting animations could cause the hamster's model to become permanently rotated backwards or upside down on the client side.
+  - I can't be 100% certain about this fix yet, because no one has been able to figure out exactly what causes this glitch.
+
 
 ---
 
