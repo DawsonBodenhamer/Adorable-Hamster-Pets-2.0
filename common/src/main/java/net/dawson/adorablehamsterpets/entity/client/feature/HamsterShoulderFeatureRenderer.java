@@ -22,6 +22,7 @@ import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.world.World;
 import org.joml.Matrix4f;
@@ -121,6 +122,14 @@ public class HamsterShoulderFeatureRenderer
         dummyHamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, data.pinkPetalType());
         dummyHamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
         dummyHamster.setBreedingAge(data.breedingAge());
+
+        // --- Set Custom Name for Easter Eggs ---
+        dummyHamster.setCustomName(null);
+        data.customName().ifPresent(name -> {
+            if (!name.isEmpty()) {
+                dummyHamster.setCustomName(Text.literal(name));
+            }
+        });
 
         // --- Apply Inventory for Armor/Accessories ---
         // Clear the inventory first to avoid ghost items if the data is empty/changed

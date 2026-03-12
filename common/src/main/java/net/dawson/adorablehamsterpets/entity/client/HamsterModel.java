@@ -11,6 +11,8 @@ import net.minecraft.util.math.Vec3d;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.GeoModel;
 
+import java.util.Locale;
+
 @SuppressWarnings("removal")
 public class HamsterModel extends GeoModel<HamsterEntity> {
 
@@ -65,6 +67,16 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         var petalSideBone = processor.getBone("pink_petal_side");
         var petalBackBone = processor.getBone("pink_petal_lower_back");
 
+        // --- Easter Egg Logic ---
+        boolean isMoonwalking = false;
+        if (entity.hasCustomName()) {
+            String customName = entity.getCustomName().getString().toLowerCase(Locale.ROOT).trim();
+            if (customName.equals("michael jackson") || customName.equals("steve irwin")) {
+                isMoonwalking = true;
+            }
+        }
+
+        // --- Pink Petal Visibility Defaults ---
         // 1.20.1: Hide petal bones by default to prevent rendering state leaks
         if (petalHeadBone != null) petalHeadBone.setHidden(true);
         if (petalSideBone != null) petalSideBone.setHidden(true);
@@ -127,6 +139,8 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             headParentBone.setScaleY(headScale);
             headParentBone.setScaleZ(headScale);
 
+            float pitchOffset = 0.0f;
+
             // --- Dynamic Pitch Rotation ---
             if (entity.isThrown()) {
                 // Projectile Mode: Align with velocity vector (follow flight arc)
@@ -134,9 +148,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
                 double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
 
                 // Calculate pitch: Positive RotX = Nose Up, Negative RotX = Nose Down
-                float targetPitch = (float) Math.atan2(velocity.y, horizontalSpeed);
-                rootBone.setRotX(targetPitch);
-
+                pitchOffset = (float) Math.atan2(velocity.y, horizontalSpeed);
             } else if (entity.clientFallPitchProgress > 0.0f || entity.prevClientFallPitchProgress > 0.0f) {
                 float partialTick = animationState.getPartialTick();
                 float lerpedProgress = MathHelper.lerp(partialTick, entity.prevClientFallPitchProgress, entity.clientFallPitchProgress);
@@ -145,11 +157,17 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
                 float interpolated = (1.0f - MathHelper.cos(lerpedProgress * (float) Math.PI)) * 0.5f;
 
                 // Rotate to face downward
-                float targetPitch = (float) (-Math.PI / 2.0);
-                rootBone.setRotX(targetPitch * interpolated);
+                pitchOffset = (float) (-Math.PI / 2.0) * interpolated;
+            }
+
+            // Absolute assignment
+            rootBone.setRotX(pitchOffset);
+
+            // Easter Egg rotation if applicable
+            if (isMoonwalking) {
+                rootBone.setRotY((float) Math.PI);
             } else {
-                // Not falling -> Reset to neutral
-                rootBone.setRotX(0);
+                rootBone.setRotY(0.0f);
             }
         }
     }
