@@ -1382,7 +1382,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                         if (HamsterTreeSearcherEntity.isTreeBlocked(world, scanResult.treeId())) {
                             // Tree is busy
                             if (this.getOwner() instanceof PlayerEntity owner) {
-                                owner.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist.occupied").formatted(Formatting.RED), true);
+                                owner.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
                             }
                             // Proceed to "Standard Block Collision Handling" below
                         } else {

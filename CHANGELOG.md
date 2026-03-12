@@ -38,6 +38,12 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - Changed nutrition/saturation values are dynamically reflected in AppleSkin's "on-eat" HUD preview. **Unfortunately due to major API changes between MC versions, this only works on 1.21.1.*
 - **Lectern Reading**
   - Added code for placing the Hamster Tips guide book into a lectern and an event handler so you can read it. You can now display your rodent knowledge in your base or wherever.
+- **Precision Tree Heists:**
+  - Right-clicking Oak Leaves with a lure item (Cheese) while a hamster is on your shoulder will now initiate a "Precision Tree Heist."
+  - This sets that specific leaf block as the guaranteed exit point for the hamster.
+  - While a precision heist is active, right-clicking in the air with the lure item will set the hamster's exit direction to match your current view.
+- **Tree Heist History Command:**
+  - Added `/ahp_reset_heist_history` for quick clearing of tree depletion memory without needing to open the config screen.
 
 ### Changed
 - **Mod Page/README**

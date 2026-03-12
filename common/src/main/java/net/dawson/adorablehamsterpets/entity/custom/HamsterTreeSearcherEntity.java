@@ -60,17 +60,28 @@ public class HamsterTreeSearcherEntity extends Entity {
     private BlockPos treeAnchor = null;
     private boolean hasAcornHat = false;
     private int dropCooldown = 0;
+    private BlockPos forcedExitPos = null;
+    private Float forcedExitYaw = null;
 
     // --- Transient State ---
-    private boolean isRegistered = false; // Tracks if this entity has locked its tree in the map
+    // Tracks if this entity has locked its tree in the map
+    private boolean isRegistered = false;
 
     // --- Constants ---
     private static final int VALIDATION_INTERVAL = 20; // Check tree integrity every second
     private static final int BASE_DURATION_MIN = 180;  // 9 sec
     private static final int BASE_DURATION_MAX = 280;  // 14 sec
     private static final float HAT_DROP_CHANCE_MULTIPLIER = 2.0f;
-    private static final float BASE_DROP_CHANCE = 0.03f; // 3%
-    private static final float DURATION_MULTIPLIER = 2.0f; // (currently unused)
+
+    // --- Getters/Setters ---
+    public void setForcedExitPos(BlockPos pos) { this.forcedExitPos = pos; }
+    public void setForcedExitYaw(float yaw) { this.forcedExitYaw = yaw; }
+    public boolean isOwnedBy(PlayerEntity player) {
+        if (this.hamsterNbt != null && this.hamsterNbt.containsUuid("Owner")) {
+            return this.hamsterNbt.getUuid("Owner").equals(player.getUuid());
+        }
+        return false;
+    }
 
     public HamsterTreeSearcherEntity(EntityType<?> type, World world) {
         super(type, world);
@@ -445,7 +456,17 @@ public class HamsterTreeSearcherEntity extends Entity {
 
         // 1. --- Calculate Exit Point ---
         BlockPos startPoint = this.getBlockPos();
-        BlockPos exitPos = TreeHeistUtil.findExitPosition(this.getWorld(), startPoint);
+        BlockPos exitPos;
+        BlockPos effectPos;
+
+        // Apply precision exit block if set and still valid
+        if (this.forcedExitPos != null && this.validLeafPositions.contains(this.forcedExitPos.asLong())) {
+            exitPos = this.forcedExitPos;
+            effectPos = this.forcedExitPos; // Play effects here for precision heists
+        } else {
+            exitPos = TreeHeistUtil.findExitPosition(this.getWorld(), startPoint);
+            effectPos = startPoint; // Play effects here for normal heists
+        }
 
         // --- 2. Respawn Hamster ---
         HamsterEntity newHamster = ModEntities.HAMSTER.get().create(serverWorld);
@@ -457,16 +478,25 @@ public class HamsterTreeSearcherEntity extends Entity {
             newHamster.setFallFlyImmunityTicks(0);
 
             // Set Position/Pitch
+            float exitYaw = this.forcedExitYaw != null ? this.forcedExitYaw : this.random.nextFloat() * 360;
+
             newHamster.refreshPositionAndAngles(
                     exitPos.getX() + 0.5,
                     exitPos.getY() + 0.1,
                     exitPos.getZ() + 0.5,
-                    this.random.nextFloat() * 360,
+                    exitYaw,
                     0
             );
 
             // Set Velocity & Flags
-            newHamster.setVelocity(Vec3d.ZERO);
+            if (this.forcedExitYaw != null && success && !this.isExhausted) {
+                // Apply forward velocity if precision heist
+                Vec3d forward = Vec3d.fromPolar(0, exitYaw).normalize().multiply(0.4);
+                newHamster.setVelocity(forward.x, 0.3, forward.z);
+            } else {
+                newHamster.setVelocity(Vec3d.ZERO);
+            }
+
             newHamster.setThrown(false);
             newHamster.setKnockedOut(false);
             newHamster.setSitting(false);
@@ -513,8 +543,8 @@ public class HamsterTreeSearcherEntity extends Entity {
             serverWorld.spawnEntityAndPassengers(newHamster);
 
             // --- Shared Audio & Visuals ---
-            // Trigger centralized pop effects at the source position (startPoint), not the spawn position.
-            newHamster.triggerLeafPopEffects(startPoint, true);
+            // Trigger effects at the block the hamster exits from, not the one it spawns in
+            newHamster.triggerLeafPopEffects(effectPos, true);
 
             if (success && !this.isExhausted) {
                 SoundEvent celebrateSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, this.random);
@@ -542,6 +572,13 @@ public class HamsterTreeSearcherEntity extends Entity {
         nbt.putBoolean("HasAcornHat", this.hasAcornHat);
         nbt.putInt("DropCooldown", this.dropCooldown);
 
+        if (this.forcedExitPos != null) {
+            nbt.putLong("ForcedExitPos", this.forcedExitPos.asLong());
+        }
+        if (this.forcedExitYaw != null) {
+            nbt.putFloat("ForcedExitYaw", this.forcedExitYaw);
+        }
+
         NbtList posList = new NbtList();
         for (Long pos : this.validLeafPositions) {
             posList.add(NbtLong.of(pos));
@@ -562,6 +599,13 @@ public class HamsterTreeSearcherEntity extends Entity {
         this.dropChanceMultiplier = nbt.getFloat("DropMultiplier");
         this.hasAcornHat = nbt.getBoolean("HasAcornHat");
         this.dropCooldown = nbt.getInt("DropCooldown");
+
+        if (nbt.contains("ForcedExitPos")) {
+            this.forcedExitPos = BlockPos.fromLong(nbt.getLong("ForcedExitPos"));
+        }
+        if (nbt.contains("ForcedExitYaw")) {
+            this.forcedExitYaw = nbt.getFloat("ForcedExitYaw");
+        }
 
         this.validLeafPositions.clear();
         if (nbt.contains("ValidLeafPositions", NbtElement.LIST_TYPE)) {

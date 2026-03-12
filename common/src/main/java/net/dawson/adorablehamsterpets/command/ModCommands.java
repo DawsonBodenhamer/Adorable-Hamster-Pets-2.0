@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.networking.payload.PlayGuidebookEffectsPayload;
 import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.advancement.AdvancementProgress;
@@ -25,11 +26,21 @@ public class ModCommands {
                 .executes(context -> executeUnlockAllModAdvancements(context.getSource()))
         );
 
-        // Technical command to trigger guidebook effects from data packs/functions
+        // Trigger guidebook effects from data packs/functions
         // Permission level 0 allows command blocks/functions to run it for the player
         dispatcher.register(CommandManager.literal("ahp_trigger_guidebook_fx")
                 .requires(source -> true)
                 .executes(context -> executeTriggerBookEffects(context.getSource()))
+        );
+
+        // Reset tree heist depletion history for the running player
+        dispatcher.register(CommandManager.literal("ahp_reset_heist_history")
+                .requires(source -> true)
+                .executes(context -> {
+                    ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
+                    ((PlayerEntityAccessor) player).ahp$clearHeistHistory();
+                    return 1;
+                })
         );
     }
 

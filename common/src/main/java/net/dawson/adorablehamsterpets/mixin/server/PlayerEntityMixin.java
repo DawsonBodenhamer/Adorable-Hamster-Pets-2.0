@@ -495,6 +495,78 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     @Unique
     @Override
+    public void adorablehamsterpets$startPrecisionTreeHeist(BlockPos leafPos) {
+        PlayerEntity self = (PlayerEntity) (Object) this;
+        World world = self.getWorld();
+        if (world.isClient) return;
+
+        // --- 1. Queue Validation & Rebuild ---
+        if (this.adorablehamsterpets$mountOrderQueue.isEmpty() && this.hasAnyShoulderHamster()) {
+            for (ShoulderLocation location : ShoulderLocation.values()) {
+                if (!this.getShoulderHamster(location).isEmpty()) {
+                    this.adorablehamsterpets$mountOrderQueue.addLast(location);
+                }
+            }
+        }
+
+        if (this.adorablehamsterpets$mountOrderQueue.isEmpty()) return;
+
+        final AhpConfig config = AdorableHamsterPets.CONFIG;
+
+        // Peek next hamster
+        ShoulderLocation locationToProcess = config.dismountOrder.get() == DismountOrder.LIFO
+                ? this.adorablehamsterpets$mountOrderQueue.peekLast()
+                : this.adorablehamsterpets$mountOrderQueue.peekFirst();
+
+        if (locationToProcess == null) return;
+
+        NbtCompound shoulderNbt = this.getShoulderHamster(locationToProcess);
+        if (shoulderNbt.isEmpty()) {
+            if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
+            else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+            return;
+        }
+
+        // Validate entity creation before altering state
+        HamsterEntity hamster = HamsterNbtUtil.createFromNbt((ServerWorld) world, self, shoulderNbt);
+        if (hamster == null) {
+            this.setShoulderHamster(locationToProcess, new NbtCompound());
+            if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
+            else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+            return;
+        }
+
+        // --- 2. Tree Heist Trigger ---
+        TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, leafPos);
+
+        if (HamsterTreeSearcherEntity.isTreeBlocked(world, scanResult.treeId())) {
+            self.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
+        } else {
+            // Start Heist
+            HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(world);
+            if (searcher != null) {
+                hamster.triggerLeafPopEffects(leafPos, false);
+                NbtCompound fullNbt = new NbtCompound();
+                hamster.writeNbt(fullNbt);
+
+                searcher.initializeSearch(leafPos, scanResult, fullNbt);
+                searcher.setForcedExitPos(leafPos); // Apply Precision Exit
+
+                world.spawnEntity(searcher);
+
+                // Clear Data
+                if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
+                else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+                this.setShoulderHamster(locationToProcess, new NbtCompound());
+
+                // Feedback
+                world.playSound(null, self.getBlockPos(), ModSounds.HAMSTER_DISMOUNT.get(), SoundCategory.PLAYERS, 0.7f, 1.0f + world.getRandom().nextFloat() * 0.2f);
+                self.sendMessage(Text.translatable("message.adorablehamsterpets.precision_tree_heist_started").formatted(Formatting.GREEN), true);            }
+        }
+    }
+
+    @Unique
+    @Override
     public boolean ahp$canPlayTagGame() {
         // --- 1. Check Config Toggle ---
         if (!Configs.AHP.enableTagGamePlayerLimit) {
@@ -675,7 +747,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, hitPos);
 
                 if (HamsterTreeSearcherEntity.isTreeBlocked(world, scanResult.treeId())) {
-                    self.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist.occupied").formatted(Formatting.RED), true);
+                    self.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
                     return; // Abort
                 } else {
                     // Start Heist
@@ -871,7 +943,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     public void ahp$clearHeistHistory() {
         this.ahp$heistHistory.clear();
         AdorableHamsterPets.LOGGER.info("[TreeHeist] Cleared heist history for player {}.", this.getName().getString());
-        ((PlayerEntity)(Object)this).sendMessage(Text.translatable("message.adorablehamsterpets.heist_history_reset").formatted(Formatting.WHITE), true);
+        ((PlayerEntity)(Object)this).sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_history_reset").formatted(Formatting.WHITE), true);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
