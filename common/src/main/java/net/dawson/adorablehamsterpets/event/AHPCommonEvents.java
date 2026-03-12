@@ -1,14 +1,17 @@
 package net.dawson.adorablehamsterpets.event;
 
+import dev.architectury.event.CompoundEventResult;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.mixin.accessor.SlotAccessor;
 import net.minecraft.block.BlockState;
@@ -28,6 +31,8 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -53,6 +58,7 @@ public class AHPCommonEvents {
         PlayerEvent.OPEN_MENU.register(AHPCommonEvents::onOpenMenu);
         EntityEvent.LIVING_HURT.register(AHPCommonEvents::onLivingHurt);
         InteractionEvent.RIGHT_CLICK_BLOCK.register(AHPCommonEvents::onRightClickBlock);
+        InteractionEvent.RIGHT_CLICK_ITEM.register(AHPCommonEvents::onRightClickItem);
     }
 
     /**
@@ -101,7 +107,58 @@ public class AHPCommonEvents {
             }
         }
 
+        // --- 3. Precision Tree Heist ---
+        if (ConfigDataCache.isLureItem(stack) && state.isOf(Blocks.OAK_LEAVES)) {
+            if (!world.isClient() && player instanceof PlayerEntityAccessor accessor) {
+                if (accessor.hasAnyShoulderHamster()) {
+                    accessor.adorablehamsterpets$startPrecisionTreeHeist(pos);
+                    return EventResult.interruptTrue();
+                }
+            } else if (world.isClient() && ((PlayerEntityAccessor) player).hasAnyShoulderHamster()) {
+                // Return success on client to swing hand and prevent placing/using item
+                return EventResult.interruptTrue();
+            }
+        }
+
         return EventResult.pass();
+    }
+
+    /**
+     * Intercepts item right-clicks (like clicking in the air) to set the dynamic exit direction
+     * for a currently active precision tree heist.
+     */
+    private static CompoundEventResult<ItemStack> onRightClickItem(PlayerEntity player, Hand hand) {
+        ItemStack stack = player.getStackInHand(hand);
+
+        if (ConfigDataCache.isLureItem(stack)) {
+            World world = player.getWorld();
+            boolean updated = false;
+
+            if (world instanceof ServerWorld serverWorld) {
+                for (Entity entity : serverWorld.iterateEntities()) {
+                    if (entity instanceof HamsterTreeSearcherEntity searcher && searcher.isOwnedBy(player)) {
+                        searcher.setForcedExitYaw(player.getYaw());
+                        updated = true;
+                    }
+                }
+                if (updated) {
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.precision_tree_heist_exit_direction_set").formatted(Formatting.AQUA), true);                }
+            } else {
+                // Client-side prediction check
+                for (Entity entity : world.getEntitiesByClass(HamsterTreeSearcherEntity.class, player.getBoundingBox().expand(64.0), e -> true)) {
+                    if (((HamsterTreeSearcherEntity) entity).isOwnedBy(player)) {
+                        updated = true;
+                        break;
+                    }
+                }
+            }
+
+            if (updated) {
+                // Prevent the player from eating the cheese while configuring the heist
+                return CompoundEventResult.interruptTrue(stack);
+            }
+        }
+        return CompoundEventResult.pass();
     }
 
     /**

@@ -41,6 +41,13 @@ public interface PlayerEntityAccessor {
     ClientShoulderHamsterData adorablehamsterpets$getClientHamsterState();
 
     /**
+     * Initiates a Precision Tree Heist, forcing the hamster to use the targeted leaf block
+     * as its exit point.
+     * @param leafPos The position of the targeted leaf block.
+     */
+    void adorablehamsterpets$startPrecisionTreeHeist(BlockPos leafPos);
+
+    /**
      * Registers a new tree heist for a specific Tree ID (Anchor position).
      */
     void ahp$registerTreeHeist(BlockPos treeId);

@@ -432,13 +432,13 @@ public class TreeHeistUtil {
     public static void sendHeistStartMessage(PlayerEntity player, float profitability) {
         if (!Configs.AHP.enableTreeHeistStartMessage) return;
 
-        String key = "message.adorablehamsterpets.tree_heist_start.high";
+        String key = "message.adorablehamsterpets.tree_heist_start_high";
         Formatting color = Formatting.WHITE;
 
         if (profitability < 0.4f) {
-            key = "message.adorablehamsterpets.tree_heist_start.low";
+            key = "message.adorablehamsterpets.tree_heist_start_low";
         } else if (profitability < 0.9f) {
-            key = "message.adorablehamsterpets.tree_heist_start.medium";
+            key = "message.adorablehamsterpets.tree_heist_start_medium";
         }
 
         if (Configs.AHP.debugTreeDetection) {
