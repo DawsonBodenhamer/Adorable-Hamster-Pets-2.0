@@ -30,10 +30,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -477,9 +474,19 @@ public class HamsterTreeSearcherEntity extends Entity {
             // Disable fall immunity so dynamic pitch/flying kick in immediately upon exit
             newHamster.setFallFlyImmunityTicks(0);
 
-            // Set Position/Pitch
-            float exitYaw = this.forcedExitYaw != null ? this.forcedExitYaw : this.random.nextFloat() * 360;
+            // Exit yaw = away from trunk for normal heists
+            float exitYaw;
+            if (this.forcedExitYaw != null) {
+                exitYaw = this.forcedExitYaw;
+            } else if (this.treeAnchor != null && (exitPos.getX() != this.treeAnchor.getX() || exitPos.getZ() != this.treeAnchor.getZ())) {
+                double dx = exitPos.getX() - this.treeAnchor.getX();
+                double dz = exitPos.getZ() - this.treeAnchor.getZ();
+                exitYaw = (float) (MathHelper.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0F;
+            } else {
+                exitYaw = this.random.nextFloat() * 360.0F;
+            }
 
+            // Set Position/Pitch
             newHamster.refreshPositionAndAngles(
                     exitPos.getX() + 0.5,
                     exitPos.getY() + 0.1,
@@ -489,8 +496,8 @@ public class HamsterTreeSearcherEntity extends Entity {
             );
 
             // Set Velocity & Flags
-            if (this.forcedExitYaw != null && success && !this.isExhausted) {
-                // Apply forward velocity if precision heist
+            if (success && !this.isExhausted) {
+                // Apply forward velocity
                 Vec3d forward = Vec3d.fromPolar(0, exitYaw).normalize().multiply(0.4);
                 newHamster.setVelocity(forward.x, 0.3, forward.z);
             } else {

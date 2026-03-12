@@ -68,6 +68,8 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - You must update Patchouli to the latest version or the game will not launch.
 - **Shoulder Animation Configs**
   - Replaced the single `Forced Animation State` setting with three distinct settings. You can now independently force the Head, Left Shoulder, and Right Shoulder hamsters into specific animation loops (when dynamic animations are disabled).
+- **Tree Heist Exits**
+  - Hamsters will now perform a small outward jump, launching themselves away from the tree upon successfully completing a Tree Heist.
 
 ### Fixed
 - **Dismount Bug**
