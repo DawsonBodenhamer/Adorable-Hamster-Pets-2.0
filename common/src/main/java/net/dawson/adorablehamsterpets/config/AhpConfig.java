@@ -486,19 +486,19 @@ public class AhpConfig extends Config {
 
     @Translatable.Name("Standard Diet")
     @Translatable.Desc("The hamster's everyday menu. These items will heal them or, if they're at full health, might give them... ideas about starting a family. Don't make it weird.")
-    public List<String> standardFoods = new ArrayList<>(List.of(
+    public List<String> standardDiet = new ArrayList<>(List.of(
             "adorablehamsterpets:hamster_food_mix", "adorablehamsterpets:sunflower_seeds", "adorablehamsterpets:green_beans",
             "adorablehamsterpets:cucumber", "adorablehamsterpets:green_bean_seeds", "adorablehamsterpets:cucumber_seeds",
             "minecraft:apple", "minecraft:carrot", "minecraft:melon_slice", "minecraft:sweet_berries",
-            "minecraft:beetroot", "minecraft:wheat", "minecraft:wheat_seeds",
+            "minecraft:beetroot", "minecraft:wheat", "minecraft:wheat_seeds", "#adorablehamsterpets:seeds",
 
             // Farmer's Delight
-            "farmersdelight:cabbage_leaf", "farmersdelight:cabbage_seeds",
-            "farmersdelight:tomato_seeds", "farmersdelight:cooked_rice",
+            "farmersdelight:cabbage_leaf",
+            "farmersdelight:cooked_rice",
             "farmersdelight:pumpkin_slice",
 
             // Cultural Delights
-            "culturaldelights:cut_cucumber", "culturaldelights:cucumber_seeds", "culturaldelights:corn_kernels"
+            "culturaldelights:cut_cucumber", "culturaldelights:corn_kernels"
     ));
 
     @Translatable.Name("High-Value Heistables")
