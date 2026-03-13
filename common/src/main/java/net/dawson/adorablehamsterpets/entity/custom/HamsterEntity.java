@@ -1260,7 +1260,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
     /**
      * Checks if the given ItemStack can be used to initiate breeding.
-     * This check is now driven by the user-configurable {@code standardFoods} list
+     * This check is now driven by the user-configurable {@code standardDiet} list
      * via the {@link ConfigDataCache#isStandardFood(ItemStack)} helper method.
      *
      * @param stack The ItemStack to check.

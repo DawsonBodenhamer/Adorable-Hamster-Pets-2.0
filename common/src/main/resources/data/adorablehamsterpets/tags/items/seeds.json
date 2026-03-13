@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values":[
+    { "id": "#c:seeds", "required": false },
+    { "id": "#forge:seeds", "required": false }
+  ]
+}

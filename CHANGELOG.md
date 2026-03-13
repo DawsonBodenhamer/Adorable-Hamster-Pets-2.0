@@ -49,6 +49,8 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
 - **Void Rescue Protocol**:
   - If a player falls into the void and dies with hamsters on their shoulders, the hamsters will no longer spawn in the void and immediately perish. The system will safely teleport them back to their linked bed. If they do not have a linked bed, they will be sent to the player's personal respawn point or the world spawn.
   - I also overhauled the shoulder-hamster data synchronization to prevent them from becoming invisible upon player respawn if they were configured to respawn with the player when the player fell into the void.
+- **Expanded Default Diet**
+  - Hamsters can now eat seeds from almost any mod out-of-the-box. Added a robust union tag to the default config that automatically syncs with `#c:seeds` and `#forge:seeds` to ensure compatibility across all versions and mod loaders.
 
 ### Changed
 - **Mod Page/README**

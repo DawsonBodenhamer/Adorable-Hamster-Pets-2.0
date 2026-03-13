@@ -220,8 +220,6 @@ public class AdorableHamsterPets {
 					AdorableHamsterPets.LOGGER.debug("Player {} respawned with 'Keep on Shoulder' enabled. Transferring {} hamster to new entity.", newPlayer.getName().getString(), location);
 				}
 			}
-			// We no longer rely solely on setShoulderHamster syncing here. The PLAYER_RESPAWN event
-			// will guarantee the client receives the payload once it's fully loaded into the world.
 			return;
 		}
 

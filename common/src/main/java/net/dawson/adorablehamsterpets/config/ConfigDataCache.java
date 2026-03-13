@@ -112,7 +112,7 @@ public class ConfigDataCache {
 
         // --- Parse Item Lists ---
         parseItemList(Configs.AHP.tamingFoods, tamingItems, tamingTags, "tamingFoods");
-        parseItemList(Configs.AHP.standardFoods, standardFoodItems, standardFoodTags, "standardFoods");
+        parseItemList(Configs.AHP.standardDiet, standardFoodItems, standardFoodTags, "standardDiet");
         parseItemList(Configs.AHP.stealableItems, stealableItems, stealableTags, "stealableItems");
         parseItemList(Configs.AHP.retrievableItems, retrievableItems, retrievableItemTags, "retrievableItems");
         parseItemList(Configs.AHP.buffFoods, buffFoodItems, buffFoodTags, "buffFoods");
