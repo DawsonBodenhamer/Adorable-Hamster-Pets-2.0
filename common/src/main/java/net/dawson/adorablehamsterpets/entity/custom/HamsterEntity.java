@@ -1652,10 +1652,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 HamsterBedUtil.wakeUpFromBed(this, false); // Natural wake-up
             }
 
-            // --- 4a. Suffocation Self-Rescue Logic ---
+            // --- Bed State Self-Healing ---
+            HamsterBedUtil.autoHealBedState(this);
+
+            // --- Suffocation Self-Rescue Logic ---
             HamsterPlacementUtil.trySuffocationRescue(this);
 
-            // --- 4b. Ejection Logic ---
+            // --- Ejection Logic ---
             if (this.ejectionCheckCooldown <= 0) {
                 this.ejectionCheckCooldown = 100; // Reset cooldown (check every 5 seconds)
                 if (HamsterInventoryUtil.enforceInventoryRules(this)) {
@@ -1663,7 +1666,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // --- 4c. Auto Eating Logic ---
+            // --- Auto Eating Logic ---
             // This section now handles the multi-stage auto-eating: considering, eating, healing.
             // --- Stage 1: Check Eligibility and Start "Considering" ---
             if (this.isTamed() && this.getHealth() < this.getMaxHealth() &&
@@ -1739,9 +1742,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     ModCriteria.HAMSTER_AUTO_FED.trigger(serverPlayerOwner, this);
                 }
             }
-            // --- End 4b. Auto Eating Logic ---
 
-            // --- 4c. Handle Continuous Diamond Celebration Effects ---
+            // --- Handle Continuous Diamond Celebration Effects ---
             if (!this.getWorld().isClient()) {
                 if (this.isCelebratingDiamond()) {
                     // Delayed Diamond Sparkle Sound
@@ -1797,7 +1799,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // --- 4d. Handle Continuous Sulking Effects ---
+            // --- Handle Continuous Sulking Effects ---
             if (this.isSulking()) {
                 // Delayed Orchestra Hit
                 if (this.sulkOrchestraHitDelayTicks == 1) { // Play when delay reaches 1 (was 10, now 1 after 9 ticks)
@@ -1844,7 +1846,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- 5. Client-Side Logic ---
-        // --- 5.1 Buff Particle Logic (Zoomies) ---
+        // --- Buff Particle Logic (Zoomies) ---
         if (world.isClient && this.hasGreenBeanBuff()) {
             if (this.random.nextInt(2) == 0) {
                 // Use CLOUD instead of WHITE_SMOKE on 1.20.1
@@ -1860,7 +1862,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 5.2 Taunting Particle Logic ---
+        // --- Taunting Particle Logic ---
         if (this.isTaunting()) {
             if (this.random.nextInt(7) == 0) {
                 ParticleEffectsUtil.spawnParticlesOnEntity(
@@ -1875,7 +1877,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 5.3 Fall Pitch Interpolation Logic ---
+        // --- Fall Pitch Interpolation Logic ---
         if (world.isClient) {
             // Capture state for interpolation before modification
             this.prevClientFallPitchProgress = this.clientFallPitchProgress;

@@ -13,11 +13,11 @@ import net.minecraft.entity.mob.MobEntity;
 
 public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
 
-    // --- 1. Fields ---
+    // --- Fields ---
     private final MobEntity hamsterMob;
     private final float chance;
 
-    // --- 2. Constructors ---
+    // --- Constructors ---
     public HamsterLookAtEntityGoal(MobEntity mob, Class<? extends LivingEntity> targetType, float range) {
         super(mob, targetType, range);
         this.hamsterMob = mob;
@@ -27,21 +27,22 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
     public HamsterLookAtEntityGoal(MobEntity mob, Class<? extends LivingEntity> targetType, float range, float chance) {
         super(mob, targetType, range, chance);
         this.hamsterMob = mob;
-        this.chance = chance; // Store the chance
+        this.chance = chance;
     }
 
     public HamsterLookAtEntityGoal(MobEntity mob, Class<? extends LivingEntity> targetType, float range, float chance, boolean lookForward) {
         super(mob, targetType, range, chance, lookForward);
-        this.hamsterMob = mob; // Initialize our reference
-        this.chance = chance; // Initialize the chance
+        this.hamsterMob = mob;
+        this.chance = chance;
     }
 
-    // --- 3. Overridden Methods ---
+    // --- Overridden Methods ---
     @Override
     public boolean canStart() {
         // --- 1. Hamster State Check ---
         if (this.hamsterMob instanceof HamsterEntity hamster) {
-            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isHoldingMouthItem() || hamster.isCelebratingRetrieval()
+            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking()
+                    || hamster.isHoldingMouthItem() || hamster.isCelebratingRetrieval() || hamster.isCelebratingDiamond()
                     || hamster.getActiveCustomGoalDebugName().equals(HamsterWanderAroundFarGoal.class.getSimpleName())) {
                 return false;
             }
@@ -81,9 +82,9 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
     @Override
     public boolean shouldContinue() {
         // --- 1. Check Hamster State ---
-        // Use our stored 'hamsterMob' reference
         if (this.hamsterMob instanceof HamsterEntity hamster) {
-            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isHoldingMouthItem() || hamster.isCelebratingRetrieval()) {
+            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking()
+                    || hamster.isHoldingMouthItem() || hamster.isCelebratingRetrieval() || hamster.isCelebratingDiamond()) {
                 return false;
             }
         }

@@ -11,6 +11,7 @@ import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.math.Vec3d;
+
 import java.util.EnumSet;
 
 public class HamsterTagGoal extends Goal {
@@ -41,7 +42,7 @@ public class HamsterTagGoal extends Goal {
         // --- 3. Entity State Checks ---
         // TODO: Prevent start if hamster is being petted by owner. (Petting is future planned feature)
         if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() ||
-                this.hamster.isHoldingMouthItem() || this.hamster.isThrown()) return false;
+                this.hamster.isHoldingMouthItem() || this.hamster.isThrown() || this.hamster.isCelebratingDiamond() || this.hamster.isSulking()) return false;
 
         // --- 4. Context Check ---
         // Must be currently "sustaining eye contact" with the player
