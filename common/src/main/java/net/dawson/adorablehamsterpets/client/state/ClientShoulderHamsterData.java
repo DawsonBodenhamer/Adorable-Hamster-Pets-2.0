@@ -33,7 +33,8 @@ public class ClientShoulderHamsterData {
     private static final float FALL_DRAG_MULTIPLIER = 0.4f; // Slows fall speed
     private static final float SQUASH_STRETCH_INTENSITY = 5.0f;
     private static final float IMPACT_SQUASH_INTENSITY = 5.0f;
-    private static final float IMPACT_SQUASH_DECAY = 0.4f; // The speed at which the impact squash wears off
+    private static final float IMPACT_SQUASH_DECAY = 0.4f; // Speed at which the impact squash wears off
+    private static final float MAX_VERTICAL_OFFSET = 0.35f; // Maximum height a hamster can float off the shoulder
 
     private final Map<ShoulderLocation, ShoulderHamsterState> hamsterStates = new EnumMap<>(ShoulderLocation.class);
     private final Map<ShoulderLocation, Integer> animationAges = new EnumMap<>(ShoulderLocation.class);
@@ -181,6 +182,14 @@ public class ClientShoulderHamsterData {
                     physics.hamsterVelocityY *= FALL_DRAG_MULTIPLIER;
                 }
                 physics.hamsterOffsetY += physics.hamsterVelocityY;
+
+                // Ceiling clamp
+                if (physics.hamsterOffsetY > MAX_VERTICAL_OFFSET) {
+                    physics.hamsterOffsetY = MAX_VERTICAL_OFFSET;
+                    if (physics.hamsterVelocityY > 0) {
+                        physics.hamsterVelocityY = 0.0f;
+                    }
+                }
 
                 // Combined Impact Detection and Collision Logic
                 if (physics.hamsterOffsetY < 0) {
