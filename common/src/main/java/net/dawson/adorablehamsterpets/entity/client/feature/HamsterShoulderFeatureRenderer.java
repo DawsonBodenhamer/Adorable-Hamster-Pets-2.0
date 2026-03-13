@@ -44,7 +44,6 @@ public class HamsterShoulderFeatureRenderer
     private static final float HAMSTER_SHOULDER_SCALE = 0.8f;
 
     // --- 2. Fields (Lazy Initialization) ---
-    private final Map<ShoulderLocation, HamsterEntity> dummyHamsters = new EnumMap<>(ShoulderLocation.class);
     private final Map<ShoulderLocation, ShoulderHamsterRenderer> hamsterRenderers = new EnumMap<>(ShoulderLocation.class);
 
     // --- 3. Constructor ---
@@ -72,8 +71,8 @@ public class HamsterShoulderFeatureRenderer
         }
 
         // --- Lazy Initialization ---
-        if (this.dummyHamsters.isEmpty()) {
-            initializeDummies(player.getWorld());
+        if (this.hamsterRenderers.isEmpty()) {
+            initializeRenderers();
         }
 
         // --- Get the per-player data holder ---
@@ -112,9 +111,6 @@ public class HamsterShoulderFeatureRenderer
      * This ensures the rendered model has the correct appearance (variant, age, cheeks, etc.).
      */
     private void applyHamsterState(HamsterEntity dummyHamster, HamsterState data, PlayerEntity owner) {
-        // --- Mark this as a shoulder pet for the animation controller ---
-        dummyHamster.setShoulderPet(true);
-
         // --- Apply Visual Data ---
         dummyHamster.setVariant(data.variantId());
         dummyHamster.setLeftCheekFull((data.hamsterFlags() & HamsterEntity.LEFT_CHEEK_FULL_FLAG) != 0);
@@ -122,6 +118,13 @@ public class HamsterShoulderFeatureRenderer
         dummyHamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, data.pinkPetalType());
         dummyHamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
         dummyHamster.setBreedingAge(data.breedingAge());
+
+        // --- Apply Core Flags ---
+        // Restore all states from when the hamster was picked up
+        dummyHamster.getDataTracker().set(HamsterEntity.HAMSTER_FLAGS, data.hamsterFlags());
+
+        // --- Mark as shoulder hamster for animation controller ---
+        dummyHamster.setShoulderPet(true);
 
         // --- Set Custom Name for Easter Eggs ---
         dummyHamster.setCustomName(null);
@@ -157,25 +160,31 @@ public class HamsterShoulderFeatureRenderer
             AbstractClientPlayerEntity player, HamsterState hamsterState, float tickDelta,
             ClientShoulderHamsterData clientData, ShoulderLocation location
     ) {
-        // --- 1. Get the correct dummy and renderer for this specific location ---
-        HamsterEntity dummyHamster = this.dummyHamsters.get(location);
+        // --- 1. Get the player's personal dummy entity to prevent animation bleed across different players ---
+        HamsterEntity dummyHamster = clientData.getOrCreateDummy(location, player.getWorld());
         ShoulderHamsterRenderer hamsterRenderer = this.hamsterRenderers.get(location);
         if (dummyHamster == null || hamsterRenderer == null) return;
 
         // --- 2. Update Dummy Entity State from Pre-Ticked Data ---
         updateDummyState(dummyHamster, hamsterState, clientData, location, player);
 
-        // Manually reset the animation manager's update timer.
-        // This forces GeckoLib to perform a full animation update for this specific dummy instance,
-        // overwriting any polluted state from other entities rendered in the same batch by Iris.
-        // WITHOUT THIS BLOCK, IRIS WILL BREAK THE SHOULDER HAMSTERS
+        // --- 3. Iris/Shader Compatibility Hack ---
+        // Force GeckoLib to rebuild bone poses for this entity. Prevents animations
+        // from "bleeding" between different hamsters during multi-pass rendering.
+        // I'm detecting these multi-passes (and game pauses/server lag, because those
+        // also cause this) by checking if the render time hasn't changed.
+        double currentTick = dummyHamster.age + tickDelta;
         AnimatableInstanceCache cache = dummyHamster.getAnimatableInstanceCache();
         if (cache != null) {
             AnimatableManager<?> manager = cache.getManagerForId(dummyHamster.getId());
             if (manager != null) {
-                manager.updatedAt(0);
+                if (currentTick == dummyHamster.lastRenderTime) {
+                    // Use microscopic delta to prevent transition math from stretching model
+                    manager.updatedAt(currentTick - 0.0000001);
+                }
             }
         }
+        dummyHamster.lastRenderTime = currentTick;
 
         // --- 3. Physics Simulation ---
         float renderOffsetY = clientData.getRenderOffsetY(location, tickDelta);
@@ -281,13 +290,9 @@ public class HamsterShoulderFeatureRenderer
     }
 
     /**
-     * Initializes the dummy hamster entities and their specialized renderers, one for each shoulder location.
-     * This is called once, the first time the feature needs to be rendered.
+     * Initializes specialized shoulder hamster renderers, one for each shoulder location.
      */
-    private void initializeDummies(World world) {
-        if (world == null) return; // Cannot proceed without a world instance
-
-        // We need an EntityRendererFactory.Context to create the renderers.
+    private void initializeRenderers() {
         MinecraftClient client = MinecraftClient.getInstance();
         EntityRendererFactory.Context context = new EntityRendererFactory.Context(
                 client.getEntityRenderDispatcher(),
@@ -300,13 +305,6 @@ public class HamsterShoulderFeatureRenderer
         );
 
         for (ShoulderLocation location : ShoulderLocation.values()) {
-            // Create a unique dummy entity for this location
-            HamsterEntity dummy = new HamsterEntity(ModEntities.HAMSTER.get(), world);
-            dummy.setNoGravity(true);
-            dummy.setSilent(true);
-            this.dummyHamsters.put(location, dummy);
-
-            // Create a unique renderer for this location
             this.hamsterRenderers.put(location, new ShoulderHamsterRenderer(context));
         }
     }

@@ -120,18 +120,23 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         entity.renderedSnowYOffset += (targetYOffset - entity.renderedSnowYOffset) * 0.15f; // controls transition speed
         poseStack.translate(0.0, entity.renderedSnowYOffset, 0.0);
 
-        // --- 4. Force Animation Update for In-World Entities ---
-        // Prevents animations from shoulder-pet dummies (FeatureRenderer)
-        // from "bleeding" onto in-world hamsters during Flashback replays
-        if (!entity.isShoulderPet()) {
-            AnimatableInstanceCache cache = entity.getAnimatableInstanceCache();
-            if (cache != null) {
-                AnimatableManager<?> manager = cache.getManagerForId(entity.getId());
-                if (manager != null) {
-                    manager.updatedAt(0.0);
+        // --- 4. Iris/Shader Compatibility Hack ---
+        // Force GeckoLib to rebuild bone poses for this entity. Prevents animations
+        // from "bleeding" between different hamsters during multi-pass rendering.
+        // I'm detecting these multi-passes (and game pauses/server lag, because those
+        // also cause this) by checking if the render time hasn't changed.
+        double currentTick = entity.age + partialTick;
+        AnimatableInstanceCache cache = entity.getAnimatableInstanceCache();
+        if (cache != null) {
+            AnimatableManager<?> manager = cache.getManagerForId(entity.getId());
+            if (manager != null) {
+                if (currentTick == entity.lastRenderTime) {
+                    // Use microscopic delta to prevent transition math from stretching model
+                    manager.updatedAt(currentTick - 0.0000001);
                 }
             }
         }
+        entity.lastRenderTime = currentTick;
 
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 

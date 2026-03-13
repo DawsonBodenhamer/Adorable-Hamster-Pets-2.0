@@ -5,12 +5,14 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.client.feature.ShoulderHamsterState;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
@@ -36,6 +38,8 @@ public class ClientShoulderHamsterData {
     private final Map<ShoulderLocation, ShoulderHamsterState> hamsterStates = new EnumMap<>(ShoulderLocation.class);
     private final Map<ShoulderLocation, Integer> animationAges = new EnumMap<>(ShoulderLocation.class);
     private final Map<ShoulderLocation, PhysicsState> physicsStates = new EnumMap<>(ShoulderLocation.class);
+    private final Map<ShoulderLocation, HamsterEntity> dummyHamsters = new EnumMap<>(ShoulderLocation.class);
+
     private double previousPlayerVelocityY = 0.0;
     private boolean wasPlayerOnGroundLastTick = true;
     private int landingCheckGracePeriod;
@@ -58,6 +62,18 @@ public class ClientShoulderHamsterData {
 
     public ClientShoulderHamsterData() {
         this.landingCheckGracePeriod = 20;
+    }
+
+    /**
+     * Retrieves the dummy entity for a specific shoulder location, creating it if it doesn't exist.
+     */
+    public HamsterEntity getOrCreateDummy(ShoulderLocation location, World world) {
+        return this.dummyHamsters.computeIfAbsent(location, loc -> {
+            HamsterEntity dummy = new HamsterEntity(net.dawson.adorablehamsterpets.entity.ModEntities.HAMSTER.get(), world);
+            dummy.setNoGravity(true);
+            dummy.setSilent(true);
+            return dummy;
+        });
     }
 
     /**
@@ -124,7 +140,9 @@ public class ClientShoulderHamsterData {
                 // --- 3.1. Standard State Ticking ---
                 ShoulderHamsterState state = this.hamsterStates.computeIfAbsent(location, ShoulderHamsterState::new);
                 state.tick(isSprinting, isWalking);
-                int currentAge = this.animationAges.getOrDefault(location, 0);
+
+                // Initialize age with a massive random offset so shoulder hamsters don't have the same animations
+                int currentAge = this.animationAges.computeIfAbsent(location, l -> player.getRandom().nextBetween(0, 100000));
                 this.animationAges.put(location, currentAge + 1);
 
                 // --- 3.2. Physics Simulation Ticking ---
@@ -226,6 +244,7 @@ public class ClientShoulderHamsterData {
                 this.hamsterStates.remove(location);
                 this.animationAges.remove(location);
                 this.physicsStates.remove(location);
+                this.dummyHamsters.remove(location);
             }
         }
         // --- 4. Update State for Next Tick ---
