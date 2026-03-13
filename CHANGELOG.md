@@ -106,6 +106,9 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - Fixed a server crash that occurred when a hamster's linked bed was destroyed while the hamster was sleeping or unloaded. Hamsters will now detect the missing bed, cancel their sleep effects, and unlink themselves to prevent future issues.
 - **Bed State**
   - Fixed an issue where chunk load order could occasionally cause a sleeping hamster's bed to visually revert to an "unoccupied" state across server restarts.
+- **Shoulder Hamster Physics**
+  - Capped the maximum vertical offset in the shoulder hamster physics simulation. This prevents hamsters from visually floating too far off the player's shoulders during long, extreme falls.
+  - This was mostly an issue with resource packs that add cool player animations to the arms. The shoulder hamsters are locked to the arms of the player, so when the arms go out to the sides during a fall, the shoulder hamsters would cross over the midpoint of the head. This doesn't fix the issue 100% (I'm not sure if that's even possible with pretty player animations) but makes it a bit less obvious.
 
 ---
 
