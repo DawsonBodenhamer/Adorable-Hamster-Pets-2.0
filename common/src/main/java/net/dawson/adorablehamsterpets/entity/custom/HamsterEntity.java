@@ -335,6 +335,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * ────────────────────────────────────────────────────────────────────────────*/
 
     // --- Unique Instance Fields ---
+    @Unique public transient double lastRenderTime = -1.0;
     @Unique public int interactionCooldown = 0;
     @Unique public int throwTicks = 0;
     @Unique public int wakingUpTicks = 0;

@@ -72,6 +72,11 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - Hamsters will now perform a small outward jump, launching themselves away from the tree upon successfully completing a Tree Heist.
 
 ### Fixed
+- **Visual Rotation Glitch**
+  - Attempted to fix an issue where using teleportation mods (like Waystones) or interrupting animations could cause the hamster's model to become permanently rotated backwards or upside down on the client side.
+  - I can't be 100% certain about this fix yet, because no one has been able to figure out exactly what causes it and I can't re-create it myself, so let me know if you run into it.
+- **Hamster Stretching with Shaders**
+  - Fixed a visual bug where hamsters would stretch to extreme sizes during multiplayer server lag or when pausing the game.
 - **Dismount Bug**
   - Fixed an issue where holding down the Sneak key for more than a second would cause the OS's auto-key-repeat feature to spam the game with inputs, dismounting all of your shoulder hamsters rapidly.
   - You can now safely hold Sneak without losing your friends.
@@ -96,10 +101,6 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - This solves the issue that all vanilla pets have where they will either get left behind in unloaded chunks and be unable to follow since their AI stops ticking, or 10% percent of the time they will successfully teleport but remain completely invisible to the client until you relog due to... *Minecraft*.
 - **Ghost Bed Crash**
   - Fixed a server crash that occurred when a hamster's linked bed was destroyed while the hamster was sleeping or unloaded. Hamsters will now detect the missing bed, cancel their sleep effects, and unlink themselves to prevent future issues.
-- **Visual Rotation Glitch**
-  - Fixed (I think) an issue where using teleportation mods (like Waystones) or interrupting animations could cause the hamster's model to become permanently rotated backwards or upside down on the client side.
-  - I can't be 100% certain about this fix yet, because no one has been able to figure out exactly what causes this glitch.
-
 
 ---
 
