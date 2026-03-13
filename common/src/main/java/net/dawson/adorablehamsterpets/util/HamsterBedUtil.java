@@ -29,6 +29,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoBlockEntity;
 
@@ -295,6 +296,59 @@ public final class HamsterBedUtil {
     /* ──────────────────────────────────────────────────────────────────────────────
      *                            Pathing & Utilities
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Ensures the block state is correctly marked as occupied if a hamster is actively sleeping in it.
+     */
+    public static void autoHealBedState(HamsterEntity hamster) {
+        if (hamster.isSleeping() && hamster.getLinkedBedPos().isPresent() && !hamster.isThrown() && !hamster.isKnockedOut()) {
+            World world = hamster.getWorld();
+            GlobalPos bedGlobalPos = hamster.getLinkedBedPos().get();
+
+            if (world.getRegistryKey() == bedGlobalPos.dimension()) {
+                BlockPos bedPos = bedGlobalPos.pos();
+
+                // Ensure chunk is loaded to prevent loading newly generated chunks via ticks
+                if (world.isChunkLoaded(bedPos.getX() >> 4, bedPos.getZ() >> 4)) {
+                    BlockState bedState = world.getBlockState(bedPos);
+
+                    if (bedState.getBlock() instanceof HamsterBedBlock && !bedState.get(HamsterBedBlock.OCCUPIED)) {
+                        world.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
+
+                        BlockEntity be = world.getBlockEntity(bedPos);
+                        if (be instanceof HamsterBedBlockEntity bedEntity) {
+                            bedEntity.triggerAnim("hamster_bed_controller", "anim_bed_becoming_occupied");
+                        }
+                        AdorableHamsterPets.LOGGER.debug("[HamsterBedUtil] Auto-healed unoccupied bed block state at {}", bedPos);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Teleports a hamster safely into its bed and forces it into a deep sleep state.
+     * Used by various rescue protocols.
+     */
+    public static void forceTeleportAndSleepInBed(HamsterEntity hamster, ServerWorld bedWorld, BlockPos bedPos, BlockState bedState) {
+        // Set position slightly elevated inside the bed to prevent clipping
+        Vec3d targetCenter = Vec3d.ofCenter(bedPos).add(0, 0.1, 0);
+        hamster.refreshPositionAndAngles(targetCenter.x, targetCenter.y, targetCenter.z, 0f, 0f);
+
+        hamster.setDozingPhase(HamsterEntity.DozingPhase.DEEP_SLEEP);
+        hamster.setSleeping(true);
+        hamster.setRescueSleeping(true);
+        hamster.setInSittingPose(true);
+
+        bedWorld.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
+
+        // Match personality pose
+        int personality = hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+        int poseIndex = (personality >= 1 && personality <= 3) ? personality : 1;
+        hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, "anim_hamster_sleep_pose" + poseIndex);
+
+        startNapTimer(hamster);
+    }
 
     /**
      * Checks if a given path traverses another hamster's linked bed.

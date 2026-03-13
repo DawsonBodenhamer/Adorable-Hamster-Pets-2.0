@@ -46,6 +46,9 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - Added `/ahp_reset_heist_history` for quick clearing of tree depletion memory without needing to open the config screen.
 - **Moonwalking Easter Egg**
   - Name your hamster "Michael Jackson" or "Steve Irwin" and it will permanently rotate backwards.
+- **Void Rescue Protocol**:
+  - If a player falls into the void and dies with hamsters on their shoulders, the hamsters will no longer spawn in the void and immediately perish. The system will safely teleport them back to their linked bed. If they do not have a linked bed, they will be sent to the player's personal respawn point or the world spawn.
+  - I also overhauled the shoulder-hamster data synchronization to prevent them from becoming invisible upon player respawn if they were configured to respawn with the player when the player fell into the void.
 
 ### Changed
 - **Mod Page/README**
@@ -101,6 +104,8 @@ A bit of bug-squashing and typo-fixing, some new advancements and improvements, 
   - This solves the issue that all vanilla pets have where they will either get left behind in unloaded chunks and be unable to follow since their AI stops ticking, or 10% percent of the time they will successfully teleport but remain completely invisible to the client until you relog due to... *Minecraft*.
 - **Ghost Bed Crash**
   - Fixed a server crash that occurred when a hamster's linked bed was destroyed while the hamster was sleeping or unloaded. Hamsters will now detect the missing bed, cancel their sleep effects, and unlink themselves to prevent future issues.
+- **Bed State**
+  - Fixed an issue where chunk load order could occasionally cause a sleeping hamster's bed to visually revert to an "unoccupied" state across server restarts.
 
 ---
 

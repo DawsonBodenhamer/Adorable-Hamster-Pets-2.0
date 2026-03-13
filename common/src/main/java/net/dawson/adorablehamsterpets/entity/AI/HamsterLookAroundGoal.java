@@ -9,33 +9,30 @@ import net.minecraft.entity.mob.MobEntity;
 
 public class HamsterLookAroundGoal extends LookAroundGoal {
 
-    // --- 1. Fields ---
-    private final MobEntity hamsterMob; // Store our own reference
-    // --- End 1. Fields ---
+    // --- Fields ---
+    private final MobEntity hamsterMob;
 
-    // --- 2. Constructor ---
+    // --- Constructor ---
     public HamsterLookAroundGoal(MobEntity mob) {
         super(mob);
-        this.hamsterMob = mob; // Initialize our reference
+        this.hamsterMob = mob;
     }
-    // --- End 2. Constructor ---
 
-    // --- 3. Overridden Methods ---
+    // --- Overrides ---
     @Override
     public boolean canStart() {
-        // Use the accessor to get the mob field
         LookAroundGoalAccessor accessor = (LookAroundGoalAccessor) this;
         MobEntity mob = accessor.getMob();
 
-        // First, perform the vanilla probability check.
-        if (mob.getRandom().nextFloat() >= 0.02F) { // Vanilla's hardcoded chance
+        // Perform vanilla probability check
+        if (mob.getRandom().nextFloat() >= 0.02F) {
             return false;
         }
+
         // Check Hamster State
-        // Use our stored 'hamsterMob' reference
         if (this.hamsterMob instanceof HamsterEntity hamster) {
             return !hamster.isSitting() && !hamster.isSleeping() && !hamster.isKnockedOut() && !hamster.isSulking()
-                    && !hamster.isHoldingMouthItem() && !hamster.isCelebratingRetrieval()
+                    && !hamster.isHoldingMouthItem() && !hamster.isCelebratingRetrieval() && !hamster.isCelebratingDiamond()
                     && !hamster.getActiveCustomGoalDebugName().equals(HamsterWanderAroundFarGoal.class.getSimpleName());
         }
         return true;
@@ -53,13 +50,12 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
     @Override
     public boolean shouldContinue() {
         // --- 1. Check Hamster State ---
-        // Use our stored 'hamsterMob' reference
         if (this.hamsterMob instanceof HamsterEntity hamster) {
-            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking() || hamster.isHoldingMouthItem() || hamster.isCelebratingRetrieval()) {
+            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking()
+                    || hamster.isHoldingMouthItem() || hamster.isCelebratingRetrieval() || hamster.isCelebratingDiamond()) {
                 return false;
             }
         }
-        // --- End 1. Check Hamster State ---
         return super.shouldContinue();
     }
 
@@ -76,7 +72,7 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
     @Override
     public void tick() {
         LookAroundGoalAccessor accessor = (LookAroundGoalAccessor) this;
-        MobEntity mob = accessor.getMob(); // Get the mob via accessor
+        MobEntity mob = accessor.getMob();
 
         // Replicate the vanilla logic of decrementing the timer
         accessor.setLookTime(accessor.getLookTime() - 1);
@@ -89,5 +85,4 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
                 mob.getZ() + accessor.getDeltaZ()
         );
     }
-    // --- End 3. Overridden Methods ---
 }

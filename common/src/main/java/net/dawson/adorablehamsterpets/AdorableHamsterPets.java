@@ -10,8 +10,8 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.ModBlockEntities;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
+import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.command.ModCommands;
-import net.dawson.adorablehamsterpets.util.HamsterState;
 import net.dawson.adorablehamsterpets.component.ModDataComponentTypes;
 import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
@@ -25,15 +25,15 @@ import net.dawson.adorablehamsterpets.networking.payload.PlayGuidebookEffectsPay
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.util.HamsterNbtUtil;
-import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
-import net.dawson.adorablehamsterpets.util.ModLootTableModifiers;
+import net.dawson.adorablehamsterpets.util.*;
 import net.dawson.adorablehamsterpets.world.ModSpawnPlacements;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
+import net.minecraft.block.BlockState;
 import net.minecraft.component.ComponentType;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnLocationTypes;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.inventory.Inventory;
@@ -47,6 +47,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.GlobalPos;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.World;
 
@@ -112,6 +113,7 @@ public class AdorableHamsterPets {
 			AHPCommonEvents.init();
 			PlayerEvent.PLAYER_JOIN.register(AdorableHamsterPets::onPlayerJoin);
 			PlayerEvent.PLAYER_CLONE.register(AdorableHamsterPets::onPlayerClone);
+			PlayerEvent.PLAYER_RESPAWN.register(AdorableHamsterPets::onPlayerRespawn);
 			PlayerEvent.CHANGE_DIMENSION.register(AdorableHamsterPets::onPlayerChangeDimension);
 			CommandRegistrationEvent.EVENT.register(ModCommands::register);
 		}
@@ -187,7 +189,15 @@ public class AdorableHamsterPets {
 	}
 
 	/**
-	 * An event handler that is called when a player entity is cloned upon respawn after death.
+	 * An event handler called when a player respawns.
+	 * Used to ensure client-side shoulder data correctly synchronizes.
+	 */
+	private static void onPlayerRespawn(ServerPlayerEntity player, boolean conqueredEnd, Entity.RemovalReason reason) {
+		((PlayerEntityAccessor) player).adorablehamsterpets$syncHamsterState();
+	}
+
+	/**
+	 * An event handler called when a player entity is cloned upon respawn after death.
 	 * <p>
 	 * NOTE: This event does not fire for dimension travel.
 	 * <p>
@@ -210,12 +220,15 @@ public class AdorableHamsterPets {
 					AdorableHamsterPets.LOGGER.debug("Player {} respawned with 'Keep on Shoulder' enabled. Transferring {} hamster to new entity.", newPlayer.getName().getString(), location);
 				}
 			}
-			return; // Data transferred, nothing more to do.
+			// We no longer rely solely on setShoulderHamster syncing here. The PLAYER_RESPAWN event
+			// will guarantee the client receives the payload once it's fully loaded into the world.
+			return;
 		}
 
 		// --- 2. Handle Spawning at Death Location (Default) ---
 		ServerWorld world = oldPlayer.getServerWorld();
 		BlockPos deathPos = oldPlayer.getBlockPos();
+		boolean isVoidDeath = deathPos.getY() < world.getBottomY();
 		Set<BlockPos> occupiedSpawnPositions = new HashSet<>();
 
 		for (ShoulderLocation location : ShoulderLocation.values()) {
@@ -227,24 +240,75 @@ public class AdorableHamsterPets {
 			HamsterEntity hamster = HamsterNbtUtil.createFromNbt(world, oldPlayer, modifiedNbt);
 			if (hamster == null) continue;
 
-			// Determine pos with safe spawning algorithm
-			Optional<BlockPos> safePosOpt = HamsterPlacementUtil.findSafeSpawnPosition(deathPos, world, 5, occupiedSpawnPositions, hamster);
+			BlockPos finalSpawnPos = null;
+			ServerWorld targetWorld = world;
+			boolean positionAlreadySet = false;
 
-			BlockPos finalSpawnPos = safePosOpt.orElse(deathPos);
-			occupiedSpawnPositions.add(finalSpawnPos); // Add chosen position to the set for the next hamster
+			// Attempt to find a local safe spot first
+			Optional<BlockPos> safePosOpt = HamsterPlacementUtil.findSafeSpawnPosition(deathPos, targetWorld, 5, occupiedSpawnPositions, hamster);
 
-			// Set initial position
-			hamster.refreshPositionAndAngles(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, 0, 0);
+			if (safePosOpt.isPresent()) {
+				finalSpawnPos = safePosOpt.get();
+			} else if (isVoidDeath) {
+				// --- VOID RESCUE PROTOCOL ---
+				AdorableHamsterPets.LOGGER.info("Player died in the void. Initiating Void Rescue Protocol for hamster on {}.", location);
 
-			// Spawn the entity in the world
-			world.spawnEntityAndPassengers(hamster);
+				// 1. Try Linked Bed
+				if (hamster.getLinkedBedPos().isPresent()) {
+					GlobalPos linkedBed = hamster.getLinkedBedPos().get();
+					ServerWorld bedWorld = oldPlayer.getServer().getWorld(linkedBed.dimension());
+					if (bedWorld != null) {
+						BlockPos bedPos = linkedBed.pos();
+						BlockState bedState = bedWorld.getBlockState(bedPos);
+
+						// Verify bed is valid and unoccupied before sending them
+						if (bedState.getBlock() instanceof HamsterBedBlock && !bedState.get(HamsterBedBlock.OCCUPIED)) {
+							targetWorld = bedWorld;
+							finalSpawnPos = bedPos; // Satisfy fallback check
+							HamsterBedUtil.forceTeleportAndSleepInBed(hamster, bedWorld, bedPos, bedState);
+							positionAlreadySet = true;
+						}
+					}
+				}
+
+				// 2. Try Player's Respawn Point
+				if (finalSpawnPos == null) {
+					ServerWorld spawnWorld = oldPlayer.getServer().getWorld(newPlayer.getSpawnPointDimension());
+					if (spawnWorld != null) {
+						targetWorld = spawnWorld;
+						BlockPos spawnPoint = newPlayer.getSpawnPointPosition();
+						if (spawnPoint != null) {
+							finalSpawnPos = spawnPoint;
+						} else {
+							finalSpawnPos = targetWorld.getSpawnPos();
+						}
+						// Find safe spot around the respawn point so they don't spawn inside a block
+						finalSpawnPos = HamsterPlacementUtil.findSafeSpawnPosition(finalSpawnPos, targetWorld, 5, occupiedSpawnPositions, hamster).orElse(finalSpawnPos);
+					}
+				}
+			}
+
+			// Ultimate fallback
+			if (finalSpawnPos == null) {
+				finalSpawnPos = deathPos;
+			}
+
+			occupiedSpawnPositions.add(finalSpawnPos);
+
+			// Set initial position if not already handled by the bed rescue
+			if (!positionAlreadySet) {
+				hamster.refreshPositionAndAngles(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, 0, 0);
+			}
+
+			// Spawn the entity in the correct world
+			targetWorld.spawnEntityAndPassengers(hamster);
 
 			// Randomize the Yaw so they don't all face the exact same direction
-			float randomYaw = world.random.nextFloat() * 360.0F;
+			float randomYaw = targetWorld.random.nextFloat() * 360.0F;
 			hamster.setBodyYaw(randomYaw);
 			hamster.setHeadYaw(randomYaw);
 
-			AdorableHamsterPets.LOGGER.debug("Player {} died. Spawning {} hamster at {} in KO state.", oldPlayer.getName().getString(), location, finalSpawnPos);
+			AdorableHamsterPets.LOGGER.debug("Player {} died. Spawning {} hamster at {} in target world {}.", oldPlayer.getName().getString(), location, finalSpawnPos, targetWorld.getRegistryKey().getValue());
 		}
 		// By not transferring any data to newPlayer, they will respawn with empty shoulders.
 	}
