@@ -23,8 +23,8 @@
 </p>
 
 <p style="text-align: center;">
-  <a href="https://youtu.be/QCzbNhzo1mg">
-    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/crimsongaming_showcase_thumbnail.png" alt="Watch the Showcase" width="55%">
+  <a href="https://www.youtube.com/watch?v=-kpqJSetTBY">
+    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_curseforge_thumbnail_noxus_showcase.png" alt="Watch the Noxus Showcase" width="100%">
   </a>
 </p>
 

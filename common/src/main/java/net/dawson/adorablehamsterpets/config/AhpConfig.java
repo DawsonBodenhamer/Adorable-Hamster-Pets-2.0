@@ -1139,7 +1139,7 @@ public class AhpConfig extends Config {
     public ValidatedInt minMiniGameFleeDurationSeconds = new ValidatedInt(5, 240, 1);
 
     @Translatable.Name("Maximum Game Duration")
-    @Translatable.Desc("The longest amount of time (in seconds) a chase lasts.")
+    @Translatable.Desc("The longest amount of time (in seconds) a chase lasts. Randomly chosen between Min and Max.")
     public ValidatedInt maxMiniGameFleeDurationSeconds = new ValidatedInt(15, 300, 5);
 
     @Translatable.Name("Item Stealing")

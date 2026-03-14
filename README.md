@@ -22,9 +22,9 @@
 
 </div>
 
-<a href="https://youtu.be/QCzbNhzo1mg">
-<img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/crimsongaming_showcase_thumbnail.png"
-     alt="Watch the Showcase"
+<a href="https://www.youtube.com/watch?v=-kpqJSetTBY">
+<img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_thumbnail_noxus_showcase.png"
+     alt="Watch the Complete YouTube Showcase by Noxus"
      width="55%">
 </a>
 
