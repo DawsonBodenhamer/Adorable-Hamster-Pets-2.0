@@ -467,7 +467,7 @@ public class AhpConfig extends Config {
     public ValidatedInt stealCooldownTicks = new ValidatedInt(100, 6000, 20);
 
     @Translatable.Name("Tag Game Cooldown")
-    @Translatable.Desc("How long a specific hamster needs to recover after being chased. Remember, they have tiny lungs. (20 ticks = 1 second; default is 10 minutes.")
+    @Translatable.Desc("How long a specific hamster needs to recover after being chased. Remember, they have tiny lungs. (20 ticks = 1 second; default = 10 minutes)")
     public ValidatedInt tagGameCooldown = new ValidatedInt(12000, 36000, 160);
 
     @ConfigGroup.Pop
@@ -1166,9 +1166,9 @@ public class AhpConfig extends Config {
 
     @Translatable.Name("Enable Player Daily Limit")
     @Translatable.Desc("If true, players are capped on how many games they can play per day. If false, you can play until your legs fall off.")
-    public boolean enableTagGamePlayerLimit = true;
+    public ValidatedBoolean enableTagGamePlayerLimit = new ValidatedBoolean(true);
 
-    private final ValidatedField<Boolean> isTagLimitEnabled = new ValidatedBoolean(true).map(b -> b, b -> enableTagGamePlayerLimit);
+    private final ValidatedField<Boolean> isTagLimitEnabled = enableTagGamePlayerLimit.map(b -> b, b -> b);
 
     @ConfigGroup.Pop
     @ConfigGroup.Pop

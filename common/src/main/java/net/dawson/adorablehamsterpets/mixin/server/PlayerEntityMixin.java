@@ -566,7 +566,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Override
     public boolean ahp$canPlayTagGame() {
         // --- 1. Check Config Toggle ---
-        if (!Configs.AHP.enableTagGamePlayerLimit) {
+        if (!Configs.AHP.enableTagGamePlayerLimit.get()) {
             return true;
         }
 
