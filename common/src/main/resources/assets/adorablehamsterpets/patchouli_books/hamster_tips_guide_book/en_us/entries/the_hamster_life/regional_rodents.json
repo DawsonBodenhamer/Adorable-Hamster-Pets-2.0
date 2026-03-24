@@ -1,12 +1,12 @@
 {
   "name": "book.adorablehamsterpets.entry.regional_rodents",
-  "icon": "adorablehamsterpets:hamster_spawn_egg",
+  "icon": "minecraft:filled_map",
   "category": "adorablehamsterpets:the_hamster_life",
   "entry_color": "00AAAA",
   "sortnum": 0,
-  "pages": [
+  "pages":[
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.regional_rodents",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.regional_rodents.page1.body",
@@ -15,7 +15,7 @@
     {
       "type": "patchouli:image",
       "title": "",
-      "images": [
+      "images":[
         "adorablehamsterpets:patchouli_books/hamster_tips_guide_book/images/regional_rodents/cream_hamster_in_desert.png",
         "adorablehamsterpets:patchouli_books/hamster_tips_guide_book/images/regional_rodents/black_hamster_in_deep_dark.png",
         "adorablehamsterpets:patchouli_books/hamster_tips_guide_book/images/regional_rodents/lavender_hamster_in_cherry_blossom.png",
@@ -23,6 +23,35 @@
       ],
       "border": false,
       "text": "book.adorablehamsterpets.entry.regional_rodents.page2.body"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.regional_rodents.page3.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.regional_rodents.page3.body",
+      "text_color": "000000",
+      "anchor": "wild_possibilities"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.regional_rodents.page4.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.regional_rodents.page4.body",
+      "text_color": "000000",
+      "anchor": "breeding_possibilities"
+    },
+    {
+      "type": "patchouli:link",
+      "url": "https://modrinth.com/mod/jade",
+      "link_text": "book.adorablehamsterpets.entry.regional_rodents.page5.link_text",
+      "text": "book.adorablehamsterpets.entry.regional_rodents.page5.body"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.regional_rodents.page6.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.regional_rodents.page6.body",
+      "text_color": "000000"
     }
   ]
 }

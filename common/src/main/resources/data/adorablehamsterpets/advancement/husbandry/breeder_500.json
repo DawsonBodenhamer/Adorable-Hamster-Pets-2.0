@@ -1,0 +1,28 @@
+{
+  "parent": "adorablehamsterpets:husbandry/breeder_100",
+  "display": {
+    "icon": {
+      "id": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:healing"
+        }
+      }
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.breeder_500.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.breeder_500.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "impossible": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -6,7 +6,7 @@
   "sortnum": 0,
   "pages": [
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.hamster_bed",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.hamster_bed.page1.body",
@@ -75,7 +75,7 @@
       "text": "book.adorablehamsterpets.entry.hamster_bed.page10.body"
     },
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "anchor": "wander_mode",
       "header": "book.adorablehamsterpets.entry.hamster_bed.page11.header",
       "header_color": "00AAAA",
@@ -87,7 +87,7 @@
       "text": "book.adorablehamsterpets.entry.hamster_bed.page12.body"
     },
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "anchor": "respawn",
       "header": "book.adorablehamsterpets.entry.hamster_bed.page13.header",
       "header_color": "00AAAA",
@@ -99,7 +99,7 @@
       "text": "book.adorablehamsterpets.entry.hamster_bed.page14.body"
     },
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "anchor": "respawn",
       "header": "book.adorablehamsterpets.entry.hamster_bed.page15.header",
       "header_color": "00AAAA",

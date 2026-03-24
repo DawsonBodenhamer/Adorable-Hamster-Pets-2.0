@@ -56,7 +56,7 @@ public final class HamsterInteractionUtil {
     // --- Debug Toggle ---
     public static ActionResult handleDebugToggle(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         if (player.isSneaking() && stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
-            if (!hamster.getWorld().isClient()) {
+            if (hamster.getWorld().isClient()) {
                 AhpConfig currentConfig = AdorableHamsterPets.CONFIG;
                 boolean newSetting = !currentConfig.enableJadeHamsterDebugInfo;
 
@@ -169,6 +169,15 @@ public final class HamsterInteractionUtil {
     // --- Taming ---
     public static ActionResult handleTaming(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         if (!hamster.isTamed() && player.isSneaking() && ConfigDataCache.isTamingFood(stack)) {
+
+            // Block taming if it is an ai-disabled statue and config forbids it
+            if (hamster.isAiDisabled() && !AdorableHamsterPets.CONFIG.allowTamingAiDisabled) {
+                if (!hamster.getWorld().isClient()) {
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.taming_statue_refusal").formatted(Formatting.RED), true);
+                }
+                return ActionResult.success(hamster.getWorld().isClient());
+            }
+
             if (!hamster.getWorld().isClient()) {
                 if (!player.getAbilities().creativeMode) {
                     stack.decrement(1);
@@ -186,12 +195,25 @@ public final class HamsterInteractionUtil {
                     hamster.setTarget(null);
                     hamster.getWorld().sendEntityStatus(hamster, (byte) 7);
 
+                    // Re-awaken if AI was disabled and reset statue physics
+                    if (hamster.isAiDisabled()) {
+                        hamster.setAiDisabled(false);
+                        hamster.setNoGravity(false);
+                    }
+
                     // Play celebrate sound only on success
                     SoundEvent celebrateSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, hamster.getRandom());
                     hamster.getWorld().playSound(null, hamster.getBlockPos(), celebrateSound, SoundCategory.NEUTRAL, 0.7F, 1.0F);
 
                     if (player instanceof ServerPlayerEntity serverPlayer) {
                         Criteria.TAME_ANIMAL.trigger(serverPlayer, hamster);
+                        HamsterGeneticsAdvancementUtil.trackTamedHamster(serverPlayer, hamster);
+                    }
+
+                    // --- Baby Link Warning ---
+                    if (hamster.isBaby() && hamster.getParentUuid() != null) {
+                        Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
+                        player.sendMessage(Text.translatable("message.adorablehamsterpets.tamed_baby_still_linked_warning", lureName).formatted(Formatting.WHITE), true);
                     }
                 } else {
                     hamster.getWorld().sendEntityStatus(hamster, (byte) 6);
@@ -428,6 +450,27 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
+    // --- Baby Unlinking ---
+    public static ActionResult handleBabyUnlink(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
+        if (hamster.isBaby() && hamster.getParentUuid() != null && ConfigDataCache.isLureItem(stack)) {
+            if (!hamster.getWorld().isClient()) {
+                hamster.setParentUuid(null);
+
+                player.sendMessage(Text.translatable("message.adorablehamsterpets.baby_unlinked").formatted(Formatting.GREEN), true);
+                hamster.getWorld().playSound(null, hamster.getBlockPos(), SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.5f, 1.2f);
+                ParticleEffectsUtil.spawnParticlesOnEntity(hamster, ParticleTypes.HEART, 3, 0.5, 0.5, 0.0, 0.5);
+
+                if (!player.getAbilities().creativeMode && Configs.AHP.consumeLureItem) {
+                    stack.decrement(1);
+                }
+            } else {
+                player.swingHand(hand);
+            }
+            return ActionResult.CONSUME;
+        }
+        return ActionResult.PASS;
+    }
+
     // --- Shoulder Mounting ---
     public static ActionResult handleShoulderMount(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
         if (ConfigDataCache.isLureItem(stack)) {
@@ -466,11 +509,17 @@ public final class HamsterInteractionUtil {
                 return ActionResult.CONSUME;
             }
 
-            if (HamsterDietUtil.tryFeeding(hamster, player, stack)) {
+            int feedResult = HamsterDietUtil.tryFeeding(hamster, player, stack);
+
+            if (feedResult == 1) {
+                // Fed successfully
                 hamster.setLastFoodItem(stack.copy());
                 if (!player.getAbilities().creativeMode) {
                     stack.decrement(1);
                 }
+                return ActionResult.CONSUME;
+            } else if (feedResult == 2) {
+                // Handled but refused
                 return ActionResult.CONSUME;
             }
         }
@@ -516,6 +565,10 @@ public final class HamsterInteractionUtil {
         if (availableSlot != null) {
             // Disable wander mode before saving
             hamster.setWanderModeActive(false);
+
+            // Prevent shoulder hamster from being permanently stuck cleaning
+            hamster.setHamsterFlag(HamsterEntity.CLEANING_FLAG, false);
+            hamster.cleaningTimer = 0;
 
             // Save, set, and update queue
             HamsterState data = HamsterNbtUtil.saveToHamsterState(hamster);

@@ -3,10 +3,10 @@
   "icon": "minecraft:emerald",
   "category": "adorablehamsterpets:the_kitchen_drawer",
   "entry_color": "00AAAA",
-  "sortnum": 2,
+  "sortnum": 4,
   "pages": [
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.support_the_mod",
       "header_color": "00AAAA",
       "text_color": "000000",

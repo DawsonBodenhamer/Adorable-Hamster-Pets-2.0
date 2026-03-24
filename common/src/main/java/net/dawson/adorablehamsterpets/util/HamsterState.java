@@ -18,7 +18,7 @@ import java.util.UUID;
 // Data-holder record
 public record HamsterState(
         UUID entityUuid,
-        int variantId,
+        NbtCompound genomeNbt,
         float health,
         NbtCompound inventoryNbt,
         int breedingAge,
@@ -30,7 +30,9 @@ public record HamsterState(
         int animationPersonalityId,
         SeekingBehaviorData seekingBehaviorData,
         WanderModeData wanderModeData,
-        int hamsterFlags // Replaces all boolean flags
+        int hamsterFlags,
+        long totalAgeTicks,
+        int timesBred
 ) {
 
     public static final Codec<NbtCompound> NBT_COMPOUND_CODEC = Codec.PASSTHROUGH.comapFlatMap(
@@ -107,7 +109,7 @@ public record HamsterState(
             CODEC = RecordCodecBuilder.create(instance ->
                     instance.group(
                     Uuids.CODEC.fieldOf("entityUuid").forGetter(HamsterState::entityUuid),
-                    Codec.INT.fieldOf("variantId").forGetter(HamsterState::variantId),
+                    NBT_COMPOUND_CODEC.fieldOf("genomeNbt").forGetter(HamsterState::genomeNbt),
                     Codec.FLOAT.fieldOf("health").forGetter(HamsterState::health),
                     NBT_COMPOUND_CODEC.fieldOf("inventoryNbt").forGetter(HamsterState::inventoryNbt),
                     Codec.INT.fieldOf("breedingAge").forGetter(HamsterState::breedingAge),
@@ -119,11 +121,27 @@ public record HamsterState(
                     Codec.INT.fieldOf("animationPersonalityId").orElse(1).forGetter(HamsterState::animationPersonalityId),
                     SeekingBehaviorData.CODEC.fieldOf("seekingBehaviorData").orElse(SeekingBehaviorData.empty()).forGetter(HamsterState::seekingBehaviorData),
                     WanderModeData.CODEC.fieldOf("wanderModeData").orElse(WanderModeData.empty()).forGetter(HamsterState::wanderModeData),
-                    Codec.INT.fieldOf("hamsterFlags").orElse(0).forGetter(HamsterState::hamsterFlags)
+                    Codec.INT.fieldOf("hamsterFlags").orElse(0).forGetter(HamsterState::hamsterFlags),
+                    Codec.LONG.fieldOf("totalAgeTicks").orElse(0L).forGetter(HamsterState::totalAgeTicks),
+                    Codec.INT.fieldOf("timesBred").orElse(0).forGetter(HamsterState::timesBred)
             ).apply(instance, HamsterState::new)
             );
         }
         return CODEC;
+    }
+
+    /**
+     * Creates a copy of this state with updated flags.
+     * Used to make tweaks to the NBT data.
+     */
+    public HamsterState withFlags(int newFlags) {
+        return new HamsterState(
+                this.entityUuid, this.genomeNbt, this.health, this.inventoryNbt,
+                this.breedingAge, this.throwCooldownEndTick, this.greenBeanBuffData,
+                this.autoEatCooldownTicks, this.customName, this.pinkPetalType,
+                this.animationPersonalityId, this.seekingBehaviorData,
+                this.wanderModeData, newFlags, this.totalAgeTicks, this.timesBred
+        );
     }
 
     /**

@@ -30,7 +30,7 @@ public class HamsterTemptGoal extends TemptGoal {
     @Override
     public boolean canStart() {
         // --- 1. Initial State Checks ---
-        if (this.hamster.isSitting() || this.hamster.isCelebratingDiamond()) {
+        if (this.hamster.isSitting() || this.hamster.isCelebratingDiamond() || this.hamster.isCelebratingBaby()) {
             return false;
         }
 
@@ -53,10 +53,9 @@ public class HamsterTemptGoal extends TemptGoal {
     @Override
     public boolean shouldContinue() {
         // --- 1. Sitting Check ---
-        if (this.hamster.isSitting() || this.hamster.isCelebratingDiamond()) {
+        if (this.hamster.isSitting() || this.hamster.isCelebratingDiamond() || this.hamster.isCelebratingBaby()) {
             return false;
         }
-        // --- End 1. Sitting Check ---
 
         // --- 2. Superclass Logic ---
         return super.shouldContinue();

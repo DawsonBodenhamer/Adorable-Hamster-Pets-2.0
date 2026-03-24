@@ -9,10 +9,7 @@ import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.SunflowerBlock;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
-import net.dawson.adorablehamsterpets.config.ConfigDataCache;
-import net.dawson.adorablehamsterpets.config.Configs;
-import net.dawson.adorablehamsterpets.config.DismountOrder;
+import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.AI.HamsterSniffForOreGoal;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
@@ -58,7 +55,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
-import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -110,8 +106,14 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private int ahp$sunflowerCheckTimer = 0;
     @Unique private int ahp$tagGamesPlayedToday = 0;
     @Unique private long ahp$lastTagGameDayTime = 0;
+    @Unique private int ahp$hamstersFedForBreeding = 0;
+    @Unique private long ahp$lastBreedingTime = 0;
 
-    // --- Teleport Tracking Fields ---
+    // --- Genetics Tracking ---
+    @Unique private final Set<Integer> ahp$tamedGenomes = new HashSet<>();
+    @Unique private final Set<Integer> ahp$bredGenomes = new HashSet<>();
+
+    // --- Teleport Tracking ---
     @Unique private Vec3d ahp$lastTickPos = null;
     @Unique private RegistryKey<World> ahp$lastTickDimension = null;
     @Unique private final List<NbtCompound> ahp$inTransitHamsters = new ArrayList<>();
@@ -189,9 +191,24 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
+        // Genetics Tracking
+        if (!this.ahp$tamedGenomes.isEmpty()) {
+            int[] tamedArray = this.ahp$tamedGenomes.stream().mapToInt(Integer::intValue).toArray();
+            nbt.putIntArray("AHPTamedGenomes", tamedArray);
+        }
+
+        if (!this.ahp$bredGenomes.isEmpty()) {
+            int[] bredArray = this.ahp$bredGenomes.stream().mapToInt(Integer::intValue).toArray();
+            nbt.putIntArray("AHPBredGenomes", bredArray);
+        }
+
         // Tag Game Tracking
         nbt.putInt("AHPTagGamesPlayed", this.ahp$tagGamesPlayedToday);
         nbt.putLong("AHPLastTagTime", this.ahp$lastTagGameDayTime);
+
+        // Player Breeding Limit Tracking
+        nbt.putInt("AHPHamstersFedForBreeding", this.ahp$hamstersFedForBreeding);
+        nbt.putLong("AHPLastBreedingTime", this.ahp$lastBreedingTime);
 
         // Guidebook tracking
         nbt.putBoolean(AHP_NBT_GUIDEBOOK_HAS_KEY, this.ahp$cachedHasGuideBook);
@@ -264,9 +281,28 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
+        // Genetics Tracking
+        this.ahp$tamedGenomes.clear();
+        if (nbt.contains("AHPTamedGenomes", NbtElement.INT_ARRAY_TYPE)) {
+            for (int hash : nbt.getIntArray("AHPTamedGenomes")) {
+                this.ahp$tamedGenomes.add(hash);
+            }
+        }
+
+        this.ahp$bredGenomes.clear();
+        if (nbt.contains("AHPBredGenomes", NbtElement.INT_ARRAY_TYPE)) {
+            for (int hash : nbt.getIntArray("AHPBredGenomes")) {
+                this.ahp$bredGenomes.add(hash);
+            }
+        }
+
         // Tag Game Tracking
         this.ahp$tagGamesPlayedToday = nbt.getInt("AHPTagGamesPlayed");
         this.ahp$lastTagGameDayTime = nbt.getLong("AHPLastTagTime");
+
+        // Player Breeding Limit Tracking
+        this.ahp$hamstersFedForBreeding = nbt.getInt("AHPHamstersFedForBreeding");
+        this.ahp$lastBreedingTime = nbt.getLong("AHPLastBreedingTime");
 
         // Guide Book Tracking
         if (nbt.contains(AHP_NBT_GUIDEBOOK_HAS_KEY, NbtElement.BYTE_TYPE)) {
@@ -492,6 +528,76 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Public API (PlayerEntityAccessor)
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    @Unique
+    @Override
+    public boolean ahp$addTamedGenome(int hash) {
+        return this.ahp$tamedGenomes.add(hash);
+    }
+
+    @Unique
+    @Override
+    public boolean ahp$addBredGenome(int hash) {
+        return this.ahp$bredGenomes.add(hash);
+    }
+
+    @Unique
+    @Override
+    public int ahp$getTamedGenomeCount() {
+        return this.ahp$tamedGenomes.size();
+    }
+
+    @Unique
+    @Override
+    public int ahp$getBredGenomeCount() {
+        return this.ahp$bredGenomes.size();
+    }
+
+    @Unique
+    @Override
+    public boolean ahp$canBreedHamsters() {
+        if (!Configs.AHP.playerBreedingLimit.get()) {
+            return true;
+        }
+
+        PlayerEntity self = (PlayerEntity) (Object) this;
+
+        // Whitelist check
+        if (Configs.AHP.allowedBreeders.contains(self.getGameProfile().getName())) {
+            return true;
+        }
+
+        LitterLimitType type = Configs.AHP.playerBreedingLimitType.get();
+        if (type == LitterLimitType.DAILY) {
+            long currentTime = this.getWorld().getTime();
+            long dayDuration = Configs.AHP.useIrlTimeForBreedingLimit.get() ? 1728000L : 24000L;
+            long currentDay = currentTime / dayDuration;
+            long lastDay = this.ahp$lastBreedingTime / dayDuration;
+
+            if (currentDay > lastDay) {
+                this.ahp$hamstersFedForBreeding = 0;
+                this.ahp$lastBreedingTime = currentTime;
+            }
+        }
+
+        // Limit is in litters, so we multiply by 2 to get the number of individual hamsters they can feed
+        int maxHamsters = Configs.AHP.maxLittersPerPlayer.get() * 2;
+        return this.ahp$hamstersFedForBreeding < maxHamsters;
+    }
+
+    @Unique
+    @Override
+    public void ahp$incrementHamstersFedForBreeding() {
+        this.ahp$hamstersFedForBreeding++;
+        this.ahp$lastBreedingTime = this.getWorld().getTime();
+    }
+
+    @Unique
+    @Override
+    public void ahp$resetBreedingHistory() {
+        this.ahp$hamstersFedForBreeding = 0;
+        ((PlayerEntity)(Object)this).sendMessage(Text.translatable("message.adorablehamsterpets.breeding_history_reset").formatted(Formatting.GREEN), true);
+    }
 
     @Unique
     @Override

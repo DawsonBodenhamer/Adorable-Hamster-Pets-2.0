@@ -6,7 +6,7 @@
   "sortnum": 0,
   "pages": [
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.the_hamster_yeet",
       "header_color": "00AAAA",
       "text_color": "000000",

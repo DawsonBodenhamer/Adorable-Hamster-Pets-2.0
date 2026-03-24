@@ -4,23 +4,21 @@
   "category": "adorablehamsterpets:the_hamster_life",
   "entry_color": "00AAAA",
   "sortnum": 3,
-  "pages": [
+  "pages":[
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.feeding.page1.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.feeding.page1.body",
       "text_color": "000000"
     },
     {
-      "type": "adorablehamsterpets:page",
-      "header": "book.adorablehamsterpets.entry.feeding.page2.header",
-      "header_color": "00AAAA",
-      "text": "book.adorablehamsterpets.entry.feeding.page2.body",
-      "text_color": "000000"
+      "type": "patchouli:text",
+      "text": "book.adorablehamsterpets.entry.feeding.page2.body"
     },
     {
-      "type": "adorablehamsterpets:page",
+      "anchor": "pickiness",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.feeding.page3.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.feeding.page3.body",
@@ -28,7 +26,7 @@
     },
     {
       "anchor": "buffs",
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.feeding.page4.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.feeding.page4.body",

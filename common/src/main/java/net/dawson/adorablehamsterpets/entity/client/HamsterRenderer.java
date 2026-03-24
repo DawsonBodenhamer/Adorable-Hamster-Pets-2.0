@@ -1,12 +1,14 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
+import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
-import net.dawson.adorablehamsterpets.entity.client.layer.HamsterAcornHatLayer;
-import net.dawson.adorablehamsterpets.entity.client.layer.HamsterArmorLayer;
-import net.dawson.adorablehamsterpets.entity.client.layer.HamsterOverlayLayer;
-import net.dawson.adorablehamsterpets.entity.client.layer.HamsterPinkPetalOverlayLayer;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.PaletteDefinition;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.TextureType;
+import net.dawson.adorablehamsterpets.util.HamsterTextureUtil;
+import net.dawson.adorablehamsterpets.entity.client.layer.*;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.dawson.adorablehamsterpets.entity.custom.HamsterVariant;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterMouthItemOffsets;
 import net.dawson.adorablehamsterpets.util.HamsterRidingUtil;
@@ -63,7 +65,10 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         this.shadowRadius = this.adultShadowRadius;
 
         // --- Physical Attributes ---
-        addRenderLayer(new HamsterOverlayLayer(this));
+        addRenderLayer(new HamsterSkinLayer(this));
+        addRenderLayer(new HamsterEyeLayer(this));
+        addRenderLayer(new HamsterWildFurOverlayLayer(this));
+        addRenderLayer(new HamsterBreedingFurOverlayLayer(this));
 
         // --- Armor & Accessories ---
         addRenderLayer(new HamsterArmorLayer(this));
@@ -73,8 +78,23 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
     @Override
     public Identifier getTextureLocation(HamsterEntity entity) {
-        HamsterVariant variant = HamsterVariant.byId(entity.getVariant());
-        return variant.getBaseTextureId();
+        if (entity.isSweetPotato()) {
+            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/easter_egg/sweet_potato.png");
+        }
+
+        HamsterGenome genome = entity.getGenome();
+        PaletteDefinition definition = HamsterPaletteManager.PALETTE_REGISTRY.get(genome.basePaletteId());
+
+        if (definition == null) {
+            // Fallback for safety
+            return HamsterTextureUtil.getOrCreateDynamicTexture("fur_base_pattern/fur_pattern", "orange");
+        }
+
+        if (definition.type() == TextureType.PROGRAMMATIC) {
+            return HamsterTextureUtil.getOrCreateDynamicTexture("fur_base_pattern/fur_pattern", genome.basePaletteId());
+        } else {
+            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/" + definition.author() + "/" + definition.id() + ".png");
+        }
     }
 
     @Override

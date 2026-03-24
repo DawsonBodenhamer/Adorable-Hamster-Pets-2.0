@@ -29,7 +29,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
 
     private static final Identifier MODEL_RESOURCE = Identifier.of(AdorableHamsterPets.MOD_ID, "geo/hamster.geo.json");
     private static final Identifier ANIMATION_RESOURCE = Identifier.of(AdorableHamsterPets.MOD_ID, "animations/anim_hamster.animation.json");
-    private static final Identifier FALLBACK_TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/orange.png");
+    private static final Identifier FALLBACK_TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Overrides
@@ -55,7 +55,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
     public void setCustomAnimations(HamsterEntity entity, long instanceId, AnimationState<HamsterEntity> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
-        // --- Bone references ---
+        // --- Bone References ---
         var processor = this.getAnimationProcessor();
         var rootBone = processor.getBone("root");
         var headParentBone = processor.getBone("head_parent");
@@ -69,14 +69,14 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         var petalSideBone = processor.getBone("pink_petal_side");
         var petalBackBone = processor.getBone("pink_petal_lower_back");
 
-        // --- Easter Egg Logic ---
-        boolean isMoonwalking = false;
-        if (entity.hasCustomName()) {
-            String customName = entity.getCustomName().getString().toLowerCase(Locale.ROOT).trim();
-            if (customName.equals("michael jackson") || customName.equals("steve irwin")) {
-                isMoonwalking = true;
-            }
+        // --- Statue / AI Disabled Logic ---
+        var closedEyesBone = processor.getBone("closed_eyes");
+        if (closedEyesBone != null) {
+            closedEyesBone.setHidden(entity.isAiDisabled()); // Ensure eyes remain open in t-pose
         }
+
+        // --- Easter Egg Logic ---
+        boolean isMoonwalking = entity.isMoonwalking();
 
         // --- Pink Petal Visibility Defaults ---
         if (petalHeadBone != null) petalHeadBone.setHidden(true);
@@ -124,21 +124,30 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         // --- Scaling & Rotation Logic ---
         // bodyParentBone scale intentionally not set here so json breathing anims scale proportionally
         if (rootBone != null && headParentBone != null) {
-            float baseScale = entity.isBaby() ? BABY_SCALE : ADULT_SCALE;
-            float headScale = entity.isBaby() ? BABY_HEAD_SCALE : ADULT_HEAD_SCALE;
+            // Calculate continuous growth progress (0.0 = newborn, 1.0 = adult)
+            float ageProgress = 1.0f;
+            if (entity.isBaby()) {
+                int exactAge = entity.getDataTracker().get(HamsterEntity.EXACT_AGE);
+                ageProgress = 1.0f - (Math.abs(exactAge) / 24000.0f);
+            }
 
-            rootBone.setScaleX(baseScale);
-            rootBone.setScaleY(baseScale);
-            rootBone.setScaleZ(baseScale);
+            // Smoothly lerp between baby and adult scales
+            float currentBaseScale = MathHelper.lerp(ageProgress, BABY_SCALE, ADULT_SCALE);
+            float currentHeadScale = MathHelper.lerp(ageProgress, BABY_HEAD_SCALE, ADULT_HEAD_SCALE);
+
+            rootBone.setScaleX(currentBaseScale);
+            rootBone.setScaleZ(currentBaseScale);
 
             // override y scale for dynamic squash and stretch if shoulder pet
             if (entity.isShoulderPet()) {
-                rootBone.setScaleY(baseScale * entity.dynamicScaleY);
+                rootBone.setScaleY(currentBaseScale * entity.dynamicScaleY);
+            } else {
+                rootBone.setScaleY(currentBaseScale);
             }
 
-            headParentBone.setScaleX(headScale);
-            headParentBone.setScaleY(headScale);
-            headParentBone.setScaleZ(headScale);
+            headParentBone.setScaleX(currentHeadScale);
+            headParentBone.setScaleY(currentHeadScale);
+            headParentBone.setScaleZ(currentHeadScale);
 
             float pitchOffset = 0.0f;
 

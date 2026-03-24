@@ -86,4 +86,41 @@ public interface PlayerEntityAccessor {
      * Increments the daily tag game counter and updates the last played timestamp.
      */
     void ahp$incrementTagGameCount();
+
+    /**
+     * Checks if the player is allowed to breed hamsters based on the configured litter limit.
+     */
+    boolean ahp$canBreedHamsters();
+
+    /**
+     * Increments the internal counter for how many hamsters a player has fed to breed.
+     */
+    void ahp$incrementHamstersFedForBreeding();
+
+    /**
+     * Resets the player's breeding history counter to zero.
+     */
+    void ahp$resetBreedingHistory();
+
+    /**
+     * Attempts to add a tamed hamster genome hash to the player's collection.
+     * @return true if the hash was newly added, false if it already existed.
+     */
+    boolean ahp$addTamedGenome(int hash);
+
+    /**
+     * Attempts to add a bred hamster genome hash to the player's collection.
+     * @return true if the hash was newly added, false if it already existed.
+     */
+    boolean ahp$addBredGenome(int hash);
+
+    /**
+     * @return The total number of unique wild/tamed genomes this player has collected.
+     */
+    int ahp$getTamedGenomeCount();
+
+    /**
+     * @return The total number of unique bred genomes this player has created.
+     */
+    int ahp$getBredGenomeCount();
 }

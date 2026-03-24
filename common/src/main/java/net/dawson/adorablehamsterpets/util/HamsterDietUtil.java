@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
@@ -36,6 +37,9 @@ public final class HamsterDietUtil {
     public static boolean checkAndHandleRefusal(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         if (ConfigDataCache.isRepeatableFood(stack)) return false;
 
+        // Bypass for babies if config enabled
+        if (hamster.isBaby() && AdorableHamsterPets.CONFIG.disableBabyFoodRefusal) return false;
+
         ItemStack lastFood = hamster.getLastFoodItem();
         if (lastFood != null && !lastFood.isEmpty() && ItemStack.areItemsEqual(lastFood, stack)) {
             hamster.setRefusingFood(true);
@@ -51,10 +55,12 @@ public final class HamsterDietUtil {
     }
 
     /**
-     * Processes feeding logic for pouch unlocking, buff application, healing, and breeding
-     * Evaluates in strict priority order
+     * Processes feeding logic for pouch unlocking, buff application, healing, and breeding.
+     * Evaluates in strict priority order.
+     *
+     * @return 1 if successfully fed, 2 if refused, 0 if not handled.
      */
-    public static boolean tryFeeding(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
+    public static int tryFeeding(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         World world = hamster.getWorld();
         AhpConfig config = AdorableHamsterPets.CONFIG;
 
@@ -77,7 +83,7 @@ public final class HamsterDietUtil {
                     0.0
             );
 
-            return true;
+            return 1;
         }
 
         // --- 2. Process Buff Food ---
@@ -88,7 +94,7 @@ public final class HamsterDietUtil {
             if (hamster.getGreenBeanBuffEndTick() > currentTime) {
                 long totalSeconds = (hamster.getGreenBeanBuffEndTick() - currentTime) / 20;
                 player.sendMessage(Text.translatable("message.adorablehamsterpets.beans_cooldown", totalSeconds / 60, totalSeconds % 60).formatted(Formatting.RED), true);
-                return false;
+                return 2;
             }
 
             // Apply config buffs
@@ -112,26 +118,73 @@ public final class HamsterDietUtil {
             if (player instanceof ServerPlayerEntity serverPlayer) {
                 ModCriteria.FED_HAMSTER_STEAMED_BEANS.get().trigger(serverPlayer, hamster);
             }
-            return true;
+            return 1;
         }
 
         // --- 3. Process Standard Food ---
         if (ConfigDataCache.isStandardFood(stack)) {
+            boolean consumed = false;
+
             // Heal if injured
             if (hamster.getHealth() < hamster.getMaxHealth()) {
                 hamster.heal(config.standardFoodHealing.get());
-                return true;
+                consumed = true;
             }
 
-            // Enter love mode if healthy and ready
+            // Grow if baby
+            if (hamster.isBaby()) {
+                // Grow by ~10% of remaining time, but at least 1 minute per feed
+                int remainingTicks = -hamster.getBreedingAge();
+                int ticksToGrow = Math.max(1200, (int) (remainingTicks * 0.1F));
+
+                // Convert to seconds since vanilla's growUp() multiplies by 20
+                int secondsToGrow = ticksToGrow / 20;
+                hamster.growUp(secondsToGrow, true);
+                consumed = true;
+            }
+
+            if (consumed) {
+                // Feedback
+                world.playSound(null, hamster.getBlockPos(), SoundEvents.ENTITY_GENERIC_EAT, SoundCategory.NEUTRAL, 0.5f, 1.2f + (hamster.getRandom().nextFloat() - 0.5f) * 0.2f);
+                return 1;
+            }
+
+            // Enter love mode if healthy, adult, and ready
             if (hamster.getBreedingAge() == 0 && !hamster.isInCustomLove()) {
-                hamster.setSitting(false, true);
-                hamster.setCustomInLove(player);
-                hamster.setInLove(true);
-                return true;
+                // Evaluate breeding permissions
+                boolean isBreedingAllowed = config.enableBreeding;
+                if (!isBreedingAllowed && config.allowedBreeders.contains(player.getGameProfile().getName())) {
+                    isBreedingAllowed = true;
+                }
+
+                if (isBreedingAllowed && hamster.timesBred < config.maxLittersPerHamster.get()) {
+
+                    // --- Player Litter Limit Check ---
+                    if (player instanceof PlayerEntityAccessor accessor) {
+                        if (!accessor.ahp$canBreedHamsters()) {
+                            player.sendMessage(Text.translatable("message.adorablehamsterpets.player_breeding_limit_reached").formatted(Formatting.RED), true);
+                            hamster.playRefusalAnimation();
+                            return 2;
+                        }
+                        accessor.ahp$incrementHamstersFedForBreeding();
+                    }
+
+                    hamster.setSitting(false, true);
+                    hamster.setCustomInLove(player);
+                    hamster.setInLove(true);
+                    return 1;
+                } else if (!isBreedingAllowed) {
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding_disabled").formatted(Formatting.RED), true);
+                    hamster.playRefusalAnimation();
+                    return 2;
+                } else {
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding_limit_reached").formatted(Formatting.RED), true);
+                    hamster.playRefusalAnimation();
+                    return 2;
+                }
             }
         }
 
-        return false;
+        return 0;
     }
 }

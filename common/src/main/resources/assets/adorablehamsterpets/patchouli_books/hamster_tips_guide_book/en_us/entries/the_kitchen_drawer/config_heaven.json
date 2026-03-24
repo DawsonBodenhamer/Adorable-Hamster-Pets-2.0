@@ -6,7 +6,7 @@
   "sortnum": 1,
   "pages": [
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.config_heaven",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.config_heaven.page1.body",

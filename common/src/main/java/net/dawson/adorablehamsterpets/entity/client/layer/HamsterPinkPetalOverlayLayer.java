@@ -20,7 +20,7 @@ import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 public class HamsterPinkPetalOverlayLayer extends GeoRenderLayer<HamsterEntity> {
 
     // Single shared texture for all 3D petal positions
-    private static final Identifier PETAL_TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/overlay_pink_petal.png");
+    private static final Identifier PETAL_TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/overlays/accessories/overlay_pink_petal.png");
 
     public HamsterPinkPetalOverlayLayer(GeoRenderer<HamsterEntity> entityRendererIn) {
         super(entityRendererIn);

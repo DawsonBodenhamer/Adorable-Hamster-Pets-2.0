@@ -154,10 +154,12 @@ public class ModPackets {
     }
 
     private static void handleUpdateRenderState(UpdateHamsterRenderStatePayload payload, NetworkManager.PacketContext context) {
-        if (payload.isRendering()) {
-            HamsterRenderTracker.addPlayer(payload.hamsterEntityId(), context.getPlayer().getUuid());
-        } else {
-            HamsterRenderTracker.removePlayer(payload.hamsterEntityId(), context.getPlayer().getUuid());
+        for (int id : payload.hamsterEntityIds()) {
+            if (payload.isRendering()) {
+                HamsterRenderTracker.addPlayer(id, context.getPlayer().getUuid());
+            } else {
+                HamsterRenderTracker.removePlayer(id, context.getPlayer().getUuid());
+            }
         }
     }
 }

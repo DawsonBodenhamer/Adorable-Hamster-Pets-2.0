@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/collector_10",
+  "display": {
+    "icon": {
+      "id": "minecraft:spyglass"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.collector_50.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.collector_50.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "impossible": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -42,6 +42,8 @@ import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.ClientParticleManager;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
+import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
+import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
@@ -114,10 +116,12 @@ public class AdorableHamsterPetsClient {
 
         // --- Config Reload Listener ---
         ConfigApiJava.event().onUpdateClient((id, config) -> {
-            if (id.equals(Identifier.of(AdorableHamsterPets.MOD_ID, "main"))) {
-                // Re-parse cached tags if the main config changes
+            if (id.getNamespace().equals(AdorableHamsterPets.MOD_ID)) {
+                // Re-parse cached tags and rules if configs change
                 ConfigDataCache.parseConfig();
-                AdorableHamsterPets.LOGGER.info("Reloaded Adorable Hamster Pets item tag config on client.");
+                ModEntitySpawns.parseConfig();
+                ModWorldGeneration.parseConfig();
+                AdorableHamsterPets.LOGGER.info("Reloaded Adorable Hamster Pets config caches on client.");
             }
         });
 
@@ -305,12 +309,19 @@ public class AdorableHamsterPetsClient {
         }
 
         // --- 4. Render State Tracking ---
-        // Determines which hamsters stopped rendering this tick (went off-screen)
+        // Determine which hamsters started and stopped rendering this tick
+        Set<Integer> startedRendering = new HashSet<>(renderedHamsterIdsThisTick);
+        startedRendering.removeAll(renderedHamsterIdsLastTick);
+
         Set<Integer> stoppedRendering = new HashSet<>(renderedHamsterIdsLastTick);
         stoppedRendering.removeAll(renderedHamsterIdsThisTick);
 
-        for (Integer entityId : stoppedRendering) {
-            NetworkManager.sendToServer(new UpdateHamsterRenderStatePayload(entityId, false));
+        if (!startedRendering.isEmpty()) {
+            NetworkManager.sendToServer(new UpdateHamsterRenderStatePayload(new ArrayList<>(startedRendering), true));
+        }
+
+        if (!stoppedRendering.isEmpty()) {
+            NetworkManager.sendToServer(new UpdateHamsterRenderStatePayload(new ArrayList<>(stoppedRendering), false));
         }
 
         renderedHamsterIdsLastTick.clear();

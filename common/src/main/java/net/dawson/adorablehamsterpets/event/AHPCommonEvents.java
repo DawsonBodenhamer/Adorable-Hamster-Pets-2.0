@@ -5,15 +5,20 @@ import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
+import dev.architectury.event.events.common.TickEvent;
+import me.fzzyhmstrs.fzzy_config.api.ConfigApiJava;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
+import net.dawson.adorablehamsterpets.command.HamsterSpawnCommandUtil;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.mixin.accessor.SlotAccessor;
+import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
+import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
@@ -59,6 +64,18 @@ public class AHPCommonEvents {
         EntityEvent.LIVING_HURT.register(AHPCommonEvents::onLivingHurt);
         InteractionEvent.RIGHT_CLICK_BLOCK.register(AHPCommonEvents::onRightClickBlock);
         InteractionEvent.RIGHT_CLICK_ITEM.register(AHPCommonEvents::onRightClickItem);
+        TickEvent.SERVER_POST.register(HamsterSpawnCommandUtil::onServerTick);
+
+        // --- Config Reload Listener ---
+        ConfigApiJava.event().onUpdateServer((id, config, player) -> {
+            if (id.getNamespace().equals(AdorableHamsterPets.MOD_ID)) {
+                // Re-parse cached tags and rules if any configs change
+                ConfigDataCache.parseConfig();
+                ModEntitySpawns.parseConfig();
+                ModWorldGeneration.parseConfig();
+                AdorableHamsterPets.LOGGER.info("Reloaded Adorable Hamster Pets config caches on server.");
+            }
+        });
     }
 
     /**

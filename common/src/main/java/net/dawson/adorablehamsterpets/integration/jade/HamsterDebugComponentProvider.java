@@ -4,6 +4,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -156,13 +157,11 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
         tooltip.add(fText("In Love (Tracker): %s", (inLoveDataTracker ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED))));
         tooltip.add(fText("In Love (Timer): %s (%d ticks)", (inLoveCustomTimer ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED)), hamster.customLoveTimer));
 
-        // --- General Info ---
         tooltip.add(Text.literal("--- General Info ---").formatted(Formatting.GRAY));
         tooltip.add(fText("Tamed: %s", hamster.isTamed() ? Text.literal("Yes").formatted(Formatting.GREEN) : Text.literal("No").formatted(Formatting.RED)));
         if (hamster.isTamed() && hamster.getOwner() != null) {
             tooltip.add(fText("  Owner: %s", Text.literal(hamster.getOwner().getName().getString()).formatted(Formatting.WHITE)));
         }
-        tooltip.add(fText("Variant: %s (ID: %d)", Text.literal(hamster.getVariantEnum().name()).formatted(Formatting.AQUA), hamster.getVariant()));
         tooltip.add(fText("Age: %s", hamster.isBaby() ? Text.literal("Baby").formatted(Formatting.AQUA) : Text.literal("Adult").formatted(Formatting.WHITE)));
     }
 

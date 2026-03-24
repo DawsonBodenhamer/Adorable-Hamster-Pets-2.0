@@ -1,85 +1,176 @@
 package net.dawson.adorablehamsterpets.command;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dev.architectury.networking.NetworkManager;
-import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
-import net.dawson.adorablehamsterpets.networking.payload.PlayGuidebookEffectsPayload;
-import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.advancement.AdvancementProgress;
-import net.minecraft.advancement.PlayerAdvancementTracker;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.PaletteDefinition;
 import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ModCommands {
 
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Suggestion Providers
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private static final SuggestionProvider<ServerCommandSource> PALETTE_SUGGESTIONS = (context, builder) -> {
+        List<String> suggestions = new ArrayList<>(HamsterPaletteManager.PALETTE_REGISTRY.keySet());
+        suggestions.add("none");
+        return CommandSource.suggestMatching(suggestions, builder);
+    };
+
+    private static final SuggestionProvider<ServerCommandSource> PATTERN_SUGGESTIONS = (context, builder) ->
+            CommandSource.suggestMatching(HamsterPaletteManager.OVERLAY_PATTERN_NAMES, builder);
+
+    private static final SuggestionProvider<ServerCommandSource> EYE_SUGGESTIONS = (context, builder) ->
+            CommandSource.suggestMatching(HamsterPaletteManager.EYE_GENOTYPE_NAMES, builder);
+
+    private static final SuggestionProvider<ServerCommandSource> AUTHOR_SUGGESTIONS = (context, builder) -> {
+        Set<String> authors = HamsterPaletteManager.PALETTE_REGISTRY.values().stream().map(PaletteDefinition::author).collect(Collectors.toSet());
+        authors.add("all");
+        return CommandSource.suggestMatching(authors, builder);
+    };
+
+    private static final SuggestionProvider<ServerCommandSource> TIME_UNIT_SUGGESTIONS = (context, builder) ->
+            CommandSource.suggestMatching(List.of("days", "months", "years"), builder);
+
+    private static final SuggestionProvider<ServerCommandSource> REPORT_OUTPUT_SUGGESTIONS = (context, builder) ->
+            CommandSource.suggestMatching(List.of("latest.log (prettier)", "chat (not recommended)"), builder);
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Registration
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
-        dispatcher.register(CommandManager.literal("ahamsterpets_unlock_advancements")
-                .requires(source -> source.hasPermissionLevel(2)) // Require op level 2 (typical for debug commands)
-                .executes(context -> executeUnlockAllModAdvancements(context.getSource()))
+
+        // Create the unified root node
+        LiteralArgumentBuilder<ServerCommandSource> ahpRoot = CommandManager.literal("ahp");
+
+        // --- Utilities ---
+        // OP Required
+        ahpRoot.then(CommandManager.literal("print_genetics_report")
+                .requires(source -> source.hasPermissionLevel(2))
+                .executes(context -> PlayerCommandUtil.executeGeneticsReport(context.getSource(), "log"))
+                .then(CommandManager.argument("output", StringArgumentType.word()).suggests(REPORT_OUTPUT_SUGGESTIONS)
+                        .executes(context -> PlayerCommandUtil.executeGeneticsReport(context.getSource(), StringArgumentType.getString(context, "output")))
+                )
         );
 
-        // Trigger guidebook effects from data packs/functions
-        // Permission level 0 allows command blocks/functions to run it for the player
-        dispatcher.register(CommandManager.literal("ahp_trigger_guidebook_fx")
+        ahpRoot.then(CommandManager.literal("set_age")
+                .requires(source -> source.hasPermissionLevel(2))
+                .then(CommandManager.argument("amount", DoubleArgumentType.doubleArg(0))
+                        .then(CommandManager.argument("unit", StringArgumentType.word()).suggests(TIME_UNIT_SUGGESTIONS)
+                                .executes(context -> PlayerCommandUtil.executeSetAge(context.getSource(), DoubleArgumentType.getDouble(context, "amount"), StringArgumentType.getString(context, "unit"), Collections.emptyList()))
+                                .then(CommandManager.argument("targets", EntityArgumentType.entities())
+                                        .executes(context -> PlayerCommandUtil.executeSetAge(context.getSource(), DoubleArgumentType.getDouble(context, "amount"), StringArgumentType.getString(context, "unit"), EntityArgumentType.getEntities(context, "targets")))
+                                )
+                        )
+                )
+        );
+
+        ahpRoot.then(CommandManager.literal("reset_player_breeding_history")
+                .requires(source -> source.hasPermissionLevel(2))
+                .executes(context -> PlayerCommandUtil.executeResetPlayerBreedingHistory(context.getSource(), Collections.singletonList(context.getSource().getPlayerOrThrow())))
+                .then(CommandManager.argument("players", EntityArgumentType.players())
+                        .executes(context -> PlayerCommandUtil.executeResetPlayerBreedingHistory(context.getSource(), EntityArgumentType.getPlayers(context, "players")))
+                )
+        );
+
+        ahpRoot.then(CommandManager.literal("reset_hamster_breeding_history")
+                .requires(source -> source.hasPermissionLevel(2))
+                .executes(context -> PlayerCommandUtil.executeResetHamsterBreedingHistory(context.getSource(), Collections.emptyList()))
+                .then(CommandManager.argument("hamsters", EntityArgumentType.entities())
+                        .executes(context -> PlayerCommandUtil.executeResetHamsterBreedingHistory(context.getSource(), EntityArgumentType.getEntities(context, "hamsters")))
+                )
+        );
+
+        ahpRoot.then(CommandManager.literal("unlock_all_advancements")
+                .requires(source -> source.hasPermissionLevel(2))
+                .executes(context -> PlayerCommandUtil.executeUnlockAllModAdvancements(context.getSource()))
+        );
+
+        ahpRoot.then(CommandManager.literal("reset_tree_economy")
+                .requires(source -> source.hasPermissionLevel(2))
+                .executes(context -> PlayerCommandUtil.executeResetHeistHistory(context.getSource()))
+        );
+
+        // No OP required
+        ahpRoot.then(CommandManager.literal("trigger_guidebook_fx")
                 .requires(source -> true)
-                .executes(context -> executeTriggerBookEffects(context.getSource()))
+                .executes(context -> PlayerCommandUtil.executeTriggerBookEffects(context.getSource()))
         );
 
-        // Reset tree heist depletion history for the running player
-        dispatcher.register(CommandManager.literal("ahp_reset_heist_history")
+        ahpRoot.then(CommandManager.literal("give_guidebook")
                 .requires(source -> true)
-                .executes(context -> {
-                    ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
-                    ((PlayerEntityAccessor) player).ahp$clearHeistHistory();
-                    return 1;
-                })
+                .executes(context -> PlayerCommandUtil.executeGiveGuidebook(context.getSource()))
         );
-    }
 
-    private static int executeTriggerBookEffects(ServerCommandSource source) throws CommandSyntaxException {
-        ServerPlayerEntity player = source.getPlayerOrThrow();
-        // Send the effects payload with closeScreen = false (keep inventory/creative menu open)
-        NetworkManager.sendToPlayer(player, new PlayGuidebookEffectsPayload(false));
-        return 1;
-    }
+        // --- Genetics & Spawning Engine
+        // OP Required
+        ahpRoot.then(CommandManager.literal("spawn_all_bases_2D")
+                .requires(source -> source.hasPermissionLevel(2))
+                .then(CommandManager.argument("with_wild_overlays", BoolArgumentType.bool())
+                        .then(CommandManager.argument("author", StringArgumentType.word()).suggests(AUTHOR_SUGGESTIONS)
+                                .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases2D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), StringArgumentType.getString(context, "author")))
+                        )
+                        .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases2D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), "all"))
+                )
+                .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases2D(context.getSource(), false, "all"))
+        );
 
-    private static int executeUnlockAllModAdvancements(ServerCommandSource source) throws CommandSyntaxException {
-        ServerPlayerEntity player = source.getPlayerOrThrow();
-        PlayerAdvancementTracker tracker = player.getAdvancementTracker();
-        Collection<AdvancementEntry> allAdvancements = source.getServer().getAdvancementLoader().getAdvancements();
-        int count = 0; // This variable will be modified
+        ahpRoot.then(CommandManager.literal("spawn_all_bases_3D")
+                .requires(source -> source.hasPermissionLevel(2))
+                .then(CommandManager.argument("with_wild_overlays", BoolArgumentType.bool())
+                        .then(CommandManager.argument("author", StringArgumentType.word()).suggests(AUTHOR_SUGGESTIONS)
+                                .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), StringArgumentType.getString(context, "author")))
+                        )
+                        .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), "all"))
+                )
+                .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), false, "all"))
+        );
 
-        for (AdvancementEntry advancementEntry : allAdvancements) {
-            Identifier id = advancementEntry.id();
-            if (id.getNamespace().equals(AdorableHamsterPets.MOD_ID) &&
-                    (id.getPath().startsWith("husbandry/"))) {
+        ahpRoot.then(CommandManager.literal("spawn_all_possible_permutations_THIS_CAN_BREAK_YOUR_WORLD")
+                .requires(source -> source.hasPermissionLevel(2))
+                .then(CommandManager.argument("ignore_safety_limits", BoolArgumentType.bool())
+                        .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllPermutations(context.getSource(), BoolArgumentType.getBool(context, "ignore_safety_limits")))
+                )
+                .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllPermutations(context.getSource(), false))
+        );
 
-                AdvancementProgress progress = tracker.getProgress(advancementEntry);
-                if (!progress.isDone()) {
-                    for (String criterion : advancementEntry.value().criteria().keySet()) {
-                        tracker.grantCriterion(advancementEntry, criterion);
-                    }
-                    count++; // count is modified here
-                }
-            }
-        }
+        ahpRoot.then(CommandManager.literal("spawn")
+                .requires(source -> source.hasPermissionLevel(2))
+                .then(CommandManager.literal("hamster")
+                        .then(CommandManager.argument("basePalette", StringArgumentType.word()).suggests(PALETTE_SUGGESTIONS)
+                                .then(CommandManager.argument("wildPattern", StringArgumentType.word()).suggests(PATTERN_SUGGESTIONS)
+                                        .then(CommandManager.argument("wildPalette", StringArgumentType.word()).suggests(PALETTE_SUGGESTIONS)
+                                                .then(CommandManager.argument("breedPattern", StringArgumentType.word()).suggests(PATTERN_SUGGESTIONS)
+                                                        .then(CommandManager.argument("breedPalette", StringArgumentType.word()).suggests(PALETTE_SUGGESTIONS)
+                                                                .then(CommandManager.argument("eyes", StringArgumentType.word()).suggests(EYE_SUGGESTIONS)
+                                                                        .executes(context -> HamsterSpawnCommandUtil.executeSpawnSpecific(
+                                                                                context.getSource(),
+                                                                                StringArgumentType.getString(context, "basePalette"),
+                                                                                StringArgumentType.getString(context, "wildPattern"),
+                                                                                StringArgumentType.getString(context, "wildPalette"),
+                                                                                StringArgumentType.getString(context, "breedPattern"),
+                                                                                StringArgumentType.getString(context, "breedPalette"),
+                                                                                StringArgumentType.getString(context, "eyes")
+                                                                        ))
+                                                                ))))))));
 
-        // --- Create a final variable for use in the lambda ---
-        final int finalCount = count;
-
-        if (finalCount > 0) { // Use finalCount here
-            source.sendFeedback(() -> Text.literal("Unlocked " + finalCount + " Adorable Hamster Pets advancements."), true);
-        } else {
-            source.sendFeedback(() -> Text.literal("No new Adorable Hamster Pets advancements to unlock or all already unlocked."), true);
-        }
-        return finalCount; // Return finalCount
+        // Register root node to the dispatcher
+        dispatcher.register(ahpRoot);
     }
 }

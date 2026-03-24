@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/breeder_1000",
+  "display": {
+    "icon": {
+      "id": "minecraft:dragon_egg"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.breeder_1000000.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.breeder_1000000.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "impossible": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -6,7 +6,7 @@
   "sortnum": 2,
   "pages": [
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.creeper_paranoia",
       "header_color": "00AAAA",
       "text_color": "000000",
