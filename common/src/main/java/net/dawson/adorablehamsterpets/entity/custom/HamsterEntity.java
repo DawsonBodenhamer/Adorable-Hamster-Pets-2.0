@@ -445,9 +445,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         // --- Set pathfinding penalties for all relevant goals ---
         this.setPathfindingPenalty(PathNodeType.WATER, 16.0F);
-        this.setPathfindingPenalty(PathNodeType.LAVA, 16.0F);
-        this.setPathfindingPenalty(PathNodeType.DAMAGE_FIRE, 16.0F);
-        this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, 16.0F);
+        this.setPathfindingPenalty(PathNodeType.LAVA, -1.0F);
+        this.setPathfindingPenalty(PathNodeType.DAMAGE_FIRE, -1.0F);
+        this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
     }
 
 
