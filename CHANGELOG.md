@@ -238,6 +238,8 @@ Hamsters now utilize a fully procedural and configurable genetics engine with `3
   - Fixed an issue where the Jade debug toggle book-interaction failed to update the client config on dedicated servers.
 - **Non-Dynamic Taming Food**
   - Fixed a bug where wild hamsters would still flee from players attempting to tame them using anything other than Sliced Cucumber. Now correctly uses the configurable "Taming Foods" from the config.
+- **Suicidal Hamsters**
+  - Hamsters will no longer choose to run through lava or fire when cornered and fleeing from a player. They will now properly recognize these hazards as completely impassable terrain.
 
 ---
 
