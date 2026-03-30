@@ -54,6 +54,12 @@ public class HamsterTagGoal extends Goal {
         // Find nearest player within 5 blocks
         PlayerEntity player = this.hamster.getWorld().getClosestPlayer(this.hamster, 5.0);
         if (player == null) return false;
+
+        // Prevent start if player is looking inside a GUI
+        if (player.currentScreenHandler != player.playerScreenHandler) {
+            return false;
+        }
+
         this.targetPlayer = player;
 
         // --- 5. Taming Check ---
