@@ -152,6 +152,24 @@ public class AhpConfig extends Config {
     @Translatable.Desc("How long (in ticks) I wait before realizing you're book-less and panicking. 3600 = 3 minutes.")
     public ValidatedInt guidebookWarningTimer = new ValidatedInt(3600, 6000, 100);
 
+    @Translatable.Name("Hamster Renaming")
+    @Translatable.Desc("Because 'Hamster #42' lacks a certain personal touch, here are some settings to control how hamsters get renamed.")
+    public ConfigGroup naming = new ConfigGroup("naming", true);
+
+    @Translatable.Name("Enable GUI Renaming")
+    @Translatable.Desc("Lets you rename hamsters directly from their inventory screen. Much more civilized than slapping them with a name tag.")
+    public boolean enableGuiRenaming = true;
+
+    @Translatable.Name("Consume Name Tag")
+    @Translatable.Desc("If true, you must have a Name Tag in your inventory (or the hamster's cheeks) to confirm the rename, and it will be consumed. True by default to keep things vanilla-friendly-ish.")
+    public boolean consumeNameTagForGuiRename = true;
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Pencil Icon Placement")
+    @Translatable.Desc("Which side of the name the little pencil icon sits on. For the easterners who prefer reading from right to left.")
+    public ValidatedEnum<RenameIconPlacement> renameIconPlacement = new ValidatedEnum<>(RenameIconPlacement.LEFT);
+
     @NonSync
     @Translatable.Name("Mod Item Tooltips")
     @Translatable.Desc("Helpful whispers on what the heck that cucumber is for.")

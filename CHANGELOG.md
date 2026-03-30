@@ -103,6 +103,14 @@ Hamsters now utilize a fully procedural and configurable genetics engine with `3
     - The `with_wild_overlays` argument causes the `spawn_all_bases` commands to execute the dynamic overlay application pipeline. The result is a full display of all hamster variants that can spawn in the wild. It's over 4,000, so be prepared for client-side lag. To reduce lag, you can try looking down at the ground before running the command.
   - Added `/ahp spawn_all_possible_permutations_THIS_CAN_BREAK_YOUR_WORLD`. Exactly what it sounds like. Don't run it unless you have a super-flat world, a fire extinguisher for your PC, and a lot of patience. Make sure you are looking straight down at the ground if you try this, because if you try to look at all the hamsters at the same time, your entire PC will probably freeze up. Note that every time I have run this command, my server tick speed never quite returned to baseline— even after deleting all the hamsters that were spawned using `/kill @e[type=!player]`.
   - Added `/ahp print_genetics_report` command, allowing server operators to recalculate and view the current 3D color-space math of the genetics engine at runtime. Useful because it dynamically updates its readout based on your exact `AhpWorldGenConfig` wild overlay settings, so you can see how your changes are affecting the total possible variant numbers without having to spawn them all.
+- **GUI Renaming System**
+  - Players can now rename their hamsters directly from the Hamster Inventory screen.
+  - Features dynamic down-scaling to ensure long names always fit perfectly within the UI constraints.
+  - An interactive pencil icon and underline display when hovering/typing.
+- **New Config Options (`UI & Quality of Life > Hamster Renaming`)**
+  - `Enable GUI Renaming`: Master toggle for the feature.
+  - `Consume Name Tag`: Forces players to sacrifice a Name Tag from their inventory (or the hamster's cheeks) to finalize the rename.
+  - `Pencil Icon Placement`: Allows swapping the icon to the left or right of the text for those who read in different directions.
 - **Tag Mini-Game**
   - Hamsters can now initiate a playful game of tag. If you maintain eye contact with a hamster for a few seconds, it will squeak and excitedly run away.
   - **The Chase:** The hamster will flee if you get too close and stop to playfully taunt you if you fall too far behind.

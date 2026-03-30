@@ -2,16 +2,16 @@ package net.dawson.adorablehamsterpets.entity.client;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
+import net.dawson.adorablehamsterpets.entity.client.layer.*;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.PaletteDefinition;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.TextureType;
-import net.dawson.adorablehamsterpets.util.HamsterTextureUtil;
-import net.dawson.adorablehamsterpets.entity.client.layer.*;
-import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterMouthItemOffsets;
 import net.dawson.adorablehamsterpets.util.HamsterRidingUtil;
+import net.dawson.adorablehamsterpets.util.HamsterTextureUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -49,19 +49,30 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
-    private final float adultShadowRadius;
-
-    /**
-     * Used by a LivingEntityRenderer mixin to suppress vanilla passenger rendering and avoid double-draw.
-     * True only while intentionally rendering the rider here.
-     */
-    public static final ThreadLocal<Boolean> IS_RENDERING_PASSENGER = ThreadLocal.withInitial(() -> false);
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constants and Static Utilities
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     private static final String SEAT_BONE = "body_child";
 
+    // Suppresses vanilla passenger rendering
+    public static final ThreadLocal<Boolean> IS_RENDERING_PASSENGER = ThreadLocal.withInitial(() -> false);
+
+    // Suppresses nameplate inside inventory GUI
+    public static final ThreadLocal<Boolean> IS_RENDERING_IN_GUI = ThreadLocal.withInitial(() -> false);
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Instance Fields
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private final float adultShadowRadius = 0.2F;
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructors
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     public HamsterRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new HamsterModel());
-        this.adultShadowRadius = 0.2F;
         this.shadowRadius = this.adultShadowRadius;
 
         // --- Physical Attributes ---
@@ -75,6 +86,10 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         addRenderLayer(new HamsterPinkPetalOverlayLayer(this));
         addRenderLayer(new HamsterAcornHatLayer(this));
     }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Overrides
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
     public Identifier getTextureLocation(HamsterEntity entity) {
@@ -98,10 +113,18 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
     }
 
     @Override
+    public boolean hasLabel(HamsterEntity entity) {
+        if (IS_RENDERING_IN_GUI.get()) {
+            return false;
+        }
+        return super.hasLabel(entity);
+    }
+
+    @Override
     public void preRender(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel model, @Nullable VertexConsumerProvider bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
 
-        // Track matrices for bones to which I need post-render access
+        // Track matrices for post render access
         model.getBone("left_foot").ifPresent(bone -> bone.setTrackingMatrices(true));
         model.getBone("nose").ifPresent(bone -> bone.setTrackingMatrices(true));
         model.getBone(SEAT_BONE).ifPresent(bone -> bone.setTrackingMatrices(true));
@@ -118,7 +141,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         }
 
         // --- 2. Report to Client-Side Tracker ---
-        // Add ID to a set to determine which entities are no longer being rendered
+        // Add ID to set to determine entities no longer rendered
         AdorableHamsterPetsClient.onHamsterRendered(entity.getId());
 
         // --- 3. Smooth Snow Layer Height Adjustment ---
@@ -127,13 +150,13 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         BlockPos pos = entity.getBlockPos();
         BlockState blockState = entity.getWorld().getBlockState(pos);
 
-        // If block is a snow layer, apply a fixed offset equal to one layer's height
+        // Fixed offset equal to one layer height if on snow
         if (blockState.isOf(Blocks.SNOW)) {
             targetYOffset = 1.0f / 8.0f;
         }
 
-        // Smoothly interpolate the current offset towards the target offset
-        entity.renderedSnowYOffset += (targetYOffset - entity.renderedSnowYOffset) * 0.15f; // controls transition speed
+        // Smooth interpolation for target offset
+        entity.renderedSnowYOffset += (targetYOffset - entity.renderedSnowYOffset) * 0.15f;
         poseStack.translate(0.0, entity.renderedSnowYOffset, 0.0);
 
         // --- 4. Iris/Shader Compatibility Hack ---
@@ -159,26 +182,18 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         poseStack.pop();
     }
 
-    /**
-     * Performs the final rendering steps, including particle effects, sounds, and passenger rendering.
-     * <p>
-     * This method polls a transient {@code particleEffectId} flag on the animatable entity each frame.
-     * If the flag is set (by a particle keyframe event), it spawns the corresponding particle effect
-     * at the animated bone's calculated world position and then immediately resets the flag to {@code null}
-     * to prevent re-triggering.
-     */
     @Override
     public void renderFinal(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel model, VertexConsumerProvider bufferSource, @Nullable VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay, int colour) {
         super.renderFinal(poseStack, animatable, model, bufferSource, buffer, partialTick, packedLight, packedOverlay, colour);
 
-        // --- 1. Handle Passengers (Bone-Locked) ---
+        // --- 1. Handle Passengers ---
         if (!animatable.getPassengerList().isEmpty()) {
             model.getBone(SEAT_BONE).ifPresent(bone -> {
                 renderPassengersForBone(poseStack, animatable, bone, bufferSource, packedLight, partialTick);
             });
         }
 
-        // --- 2. Handle Item in Mouth ---
+        // --- 2. Handle Mouth Item ---
         if (animatable.isHoldingMouthItem()) {
             model.getBone("nose").ifPresent(bone -> {
                 renderItemForBone(poseStack, animatable, bone, bufferSource, packedLight, packedOverlay);
@@ -195,6 +210,10 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             handleSoundKeyframes(animatable);
         }
     }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
      * Renders hamster passengers "bone-locked" to a GeckoLib bone.
@@ -224,7 +243,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         final Matrix4f modelBase = new Matrix4f(this.modelRenderTranslations);
         final Matrix3f modelBaseNormal = new Matrix3f(modelBase).invert().transpose();
 
-        // Temporarily disable shadow rendering for the rider to prevent double shadows or artifacts
+        // Temporarily disable shadow rendering for rider to prevent double shadows or artifacts
         dispatcher.setRenderShadows(false);
         try {
             for (Entity passenger : hamster.getPassengerList()) {
@@ -232,7 +251,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                     continue;
                 }
 
-                // Local first-person: don't render "fake" rider so it doesn't obstruct view
+                // Skip fake rider in first person so it doesn't obstruct view
                 if (passenger == client.player && client.options.getPerspective().isFirstPerson()) {
                     continue;
                 }
@@ -340,7 +359,6 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             matrices.pop();
         }
     }
-
 
     private void handleParticleKeyframes(HamsterEntity animatable, BakedGeoModel model) {
         Random random = animatable.getRandom();
