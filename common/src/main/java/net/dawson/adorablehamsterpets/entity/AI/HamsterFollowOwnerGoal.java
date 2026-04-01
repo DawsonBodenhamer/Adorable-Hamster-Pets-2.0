@@ -56,15 +56,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
         }
 
         // --- State Exclusions ---
-        if (this.hamster.isSitting() ||
-                this.hamster.isSleeping() ||
-                this.hamster.isKnockedOut() ||
-                this.hamster.isSulking() ||
-                this.hamster.isCelebratingDiamond() ||
-                this.hamster.isCelebratingRetrieval() ||
-                this.hamster.isPlayingTag() ||
-                this.hamster.isCelebratingBaby() ||
-                this.hamster.isWanderModeActive()) {
+        if (HamsterMovementUtil.shouldNotFollow(this.hamster)) {
             return false;
         }
 
@@ -87,14 +79,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
     @Override
     public boolean shouldContinue() {
         // --- State Exclusions ---
-        if (this.hamster.isSitting() ||
-                this.hamster.isSleeping() ||
-                this.hamster.isKnockedOut() ||
-                this.hamster.isSulking() ||
-                this.hamster.isCelebratingDiamond() ||
-                this.hamster.isPlayingTag() ||
-                this.hamster.isCelebratingBaby() ||
-                this.hamster.isCelebratingRetrieval()) {
+        if (HamsterMovementUtil.shouldNotFollow(this.hamster)) {
             return false;
         }
 

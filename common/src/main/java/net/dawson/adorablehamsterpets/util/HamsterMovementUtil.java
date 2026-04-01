@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.FuzzyTargeting;
 import net.minecraft.entity.mob.MobEntity;
@@ -80,5 +81,23 @@ public final class HamsterMovementUtil {
         // FuzzyTargeting.findFrom creates a target vector away from the provided start pos (the chaser)
         // arg 2: horizontal spread, arg 3: vertical spread
         return FuzzyTargeting.findFrom(runner, (int) maxDistance, 7, chaser.getPos());
+    }
+
+    /**
+     * Determines if the hamster is in a state that forbids following another entity.
+     *
+     * @param hamster The hamster to check.
+     * @return True if the hamster should not follow, false otherwise.
+     */
+    public static boolean shouldNotFollow(HamsterEntity hamster) {
+        return hamster.isSitting() ||
+                hamster.isSleeping() ||
+                hamster.isKnockedOut() ||
+                hamster.isSulking() ||
+                hamster.isCelebratingDiamond() ||
+                hamster.isCelebratingRetrieval() ||
+                hamster.isPlayingTag() ||
+                hamster.isCelebratingBaby() ||
+                hamster.isWanderModeActive();
     }
 }
