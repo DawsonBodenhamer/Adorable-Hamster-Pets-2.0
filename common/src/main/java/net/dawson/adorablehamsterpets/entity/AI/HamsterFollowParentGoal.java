@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.AI;
 
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.server.world.ServerWorld;
@@ -36,7 +37,7 @@ public class HamsterFollowParentGoal extends Goal {
     @Override
     public boolean canStart() {
         if (!this.hamster.isBaby()) return false;
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isWanderModeActive()) return false;
+        if (HamsterMovementUtil.shouldNotFollow(this.hamster)) return false;
 
         UUID parentUuid = this.hamster.getParentUuid();
         if (parentUuid == null) return false;
@@ -52,10 +53,11 @@ public class HamsterFollowParentGoal extends Goal {
         return false;
     }
 
+
     @Override
     public boolean shouldContinue() {
         if (!this.hamster.isBaby() || this.parent == null || !this.parent.isAlive()) return false;
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isWanderModeActive()) return false;
+        if (HamsterMovementUtil.shouldNotFollow(this.hamster)) return false;
 
         double distanceSq = this.hamster.squaredDistanceTo(this.parent);
         // Continue following as long as distance is between 2 and 16 blocks
