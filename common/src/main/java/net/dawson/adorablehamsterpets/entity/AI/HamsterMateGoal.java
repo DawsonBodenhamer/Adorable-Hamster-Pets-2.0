@@ -69,6 +69,7 @@ public class HamsterMateGoal extends Goal {
         return this.targetMate != null
                 && this.targetMate.isAlive()
                 && this.hamster.isInCustomLove()
+                && this.targetMate.isInCustomLove()
                 && this.timer < BREEDING_TIME_TICKS;
     }
 
@@ -115,7 +116,10 @@ public class HamsterMateGoal extends Goal {
     }
 
     private void breed() {
-        // --- 1. Cooldown Application ---
+        // --- 1. Safety Check ---
+        if (!this.hamster.isInCustomLove() || !this.targetMate.isInCustomLove()) return; // Prevent love triangles
+
+        // --- 2. Cooldown Application ---
         final AhpConfig config = AdorableHamsterPets.CONFIG;
         int cooldown = config.breedingCooldownSeconds.get() * 20;
         this.hamster.setBreedingAge(cooldown);
@@ -127,16 +131,16 @@ public class HamsterMateGoal extends Goal {
         this.hamster.setInLove(false);
         this.targetMate.setInLove(false);
 
-        // --- 2. Update Breeding Counters ---
+        // --- 3. Update Breeding Counters ---
         this.hamster.timesBred++;
         this.targetMate.timesBred++;
 
-        // --- 3. Determine Litter Size ---
+        // --- 4. Determine Litter Size ---
         int min = config.litterSizeMin.get();
         int max = Math.max(min, config.litterSizeMax.get());
         int litterSize = min >= max ? min : this.hamster.getRandom().nextBetween(min, max);
 
-        // --- 4. Spawn Litter ---
+        // --- 5. Spawn Litter ---
         ServerWorld world = (ServerWorld) this.hamster.getWorld();
         List<HamsterEntity> spawnedBabies = new ArrayList<>();
 
@@ -162,7 +166,7 @@ public class HamsterMateGoal extends Goal {
             }
         }
 
-        // --- 5. Schedule Post-Breeding Feedback ---
+        // --- 6. Schedule Post-Breeding Feedback ---
         if (!spawnedBabies.isEmpty()) {
             // Grab the first baby, and the second baby (if it exists)
             HamsterEntity babyA = spawnedBabies.get(0);
