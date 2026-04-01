@@ -84,6 +84,7 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
 - **Parent-Following**
   - Babies will now randomly select a parent to follow until adulthood, instead of following their owner.
   - If already tamed one of the new babies and you would like it to follow you immediately, you can break its connection to the parent by right-clicking it with a Lure Item (Cheese by default). Note that you must tame it first, or your player will just start eating the cheese.
+  - Added a config toggle to disable the action bar message that warns you when a newly tamed baby hamster refuses to follow you because it's still attached to its parent.
 - **Jade Integration**
   - Added comprehensive Jade overlay integration that reveals a hamster's exact genetic makeup (Base Palette, Wild/Breeding Overlays, and Eye Genotype) when you look at them.
   - Enabled without needing to turn on debug mode to help with breeding.
@@ -174,8 +175,11 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - The "Sweet Potato" Easter egg now applies a unique custom texture to the hamster, thanks to [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!
   - Renaming a hamster "Sweet Potato" hides its normal genetics (base coat, overlays, and eye color) without permanently deleting them.
   - Sweet Potato hamsters can still breed, and their offspring will genetically inherit traits mathematically blended from the sweet potato's unique color palette, but they do not spawn in the wild.
-- **Jade Integration**
-  - Moved the new complex genetic info (Base Palette, Overlay Patterns, Eye Genotype) to the default Jade overlay so breeders don't have to turn on debug mode.
+- **Jade HUD Config Settings**
+  - Added a new "Jade Overlay Settings" section to the config under "UI & Quality of Life". 
+  - Displays complex genetic info (Age, Base Coat, Wild Overlay, Breeding Overlay, Eye Color) by default.
+  - Added a "Require Sneaking" toggle (disabled by default) allowing you to hide the genetic overlay unless you are actively sneaking.
+  - Added individual toggles for every piece of genetic info shown in the Jade overlay, allowing you to completely customize the HUD to your liking.
   - Built a smart-formatting engine so that community texture IDs are automatically converted into localized, human-readable titles on the HUD (e.g., `cheesecake_mocha.png` -> "Cheesecake Mocha").
 - **Statue Performance & AI Toggling**
   - Hamsters spawned with their AI disabled will now completely freeze their animation playback and no longer emit ambient idle squeaks. This attempts to reduce client-side rendering lag when hundreds of thousands of hamsters are on screen for testing, but Java itself struggles with that many cubes on screen, so it's still laggy if you try to look at 2 million+ hamsters simultaneously.
@@ -186,6 +190,8 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - It was getting too large, so I have reorganized it, reworded it, and split a few things off into other easily accessible files, so the README only has one job now.
 - **Mount Priority**
   - Changed default config value to `HEAD_FIRST`.
+- **Action Bar Config Toggles**
+  - Grouped all action bar message toggles (Shoulder Dismount, Tree Heist Start, Bed Break, Tamed Baby Warning, and Display Duration) into a new "Action Bar Messages" sub-category under "UI & Quality of Life" for easier access.
 - **Guidebook**
   - Updated Hamster Bed entry to explicitly mention the Totem of Undying requirement for respawning.
 - **Guidebook Effects**
