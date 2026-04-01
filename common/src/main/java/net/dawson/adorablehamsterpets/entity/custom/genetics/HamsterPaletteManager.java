@@ -168,15 +168,20 @@ public class HamsterPaletteManager {
                     .filter(p -> HamsterGeneticsUtil.isValidWildOverlay(baseDef, p))
                     .count();
 
+            // Count valid breeding palettes for this specific base coat
+            long validBreedingPalettes = PALETTE_REGISTRY.values().stream()
+                    .filter(p -> HamsterGeneticsUtil.isValidBreedingOverlay(baseDef, p))
+                    .count();
+
             // 1. States with no wild overlay
             long noWildOverlayStates = 1;
-            long breedingCombsIfNoWild = 1 + (basePalettes * overlayPatterns);
+            long breedingCombsIfNoWild = 1 + (validBreedingPalettes * overlayPatterns);
             long totalNoWildBranch = noWildOverlayStates * breedingCombsIfNoWild;
 
             // 2. States with wild overlay
             long withWildOverlayStates = validWildOverlays * overlayPatterns;
             // Breeding pattern must not overlap wild pattern
-            long breedingCombsIfWild = 1 + (basePalettes * (overlayPatterns - 1));
+            long breedingCombsIfWild = 1 + (validBreedingPalettes * (overlayPatterns - 1));
             long totalWithWildBranch = withWildOverlayStates * breedingCombsIfWild;
 
             // Combine branches and multiply by visual eye states

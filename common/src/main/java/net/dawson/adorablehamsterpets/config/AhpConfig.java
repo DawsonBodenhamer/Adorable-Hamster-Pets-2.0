@@ -901,6 +901,10 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Just the basic stuff. You know, detecting creepers, sniffing diamonds. Just average Minecraft stuff really. No big deal. Why are you clapping and squealing? Stop that. You look silly.")
     public ConfigGroup shoulderCore = new ConfigGroup("shoulderCore", true);
 
+    @Translatable.Name("Max Mounts")
+    @Translatable.Desc("The maximum number of hamsters you can carry on your shoulders and head. Limits the chaos. Changes take effect on next mount attempt.")
+    public ValidatedInt maxShoulderHamsters = new ValidatedInt(3, 3, 1);
+
     @NonSync
     @Translatable.Name("Mount Priority")
     @Translatable.Desc("Where should the hamster go first? 'Shoulders First' fills the Right Shoulder, then Left, then Head. 'Head First' fills Head, then Right, then Left.")

@@ -322,6 +322,14 @@ public class HamsterSpawnCommandUtil {
                 // Cross product
                 for (HamsterGenome wCombo : baseWildCombos) {
                     for (HamsterGenome bCombo : breedingCombos) {
+                        // Skip invalid breeding overlays
+                        if (bCombo.breedingOverlayPaletteId() != null) {
+                            PaletteDefinition breedingDef = HamsterPaletteManager.PALETTE_REGISTRY.get(bCombo.breedingOverlayPaletteId());
+                            if (breedingDef != null && !HamsterGeneticsUtil.isValidBreedingOverlay(baseDef, breedingDef)) {
+                                continue;
+                            }
+                        }
+
                         // Carrier looks identical to Black so skip for visual distinction
                         permutations.add(new HamsterGenome(wCombo.basePaletteId(), wCombo.wildOverlayPattern(), wCombo.wildOverlayPaletteId(), bCombo.breedingOverlayPattern(), bCombo.breedingOverlayPaletteId(), 0));
                         permutations.add(new HamsterGenome(wCombo.basePaletteId(), wCombo.wildOverlayPattern(), wCombo.wildOverlayPaletteId(), bCombo.breedingOverlayPattern(), bCombo.breedingOverlayPaletteId(), 2));

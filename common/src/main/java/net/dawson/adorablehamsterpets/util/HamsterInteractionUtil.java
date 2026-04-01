@@ -582,6 +582,12 @@ public final class HamsterInteractionUtil {
     public static void executeShoulderMount(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
 
+        // --- Capacity Check ---
+        if (playerAccessor.adorablehamsterpets$getMountOrderQueue().size() >= Configs.AHP.maxShoulderHamsters.get()) {
+            player.sendMessage(Text.translatable("message.adorablehamsterpets.shoulder_occupied"), true);
+            return;
+        }
+
         // --- Mount Priority Logic ---
         ShoulderLocation availableSlot = null;
         MountPriority priority = Configs.AHP.mountPriority.get();
