@@ -1,14 +1,14 @@
 package net.dawson.adorablehamsterpets.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.RenameIconPlacement;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.dawson.adorablehamsterpets.networking.payload.RenameHamsterPayload;
+import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -20,7 +20,6 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.StringHelper;
 import net.minecraft.util.Util;
 import org.lwjgl.glfw.GLFW;
 
@@ -33,8 +32,8 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
      *        Constants
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static final Identifier TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/gui/hamster_inventory_gui.png");
-    private static final Identifier PENCIL_ICON = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/gui/pencil_icon_ui.png");
+    private static final Identifier TEXTURE = new Identifier(AdorableHamsterPets.MOD_ID, "textures/gui/hamster_inventory_gui.png");
+    private static final Identifier PENCIL_ICON = new Identifier(AdorableHamsterPets.MOD_ID, "textures/gui/pencil_icon_ui.png");
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Instance Fields
@@ -144,7 +143,7 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
     public boolean charTyped(char chr, int modifiers) {
         if (this.isRenaming) {
             // Filter out unprintable/illegal characters
-            if (StringHelper.isValidChar(chr)) {
+            if (SharedConstants.isValidChar(chr)) {
                 this.currentName += chr;
                 this.hasUnsavedName = true;
                 return true;
@@ -321,13 +320,13 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
     }
 
     /**
-     * Transmits the RenameHamsterPayload to the server if changes were actually made.
+     * Transmits the RenameHamsterC2SPacket to the server if changes were actually made.
      */
     private void sendRenamePacket() {
         if (this.hasUnsavedName && !this.currentName.equals(this.initialName)) {
             HamsterEntity hamster = this.handler.getHamsterEntity();
             if (hamster != null) {
-                NetworkManager.sendToServer(new RenameHamsterPayload(hamster.getId(), this.currentName.trim()));
+                ModPackets.CHANNEL.sendToServer(new ModPackets.RenameHamsterC2SPacket(hamster.getId(), this.currentName.trim()));
                 this.initialName = this.currentName; // Update initial state to prevent duplicate packets
                 this.hasUnsavedName = false;
             }

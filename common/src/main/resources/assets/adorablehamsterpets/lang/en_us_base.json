@@ -170,6 +170,9 @@
   "tooltip.adorablehamsterpets.smithing_template.diamond.hint2": "Smithing Table required. Base: Acorn Armor.",
   "tooltip.adorablehamsterpets.smithing_template.netherite.hint1": "Grants knockback resistance and increased throw inertia.",
   "tooltip.adorablehamsterpets.smithing_template.netherite.hint2": "Smithing Table required. Base: Acorn Armor.",
+  "tooltip.adorablehamsterpets.rename": "Click and start typing to rename.",
+  "tooltip.adorablehamsterpets.rename.consume": "Requires 1 Name Tag (Configurable).",
+  "tooltip.adorablehamsterpets.rename.missing_tag": "Requires a Name Tag. The bureaucracy is unforgiving.",
 
   "time.adorablehamsterpets.day": "%d Day",
   "time.adorablehamsterpets.days": "%d Days",

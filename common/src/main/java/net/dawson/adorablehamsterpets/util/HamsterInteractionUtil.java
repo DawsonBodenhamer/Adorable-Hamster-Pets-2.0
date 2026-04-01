@@ -229,6 +229,33 @@ public final class HamsterInteractionUtil {
      *                           Owner Interactions
      * ────────────────────────────────────────────────────────────────────────────*/
 
+    // --- Naming ---
+    public static boolean consumeNameTag(PlayerEntity player, HamsterEntity hamster) {
+        // 1. Check player inventory
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            ItemStack stack = player.getInventory().getStack(i);
+            if (stack.isOf(Items.NAME_TAG)) {
+                if (!player.getAbilities().creativeMode) {
+                    stack.decrement(1);
+                }
+                return true;
+            }
+        }
+
+        // 2. Check hamster cheek pouches (slots 0-5)
+        for (int i = 0; i < HamsterInventoryUtil.CHEEK_POUCH_SIZE; i++) {
+            ItemStack stack = hamster.getItems().get(i);
+            if (stack.isOf(Items.NAME_TAG)) {
+                if (!player.getAbilities().creativeMode) {
+                    stack.decrement(1);
+                    hamster.markDirty();
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     // --- Bed Linking ---
     public static ActionResult handleBedLinking(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
         if (stack.getItem() instanceof HamsterBedItem) {

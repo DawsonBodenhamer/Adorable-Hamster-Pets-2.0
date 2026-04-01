@@ -11,10 +11,13 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
+import net.minecraft.advancement.Advancement;
+import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -47,6 +50,7 @@ public class ModPackets {
     public record ResetHeistHistoryC2SPacket() {}
     public record RequestHamsterRideC2SPacket(int entityId) {}
     public record HamsterInputC2SPacket(boolean jumpHeld, boolean sprintHeld) {}
+    public record RenameHamsterC2SPacket(int entityId, String newName) {}
 
     // S2C (Server-to-Client)
     public record PlayGuidebookEffectsS2CPacket(boolean closeScreen) {}
@@ -175,6 +179,53 @@ public class ModPackets {
                     if (player.getVehicle() instanceof HamsterEntity hamster) {
                         if (hamster.getControllingPassenger() == player) {
                             hamster.setRiderInput(packet.jumpHeld(), packet.sprintHeld());
+                        }
+                    }
+                })
+        );
+
+        CHANNEL.register(RenameHamsterC2SPacket.class,
+                (packet, buf) -> {
+                    buf.writeInt(packet.entityId());
+                    buf.writeString(packet.newName());
+                },
+                (buf) -> new RenameHamsterC2SPacket(buf.readInt(), buf.readString()),
+                (packet, context) -> context.get().queue(() -> {
+                    if (!Configs.AHP.enableGuiRenaming) return;
+
+                    if (context.get().getPlayer() instanceof ServerPlayerEntity player) {
+                        net.minecraft.entity.Entity entity = player.getWorld().getEntityById(packet.entityId());
+
+                        // Ensure player owns hamster and is close enough
+                        if (entity instanceof HamsterEntity hamster && hamster.isOwner(player) && hamster.squaredDistanceTo(player) < 64.0) {
+                            String newName = packet.newName().trim();
+                            boolean canRename = true;
+
+                            // Process name tag sacrifice if configured
+                            if (Configs.AHP.consumeNameTagForGuiRename) {
+                                canRename = HamsterInteractionUtil.consumeNameTag(player, hamster);
+                            }
+
+                            if (canRename) {
+                                if (newName.isEmpty()) {
+                                    hamster.setCustomName(null);
+                                } else {
+                                    hamster.setCustomName(Text.literal(newName));
+
+                                    // Manually grant Sweet Potato advancement for easter egg
+                                    if (hamster.isSweetPotato()) {
+                                        PlayerAdvancementTracker tracker = player.getAdvancementTracker();
+                                        Identifier advId = new Identifier(AdorableHamsterPets.MOD_ID, "technical/sweet_potato_named");
+                                        Advancement adv = player.server.getAdvancementLoader().get(advId);
+
+                                        if (adv != null) {
+                                            for (String criterion : adv.getCriteria().keySet()) {
+                                                tracker.grantCriterion(adv, criterion);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 })
