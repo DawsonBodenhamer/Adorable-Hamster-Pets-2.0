@@ -1,6 +1,6 @@
 {
   "include": [
-    { "template": "page",
+    { "template": "dynamic_page",
       "as": "page",
       "using": {
         "header": "#header",

@@ -6,7 +6,7 @@
   "sortnum": -1,
   "pages": [
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.tree_heist_and_armor",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page1.body",
@@ -37,7 +37,7 @@
       "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page4_image_caption"
     },
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page5.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page5.body",
@@ -45,7 +45,7 @@
       "anchor": "enchanting"
     },
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page6.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page6.body",
@@ -60,7 +60,7 @@
       "anchor": "upgrades"
     },
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page8.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page8.body",
@@ -68,7 +68,7 @@
       "anchor": "perks"
     },
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page9.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page9.body",
@@ -85,7 +85,7 @@
       "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page10_image_caption"
     },
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page11.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page11.body",
@@ -93,7 +93,7 @@
       "anchor": "economy"
     },
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.tree_heist_and_armor.page12.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.tree_heist_and_armor.page12.body",

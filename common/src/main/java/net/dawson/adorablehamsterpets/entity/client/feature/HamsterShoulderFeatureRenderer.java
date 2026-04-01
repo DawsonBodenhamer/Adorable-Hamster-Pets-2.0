@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.entity.client.feature;
 
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.util.HamsterState;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
@@ -112,12 +113,14 @@ public class HamsterShoulderFeatureRenderer
      */
     private void applyHamsterState(HamsterEntity dummyHamster, HamsterState data, PlayerEntity owner) {
         // --- Apply Visual Data ---
-        dummyHamster.setVariant(data.variantId());
+        dummyHamster.setGenome(HamsterGenome.readFromNbt(data.genomeNbt()));
         dummyHamster.setLeftCheekFull((data.hamsterFlags() & HamsterEntity.LEFT_CHEEK_FULL_FLAG) != 0);
         dummyHamster.setRightCheekFull((data.hamsterFlags() & HamsterEntity.RIGHT_CHEEK_FULL_FLAG) != 0);
         dummyHamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, data.pinkPetalType());
         dummyHamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
         dummyHamster.setBreedingAge(data.breedingAge());
+        dummyHamster.getDataTracker().set(HamsterEntity.EXACT_AGE, data.breedingAge());
+        dummyHamster.setBaby(data.breedingAge() < 0);
 
         // --- Apply Core Flags ---
         // Restore all states from when the hamster was picked up

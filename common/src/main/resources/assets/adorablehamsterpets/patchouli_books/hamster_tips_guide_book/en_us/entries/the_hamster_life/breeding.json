@@ -1,0 +1,51 @@
+{
+  "name": "book.adorablehamsterpets.entry.breeding",
+  "icon": "adorablehamsterpets:hamster_spawn_egg",
+  "category": "adorablehamsterpets:the_hamster_life",
+  "entry_color": "00AAAA",
+  "sortnum": 4,
+  "pages":[
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.breeding.page1.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.breeding.page1.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.breeding.page2.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.breeding.page2.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.breeding.page3.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.breeding.page3.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.breeding.page4.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.breeding.page4.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.breeding.page5.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.breeding.page5.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.breeding.page6.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.breeding.page6.body",
+      "text_color": "000000"
+    }
+  ]
+}

@@ -6,7 +6,7 @@
   "sortnum": 4,
   "pages": [
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.hamster_food_mix",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.hamster_food_mix.page1.body",

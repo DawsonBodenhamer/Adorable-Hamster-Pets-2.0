@@ -199,11 +199,7 @@ public final class HamsterInventoryUtil {
         boolean isCaveHamster = false;
         World world = hamster.getWorld();
         if (!world.isClient()) {
-            RegistryEntry<Biome> biomeEntry = world.getBiome(hamster.getBlockPos());
-            boolean isCaveBiome = biomeEntry.isIn(ModBiomeTags.IS_CAVE);
-            boolean isDeepAndDark = hamster.getY() < 50 && !world.isSkyVisible(hamster.getBlockPos());
-
-            if (isCaveBiome || isDeepAndDark) isCaveHamster = true;
+            isCaveHamster = HamsterGeneticsUtil.isCaveEnvironment(world, hamster.getBlockPos());
         }
 
         if (isCaveHamster) {

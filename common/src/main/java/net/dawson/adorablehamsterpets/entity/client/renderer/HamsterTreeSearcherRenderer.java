@@ -19,7 +19,7 @@ public class HamsterTreeSearcherRenderer extends EntityRenderer<HamsterTreeSearc
     @Override
     public Identifier getTexture(HamsterTreeSearcherEntity entity) {
         // Fallback texture, though it will never be used.
-        return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/orange.png");
+        return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
     }
 
     @Override

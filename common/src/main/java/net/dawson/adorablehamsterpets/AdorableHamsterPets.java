@@ -13,6 +13,7 @@ import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.event.AHPCommonEvents;
 import net.dawson.adorablehamsterpets.item.ModItemGroups;
 import net.dawson.adorablehamsterpets.item.ModItems;
@@ -20,7 +21,10 @@ import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.util.*;
+import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
+import net.dawson.adorablehamsterpets.util.HamsterNbtUtil;
+import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
+import net.dawson.adorablehamsterpets.util.ModLootTableModifiers;
 import net.dawson.adorablehamsterpets.world.ModSpawnPlacements;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
@@ -80,18 +84,21 @@ public class AdorableHamsterPets {
 	 * This is called from FMLCommonSetupEvent on Forge and onInitialize on Fabric.
 	 */
 	public static void initCommonSetup() {
-		// We check if the data generation API is NOT loaded. If it is loaded, we are in a datagen environment
-		// and should skip runtime-only logic to prevent crashes.
+		// Check if inside data generation environment. If so, skip runtime-only logic to prevent crashes
 		if (System.getProperty("fabric-api.datagen") == null) {
-			ModRegistries.registerCompostables();
-			ModRegistries.registerDispenserBehaviors();
+			// --- Configuration Parsing ---
+			ConfigDataCache.parseConfig();
 			ModEntitySpawns.parseConfig();
 			ModWorldGeneration.parseConfig();
-			ConfigDataCache.parseConfig();
+
+			// --- Config-Dependent Systems ---
+			HamsterPaletteManager.init();
+			ModRegistries.registerCompostables();
+			ModRegistries.registerDispenserBehaviors();
 			ModLootTableModifiers.init();
 
 			// --- Networking Registration ---
-			// On 1.20.1, register all  packets on both sides using the safe common method.
+			// On 1.20.1, register all packets on both sides using safe common method
 			ModPackets.registerCommonPackets();
 
 			// --- World Gen ---
@@ -223,7 +230,7 @@ public class AdorableHamsterPets {
 			if (shoulderNbt.isEmpty()) continue;
 
 			// Modify NBT to set the knocked-out state before spawning
-			NbtCompound modifiedNbt = setKnockedOutInNbt(shoulderNbt);
+			NbtCompound modifiedNbt = HamsterNbtUtil.setKnockedOutInNbt(shoulderNbt);
 			HamsterEntity hamster = HamsterNbtUtil.createFromNbt(world, oldPlayer, modifiedNbt);
 			if (hamster == null) continue;
 
@@ -298,26 +305,6 @@ public class AdorableHamsterPets {
 			AdorableHamsterPets.LOGGER.debug("Player {} died. Spawning {} hamster at {} in target world {}.", oldPlayer.getName().getString(), location, finalSpawnPos, targetWorld.getRegistryKey().getValue());
 		}
 		// By not transferring any data to newPlayer, they will respawn with empty shoulders.
-	}
-
-	/**
-	 * A helper method that takes a hamster's NBT data, deserializes it, sets the
-	 * knocked-out flag, and re-serializes it to a new NbtCompound.
-	 *
-	 * @param originalNbt The original NbtCompound from the player's shoulder data.
-	 * @return A new NbtCompound with the KNOCKED_OUT_FLAG set.
-	 */
-	private static NbtCompound setKnockedOutInNbt(NbtCompound originalNbt) {
-		return HamsterState.fromNbt(originalNbt).map(data -> {
-			int newFlags = data.hamsterFlags() | HamsterEntity.KNOCKED_OUT_FLAG;
-			HamsterState knockedOutData = new HamsterState(
-					data.entityUuid(), data.variantId(), data.health(), data.inventoryNbt(),
-					data.breedingAge(), data.throwCooldownEndTick(), data.greenBeanBuffData(),
-					data.autoEatCooldownTicks(), data.customName(), data.pinkPetalType(),
-					data.animationPersonalityId(), data.seekingBehaviorData(), data.wanderModeData(), newFlags
-			);
-			return knockedOutData.toNbt();
-		}).orElse(originalNbt); // Fallback to original NBT if deserialization fails
 	}
 
 	/**

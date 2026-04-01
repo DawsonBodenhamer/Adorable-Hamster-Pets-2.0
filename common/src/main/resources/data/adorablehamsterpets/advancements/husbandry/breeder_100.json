@@ -1,0 +1,28 @@
+{
+  "parent": "adorablehamsterpets:husbandry/breeder_1",
+  "display": {
+    "icon": {
+      "item": "minecraft:potion",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:fire_resistance"
+        }
+      }
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.breeder_100.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.breeder_100.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "impossible": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

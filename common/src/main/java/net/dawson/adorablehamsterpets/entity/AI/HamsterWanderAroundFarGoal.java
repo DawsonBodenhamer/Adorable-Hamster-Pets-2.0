@@ -38,7 +38,8 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
     @Override
     public boolean canStart() {
         // --- 1. Initial State Checks ---
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isSulking() || this.hamster.isCelebratingDiamond() || this.hamster.isCelebratingRetrieval()) {
+        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isSulking()
+                || this.hamster.isCelebratingDiamond() || this.hamster.isCelebratingRetrieval() || this.hamster.isCelebratingBaby()) {
             return false;
         }
 
@@ -100,8 +101,8 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
             if (this.hamster.isLookAtEntityGoalActive && closestPlayer != null && EntityTargetingUtil.isLookingAt(closestPlayer, this.hamster, 5.0, 0.0)) {
                 return false;
             }
-            // For normal wandering, use the default behavior.
-            return super.shouldContinue();
+            // For normal wandering, use default behavior
+            return super.shouldContinue() && !this.hamster.isCelebratingBaby();
         }
     }
 

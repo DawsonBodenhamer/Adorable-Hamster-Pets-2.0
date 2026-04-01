@@ -163,6 +163,11 @@ public class AhpConfig extends Config {
     public boolean enableShoulderDismountMessages = true;
 
     @NonSync
+    @Translatable.Name("Age Progression IRL Time")
+    @Translatable.Desc("If true, the hamster's age progresses at real-world speed (24 hours = 1 day) instead of Minecraft speed (20 minutes = 1 day).")
+    public boolean displayAgeInIrlTime = false;
+
+    @NonSync
     @Translatable.Name("Jade Hamster Debug Info")
     @Translatable.Desc("More stats than anyone asked for. Defaults to off— mercifully.")
     public boolean enableJadeHamsterDebugInfo = false;
@@ -384,6 +389,10 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Fundamental hamster hijinks— fiddle at your own risk.")
     public ConfigGroup core = new ConfigGroup("core", true);
 
+    @Translatable.Name("Enable Breeding")
+    @Translatable.Desc("Whether hamsters are allowed to multiply. Turn this off if you fear someone on your server plans to create a rodent horde.")
+    public boolean enableBreeding = true;
+
     @Translatable.Name("Enable Teleport Rescue")
     @Translatable.Desc("If true, hamsters that are actively following you (not sitting or wandering) will instantly teleport with you, across dimensions and even if their current chunk becomes unloaded. WARNING: do not turn this off unless you want to risk your hamsters being left behind on long teleports.")
     public boolean enableTeleportRescue = true;
@@ -422,6 +431,10 @@ public class AhpConfig extends Config {
     @Translatable.Name("Use 'Hampter' as Default Name")
     @Translatable.Desc("Changes the default entity name from 'Hamster' to 'Hampter'. Note: This has no visible effect in vanilla Minecraft, as mobs don't show nameplates by default. It's primarily for use with mods like Auto Leveling that display entity names.")
     public boolean useHampterName = false;
+
+    @Translatable.Name("Allow Taming to Re-Enable AI")
+    @Translatable.Desc("If true, players can tame frozen, AI-disabled hamsters, instantly breathing life into them like some sort of furry necromancer. Turn this off if you're using command-spawned hamsters as statues or shop displays and don't want your patrons walking off with the merchandise happily following.")
+    public boolean allowTamingAiDisabled = true;
 
     @Translatable.Name("Mob Interactions")
     @Translatable.Desc("Configure how hamsters interact with (or terrify) other creatures.")
@@ -471,9 +484,9 @@ public class AhpConfig extends Config {
     public ValidatedInt tagGameCooldown = new ValidatedInt(12000, 36000, 160);
 
     @ConfigGroup.Pop
-    @Translatable.Name("Breeding Cooldown")
-    @Translatable.Desc("Hamsters need their space. (20 ticks = 1 second)")
-    public ValidatedInt breedingCooldownTicks = new ValidatedInt(6000, 24000, 600);
+    @Translatable.Name("Breeding Cooldown (Seconds)")
+    @Translatable.Desc("Hamsters need their space. Here's where you give them a break between litters.")
+    public ValidatedInt breedingCooldownSeconds = new ValidatedInt(300, 1200, 1);
 
     // --- Core Item Tag Overrides ---
     @Translatable.Name("Core Item Tag Overrides")
@@ -596,10 +609,76 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Tamed hamster melee damage. Squeak-first, ask questions later.")
     public ValidatedDouble meleeDamage = new ValidatedDouble(2.0, 40.0, 0.0);
 
-    @ConfigGroup.Pop
     @Translatable.Name("Throw Damage")
     @Translatable.Desc("Damage dealt by thrown hamster. Surprisingly effective against Creepers. How convenient.")
     public ValidatedDouble hamsterThrowDamage = new ValidatedDouble(20.0, 40.0, 0.0);
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Enable Red Eyes")
+    @Translatable.Desc("Toggle this off if you find the rare, recessive red-eyed hamsters to be a bit too... scary. Reverts them to standard black, but only for you. They will still appear red for everyone else.")
+    public boolean enableRedEyes = true;
+
+    // --- Breeding Settings ---
+    @Translatable.Name("Breeding Settings")
+    @Translatable.Desc("Control the rate of hamster reproduction. Genetics are fun, but we don't want your server to start begging for mercy. Note: the global 'Enable Breeding' toggle is in the 'Core Feature Toggles' section.")
+    public ConfigGroup breedingSettings = new ConfigGroup("breedingSettings", true);
+
+    @NonSync
+    @Translatable.Name("Reset Your Breeding History")
+    public ConfigAction resetBreedingHistory = new ConfigAction.Builder()
+            .title(Text.translatable("config.adorablehamsterpets.main.breedingSettings.resetBreedingHistory"))
+            .desc(Text.translatable("config.adorablehamsterpets.main.breedingSettings.resetBreedingHistory.desc"))
+            .decoration(TextureIds.INSTANCE.getRESTORE())
+            .build(() -> {
+                if (MinecraftClient.getInstance().getNetworkHandler() != null) {
+                    MinecraftClient.getInstance().getNetworkHandler().sendCommand("ahp reset_player_breeding_history");
+                }
+            });
+
+    @Translatable.Name("Babies Spawn Wild")
+    @Translatable.Desc("If true, babies are born feral and unclaimed. You'll need to tame them yourself to earn their affections.")
+    public boolean babiesSpawnWild = true;
+
+    @Translatable.Name("Breeder Whitelist")
+    @Translatable.Desc("A list of player usernames allowed to breed hamsters even if breeding is toggled off globally (see the 'Core Feature Toggles' section). Useful for server admins who want to keep breeding under control.")
+    public List<String> allowedBreeders = new ArrayList<>();
+
+    @Translatable.Name("Litters Per Hamster")
+    @Translatable.Desc("How many times a single hamster can reproduce before its biological clock says 'absolutely not.'")
+    public ValidatedInt maxLittersPerHamster = new ValidatedInt(50, 100, 1);
+
+    @Translatable.Name("Min Litter Size")
+    @Translatable.Desc("The minimum number of babies per litter.")
+    public ValidatedInt litterSizeMin = new ValidatedInt(1, 5, 1);
+
+    @Translatable.Name("Max Litter Size")
+    @Translatable.Desc("The maximum number of babies per litter. Make sure this is greater than or equal to the minimum, obviously.")
+    public ValidatedInt litterSizeMax = new ValidatedInt(3, 10, 1);
+
+    @Translatable.Name("Limit Breeding By Player")
+    @Translatable.Desc("Try as I might, I could not think of a better way to word that. Here's where you can cap the number of hamster litters a single player can breed.")
+    public ValidatedBoolean playerBreedingLimit = new ValidatedBoolean(false);
+
+    private final ValidatedField<Boolean> isPlayerBreedingLimitEnabled = playerBreedingLimit.map(b -> b, b -> b);
+
+    @Translatable.Name("Player Breeding Limit Type")
+    @Translatable.Desc("Whether the limit resets daily, or if it's a lifetime cap per player.")
+    public ValidatedCondition<LitterLimitType> playerBreedingLimitType = new ValidatedEnum<>(LitterLimitType.DAILY)
+            .toCondition(isPlayerBreedingLimitEnabled, Text.translatable("config.adorablehamsterpets.condition.litter_limit_enabled"), () -> LitterLimitType.DAILY);
+
+    @Translatable.Name("Max Litters Per Player")
+    @Translatable.Desc("How many litters a player can orchestrate before their breeding license is revoked.")
+    public ValidatedCondition<Integer> maxLittersPerPlayer = new ValidatedInt(5, 100, 1)
+            .toCondition(isPlayerBreedingLimitEnabled, Text.translatable("config.adorablehamsterpets.condition.litter_limit_enabled"), () -> 5);
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Use IRL Time")
+    @Translatable.Desc("If true, 'Daily Player Breeding Limit' means 24 real-world hours. If false, it means 20 Minecraft minutes.")
+    public ValidatedCondition<Boolean> useIrlTimeForBreedingLimit = new ValidatedBoolean(false)
+            .toCondition(isPlayerBreedingLimitEnabled, Text.translatable("config.adorablehamsterpets.condition.litter_limit_enabled"), () -> false);
 
     // --- Armor Settings ---
     @Translatable.Name("Armor Settings")
@@ -1018,6 +1097,10 @@ public class AhpConfig extends Config {
     @Translatable.Name("Standard Hamster Food")
     @Translatable.Desc("Healing from basic seeds/crops. Better than nothing… probably.")
     public ValidatedFloat standardFoodHealing = new ValidatedFloat(2.0f, 5.0f, 0.0f);
+
+    @Translatable.Name("Disable Baby Food Refusal")
+    @Translatable.Desc("If true, baby hamsters lose their refined palates and will eagerly gorge themselves on the same seeds repeatedly, in case you want to grow them up faster.")
+    public boolean disableBabyFoodRefusal = false;
 
     // --- Nutrition and Saturation Settings ---
     @Translatable.Name("Nutrition and Saturation Settings")

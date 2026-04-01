@@ -17,7 +17,7 @@ import java.util.UUID;
 
 public record HamsterState(
         UUID entityUuid,
-        int variantId,
+        NbtCompound genomeNbt,
         float health,
         NbtCompound inventoryNbt,
         int breedingAge,
@@ -29,7 +29,9 @@ public record HamsterState(
         int animationPersonalityId,
         SeekingBehaviorData seekingBehaviorData,
         WanderModeData wanderModeData,
-        int hamsterFlags
+        int hamsterFlags,
+        long totalAgeTicks,
+        int timesBred
 ) {
 
     // --- Static Codecs Definitions ---
@@ -117,24 +119,41 @@ public record HamsterState(
         if (CODEC == null) {
             CODEC = RecordCodecBuilder.create(instance ->
                     instance.group(
-                            Uuids.CODEC.fieldOf("entityUuid").forGetter(HamsterState::entityUuid),
-                            Codec.INT.fieldOf("variantId").forGetter(HamsterState::variantId),
-                            Codec.FLOAT.fieldOf("health").forGetter(HamsterState::health),
-                            NBT_COMPOUND_CODEC.fieldOf("inventoryNbt").forGetter(HamsterState::inventoryNbt),
-                            Codec.INT.fieldOf("breedingAge").forGetter(HamsterState::breedingAge),
-                            Codec.LONG.fieldOf("throwCooldownEndTick").forGetter(HamsterState::throwCooldownEndTick),
-                            GreenBeanBuffData.CODEC.fieldOf("greenBeanBuffData").orElse(GreenBeanBuffData.empty()).forGetter(HamsterState::greenBeanBuffData),
-                            Codec.INT.fieldOf("autoEatCooldownTicks").forGetter(HamsterState::autoEatCooldownTicks),
-                            Codec.STRING.optionalFieldOf("customName").forGetter(HamsterState::customName),
-                            Codec.INT.fieldOf("pinkPetalType").orElse(0).forGetter(HamsterState::pinkPetalType),
-                            Codec.INT.fieldOf("animationPersonalityId").orElse(1).forGetter(HamsterState::animationPersonalityId),
-                            SeekingBehaviorData.CODEC.fieldOf("seekingBehaviorData").orElse(SeekingBehaviorData.empty()).forGetter(HamsterState::seekingBehaviorData),
-                            WanderModeData.CODEC.fieldOf("wanderModeData").orElse(WanderModeData.empty()).forGetter(HamsterState::wanderModeData),
-                            Codec.INT.fieldOf("hamsterFlags").orElse(0).forGetter(HamsterState::hamsterFlags)
+                    Uuids.CODEC.fieldOf("entityUuid").forGetter(HamsterState::entityUuid),
+                    NBT_COMPOUND_CODEC.fieldOf("genomeNbt").forGetter(HamsterState::genomeNbt),
+                    Codec.FLOAT.fieldOf("health").forGetter(HamsterState::health),
+                    NBT_COMPOUND_CODEC.fieldOf("inventoryNbt").forGetter(HamsterState::inventoryNbt),
+                    Codec.INT.fieldOf("breedingAge").forGetter(HamsterState::breedingAge),
+                    Codec.LONG.fieldOf("throwCooldownEndTick").forGetter(HamsterState::throwCooldownEndTick),
+                    GreenBeanBuffData.CODEC.fieldOf("greenBeanBuffData").orElse(GreenBeanBuffData.empty()).forGetter(HamsterState::greenBeanBuffData),
+                    Codec.INT.fieldOf("autoEatCooldownTicks").forGetter(HamsterState::autoEatCooldownTicks),
+                    Codec.STRING.optionalFieldOf("customName").forGetter(HamsterState::customName),
+                    Codec.INT.fieldOf("pinkPetalType").orElse(0).forGetter(HamsterState::pinkPetalType),
+                    Codec.INT.fieldOf("animationPersonalityId").orElse(1).forGetter(HamsterState::animationPersonalityId),
+                    SeekingBehaviorData.CODEC.fieldOf("seekingBehaviorData").orElse(SeekingBehaviorData.empty()).forGetter(HamsterState::seekingBehaviorData),
+                    WanderModeData.CODEC.fieldOf("wanderModeData").orElse(WanderModeData.empty()).forGetter(HamsterState::wanderModeData),
+                    Codec.INT.fieldOf("hamsterFlags").orElse(0).forGetter(HamsterState::hamsterFlags),
+                    Codec.LONG.fieldOf("totalAgeTicks").orElse(0L).forGetter(HamsterState::totalAgeTicks),
+                    Codec.INT.fieldOf("timesBred").orElse(0).forGetter(HamsterState::timesBred)
+
                     ).apply(instance, HamsterState::new)
             );
         }
         return CODEC;
+    }
+
+    /**
+     * Creates a copy of this state with updated flags.
+     * Used to make tweaks to the NBT data.
+     */
+    public HamsterState withFlags(int newFlags) {
+        return new HamsterState(
+                this.entityUuid, this.genomeNbt, this.health, this.inventoryNbt,
+                this.breedingAge, this.throwCooldownEndTick, this.greenBeanBuffData,
+                this.autoEatCooldownTicks, this.customName, this.pinkPetalType,
+                this.animationPersonalityId, this.seekingBehaviorData,
+                this.wanderModeData, newFlags, this.totalAgeTicks, this.timesBred
+        );
     }
 
     /**
@@ -161,7 +180,7 @@ public record HamsterState(
     @Override
     public String toString() {
         return "HamsterState[uuid=" + entityUuid +
-                ", variantId=" + variantId +
+                ", genomeNbt=" + genomeNbt.toString().substring(0, Math.min(genomeNbt.toString().length(), 50)) + "..." +
                 ", health=" + health +
                 ", inventoryNbt=" + inventoryNbt.toString().substring(0, Math.min(inventoryNbt.toString().length(), 50)) + "..." +
                 ", age=" + breedingAge +
@@ -174,13 +193,29 @@ public record HamsterState(
                 ", seekingBehaviorData=" + seekingBehaviorData +
                 ", wanderModeData=" + wanderModeData +
                 ", hamsterFlags=" + hamsterFlags +
+                ", totalAgeTicks=" + totalAgeTicks +
+                ", timesBred=" + timesBred +
                 "]";
     }
 
     public static HamsterState empty() {
-        return new HamsterState(UUID.randomUUID(), 0, 8.0f, new NbtCompound(), 0, 0L,
-                GreenBeanBuffData.empty(), 0, Optional.empty(), 0, 1,
-                SeekingBehaviorData.empty(), WanderModeData.empty(), 0
+        return new HamsterState(
+                UUID.randomUUID(),
+                new NbtCompound(),
+                8.0f,
+                new NbtCompound(),
+                0,
+                0L,
+                GreenBeanBuffData.empty(),
+                0,
+                Optional.empty(),
+                0,
+                1,
+                SeekingBehaviorData.empty(),
+                WanderModeData.empty(),
+                0,
+                0L,
+                0
         );
     }
 }

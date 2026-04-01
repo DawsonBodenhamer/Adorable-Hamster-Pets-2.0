@@ -6,7 +6,7 @@
   "sortnum": 2,
   "pages": [
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.subterranean_shinies",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.subterranean_shinies.page1.body",

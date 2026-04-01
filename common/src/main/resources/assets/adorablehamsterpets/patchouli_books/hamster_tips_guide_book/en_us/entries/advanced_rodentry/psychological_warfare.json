@@ -6,7 +6,7 @@
   "sortnum": 3,
   "pages": [
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.psychological_warfare",
       "header_color": "00AAAA",
       "text_color": "000000",

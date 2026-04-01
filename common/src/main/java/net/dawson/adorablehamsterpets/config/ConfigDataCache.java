@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.config;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterColorZone;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.Item;
@@ -15,10 +16,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.biome.Biome;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A static cache for data parsed from the mod's configuration files.
@@ -29,6 +27,15 @@ import java.util.Set;
  * O(1) lookups during gameplay, avoiding repeated config parsing.
  */
 public class ConfigDataCache {
+
+    // Inner record for spawning
+    public record EnvironmentDefinition(
+            Set<Identifier> biomes,
+            Set<TagKey<Biome>> tags,
+            Set<Identifier> excludedBiomes,
+            Set<TagKey<Biome>> excludedTags,
+            Map<HamsterColorZone, Integer> weights
+    ) {}
 
     // --- Cached Sets for Item Performance ---
     private static final Set<Item> tamingItems = new HashSet<>();
@@ -64,35 +71,16 @@ public class ConfigDataCache {
     private static final Set<Block> sulkingOreBlocks = new HashSet<>();
     private static final Set<TagKey<Block>> sulkingOreTags = new HashSet<>();
 
-    // --- Cached Sets for Biome Variant Performance ---
-    private static final Set<Identifier> blueBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> blueBiomeTags = new HashSet<>();
-    private static final Set<Identifier> blueExclusionBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> blueExclusionBiomeTags = new HashSet<>();
-    private static final Set<Identifier> lavenderBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> lavenderBiomeTags = new HashSet<>();
-    private static final Set<Identifier> lavenderExclusionBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> lavenderExclusionBiomeTags = new HashSet<>();
-    private static final Set<Identifier> whiteBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> whiteBiomeTags = new HashSet<>();
-    private static final Set<Identifier> whiteExclusionBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> whiteExclusionBiomeTags = new HashSet<>();
-    private static final Set<Identifier> grayBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> grayBiomeTags = new HashSet<>();
-    private static final Set<Identifier> grayExclusionBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> grayExclusionBiomeTags = new HashSet<>();
-    private static final Set<Identifier> blackBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> blackBiomeTags = new HashSet<>();
-    private static final Set<Identifier> blackExclusionBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> blackExclusionBiomeTags = new HashSet<>();
-    private static final Set<Identifier> creamBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> creamBiomeTags = new HashSet<>();
-    private static final Set<Identifier> creamExclusionBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> creamExclusionBiomeTags = new HashSet<>();
-    private static final Set<Identifier> chocolateBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> chocolateBiomeTags = new HashSet<>();
-    private static final Set<Identifier> chocolateExclusionBiomeIds = new HashSet<>();
-    private static final Set<TagKey<Biome>> chocolateExclusionBiomeTags = new HashSet<>();
+    // --- Cached Lists for Environment-Spawning Performance ---
+    private static final List<EnvironmentDefinition> ENVIRONMENTS = new ArrayList<>();
+    private static Map<HamsterColorZone, Integer> FALLBACK_WEIGHTS = new EnumMap<>(HamsterColorZone.class);
+    private static final Set<HamsterColorZone> allowedWildOverlayZones = new HashSet<>();
+    private static final Set<HamsterColorZone> restrictedBaseZones = new HashSet<>();
+    private static final Set<HamsterColorZone> clashingOverlayZones = new HashSet<>();
+
+    public static Set<HamsterColorZone> getAllowedWildOverlayZones() { return allowedWildOverlayZones; }
+    public static Set<HamsterColorZone> getRestrictedBaseZones() { return restrictedBaseZones; }
+    public static Set<HamsterColorZone> getClashingOverlayZones() { return clashingOverlayZones; }
 
     // --- Cached Lists for Loot Generation ---
     // Tags are expanded into individual items for generation logic
@@ -108,7 +96,6 @@ public class ConfigDataCache {
     public static void parseConfig() {
         clearAllItemSets();
         clearAllBlockSets();
-        clearAllBiomeSets();
 
         // --- Parse Item Lists ---
         parseItemList(Configs.AHP.tamingFoods, tamingItems, tamingTags, "tamingFoods");
@@ -133,43 +120,41 @@ public class ConfigDataCache {
         parseBlockList(Configs.AHP.celebrationOres, celebrationOreBlocks, celebrationOreTags, "celebrationOres");
         parseBlockList(Configs.AHP.sulkingOres, sulkingOreBlocks, sulkingOreTags, "sulkingOres");
 
-        // --- Parse Biome Lists ---
-        parseBiomeIdList(Configs.AHP_WORLDGEN.blueBiomes, blueBiomeIds, "blueBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.blueTags, blueBiomeTags, "blueTags");
-        parseBiomeIdList(Configs.AHP_WORLDGEN.blueExclusionBiomes, blueExclusionBiomeIds, "blueExclusionBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.blueExclusionTags, blueExclusionBiomeTags, "blueExclusionTags");
+        // --- Parse Spawning Environments ---
+        ENVIRONMENTS.clear();
+        AhpWorldGenConfig wgc = Configs.AHP_WORLDGEN;
 
-        parseBiomeIdList(Configs.AHP_WORLDGEN.lavenderBiomes, lavenderBiomeIds, "lavenderBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.lavenderTags, lavenderBiomeTags, "lavenderTags");
-        parseBiomeIdList(Configs.AHP_WORLDGEN.lavenderExclusionBiomes, lavenderExclusionBiomeIds, "lavenderExclusionBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.lavenderExclusionTags, lavenderExclusionBiomeTags, "lavenderExclusionTags");
+        ENVIRONMENTS.add(parseEnvironment(wgc.icyBiomes, wgc.icyTags, wgc.icyExclusionBiomes, wgc.icyExclusionTags, wgc.icyWeights, "Icy"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.magicalBiomes, wgc.magicalTags, wgc.magicalExclusionBiomes, wgc.magicalExclusionTags, wgc.magicalWeights, "Magical"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.snowyBiomes, wgc.snowyTags, wgc.snowyExclusionBiomes, wgc.snowyExclusionTags, wgc.snowyWeights, "Snowy"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.rockyBiomes, wgc.rockyTags, wgc.rockyExclusionBiomes, wgc.rockyExclusionTags, wgc.mountainWeights, "Mountain"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.darkBiomes, wgc.darkTags, wgc.darkExclusionBiomes, wgc.darkExclusionTags, wgc.darkWeights, "Cave"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.sandyBiomes, wgc.sandyTags, wgc.sandyExclusionBiomes, wgc.sandyExclusionTags, wgc.sandyWeights, "Sandy"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.forestBiomes, wgc.forestTags, wgc.forestExclusionBiomes, wgc.forestExclusionTags, wgc.forestWeights, "Forest"));
 
-        parseBiomeIdList(Configs.AHP_WORLDGEN.whiteBiomes, whiteBiomeIds, "whiteBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.whiteTags, whiteBiomeTags, "whiteTags");
-        parseBiomeIdList(Configs.AHP_WORLDGEN.whiteExclusionBiomes, whiteExclusionBiomeIds, "whiteExclusionBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.whiteExclusionTags, whiteExclusionBiomeTags, "whiteExclusionTags");
+        // Fallback: Plains environment doesn't need biome checks, just the weights
+        FALLBACK_WEIGHTS = parseWeights(wgc.plainsWeights, "Plains");
 
-        parseBiomeIdList(Configs.AHP_WORLDGEN.grayBiomes, grayBiomeIds, "grayBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.grayTags, grayBiomeTags, "grayTags");
-        parseBiomeIdList(Configs.AHP_WORLDGEN.grayExclusionBiomes, grayExclusionBiomeIds, "grayExclusionBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.grayExclusionTags, grayExclusionBiomeTags, "grayExclusionTags");
+        // --- Parse Wild Overlays ---
+        allowedWildOverlayZones.clear();
+        for (String zoneStr : Configs.AHP_WORLDGEN.allowedWildOverlayZones) {
+            try { allowedWildOverlayZones.add(HamsterColorZone.valueOf(zoneStr.trim().toUpperCase(Locale.ROOT))); }
+            catch (IllegalArgumentException e) { AdorableHamsterPets.LOGGER.warn("[ConfigDataCache] Invalid wild overlay zone '{}' in config.", zoneStr); }
+        }
 
-        parseBiomeIdList(Configs.AHP_WORLDGEN.blackBiomes, blackBiomeIds, "blackBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.blackTags, blackBiomeTags, "blackTags");
-        parseBiomeIdList(Configs.AHP_WORLDGEN.blackExclusionBiomes, blackExclusionBiomeIds, "blackExclusionBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.blackExclusionTags, blackExclusionBiomeTags, "blackExclusionTags");
+        restrictedBaseZones.clear();
+        for (String zoneStr : Configs.AHP_WORLDGEN.restrictedBaseZones) {
+            try { restrictedBaseZones.add(HamsterColorZone.valueOf(zoneStr.trim().toUpperCase(Locale.ROOT))); }
+            catch (IllegalArgumentException e) { AdorableHamsterPets.LOGGER.warn("[ConfigDataCache] Invalid restricted base zone '{}' in config.", zoneStr); }
+        }
 
-        parseBiomeIdList(Configs.AHP_WORLDGEN.creamBiomes, creamBiomeIds, "creamBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.creamTags, creamBiomeTags, "creamTags");
-        parseBiomeIdList(Configs.AHP_WORLDGEN.creamExclusionBiomes, creamExclusionBiomeIds, "creamExclusionBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.creamExclusionTags, creamExclusionBiomeTags, "creamExclusionTags");
+        clashingOverlayZones.clear();
+        for (String zoneStr : Configs.AHP_WORLDGEN.clashingOverlayZones) {
+            try { clashingOverlayZones.add(HamsterColorZone.valueOf(zoneStr.trim().toUpperCase(Locale.ROOT))); }
+            catch (IllegalArgumentException e) { AdorableHamsterPets.LOGGER.warn("[ConfigDataCache] Invalid clashing overlay zone '{}' in config.", zoneStr); }
+        }
 
-        parseBiomeIdList(Configs.AHP_WORLDGEN.chocolateBiomes, chocolateBiomeIds, "chocolateBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.chocolateTags, chocolateBiomeTags, "chocolateTags");
-        parseBiomeIdList(Configs.AHP_WORLDGEN.chocolateExclusionBiomes, chocolateExclusionBiomeIds, "chocolateExclusionBiomes");
-        parseBiomeTagList(Configs.AHP_WORLDGEN.chocolateExclusionTags, chocolateExclusionBiomeTags, "chocolateExclusionTags");
-
-        AdorableHamsterPets.LOGGER.info("Parsed all item and biome tag overrides from config.");
+        AdorableHamsterPets.LOGGER.info("Parsed all config data into caches.");
     }
 
     // --- Public Item Checker Methods ---
@@ -194,14 +179,18 @@ public class ConfigDataCache {
     public static boolean isCelebrationOre(BlockState state) { return matchesBlock(state, celebrationOreBlocks, celebrationOreTags); }
     public static boolean isSulkingOre(BlockState state) { return matchesBlock(state, sulkingOreBlocks, sulkingOreTags); }
 
-    // --- Public Biome Checker Methods ---
-    public static boolean isBlueBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, blueBiomeIds, blueBiomeTags, blueExclusionBiomeIds, blueExclusionBiomeTags); }
-    public static boolean isLavenderBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, lavenderBiomeIds, lavenderBiomeTags, lavenderExclusionBiomeIds, lavenderExclusionBiomeTags); }
-    public static boolean isWhiteBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, whiteBiomeIds, whiteBiomeTags, whiteExclusionBiomeIds, whiteExclusionBiomeTags); }
-    public static boolean isGrayBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, grayBiomeIds, grayBiomeTags, grayExclusionBiomeIds, grayExclusionBiomeTags); }
-    public static boolean isBlackBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, blackBiomeIds, blackBiomeTags, blackExclusionBiomeIds, blackExclusionBiomeTags); }
-    public static boolean isCreamBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, creamBiomeIds, creamBiomeTags, creamExclusionBiomeIds, creamExclusionBiomeTags); }
-    public static boolean isChocolateBiome(RegistryEntry<Biome> biomeEntry) { return matchesBiome(biomeEntry, chocolateBiomeIds, chocolateBiomeTags, chocolateExclusionBiomeIds, chocolateExclusionBiomeTags); }
+    // --- Public Environment Checker Methods ---
+    /**
+     * Determines which environment a biome belongs to and returns its configured zone weights.
+     */
+    public static Map<HamsterColorZone, Integer> getWeightsForBiome(RegistryEntry<Biome> biomeEntry) {
+        for (EnvironmentDefinition env : ENVIRONMENTS) {
+            if (matchesBiome(biomeEntry, env.biomes(), env.tags(), env.excludedBiomes(), env.excludedTags())) {
+                return env.weights();
+            }
+        }
+        return FALLBACK_WEIGHTS; // Fallback to Plains
+    }
 
     // --- Private Helper Methods ---
     private static void parseItemList(List<String> configList, Set<Item> itemSet, Set<TagKey<Item>> tagSet, String listName) {
@@ -276,6 +265,39 @@ public class ConfigDataCache {
                 }
             }
         }
+    }
+
+    private static EnvironmentDefinition parseEnvironment(List<String> biomes, List<String> tags, List<String> exBiomes, List<String> exTags, List<String> weightStrings, String name) {
+        Set<Identifier> bIds = new HashSet<>();
+        Set<TagKey<Biome>> bTags = new HashSet<>();
+        Set<Identifier> eIds = new HashSet<>();
+        Set<TagKey<Biome>> eTags = new HashSet<>();
+
+        parseBiomeIdList(biomes, bIds, name + " Biomes");
+        parseBiomeTagList(tags, bTags, name + " Tags");
+        parseBiomeIdList(exBiomes, eIds, name + " Exclusions");
+        parseBiomeTagList(exTags, eTags, name + " Exclusion Tags");
+
+        Map<HamsterColorZone, Integer> weights = parseWeights(weightStrings, name);
+        return new EnvironmentDefinition(bIds, bTags, eIds, eTags, weights);
+    }
+
+    private static Map<HamsterColorZone, Integer> parseWeights(List<String> weightStrings, String envName) {
+        Map<HamsterColorZone, Integer> weights = new EnumMap<>(HamsterColorZone.class);
+        for (String str : weightStrings) {
+            String[] parts = str.split(":");
+            if (parts.length == 2) {
+                try {
+                    HamsterColorZone zone = HamsterColorZone.valueOf(parts[0].trim().toUpperCase(Locale.ROOT));
+                    int weight = Integer.parseInt(parts[1].trim());
+                    if (weight > 0) weights.put(zone, weight);
+                } catch (IllegalArgumentException e) {
+                    AdorableHamsterPets.LOGGER.warn("[ConfigDataCache] Invalid weight zone '{}' in {}", str, envName);
+                }
+            }
+        }
+        if (weights.isEmpty()) weights.put(HamsterColorZone.ORANGE, 100); // Absolute safety fallback
+        return weights;
     }
 
     private static void parseBiomeIdList(List<String> configList, Set<Identifier> idSet, String listName) {
@@ -377,37 +399,6 @@ public class ConfigDataCache {
         celebrationOreTags.clear();
         sulkingOreBlocks.clear();
         sulkingOreTags.clear();
-    }
-
-    private static void clearAllBiomeSets() {
-        blueBiomeIds.clear();
-        blueBiomeTags.clear();
-        blueExclusionBiomeIds.clear();
-        blueExclusionBiomeTags.clear();
-        lavenderBiomeIds.clear();
-        lavenderBiomeTags.clear();
-        lavenderExclusionBiomeIds.clear();
-        lavenderExclusionBiomeTags.clear();
-        whiteBiomeIds.clear();
-        whiteBiomeTags.clear();
-        whiteExclusionBiomeIds.clear();
-        whiteExclusionBiomeTags.clear();
-        grayBiomeIds.clear();
-        grayBiomeTags.clear();
-        grayExclusionBiomeIds.clear();
-        grayExclusionBiomeTags.clear();
-        blackBiomeIds.clear();
-        blackBiomeTags.clear();
-        blackExclusionBiomeIds.clear();
-        blackExclusionBiomeTags.clear();
-        creamBiomeIds.clear();
-        creamBiomeTags.clear();
-        creamExclusionBiomeIds.clear();
-        creamExclusionBiomeTags.clear();
-        chocolateBiomeIds.clear();
-        chocolateBiomeTags.clear();
-        chocolateExclusionBiomeIds.clear();
-        chocolateExclusionBiomeTags.clear();
     }
 
     /**

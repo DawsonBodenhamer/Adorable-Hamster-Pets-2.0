@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/collector_50",
+  "display": {
+    "icon": {
+      "item": "minecraft:compass"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.collector_100.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.collector_100.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "impossible": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

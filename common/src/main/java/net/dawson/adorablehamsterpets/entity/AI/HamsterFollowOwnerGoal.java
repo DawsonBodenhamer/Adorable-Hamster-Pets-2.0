@@ -1,37 +1,68 @@
 package net.dawson.adorablehamsterpets.entity.AI;
 
-import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.FollowOwnerGoalAccessor;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.LeavesBlock;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.FuzzyTargeting;
 import net.minecraft.entity.ai.goal.FollowOwnerGoal;
 import net.minecraft.entity.ai.pathing.LandPathNodeMaker;
 import net.minecraft.entity.ai.pathing.PathNodeType;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldView;
 
 public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
-    private final HamsterEntity hamster;
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constants
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     private static final double BUFFED_FOLLOW_SPEED = 1.5D;
 
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Instance Fields
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private final HamsterEntity hamster;
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructors
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     public HamsterFollowOwnerGoal(HamsterEntity hamster, double speed, float minDistance, float maxDistance) {
-        // In 1.20.1, the boolean is 'leavesAllowed'. We set it to true as a safe default.
+        // In 1.20.1, the boolean is leavesAllowed
         super(hamster, speed, minDistance, maxDistance, true);
         this.hamster = hamster;
     }
 
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Lifecycle Hooks
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     @Override
     public boolean canStart() {
+        // --- Base Logic ---
         if (!super.canStart()) {
             return false;
         }
 
-        // --- 2. Apply  custom conditions ---
+        // --- Parent Override ---
+        // Abort if baby is tracking a living parent
+        if (this.hamster.isBaby() && this.hamster.getParentUuid() != null) {
+            if (this.hamster.getWorld() instanceof ServerWorld serverWorld) {
+                Entity parent = serverWorld.getEntity(this.hamster.getParentUuid());
+                if (parent instanceof HamsterEntity parentHamster && parentHamster.isAlive()) {
+                    return false;
+                }
+            }
+        }
+
+        // --- State Exclusions ---
         if (this.hamster.isSitting() ||
                 this.hamster.isSleeping() ||
                 this.hamster.isKnockedOut() ||
@@ -39,74 +70,102 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
                 this.hamster.isCelebratingDiamond() ||
                 this.hamster.isCelebratingRetrieval() ||
                 this.hamster.isPlayingTag() ||
+                this.hamster.isCelebratingBaby() ||
                 this.hamster.isWanderModeActive()) {
             return false;
         }
 
-        // The super.canStart() already checks the base minDistance.
-        if (this.hamster.hasGreenBeanBuff()) {
-            LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
-            if (owner != null) {
-                // If buffed, require a larger distance to start following.
-                return !(this.hamster.squaredDistanceTo(owner) < (double) ((((FollowOwnerGoalAccessor) this).getMinDistance() + 5.0F) * (((FollowOwnerGoalAccessor) this).getMinDistance() + 5.0F)));
-            }
+        // --- Distance Calculation ---
+        // Recalculate minimum follow distance for zoomies
+        float minDist = ((FollowOwnerGoalAccessor) this).getMinDistance();
+        LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
+
+        if (owner == null) {
+            return false;
         }
 
-        return true;
+        if (this.hamster.hasGreenBeanBuff()) {
+            minDist += 5.0F;
+        }
+
+        return !(this.hamster.squaredDistanceTo(owner) < (double) (minDist * minDist));
     }
 
     @Override
     public boolean shouldContinue() {
+        // --- State Exclusions ---
         if (this.hamster.isSitting() ||
                 this.hamster.isSleeping() ||
                 this.hamster.isKnockedOut() ||
                 this.hamster.isSulking() ||
                 this.hamster.isCelebratingDiamond() ||
                 this.hamster.isPlayingTag() ||
+                this.hamster.isCelebratingBaby() ||
                 this.hamster.isCelebratingRetrieval()) {
             return false;
         }
 
-        // Let the vanilla logic handle the rest.
-        return super.shouldContinue();
+        // --- Distance Calculation ---
+        // Recalculate maximum follow distance for zoomies
+        float maxDist = ((FollowOwnerGoalAccessor) this).getMaxDistance();
+        LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
+
+        if (owner == null) {
+            return false;
+        }
+
+        if (this.hamster.hasGreenBeanBuff()) {
+            maxDist += 5.0F;
+        }
+
+        return !this.hamster.getNavigation().isIdle() && this.hamster.squaredDistanceTo(owner) > (double) (maxDist * maxDist);
     }
 
     @Override
     public void start() {
         super.start();
         this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName() + (this.hamster.hasGreenBeanBuff() ? " (Zoomies)" : ""));
-        AdorableHamsterPets.LOGGER.trace("[FollowGoal-{}] start: Goal has started. IsBuffed: {}", this.hamster.getId(), this.hamster.hasGreenBeanBuff());
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        if (this.hamster.getActiveCustomGoalDebugName().startsWith(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalDebugName("None");
+        }
     }
 
     @Override
     public void tick() {
+        // --- Target Resolution ---
         FollowOwnerGoalAccessor accessor = (FollowOwnerGoalAccessor) this;
         LivingEntity owner = accessor.getOwner();
-        if (owner == null) return;
 
-        // 1. Evaluate teleport condition (vanilla default: 12 blocks distance squared)
+        if (owner == null) {
+            return;
+        }
+
+        // Evaluate teleport condition (vanilla default: 12 blocks distance squared)
         boolean shouldTeleport = this.hamster.squaredDistanceTo(owner) >= 144.0;
 
-        // --- 2. Handle Looking ---
-        // Always look at the owner if not about to teleport.
+        // --- Facing Logic ---
         if (!shouldTeleport) {
             HamsterMovementUtil.faceEntity(this.hamster, owner);
         }
 
-        // --- 3. Use Vanilla Update Timer via Accessor ---
+        // --- Update Timer ---
         int currentTicks = accessor.getUpdateCountdownTicks() - 1;
         accessor.setUpdateCountdownTicks(currentTicks);
 
         if (currentTicks <= 0) {
             accessor.setUpdateCountdownTicks(this.getTickCount(10));
 
-            // --- 4. Replicated Vanilla Teleport Logic ---
+            // --- Movement Execution ---
             if (shouldTeleport) {
                 this.tryTeleport();
             } else {
-                // --- 5. Custom Pathfinding Logic ---
                 if (this.hamster.hasGreenBeanBuff()) {
-                    // "Zoomies" pathfinding
+                    // Zoomies erratic pathfinding
                     Vec3d targetPos = FuzzyTargeting.findTo(this.hamster, 8, 5, Vec3d.ofCenter(owner.getBlockPos()));
                     if (targetPos != null) {
                         this.hamster.getNavigation().startMovingTo(targetPos.x, targetPos.y, targetPos.z, BUFFED_FOLLOW_SPEED);
@@ -119,15 +178,10 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
         }
     }
 
-    @Override
-    public void stop() {
-        super.stop();
-        if (this.hamster.getActiveCustomGoalDebugName().startsWith(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
-        }
-    }
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
 
-    // --- Private Helper Methods for Teleportation (Replicated from Vanilla) ---
     private void tryTeleport() {
         LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
         if (owner == null) return;

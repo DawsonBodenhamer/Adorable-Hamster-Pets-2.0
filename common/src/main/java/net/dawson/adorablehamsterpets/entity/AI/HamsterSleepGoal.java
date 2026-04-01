@@ -6,31 +6,45 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 
 import java.util.EnumSet;
+import java.util.UUID;
 
 public class HamsterSleepGoal extends Goal {
 
-    // --- 1. Constants and Static Utilities ---
-    private static final int CHECK_INTERVAL = 20; // Check for threats every second
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constants
+     * ────────────────────────────────────────────────────────────────────────────*/
 
-    // --- 2. Fields ---
+    private static final int CHECK_INTERVAL = 20; // Check once per second
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Instance Fields
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     private final HamsterEntity hamster;
     private int checkTimer = 0;
 
-    // --- 3. Constructors ---
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructors
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     public HamsterSleepGoal(HamsterEntity hamster) {
         this.hamster = hamster;
         // Control movement and look to prevent interference
         this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
     }
 
-    // --- 4. Public Methods (Overrides from Goal) ---
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Lifecycle Hooks
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     @Override
     public boolean canStart() {
-        // Only wild hamsters sleep via this goal.
+        // Only wild hamsters sleep via this goal
         if (this.hamster.isTamed() ||
                 this.hamster.isSleeping() ||
                 this.hamster.isSitting() ||
@@ -44,11 +58,27 @@ public class HamsterSleepGoal extends Goal {
         if (!this.hamster.isOnGround()) {
             return false;
         }
+
+        // Randomized delay for wild babies
+        if (this.hamster.isBaby()) {
+            long delayTicks = Math.abs(this.hamster.getUuid().getLeastSignificantBits()) % 60 + 100; // 1 to 3 sec
+            if (this.hamster.age < delayTicks) {
+                return false;
+            }
+        }
+
+        // Throttle checks for performance
         if (this.checkTimer > 0) {
             this.checkTimer--;
             return false;
         }
         this.checkTimer = CHECK_INTERVAL;
+
+        // Check if parent is leaving them behind
+        if (isParentTooFar()) {
+            return false;
+        }
+
         double radius = 5.0;
         boolean threatNearby = !this.hamster.getWorld().getOtherEntities(
                 this.hamster,
@@ -58,23 +88,48 @@ public class HamsterSleepGoal extends Goal {
         return !threatNearby;
     }
 
-    /**
-     * Called when the goal starts. Sets the hamster to a sleeping state,
-     * plays a sleep sound, and triggers the wild settle sleep animation.
-     */
+    @Override
+    public boolean shouldContinue() {
+        if (this.hamster.isTamed() || !this.hamster.getWorld().isDay()) {
+            return false;
+        }
+
+        // Throttle expensive checks
+        if (this.checkTimer > 0) {
+            this.checkTimer--;
+            return true;
+        }
+        this.checkTimer = CHECK_INTERVAL;
+
+        // Check if parent is leaving them behind
+        if (isParentTooFar()) {
+            return false;
+        }
+
+        double radius = 5.0;
+        boolean threatNearby = !this.hamster.getWorld().getOtherEntities(
+                this.hamster,
+                this.hamster.getBoundingBox().expand(radius),
+                this::isThreat
+        ).isEmpty();
+        return !threatNearby;
+    }
+
     @Override
     public void start() {
+        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
+
         // --- Stop Movement and Targeting ---
         this.hamster.getNavigation().stop();
         this.hamster.setTarget(null);
 
         // --- Set Sleep State ---
         this.hamster.setSleeping(true);
-        this.hamster.setInSittingPose(true); // Vanilla flag to prevent other AI movement
+        this.hamster.setInSittingPose(true); // Prevent other AI movement
 
-        // --- Trigger Wild Settle Sleep Animation ---
-        if (!this.hamster.getWorld().isClient()) { // Ensure server-side
-            // 1. Randomly select a sleep pose (1, 2, or 3)
+        // --- Animation ---
+        if (!this.hamster.getWorld().isClient()) {
+            // Randomly select sleep pose
             int choice = this.hamster.getRandom().nextInt(3);
             String settleAnimId;
             String deepSleepAnimIdForTracker;
@@ -94,18 +149,14 @@ public class HamsterSleepGoal extends Goal {
                 }
             }
 
-            // 2. Store the chosen deep sleep animation name in the DataTracker
+            // Store deep sleep animation name
             this.hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, deepSleepAnimIdForTracker);
 
-            // 3. Trigger the corresponding settle animation
+            // Trigger corresponding settle anim
             this.hamster.triggerAnimOnServer("mainController", settleAnimId);
 
-            // 4. Trigger the sound effects
+            // Sound effects
             this.hamster.triggerSettleEffects(0.24f, 14, 0.27f);
-        }
-
-        // --- Play Sound ---
-        if (!this.hamster.getWorld().isClient()) {
             SoundEvent sleepSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SLEEP_SOUNDS, this.hamster.getRandom());
             if (sleepSound != null) {
                 this.hamster.getWorld().playSound(
@@ -118,26 +169,6 @@ public class HamsterSleepGoal extends Goal {
                 );
             }
         }
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
-    }
-
-    @Override
-    public boolean shouldContinue() {
-        if (this.hamster.isTamed() || !this.hamster.getWorld().isDay()) {
-            return false;
-        }
-        if (this.checkTimer > 0) {
-            this.checkTimer--;
-            return true;
-        }
-        this.checkTimer = CHECK_INTERVAL;
-        double radius = 5.0;
-        boolean threatNearby = !this.hamster.getWorld().getOtherEntities(
-                this.hamster,
-                this.hamster.getBoundingBox().expand(radius),
-                this::isThreat
-        ).isEmpty();
-        return !threatNearby;
     }
 
     @Override
@@ -156,21 +187,44 @@ public class HamsterSleepGoal extends Goal {
         }
     }
 
-    // --- 5. Private Helper Methods ---
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
      * Determines if the given entity is considered a threat to a sleeping wild hamster,
      * which would cause it to wake up.
-     *
-     * @param entity The entity to check.
-     * @return True if the entity is a threat, false otherwise.
      */
     private boolean isThreat(Entity entity) {
         if (entity instanceof HostileEntity) {
             return true;
         }
         if (entity instanceof PlayerEntity) {
-            return true;
+            // Baby hamsters don't care about nearby players
+            return !this.hamster.isBaby();
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the baby's parent has wandered too far away.
+     * Prevents wild babies from sleeping while their parent leaves them behind.
+     */
+    private boolean isParentTooFar() {
+        if (!this.hamster.isBaby()) return false;
+
+        UUID parentUuid = this.hamster.getParentUuid();
+        if (parentUuid == null) return false;
+
+        if (this.hamster.getWorld() instanceof ServerWorld serverWorld) {
+            // Retrieve the parent entity using UUID
+            Entity parent = serverWorld.getEntity(parentUuid);
+
+            // If parent exists and is alive, check distance
+            if (parent != null && parent.isAlive()) {
+                // Wake up if parent is more than 4 blocks away
+                return this.hamster.squaredDistanceTo(parent) > 16.0;
+            }
         }
         return false;
     }

@@ -22,7 +22,8 @@ public final class AHPJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(HamsterBedComponentProvider.INSTANCE, HamsterBedBlock.class);
         registration.usePickedResult(ModBlocks.HAMSTER_BED.get());
 
-        // Entity component for Hamster debugging
+        // Entity components
+        registration.registerEntityComponent(HamsterGeneticsComponentProvider.INSTANCE, HamsterEntity.class);
         registration.registerEntityComponent(HamsterDebugComponentProvider.INSTANCE, HamsterEntity.class);
     }
 
@@ -30,6 +31,7 @@ public final class AHPJadePlugin implements IWailaPlugin {
     public void register(IWailaCommonRegistration registration) {
         // Server-side data providers
         registration.registerBlockDataProvider(HamsterBedComponentProvider.INSTANCE, HamsterBedBlockEntity.class);
+        registration.registerEntityDataProvider(HamsterGeneticsComponentProvider.INSTANCE, HamsterEntity.class);
         registration.registerEntityDataProvider(HamsterDebugComponentProvider.INSTANCE, HamsterEntity.class);
     }
 }

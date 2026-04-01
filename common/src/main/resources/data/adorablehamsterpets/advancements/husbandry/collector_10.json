@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/tame_hamster",
+  "display": {
+    "icon": {
+      "item": "adorablehamsterpets:hamster_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.collector_10.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.collector_10.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "impossible": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -6,7 +6,7 @@
   "sortnum": 0,
   "pages": [
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.world_loot",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.world_loot.page1.body",

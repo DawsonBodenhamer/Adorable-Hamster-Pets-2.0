@@ -9,7 +9,6 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
 import net.minecraft.entity.player.PlayerEntity;
@@ -19,6 +18,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static net.dawson.adorablehamsterpets.AdorableHamsterPets.MOD_ID;
 
@@ -39,7 +41,7 @@ public class ModPackets {
     // C2S (Client-to-Server)
     public record ThrowHamsterC2SPacket() {}
     public record DismountHamsterC2SPacket() {}
-    public record UpdateRenderStateC2SPacket(int entityId, boolean isRendering) {}
+    public record UpdateHamsterRenderStateC2SPacket(List<Integer> hamsterEntityIds, boolean isRendering) {}
     public record RequestGuidebookC2SPacket() {}
     public record RequestHamsterMountC2SPacket(int entityId) {}
     public record ResetHeistHistoryC2SPacket() {}
@@ -75,17 +77,29 @@ public class ModPackets {
                 })
         );
 
-        CHANNEL.register(UpdateRenderStateC2SPacket.class,
+        CHANNEL.register(UpdateHamsterRenderStateC2SPacket.class,
                 (packet, buf) -> {
-                    buf.writeInt(packet.entityId());
+                    buf.writeInt(packet.hamsterEntityIds().size());
+                    for (int id : packet.hamsterEntityIds()) {
+                        buf.writeInt(id);
+                    }
                     buf.writeBoolean(packet.isRendering());
                 },
-                (buf) -> new UpdateRenderStateC2SPacket(buf.readInt(), buf.readBoolean()),
+                (buf) -> {
+                    int size = buf.readInt();
+                    List<Integer> ids = new ArrayList<>(size);
+                    for (int i = 0; i < size; i++) {
+                        ids.add(buf.readInt());
+                    }
+                    return new UpdateHamsterRenderStateC2SPacket(ids, buf.readBoolean());
+                },
                 (packet, context) -> context.get().queue(() -> {
-                    if (packet.isRendering()) {
-                        HamsterRenderTracker.addPlayer(packet.entityId(), context.get().getPlayer().getUuid());
-                    } else {
-                        HamsterRenderTracker.removePlayer(packet.entityId(), context.get().getPlayer().getUuid());
+                    for (int id : packet.hamsterEntityIds()) {
+                        if (packet.isRendering()) {
+                            HamsterRenderTracker.addPlayer(id, context.get().getPlayer().getUuid());
+                        } else {
+                            HamsterRenderTracker.removePlayer(id, context.get().getPlayer().getUuid());
+                        }
                     }
                 })
         );

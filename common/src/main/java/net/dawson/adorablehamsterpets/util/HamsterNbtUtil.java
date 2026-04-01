@@ -4,6 +4,7 @@ import com.mojang.serialization.DataResult;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
@@ -13,6 +14,7 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.RegistryOps;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -33,20 +35,19 @@ public final class HamsterNbtUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     public static void writeCustomDataToNbt(HamsterEntity hamster, NbtCompound nbt) {
-        // --- 1. Write Core Data & Flags ---
-        nbt.putInt("HamsterVariant", hamster.getVariant());
-
-        // For backward compatibility, write the flags out as individual booleans.
+        // --- 1. Core Data & Flags ---
+        nbt.put("HamsterGenome", hamster.getGenome().saveToNbt());
+        nbt.putLong("TotalAgeTicks", hamster.totalAgeTicks);
+        nbt.putInt("TimesBred", hamster.timesBred);
+        // Write flags as individual booleans for backwards compat
         if (hamster.isTamed()) {
             nbt.putBoolean("Sitting", hamster.getHamsterFlag(HamsterEntity.SITTING_FLAG));
             nbt.putBoolean("IsSleeping", hamster.getHamsterFlag(HamsterEntity.SLEEPING_FLAG));
         } else {
             nbt.putBoolean("IsSleeping", false);
         }
-
         nbt.putBoolean("KnockedOut", hamster.getHamsterFlag(HamsterEntity.KNOCKED_OUT_FLAG));
         nbt.putBoolean("CheekPouchUnlocked", hamster.getHamsterFlag(HamsterEntity.CHEEK_POUCH_UNLOCKED_FLAG));
-
         nbt.putLong("ThrowCooldownEnd", hamster.throwCooldownEndTick);
         nbt.putLong("GreenBeanBuffDuration", hamster.getDataTracker().get(HamsterEntity.GREEN_BEAN_BUFF_DURATION));
         nbt.putInt("AutoEatCooldown", hamster.getAutoEatCooldownTicks());
@@ -54,19 +55,25 @@ public final class HamsterNbtUtil {
         nbt.putInt("PinkPetalType", hamster.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE));
         nbt.putInt("AnimationPersonalityId", hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID));
 
-        // --- 2. Write Sleep State Data ---
+        // --- 2. Parent Following ---
+        if (hamster.getParentUuid() != null) {
+            nbt.putUuid("ParentUuid", hamster.getParentUuid());
+        }
+
+        // --- 3. Sleep State ---
         nbt.putInt("DozingPhase", hamster.getDozingPhase().ordinal());
         nbt.putString("CurrentDeepSleepAnimId", hamster.getDataTracker().get(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID));
         nbt.putInt("QuiescentSitTimer", hamster.getQuiescentSitTimer());
         nbt.putInt("DriftingOffTimer", hamster.getDriftingOffTimer());
         nbt.putInt("SettleSleepCooldown", hamster.getSettleSleepCooldown());
 
-        // --- 3. Write Inventory ---
+        // --- 4. Inventory ---
+        // 1.20.1 does not require registry wrapper
         NbtCompound inventoryWrapperNbt = new NbtCompound();
         Inventories.writeNbt(inventoryWrapperNbt, hamster.getItems());
         nbt.put("Inventory", inventoryWrapperNbt);
 
-        // --- 4. Write Seeking and Sulking Data ---
+        // --- 5. Ore Seeking ---
         nbt.putBoolean("IsPrimedToSeekDiamonds", hamster.isPrimedToSeekDiamonds);
         nbt.putLong("FoundOreCooldownEndTick", hamster.foundOreCooldownEndTick);
         if (hamster.currentOreTarget != null) {
@@ -77,14 +84,12 @@ public final class HamsterNbtUtil {
         nbt.putBoolean("IsSulking", hamster.getHamsterFlag(HamsterEntity.SULKING_FLAG));
         nbt.putBoolean("IsCelebratingDiamond", hamster.getHamsterFlag(HamsterEntity.CELEBRATING_DIAMOND_FLAG));
 
-        // --- 5. Write Interaction & Mini-Game Data ---
+        // --- 6. Interaction & Mini-Game ---
         nbt.putLong("TagGameCooldownEnd", hamster.tagGameCooldownEndTick);
         nbt.putLong("StealingCooldownEnd", hamster.stealingCooldownEndTick);
-
         if (hamster.getGenericInteractionTimer() > 0) {
             nbt.putInt("GenericInteractionTimer", hamster.getGenericInteractionTimer());
         }
-
         if (hamster.isHoldingMouthItem()) {
             nbt.putBoolean("IsHoldingMouthItem", true);
             if (!hamster.getMouthItemStack().isEmpty()) {
@@ -92,7 +97,7 @@ public final class HamsterNbtUtil {
             }
         }
 
-        // --- 7. Write Wander Mode Data ---
+        // --- 7. Wander Mode ---
         nbt.putBoolean("IsWanderModeActive", hamster.isWanderModeActive());
         hamster.getLinkedBedPos().ifPresent(globalPos -> {
             DataResult<NbtElement> result = GlobalPos.CODEC.encodeStart(RegistryOps.of(NbtOps.INSTANCE, hamster.getWorld().getRegistryManager()), globalPos);
@@ -102,37 +107,43 @@ public final class HamsterNbtUtil {
         nbt.putBoolean("StuckSearchingForBed", hamster.isStuckSearchingForBed());
         nbt.putBoolean("IsRescueSleeping", hamster.isRescueSleeping());
 
-        // --- 8. Write Flight Data ---
+        // --- 8. Flight ---
         nbt.putBoolean("HasPlayedIncomingSound", hamster.hasPlayedIncomingSound());
     }
 
     public static void readCustomDataFromNbt(HamsterEntity hamster, NbtCompound nbt) {
-        hamster.setLoadingNbt(true); // Suppress sounds
-
         // --- 1. Read Core Data ---
-        hamster.setVariant(nbt.getInt("HamsterVariant"));
-
-        // --- Read individual booleans and set flags for backward compatibility ---
+        hamster.setLoadingNbt(true); // Suppress sounds
+        hamster.totalAgeTicks = nbt.getLong("TotalAgeTicks");
+        hamster.timesBred = nbt.getInt("TimesBred");
+        // Migrate legacy variant IDs to v3.6.0's Genome structure
+        if (nbt.contains("HamsterGenome", NbtElement.COMPOUND_TYPE)) {
+            hamster.setGenome(HamsterGenome.readFromNbt(nbt.getCompound("HamsterGenome")));
+        } else if (nbt.contains("HamsterVariant", NbtElement.INT_TYPE)) {
+            // Catch old integer IDs from pre 3.6.0
+            int legacyId = nbt.getInt("HamsterVariant");
+            hamster.setGenome(HamsterGeneticsUtil.getGenomeForLegacyId(legacyId));
+        } else {
+            hamster.setGenome(HamsterGenome.createDefault());
+        }
+        // Backwards compat: read individual booleans & set flags
         boolean wasSittingNbt = hamster.isTamed() && nbt.getBoolean("Sitting");
         hamster.setSitting(wasSittingNbt, true); // This will correctly set the SITTING_FLAG
         hamster.setHamsterFlag(HamsterEntity.KNOCKED_OUT_FLAG, nbt.getBoolean("KnockedOut"));
         hamster.setHamsterFlag(HamsterEntity.CHEEK_POUCH_UNLOCKED_FLAG, nbt.getBoolean("CheekPouchUnlocked"));
         hamster.setHamsterFlag(HamsterEntity.SULKING_FLAG, nbt.getBoolean("IsSulking"));
         hamster.setHamsterFlag(HamsterEntity.CELEBRATING_DIAMOND_FLAG, nbt.getBoolean("IsCelebratingDiamond"));
-
         boolean loadedSleeping = nbt.getBoolean("IsSleeping");
         if (!hamster.isTamed()) {
             loadedSleeping = false;
         }
         hamster.setHamsterFlag(HamsterEntity.SLEEPING_FLAG, loadedSleeping);
-
         hamster.throwCooldownEndTick = nbt.getLong("ThrowCooldownEnd");
         hamster.getDataTracker().set(HamsterEntity.GREEN_BEAN_BUFF_DURATION, nbt.getLong("GreenBeanBuffDuration"));
         hamster.setAutoEatCooldownTicks(nbt.getInt("AutoEatCooldown"));
         hamster.setEjectionCheckCooldown(nbt.contains("EjectionCheckCooldown", NbtElement.INT_TYPE) ? nbt.getInt("EjectionCheckCooldown") : 20);
         hamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, nbt.getInt("PinkPetalType"));
-
-        // Personality ID verification for backwards compat
+        // Backwards compat: personality ID verification
         if (!nbt.contains("AnimationPersonalityId", NbtElement.INT_TYPE)) {
             int personalityId = hamster.getRandom().nextBetween(1, 3);
             hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, personalityId);
@@ -141,7 +152,12 @@ public final class HamsterNbtUtil {
             hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, nbt.getInt("AnimationPersonalityId"));
         }
 
-        // --- 2. Read Sleep State Data ---
+        // --- 2. Parent Following ---
+        if (nbt.containsUuid("ParentUuid")) {
+            hamster.setParentUuid(nbt.getUuid("ParentUuid"));
+        }
+
+        // --- 3. Sleep State ---
         if (nbt.contains("DozingPhase", NbtElement.INT_TYPE)) {
             int phaseOrdinal = nbt.getInt("DozingPhase");
             if (phaseOrdinal >= 0 && phaseOrdinal < HamsterEntity.DozingPhase.values().length) {
@@ -161,20 +177,18 @@ public final class HamsterNbtUtil {
         hamster.setDriftingOffTimer(nbt.getInt("DriftingOffTimer"));
         hamster.setSettleSleepCooldown(nbt.getInt("SettleSleepCooldown"));
 
-        // --- 3. Read Inventory ---
+        // --- 4. Inventory ---
         hamster.getItems().clear();
         if (nbt.contains("Inventory", NbtElement.COMPOUND_TYPE)) {
             Inventories.readNbt(nbt.getCompound("Inventory"), hamster.getItems());
         }
-
-        // If the NBT from a command or save file doesn't specify wild loot, generate it.
         if (!hasInventoryData(nbt) && !hamster.isTamed()) {
             HamsterInventoryUtil.generateWildLoot(hamster, hamster.getRandom());
         }
         HamsterInventoryUtil.updateCheekStates(hamster);
         HamsterInventoryUtil.syncEquipmentTrackers(hamster);
 
-        // --- 4. Read Seeking Data ---
+        // --- 5. Ore Seeking ---
         hamster.isPrimedToSeekDiamonds = nbt.getBoolean("IsPrimedToSeekDiamonds");
         hamster.foundOreCooldownEndTick = nbt.getLong("FoundOreCooldownEndTick");
         if (nbt.contains("OreTargetX") && nbt.contains("OreTargetY") && nbt.contains("OreTargetZ")) {
@@ -183,7 +197,7 @@ public final class HamsterNbtUtil {
             hamster.currentOreTarget = null;
         }
 
-        // --- 5. Read Interaction & Mini-Game Data ---
+        // --- 6. Interaction & Mini-Game ---
         hamster.tagGameCooldownEndTick = nbt.getLong("TagGameCooldownEnd");
         hamster.stealingCooldownEndTick = nbt.getLong("StealingCooldownEnd");
         hamster.setGenericInteractionTimer(nbt.getInt("GenericInteractionTimer"));
@@ -199,7 +213,7 @@ public final class HamsterNbtUtil {
             hamster.setMouthItemStack(ItemStack.EMPTY);
         }
 
-        // --- 7. Read Wander Mode Data ---
+        // --- 7. Wander Mode ---
         hamster.setWanderModeActive(nbt.getBoolean("IsWanderModeActive"));
         if (nbt.contains("LinkedBedPos")) {
             hamster.setLinkedBedPos(GlobalPos.CODEC.parse(RegistryOps.of(NbtOps.INSTANCE, hamster.getWorld().getRegistryManager()), nbt.get("LinkedBedPos")).result());
@@ -213,7 +227,7 @@ public final class HamsterNbtUtil {
             hamster.setHamsterFlag(HamsterEntity.SLEEPING_FLAG, true);
         }
 
-        // --- 8. Read Flight Data ---
+        // --- 8. Flight ---
         hamster.setHasPlayedIncomingSound(nbt.getBoolean("HasPlayedIncomingSound"));
 
         // --- 9. Reconcile Accessory State ---
@@ -225,6 +239,17 @@ public final class HamsterNbtUtil {
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       Shoulder Data Handlers
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Takes a hamster's NBT data, deserializes it, sets the knocked-out flag,
+     * and re-serializes it to a new NbtCompound.
+     */
+    public static NbtCompound setKnockedOutInNbt(NbtCompound originalNbt) {
+        return HamsterState.fromNbt(originalNbt).map(data -> {
+            int newFlags = data.hamsterFlags() | HamsterEntity.KNOCKED_OUT_FLAG;
+            return data.withFlags(newFlags).toNbt();
+        }).orElse(originalNbt); // Fallback
+    }
 
     /**
      * Captures the current state of this hamster into a {@link HamsterState} record.
@@ -263,7 +288,7 @@ public final class HamsterNbtUtil {
         // --- 5. Create and Return the Main Data Record ---
         return new HamsterState(
                 hamster.getUuid(),
-                hamster.getVariant(),
+                hamster.getGenome().saveToNbt(),
                 hamster.getHealth(),
                 inventoryNbt,
                 hamster.getBreedingAge(),
@@ -275,7 +300,9 @@ public final class HamsterNbtUtil {
                 hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID),
                 seekingData,
                 wanderData,
-                hamster.getDataTracker().get(HamsterEntity.HAMSTER_FLAGS)
+                hamster.getDataTracker().get(HamsterEntity.HAMSTER_FLAGS),
+                hamster.totalAgeTicks,
+                hamster.timesBred
         );
     }
 
@@ -299,7 +326,7 @@ public final class HamsterNbtUtil {
         if (hamster != null) {
             // --- 1. Load Core Data ---
             hamster.setUuid(data.entityUuid());
-            hamster.setVariant(data.variantId());
+            hamster.setGenome(HamsterGenome.readFromNbt(data.genomeNbt()));
             hamster.setHealth(data.health());
             hamster.setOwnerUuid(player.getUuid());
             hamster.setTamed(true, true);
@@ -309,6 +336,8 @@ public final class HamsterNbtUtil {
             hamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, data.pinkPetalType());
             hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
             hamster.getDataTracker().set(HamsterEntity.HAMSTER_FLAGS, data.hamsterFlags());
+            hamster.totalAgeTicks = data.totalAgeTicks();
+            hamster.timesBred = data.timesBred();
 
             // Explicitly clear the sitting flag to ensure the hamster always dismounts standing.
             hamster.setHamsterFlag(HamsterEntity.SITTING_FLAG, false);
@@ -362,7 +391,10 @@ public final class HamsterNbtUtil {
         return hamster;
     }
 
-    // --- Private Helpers ---
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                               Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     private static boolean hasInventoryData(NbtCompound nbt) {
         return nbt.contains("Inventory", NbtElement.COMPOUND_TYPE);
     }

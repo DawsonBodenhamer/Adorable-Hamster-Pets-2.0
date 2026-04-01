@@ -1,0 +1,89 @@
+{
+  "name": "book.adorablehamsterpets.entry.ahp_commands",
+  "icon": "minecraft:command_block",
+  "category": "adorablehamsterpets:the_kitchen_drawer",
+  "entry_color": "00AAAA",
+  "sortnum": 3,
+  "pages":[
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "spawn_hamster",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page1.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page1.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "spawn_all_bases",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page2.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page2.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "spawn_all_bases_2D",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page3.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page3.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "spawn_all_bases_3D",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page4.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page4.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "spawn_all_permutations",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page5.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page5.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "print_genetics_report",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page6.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page6.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "set_age",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page7.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page7.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "reset_player_breeding",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page8.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page8.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "reset_hamster_breeding",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page9.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page9.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "reset_tree_heist",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page10.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page10.body",
+      "text_color": "000000"
+    }
+  ]
+}

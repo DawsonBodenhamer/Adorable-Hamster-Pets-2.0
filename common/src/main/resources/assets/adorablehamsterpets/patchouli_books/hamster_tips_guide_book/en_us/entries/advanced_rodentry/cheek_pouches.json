@@ -6,7 +6,7 @@
   "sortnum": 1,
   "pages": [
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.cheek_pouches",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.cheek_pouches.page1.body",
@@ -17,7 +17,7 @@
       "text": "book.adorablehamsterpets.entry.cheek_pouches.page2.body"
     },
     {
-      "type": "adorablehamsterpets:page",
+      "type": "adorablehamsterpets:dynamic_page",
       "header": "book.adorablehamsterpets.entry.cheek_pouches.page3.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.cheek_pouches.page3.body",
