@@ -152,6 +152,71 @@ public class AhpConfig extends Config {
     @Translatable.Desc("How long (in ticks) I wait before realizing you're book-less and panicking. 3600 = 3 minutes.")
     public ValidatedInt guidebookWarningTimer = new ValidatedInt(3600, 6000, 100);
 
+    @Translatable.Name("Jade Overlay Settings")
+    @Translatable.Desc("Fine-tune the voyeuristic amount of genetic data you see when staring at a hamster.")
+    public ConfigGroup jadeOverlaySettings = new ConfigGroup("jadeOverlaySettings", true);
+
+    @NonSync
+    @Translatable.Name("Require Sneaking")
+    @Translatable.Desc("If true, you must hold sneak to expose their genetic secrets. If false, their DNA is proudly broadcasted to you at all times. Set to False by default so I don't get spammed on Discord.")
+    public boolean requireSneakForJadeInfo = false;
+
+    @NonSync
+    @Translatable.Name("Show Age")
+    @Translatable.Desc("Display how long this hamster has managed to survive your world.")
+    public boolean showJadeAge = true;
+
+    @NonSync
+    @Translatable.Name("Show Base Coat")
+    @Translatable.Desc("Display the underlying fur palette.")
+    public boolean showJadeBaseCoat = true;
+
+    @NonSync
+    @Translatable.Name("Show Wild Overlay")
+    @Translatable.Desc("Display the naturally occurring fur overlay patterns.")
+    public boolean showJadeWildOverlay = true;
+
+    @NonSync
+    @Translatable.Name("Show Breeding Overlay")
+    @Translatable.Desc("Display the mutations you caused by genetic engineering.")
+    public boolean showJadeBreedingOverlay = true;
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Show Eye Color")
+    @Translatable.Desc("Display whether they possess the recessive red eye gene. Helpful since the eyes still appear black.")
+    public boolean showJadeEyeColor = true;
+
+    @Translatable.Name("Action Bar Messages")
+    @Translatable.Desc("Toggle and change the duration of the various little status mumbles that appear above your hotbar.")
+    public ConfigGroup actionBarMessages = new ConfigGroup("actionBarMessages", true);
+
+    @NonSync
+    @Translatable.Name("Action Bar Duration")
+    @Translatable.Desc("The duration (in ticks) that action bar messages stay on screen. Only affects your personal computer. Vanilla is 60 (3 seconds), which is barely enough time to realize you're reading. Crank this up to savor the text. (20 ticks = 1 second).")
+    public ValidatedInt actionBarDuration = new ValidatedInt(100, 300, 40);
+
+    @NonSync
+    @Translatable.Name("Shoulder Dismount Messages")
+    @Translatable.Desc("Little status mumbles when your co-pilot disembarks.")
+    public boolean enableShoulderDismountMessages = true;
+
+    @NonSync
+    @Translatable.Name("Tree Heist Start Message")
+    @Translatable.Desc("Whether to show an action bar message when a Tree Heist begins.")
+    public boolean enableTreeHeistStartMessage = true;
+
+    @NonSync
+    @Translatable.Name("Bed Break Notification")
+    @Translatable.Desc("Get an action bar message when your hamster's bed is broken. Here's where you can turn it off if you prefer... complete immersion.")
+    public boolean enableBedBreakMessage = true;
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Tamed Baby Warning")
+    @Translatable.Desc("Warns you when a newly tamed baby hamster refuses to follow you and informs you how to unlink them from their parent.")
+    public boolean enableTamedBabyWarningMessage = true;
+
     @Translatable.Name("Hamster Renaming")
     @Translatable.Desc("Because 'Hamster #42' lacks a certain personal touch, here are some settings to control how hamsters get renamed.")
     public ConfigGroup naming = new ConfigGroup("naming", true);
@@ -176,25 +241,15 @@ public class AhpConfig extends Config {
     public boolean enableItemTooltips = true;
 
     @NonSync
-    @Translatable.Name("Shoulder Dismount Messages")
-    @Translatable.Desc("Little status mumbles when your co-pilot disembarks.")
-    public boolean enableShoulderDismountMessages = true;
-
-    @NonSync
     @Translatable.Name("Age Progression IRL Time")
     @Translatable.Desc("If true, the hamster's age progresses at real-world speed (24 hours = 1 day) instead of Minecraft speed (20 minutes = 1 day).")
     public boolean displayAgeInIrlTime = false;
 
     @NonSync
+    @ConfigGroup.Pop
     @Translatable.Name("Jade Hamster Debug Info")
     @Translatable.Desc("More stats than anyone asked for. Defaults to off— mercifully.")
     public boolean enableJadeHamsterDebugInfo = false;
-
-    @NonSync
-    @ConfigGroup.Pop
-    @Translatable.Name("Action Bar Duration")
-    @Translatable.Desc("The duration (in ticks) that action bar messages stay on screen. Only affects your personal computer. Vanilla is 60 (3 seconds), which is barely enough time to realize you're reading. Crank this up to savor the text. (20 ticks = 1 second).")
-    public ValidatedInt actionBarDuration = new ValidatedInt(100, 300, 40);
 
     // --- Announcements & Update Notes ---
     @Translatable.Name("Announcements & Update Notes")
@@ -778,11 +833,6 @@ public class AhpConfig extends Config {
     public ValidatedFloat acornDropChance = new ValidatedFloat(0.03f, 1.0f, 0.0f);
 
     @NonSync
-    @Translatable.Name("Show Start Message")
-    @Translatable.Desc("Whether to show an action bar message when a Tree Heist begins.")
-    public boolean enableTreeHeistStartMessage = true;
-
-    @NonSync
     @Translatable.Name("Reset History")
     public ConfigAction resetHeistHistory = new ConfigAction.Builder()
             .title(Text.translatable("config.adorablehamsterpets.main.treeHeist.resetHeistHistory"))
@@ -831,10 +881,6 @@ public class AhpConfig extends Config {
     @Translatable.Name("Distance: Far")
     @Translatable.Desc("The radius (in blocks) for the 'Far' wander distance setting. For the adventurous hamster who might send you a postcard someday. Maybe.")
     public ValidatedInt wanderDistanceFar = new ValidatedInt(32, 64, 1);
-
-    @Translatable.Name("Bed Break Notification")
-    @Translatable.Desc("Get an action bar message when your hamster's bed is broken. Here's where you can turn it off if you prefer... complete immersion.")
-    public boolean enableBedBreakMessage = true;
 
     @Translatable.Name("Allow Sleeping in Bed")
     @Translatable.Desc("The global override for whether hamsters can sleep in their beds. If enabled, all hamsters in wander mode will seek out their bed to sleep at specific times, regardless of individual bed settings. If disabled, they'll just pass out when sitting, like your old uncle at family gatherings.")

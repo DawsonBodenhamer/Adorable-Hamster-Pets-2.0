@@ -212,7 +212,7 @@ public final class HamsterInteractionUtil {
                     }
 
                     // --- Baby Link Warning ---
-                    if (hamster.isBaby() && hamster.getParentUuid() != null) {
+                    if (Configs.AHP.enableTamedBabyWarningMessage && hamster.isBaby() && hamster.getParentUuid() != null) {
                         Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
                         player.sendMessage(Text.translatable("message.adorablehamsterpets.tamed_baby_still_linked_warning", lureName).formatted(Formatting.WHITE), true);
                     }

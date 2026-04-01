@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.util.MiscUtil;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.text.Text;
@@ -28,38 +29,51 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
         NbtCompound serverData = accessor.getServerData();
         if (!serverData.contains("HamsterGenome", NbtElement.COMPOUND_TYPE)) return;
 
+        PlayerEntity player = accessor.getPlayer();
+
+        // --- Sneak Check ---
+        if (Configs.AHP.requireSneakForJadeInfo && !player.isSneaking()) {
+            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sneak_for_info").formatted(Formatting.GRAY));
+            return;
+        }
+
         HamsterGenome genome = HamsterGenome.readFromNbt(serverData.getCompound("HamsterGenome"));
 
-        // Formatted Age Logic
-        long ageTicks = serverData.getLong("TotalAgeTicks");
-        Text ageText = MiscUtil.TimeConversionUtil.formatAge(ageTicks);
+        // --- Formatted Age ---
+        if (Configs.AHP.showJadeAge) {
+            long ageTicks = serverData.getLong("TotalAgeTicks");
+            Text ageText = MiscUtil.TimeConversionUtil.formatAge(ageTicks);
+            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.age", ageText));
+        }
 
-        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.age", ageText));
+        // --- Base Coat ---
+        if (Configs.AHP.showJadeBaseCoat) {
+            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.base", getPaletteText(genome.basePaletteId())));
+        }
 
-        // Base Coat
-        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.base", getPaletteText(genome.basePaletteId())));
-
-        // Wild Overlay
-        if (genome.wildOverlayPattern() > 0 && genome.wildOverlayPaletteId() != null) {
+        // --- Wild Overlay ---
+        if (Configs.AHP.showJadeWildOverlay && genome.wildOverlayPattern() > 0 && genome.wildOverlayPaletteId() != null) {
             tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.wild",
                     getPatternText(genome.wildOverlayPattern()),
                     getPaletteText(genome.wildOverlayPaletteId())));
         }
 
-        // Breeding Overlay
-        if (genome.breedingOverlayPattern() > 0 && genome.breedingOverlayPaletteId() != null) {
+        // --- Breeding Overlay ---
+        if (Configs.AHP.showJadeBreedingOverlay && genome.breedingOverlayPattern() > 0 && genome.breedingOverlayPaletteId() != null) {
             tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.breeding",
                     getPatternText(genome.breedingOverlayPattern()),
                     getPaletteText(genome.breedingOverlayPaletteId())));
         }
 
-        // Eye Genetics
-        String eyeKey = switch (genome.eyeGenotype()) {
-            case 1 -> "tooltip.adorablehamsterpets.jade.genetics.eyes.carrier";
-            case 2 -> "tooltip.adorablehamsterpets.jade.genetics.eyes.red";
-            default -> "tooltip.adorablehamsterpets.jade.genetics.eyes.black";
-        };
-        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.eyes", Text.translatable(eyeKey)));
+        // --- Eye Genetics ---
+        if (Configs.AHP.showJadeEyeColor) {
+            String eyeKey = switch (genome.eyeGenotype()) {
+                case 1 -> "tooltip.adorablehamsterpets.jade.genetics.eyes.carrier";
+                case 2 -> "tooltip.adorablehamsterpets.jade.genetics.eyes.red";
+                default -> "tooltip.adorablehamsterpets.jade.genetics.eyes.black";
+            };
+            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.eyes", Text.translatable(eyeKey)));
+        }
     }
 
     @Override
