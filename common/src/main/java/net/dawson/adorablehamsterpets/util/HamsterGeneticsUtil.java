@@ -61,6 +61,13 @@ public final class HamsterGeneticsUtil {
     }
 
     /**
+     * Determines if a palette is a valid breeding overlay for a given base coat.
+     */
+    public static boolean isValidBreedingOverlay(PaletteDefinition baseDef, PaletteDefinition overlayDef) {
+        return !baseDef.id().equals(overlayDef.id());
+    }
+
+    /**
      * Calculates the genome for a newborn hamster based on inheritance rules and 3D color space midpoints.
      */
     public static HamsterGenome calculateBabyGenome(HamsterEntity parentAEntity, PassiveEntity parentBEntity, Random random) {
@@ -92,7 +99,8 @@ public final class HamsterGeneticsUtil {
 
         // --- 2. Wild Overlay Inheritance ---
         int wildCount = (genomeA.wildOverlayPattern() > 0 ? 1 : 0) + (genomeB.wildOverlayPattern() > 0 ? 1 : 0);
-        float wildChance = wildCount == 2 ? 1.0f : (wildCount == 1 ? 0.5f : 0.1f);
+        // 50% chance to inherit if at least one parent had one
+        float wildChance = wildCount == 2 ? 1.0f : (wildCount == 1 ? 0.5f : 0.0f);
 
         int babyWildPattern = 0;
         String babyWildPaletteId = null;
@@ -121,6 +129,7 @@ public final class HamsterGeneticsUtil {
             } else if (wildCount == 1) {
                 babyWildPaletteId = genomeA.wildOverlayPattern() > 0 ? genomeA.wildOverlayPaletteId() : genomeB.wildOverlayPaletteId();
             } else {
+                // This should theoretically never run
                 babyWildPaletteId = HamsterPaletteManager.getRandomPalette(random, wildZones, true).id();
             }
         }
@@ -128,6 +137,11 @@ public final class HamsterGeneticsUtil {
         // --- 3. Breeding Overlay Inheritance ---
         int breedCount = (genomeA.breedingOverlayPattern() > 0 ? 1 : 0) + (genomeB.breedingOverlayPattern() > 0 ? 1 : 0);
         float breedChance = breedCount == 2 ? 1.0f : (breedCount == 1 ? 0.5f : 0.45f);
+
+        // Boost chance if parents are boring (no overlays)
+        if (wildCount == 0 && breedCount == 0) {
+            breedChance = 0.70f;
+        }
 
         int babyBreedingPattern = 0;
         String babyBreedingPaletteId = null;
@@ -156,7 +170,29 @@ public final class HamsterGeneticsUtil {
             }
         }
 
-        // --- 4. Eye Genetics ---
+        // --- 4. Prevent Breeding Overlay Matching Base Coat ---
+        // If breeding overlay matches base coat, bump to different palette within same color zone
+        if (babyBreedingPattern > 0 && babyBreedingPaletteId != null) {
+            PaletteDefinition baseDef = HamsterPaletteManager.PALETTE_REGISTRY.get(babyBase.id());
+            PaletteDefinition breedingDef = HamsterPaletteManager.PALETTE_REGISTRY.get(babyBreedingPaletteId);
+
+            if (baseDef != null && breedingDef != null && !isValidBreedingOverlay(baseDef, breedingDef)) {
+                Set<String> bumpExclusions = new HashSet<>();
+                bumpExclusions.add(baseDef.id());
+
+                PaletteDefinition bumpedPalette = HamsterPaletteManager.getClosestPalette(
+                        breedingDef.colorSpacePos(),
+                        bumpExclusions,
+                        Set.of(breedingDef.zone()),
+                        false
+                );
+                if (bumpedPalette != null) {
+                    babyBreedingPaletteId = bumpedPalette.id();
+                }
+            }
+        }
+
+        // --- 5. Eye Genetics ---
         int babyEyeGenotype = calculateBabyEyeGenotype(genomeA.eyeGenotype(), genomeB.eyeGenotype(), random);
 
         return new HamsterGenome(babyBase.id(), babyWildPattern, babyWildPaletteId, babyBreedingPattern, babyBreedingPaletteId, babyEyeGenotype);

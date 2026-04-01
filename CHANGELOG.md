@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # **The Genetics Update**
 
-Hamsters now utilize a fully procedural and configurable genetics engine with `3,158` brand-new default wild variants, over 2.3 Million potential breeding outcomes, recessive red eyes, 13 new advancements, and a Hamster Tips guidebook update that explains how it all works. To balance breeding obsessions with server tick speed (looking at you, Janet) comprehensive breeding limitation settings have been added to the config. Also many bugs were squashed, and hamsters learned to play tag and spit out gifts from their cheeks. And make sure you update Patchouli to the latest version or your game won't launch!
+Hamsters now utilize a fully procedural and configurable genetics engine with **3,158** new wild variants, **2,285,046** potential breeding outcomes, recessive red eyes, 13 new advancements, and a guidebook update that explains everything. Added comprehensive breeding settings to balance obsessions with server tick speed (looking at you, Janet). Also many bugs were squashed, and hamsters learned to play tag and spit out gifts from their cheeks. Make sure you update Patchouli to the latest version or your game won't launch!
 
 ## **→** `/ahp print genetics report` **↓**
 ```log
@@ -27,8 +27,8 @@ Hamsters now utilize a fully procedural and configurable genetics engine with `3
   |          - Be brighter than base color
   |          - Be less saturated than base color
   |          - Not clash with the BLUE, LAVENDER color zones
-  |      Total Possible After Breeding ..... | = 2,336,832
-  |      Number of 3D Color Relationships .. | = 2,730,393,066,528
+  |      Total Possible After Breeding ..... | = 2,285,046
+  |      Number of 3D Color Relationships .. | = 2,610,718,753,581
   |                                                                                                                 
 ```
 
@@ -37,7 +37,7 @@ Hamsters now utilize a fully procedural and configurable genetics engine with `3
   - Hamsters are no longer pre-defined, hardcoded variants. Every hamster now possesses a fully serialized `HamsterGenome` detailing its precise genetic makeup across six distinct traits.
   - This was accomplished by developing a 3D Hue/Saturation/Brightness (HSB) Cartesian color space. The mod uses this to mathematically map the exact color coordinates of every hamster variant into a three-dimensional neural network, which is dynamically used to calculate genetic relationships, mutations, overlay exclusion rules, and environment-spawning rules on the fly.
   - I got the idea for creating the textures programmatically like this because that's how I made the original textures in Photoshop— using various Gradient Maps applied to a single, grayscale texture. Then I realized Java code can do the same thing!
-  - The total number of unique hamster types that spawn in the wild is now **3,231** by default, and the number of genetically inheritable hamster permutations from breeding is now **over 2.3 Million**.
+  - The total number of unique hamster types that spawn in the wild is now **3,231** by default, and the number of genetically inheritable hamster permutations from breeding is now **over 2.2 Million**.
   - **Want to understand the math?** Simply start up your world or server, and then open up your `logs/latest.log` file. Press `CNTRL + F` and search for "`Genetics Engine`." I have added fancy logging output to walk you through the color-combination math in a way that is (hopefully) easy to understand.
 - **Dynamic Palette Swapping**
   - Built an optimized, client-side dynamic texture generator. Instead of bloating your hard drive with over 2 million distinct PNG files, the mod dynamically recolors grayscale fur templates at runtime using custom genetic palette hex code data I designed based off my Photoshop workflow, then mixes them with hard-coded PNGs from the community.
@@ -107,14 +107,14 @@ Hamsters now utilize a fully procedural and configurable genetics engine with `3
   - Players can now rename their hamsters directly from the Hamster Inventory screen.
   - Features dynamic down-scaling to ensure long names always fit perfectly within the UI constraints.
   - An interactive pencil icon and underline display when hovering/typing.
-- **New Config Options (`UI & Quality of Life > Hamster Renaming`)**
-  - `Enable GUI Renaming`: Master toggle for the feature.
-  - `Consume Name Tag`: Forces players to sacrifice a Name Tag from their inventory (or the hamster's cheeks) to finalize the rename.
-  - `Pencil Icon Placement`: Allows swapping the icon to the left or right of the text for those who read in different directions.
+  - **New Config Options (`UI & Quality of Life > Hamster Renaming`)**
+    - `Enable GUI Renaming`: Master toggle for the feature.
+    - `Consume Name Tag`: Forces players to sacrifice a Name Tag from their inventory (or the hamster's cheeks) to finalize the rename.
+    - `Pencil Icon Placement`: Allows swapping the icon to the left or right of the text for those who read in different directions.
 - **Tag Mini-Game**
   - Hamsters can now initiate a playful game of tag. If you maintain eye contact with a hamster for a few seconds, it will squeak and excitedly run away.
   - **The Chase:** The hamster will flee if you get too close and stop to playfully taunt you if you fall too far behind.
-  - **The Reward:** Successfully "catching" (right-clicking) the hamster before it gets bored ends the game triggers a celebration. The hamster will then spit out a random item from its cheek pouches as a gift (pulling from the configurable cheek pouch loot lists).
+  - **Payoff:** Successfully "catching" (right-clicking) the hamster before it gets bored ends the game triggers a celebration. The hamster will then spit out a random item from its cheek pouches as a gift (pulling from the configurable cheek pouch loot lists).
   - **Stranger Danger:** By default, you can play tag with wild hamsters and hamsters owned by other players. (Can be disabled in config).
   - **Configurable Limits:** Added configs to control how often they want to play, the cooldown between games, and an anti-abuse cap on how many times a single player can play the game per in-game day (so they can't farm rewards).
 - **Dynamic Gaze**
@@ -145,7 +145,8 @@ Hamsters now utilize a fully procedural and configurable genetics engine with `3
 - **Precision Tree Heists**
   - Right-clicking Oak Leaves with a lure item (Cheese) while a hamster is on your shoulder will now initiate a "Precision Tree Heist."
   - This sets that specific leaf block as the guaranteed exit point for the hamster.
-  - While a precision heist is active, right-clicking in the air with the lure item will set the hamster's exit direction to match your current view.
+  - While a precision heist is active, right-clicking in the air with the lure item will set the hamster's exit direction to match the direction you are currently looking.
+  - **Why?** This allows you to precisely control the exact block and angle by which your hamster will exit the tree, which makes for much more predictable recording sessions.
 - **Tree Heist History Command**
   - Added `/ahp reset_tree_economy` for quick clearing of tree depletion memory without needing to open the config screen.
 - **Moonwalking Easter Egg**
@@ -159,7 +160,9 @@ Hamsters now utilize a fully procedural and configurable genetics engine with `3
   - The *Hamster Tips* guidebook now uses a custom string processor to pull live data directly into the text, so I can do things like automatically displaying the exact number of mathematically possible wild variants or the name of your dynamically configured Lure Item instead of hardcoding "Cheese".
   - Updated the "Regional Rodents" entry to explain the new biome-adaptive color logic, Wild Overlays and Jade integration.
   - Added a new "Breeding" entry in _The Hamster Life_ chapter detailing the genetic mechanics, recessive red eyes, and feral youth mechanics.
-  - Added a new "Advanced Stuff" entry in _The Kitchen Drawer_ chapter detailing the various new (and old) commands the mod has to offer since some of them (especially the new ones) are super useful.
+  - Added a new "Admin Commands" entry in _The Kitchen Drawer_ chapter detailing the various new (and old) commands the mod has to offer since some of them (especially the new ones) are super useful.
+- **Max Mounted Hamsters Config**
+  - Added a configuration slider under 'Shoulder Hamster Settings > Core Settings' allowing players to limit the maximum number of hamsters that can be mounted simultaneously (1 to 3).
 
 ### Changed
 - **Location-Centric Spawning Overhaul**
