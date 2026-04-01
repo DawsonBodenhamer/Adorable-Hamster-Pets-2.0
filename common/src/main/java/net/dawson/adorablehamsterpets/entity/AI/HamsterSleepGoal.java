@@ -19,7 +19,7 @@ public class HamsterSleepGoal extends Goal {
      *        Constants
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static final int CHECK_INTERVAL = 20; // Check once per second
+    private static final int CHECK_INTERVAL = 20;
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Instance Fields
@@ -27,6 +27,8 @@ public class HamsterSleepGoal extends Goal {
 
     private final HamsterEntity hamster;
     private int checkTimer = 0;
+    private int delayTimer = 0;
+    private boolean isActuallySleeping = false;
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constructors
@@ -59,15 +61,6 @@ public class HamsterSleepGoal extends Goal {
             return false;
         }
 
-        // Randomized delay for wild babies
-        if (this.hamster.isBaby()) {
-            long delayTicks = Math.abs(this.hamster.getUuid().getLeastSignificantBits()) % 60 + 100; // 1 to 3 sec
-            if (this.hamster.age < delayTicks) {
-                return false;
-            }
-        }
-
-        // Throttle checks for performance
         if (this.checkTimer > 0) {
             this.checkTimer--;
             return false;
@@ -94,7 +87,7 @@ public class HamsterSleepGoal extends Goal {
             return false;
         }
 
-        // Throttle expensive checks
+        // Throttle check for performance
         if (this.checkTimer > 0) {
             this.checkTimer--;
             return true;
@@ -119,11 +112,54 @@ public class HamsterSleepGoal extends Goal {
     public void start() {
         this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
 
-        // --- Stop Movement and Targeting ---
+        // --- Set Sleep State ---
         this.hamster.getNavigation().stop();
         this.hamster.setTarget(null);
+        this.isActuallySleeping = false;
 
-        // --- Set Sleep State ---
+        // Randomized delay for wild babies
+        if (this.hamster.isBaby()) {
+            this.delayTimer = this.hamster.getRandom().nextBetween(20, 60); // 1 to 3 sec
+        } else {
+            this.delayTimer = 0;
+            fallAsleep(); // Sleep instantly if adult
+        }
+    }
+
+    @Override
+    public void tick() {
+        if (this.delayTimer > 0 && !this.isActuallySleeping) {
+            this.delayTimer--;
+            if (this.delayTimer == 0) {
+                fallAsleep();
+            }
+        }
+    }
+
+    @Override
+    public void stop() {
+        // If hamster was sleeping, trigger wake up animation and sound
+        if (this.isActuallySleeping && this.hamster.isSleeping()) {
+            this.hamster.triggerWakeUpFromSleepAnimation(false);
+        }
+
+        this.hamster.setSleeping(false);
+        this.hamster.setInSittingPose(false);
+        this.isActuallySleeping = false;
+        this.delayTimer = 0;
+        this.checkTimer = 0;
+
+        if (this.hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalDebugName("None");
+        }
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private void fallAsleep() {
+        this.isActuallySleeping = true;
         this.hamster.setSleeping(true);
         this.hamster.setInSittingPose(true); // Prevent other AI movement
 
@@ -171,26 +207,6 @@ public class HamsterSleepGoal extends Goal {
         }
     }
 
-    @Override
-    public void stop() {
-        // If hamster was sleeping, trigger wake up animation and sound
-        if (this.hamster.isSleeping()) {
-            this.hamster.triggerWakeUpFromSleepAnimation(false);
-        }
-
-        this.hamster.setSleeping(false);
-        this.hamster.setInSittingPose(false);
-        this.checkTimer = 0;
-
-        if (this.hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
-        }
-    }
-
-    /* ──────────────────────────────────────────────────────────────────────────────
-     *        Private Helpers
-     * ────────────────────────────────────────────────────────────────────────────*/
-
     /**
      * Determines if the given entity is considered a threat to a sleeping wild hamster,
      * which would cause it to wake up.
@@ -217,7 +233,7 @@ public class HamsterSleepGoal extends Goal {
         if (parentUuid == null) return false;
 
         if (this.hamster.getWorld() instanceof ServerWorld serverWorld) {
-            // Retrieve the parent entity using UUID
+            // Retrieve parent entity
             Entity parent = serverWorld.getEntity(parentUuid);
 
             // If parent exists and is alive, check distance
