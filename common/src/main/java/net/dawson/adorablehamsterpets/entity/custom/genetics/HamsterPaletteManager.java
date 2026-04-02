@@ -100,14 +100,21 @@ public class HamsterPaletteManager {
                 registerStatic(author, textureName);
             }
         }
-
-        // Print initial report to console
-        printGeneticsReport(null, false);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Static Utilities
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Triggers the initial genetics report if it hasn't been printed yet.
+     */
+    public static void triggerInitialReport() {
+        if (!initialReportPrinted) {
+            printGeneticsReport(null, false);
+            initialReportPrinted = true;
+        }
+    }
 
     /**
      * Calculates the total number of visually distinct wild hamster variants that can naturally spawn,
@@ -340,6 +347,11 @@ public class HamsterPaletteManager {
         output.accept("  |                                                                                      ");
     }
 
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Instance Fields
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private static boolean initialReportPrinted = false;
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Private Helpers

@@ -1,9 +1,9 @@
 package net.dawson.adorablehamsterpets.mixin.client;
 
-import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
 import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconWidget;
 import net.dawson.adorablehamsterpets.config.Configs;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.mixin.accessor.ScreenWidgetAdder;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -19,46 +19,45 @@ import java.util.List;
 @Mixin(TitleScreen.class)
 public abstract class TitleScreenMixin extends Screen {
 
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructors
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     protected TitleScreenMixin(Text title) {
         super(title);
     }
 
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Lifecycle Hooks
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     @Inject(method = "init", at = @At("TAIL"))
     private void adorablehamsterpets$onInit(CallbackInfo ci) {
-        AdorableHamsterPets.LOGGER.trace("[AHP TitleScreen] Mixin init called. Scheduling manifest refresh.");
+        // Trigger genetics report once title screen loads
+        HamsterPaletteManager.triggerInitialReport();
 
-        // Asynchronously refresh the announcement manifest when the title screen loads.
-        // This returns a CompletableFuture to prevent race conditions with the network request.
+        // Refresh announcement manifest asynchronously
         AnnouncementManager.INSTANCE.refreshManifestOnce().thenAcceptAsync(v -> {
-            // This code needs to run after the manifest is ready.
-            AdorableHamsterPets.LOGGER.trace("[AHP TitleScreen] Manifest refresh future completed.");
-            // Get notifications directly from the manager, not the stale client cache
-            List<AnnouncementManager.PendingNotification> notifications = AnnouncementManager.INSTANCE.getPendingNotifications();
-            AdorableHamsterPets.LOGGER.trace("[AHP TitleScreen] Pending notifications count: {}", notifications.size());
 
-            // Only add the widget to the title screen if there is a pending "update available" notification.  
-            // This code runs AFTER the manifest has been fetched/loaded.
+            // Get notifications directly from manager
+            List<AnnouncementManager.PendingNotification> notifications = AnnouncementManager.INSTANCE.getPendingNotifications();
+
+            // Check for pending update notification
             boolean shouldShowIcon = notifications.stream()
                     .anyMatch(n -> n.reason().equals(AnnouncementManager.PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT));
 
-            AdorableHamsterPets.LOGGER.trace("[AHP TitleScreen] Should show icon: {}", shouldShowIcon);
-
             if (shouldShowIcon && Configs.AHP.enableHudIcon.get()) {
-                // The initial x/y and size don't matter much as they are controlled by the animator.
-                // Pass the current screen instance as the parent.
-                // Add widget if on title screen
+                // Add widget if title screen active
                 if (MinecraftClient.getInstance().currentScreen == (TitleScreen) (Object) this) {
-                    AdorableHamsterPets.LOGGER.trace("[AHP TitleScreen] Adding AnnouncementIconWidget to the screen.");
-                    // Use ScreenWidgetAdder accessor to add the widget for cross-loader compatibility
-                    ((ScreenWidgetAdder)(Object)this).adorablehamsterpets$addWidget(new AnnouncementIconWidget(
+                    // Use accessor to add widget for cross-loader compatibility
+                    // Initial bounds controlled by animator
+                    ((ScreenWidgetAdder) (Object) this).adorablehamsterpets$addWidget(new AnnouncementIconWidget(
                             0, 0, 16, 16,
                             button -> ((AnnouncementIconWidget) button).onPress(),
-                            (Screen) (Object) this // 'this' is the TitleScreen instance
+                            (Screen) (Object) this
                     ));
-                } else {
-                    AdorableHamsterPets.LOGGER.trace("[AHP TitleScreen] Screen changed before widget could be added. Current screen: {}", MinecraftClient.getInstance().currentScreen);
                 }
             }
-        }, MinecraftClient.getInstance()); // Ensure callback runs on the render thread
+        }, MinecraftClient.getInstance());
     }
 }

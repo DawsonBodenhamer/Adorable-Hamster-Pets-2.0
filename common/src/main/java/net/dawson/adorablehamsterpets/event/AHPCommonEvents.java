@@ -2,10 +2,7 @@ package net.dawson.adorablehamsterpets.event;
 
 import dev.architectury.event.CompoundEventResult;
 import dev.architectury.event.EventResult;
-import dev.architectury.event.events.common.EntityEvent;
-import dev.architectury.event.events.common.InteractionEvent;
-import dev.architectury.event.events.common.PlayerEvent;
-import dev.architectury.event.events.common.TickEvent;
+import dev.architectury.event.events.common.*;
 import me.fzzyhmstrs.fzzy_config.api.ConfigApiJava;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
@@ -15,6 +12,7 @@ import net.dawson.adorablehamsterpets.command.HamsterSpawnCommandUtil;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.mixin.accessor.SlotAccessor;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
@@ -65,6 +63,11 @@ public class AHPCommonEvents {
         InteractionEvent.RIGHT_CLICK_BLOCK.register(AHPCommonEvents::onRightClickBlock);
         InteractionEvent.RIGHT_CLICK_ITEM.register(AHPCommonEvents::onRightClickItem);
         TickEvent.SERVER_POST.register(HamsterSpawnCommandUtil::onServerTick);
+
+        // Trigger the genetics report on headless servers
+        LifecycleEvent.SERVER_STARTED.register(server -> {
+            HamsterPaletteManager.triggerInitialReport();
+        });
 
         // --- Config Reload Listener ---
         ConfigApiJava.event().onUpdateServer((id, config, player) -> {
