@@ -159,6 +159,19 @@ public record HamsterState(
      * @return An Optional containing the deserialized data, or empty if deserialization fails.
      */
     public static Optional<HamsterState> fromNbt(NbtCompound nbt) {
+        // --- Legacy Migration Shim ---
+        // Convert v3.5.0 variants to v3.6.0 genome NBT to prevent shoulder hamsters being deleted
+        if (!nbt.contains("genomeNbt", NbtElement.COMPOUND_TYPE)) {
+            int legacyId = 0;
+
+            // In v3.5.0, HamsterState serialized variant using "variantId"
+            if (nbt.contains("variantId", NbtElement.INT_TYPE)) {
+                legacyId = nbt.getInt("variantId");
+            }
+
+            nbt.put("genomeNbt", HamsterGeneticsUtil.getGenomeForLegacyId(legacyId).saveToNbt());
+        }
+
         return getCodec().parse(NbtOps.INSTANCE, nbt)
                 .resultOrPartial(AdorableHamsterPets.LOGGER::error);
     }
