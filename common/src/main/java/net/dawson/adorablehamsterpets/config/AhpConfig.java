@@ -153,13 +153,38 @@ public class AhpConfig extends Config {
     public ValidatedInt guidebookWarningTimer = new ValidatedInt(3600, 6000, 100);
 
     @Translatable.Name("Jade Overlay Settings")
-    @Translatable.Desc("Fine-tune the voyeuristic amount of genetic data you see when staring at a hamster.")
+    @Translatable.Desc("Fine-tune the voyeuristic amount of genetic data you see when staring at a hamster. Also includes toggles for Jade's default info. Note that these toggles do not affect any entities except hamsters.")
     public ConfigGroup jadeOverlaySettings = new ConfigGroup("jadeOverlaySettings", true);
 
     @NonSync
-    @Translatable.Name("Require Sneaking")
+    @Translatable.Name("Require Sneak for Custom Info")
     @Translatable.Desc("If true, you must hold sneak to expose their genetic secrets. If false, their DNA is proudly broadcasted to you at all times. Set to False by default so I don't get spammed on Discord.")
-    public boolean requireSneakForJadeInfo = false;
+    public boolean requireSneakForCustomJadeInfo = false;
+
+    @NonSync
+    @Translatable.Name("Require Sneak for Default Info")
+    @Translatable.Desc("If true, the default Jade info will also be hidden unless you are actively sneaking. This setting only matters if 'Require Sneaking' is enabled above.")
+    public boolean requireSneakForDefaultJadeInfo = false;
+
+    @NonSync
+    @Translatable.Name("Show Entity Name")
+    @Translatable.Desc("Display the default Jade entity name. You know, 'Hampter'.")
+    public boolean showJadeEntityName = true;
+
+    @NonSync
+    @Translatable.Name("Show Health")
+    @Translatable.Desc("Display the default Jade health hearts. In case you want to know exactly how close your hamster is to the great beyond.")
+    public boolean showJadeEntityHealth = true;
+
+    @NonSync
+    @Translatable.Name("Show Growth Time")
+    @Translatable.Desc("Display the default Jade growth timer that shows how long until babies become adults. Useful if you believe age is just a feeling.")
+    public boolean showJadeGrowthTime = true;
+
+    @NonSync
+    @Translatable.Name("Show Owner")
+    @Translatable.Desc("Display the default Jade owner name. So everyone knows who is responsible when it happens.")
+    public boolean showJadeOwner = true;
 
     @NonSync
     @Translatable.Name("Show Age")
@@ -182,10 +207,15 @@ public class AhpConfig extends Config {
     public boolean showJadeBreedingOverlay = true;
 
     @NonSync
-    @ConfigGroup.Pop
     @Translatable.Name("Show Eye Color")
     @Translatable.Desc("Display whether they possess the recessive red eye gene. Helpful since the eyes still appear black.")
     public boolean showJadeEyeColor = true;
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Show Inventory")
+    @Translatable.Desc("Display the default Jade inventory contents so you can see what your hamster is hoarding.")
+    public boolean showJadeInventory = true;
 
     @Translatable.Name("Action Bar Messages")
     @Translatable.Desc("Toggle and change the duration of the various little status mumbles that appear above your hotbar.")
