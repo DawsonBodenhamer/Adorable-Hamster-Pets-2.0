@@ -32,7 +32,7 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
         PlayerEntity player = accessor.getPlayer();
 
         // --- Sneak Check ---
-        if (Configs.AHP.requireSneakForJadeInfo && !player.isSneaking()) {
+        if (Configs.AHP.requireSneakForCustomJadeInfo && !player.isSneaking()) {
             tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sneak_for_info").formatted(Formatting.GRAY));
             return;
         }

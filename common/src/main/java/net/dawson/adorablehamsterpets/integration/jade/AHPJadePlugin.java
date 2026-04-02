@@ -5,31 +5,56 @@ import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.WildCucumberBushBlock;
 import net.dawson.adorablehamsterpets.block.custom.WildGreenBeanBushBlock;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import snownee.jade.api.IWailaClientRegistration;
-import snownee.jade.api.IWailaCommonRegistration;
-import snownee.jade.api.IWailaPlugin;
-import snownee.jade.api.WailaPlugin;
+import net.minecraft.util.Identifier;
+import snownee.jade.api.*;
 
-@WailaPlugin // This annotation marks this class as a Jade plugin
+@WailaPlugin
 public final class AHPJadePlugin implements IWailaPlugin {
 
     @Override
     public void registerClient(IWailaClientRegistration registration) {
-        // Block components
+        // --- Block Components ---
         registration.registerBlockComponent(WildBushComponentProvider.INSTANCE, WildCucumberBushBlock.class);
         registration.registerBlockComponent(WildBushComponentProvider.INSTANCE, WildGreenBeanBushBlock.class);
         registration.registerBlockComponent(HamsterBedComponentProvider.INSTANCE, HamsterBedBlock.class);
         registration.usePickedResult(ModBlocks.HAMSTER_BED.get());
 
-        // Entity components
+        // --- Entity Components ---
         registration.registerEntityComponent(HamsterGeneticsComponentProvider.INSTANCE, HamsterEntity.class);
         registration.registerEntityComponent(HamsterDebugComponentProvider.INSTANCE, HamsterEntity.class);
+
+        // --- Selective Default Component Removal ---
+        // Intercept final tooltip collection to purge default Jade elements if configured
+        registration.addTooltipCollectedCallback((tooltipBox, accessor) -> {
+            if (accessor instanceof snownee.jade.api.EntityAccessor entityAccessor && entityAccessor.getEntity() instanceof HamsterEntity) {
+                ITooltip tooltip = tooltipBox.getTooltip();
+                boolean playerSneaking = entityAccessor.getPlayer().isSneaking();
+                boolean hideDueToSneak = Configs.AHP.requireSneakForDefaultJadeInfo && !playerSneaking;
+
+                if (!Configs.AHP.showJadeEntityName || hideDueToSneak) {
+                    tooltip.remove(Identifier.of("jade", "object_name"));
+                }
+                if (!Configs.AHP.showJadeEntityHealth || hideDueToSneak) {
+                    tooltip.remove(Identifier.of("minecraft", "entity_health"));
+                }
+                if (!Configs.AHP.showJadeGrowthTime || hideDueToSneak) {
+                    tooltip.remove(Identifier.of("minecraft", "mob_growth"));
+                }
+                if (!Configs.AHP.showJadeOwner || hideDueToSneak) {
+                    tooltip.remove(Identifier.of("minecraft", "animal_owner"));
+                }
+                if (!Configs.AHP.showJadeInventory || hideDueToSneak) {
+                    tooltip.remove(Identifier.of("minecraft", "item_storage"));
+                }
+            }
+        });
     }
 
     @Override
     public void register(IWailaCommonRegistration registration) {
-        // Server-side data providers
+        // --- Server-Side Data Providers ---
         registration.registerBlockDataProvider(HamsterBedComponentProvider.INSTANCE, HamsterBedBlockEntity.class);
         registration.registerEntityDataProvider(HamsterGeneticsComponentProvider.INSTANCE, HamsterEntity.class);
         registration.registerEntityDataProvider(HamsterDebugComponentProvider.INSTANCE, HamsterEntity.class);

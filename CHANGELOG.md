@@ -179,7 +179,8 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - Added a new "Jade Overlay Settings" section to the config under "UI & Quality of Life". 
   - Displays complex genetic info (Age, Base Coat, Wild Overlay, Breeding Overlay, Eye Color) by default.
   - Added a "Require Sneaking" toggle (disabled by default) allowing you to hide the genetic overlay unless you are actively sneaking.
-  - Added individual toggles for every piece of genetic info shown in the Jade overlay, allowing you to completely customize the HUD to your liking.
+  - Added individual toggles for every piece of my custom genetic info shown in the Jade overlay.
+  - Added additional toggles for selectively disabling default Jade info lines (Name, Health, Growth Time, Owner, Inventory) specifically for hamsters without impacting other entities, and a toggle to link their visibility to the player's sneaking state, allowing you to completely customize the HUD to your liking.
   - Built a smart-formatting engine so that community texture IDs are automatically converted into localized, human-readable titles on the HUD (e.g., `cheesecake_mocha.png` -> "Cheesecake Mocha").
 - **Statue Performance & AI Toggling**
   - Hamsters spawned with their AI disabled will now completely freeze their animation playback and no longer emit ambient idle squeaks. This attempts to reduce client-side rendering lag when hundreds of thousands of hamsters are on screen for testing, but Java itself struggles with that many cubes on screen, so it's still laggy if you try to look at 2 million+ hamsters simultaneously.
