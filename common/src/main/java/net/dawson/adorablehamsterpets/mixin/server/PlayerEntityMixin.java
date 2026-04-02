@@ -1087,16 +1087,39 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         List<HamsterEntity> toRescue = new ArrayList<>();
 
-        // 1. Grab hamsters left behind at the old location
+        // Grab hamsters left behind at the old location
         Box oldSearchBox = new Box(oldPos.x - 32, oldPos.y - 32, oldPos.z - 32, oldPos.x + 32, oldPos.y + 32, oldPos.z + 32);
-        toRescue.addAll(oldWorld.getEntitiesByClass(HamsterEntity.class, oldSearchBox, this::ahp$isValidRescueTarget));
+        List<HamsterEntity> oldWorldHamsters = oldWorld.getEntitiesByClass(HamsterEntity.class, oldSearchBox, entity -> true);
 
-        // 2. Grab hamsters who might have already teleported to the new location
+        // Grab hamsters who might have already teleported to the new location
         Box newSearchBox = new Box(this.getX() - 32, this.getY() - 32, this.getZ() - 32, this.getX() + 32, this.getY() + 32, this.getZ() + 32);
-        List<HamsterEntity> newWorldHamsters = newWorld.getEntitiesByClass(HamsterEntity.class, newSearchBox, this::ahp$isValidRescueTarget);
+        List<HamsterEntity> newWorldHamsters = newWorld.getEntitiesByClass(HamsterEntity.class, newSearchBox, entity -> true);
 
-        for (HamsterEntity h : newWorldHamsters) {
-            if (!toRescue.contains(h)) toRescue.add(h);
+        // Combine unique candidates
+        List<HamsterEntity> allCandidates = new ArrayList<>(oldWorldHamsters);
+        for (HamsterEntity hamster : newWorldHamsters) {
+            if (!allCandidates.contains(hamster)) {
+                allCandidates.add(hamster);
+            }
+        }
+
+        // Identify primary targets
+        for (HamsterEntity hamster : allCandidates) {
+            if (this.ahp$isValidRescueTarget(hamster)) {
+                toRescue.add(hamster);
+            }
+        }
+
+        // Identify dependent babies
+        Set<UUID> rescuedUuids = new HashSet<>();
+        for (HamsterEntity hamster : toRescue) {
+            rescuedUuids.add(hamster.getUuid());
+        }
+
+        for (HamsterEntity hamster : allCandidates) {
+            if (hamster.isBaby() && hamster.getParentUuid() != null && rescuedUuids.contains(hamster.getParentUuid()) && !toRescue.contains(hamster)) {
+                toRescue.add(hamster);
+            }
         }
 
         if (toRescue.isEmpty()) return;

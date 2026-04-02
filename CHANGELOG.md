@@ -124,6 +124,9 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - Added a brand new `anim_hamster_cheek_unload` animation used for gifting items, complete with item and spit particle effects.
   - Added 4 new scratching sound variations for the cleaning animation, and switched to keyframes for the SFX to make it less repetitive and more realistic. This also has the side effect of muting the sound effect if the hamster is not on screen, and thus not being rendered. This means you will no longer hear nearby hamsters cleaning unless you can also see them.
   - Added dynamic item sounds (clink, squish, thud, etc.) to the new gifting sequence.
+- **Teleport Rescue Protocol**
+  - Overhauled how hamsters follow you across vast distances or dimensions (e.g., when using Waystones).
+  - Instead of relying on their tiny legs and pathfinding AI to catch up, your player code will now safely scoop up any actively following hamsters (and their babies if the babies are following them), hold them in a little NBT pocket while the world loads, and drop them at your new location 0.75 seconds later.
 - **Advancement: Carat Confusion**
   - Triggers when a hamster leads you to Gold Ore instead of Diamond.
 - **Advancement: Load-Bearing Human**
@@ -241,8 +244,8 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
 - **Hamster Bed Linking**
   - Reduced the maximum stack size of Hamster Beds to 1. Not only does this feel like the way it always should have been, it resolves an issue where holding a stack of beds and right-clicking a hamster would link the entire stack simultaneously.
 - **Invisible Hamster Teleport Glitch**
-  - Dramatically overhauled how hamsters follow you when you teleport (even with mods like Waystones). Instead of relying on their own AI to catch up, the player will now safely scoop up any following hamsters, hold them in transit while the world loads, and drop them at your new location 0.75 seconds later.
-  - This solves the issue that all vanilla pets have where they will either get left behind in unloaded chunks and be unable to follow since their AI stops ticking, or 10% percent of the time they will successfully teleport but remain completely invisible to the client until you relog due to... *Minecraft*.
+  - Solved a vanilla Minecraft issue where hamsters (and other pets) get left behind in unloaded chunks because their AI stops ticking before they can teleport.
+  - Fixed a related bug where teleporting hamsters would sometimes successfully arrive but remain completely invisible to the client until you relogged. The new Teleport Rescue Protocol bypasses these vanilla quirks entirely.
 - **Ghost Bed Crash**
   - Fixed a server crash that occurred when a hamster's linked bed was destroyed while the hamster was sleeping or unloaded. Hamsters will now detect the missing bed, cancel their sleep effects, and unlink themselves to prevent future issues.
 - **Bed State**
