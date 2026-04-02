@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
+import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
 import net.minecraft.advancement.Advancement;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
@@ -103,12 +104,12 @@ public class PlayerCommandUtil {
         int count = 0;
 
         if (targets.isEmpty()) {
-            HamsterEntity nearest = getNearestHamster(source.getPlayerOrThrow());
-            if (nearest == null) {
+            HamsterEntity target = getTargetHamster(source.getPlayerOrThrow());
+            if (target == null) {
                 source.sendFeedback(() -> Text.literal("No hamster found within 5 blocks. Look closer or specify a target.").formatted(Formatting.RED), false);
                 return 0;
             }
-            nearest.timesBred = 0;
+            target.timesBred = 0;
             count++;
         } else {
             for (Entity entity : targets) {
@@ -130,8 +131,8 @@ public class PlayerCommandUtil {
      * @param source  The command source invoking this command.
      * @param amount  The desired age amount.
      * @param unit    The unit of time ("days", "months", "years").
-     * @param targets The collection of entities to apply this age to. If empty, the command
-     *                will target the absolute nearest hamster within a 5-block radius.
+     * @param targets The collection of entities to apply this age to. If empty,
+     *                the command will target the hamster being looked at, or the nearest.
      * @return The number of hamsters that were successfully updated.
      */
     public static int executeSetAge(ServerCommandSource source, double amount, String unit, Collection<? extends Entity> targets) throws CommandSyntaxException {
@@ -146,12 +147,12 @@ public class PlayerCommandUtil {
         int count = 0;
 
         if (targets.isEmpty()) {
-            HamsterEntity nearest = getNearestHamster(source.getPlayerOrThrow());
-            if (nearest == null) {
+            HamsterEntity target = getTargetHamster(source.getPlayerOrThrow());
+            if (target == null) {
                 source.sendFeedback(() -> Text.literal("No hamster found within 5 blocks. Look closer or specify a target.").formatted(Formatting.RED), false);
                 return 0;
             }
-            nearest.totalAgeTicks = newAgeTicks;
+            target.totalAgeTicks = newAgeTicks;
             count++;
         } else {
             for (Entity entity : targets) {
@@ -184,24 +185,37 @@ public class PlayerCommandUtil {
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static HamsterEntity getNearestHamster(ServerPlayerEntity player) {
+    private static HamsterEntity getTargetHamster(ServerPlayerEntity player) {
         List<HamsterEntity> nearby = player.getWorld().getEntitiesByClass(
                 HamsterEntity.class,
                 player.getBoundingBox().expand(5.0),
                 e -> true
         );
 
+        HamsterEntity lookedAt = null;
+        double minLookedAtDistSq = Double.MAX_VALUE;
+
         HamsterEntity nearest = null;
         double minDistanceSq = Double.MAX_VALUE;
 
         for (HamsterEntity h : nearby) {
             double distSq = h.squaredDistanceTo(player);
+
+            // Prioritize hamsters player is actively looking at
+            if (EntityTargetingUtil.isLookingAt(player, h, 10.0, 0.2)) {
+                if (distSq < minLookedAtDistSq) {
+                    minLookedAtDistSq = distSq;
+                    lookedAt = h;
+                }
+            }
+
+            // Track nearest overall as fallback
             if (distSq < minDistanceSq) {
                 minDistanceSq = distSq;
                 nearest = h;
             }
         }
 
-        return nearest;
+        return lookedAt != null ? lookedAt : nearest;
     }
 }
