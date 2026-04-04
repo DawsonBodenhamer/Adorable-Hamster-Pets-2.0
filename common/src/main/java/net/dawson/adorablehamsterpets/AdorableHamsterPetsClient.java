@@ -8,6 +8,7 @@ import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.networking.NetworkManager;
+import dev.architectury.platform.Platform;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.client.rendering.ColorHandlerRegistry;
@@ -25,6 +26,8 @@ import net.dawson.adorablehamsterpets.client.event.AHPClientScreenEvents;
 import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconAnimator;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
+import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
+import net.dawson.adorablehamsterpets.client.perk.PlayerPerkManager;
 import net.dawson.adorablehamsterpets.client.render.LeafJiggleManager;
 import net.dawson.adorablehamsterpets.client.sound.HamsterTreeLoopSoundInstance;
 import net.dawson.adorablehamsterpets.config.*;
@@ -34,6 +37,7 @@ import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterTreeSearcher
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
+import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.dawson.adorablehamsterpets.networking.payload.*;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
@@ -45,6 +49,7 @@ import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.entity.player.PlayerEntity;
@@ -56,10 +61,11 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import org.joml.Quaternionf;
 
 import java.util.*;
 
@@ -68,6 +74,9 @@ public class AdorableHamsterPetsClient {
     // --- Rendering ---
     private static final Set<Integer> renderedHamsterIdsThisTick = new HashSet<>();
     private static final Set<Integer> renderedHamsterIdsLastTick = new HashSet<>();
+
+    // --- Compatibility ---
+    private static final boolean IS_SKIN_LAYERS_3D_LOADED = Platform.isModLoaded("skinlayers3d");
 
     // --- Guidebook ---
     private static int clientSessionTimer = 0;
@@ -81,6 +90,8 @@ public class AdorableHamsterPetsClient {
     private static int dismountDebounceTicks = 0;
     private static final int DISMOUNT_DEBOUNCE_DEFAULT = 5;
     private static int dismountKeyHeldTicks = 0;
+    private static int crownDoubleTapTimer = 0;
+    private static boolean isWaitingForCrownSecondTap = false;
 
     // --- Announcement System ---
     private static final AnnouncementHudRenderer announcementHudRenderer = new AnnouncementHudRenderer();
@@ -114,6 +125,11 @@ public class AdorableHamsterPetsClient {
                 ModBlocks.WILD_GREEN_BEAN_BUSH.get(),
                 ModBlocks.HAMSTER_BED.get());
 
+        // --- Mod Compatibility Logging ---
+        if (IS_SKIN_LAYERS_3D_LOADED) {
+            AdorableHamsterPets.LOGGER.info("[AHP Client] 3D Skin Layers detected. Adjusting Supporter Crown radius.");
+        }
+
         // --- Config Reload Listener ---
         ConfigApiJava.event().onUpdateClient((id, config) -> {
             if (id.getNamespace().equals(AdorableHamsterPets.MOD_ID)) {
@@ -121,6 +137,13 @@ public class AdorableHamsterPetsClient {
                 ConfigDataCache.parseConfig();
                 ModEntitySpawns.parseConfig();
                 ModWorldGeneration.parseConfig();
+
+                // Sync crown theme preference to server
+                if (MinecraftClient.getInstance().player != null) {
+                    int payloadTheme = Configs.AHP.showMyCrown ? Configs.AHP.crownTheme.get().ordinal() : -1;
+                    NetworkManager.sendToServer(new UpdateCrownThemePayload(payloadTheme));
+                }
+
                 AdorableHamsterPets.LOGGER.info("Reloaded Adorable Hamster Pets config caches on client.");
             }
         });
@@ -141,11 +164,15 @@ public class AdorableHamsterPetsClient {
         // --- Register Client Commands ---
         ClientCommandRegistrationEvent.EVENT.register(ModClientCommands::register);
 
-        // --- Timers Reset ---
+        // --- Timers Reset & Sync ---
         ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(player -> {
             clientSessionTimer = 0;
             ClientParticleManager.INSTANCE.clear();
             pendingGuidebookEffects = false;
+
+            // Sync initial crown theme preference to server
+            int payloadTheme = Configs.AHP.showMyCrown ? Configs.AHP.crownTheme.get().ordinal() : -1;
+            NetworkManager.sendToServer(new UpdateCrownThemePayload(payloadTheme));
         });
 
         // --- Register Tree Heist Sound & Jiggle Logic ---
@@ -192,6 +219,9 @@ public class AdorableHamsterPetsClient {
             }
             return EventResult.pass();
         });
+
+        // --- Perk System ---
+        PlayerPerkManager.INSTANCE.refreshManifestOnce();
     }
 
     /**
@@ -308,6 +338,58 @@ public class AdorableHamsterPetsClient {
             }
         }
 
+        // --- Handle Toggle Crown Keybind ---
+        if (crownDoubleTapTimer > 0) {
+            crownDoubleTapTimer--;
+            if (crownDoubleTapTimer == 0 && isWaitingForCrownSecondTap) {
+                // --- Single Tap: Cycle Color ---
+                isWaitingForCrownSecondTap = false;
+
+                PixieDustParticleTheme[] themes = PixieDustParticleTheme.values();
+                int nextOrdinal = (Configs.AHP.crownTheme.get().ordinal() + 1) % themes.length;
+                PixieDustParticleTheme nextTheme = themes[nextOrdinal];
+
+                // Update config using the accessor
+                @SuppressWarnings("unchecked")
+                ValidatedFieldAccessor<PixieDustParticleTheme> accessor = (ValidatedFieldAccessor<PixieDustParticleTheme>) (Object) Configs.AHP.crownTheme;
+                accessor.adorablehamsterpets$set(nextTheme);
+                Configs.AHP.save();
+
+                // Broadcast to server if currently visible
+                if (Configs.AHP.showMyCrown) {
+                    NetworkManager.sendToServer(new UpdateCrownThemePayload(nextOrdinal));
+                }
+
+                client.player.sendMessage(Text.translatable("message.adorablehamsterpets.supporter_crown_color_changed", Text.translatable(nextTheme.translationKey())).formatted(Formatting.WHITE), true);
+            }
+        }
+
+        // Consume all presses from buffer to handle rapid clicking
+        int crownPresses = 0;
+        while (ModKeyBindings.TOGGLE_SUPPORTER_CROWN_KEY.wasPressed()) {
+            crownPresses++;
+        }
+
+        if (crownPresses > 0) {
+            if (crownPresses >= 2 || (isWaitingForCrownSecondTap && crownDoubleTapTimer > 0)) {
+                // --- Double Tap: Toggle Visibility ---
+                isWaitingForCrownSecondTap = false;
+                crownDoubleTapTimer = 0;
+
+                Configs.AHP.showMyCrown = !Configs.AHP.showMyCrown;
+                Configs.AHP.save();
+
+                int payloadTheme = Configs.AHP.showMyCrown ? Configs.AHP.crownTheme.get().ordinal() : -1;
+                NetworkManager.sendToServer(new UpdateCrownThemePayload(payloadTheme));
+
+                client.player.sendMessage(Text.translatable(Configs.AHP.showMyCrown ? "message.adorablehamsterpets.supporter_crown_enabled" : "message.adorablehamsterpets.supporter_crown_disabled").formatted(Formatting.GOLD), true);
+            } else {
+                // First tap detected: Start double-tap listening window (10 ticks = 0.5 seconds)
+                isWaitingForCrownSecondTap = true;
+                crownDoubleTapTimer = 10;
+            }
+        }
+
         // --- 4. Render State Tracking ---
         // Determine which hamsters started and stopped rendering this tick
         Set<Integer> startedRendering = new HashSet<>(renderedHamsterIdsThisTick);
@@ -349,6 +431,59 @@ public class AdorableHamsterPetsClient {
             } else if (pendingGuidebookEffectsTimer <= 0) {
                 // Took too long, cancel effects
                 pendingGuidebookEffects = false;
+            }
+        }
+
+        // --- 9. Supporter Crown Rendering ---
+        if (client.world != null && !client.isPaused() && Configs.AHP.enableSupporterCrown) {
+            boolean isFirstPerson = client.options.getPerspective().isFirstPerson();
+
+            for (AbstractClientPlayerEntity player : client.world.getPlayers()) {
+                if (!player.isAlive() || player.isSpectator()) continue;
+
+                // Hide from local player if in first person and config is off
+                if (player == client.player && !Configs.AHP.showCrownInFirstPerson && isFirstPerson) continue;
+
+                // Get theme from synced DataTracker
+                int themeOrdinal = ((PlayerEntityAccessor) player).ahp$getCrownTheme();
+
+                // If themeOrdinal is < 0, it means the player toggled their crown off
+                if (themeOrdinal < 0) continue;
+
+                if (PlayerPerkManager.INSTANCE.hasPerk(player.getGameProfile().getName(), "supporter_crown")) {
+                    // Use player's lerped neck position as pivot point for rotation
+                    double pivotOffset = (player.isSneaking() ? 1.2375 : 1.5) * player.getScale();
+                    Vec3d pivotPos = player.getLerpedPos(1.0f).add(0, pivotOffset, 0);
+
+                    // Create a 3D rotation based on the player's head yaw and pitch
+                    Quaternionf headRotation = new Quaternionf()
+                            .rotateY(-player.headYaw * MathHelper.RADIANS_PER_DEGREE)
+                            .rotateX(player.getPitch() * MathHelper.RADIANS_PER_DEGREE);
+
+                    PixieDustParticleTheme theme = PixieDustParticleTheme.values()[MathHelper.clamp(themeOrdinal, 0, PixieDustParticleTheme.values().length - 1)];
+                    SimpleParticleType particleType = ModParticles.PIXIE_DUST.get(theme).get();
+
+                    // Add distance between the eyes and the neck to config offset
+                    double adjustedYOffset = Configs.AHP.crownYOffset.get() + (player.getStandingEyeHeight() - pivotOffset);
+
+                    // Add 0.1 to radius if 3D Skin Layers is installed
+                    double adjustedRadius = Configs.AHP.crownRadius.get() + (IS_SKIN_LAYERS_3D_LOADED ? 0.1 : 0.0);
+
+                    ParticleEffectsUtil.spawnOrientedSpinningRing(
+                            client.world,
+                            pivotPos,
+                            headRotation,
+                            particleType,
+                            Configs.AHP.crownParticleCount.get(),
+                            adjustedRadius,
+                            Configs.AHP.crownHorizontalThickness.get(),
+                            Configs.AHP.crownVerticalThickness.get(),
+                            0.3,
+                            0.03,
+                            0.007,
+                            adjustedYOffset
+                    );
+                }
             }
         }
     }

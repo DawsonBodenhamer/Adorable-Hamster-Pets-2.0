@@ -6,6 +6,8 @@ import net.dawson.adorablehamsterpets.block.ModBlockEntities;
 import net.dawson.adorablehamsterpets.block.client.HamsterBedRenderer;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
+import net.dawson.adorablehamsterpets.client.particle.PixieDustParticle;
+import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
 import net.dawson.adorablehamsterpets.client.render.LeafJiggleRenderer;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
@@ -59,11 +61,16 @@ public final class AdorableHamsterPetsNeoForgeClient {
         );
     }
 
+    // --- Register Particle Factory ---
     @SubscribeEvent
     public static void onRegisterParticleProviders(RegisterParticleProvidersEvent event) {
-        // Register particle factory for all variants.
         for (RegistrySupplier<SimpleParticleType> particleSupplier : ModParticles.BEDDING_PARTICLES.values()) {
             event.registerSpriteSet(particleSupplier.get(), HamsterBeddingParticle.Factory::new);
+        }
+
+        for (PixieDustParticleTheme theme : PixieDustParticleTheme.values()) {
+            RegistrySupplier<SimpleParticleType> supplier = ModParticles.PIXIE_DUST.get(theme);
+            event.registerSpriteSet(supplier.get(), provider -> new PixieDustParticle.Factory(provider, theme));
         }
     }
 
@@ -77,6 +84,7 @@ public final class AdorableHamsterPetsNeoForgeClient {
 
         // Use the event to register the key mapping
         event.register(ModKeyBindings.THROW_HAMSTER_KEY);
+        event.register(ModKeyBindings.TOGGLE_SUPPORTER_CROWN_KEY);
         event.register(ModKeyBindings.DISMOUNT_HAMSTER_KEY);
         event.register(ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY);
         event.register(ModKeyBindings.RIDE_HAMSTER_KEY);

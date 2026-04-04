@@ -123,7 +123,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
             return;
         }
 
-        boolean shouldTeleport = this.hamster.shouldTryTeleportToOwner();
+        boolean shouldTeleport = HamsterMovementUtil.shouldTeleportTo(this.hamster, owner);
 
         // --- Facing Logic ---
         if (!shouldTeleport) {
@@ -139,7 +139,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
 
             // --- Movement Execution ---
             if (shouldTeleport) {
-                this.hamster.tryTeleportToOwner();
+                HamsterMovementUtil.tryTeleportTo(this.hamster, owner);
             } else {
                 if (this.hamster.hasGreenBeanBuff()) {
                     // Zoomies erratic pathfinding

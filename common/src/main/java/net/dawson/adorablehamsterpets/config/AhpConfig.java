@@ -18,6 +18,7 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedFloat;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
+import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
 import net.dawson.adorablehamsterpets.networking.payload.RequestGuidebookPayload;
 import net.dawson.adorablehamsterpets.networking.payload.ResetHeistHistoryPayload;
 import net.minecraft.client.MinecraftClient;
@@ -121,6 +122,62 @@ public class AhpConfig extends Config {
             .decoration(TextureIds.INSTANCE.getDECO_LINK())
             .build(new ClickEvent(ClickEvent.Action.OPEN_URL,
                     "https://www.fortheking.design"));
+
+    // --- Supporter Perks ---
+    @Translatable.Name("Supporter Perks")
+    @Translatable.Desc("For the generous souls who keep the hamster wheels spinning. Here are your exclusive cosmetics settings.")
+    public ConfigGroup supporterPerks = new ConfigGroup("supporterPerks", true);
+
+    @Translatable.Name("Particle Crown")
+    @Translatable.Desc("Settings for the majestic, spinning ring of pixie dust hovering above your head.")
+    public ConfigGroup supporterParticleCrown = new ConfigGroup("supporterParticleCrown", true);
+
+    @NonSync
+    @Translatable.Name("Enable Crowns")
+    @Translatable.Desc("Master switch. Turn this off if you hate fun. Disables all crowns, even those worn by others.")
+    public boolean enableSupporterCrown = true;
+
+    @NonSync
+    @Translatable.Name("Show My Crown")
+    @Translatable.Desc("Toggle this off if you want to hide your own crown from yourself and everyone else. Only affects your own crown.")
+    public boolean showMyCrown = true;
+
+    @NonSync
+    @Translatable.Name("Show in First Person")
+    @Translatable.Desc("Should your own crown block your vision while you're trying to mine? Turn on to flex on yourself. Only affects your own crown.")
+    public boolean showCrownInFirstPerson = false;
+
+    @NonSync
+    @Translatable.Name("Color Theme")
+    @Translatable.Desc("Pick your own crown's specific color. Other players will instantly see this color change above your head. Only affects your own crown.")
+    public ValidatedEnum<PixieDustParticleTheme> crownTheme = new ValidatedEnum<>(PixieDustParticleTheme.GOLD);
+
+    @NonSync
+    @Translatable.Name("Particle Count")
+    @Translatable.Desc("How many sparkly particles to spawn per tick (20 ticks per second). Makes the crown thicker or thinner. Affects all crowns.")
+    public ValidatedInt crownParticleCount = new ValidatedInt(10, 30, 1);
+
+    @NonSync
+    @Translatable.Name("Radius")
+    @Translatable.Desc("How wide (in blocks) the halo of superiority extends around your head. Affects all crowns.")
+    public ValidatedDouble crownRadius = new ValidatedDouble(0.3, 1.0, 0.1);
+
+    @NonSync
+    @Translatable.Name("Thickness")
+    @Translatable.Desc("How thick the crown is from the inner edge (the inside rim around your head) to the outer edge. Affects all crowns.")
+    public ValidatedDouble crownHorizontalThickness = new ValidatedDouble(0.02, 1.0, 0.0);
+
+    @NonSync
+    @Translatable.Name("Height")
+    @Translatable.Desc("How tall the crown is from the bottom edge to the top edge. Increase this to make the crown less of a hula-hoop and more of a cylinder. Affects all crowns.")
+    public ValidatedDouble crownVerticalThickness = new ValidatedDouble(0.2, 1.0, 0.0);
+
+    @NonSync
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Vertical Offset")
+    @Translatable.Desc("Nudge the crown up or down. Move it high enough and you'll have a halo. Vanity for the win. Affects all crowns.")
+    public ValidatedDouble crownYOffset = new ValidatedDouble(0.25, 2.0, -2.0);
 
     // --- UI & Quality of Life ---
     @Translatable.Name("UI & Quality of Life")

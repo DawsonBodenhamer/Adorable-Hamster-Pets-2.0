@@ -40,23 +40,17 @@ public class HamsterPlacementUtil {
      * @param hamster The hamster to check.
      */
     public static void trySuffocationRescue(HamsterEntity hamster) {
-        // Only run if grace period is active AND the hamster is actually inside a wall
+        // Only run if grace period active and inside wall
         if (hamster.suffocationGracePeriod > 0 && hamster.isInsideWall()) {
             World world = hamster.getWorld();
             BlockPos currentPos = hamster.getBlockPos();
 
-            // Use findSafeSpawnPosition with a small radius (3 blocks)
+            // Small radius
             Optional<BlockPos> safePosOpt = findSafeSpawnPosition(currentPos, world, 3, hamster);
 
             safePosOpt.ifPresent(safePos -> {
-                // Found a safe spot, teleport hamster
-                hamster.refreshPositionAndAngles(
-                        safePos.getX() + 0.5,
-                        safePos.getY(),
-                        safePos.getZ() + 0.5,
-                        hamster.getYaw(),
-                        hamster.getPitch()
-                );
+                // Found a safe spot, request teleport to sync with client
+                hamster.requestTeleport(safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5);
 
                 // Stop momentum
                 hamster.setVelocity(0, 0, 0);
@@ -67,6 +61,14 @@ public class HamsterPlacementUtil {
 
                 // End grace period immediately
                 hamster.suffocationGracePeriod = 0;
+
+                // Force explicit delayed positional update to prevent Server/Client desync
+                long currentWorldTime = world.getTime();
+                hamster.scheduleTask(currentWorldTime + 5, "sledgehammer_teleport_sync", () -> {
+                    if (hamster.isAlive() && !hamster.isRemoved()) {
+                        hamster.requestTeleport(hamster.getX(), hamster.getY(), hamster.getZ());
+                    }
+                });
             });
         }
     }

@@ -1,12 +1,21 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.FuzzyTargeting;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 /**
  * Encapsulates movement mathematics for fleeing and taunting behaviors.
@@ -99,5 +108,59 @@ public final class HamsterMovementUtil {
                 hamster.isPlayingTag() ||
                 hamster.isCelebratingBaby() ||
                 hamster.isWanderModeActive();
+    }
+
+    /**
+     * Determines if the hamster should teleport to the target.
+     * Checks if the hamster is not leashed, not a passenger, and is far enough away.
+     *
+     * @param hamster The hamster to check.
+     * @param target  The target entity to follow.
+     * @return True if the hamster should teleport.
+     */
+    public static boolean shouldTeleportTo(HamsterEntity hamster, Entity target) {
+        return !hamster.isLeashed() && !hamster.hasVehicle() && hamster.squaredDistanceTo(target) > 144.0;
+    }
+
+    /**
+     * Attempts to safely teleport the hamster to the target entity using a safe placement algorithm.
+     * Intercepts long-distance AI teleports to prevent vanilla chunk tracking race conditions causing Server/Client desync.
+     *
+     * @param hamster The hamster to teleport.
+     * @param target  The target entity to teleport to.
+     */
+    public static void tryTeleportTo(HamsterEntity hamster, Entity target) {
+        World world = hamster.getWorld();
+        if (world.isClient()) return;
+
+        // --- Sledgehammer Server/Client Sync ---
+        // Force Pocket Rescue Protocol for teleports more than 32 blocks
+        if (Configs.AHP.enableTeleportRescue && hamster.squaredDistanceTo(target) > 1024.0) {
+            PlayerEntity ownerPlayer = null;
+
+            if (target instanceof PlayerEntity playerTarget) {
+                ownerPlayer = playerTarget;
+            } else if (target instanceof HamsterEntity parentHamster && parentHamster.getOwner() instanceof PlayerEntity parentOwner) {
+                ownerPlayer = parentOwner;
+            }
+
+            if (ownerPlayer instanceof PlayerEntityAccessor accessor) {
+                NbtCompound nbt = new NbtCompound();
+                hamster.writeNbt(nbt); // Save full state
+                accessor.ahp$getInTransitHamsters().add(nbt);
+                accessor.ahp$setTransitTimer(15); // Wait 15 ticks for client to load
+                hamster.discard();
+                AdorableHamsterPets.LOGGER.debug("[Teleport Rescue Protocol] Hamster {} intercepted. (Without this, any babies currently following {} would now be invisible).", hamster.getId(), hamster.getId());
+                return; // Abort vanilla teleport
+            }
+        }
+
+        // --- Standard Vanilla Teleport ---
+        Optional<BlockPos> safePosOpt = HamsterPlacementUtil.findSafeSpawnPosition(target.getBlockPos(), world, 3, hamster);
+
+        safePosOpt.ifPresent(safePos -> {
+            hamster.refreshPositionAndAngles(safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5, hamster.getYaw(), hamster.getPitch());
+            hamster.getNavigation().stop();
+        });
     }
 }

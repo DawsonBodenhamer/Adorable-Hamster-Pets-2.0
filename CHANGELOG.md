@@ -83,7 +83,8 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - When untamed, babies no longer flee from players, making them easier to manage.
 - **Parent-Following**
   - Babies will now randomly select a parent to follow until adulthood, instead of following their owner.
-  - If already tamed one of the new babies and you would like it to follow you immediately, you can break its connection to the parent by right-clicking it with a Lure Item (Cheese by default). Note that you must tame it first, or your player will just start eating the cheese.
+  - Wild baby hamsters will switch to following the player if their parent is currently mounted on the player's shoulder. They will automatically resume following the parent once it is dismounted.
+  - If you want the baby to follow you instead, you must first tame it, then you can break its connection to the parent by right-clicking it with a Lure Item (Cheese by default).
   - Added a config toggle to disable the action bar message that warns you when a newly tamed baby hamster refuses to follow you because it's still attached to its parent.
 - **Jade Integration**
   - Added comprehensive Jade overlay integration that reveals a hamster's exact genetic makeup (Base Palette, Wild/Breeding Overlays, and Eye Genotype) when you look at them.
@@ -112,6 +113,18 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
     - `Enable GUI Renaming`: Master toggle for the feature.
     - `Consume Name Tag`: Forces players to sacrifice a Name Tag from their inventory (or the hamster's cheeks) to finalize the rename.
     - `Pencil Icon Placement`: Allows swapping the icon to the left or right of the text for those who read in different directions.
+- **Pixie-Dust Crown for Supporters**
+  - Added a dynamic, spinning, bobbing particle crown that renders above the heads of mod supporters. Uses a custom `Pixie Dust` particle system featuring a dense, short-lived, shimmering effect.
+  - Includes 5 different themes (Gold, Crimson, Lavender, Ice, Emerald) by manipulating the HSB color values of a single grayscale texture at runtime.
+  - Automatically hides in first-person view to prevent visual obstruction.
+  - Powered by a remote manager that pulls configuration data asynchronously from GitHub and caches it for offline use.
+  - **Configurable Aesthetics**
+    - Added a new `Supporter Perks` config group.
+    - Added a global toggle to disable rendering of all crowns if you hate fun.
+    - Added a local toggle to allow rendering your own crown in first-person mode if you want to both obstruct your view and thrill yourself.
+    - Added sliders for particle count, crown radius, crown height, crown thickness, and vertical offset.
+    - Added a new "Toggle Supporter Crown" keybind allowing users to show/hide their own crown from both themselves and the rest of the server. A single press cycles the crown to the next available color theme, while a double-tap toggles the crown's visibility.
+    - Supporters can pick their own crown color. Your preference syncs instantly to all other players looking at you utilizing `DataTracker` networking.
 - **Tag Mini-Game**
   - Hamsters can now initiate a playful game of tag. If you maintain eye contact with a hamster for a few seconds, it will squeak and excitedly run away.
   - **The Chase:** The hamster will flee if you get too close and stop to playfully taunt you if you fall too far behind.

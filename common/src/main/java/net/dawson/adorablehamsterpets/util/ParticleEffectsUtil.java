@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.ai.pathing.PathNode;
@@ -11,6 +12,8 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /**
  * Centralized utility for spawning particle effects.
@@ -253,6 +256,55 @@ public class ParticleEffectsUtil {
     }
 
     /**
+     * Spawns a spinning ring of particles that is oriented in 3D space based on a given rotation.
+     * <p>
+     * Useful for tying particle rings to an entity's head or body rotation,
+     * allowing the ring to tilt and pan naturally with the entity.
+     */
+    public static void spawnOrientedSpinningRing(World world, Vec3d centerPos, Quaternionf rotation, ParticleEffect particle,
+                                                 int count, double radius, double horizontalRingThickness, double verticalRingThickness,
+                                                 double rotationSpeed, double bobbingHeight, double upwardVelocity, double localYOffset) {
+
+        double timeOffset = world.getTime() * rotationSpeed;
+        double bobbingTimeOffset = world.getTime() * (rotationSpeed / 1.5);
+        double angleStep = (Math.PI * 2) / count;
+
+        for (int i = 0; i < count; i++) {
+            double angle = timeOffset + (i * angleStep);
+            double currentRadius = radius + (world.getRandom().nextDouble() - 0.5) * horizontalRingThickness;
+            double verticalScatter = (world.getRandom().nextDouble() - 0.5) * verticalRingThickness;
+
+            // 1. Calculate offset in local, un-rotated space
+            float xOffset = (float) (Math.cos(angle) * currentRadius);
+            // Apply local Y offset, bobbing, and vertical scatter to the local Y axis
+            float yOffset = (float) (localYOffset + Math.sin(bobbingTimeOffset) * bobbingHeight + verticalScatter);
+            float zOffset = (float) (Math.sin(angle) * currentRadius);
+
+            Vector3f offset = new Vector3f(xOffset, yOffset, zOffset);
+
+            // 2. Apply the 3D rotation (Tilts the ring to match head pitch/yaw)
+            offset.rotate(rotation);
+
+            // 3. Add to world center position
+            double x = centerPos.getX() + offset.x();
+            double y = centerPos.getY() + offset.y();
+            double z = centerPos.getZ() + offset.z();
+
+            // 4. Rotate velocity vector so "upward" matches the oriented "up"
+            Vector3f vel = new Vector3f(0.0f, (float) upwardVelocity, 0.0f);
+            if (upwardVelocity != 0.0) {
+                vel.rotate(rotation);
+            }
+
+            if (world instanceof ServerWorld serverWorld) {
+                serverWorld.spawnParticles(particle, x, y, z, 0, vel.x(), vel.y(), vel.z(), 1.0);
+            } else {
+                world.addParticle(particle, x, y, z, vel.x(), vel.y(), vel.z());
+            }
+        }
+    }
+
+    /**
      * Spawns particles in a spherical shell pattern around a center point.
      * Useful for highlighting block boundaries or creating magic shields.
      *
@@ -296,6 +348,37 @@ public class ParticleEffectsUtil {
                         center.y + offsetY,
                         center.z + offsetZ,
                         0, 0, 0);
+            }
+        }
+    }
+
+    /**
+     * Spawns a cloud of particles around a hamster that steadily decays in count over time.
+     *
+     * @param entity        The hamster entity to spawn particles around.
+     * @param particle      The particle effect to spawn.
+     * @param durationTicks How long the effect should last.
+     * @param startCount    The number of particles to spawn on the first tick.
+     * @param spreadXZ      The horizontal spread radius.
+     * @param spreadY       The vertical spread radius.
+     * @param yOffset       The vertical offset from the entity's feet.
+     */
+    public static <T extends ParticleEffect> void spawnDecayingParticleCloud(HamsterEntity entity, T particle, int durationTicks, int startCount, double spreadXZ, double spreadY, double yOffset) {
+        if (entity.getWorld().isClient()) return;
+
+        long currentTime = entity.getWorld().getTime();
+
+        for (int i = 0; i < durationTicks; i++) {
+            int ticksFromNow = i;
+            int countForTick = (int) Math.round(startCount * (1.0 - ((double) i / durationTicks)));
+
+            if (countForTick > 0) {
+                entity.scheduleTask(currentTime + ticksFromNow, "decay_cloud_" + particle.getClass().getSimpleName(), () -> {
+                    if (entity.isAlive() && !entity.isRemoved()) {
+                        Vec3d center = new Vec3d(entity.getX(), entity.getY() + yOffset, entity.getZ());
+                        spawnParticles(entity.getWorld(), center, particle, countForTick, spreadXZ, spreadY, spreadXZ, 0.0);
+                    }
+                });
             }
         }
     }

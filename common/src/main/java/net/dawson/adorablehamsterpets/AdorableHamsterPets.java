@@ -214,7 +214,12 @@ public class AdorableHamsterPets {
 		PlayerEntityAccessor oldPlayerAccessor = (PlayerEntityAccessor) oldPlayer;
 		PlayerEntityAccessor newPlayerAccessor = (PlayerEntityAccessor) newPlayer;
 
-		// --- 1. Handle "Keep on Shoulder" Scenario ---
+		// --- 1. Transfer Transient & Tracking Data ---
+		newPlayerAccessor.ahp$getInTransitHamsters().addAll(oldPlayerAccessor.ahp$getInTransitHamsters());
+		newPlayerAccessor.ahp$setTransitTimer(oldPlayerAccessor.ahp$getTransitTimer());
+		newPlayerAccessor.ahp$setCrownTheme(oldPlayerAccessor.ahp$getCrownTheme());
+
+		// --- 2. Handle "Keep on Shoulder" Scenario ---
 		if (Configs.AHP.keepHamstersOnShoulderOnDeath) {
 			newPlayerAccessor.adorablehamsterpets$getMountOrderQueue().addAll(oldPlayerAccessor.adorablehamsterpets$getMountOrderQueue());
 			for (ShoulderLocation location : ShoulderLocation.values()) {
@@ -227,7 +232,7 @@ public class AdorableHamsterPets {
 			return;
 		}
 
-		// --- 2. Handle Spawning at Death Location (Default) ---
+		// --- 3. Handle Spawning at Death Location (Default) ---
 		ServerWorld world = oldPlayer.getServerWorld();
 		BlockPos deathPos = oldPlayer.getBlockPos();
 		boolean isVoidDeath = deathPos.getY() < world.getBottomY();

@@ -1,7 +1,10 @@
 package net.dawson.adorablehamsterpets.entity.AI;
 
+import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
+import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.HamsterState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.mob.HostileEntity;
@@ -11,6 +14,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.UUID;
 
 public class HamsterSleepGoal extends Goal {
@@ -240,6 +244,29 @@ public class HamsterSleepGoal extends Goal {
             if (parent != null && parent.isAlive()) {
                 // Wake up if parent is more than 4 blocks away
                 return this.hamster.squaredDistanceTo(parent) > 16.0;
+            } else {
+                // Check if parent is on a player's shoulder
+                for (PlayerEntity player : serverWorld.getPlayers()) {
+                    if (player instanceof PlayerEntityAccessor accessor) {
+                        if (isParentOnShoulder(accessor, parentUuid)) {
+                            return this.hamster.squaredDistanceTo(player) > 16.0;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isParentOnShoulder(PlayerEntityAccessor accessor, UUID parentUuid) {
+        if (!accessor.hasAnyShoulderHamster()) return false;
+        for (ShoulderLocation loc : ShoulderLocation.values()) {
+            net.minecraft.nbt.NbtCompound nbt = accessor.getShoulderHamster(loc);
+            if (!nbt.isEmpty()) {
+                Optional<HamsterState> state = HamsterState.fromNbt(nbt);
+                if (state.isPresent() && state.get().entityUuid().equals(parentUuid)) {
+                    return true;
+                }
             }
         }
         return false;

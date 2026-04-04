@@ -161,6 +161,14 @@ public class ModPackets {
                     }
                 })
         );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, UpdateCrownThemePayload.ID, UpdateCrownThemePayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    if (context.getPlayer() instanceof PlayerEntityAccessor player) {
+                        player.ahp$setCrownTheme(payload.themeOrdinal());
+                    }
+                })
+        );
     }
 
     /**

@@ -5,6 +5,8 @@ import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
+import net.dawson.adorablehamsterpets.client.particle.PixieDustParticle;
+import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
 import net.dawson.adorablehamsterpets.client.render.LeafJiggleRenderer;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.fabricmc.api.ClientModInitializer;
@@ -24,13 +26,19 @@ public final class AdorableHamsterPetsFabricClient implements ClientModInitializ
         // --- Register keybindings for Fabric ---
         ModKeyBindings.init();
         KeyMappingRegistry.register(ModKeyBindings.THROW_HAMSTER_KEY);
+        KeyMappingRegistry.register(ModKeyBindings.TOGGLE_SUPPORTER_CROWN_KEY);
         KeyMappingRegistry.register(ModKeyBindings.DISMOUNT_HAMSTER_KEY);
         KeyMappingRegistry.register(ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY);
         KeyMappingRegistry.register(ModKeyBindings.RIDE_HAMSTER_KEY);
 
-        // --- Register Particle Provider for all variants ---
+        // --- Register Particle Provider ---
         for (RegistrySupplier<SimpleParticleType> particleSupplier : ModParticles.BEDDING_PARTICLES.values()) {
             ParticleFactoryRegistry.getInstance().register(particleSupplier.get(), HamsterBeddingParticle.Factory::new);
+        }
+
+        for (PixieDustParticleTheme theme : PixieDustParticleTheme.values()) {
+            RegistrySupplier<SimpleParticleType> supplier = ModParticles.PIXIE_DUST.get(theme);
+            ParticleFactoryRegistry.getInstance().register(supplier.get(), provider -> new PixieDustParticle.Factory(provider, theme));
         }
 
         // --- Register Leaf Jiggle Renderer ---

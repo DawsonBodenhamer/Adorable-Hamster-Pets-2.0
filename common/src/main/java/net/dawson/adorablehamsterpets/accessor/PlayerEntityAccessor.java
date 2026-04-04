@@ -7,6 +7,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayDeque;
+import java.util.List;
 
 /**
  * Accessor interface to expose custom methods injected into PlayerEntity by PlayerEntityMixin.
@@ -123,4 +124,12 @@ public interface PlayerEntityAccessor {
      * @return The total number of unique bred genomes this player has created.
      */
     int ahp$getBredGenomeCount();
+
+    int ahp$getCrownTheme();
+
+    void ahp$setCrownTheme(int theme);
+
+    List<NbtCompound> ahp$getInTransitHamsters();
+    int ahp$getTransitTimer();
+    void ahp$setTransitTimer(int timer);
 }
