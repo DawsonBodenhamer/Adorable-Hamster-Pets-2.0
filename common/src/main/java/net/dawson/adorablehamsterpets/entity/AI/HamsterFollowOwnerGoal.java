@@ -3,18 +3,12 @@ package net.dawson.adorablehamsterpets.entity.AI;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.FollowOwnerGoalAccessor;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.LeavesBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.FuzzyTargeting;
 import net.minecraft.entity.ai.goal.FollowOwnerGoal;
-import net.minecraft.entity.ai.pathing.LandPathNodeMaker;
-import net.minecraft.entity.ai.pathing.PathNodeType;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.WorldView;
 
 public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
 
@@ -130,8 +124,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
             return;
         }
 
-        // Evaluate teleport condition (vanilla default: 12 blocks distance squared)
-        boolean shouldTeleport = this.hamster.squaredDistanceTo(owner) >= 144.0;
+        boolean shouldTeleport = HamsterMovementUtil.shouldTeleportTo(this.hamster, owner);
 
         // --- Facing Logic ---
         if (!shouldTeleport) {
@@ -147,7 +140,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
 
             // --- Movement Execution ---
             if (shouldTeleport) {
-                this.tryTeleport();
+                HamsterMovementUtil.tryTeleportTo(this.hamster, owner);
             } else {
                 if (this.hamster.hasGreenBeanBuff()) {
                     // Zoomies erratic pathfinding
@@ -161,58 +154,5 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
                 }
             }
         }
-    }
-
-    /* ──────────────────────────────────────────────────────────────────────────────
-     *        Private Helpers
-     * ────────────────────────────────────────────────────────────────────────────*/
-
-    private void tryTeleport() {
-        LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
-        if (owner == null) return;
-        BlockPos blockPos = owner.getBlockPos();
-
-        for(int i = 0; i < 10; ++i) {
-            int j = this.getRandomInt(-3, 3);
-            int k = this.getRandomInt(-1, 1);
-            int l = this.getRandomInt(-3, 3);
-            if (this.tryTeleportTo(blockPos.getX() + j, blockPos.getY() + k, blockPos.getZ() + l)) {
-                return;
-            }
-        }
-    }
-
-    private boolean tryTeleportTo(int x, int y, int z) {
-        LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
-        if (owner == null) return false;
-
-        if (Math.abs((double)x - owner.getX()) < 2.0 && Math.abs((double)z - owner.getZ()) < 2.0) {
-            return false;
-        }
-        if (!this.canTeleportTo(new BlockPos(x, y, z))) {
-            return false;
-        }
-
-        this.hamster.refreshPositionAndAngles((double)x + 0.5, y, (double)z + 0.5, this.hamster.getYaw(), this.hamster.getPitch());
-        this.hamster.getNavigation().stop();
-        return true;
-    }
-
-    private boolean canTeleportTo(BlockPos pos) {
-        WorldView world = this.hamster.getWorld();
-        PathNodeType pathNodeType = LandPathNodeMaker.getLandNodeType(world, pos.mutableCopy());
-        if (pathNodeType != PathNodeType.WALKABLE) {
-            return false;
-        }
-        BlockState blockState = world.getBlockState(pos.down());
-        if (blockState.getBlock() instanceof LeavesBlock) { // The 'leavesAllowed' check
-            return false;
-        }
-        BlockPos blockPos = pos.subtract(this.hamster.getBlockPos());
-        return world.isSpaceEmpty(this.hamster, this.hamster.getBoundingBox().offset(blockPos));
-    }
-
-    private int getRandomInt(int min, int max) {
-        return this.hamster.getRandom().nextInt(max - min + 1) + min;
     }
 }

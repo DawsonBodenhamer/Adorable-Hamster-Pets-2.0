@@ -332,7 +332,17 @@ public final class HamsterBedUtil {
     public static void forceTeleportAndSleepInBed(HamsterEntity hamster, ServerWorld bedWorld, BlockPos bedPos, BlockState bedState) {
         // Set position slightly elevated inside the bed to prevent clipping
         Vec3d targetCenter = Vec3d.ofCenter(bedPos).add(0, 0.1, 0);
-        hamster.refreshPositionAndAngles(targetCenter.x, targetCenter.y, targetCenter.z, 0f, 0f);
+
+        // Request teleport to sync with client
+        hamster.requestTeleport(targetCenter.x, targetCenter.y, targetCenter.z);
+
+        // Force delayed positional update to prevent Server/Client desync
+        long currentWorldTime = bedWorld.getTime();
+        hamster.scheduleTask(currentWorldTime + 5, "sledgehammer_teleport_sync", () -> {
+            if (hamster.isAlive() && !hamster.isRemoved()) {
+                hamster.requestTeleport(hamster.getX(), hamster.getY(), hamster.getZ());
+            }
+        });
 
         hamster.setDozingPhase(HamsterEntity.DozingPhase.DEEP_SLEEP);
         hamster.setSleeping(true);

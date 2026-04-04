@@ -51,6 +51,7 @@ public class ModPackets {
     public record RequestHamsterRideC2SPacket(int entityId) {}
     public record HamsterInputC2SPacket(boolean jumpHeld, boolean sprintHeld) {}
     public record RenameHamsterC2SPacket(int entityId, String newName) {}
+    public record UpdateCrownThemeC2SPacket(int themeOrdinal) {}
 
     // S2C (Server-to-Client)
     public record PlayGuidebookEffectsS2CPacket(boolean closeScreen) {}
@@ -227,6 +228,16 @@ public class ModPackets {
                                 }
                             }
                         }
+                    }
+                })
+        );
+
+        CHANNEL.register(UpdateCrownThemeC2SPacket.class,
+                (packet, buf) -> buf.writeInt(packet.themeOrdinal()),
+                (buf) -> new UpdateCrownThemeC2SPacket(buf.readInt()),
+                (packet, context) -> context.get().queue(() -> {
+                    if (context.get().getPlayer() instanceof PlayerEntityAccessor player) {
+                        player.ahp$setCrownTheme(packet.themeOrdinal());
                     }
                 })
         );

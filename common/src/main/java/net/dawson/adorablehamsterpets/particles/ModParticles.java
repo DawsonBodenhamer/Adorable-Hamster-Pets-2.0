@@ -4,11 +4,13 @@ import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
+import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
 import net.minecraft.particle.DefaultParticleType;
 import net.minecraft.particle.ParticleType;
 import net.minecraft.registry.RegistryKeys;
 
 import java.util.EnumMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -22,11 +24,19 @@ public class ModParticles {
     // For 1.20.1, use DefaultParticleType
     public static final Map<WoodVariant, RegistrySupplier<DefaultParticleType>> BEDDING_PARTICLES = new EnumMap<>(WoodVariant.class);
 
+    // Map to link each Pixie Dust theme to a particle type
+    public static final Map<PixieDustParticleTheme, RegistrySupplier<DefaultParticleType>> PIXIE_DUST = new EnumMap<>(PixieDustParticleTheme.class);
+
     static {
         for (WoodVariant variant : WoodVariant.values()) {
             String id = "hamster_bedding_" + variant.asString();
             // In 1.20.1, use new DefaultParticleType(false), using an anonymous subclass to bypass the protected constructor
             BEDDING_PARTICLES.put(variant, PARTICLE_TYPES.register(id, () -> new DefaultParticleType(false) {}));
+        }
+
+        for (PixieDustParticleTheme theme : PixieDustParticleTheme.values()) {
+            String id = "pixie_dust_" + theme.name().toLowerCase(Locale.ROOT);
+            PIXIE_DUST.put(theme, PARTICLE_TYPES.register(id, () -> new DefaultParticleType(false) {}));
         }
     }
 

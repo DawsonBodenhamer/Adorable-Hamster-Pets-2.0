@@ -241,6 +241,7 @@
 
   "key.categories.adorablehamsterpets.main": "Adorable Hamster Pets",
   "key.adorablehamsterpets.throw_hamster": "Throw Hamster",
+  "key.adorablehamsterpets.toggle_supporter_crown": "Toggle Supporter Crown",
   "key.adorablehamsterpets.dismount_hamster": "Dismount Hamster",
   "key.adorablehamsterpets.force_mount_hamster": "Force Shoulder Mount",
   "key.adorablehamsterpets.ride_hamster": "Ride Hamster",
@@ -319,6 +320,9 @@
   "message.adorablehamsterpets.breeding_history_reset_multiple": "Breeding history reset for %d players.",
   "message.adorablehamsterpets.baby_unlinked": "The aroma of moldy dairy has won this baby over. They will now follow you.",
   "message.adorablehamsterpets.tamed_baby_still_linked_warning": "This baby is still a bit timid. Lure to yourself with %s, or wait for it to grow up.",
+  "message.adorablehamsterpets.supporter_crown_enabled": "You feel a sense of awesomeness rush over you.",
+  "message.adorablehamsterpets.supporter_crown_disabled": "Time to mingle with the peasants again.",
+  "message.adorablehamsterpets.supporter_crown_color_changed": "Color changed to %s.",
 
   "subtitles.adorablehamsterpets.hamster_attack": "Hamster attacks",
   "subtitles.adorablehamsterpets.hamster_beg": "Hamster begs",
@@ -516,6 +520,11 @@
   "config.adorablehamsterpets.condition.litter_limit_enabled": "Only available when 'Limit Breeding By Player' is TRUE.",
   "config.adorablehamsterpets.main.breedingSettings.resetBreedingHistory": "Reset Breeding History",
   "config.adorablehamsterpets.main.breedingSettings.resetBreedingHistory.desc": "Wipes your record clean. Useful if you've hit your lifetime quota but still have an unhealthy obsession with genetics. Note: you must have OP permissions for this to work.",
+  "config.adorablehamsterpets.enum.pixie_dust_color_theme.gold": "Gold",
+  "config.adorablehamsterpets.enum.pixie_dust_color_theme.crimson": "Crimson",
+  "config.adorablehamsterpets.enum.pixie_dust_color_theme.lavender": "Lavender",
+  "config.adorablehamsterpets.enum.pixie_dust_color_theme.ice": "Ice",
+  "config.adorablehamsterpets.enum.pixie_dust_color_theme.emerald": "Emerald",
 
   "book.adorablehamsterpets.hamster_guide_book.title": "§f§lHamster Tips§r",
   "book.adorablehamsterpets.hamster_guide_book.subtitle": "§6§o Guidebook to the Tiny, Furry Heart§r",
