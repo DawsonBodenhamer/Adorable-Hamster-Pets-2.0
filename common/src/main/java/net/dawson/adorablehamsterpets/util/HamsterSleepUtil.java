@@ -113,6 +113,7 @@ public final class HamsterSleepUtil {
                 } else {
                     // Settle animation finished transition to deep sleep
                     hamster.setDozingPhase(HamsterEntity.DozingPhase.DEEP_SLEEP);
+                    hamster.setSleeping(true);
                 }
             }
             case DEEP_SLEEP -> {
@@ -157,5 +158,6 @@ public final class HamsterSleepUtil {
         hamster.setQuiescentSitTimer(0);
         hamster.setDriftingOffTimer(0);
         hamster.setSettleSleepCooldown(0);
+        hamster.setSleeping(false);
     }
 }

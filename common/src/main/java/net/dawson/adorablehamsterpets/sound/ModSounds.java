@@ -166,6 +166,11 @@ public class ModSounds {
     // --- Generic Misc Sounds ---
     public static final RegistrySupplier<SoundEvent> HAMSTER_DING = registerSoundEvent("ding");
     public static final RegistrySupplier<SoundEvent> MAGIC_SHIMMER = registerSoundEvent("magic_shimmer");
+    public static final RegistrySupplier<SoundEvent> MAGIC_SPARKLING1 = registerSoundEvent("magic_sparkling1");
+    public static final RegistrySupplier<SoundEvent> MAGIC_SPARKLING2 = registerSoundEvent("magic_sparkling2");
+    public static final RegistrySupplier<SoundEvent> MAGIC_SPARKLING3 = registerSoundEvent("magic_sparkling3");
+    public static final RegistrySupplier<SoundEvent> MAGIC_SPARKLING4 = registerSoundEvent("magic_sparkling4");
+    public static final RegistrySupplier<SoundEvent> MAGIC_SPARKLING5 = registerSoundEvent("magic_sparkling5");
 
     // --- 3. Public Sound Lists (using RegistrySuppliers) ---
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_ATTACK_SOUNDS = List.of(HAMSTER_ATTACK1, HAMSTER_ATTACK2, HAMSTER_ATTACK3, HAMSTER_ATTACK4);
@@ -185,6 +190,7 @@ public class ModSounds {
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_BOUNCE_SOUNDS = List.of(HAMSTER_BOUNCE);
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_AFFECTION_SOUNDS = List.of(HAMSTER_AFFECTION1, HAMSTER_AFFECTION2, HAMSTER_AFFECTION3);
     public static final List<RegistrySupplier<SoundEvent>> DIAMOND_SPARKLE_SOUNDS = List.of(DIAMOND_SPARKLE1, DIAMOND_SPARKLE2, DIAMOND_SPARKLE3);
+    public static final List<RegistrySupplier<SoundEvent>> CROWN_SPARKLE_SOUNDS = List.of(MAGIC_SPARKLING1, MAGIC_SPARKLING2, MAGIC_SPARKLING3, MAGIC_SPARKLING4, MAGIC_SPARKLING5);
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_SHOULDER_IMPACT_SOUNDS = List.of(HAMSTER_SHOULDER_IMPACT1, HAMSTER_SHOULDER_IMPACT2, HAMSTER_SHOULDER_IMPACT3);
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_BED_LEAVES_RUSTLE_SOUNDS = List.of(HAMSTER_BED_LEAVES_RUSTLE1, HAMSTER_BED_LEAVES_RUSTLE2, HAMSTER_BED_LEAVES_RUSTLE3);
 

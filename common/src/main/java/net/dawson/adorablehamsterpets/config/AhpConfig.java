@@ -138,6 +138,16 @@ public class AhpConfig extends Config {
     public boolean enableSupporterCrown = true;
 
     @NonSync
+    @Translatable.Name("Enable Crown Audio")
+    @Translatable.Desc("Turns off the sparkling sound effects the emanate from the crown. Affects all crowns, even those worn by others.")
+    public boolean enableCrownAudio = true;
+
+    @NonSync
+    @Translatable.Name("Crown Audio Volume")
+    @Translatable.Desc("How loud the crown sparkles are. Crank it up if your 50 sound physics mods made it inaudible, or turn it down if the majestic twinkling is eroding your sanity.")
+    public ValidatedFloat crownAudioVolume = new ValidatedFloat(1.0f, 2.0f, 0.1f);
+
+    @NonSync
     @Translatable.Name("Show My Crown")
     @Translatable.Desc("Toggle this off if you want to hide your own crown from yourself and everyone else. Only affects your own crown.")
     public boolean showMyCrown = true;

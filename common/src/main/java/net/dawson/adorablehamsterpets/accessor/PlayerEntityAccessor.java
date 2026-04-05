@@ -129,6 +129,10 @@ public interface PlayerEntityAccessor {
 
     void ahp$setCrownTheme(int theme);
 
+    int ahp$getCrownAudioTimer();
+
+    void ahp$setCrownAudioTimer(int timer);
+
     List<NbtCompound> ahp$getInTransitHamsters();
     int ahp$getTransitTimer();
     void ahp$setTransitTimer(int timer);

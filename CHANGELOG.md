@@ -56,10 +56,10 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - Added new `Restricted Base Colors` and `Clashing Overlay Colors` lists. By default, these prevent `CREAM` and `DARK_GRAY` wild overlays from spawning on top of `BLUE` and `LAVENDER` base coats, as these color combinations tend to look a bit strange visually.
   - Added new `Enforce Brighter Overlays` and `Enforce Muted Overlays` toggles. Allows players to disable the overlay filtering that prevents saturated colors (like Cream) from spawning on muted bases (like Black) and darker colors from being used as overlays on top of lighter bases.
 - **Breeding Inheritance**
-  - When breeding two hamsters together, the color for the baby (and its overlay colors) are chosen based on the midpoint between the parents' colors in the 3D color-space coordinate system. But instead of always producing the exact mid-point color between the two parents, the algorithm applies a 3D randomized "jitter" scatter, making multi-generational breeding lines a bit less predictable and more exciting.
+  - When breeding two hamsters together, the color for the baby (and its overlay colors) are chosen based on a straight line between the two parents in the 3D color-space coordinate system. This means babies will tend towards the mathematical center, but occasionally one parent's color traits will strongly dominate the outcome, mimicking real-world genetics and providing visual variety within a single hamster family.
 - **Recessive Eye Genetics**
   - Hamsters now possess dominant (Black) and recessive (Red) eye genetics.
-  - Red eyes do not exist in the wild. They are genetically tied to the "diluteness" (brightness/saturation) of the hamster's coat. A fully dilute hamster has up to a 55% chance of spawning with a recessive red eye gene. By selectively breeding highly dilute hamsters, players can uncover carriers (`Br`) and eventually breed Red-Eyed (`rr`) variants.
+  - Red eyes do not exist in the wild. They are genetically tied to the "diluteness" (brightness/saturation) of the hamster's coat. A fully dilute hamster has up to a 50% chance of spawning with a recessive red eye gene. By selectively breeding highly dilute hamsters, players can uncover carriers (`Br`) and eventually breed Red-Eyed (`rr`) variants.
 - **Baby Growth Mechanics**
   - You can now feed baby hamsters standard hamster food items to accelerate their growth.
   - To balance this with their natural pickiness, a new config option (`Disable Baby Food Refusal`) allows you to bypass their desire for dietary variety specifically for babies if you want. This is turned off by default, so you'll still need lots of *Hamster Food Mix* to quickly grow up the babies without them refusing the food.
@@ -115,14 +115,15 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
     - `Pencil Icon Placement`: Allows swapping the icon to the left or right of the text for those who read in different directions.
 - **Pixie-Dust Crown for Supporters**
   - Added a dynamic, spinning, bobbing particle crown that renders above the heads of mod supporters. Uses a custom `Pixie Dust` particle system featuring a dense, short-lived, shimmering effect.
-  - Includes 5 different themes (Gold, Crimson, Lavender, Ice, Emerald) by manipulating the HSB color values of a single grayscale texture at runtime.
+  - Emits a subtle sparkling sound and includes 5 different themes (Gold, Crimson, Lavender, Ice, Emerald) by manipulating the HSB color values of a single grayscale texture at runtime.
   - Automatically hides in first-person view to prevent visual obstruction.
   - Powered by a remote manager that pulls configuration data asynchronously from GitHub and caches it for offline use.
   - **Configurable Aesthetics**
     - Added a new `Supporter Perks` config group.
     - Added a global toggle to disable rendering of all crowns if you hate fun.
+    - Added a global toggle to disable sound effects of all crowns.
     - Added a local toggle to allow rendering your own crown in first-person mode if you want to both obstruct your view and thrill yourself.
-    - Added sliders for particle count, crown radius, crown height, crown thickness, and vertical offset.
+    - Added sliders for sound volume, particle count, crown radius, crown height, crown thickness, and vertical offset.
     - Added a new "Toggle Supporter Crown" keybind allowing users to show/hide their own crown from both themselves and the rest of the server. A single press cycles the crown to the next available color theme, while a double-tap toggles the crown's visibility.
     - Supporters can pick their own crown color. Your preference syncs instantly to all other players looking at you utilizing `DataTracker` networking.
 - **Tag Mini-Game**

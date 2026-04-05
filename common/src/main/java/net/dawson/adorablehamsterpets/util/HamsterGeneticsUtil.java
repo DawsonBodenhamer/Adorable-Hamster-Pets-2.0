@@ -206,8 +206,8 @@ public final class HamsterGeneticsUtil {
         PaletteDefinition def = HamsterPaletteManager.PALETTE_REGISTRY.get(paletteId);
         if (def == null) return 0;
 
-        // More dilute coat = higher chance to be carrier (up to 55%)
-        float chanceOfBeingCarrier = def.diluteness() * 0.55f;
+        // More dilute coat = higher chance to be carrier (up to 50%)
+        float chanceOfBeingCarrier = def.diluteness() * 0.50f;
         return random.nextFloat() < chanceOfBeingCarrier ? 1 : 0;
     }
 

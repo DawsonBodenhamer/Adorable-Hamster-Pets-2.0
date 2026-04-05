@@ -451,6 +451,25 @@ public class AdorableHamsterPetsClient {
                 if (themeOrdinal < 0) continue;
 
                 if (PlayerPerkManager.INSTANCE.hasPerk(player.getGameProfile().getName(), "supporter_crown")) {
+
+                    // --- Audio ---
+                    PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
+                    int audioTimer = accessor.ahp$getCrownAudioTimer();
+
+                    if (audioTimer > 0) {
+                        accessor.ahp$setCrownAudioTimer(audioTimer - 1);
+                    } else {
+                        if (Configs.AHP.enableCrownAudio) {
+                            float volume = Configs.AHP.crownAudioVolume.get();
+                            SoundEvent sound = ModSounds.getRandomSoundFrom(ModSounds.CROWN_SPARKLE_SOUNDS, client.world.random);
+                            if (sound != null) {
+                                client.world.playSound(player.getX(), player.getY(), player.getZ(), sound, SoundCategory.PLAYERS, volume, 1.0f + client.world.random.nextFloat() * 0.2f, false);
+                            }
+                        }
+                        // Reset timer to ~3 seconds +/- 20 ticks for randomness
+                        accessor.ahp$setCrownAudioTimer(60 + client.world.random.nextBetween(-20, 20));
+                    }
+
                     // Use player's lerped neck position as pivot point for rotation
                     double pivotOffset = (player.isSneaking() ? 1.2375 : 1.5) * player.getScale();
                     Vec3d pivotPos = player.getLerpedPos(1.0f).add(0, pivotOffset, 0);
