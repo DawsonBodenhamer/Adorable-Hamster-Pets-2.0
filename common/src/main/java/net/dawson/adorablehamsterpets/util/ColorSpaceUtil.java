@@ -219,13 +219,19 @@ public final class ColorSpaceUtil {
     }
 
     /**
-     * Calculates the midpoint between two colors in a 3D Cartesian space.
-     * Represents the "average" genetic color of two parents.
-     * Adds a randomized jitter to expand the pool of potential genetic
-     * results, so parents don't produce the exact same offspring every time.
+     * Calculates a straight line between two colors in a 3D Cartesian space.
+     * Represents a "probabilistic slider" for the offspring of two parents.
+     * Adds a randomized jitter to "thicken" the line, expanding the pool of potential genetic results.
      */
     public static Vec3d calculateGeneticMidpoint(Vec3d parentA, Vec3d parentB, Random random) {
-        Vec3d mid = new Vec3d((parentA.x + parentB.x) / 2.0, (parentA.y + parentB.y) / 2.0, (parentA.z + parentB.z) / 2.0);
+        // Gaussian distribution centered at 0.5 (midpoint) with slight deviation 0.15
+        double t = 0.5 + (random.nextGaussian() * 0.15);
+
+        // Clamp to [0, 1] to prevent moving past parental boundaries
+        t = Math.max(0.0, Math.min(1.0, t));
+
+        // Lerp along the 3D line segment
+        Vec3d mid = parentA.lerp(parentB, t);
 
         // Add random scatter offset (+/- 0.1 on all axes)
         // Equates to 10% brightness range and 5% hue/saturation range

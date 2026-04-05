@@ -129,6 +129,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private boolean ahp$cachedHasGuideBook = false;
     @Unique private boolean ahp$guideBookTrackingInitialized = false;
     @Unique private static final TrackedData<Integer> AHP_CROWN_THEME = DataTracker.registerData(PlayerEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    @Unique private int ahp$crownAudioTimer = 0;
 
     // --- Collections ---
     @Unique private final List<ScheduledTask> adorablehamsterpets$scheduledTasks = new ArrayList<>();
@@ -659,6 +660,18 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Override
     public void ahp$setCrownTheme(int theme) {
         this.dataTracker.set(AHP_CROWN_THEME, theme);
+    }
+
+    @Unique
+    @Override
+    public int ahp$getCrownAudioTimer() {
+        return this.ahp$crownAudioTimer;
+    }
+
+    @Unique
+    @Override
+    public void ahp$setCrownAudioTimer(int timer) {
+        this.ahp$crownAudioTimer = timer;
     }
 
     @Unique

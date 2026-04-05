@@ -17,6 +17,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.random.Random;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -159,7 +160,7 @@ public class HamsterSpawnCommandUtil {
      */
     public static int executeSpawnAllBases3D(ServerCommandSource source, boolean withOverlays, String author) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrThrow();
-        List<HamsterGenome> genomes = getGenomesToSpawn(withOverlays, author); // Number being spawned
+        List<HamsterGenome> genomes = getGenomesToSpawn(player.getServerWorld().getRandom(), withOverlays, author); // Number being spawned
 
         // Dynamic scale based on total number
         double scale = Math.max(2.0,
@@ -198,7 +199,7 @@ public class HamsterSpawnCommandUtil {
      */
     public static int executeSpawnAllBases2D(ServerCommandSource source, boolean withOverlays, String author) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrThrow();
-        List<HamsterGenome> genomes = getGenomesToSpawn(withOverlays, author);
+        List<HamsterGenome> genomes = getGenomesToSpawn(player.getServerWorld().getRandom(), withOverlays, author);
 
         // Group genomes by their genetic color zone
         Map<HamsterColorZone, List<HamsterGenome>> groupedGenomes = new EnumMap<>(HamsterColorZone.class);
@@ -389,12 +390,13 @@ public class HamsterSpawnCommandUtil {
         return hamster;
     }
 
-    private static List<HamsterGenome> getGenomesToSpawn(boolean withOverlays, String targetAuthor) {
+    private static List<HamsterGenome> getGenomesToSpawn(Random random, boolean withOverlays, String targetAuthor) {
         List<HamsterGenome> genomes = new ArrayList<>();
         for (PaletteDefinition def : HamsterPaletteManager.PALETTE_REGISTRY.values()) {
             if (!targetAuthor.equals("all") && !def.author().equals(targetAuthor)) continue; // Filter base colors by author
 
-            genomes.add(new HamsterGenome(def.id(), 0, null, 0, null, 0)); // Base color group
+            int baseEye = HamsterGeneticsUtil.generateWildEyeGenotype(def.id(), random);
+            genomes.add(new HamsterGenome(def.id(), 0, null, 0, null, baseEye));
 
             if (withOverlays) {
                 List<HamsterColorZone> allowedZones = new ArrayList<>(ConfigDataCache.getAllowedWildOverlayZones());
@@ -415,7 +417,8 @@ public class HamsterSpawnCommandUtil {
                     for (PaletteDefinition overlayPalette : validOverlays) {
                         int maxPattern = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.size() - 1;
                         for (int pattern = 1; pattern <= maxPattern; pattern++) {
-                            genomes.add(new HamsterGenome(def.id(), pattern, overlayPalette.id(), 0, null, 0));
+                            int overlayEye = HamsterGeneticsUtil.generateWildEyeGenotype(def.id(), random);
+                            genomes.add(new HamsterGenome(def.id(), pattern, overlayPalette.id(), 0, null, overlayEye));
                         }
                     }
                 }
