@@ -154,8 +154,8 @@ public class AhpConfig extends Config {
 
     @NonSync
     @Translatable.Name("Show in First Person")
-    @Translatable.Desc("Should your own crown block your vision while you're trying to mine? Turn on to flex on yourself. Only affects your own crown.")
-    public boolean showCrownInFirstPerson = false;
+    @Translatable.Desc("Should your own crown decorate your vision while you're trying to mine? Turn it off if you are tired of flexing on yourself. Only affects your own crown.")
+    public boolean showCrownInFirstPerson = true;
 
     @NonSync
     @Translatable.Name("Color Theme")

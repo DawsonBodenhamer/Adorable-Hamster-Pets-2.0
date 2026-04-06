@@ -165,7 +165,22 @@ public class ModPackets {
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, UpdateCrownThemePayload.ID, UpdateCrownThemePayload.CODEC,
                 (payload, context) -> context.queue(() -> {
                     if (context.getPlayer() instanceof PlayerEntityAccessor player) {
-                        player.ahp$setCrownTheme(payload.themeOrdinal());
+                        player.ahp$setSupporterCrownTheme(payload.themeOrdinal());
+                    }
+                })
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, StartCrownTrialPayload.ID, StartCrownTrialPayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    if (context.getPlayer() instanceof ServerPlayerEntity player) {
+                        PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
+
+                        // Prevent users from requesting multiple trials per server by checking the NBT flag
+                        if (!accessor.ahp$hasUsedSupporterCrownTrial()) {
+                            accessor.ahp$setHasUsedSupporterCrownTrial(true);
+                            accessor.ahp$setSupporterCrownTrialTicks(600); // 30 seconds
+                            accessor.ahp$setSupporterCrownTheme(payload.themeOrdinal());
+                        }
                     }
                 })
         );
