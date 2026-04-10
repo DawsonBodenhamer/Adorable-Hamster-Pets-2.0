@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.client.layer;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
@@ -28,6 +29,8 @@ public class HamsterSkinLayer extends GeoRenderLayer<HamsterEntity> {
     @Override
     public void render(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel bakedModel, RenderLayer renderType,
                        VertexConsumerProvider bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
+
+        if (Configs.AHP.performanceMode) return;
 
         getRenderer().reRender(
                 bakedModel,

@@ -120,6 +120,7 @@ public final class AdorableHamsterPetsForgeClient {
         event.register(ModKeyBindings.GENETICS_VISUALIZER_VAR_DOWN_KEY);
         event.register(ModKeyBindings.GENETICS_VISUALIZER_MUT_UP_KEY);
         event.register(ModKeyBindings.GENETICS_VISUALIZER_MUT_DOWN_KEY);
+        event.register(ModKeyBindings.TOGGLE_PERFORMANCE_MODE_KEY);
     }
 
     /* ------------------------------------------------------------ */

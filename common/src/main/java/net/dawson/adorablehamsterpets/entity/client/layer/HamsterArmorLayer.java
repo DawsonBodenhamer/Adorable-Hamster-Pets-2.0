@@ -25,6 +25,8 @@ public class HamsterArmorLayer extends GeoRenderLayer<HamsterEntity> {
     public void render(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel bakedModel, RenderLayer renderType,
                        VertexConsumerProvider bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
 
+        if (Configs.AHP.performanceMode) return;
+
         // Check global visual toggle
         if (!Configs.AHP.enableArmorVisuals) {
             return;

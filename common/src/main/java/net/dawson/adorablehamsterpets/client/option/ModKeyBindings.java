@@ -17,6 +17,7 @@ public class ModKeyBindings {
     public static final String KEY_GENETICS_VISUALIZER_VAR_DOWN = "key.adorablehamsterpets.genetics_visualization.variance_down";
     public static final String KEY_GENETICS_VISUALIZER_MUT_UP = "key.adorablehamsterpets.genetics_visualization.mutation_rate_up";
     public static final String KEY_GENETICS_VISUALIZER_MUT_DOWN = "key.adorablehamsterpets.genetics_visualization.mutation_rate_down";
+    public static final String KEY_TOGGLE_PERFORMANCE_MODE = "key.adorablehamsterpets.toggle_performance_mode";
 
     // --- KeyBinding Instances ---
     public static KeyBinding THROW_HAMSTER_KEY;
@@ -28,6 +29,7 @@ public class ModKeyBindings {
     public static KeyBinding GENETICS_VISUALIZER_VAR_DOWN_KEY;
     public static KeyBinding GENETICS_VISUALIZER_MUT_UP_KEY;
     public static KeyBinding GENETICS_VISUALIZER_MUT_DOWN_KEY;
+    public static KeyBinding TOGGLE_PERFORMANCE_MODE_KEY;
 
     /**
      * Initializes the KeyBinding objects. This should be called during client setup
@@ -90,6 +92,12 @@ public class ModKeyBindings {
                 KEY_GENETICS_VISUALIZER_MUT_DOWN,
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_DOWN,
+                KEY_CATEGORY_AHP
+        );
+
+        TOGGLE_PERFORMANCE_MODE_KEY = new KeyBinding(
+                KEY_TOGGLE_PERFORMANCE_MODE,
+                InputUtil.UNKNOWN_KEY.getCode(), // Unbound by default
                 KEY_CATEGORY_AHP
         );
     }

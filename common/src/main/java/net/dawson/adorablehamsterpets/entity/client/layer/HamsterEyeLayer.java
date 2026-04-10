@@ -30,6 +30,8 @@ public class HamsterEyeLayer extends GeoRenderLayer<HamsterEntity> {
     public void render(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel bakedModel, RenderLayer renderType,
                        VertexConsumerProvider bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
 
+        if (Configs.AHP.performanceMode) return;
+
         // Check if recessive red eye gene (rr = 2) is active and the config is enabled
         boolean isRed = animatable.getGenome().eyeGenotype() == 2 && Configs.AHP.enableRedEyes && !animatable.isSweetPotato(); // Sweet Potato easter egg forces black eyes
         Identifier eyeTexture = isRed ? RED_EYE_TEXTURE : BLACK_EYE_TEXTURE;

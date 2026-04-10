@@ -252,6 +252,7 @@
   "key.adorablehamsterpets.genetics_visualization.variance_down": "Decrease Genetic Variance",
   "key.adorablehamsterpets.genetics_visualization.mutation_rate_up": "Increase Mutation Rate",
   "key.adorablehamsterpets.genetics_visualization.mutation_rate_down": "Decrease Mutation Rate",
+  "key.adorablehamsterpets.toggle_performance_mode": "Toggle Performance Mode",
 
   "message.adorablehamsterpets.throw_cooldown": "Your hamster needs a break— try again in %d seconds.",
   "message.adorablehamsterpets.baby_throw_refusal": "Your baby hamster clings tightly, refusing to become a furry cannonball. Perhaps wait until it's older?",
@@ -342,6 +343,8 @@
   "message.adorablehamsterpets.crown_trial_countdown": "Supporter Crown: %d seconds remaining",
   "message.adorablehamsterpets.crown_trial_ended": "Your 30 seconds of fame have expired.",
   "message.adorablehamsterpets.crown_trial_discord": "§l§n[Click here]§r to join the Discord and learn how get your own Supporter Crown.",
+  "message.adorablehamsterpets.performance_mode_enabled": "AHP Performance Mode: ENABLED",
+  "message.adorablehamsterpets.performance_mode_disabled": "AHP Performance Mode: DISABLED",
 
   "subtitles.adorablehamsterpets.hamster_attack": "Hamster attacks",
   "subtitles.adorablehamsterpets.hamster_beg": "Hamster begs",
