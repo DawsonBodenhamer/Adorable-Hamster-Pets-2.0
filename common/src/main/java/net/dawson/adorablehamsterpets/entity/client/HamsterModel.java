@@ -69,26 +69,6 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
                 bone.setHidden(!keepVisible);
             }
 
-//            // Apply basic scaling
-//            var rootBone = processor.getBone("root");
-//            var headParentBone = processor.getBone("head_parent");
-//            if (rootBone != null && headParentBone != null) {
-//                float ageProgress = 1.0f;
-//                if (entity.isBaby()) {
-//                    int exactAge = entity.getDataTracker().get(HamsterEntity.EXACT_AGE);
-//                    ageProgress = 1.0f - (Math.abs(exactAge) / 24000.0f);
-//                }
-//                float currentBaseScale = MathHelper.lerp(ageProgress, BABY_SCALE, ADULT_SCALE);
-//                float currentHeadScale = MathHelper.lerp(ageProgress, BABY_HEAD_SCALE, ADULT_HEAD_SCALE);
-//
-//                rootBone.setScaleX(currentBaseScale);
-//                rootBone.setScaleZ(currentBaseScale);
-//                rootBone.setScaleY(entity.isShoulderPet() ? currentBaseScale * entity.dynamicScaleY : currentBaseScale);
-//
-//                headParentBone.setScaleX(currentHeadScale);
-//                headParentBone.setScaleY(currentHeadScale);
-//                headParentBone.setScaleZ(currentHeadScale);
-//            }
             return; // Skip all other visual calculations
         } else {
             // Restore visibility to all bones when performance mode off
@@ -120,12 +100,13 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         // --- Easter Egg Logic ---
         boolean isMoonwalking = entity.isMoonwalking();
 
-        // --- Pink Petal Visibility Defaults ---
-        if (petalHeadBone != null) petalHeadBone.setHidden(true);
-        if (petalSideBone != null) petalSideBone.setHidden(true);
-        if (petalBackBone != null) petalBackBone.setHidden(true);
+        // --- Pink Petal Logic ---
+        int petalType = entity.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE);
+        if (petalHeadBone != null) petalHeadBone.setHidden(petalType != 1);
+        if (petalSideBone != null) petalSideBone.setHidden(petalType != 2);
+        if (petalBackBone != null) petalBackBone.setHidden(petalType != 3);
 
-        // --- Cheek Pouch Visibility Logic ---
+        // --- Cheek Pouch Logic ---
         if (leftCheekDefBone != null && leftCheekInfBone != null) {
             boolean leftFull = entity.isLeftCheekFull();
             leftCheekDefBone.setHidden(leftFull);
@@ -137,7 +118,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             rightCheekInfBone.setHidden(!rightFull);
         }
 
-        // --- Armor/Accessory Visual Logic ---
+        // --- Armor/Accessory Logic ---
         if (rightEarBone != null) {
             boolean shouldHideEar = false;
             boolean shouldShowHat = false;

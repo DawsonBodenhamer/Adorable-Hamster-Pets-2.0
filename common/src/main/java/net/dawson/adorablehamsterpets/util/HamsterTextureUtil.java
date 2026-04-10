@@ -1,13 +1,18 @@
 package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.config.Configs;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.PaletteDefinition;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.TextureType;
+import net.dawson.adorablehamsterpets.item.ModItems;
+import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.resource.Resource;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ColorHelper;
 
@@ -31,110 +36,274 @@ public class HamsterTextureUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
-     * Generates or retrieves a dynamic texture using a registered palette.
+     * Generates or retrieves a dynamic, composite texture for a specific hamster.
+     * This combines the base coat, overlays, skin, eyes, accessories, and armor
+     * into a single image to reduce render layers and draw calls.
      * Supports both programmatic color replacement and static image alpha masking.
      */
-    public static Identifier getOrCreateDynamicTexture(String textureName, String paletteId) {
-        String cacheKey = textureName + "_" + paletteId;
+    public static Identifier getHamsterTexture(HamsterEntity hamster) {
+        if (Configs.AHP.performanceMode) {
+            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/performance_mode.png");
+        }
+        if (hamster.isSweetPotato()) {
+            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/easter_egg/sweet_potato.png");
+        }
+
+        HamsterGenome genome = hamster.getGenome();
+        boolean redEyes = genome.eyeGenotype() == 2 && Configs.AHP.enableRedEyes;
+
+        // --- Extract Equipment States ---
+        ItemStack armorStack = hamster.getArmorStack();
+        String armorMaterial = "none";
+        Identifier armorTextureId = null;
+
+        if (Configs.AHP.enableArmorVisuals && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
+            armorMaterial = armorItem.getMaterial().getName();
+            armorTextureId = armorItem.getEntityTexture();
+        }
+
+        boolean hasAcornHat = false;
+        ItemStack accessoryStack = hamster.getAccessoryStack();
+
+        if (accessoryStack.isOf(ModItems.ACORN_HAT.get())) {
+            hasAcornHat = true;
+        } else if (!armorStack.isEmpty() && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP.renderAcornHat.get()) {
+            hasAcornHat = true;
+        }
+
+        boolean hasPinkPetals = hamster.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE) > 0;
+
+        // --- Generate Cache Key ---
+        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_h%b_p%b",
+                genome.basePaletteId(),
+                genome.wildOverlayPattern(),
+                genome.wildOverlayPaletteId() != null ? genome.wildOverlayPaletteId() : "",
+                genome.breedingOverlayPattern(),
+                genome.breedingOverlayPaletteId() != null ? genome.breedingOverlayPaletteId() : "",
+                redEyes,
+                armorMaterial,
+                hasAcornHat,
+                hasPinkPetals);
+
         Identifier cachedId = CACHED_TEXTURES.get(cacheKey);
         if (cachedId != null) {
             return cachedId;
         }
 
-        // Fetch palette from manager
-        PaletteDefinition palette = HamsterPaletteManager.PALETTE_REGISTRY.get(paletteId);
-        Identifier baseTextureId = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/" + textureName + ".png");
-
-        if (palette == null) {
-            return baseTextureId;
-        }
-
-        MinecraftClient client = MinecraftClient.getInstance();
-        Identifier dynamicId = Identifier.of(AdorableHamsterPets.MOD_ID, "dynamic_" + cacheKey);
+        Identifier dynamicId = Identifier.of(AdorableHamsterPets.MOD_ID, cacheKey);
 
         try {
-            Resource maskResource = client.getResourceManager().getResource(baseTextureId).orElseThrow();
-            try (InputStream maskStream = maskResource.getInputStream()) {
-                NativeImage maskImage = NativeImage.read(maskStream);
-
-                if (palette.type() == TextureType.PROGRAMMATIC && palette.hexCodes() != null) {
-                    // --- Programmatic Palette Swapping ---
-                    int[] hexCodes = palette.hexCodes();
-
-                    // Iterate through mask pixels and map brightness to palette hex codes
-                    for (int y = 0; y < maskImage.getHeight(); y++) {
-                        for (int x = 0; x < maskImage.getWidth(); x++) {
-                            int color = maskImage.getColor(x, y);
-                            int a = ColorHelper.Abgr.getAlpha(color);
-                            if (a == 0) continue; // Skip transparent pixels
-
-                            int r = ColorHelper.Abgr.getRed(color);
-                            float brightness = r / 255.0f;
-                            int newHexRgb;
-
-                            // Map grayscale brightness to specific hex codes
-                            if (brightness >= 0.89f) newHexRgb = hexCodes[0]; // B1 (100%)
-                            else if (brightness >= 0.72f) newHexRgb = hexCodes[1]; // B2 (78%)
-                            else if (brightness >= 0.61f) newHexRgb = hexCodes[2]; // B3 (67%)
-                            else if (brightness >= 0.49f) newHexRgb = hexCodes[3]; // B4 (55%)
-                            else if (brightness >= 0.38f) newHexRgb = hexCodes[4]; // B5 (44%)
-                            else if (brightness >= 0.27f) newHexRgb = hexCodes[5]; // B6 (33%)
-                            else if (brightness >= 0.16f) newHexRgb = hexCodes[6]; // B7 (22%)
-                            else newHexRgb = hexCodes[7]; // B8 (11%)
-
-                            maskImage.setColor(x, y, applyHexToAbgr(a, newHexRgb));
-                        }
-                    }
-                } else if (palette.type() == TextureType.STATIC) {
-                    // --- Static Image Masking ---
-                    Identifier sourceTextureId = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/" + palette.author() + "/" + palette.id() + ".png");
-                    Resource sourceResource = client.getResourceManager().getResource(sourceTextureId).orElseThrow();
-
-                    try (InputStream sourceStream = sourceResource.getInputStream()) {
-                        NativeImage sourceImage = NativeImage.read(sourceStream);
-
-                        // Ensure dimensions match to prevent out-of-bounds exceptions
-                        int width = Math.min(maskImage.getWidth(), sourceImage.getWidth());
-                        int height = Math.min(maskImage.getHeight(), sourceImage.getHeight());
-
-                        // Iterate through pixels and composite source color with mask alpha
-                        for (int y = 0; y < height; y++) {
-                            for (int x = 0; x < width; x++) {
-                                int maskColor = maskImage.getColor(x, y);
-                                int maskAlpha = ColorHelper.Abgr.getAlpha(maskColor);
-
-                                if (maskAlpha == 0) continue;
-
-                                int sourceColor = sourceImage.getColor(x, y);
-
-                                // Preserve source RGB but overwrite its alpha with the mask's alpha
-                                int newColor = (sourceColor & 0x00FFFFFF) | (maskAlpha << 24);
-                                maskImage.setColor(x, y, newColor);
-                            }
-                        }
-                        // Free native memory for the source image
-                        sourceImage.close();
-                    }
-                } else {
-                    maskImage.close();
-                    return baseTextureId;
-                }
-
-                // Register composited image as a new dynamic texture
-                NativeImageBackedTexture dynamicTex = new NativeImageBackedTexture(maskImage);
-                client.getTextureManager().registerTexture(dynamicId, dynamicTex);
-                CACHED_TEXTURES.put(cacheKey, dynamicId);
-                return dynamicId;
+            // --- 1. Base Coat ---
+            NativeImage composite = createLayerImage("fur_base_pattern/fur_pattern.png", genome.basePaletteId());
+            if (composite == null) {
+                return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png"); // Ultimate fallback
             }
+
+            // --- 2. Wild Overlay ---
+            if (genome.wildOverlayPattern() > 0 && genome.wildOverlayPaletteId() != null) {
+                String patternName = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.get(genome.wildOverlayPattern());
+                NativeImage wildLayer = createLayerImage("overlays/fur_overlay_pattern/" + patternName + ".png", genome.wildOverlayPaletteId());
+                if (wildLayer != null) {
+                    blendImages(composite, wildLayer);
+                    wildLayer.close();
+                }
+            }
+
+            // --- 3. Breeding Overlay ---
+            if (genome.breedingOverlayPattern() > 0 && genome.breedingOverlayPaletteId() != null) {
+                String patternName = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.get(genome.breedingOverlayPattern());
+                NativeImage breedLayer = createLayerImage("overlays/fur_overlay_pattern/" + patternName + ".png", genome.breedingOverlayPaletteId());
+                if (breedLayer != null) {
+                    blendImages(composite, breedLayer);
+                    breedLayer.close();
+                }
+            }
+
+            // --- 4. Skin Layer ---
+            NativeImage skinLayer = readRawImage("textures/entity/hamster/overlays/skin/skin.png");
+            if (skinLayer != null) {
+                blendImages(composite, skinLayer);
+                skinLayer.close();
+            }
+
+            // --- 5. Eye Layer ---
+            String eyeTexture = redEyes ? "textures/entity/hamster/overlays/eyes/red_eyes.png" : "textures/entity/hamster/overlays/eyes/black_eyes.png";
+            NativeImage eyeLayer = readRawImage(eyeTexture);
+            if (eyeLayer != null) {
+                blendImages(composite, eyeLayer);
+                eyeLayer.close();
+            }
+
+            // --- 6. Armor Layer ---
+            if (armorTextureId != null) {
+                NativeImage armorLayer = readRawImage(armorTextureId.getPath());
+                if (armorLayer != null) {
+                    blendImages(composite, armorLayer);
+                    armorLayer.close();
+                }
+            }
+
+            // --- 7. Acorn Hat Layer ---
+            if (hasAcornHat) {
+                NativeImage hatLayer = readRawImage("textures/entity/hamster/armor/acorn_hat.png");
+                if (hatLayer != null) {
+                    blendImages(composite, hatLayer);
+                    hatLayer.close();
+                }
+            }
+
+            // --- 8. Pink Petals Layer ---
+            if (hasPinkPetals) {
+                NativeImage petalLayer = readRawImage("textures/entity/hamster/overlays/accessories/overlay_pink_petal.png");
+                if (petalLayer != null) {
+                    blendImages(composite, petalLayer);
+                    petalLayer.close();
+                }
+            }
+
+            // Register and cache the flattened image
+            MinecraftClient.getInstance().getTextureManager().registerTexture(dynamicId, new NativeImageBackedTexture(composite));
+            CACHED_TEXTURES.put(cacheKey, dynamicId);
+            return dynamicId;
+
         } catch (Exception e) {
-            AdorableHamsterPets.LOGGER.error("Failed to generate dynamic texture for " + cacheKey, e);
-            return baseTextureId;
+            AdorableHamsterPets.LOGGER.error("Failed to generate composite texture for " + cacheKey, e);
+            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
         }
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Reads a mask and colorizes it according to the assigned palette.
+     */
+    private static NativeImage createLayerImage(String relativeMaskPath, String paletteId) {
+        PaletteDefinition palette = HamsterPaletteManager.PALETTE_REGISTRY.get(paletteId);
+        if (palette == null) return null;
+
+        NativeImage maskImage = readRawImage("textures/entity/hamster/" + relativeMaskPath);
+        if (maskImage == null) return null;
+
+        if (palette.type() == TextureType.PROGRAMMATIC && palette.hexCodes() != null) {
+            // --- Programmatic Palette Swapping ---
+            int[] hexCodes = palette.hexCodes();
+
+            // Iterate through mask pixels and map brightness to palette hex codes
+            for (int y = 0; y < maskImage.getHeight(); y++) {
+                for (int x = 0; x < maskImage.getWidth(); x++) {
+                    int color = maskImage.getColor(x, y);
+                    int a = ColorHelper.Abgr.getAlpha(color);
+                    if (a == 0) continue; // Skip transparent pixels
+
+                    int r = ColorHelper.Abgr.getRed(color);
+                    float brightness = r / 255.0f;
+                    int newHexRgb;
+
+                    // Map grayscale brightness to specific hex codes
+                    if (brightness >= 0.89f) newHexRgb = hexCodes[0]; // B1 (100%)
+                    else if (brightness >= 0.72f) newHexRgb = hexCodes[1]; // B2 (78%)
+                    else if (brightness >= 0.61f) newHexRgb = hexCodes[2]; // B3 (67%)
+                    else if (brightness >= 0.49f) newHexRgb = hexCodes[3]; // B4 (55%)
+                    else if (brightness >= 0.38f) newHexRgb = hexCodes[4]; // B5 (44%)
+                    else if (brightness >= 0.27f) newHexRgb = hexCodes[5]; // B6 (33%)
+                    else if (brightness >= 0.16f) newHexRgb = hexCodes[6]; // B7 (22%)
+                    else newHexRgb = hexCodes[7]; // B8 (11%)
+
+                    maskImage.setColor(x, y, applyHexToAbgr(a, newHexRgb));
+                }
+            }
+        } else if (palette.type() == TextureType.STATIC) {
+            // --- Static Image Masking ---
+            NativeImage sourceImage = readRawImage("textures/entity/hamster/" + palette.author() + "/" + palette.id() + ".png");
+            if (sourceImage != null) {
+                // Ensure dimensions match to prevent out-of-bounds exceptions
+                int width = Math.min(maskImage.getWidth(), sourceImage.getWidth());
+                int height = Math.min(maskImage.getHeight(), sourceImage.getHeight());
+
+                // Iterate through pixels and composite source color with mask alpha
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        int maskColor = maskImage.getColor(x, y);
+                        int maskAlpha = ColorHelper.Abgr.getAlpha(maskColor);
+
+                        if (maskAlpha == 0) continue;
+
+                        int sourceColor = sourceImage.getColor(x, y);
+
+                        // Preserve source RGB but overwrite its alpha with the mask's alpha
+                        int newColor = (sourceColor & 0x00FFFFFF) | (maskAlpha << 24);
+                        maskImage.setColor(x, y, newColor);
+                    }
+                }
+                // Free native memory for the source image
+                sourceImage.close();
+            }
+        }
+        return maskImage;
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Reads a raw PNG image directly from the resource manager.
+     */
+    private static NativeImage readRawImage(String path) {
+        Identifier id = Identifier.of(AdorableHamsterPets.MOD_ID, path);
+        try {
+            var resource = MinecraftClient.getInstance().getResourceManager().getResource(id);
+            if (resource.isPresent()) {
+                try (InputStream stream = resource.get().getInputStream()) {
+                    return NativeImage.read(stream);
+                }
+            }
+        } catch (Exception e) {
+            AdorableHamsterPets.LOGGER.error("Failed to read raw image: " + path, e);
+        }
+        return null;
+    }
+
+    /**
+     * Alpha-blends the top layer onto the base layer.
+     */
+    private static void blendImages(NativeImage base, NativeImage layer) {
+        int width = Math.min(base.getWidth(), layer.getWidth());
+        int height = Math.min(base.getHeight(), layer.getHeight());
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int topColor = layer.getColor(x, y);
+                int topA = ColorHelper.Abgr.getAlpha(topColor);
+
+                if (topA == 0) continue;
+                if (topA == 255) {
+                    base.setColor(x, y, topColor);
+                    continue;
+                }
+
+                int bottomColor = base.getColor(x, y);
+                int botA = ColorHelper.Abgr.getAlpha(bottomColor);
+
+                if (botA == 0) {
+                    base.setColor(x, y, topColor);
+                    continue;
+                }
+
+                float alpha = topA / 255.0f;
+                float invAlpha = 1.0f - alpha;
+
+                int r = (int) (ColorHelper.Abgr.getRed(topColor) * alpha + ColorHelper.Abgr.getRed(bottomColor) * invAlpha);
+                int g = (int) (ColorHelper.Abgr.getGreen(topColor) * alpha + ColorHelper.Abgr.getGreen(bottomColor) * invAlpha);
+                int b = (int) (ColorHelper.Abgr.getBlue(topColor) * alpha + ColorHelper.Abgr.getBlue(bottomColor) * invAlpha);
+                int a = Math.max(topA, botA);
+
+                base.setColor(x, y, ColorHelper.Abgr.getAbgr(a, b, g, r));
+            }
+        }
+    }
 
     /**
      * Converts a standard RGB hex integer into Minecraft's required ABGR format.

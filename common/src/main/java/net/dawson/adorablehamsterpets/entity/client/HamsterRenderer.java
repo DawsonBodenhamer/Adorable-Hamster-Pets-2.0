@@ -1,14 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
-import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
-import net.dawson.adorablehamsterpets.config.Configs;
-import net.dawson.adorablehamsterpets.entity.client.layer.*;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
-import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
-import net.dawson.adorablehamsterpets.entity.custom.genetics.PaletteDefinition;
-import net.dawson.adorablehamsterpets.entity.custom.genetics.TextureType;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterMouthItemOffsets;
 import net.dawson.adorablehamsterpets.util.HamsterRidingUtil;
@@ -75,17 +68,6 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
     public HamsterRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new HamsterModel());
         this.shadowRadius = this.adultShadowRadius;
-
-        // --- Physical Attributes ---
-        addRenderLayer(new HamsterSkinLayer(this));
-        addRenderLayer(new HamsterEyeLayer(this));
-        addRenderLayer(new HamsterWildFurOverlayLayer(this));
-        addRenderLayer(new HamsterBreedingFurOverlayLayer(this));
-
-        // --- Armor & Accessories ---
-        addRenderLayer(new HamsterArmorLayer(this));
-        addRenderLayer(new HamsterPinkPetalOverlayLayer(this));
-        addRenderLayer(new HamsterAcornHatLayer(this));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -94,28 +76,8 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
     @Override
     public Identifier getTextureLocation(HamsterEntity entity) {
-        if (Configs.AHP.performanceMode) {
-            // Bypass all dynamic texture generation in performance mode
-            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/performance_mode.png");
-        }
-
-        if (entity.isSweetPotato()) {
-            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/easter_egg/sweet_potato.png");
-        }
-
-        HamsterGenome genome = entity.getGenome();
-        PaletteDefinition definition = HamsterPaletteManager.PALETTE_REGISTRY.get(genome.basePaletteId());
-
-        if (definition == null) {
-            // Fallback for safety
-            return HamsterTextureUtil.getOrCreateDynamicTexture("fur_base_pattern/fur_pattern", "orange");
-        }
-
-        if (definition.type() == TextureType.PROGRAMMATIC) {
-            return HamsterTextureUtil.getOrCreateDynamicTexture("fur_base_pattern/fur_pattern", genome.basePaletteId());
-        } else {
-            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/" + definition.author() + "/" + definition.id() + ".png");
-        }
+        // Defer to caching utility
+        return HamsterTextureUtil.getHamsterTexture(entity);
     }
 
     @Override

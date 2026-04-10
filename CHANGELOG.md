@@ -39,6 +39,14 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - I got the idea for creating the textures programmatically like this because that's how I made the original textures in Photoshop— using various Gradient Maps applied to a single, grayscale texture. Then I realized Java code can do the same thing!
   - The total number of unique hamster types that spawn in the wild is now **3,231** by default, and the number of genetically inheritable hamster permutations from breeding is now **over 2.2 Million**.
   - **Want to understand the math?** Simply start up your world or server, and then open up your `logs/latest.log` file. Press `CNTRL + F` and search for "`Genetics Engine`." I have added fancy logging output to walk you through the color-combination math in a way that is (hopefully) easy to understand.
+- **Massive Rendering Optimization**
+  - Flattened the entire visual stack (base coat, wild overlays, breeding overlays, skin, eyes, armor, and accessories) into a single, dynamically composited texture at runtime.
+  - This completely eliminates all secondary `GeoRenderLayer` passes. Every hamster, regardless of its complex genetics or equipped items, now costs exactly one draw call to render (instead of up to 8!), resulting in a massive performance boost.
+- **Bare-Bones Performance Mode**
+  - Added a new `Performance Mode` toggle in the config (and an assignable keybind) designed specifically for viewing absurd numbers of hamsters simultaneously without melting your GPU.
+  - When enabled, it bypasses the dynamic texture engine entirely (falling back to a single flat texture) and hides almost all the model's geometry.
+  - The hamsters essentially become grayscale cubes, stripping away nearly all matrix-calculation overhead.
+  - The Jade HUD overlay will still display their exact genetic information, because the server never forgets what they are actually supposed to look like.
 - **Dynamic Palette Swapping**
   - Built an optimized, client-side dynamic texture generator. Instead of bloating your hard drive with over 2 million distinct PNG files, the mod dynamically recolors grayscale fur templates at runtime using custom genetic palette hex code data I designed based off my Photoshop workflow, then mixes them with hard-coded PNGs from the community.
   - I realized the original hamster variants were just gradient maps applied to a grayscale texture in Photoshop. So, naturally, I invested an unreasonable amount of effort rebuilding Photoshop's Gradient Map tool inside Java.
@@ -63,11 +71,6 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
     - **Genetic Mutation Rate**: Adjusts the random color scatter/mutations applied to babies. Think of this as the "thickness" of the line.
     - **Simulated Offspring Per Second**: Adjust the density of the 3D visualizer particle cloud. Each particle represents a potential baby.
     - **Real-time Controls:** While holding the guidebook, you can dynamically tweak the shape of the genetic probability cloud using the arrow keys: Left/Right Arrows adjust Genetic Variance; Up/Down Arrows adjust Genetic Mutation Rate.
-- **Performance Mode**
-  - Added a new `Performance Mode` toggle in the config (and an assignable keybind so you can turn it off and on quickly) designed for viewing massive numbers of hamsters.
-  - When enabled, the game will completely skip rendering all texture overlays, (fur patterns, eyes, skin accessories, armor), forcing them to render with a single grayscale texture on a single bone from the model. Essentially they will become grayscale cubes.
-  - This eliminates over 80% of the draw calls required per hamster, providing a massive FPS boost when thousands are spawned at once.
-  - The Jade HUD overlay will still display their genetic information, because the server still remembers what they are supposed to look like.
 - **Recessive Eye Genetics**
   - Hamsters now possess dominant (Black) and recessive (Red) eye genetics.
   - Red eyes do not exist in the wild. They are genetically tied to the "diluteness" (brightness/saturation) of the hamster's coat. A fully dilute hamster has up to a 50% chance of spawning with a recessive red eye gene. By selectively breeding highly dilute hamsters, players can uncover carriers (`Br`) and eventually breed Red-Eyed (`rr`) variants.
