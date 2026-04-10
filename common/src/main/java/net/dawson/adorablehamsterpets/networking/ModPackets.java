@@ -9,6 +9,7 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
 import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
 import net.minecraft.advancement.Advancement;
@@ -18,9 +19,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +56,7 @@ public class ModPackets {
     public record RenameHamsterC2SPacket(int entityId, String newName) {}
     public record UpdateCrownThemeC2SPacket(int themeOrdinal) {}
     public record StartCrownTrialC2SPacket(int themeOrdinal) {}
+    public record AdjustGeneticsConfigC2SPacket(boolean isVariance, boolean increase) {}
 
     // S2C (Server-to-Client)
     public record PlayGuidebookEffectsS2CPacket(boolean closeScreen) {}
@@ -255,6 +259,39 @@ public class ModPackets {
                             accessor.ahp$setHasUsedSupporterCrownTrial(true);
                             accessor.ahp$setSupporterCrownTrialTicks(600); // 30 seconds
                             accessor.ahp$setSupporterCrownTheme(packet.themeOrdinal());
+                        }
+                    }
+                })
+        );
+
+        CHANNEL.register(AdjustGeneticsConfigC2SPacket.class,
+                (packet, buf) -> {
+                    buf.writeBoolean(packet.isVariance());
+                    buf.writeBoolean(packet.increase());
+                },
+                (buf) -> new AdjustGeneticsConfigC2SPacket(buf.readBoolean(), buf.readBoolean()),
+                (packet, context) -> context.get().queue(() -> {
+                    if (context.get().getPlayer() instanceof ServerPlayerEntity player) {
+                        if (player.hasPermissionLevel(2)) {
+                            // OP required to modify server config
+                            if (packet.isVariance()) {
+                                double current = Configs.AHP.geneticVariance.get();
+                                double next = MathHelper.clamp(current + (packet.increase() ? 0.05 : -0.05), 0.0, 1.0);
+                                @SuppressWarnings("unchecked")
+                                ValidatedFieldAccessor<Double> accessor = (ValidatedFieldAccessor<Double>) (Object) Configs.AHP.geneticVariance;
+                                accessor.adorablehamsterpets$set(next);
+                                player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.genetic_variance_updated", String.format("%.2f", next)).formatted(Formatting.WHITE), true);
+                            } else {
+                                double current = Configs.AHP.geneticMutationRate.get();
+                                double next = MathHelper.clamp(current + (packet.increase() ? 0.1 : -0.1), 0.0, 2.0);
+                                @SuppressWarnings("unchecked")
+                                ValidatedFieldAccessor<Double> accessor = (ValidatedFieldAccessor<Double>) (Object) Configs.AHP.geneticMutationRate;
+                                accessor.adorablehamsterpets$set(next);
+                                player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.genetics_mutation_rate_updated", String.format("%.1f", next)).formatted(Formatting.WHITE), true);
+                            }
+                            Configs.AHP.save();
+                        } else {
+                            player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.no_permission").formatted(Formatting.RED), true);
                         }
                     }
                 })

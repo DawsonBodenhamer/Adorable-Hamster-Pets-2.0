@@ -30,6 +30,10 @@ public final class AdorableHamsterPetsFabricClient implements ClientModInitializ
         KeyMappingRegistry.register(ModKeyBindings.DISMOUNT_HAMSTER_KEY);
         KeyMappingRegistry.register(ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY);
         KeyMappingRegistry.register(ModKeyBindings.RIDE_HAMSTER_KEY);
+        KeyMappingRegistry.register(ModKeyBindings.GENETICS_VISUALIZER_VAR_UP_KEY);
+        KeyMappingRegistry.register(ModKeyBindings.GENETICS_VISUALIZER_VAR_DOWN_KEY);
+        KeyMappingRegistry.register(ModKeyBindings.GENETICS_VISUALIZER_MUT_UP_KEY);
+        KeyMappingRegistry.register(ModKeyBindings.GENETICS_VISUALIZER_MUT_DOWN_KEY);
 
         // --- Register Particle Provider ---
         // On 1.20.1, use DefaultParticleType

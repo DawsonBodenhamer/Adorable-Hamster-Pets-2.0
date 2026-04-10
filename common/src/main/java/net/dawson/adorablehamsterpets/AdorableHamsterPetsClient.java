@@ -327,6 +327,23 @@ public class AdorableHamsterPetsClient {
             ModPackets.CHANNEL.sendToServer(new ModPackets.HamsterInputC2SPacket(false, false));
         }
 
+        // Handle Genetics Visualizer Config Adjustments
+        if (client.player.getMainHandStack().isOf(ModItems.HAMSTER_GUIDE_BOOK.get()) || client.player.getOffHandStack().isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+            while (ModKeyBindings.GENETICS_VISUALIZER_VAR_UP_KEY.wasPressed()) {
+                // Send typed packets for 1.20.1
+                ModPackets.CHANNEL.sendToServer(new ModPackets.AdjustGeneticsConfigC2SPacket(true, true));
+            }
+            while (ModKeyBindings.GENETICS_VISUALIZER_VAR_DOWN_KEY.wasPressed()) {
+                ModPackets.CHANNEL.sendToServer(new ModPackets.AdjustGeneticsConfigC2SPacket(true, false));
+            }
+            while (ModKeyBindings.GENETICS_VISUALIZER_MUT_UP_KEY.wasPressed()) {
+                ModPackets.CHANNEL.sendToServer(new ModPackets.AdjustGeneticsConfigC2SPacket(false, true));
+            }
+            while (ModKeyBindings.GENETICS_VISUALIZER_MUT_DOWN_KEY.wasPressed()) {
+                ModPackets.CHANNEL.sendToServer(new ModPackets.AdjustGeneticsConfigC2SPacket(false, false));
+            }
+        }
+
         // Handle Throw Hamster Keybind
         if (ModKeyBindings.THROW_HAMSTER_KEY.wasPressed()) {
             final AhpConfig currentConfig = AdorableHamsterPets.CONFIG;

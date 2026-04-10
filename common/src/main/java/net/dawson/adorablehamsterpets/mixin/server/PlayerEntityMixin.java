@@ -119,6 +119,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     // --- Genetics Tracking ---
     @Unique private final Set<Integer> ahp$tamedGenomes = new HashSet<>();
     @Unique private final Set<Integer> ahp$bredGenomes = new HashSet<>();
+    @Unique private UUID ahp$geneticParent1Uuid = null;
+    @Unique private UUID ahp$geneticParent2Uuid = null;
 
     // --- Teleport Tracking ---
     @Unique private Vec3d ahp$lastTickPos = null;
@@ -214,11 +216,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             int[] tamedArray = this.ahp$tamedGenomes.stream().mapToInt(Integer::intValue).toArray();
             nbt.putIntArray("AHPTamedGenomes", tamedArray);
         }
-
         if (!this.ahp$bredGenomes.isEmpty()) {
             int[] bredArray = this.ahp$bredGenomes.stream().mapToInt(Integer::intValue).toArray();
             nbt.putIntArray("AHPBredGenomes", bredArray);
         }
+        if (this.ahp$geneticParent1Uuid != null) nbt.putUuid("AHPGeneticParent1", this.ahp$geneticParent1Uuid);
+        if (this.ahp$geneticParent2Uuid != null) nbt.putUuid("AHPGeneticParent2", this.ahp$geneticParent2Uuid);
 
         // --- Tag Game ---
         nbt.putInt("AHPTagGamesPlayed", this.ahp$tagGamesPlayedToday);
@@ -319,13 +322,16 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 this.ahp$tamedGenomes.add(hash);
             }
         }
-
         this.ahp$bredGenomes.clear();
         if (nbt.contains("AHPBredGenomes", NbtElement.INT_ARRAY_TYPE)) {
             for (int hash : nbt.getIntArray("AHPBredGenomes")) {
                 this.ahp$bredGenomes.add(hash);
             }
         }
+        if (nbt.containsUuid("AHPGeneticParent1")) this.ahp$geneticParent1Uuid = nbt.getUuid("AHPGeneticParent1");
+        else this.ahp$geneticParent1Uuid = null;
+        if (nbt.containsUuid("AHPGeneticParent2")) this.ahp$geneticParent2Uuid = nbt.getUuid("AHPGeneticParent2");
+        else this.ahp$geneticParent2Uuid = null;
 
         // --- Tag Game ---
         this.ahp$tagGamesPlayedToday = nbt.getInt("AHPTagGamesPlayed");
@@ -546,7 +552,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
-        // Glowing Sunflower Easter Egg (Server side only, low frequency)
+        // Glowing Sunflower Easter Egg (Server)
         if (++this.ahp$sunflowerCheckTimer >= 20) {
             this.ahp$sunflowerCheckTimer = 0;
             if (Configs.AHP_WORLDGEN.enableGlowingSunflowers && !world.isDay()) {
@@ -559,6 +565,17 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                         break;
                     }
                 }
+            }
+        }
+
+        // --- Genetic Visualization (Server) ---
+        if (this.ahp$geneticParent1Uuid != null && this.ahp$geneticParent2Uuid != null) {
+            Entity parent1 = ((ServerWorld) world).getEntity(this.ahp$geneticParent1Uuid);
+            Entity parent2 = ((ServerWorld) world).getEntity(this.ahp$geneticParent2Uuid);
+
+            if (parent1 != null && parent2 != null && parent1.isAlive() && parent2.isAlive()) {
+                int countPerTick = Configs.AHP.simulatedOffspringPerTick.get();
+                ParticleEffectsUtil.spawnGeneticProbabilityCloud(world, parent1.getPos(), parent2.getPos(), countPerTick);
             }
         }
 
@@ -743,6 +760,29 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         this.dataTracker.set(AHP_CROWN_TRIAL_TICKS, ticks);
     }
 
+    @Unique
+    @Override
+    public UUID ahp$getGeneticParent1Uuid() {
+        return this.ahp$geneticParent1Uuid;
+    }
+
+    @Unique
+    @Override
+    public void ahp$setGeneticParent1Uuid(UUID uuid) {
+        this.ahp$geneticParent1Uuid = uuid;
+    }
+
+    @Unique
+    @Override
+    public UUID ahp$getGeneticParent2Uuid() {
+        return this.ahp$geneticParent2Uuid;
+    }
+
+    @Unique
+    @Override
+    public void ahp$setGeneticParent2Uuid(UUID uuid) {
+        this.ahp$geneticParent2Uuid = uuid;
+    }
 
     @Unique
     @Override
@@ -811,7 +851,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Override
     public void ahp$resetBreedingHistory() {
         this.ahp$hamstersFedForBreeding = 0;
-        ((PlayerEntity)(Object)this).sendMessage(Text.translatable("message.adorablehamsterpets.breeding_history_reset").formatted(Formatting.GREEN), true);
+        ((PlayerEntity)(Object)this).sendMessage(Text.translatable("message.adorablehamsterpets.breeding.history_reset").formatted(Formatting.GREEN), true);
     }
 
     @Unique

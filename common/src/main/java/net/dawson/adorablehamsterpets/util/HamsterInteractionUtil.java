@@ -74,6 +74,38 @@ public final class HamsterInteractionUtil {
         return ActionResult.PASS;
     }
 
+    // --- Genetics Visualizer ---
+    public static ActionResult handleGeneticsVisualizer(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
+        if (!player.isSneaking() && stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+            if (hamster.isGeneticsVisualizerMember()) {
+                if (!hamster.getWorld().isClient()) {
+                    PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
+                    UUID p1 = accessor.ahp$getGeneticParent1Uuid();
+                    UUID p2 = accessor.ahp$getGeneticParent2Uuid();
+                    UUID target = hamster.getUuid();
+
+                    if (target.equals(p1) || target.equals(p2)) {
+                        // Clicking an already selected parent clears visualization
+                        accessor.ahp$setGeneticParent1Uuid(null);
+                        accessor.ahp$setGeneticParent2Uuid(null);
+                        player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.clear").formatted(Formatting.YELLOW), true);
+                    } else if (p1 == null || (p1 != null && p2 != null)) {
+                        // Start a new selection
+                        accessor.ahp$setGeneticParent1Uuid(target);
+                        accessor.ahp$setGeneticParent2Uuid(null);
+                        player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.set_parent1").formatted(Formatting.WHITE), true);
+                    } else {
+                        // Set second parent
+                        accessor.ahp$setGeneticParent2Uuid(target);
+                        player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.set_parent2").formatted(Formatting.WHITE), true);
+                    }
+                }
+                return ActionResult.success(hamster.getWorld().isClient());
+            }
+        }
+        return ActionResult.PASS;
+    }
+
     // --- Tag Game ---
     public static ActionResult handleTagGame(HamsterEntity hamster, PlayerEntity player) {
         if (hamster.isPlayingTag()) {
