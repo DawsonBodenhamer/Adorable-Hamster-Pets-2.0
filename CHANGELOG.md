@@ -39,10 +39,10 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - I got the idea for creating the textures programmatically like this because that's how I made the original textures in Photoshop— using various Gradient Maps applied to a single, grayscale texture. Then I realized Java code can do the same thing!
   - The total number of unique hamster types that spawn in the wild is now **3,231** by default, and the number of genetically inheritable hamster permutations from breeding is now **over 2.2 Million**.
   - **Want to understand the math?** Simply start up your world or server, and then open up your `logs/latest.log` file. Press `CNTRL + F` and search for "`Genetics Engine`." I have added fancy logging output to walk you through the color-combination math in a way that is (hopefully) easy to understand.
-- **Massive Rendering Optimization**
+- **Significant Performance Improvements**
   - Flattened the entire visual stack (base coat, wild overlays, breeding overlays, skin, eyes, armor, and accessories) into a single, dynamically composited texture at runtime.
-  - This completely eliminates all secondary `GeoRenderLayer` passes. Every hamster, regardless of its complex genetics or equipped items, now costs exactly one draw call to render (instead of up to 8!), resulting in a massive performance boost.
-- **Bare-Bones Performance Mode**
+  - This completely eliminates all secondary `GeoRenderLayer` passes. Every hamster, regardless of its complex genetics or equipped items, now costs exactly one draw call to render (instead of up to 8!), resulting in a massive performance boost. Especially noticeable when numerous hamsters are on screen at the same time.
+- **Bare-Bones Ultra Performance Mode**
   - Added a new `Performance Mode` toggle in the config (and an assignable keybind) designed specifically for viewing absurd numbers of hamsters simultaneously without melting your GPU.
   - When enabled, it bypasses the dynamic texture engine entirely (falling back to a single flat texture) and hides almost all the model's geometry.
   - The hamsters essentially become grayscale cubes, stripping away nearly all matrix-calculation overhead.
