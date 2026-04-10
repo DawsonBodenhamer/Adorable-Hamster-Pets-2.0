@@ -100,6 +100,31 @@ public class HamsterPaletteManager {
                 registerStatic(author, textureName);
             }
         }
+
+        // --- Diluteness Normalization ---
+        // Determine absolute bounds across all loaded palettes
+        double minBri = Double.MAX_VALUE;
+        double maxSat = Double.MIN_VALUE;
+
+        for (PaletteDefinition def : PALETTE_REGISTRY.values()) {
+            double bri = ColorSpaceUtil.getBrightness(def.colorSpacePos());
+            double sat = ColorSpaceUtil.getSaturation(def.colorSpacePos());
+            if (bri < minBri) minBri = bri;
+            if (sat > maxSat) maxSat = sat;
+        }
+
+        // Re-build registry with normalized diluteness scores
+        for (Map.Entry<String, PaletteDefinition> entry : PALETTE_REGISTRY.entrySet()) {
+            PaletteDefinition oldDef = entry.getValue();
+            float normalizedDiluteness = ColorSpaceUtil.calculateNormalizedDiluteness(oldDef.colorSpacePos(), minBri, maxSat);
+
+            PaletteDefinition newDef = new PaletteDefinition(
+                    oldDef.id(), oldDef.author(), oldDef.type(),
+                    oldDef.hexCodes(), oldDef.colorSpacePos(),
+                    normalizedDiluteness, oldDef.zone()
+            );
+            PALETTE_REGISTRY.put(entry.getKey(), newDef);
+        }
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
