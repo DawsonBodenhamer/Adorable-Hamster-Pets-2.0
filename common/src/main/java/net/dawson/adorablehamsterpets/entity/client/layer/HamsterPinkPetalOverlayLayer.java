@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.client.layer;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -29,6 +30,8 @@ public class HamsterPinkPetalOverlayLayer extends GeoRenderLayer<HamsterEntity> 
     @Override
     public void render(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel bakedModel, RenderLayer renderType,
                        VertexConsumerProvider bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
+
+        if (Configs.AHP.performanceMode) return;
 
         // 1. Get the petal type (0 = none, 1 = head, 2 = side, 3 = lower back)
         int petalType = animatable.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE);

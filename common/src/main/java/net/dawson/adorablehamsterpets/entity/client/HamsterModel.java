@@ -10,6 +10,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoRenderer;
 
@@ -55,8 +56,49 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
     public void setCustomAnimations(HamsterEntity entity, long instanceId, AnimationState<HamsterEntity> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
-        // --- Bone References ---
         var processor = this.getAnimationProcessor();
+
+        // --- Performance Mode ---
+        if (Configs.AHP.performanceMode) {
+            // Hide everything except absolute essentials
+            for (GeoBone bone : processor.getRegisteredBones()) {
+                String name = bone.getName();
+                boolean keepVisible = name.equals("root")
+                        || name.equals("body_parent")
+                        || name.equals("body_child");
+                bone.setHidden(!keepVisible);
+            }
+
+//            // Apply basic scaling
+//            var rootBone = processor.getBone("root");
+//            var headParentBone = processor.getBone("head_parent");
+//            if (rootBone != null && headParentBone != null) {
+//                float ageProgress = 1.0f;
+//                if (entity.isBaby()) {
+//                    int exactAge = entity.getDataTracker().get(HamsterEntity.EXACT_AGE);
+//                    ageProgress = 1.0f - (Math.abs(exactAge) / 24000.0f);
+//                }
+//                float currentBaseScale = MathHelper.lerp(ageProgress, BABY_SCALE, ADULT_SCALE);
+//                float currentHeadScale = MathHelper.lerp(ageProgress, BABY_HEAD_SCALE, ADULT_HEAD_SCALE);
+//
+//                rootBone.setScaleX(currentBaseScale);
+//                rootBone.setScaleZ(currentBaseScale);
+//                rootBone.setScaleY(entity.isShoulderPet() ? currentBaseScale * entity.dynamicScaleY : currentBaseScale);
+//
+//                headParentBone.setScaleX(currentHeadScale);
+//                headParentBone.setScaleY(currentHeadScale);
+//                headParentBone.setScaleZ(currentHeadScale);
+//            }
+            return; // Skip all other visual calculations
+        } else {
+            // Restore visibility to all bones when performance mode off
+            for (GeoBone bone : processor.getRegisteredBones()) {
+                bone.setHidden(false);
+            }
+        }
+
+        // --- Normal Mode ---
+        // --- Bone References ---
         var rootBone = processor.getBone("root");
         var headParentBone = processor.getBone("head_parent");
         var leftCheekDefBone = processor.getBone("left_cheek_deflated");

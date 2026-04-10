@@ -63,6 +63,11 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
     - **Genetic Mutation Rate**: Adjusts the random color scatter/mutations applied to babies. Think of this as the "thickness" of the line.
     - **Simulated Offspring Per Second**: Adjust the density of the 3D visualizer particle cloud. Each particle represents a potential baby.
     - **Real-time Controls:** While holding the guidebook, you can dynamically tweak the shape of the genetic probability cloud using the arrow keys: Left/Right Arrows adjust Genetic Variance; Up/Down Arrows adjust Genetic Mutation Rate.
+- **Performance Mode**
+  - Added a new `Performance Mode` toggle in the config (and an assignable keybind so you can turn it off and on quickly) designed for viewing massive numbers of hamsters.
+  - When enabled, the game will completely skip rendering all texture overlays, (fur patterns, eyes, skin accessories, armor), forcing them to render with a single grayscale texture on a single bone from the model. Essentially they will become grayscale cubes.
+  - This eliminates over 80% of the draw calls required per hamster, providing a massive FPS boost when thousands are spawned at once.
+  - The Jade HUD overlay will still display their genetic information, because the server still remembers what they are supposed to look like.
 - **Recessive Eye Genetics**
   - Hamsters now possess dominant (Black) and recessive (Red) eye genetics.
   - Red eyes do not exist in the wild. They are genetically tied to the "diluteness" (brightness/saturation) of the hamster's coat. A fully dilute hamster has up to a 50% chance of spawning with a recessive red eye gene. By selectively breeding highly dilute hamsters, players can uncover carriers (`Br`) and eventually breed Red-Eyed (`rr`) variants.

@@ -354,6 +354,18 @@ public class AdorableHamsterPetsClient {
             }
         }
 
+        // Handle Toggle Performance Mode Keybind
+        while (ModKeyBindings.TOGGLE_PERFORMANCE_MODE_KEY.wasPressed()) {
+            Configs.AHP.performanceMode = !Configs.AHP.performanceMode;
+            Configs.AHP.save();
+
+            Text message = Text.translatable(
+                    Configs.AHP.performanceMode ? "message.adorablehamsterpets.performance_mode_enabled" : "message.adorablehamsterpets.performance_mode_disabled"
+            ).formatted(Configs.AHP.performanceMode ? Formatting.GREEN : Formatting.RED);
+
+            client.player.sendMessage(message, false);
+        }
+
         // --- Handle Toggle Supporter Crown Keybind ---
         if (crownDoubleTapTimer > 0) {
             crownDoubleTapTimer--;

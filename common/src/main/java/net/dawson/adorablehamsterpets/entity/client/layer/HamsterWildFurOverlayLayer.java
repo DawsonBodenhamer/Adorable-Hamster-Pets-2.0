@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.entity.client.layer;
 
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
@@ -24,6 +25,8 @@ public class HamsterWildFurOverlayLayer extends GeoRenderLayer<HamsterEntity> {
     @Override
     public void render(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel bakedModel, RenderLayer renderType,
                        VertexConsumerProvider bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
+
+        if (Configs.AHP.performanceMode) return;
 
         if (animatable.isSweetPotato()) return;
 

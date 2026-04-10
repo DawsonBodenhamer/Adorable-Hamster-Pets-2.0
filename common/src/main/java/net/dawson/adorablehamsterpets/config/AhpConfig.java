@@ -189,6 +189,16 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Nudge the crown up or down. Move it high enough and you'll have a halo. Vanity for the win. Affects all crowns.")
     public ValidatedDouble crownYOffset = new ValidatedDouble(0.25, 2.0, -2.0);
 
+    // --- Performance Settings ---
+    @Translatable.Name("Performance Settings")
+    @Translatable.Desc("Hamsters have a lot of render layers by default. Here's where you can turn them all off temporarily if you'd like to look at a huge group of 500 thousand hamsters without setting your PC on fire.")
+    public ConfigGroup performanceSettings = new ConfigGroup("performanceSettings", true);
+
+    @NonSync
+    @Translatable.Name("Performance Mode [WARNING]")
+    @Translatable.Desc("[WARNING: THIS MAKES ALL HAMSTERS LOOK IDENTICAL]. Disables all texture overlays, accessories, and armor rendering on hamsters, forcing them to render with a single grayscale texture. Drastically improves FPS when hundreds of thousands of hamsters are on screen. Can be toggled on and off via a custom keybind.")
+    public boolean performanceMode = false;
+
     // --- UI & Quality of Life ---
     @Translatable.Name("UI & Quality of Life")
     @Translatable.Desc("Because Sanity is Overrated")

@@ -28,6 +28,8 @@ public class HamsterAcornHatLayer extends GeoRenderLayer<HamsterEntity> {
     public void render(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel bakedModel, RenderLayer renderType,
                        VertexConsumerProvider bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
 
+        if (Configs.AHP.performanceMode) return;
+
         boolean shouldRender = false;
 
         // 1. Check Bling Slot (Slot 6) - Highest Priority

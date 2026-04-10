@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.entity.client;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.client.layer.*;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
@@ -93,6 +94,11 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
     @Override
     public Identifier getTextureLocation(HamsterEntity entity) {
+        if (Configs.AHP.performanceMode) {
+            // Bypass all dynamic texture generation in performance mode
+            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/performance_mode.png");
+        }
+
         if (entity.isSweetPotato()) {
             return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/easter_egg/sweet_potato.png");
         }
