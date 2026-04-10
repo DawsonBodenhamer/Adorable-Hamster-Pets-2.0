@@ -162,7 +162,7 @@ public final class HamsterDietUtil {
                     // --- Player Litter Limit Check ---
                     if (player instanceof PlayerEntityAccessor accessor) {
                         if (!accessor.ahp$canBreedHamsters()) {
-                            player.sendMessage(Text.translatable("message.adorablehamsterpets.player_breeding_limit_reached").formatted(Formatting.RED), true);
+                            player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.player_limit_reached").formatted(Formatting.RED), true);
                             hamster.playRefusalAnimation();
                             return 2;
                         }
@@ -174,11 +174,11 @@ public final class HamsterDietUtil {
                     hamster.setInLove(true);
                     return 1;
                 } else if (!isBreedingAllowed) {
-                    player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding_disabled").formatted(Formatting.RED), true);
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.disabled").formatted(Formatting.RED), true);
                     hamster.playRefusalAnimation();
                     return 2;
                 } else {
-                    player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding_limit_reached").formatted(Formatting.RED), true);
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.hamster_limit_reached").formatted(Formatting.RED), true);
                     hamster.playRefusalAnimation();
                     return 2;
                 }

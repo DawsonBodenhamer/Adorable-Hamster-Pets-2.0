@@ -224,8 +224,11 @@ public final class ColorSpaceUtil {
      * Adds a randomized jitter to "thicken" the line, expanding the pool of potential genetic results.
      */
     public static Vec3d calculateGeneticMidpoint(Vec3d parentA, Vec3d parentB, Random random) {
-        // Gaussian distribution centered at 0.5 (midpoint) with slight deviation 0.15
-        double t = 0.5 + (random.nextGaussian() * 0.15);
+        double variance = AdorableHamsterPets.CONFIG.geneticVariance.get();
+        double mutationRate = AdorableHamsterPets.CONFIG.geneticMutationRate.get();
+
+        // Gaussian distribution centered at 0.5 (midpoint) with slight configurable deviation
+        double t = 0.5 + (random.nextGaussian() * variance);
 
         // Clamp to [0, 1] to prevent moving past parental boundaries
         t = Math.max(0.0, Math.min(1.0, t));
@@ -233,11 +236,10 @@ public final class ColorSpaceUtil {
         // Lerp along the 3D line segment
         Vec3d mid = parentA.lerp(parentB, t);
 
-        // Add random scatter offset (+/- 0.1 on all axes)
-        // Equates to 10% brightness range and 5% hue/saturation range
-        double jx = (random.nextDouble() - 0.5) * 0.2;
-        double jy = (random.nextDouble() - 0.5) * 0.2;
-        double jz = (random.nextDouble() - 0.5) * 0.2;
+        // Add random scatter offset on all axes
+        double jx = (random.nextDouble() - 0.5) * mutationRate;
+        double jy = (random.nextDouble() - 0.5) * mutationRate;
+        double jz = (random.nextDouble() - 0.5) * mutationRate;
 
         return mid.add(jx, jy, jz);
     }

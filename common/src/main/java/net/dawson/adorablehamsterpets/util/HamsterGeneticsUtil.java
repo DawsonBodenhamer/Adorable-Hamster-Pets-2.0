@@ -143,6 +143,11 @@ public final class HamsterGeneticsUtil {
             breedChance = 0.70f;
         }
 
+        // Force overlay if configured
+        if (AdorableHamsterPets.CONFIG.forceBreedingOverlay) {
+            breedChance = 1.0f;
+        }
+
         int babyBreedingPattern = 0;
         String babyBreedingPaletteId = null;
 

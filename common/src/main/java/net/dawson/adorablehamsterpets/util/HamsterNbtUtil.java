@@ -52,6 +52,7 @@ public final class HamsterNbtUtil {
         nbt.putInt("EjectionCheckCooldown", hamster.getEjectionCheckCooldown());
         nbt.putInt("PinkPetalType", hamster.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE));
         nbt.putInt("AnimationPersonalityId", hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID));
+        nbt.putBoolean("isGeneticsVisualizerMember", hamster.isGeneticsVisualizerMember());
 
         // --- 2. Parent Following ---
         if (hamster.getParentUuid() != null) {
@@ -147,6 +148,7 @@ public final class HamsterNbtUtil {
         } else {
             hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, nbt.getInt("AnimationPersonalityId"));
         }
+        hamster.setGeneticsVisualizerMember(nbt.getBoolean("isGeneticsVisualizerMember"));
 
         // --- 2. Parent Following ---
         if (nbt.containsUuid("ParentUuid")) {

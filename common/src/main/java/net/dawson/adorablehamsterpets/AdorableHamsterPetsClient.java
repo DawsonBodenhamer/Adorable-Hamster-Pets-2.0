@@ -323,6 +323,22 @@ public class AdorableHamsterPetsClient {
             NetworkManager.sendToServer(new HamsterInputPayload(false, false));
         }
 
+        // Handle Genetics Visualizer Config Adjustments
+        if (client.player.getMainHandStack().isOf(ModItems.HAMSTER_GUIDE_BOOK.get()) || client.player.getOffHandStack().isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+            while (ModKeyBindings.GENETICS_VISUALIZER_VAR_UP_KEY.wasPressed()) {
+                NetworkManager.sendToServer(new AdjustGeneticsConfigPayload(true, true));
+            }
+            while (ModKeyBindings.GENETICS_VISUALIZER_VAR_DOWN_KEY.wasPressed()) {
+                NetworkManager.sendToServer(new AdjustGeneticsConfigPayload(true, false));
+            }
+            while (ModKeyBindings.GENETICS_VISUALIZER_MUT_UP_KEY.wasPressed()) {
+                NetworkManager.sendToServer(new AdjustGeneticsConfigPayload(false, true));
+            }
+            while (ModKeyBindings.GENETICS_VISUALIZER_MUT_DOWN_KEY.wasPressed()) {
+                NetworkManager.sendToServer(new AdjustGeneticsConfigPayload(false, false));
+            }
+        }
+
         // Handle Throw Hamster Keybind
         if (ModKeyBindings.THROW_HAMSTER_KEY.wasPressed()) {
             final AhpConfig currentConfig = AdorableHamsterPets.CONFIG;

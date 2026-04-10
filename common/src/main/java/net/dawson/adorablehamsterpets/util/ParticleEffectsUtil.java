@@ -382,4 +382,26 @@ public class ParticleEffectsUtil {
             }
         }
     }
+
+    /**
+     * Spawns a cloud of particles representing the genetic probability distribution
+     * between two parent hamster colors in the 3D color space.
+     *
+     * @param world The world to spawn in.
+     * @param parentAPos The 3D position of the first parent.
+     * @param parentBPos The 3D position of the second parent.
+     * @param countPerTick How many particles to spawn per tick.
+     */
+    public static void spawnGeneticProbabilityCloud(World world, Vec3d parentAPos, Vec3d parentBPos, int countPerTick) {
+        for (int i = 0; i < countPerTick; i++) {
+            // Utilize exact same math from breeding system
+            Vec3d point = ColorSpaceUtil.calculateGeneticMidpoint(parentAPos, parentBPos, world.getRandom());
+
+            if (world instanceof ServerWorld serverWorld) {
+                serverWorld.spawnParticles(ParticleTypes.WAX_ON, point.x, point.y, point.z, 1, 0, 0, 0, 0);
+            } else {
+                world.addParticle(ParticleTypes.WAX_ON, point.x, point.y, point.z, 0, 0, 0);
+            }
+        }
+    }
 }

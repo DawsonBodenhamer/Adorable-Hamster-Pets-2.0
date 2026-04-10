@@ -7,6 +7,7 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
+import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
 import net.dawson.adorablehamsterpets.networking.payload.*;
 import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
@@ -19,7 +20,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 
 public class ModPackets {
 
@@ -180,6 +183,33 @@ public class ModPackets {
                             accessor.ahp$setHasUsedSupporterCrownTrial(true);
                             accessor.ahp$setSupporterCrownTrialTicks(600); // 30 seconds
                             accessor.ahp$setSupporterCrownTheme(payload.themeOrdinal());
+                        }
+                    }
+                })
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, AdjustGeneticsConfigPayload.ID, AdjustGeneticsConfigPayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    if (context.getPlayer() instanceof ServerPlayerEntity player) {
+                        if (player.hasPermissionLevel(2)) { // OP required to modify server config
+                            if (payload.isVariance()) {
+                                double current = Configs.AHP.geneticVariance.get();
+                                double next = MathHelper.clamp(current + (payload.increase() ? 0.05 : -0.05), 0.0, 1.0);
+                                @SuppressWarnings("unchecked")
+                                ValidatedFieldAccessor<Double> accessor = (ValidatedFieldAccessor<Double>) (Object) Configs.AHP.geneticVariance;
+                                accessor.adorablehamsterpets$set(next);
+                                player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.genetic_variance_updated", String.format("%.2f", next)).formatted(Formatting.WHITE), true);
+                            } else {
+                                double current = Configs.AHP.geneticMutationRate.get();
+                                double next = MathHelper.clamp(current + (payload.increase() ? 0.1 : -0.1), 0.0, 2.0);
+                                @SuppressWarnings("unchecked")
+                                ValidatedFieldAccessor<Double> accessor = (ValidatedFieldAccessor<Double>) (Object) Configs.AHP.geneticMutationRate;
+                                accessor.adorablehamsterpets$set(next);
+                                player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.genetics_mutation_rate_updated", String.format("%.1f", next)).formatted(Formatting.WHITE), true);
+                            }
+                            Configs.AHP.save();
+                        } else {
+                            player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.no_permission").formatted(Formatting.RED), true);
                         }
                     }
                 })

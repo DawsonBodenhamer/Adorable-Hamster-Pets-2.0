@@ -794,6 +794,22 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Control the rate of hamster reproduction. Genetics are fun, but we don't want your server to start begging for mercy. Note: the global 'Enable Breeding' toggle is in the 'Core Feature Toggles' section.")
     public ConfigGroup breedingSettings = new ConfigGroup("breedingSettings", true);
 
+    @Translatable.Name("Force Breeding Overlay")
+    @Translatable.Desc("If true, all baby hamsters are guaranteed to receive a breeding overlay, regardless of whether their parents had them. Reduces the total number of possible outcomes.")
+    public boolean forceBreedingOverlay = false;
+
+    @Translatable.Name("Genetic Variance")
+    @Translatable.Desc("How much the baby's base color tends to deviate from the exact mathematical center between its parents. Higher values mean the baby could look much more like Parent A or Parent B, rather than a perfect mix.")
+    public ValidatedDouble geneticVariance = new ValidatedDouble(0.1, 1.0, 0.0);
+
+    @Translatable.Name("Genetic Mutation Rate")
+    @Translatable.Desc("How much random 'scatter' is added to the baby's color across all dimensions (Hue, Saturation, Brightness). Higher values mean the baby could end up a completely unexpected color instead of a mixture between the two parents.")
+    public ValidatedDouble geneticMutationRate = new ValidatedDouble(0.3, 2.0, 0.0);
+
+    @Translatable.Name("Simulated Offspring Per Second")
+    @Translatable.Desc("How many theoretical babies the 3D visualizer calculates every tick (20 ticks = 1 second) to build the probability particle cloud. Each particle spawned represents a baby hamster. Higher numbers create a denser, clearer picture of the genetic potential.")
+    public ValidatedInt simulatedOffspringPerTick = new ValidatedInt(20, 300, 1);
+
     @NonSync
     @Translatable.Name("Reset Your Breeding History")
     public ConfigAction resetBreedingHistory = new ConfigAction.Builder()
@@ -820,11 +836,11 @@ public class AhpConfig extends Config {
 
     @Translatable.Name("Min Litter Size")
     @Translatable.Desc("The minimum number of babies per litter.")
-    public ValidatedInt litterSizeMin = new ValidatedInt(1, 5, 1);
+    public ValidatedInt litterSizeMin = new ValidatedInt(1, 15, 1);
 
     @Translatable.Name("Max Litter Size")
     @Translatable.Desc("The maximum number of babies per litter. Make sure this is greater than or equal to the minimum, obviously.")
-    public ValidatedInt litterSizeMax = new ValidatedInt(3, 10, 1);
+    public ValidatedInt litterSizeMax = new ValidatedInt(3, 20, 1);
 
     @Translatable.Name("Limit Breeding By Player")
     @Translatable.Desc("Try as I might, I could not think of a better way to word that. Here's where you can cap the number of hamster litters a single player can breed.")

@@ -46,13 +46,36 @@ public class HamsterSpawnCommandUtil {
         int delayTicks = 0;
     }
 
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Fields
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private static int delayedPromptTicks = 0;
+    private static ServerPlayerEntity promptPlayer = null;
+
     private static final PermutationState permState = new PermutationState();
 
-    /**
-     * Ticks an asynchronous permutation spawning process.
-     * Prevents locking up the main server thread by processing spawns in batches.
-     */
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Lifecycle Hooks
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     public static void onServerTick(MinecraftServer server) {
+        // --- Delayed Genetics Visualization Prompt ---
+        if (delayedPromptTicks > 0 && promptPlayer != null) {
+            delayedPromptTicks--;
+            if (delayedPromptTicks == 0) {
+                promptPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line1").formatted(Formatting.GOLD), false);
+                promptPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line2").formatted(Formatting.WHITE), false);
+                promptPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line3").formatted(Formatting.WHITE), false);
+                promptPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line4").formatted(Formatting.AQUA), false);
+                promptPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line5").formatted(Formatting.AQUA), false);
+                promptPlayer = null;
+            }
+        }
+
+         // --- Asynchronous Permutation Spawning ---
+        // Prevent locking up main server thread by processing spawns in batches
         if (!permState.active || permState.genomesToSpawn == null) return;
 
         if (permState.delayTicks > 0) {
@@ -182,15 +205,25 @@ public class HamsterSpawnCommandUtil {
             float yaw = (float) Math.toDegrees(Math.atan2(-dz, -dx)) - 90.0f;
             HamsterEntity hamster = spawnFrozenHamster(player.getServerWorld(), player.getPos().add(dx, dy, dz), yaw, genome);
 
-            // Tag the center-most hamster (Pure White) so it can spawn the 3D cylinder particle visuals
-            if (hamster != null && def.zone() == HamsterColorZone.WHITE && !centerTagged) {
-                hamster.addCommandTag("3d_layout_center");
-                hamster.addCommandTag("3d_scale_" + scale);
-                hamster.addCommandTag("3d_base_y_" + player.getBlockPos().getY());
-                centerTagged = true;
+            if (hamster != null) {
+                hamster.addCommandTag("3d_layout_member");
+                hamster.setGeneticsVisualizerMember(true);
+
+                // Tag center-most hamster (Pure White) so it can spawn the 3D cylinder particle visuals
+                if (def.zone() == HamsterColorZone.WHITE && !centerTagged) {
+                    hamster.addCommandTag("3d_layout_center");
+                    hamster.addCommandTag("3d_scale_" + scale);
+                    hamster.addCommandTag("3d_base_y_" + player.getBlockPos().getY());
+                    centerTagged = true;
+                }
             }
         }
         source.sendFeedback(() -> Text.literal("[Hamster Genetics] Spawned " + genomes.size() + " base variants in a 3D HSB layout."), false);
+
+        // Start delay for control instructions
+        delayedPromptTicks = 80;
+        promptPlayer = player;
+
         return 1;
     }
 

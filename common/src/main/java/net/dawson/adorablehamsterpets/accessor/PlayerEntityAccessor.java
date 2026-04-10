@@ -8,6 +8,7 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Accessor interface to expose custom methods injected into PlayerEntity by PlayerEntityMixin.
@@ -49,6 +50,10 @@ public interface PlayerEntityAccessor {
     boolean ahp$addBredGenome(int hash);
     int ahp$getTamedGenomeCount();
     int ahp$getBredGenomeCount();
+    UUID ahp$getGeneticParent1Uuid();
+    void ahp$setGeneticParent1Uuid(UUID uuid);
+    UUID ahp$getGeneticParent2Uuid();
+    void ahp$setGeneticParent2Uuid(UUID uuid);
 
     int ahp$getSupporterCrownTheme();
     void ahp$setSupporterCrownTheme(int theme);

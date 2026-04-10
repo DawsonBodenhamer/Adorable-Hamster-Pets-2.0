@@ -254,6 +254,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int RESCUE_SLEEPING_FLAG = 1 << 22;
     public static final int IS_PLAYING_TAG_FLAG = 1 << 23;
     public static final int CELEBRATING_BABY_FLAG = 1 << 24;
+    public static final int GENETICS_VISUALIZER_MEMBER_FLAG = 1 << 25;
 
     // --- Data Trackers ---
     public static final TrackedData<Integer> HAMSTER_FLAGS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -529,6 +530,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public boolean isCelebratingDiamond() {return getHamsterFlag(CELEBRATING_DIAMOND_FLAG);}
     public boolean isCelebratingBaby() { return getHamsterFlag(CELEBRATING_BABY_FLAG); }
     public void setCelebratingBaby(boolean celebratingBaby) { setHamsterFlag(CELEBRATING_BABY_FLAG, celebratingBaby); }
+    public boolean isGeneticsVisualizerMember() { return getHamsterFlag(GENETICS_VISUALIZER_MEMBER_FLAG); }
+    public void setGeneticsVisualizerMember(boolean isGeneticsVisualizerMember) { setHamsterFlag(GENETICS_VISUALIZER_MEMBER_FLAG, isGeneticsVisualizerMember); }
     // --- Riding State Accessors ---
     public int getRiderJumpCooldown() { return this.riderJumpCooldown; }
     public void setRiderJumpCooldown(int ticks) { this.riderJumpCooldown = ticks; }
@@ -1157,6 +1160,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         // --- 1. Global Interactions ---
         ActionResult result = HamsterInteractionUtil.handleDebugToggle(this, player, stack);
+        if (result != ActionResult.PASS) return result;
+
+        result = HamsterInteractionUtil.handleGeneticsVisualizer(this, player, stack);
         if (result != ActionResult.PASS) return result;
 
         result = HamsterInteractionUtil.handleTagGame(this, player);
