@@ -57,7 +57,7 @@ public final class ColorSpaceUtil {
     public record ColorData(Vec3d position, float dilutenessScore) {}
 
     /**
-     * Analyzes an array of Hex color codes and returns its averaged 3D spatial coordinate and diluteness score.
+     * Analyzes an array of Hex color codes and returns its averaged 3D spatial coordinate.
      */
     public static ColorData analyzePalette(int[] paletteHexCodes) {
         if (paletteHexCodes == null || paletteHexCodes.length == 0) {
@@ -65,7 +65,6 @@ public final class ColorSpaceUtil {
         }
 
         double sumX = 0, sumY = 0, sumZ = 0;
-        double totalDiluteness = 0.0;
 
         for (int hex : paletteHexCodes) {
             // Extract RGB
@@ -80,13 +79,12 @@ public final class ColorSpaceUtil {
             sumX += hsb[1] * Math.cos(angleRadians);
             sumY += hsb[1] * Math.sin(angleRadians);
             sumZ += hsb[2];
-            totalDiluteness += hsb[2] * (1.0f - hsb[1]);
         }
 
         int count = paletteHexCodes.length;
         return new ColorData(
                 new Vec3d(sumX / count, sumY / count, sumZ / count),
-                (float) (totalDiluteness / count)
+                0.0f
         );
     }
 
@@ -108,7 +106,6 @@ public final class ColorSpaceUtil {
 
             BufferedImage image = ImageIO.read(stream);
             double sumX = 0, sumY = 0, sumZ = 0;
-            double totalDiluteness = 0.0;
             int validPixels = 0;
 
             for (int y = 0; y < image.getHeight(); y++) {
@@ -116,8 +113,6 @@ public final class ColorSpaceUtil {
                     int argb = image.getRGB(x, y);
                     int alpha = (argb >> 24) & 0xFF;
 
-                    // Skip transparent or semi-transparent pixels
-                    // (mostly for anti-aliased edges; probably not 100% necessary for 6-pixel Minecraft textures)
                     if (alpha < 255) continue;
 
                     int r = (argb >> 16) & 0xFF;
@@ -130,7 +125,6 @@ public final class ColorSpaceUtil {
                     sumX += hsb[1] * Math.cos(angleRadians);
                     sumY += hsb[1] * Math.sin(angleRadians);
                     sumZ += hsb[2];
-                    totalDiluteness += hsb[2] * (1.0f - hsb[1]);
                     validPixels++;
                 }
             }
@@ -139,13 +133,30 @@ public final class ColorSpaceUtil {
 
             return new ColorData(
                     new Vec3d(sumX / validPixels, sumY / validPixels, sumZ / validPixels),
-                    (float) (totalDiluteness / validPixels)
+                    0.0f
             );
 
         } catch (Exception e) {
             AdorableHamsterPets.LOGGER.error("Failed to analyze image for genetics: {}", resourcePath, e);
             return new ColorData(Vec3d.ZERO, 0.0f);
         }
+    }
+
+    /**
+     * Dynamically maps lowest brightness to 0 and highest saturation to 1.
+     */
+    public static float calculateNormalizedDiluteness(Vec3d colorSpacePos, double minBri, double maxSat) {
+        double avgBri = getBrightness(colorSpacePos);
+        double avgSat = getSaturation(colorSpacePos);
+
+        // Normalize brightness relative to the darkest base coat
+        double normBri = Math.max(0.0, (avgBri - minBri) / (1.0 - minBri));
+
+        // Normalize saturation relative to the most vibrant base coat
+        // Guard against division if all bases are grayscale
+        double normSat = maxSat > 0 ? Math.min(1.0, avgSat / maxSat) : 0.0;
+
+        return (float) (normBri * (1.0 - normSat));
     }
 
     /**
