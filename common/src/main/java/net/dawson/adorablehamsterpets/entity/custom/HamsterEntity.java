@@ -1001,6 +1001,15 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
     // --- Entity Behavior ---
     @Override
+    protected void onGrowUp() {
+        super.onGrowUp();
+        // Apply configured breeding cooldown when reaching adulthood naturally
+        if (!this.getWorld().isClient()) {
+            this.setBreedingAge(Configs.AHP.breedingCooldownSeconds.get() * 20);
+        }
+    }
+
+    @Override
     public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) { return false; }
 
     @Override

@@ -139,8 +139,18 @@ public final class HamsterDietUtil {
 
                 // Convert to seconds since vanilla's growUp() multiplies by 20
                 int secondsToGrow = ticksToGrow / 20;
-                hamster.growUp(secondsToGrow, true);
+
+                // Track state before growth
+                boolean wasBaby = hamster.isBaby();
+
+                // Prevent vanilla from storing 'forcedAge' penalty
+                hamster.growUp(secondsToGrow, false);
                 consumed = true;
+
+                // If just reached adulthood, apply configured cooldown
+                if (wasBaby && !hamster.isBaby()) {
+                    hamster.setBreedingAge(config.breedingCooldownSeconds.get() * 20);
+                }
             }
 
             if (consumed) {
