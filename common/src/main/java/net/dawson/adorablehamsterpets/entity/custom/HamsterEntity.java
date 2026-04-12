@@ -698,15 +698,22 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             return false;
         }
 
-        // --- 2. Reset Armor Flag ---
+        // --- 2. Friendly Fire Prevention ---
+        if (Configs.AHP.preventOwnerFriendlyFire && this.isTamed()) {
+            Entity attacker = source.getAttacker();
+            if (attacker instanceof LivingEntity livingAttacker && this.isOwner(livingAttacker)) {
+                return false;
+            }
+        }
+
+        // --- 3. Reset Armor Flag ---
         this.armorAbsorbedDamage = false;
 
-        // --- 3. Delegate to Vanilla Logic ---
+        // --- 4. Delegate to Vanilla Logic ---
         boolean result = super.damage(source, amount);
 
-        // --- 4. Armor Absorption Override ---
-        // If armor absorbed the damage, tell the engine "yes, the entity
-        // was hit", which is required for the attacker to apply knockback/SFX.
+        // --- 5. Armor Absorption Override ---
+        // If armor absorbed damage, tell engine entity was hit so it applies knockback/SFX
         if (this.armorAbsorbedDamage) {
             return true;
         }

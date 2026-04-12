@@ -123,8 +123,12 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - If you do not specify a target, it will automatically apply to the hamster you are currently looking at.
   - The Jade HUD overlay displays the hamster's age alongside its genetic data.
   - Added a new `Display IRL Age` config setting that dictates how fast the hamster ages. If true, their age progresses at 1/72nd the normal speed (matching the real-world 24-hour cycle).
-- **Red Eye Config**
+- **Red Eye Config Toggle**
   - Don't like the red eye hamsters? You can visually disable that for your own client via a new config toggle, which makes them appear to have black eyes.
+- **Friendly Fire Config Toggle**
+  - Added `Prevent Owner Friendly Fire` to the Core config toggles.
+  - When enabled, players can no longer accidentally damage their own tamed hamsters. Disabled by default to remain vanilla-friendly.
+  - In the next update (hopefully), this setting will be tied to a new item: the **Acorn Ring**. I also plan to integrate with the **Trinkets** mod so you can use a trinket slot for it.
 - **GUI Renaming System**
   - Players can now rename their hamsters directly from the Hamster Inventory screen.
   - Features dynamic down-scaling to ensure long names always fit perfectly within the UI constraints.

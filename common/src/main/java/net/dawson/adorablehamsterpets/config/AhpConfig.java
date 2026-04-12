@@ -195,6 +195,7 @@ public class AhpConfig extends Config {
     public ConfigGroup performanceSettings = new ConfigGroup("performanceSettings", true);
 
     @NonSync
+    @ConfigGroup.Pop
     @Translatable.Name("Performance Mode [WARNING]")
     @Translatable.Desc("[WARNING: THIS MAKES ALL HAMSTERS LOOK IDENTICAL]. Disables all texture overlays, accessories, and armor rendering on hamsters, forcing them to render with a single grayscale texture. Drastically improves FPS when hundreds of thousands of hamsters are on screen. Can be toggled on and off via a custom keybind.")
     public boolean performanceMode = false;
@@ -615,6 +616,10 @@ public class AhpConfig extends Config {
     @Translatable.Name("Allow Taming to Re-Enable AI")
     @Translatable.Desc("If true, players can tame frozen, AI-disabled hamsters, instantly breathing life into them like some sort of furry necromancer. Turn this off if you're using command-spawned hamsters as statues or shop displays and don't want your patrons walking off with the merchandise happily following.")
     public boolean allowTamingAiDisabled = true;
+
+    @Translatable.Name("Prevent Owner Friendly Fire")
+    @Translatable.Desc("If true, your weapons will magically pass through your own tamed hamsters. Perfect for those with butter fingers who keep 'accidentally' sending their companions to the great hamster wheel in the sky.")
+    public boolean preventOwnerFriendlyFire = false;
 
     @Translatable.Name("Mob Interactions")
     @Translatable.Desc("Configure how hamsters interact with (or terrify) other creatures.")
