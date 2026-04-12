@@ -705,9 +705,14 @@ public final class HamsterInteractionUtil {
 
     /**
      * Selects a random item from the Default or Extra cheek pouch loot lists.
-     * Prioritizes lists that actually contain items.
+     * Prioritizes lists that actually contain items. If configured,
+     * it pulls exclusively from a custom tag rewards list.
      */
     private static Item getRandomTagGameReward(HamsterEntity hamster) {
+        if (!Configs.AHP.usePouchLootForTagRewards) {
+            return ConfigDataCache.getRandomCustomTagReward(hamster.getRandom());
+        }
+
         List<Integer> validPools = new ArrayList<>();
         validPools.add(0); // Default is always valid
 

@@ -1448,8 +1448,6 @@ public class AhpConfig extends Config {
 
     private final ValidatedField<Boolean> isTagLimitEnabled = enableTagGamePlayerLimit.map(b -> b, b -> b);
 
-    @ConfigGroup.Pop
-    @ConfigGroup.Pop
     @Translatable.Name("Max Games Per Day")
     @Translatable.Desc("How many times a single player can be 'It' per Minecraft day before telling the rodents to go find a hobby. Prevents infinite reward farming.")
     public ValidatedCondition<Integer> maxDailyTagGamesPerPlayer = new ValidatedInt(3, 100, 0)
@@ -1458,6 +1456,16 @@ public class AhpConfig extends Config {
                     Text.translatable("config.adorablehamsterpets.condition.tag_limit_enabled"),
                     () -> 3
             );
+
+    @Translatable.Name("Use Pouch Loot for Rewards")
+    @Translatable.Desc("If true, winning a game of tag rewards you with whatever random pocket lint generates in wild cheek pouches. (That list is configurable: see \"Cheek Pouch Loot\" in the World Gen Config.) If false, it strictly pulls from the custom list below.")
+    public boolean usePouchLootForTagRewards = true;
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Custom Tag Rewards")
+    @Translatable.Desc("The specific items your hamster will regurgitate as a prize, assuming you disabled the toggle above. Format specific item names like this: 'minecraft:diamond' and you can use tags like this: '#minecraft:flowers'. If you leave this empty while custom rewards are active, your hamster will just stare at you awkwardly after you win.")
+    public List<String> customTagRewards = new ArrayList<>();
 
     @Translatable.Name("Commissioned Features")
     @Translatable.Desc("Specialized, unofficial mechanics that don't necessarily fit the theme of the mod, but were funded by various individuals in the community. Purposefully tucked away in the config to ensure most people don't notice them.")
