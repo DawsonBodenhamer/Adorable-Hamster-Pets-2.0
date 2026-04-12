@@ -155,7 +155,10 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - **The Chase:** The hamster will flee if you get too close and stop to playfully taunt you if you fall too far behind.
   - **Payoff:** Successfully "catching" (right-clicking) the hamster before it gets bored ends the game triggers a celebration. The hamster will then spit out a random item from its cheek pouches as a gift (pulling from the configurable cheek pouch loot lists).
   - **Stranger Danger:** By default, you can play tag with wild hamsters and hamsters owned by other players. (Can be disabled in config).
-  - **Configurable Limits:** Added configs to control how often they want to play, the cooldown between games, and an anti-abuse cap on how many times a single player can play the game per in-game day (so they can't farm rewards).
+  - **Configurable Limits and Rewards**
+    - Added configs to control how often they want to play, the cooldown between games, and an anti-abuse cap on how many times a single player can play the game per in-game day (so they can't farm rewards).
+    - Added configs to control rewards: By default, hamsters will randomly pick an item from their configurable "Cheek Pouch Loot" list (the list of potential items a wild hamster might spawn with). The item does not have to be in the hamster's cheek pouch for it to give it as a gift.
+    - That can be disabled, in which case the hamster will choose the gift from a separate "Custom Tag Rewards" list in the config, which means you can make your hamster give you a diamond or any modded item (or whatever you want) when you catch it after a game of tag. Only server moderators can modify this of course.
 - **Dynamic Gaze**
   - Hamsters will now sustain eye contact with you indefinitely, provided you continue looking back at them, and they don't start a game of tag.
 - **New Audio & Visuals**
