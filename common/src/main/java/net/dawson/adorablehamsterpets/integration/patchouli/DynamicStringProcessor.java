@@ -56,6 +56,12 @@ public class DynamicStringProcessor implements IComponentProcessor {
                 rawText = rawText.replace("{TOTAL_WILD_VARIANTS}", formattedNum);
             }
 
+            if (rawText.contains("{TOTAL_WILD_PLUS_BREEDING_SAMPLE_VARIANTS}")) {
+                long totalSampleVariants = HamsterPaletteManager.calculateTotalWildVariants() * 3L;
+                String formattedNum = NumberFormat.getIntegerInstance().format(totalSampleVariants);
+                rawText = rawText.replace("{TOTAL_WILD_PLUS_BREEDING_SAMPLE_VARIANTS}", formattedNum);
+            }
+
             if (rawText.contains("{TOTAL_POSSIBLE_VARIANTS}")) {
                 long totalBredVariants = HamsterPaletteManager.calculateTotalPossibleVariants();
                 String formattedNum = NumberFormat.getIntegerInstance().format(totalBredVariants);
