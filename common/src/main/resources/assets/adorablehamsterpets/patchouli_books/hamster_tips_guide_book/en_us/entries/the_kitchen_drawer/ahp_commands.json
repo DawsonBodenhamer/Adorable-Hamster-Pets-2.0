@@ -23,7 +23,7 @@
     },
     {
       "type": "adorablehamsterpets:dynamic_page",
-      "anchor": "spawn_all_bases_2D",
+      "anchor": "performance_mode",
       "header": "book.adorablehamsterpets.entry.ahp_commands.page3.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.ahp_commands.page3.body",
@@ -31,7 +31,7 @@
     },
     {
       "type": "adorablehamsterpets:dynamic_page",
-      "anchor": "spawn_all_bases_3D",
+      "anchor": "spawn_all_bases_2D",
       "header": "book.adorablehamsterpets.entry.ahp_commands.page4.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.ahp_commands.page4.body",
@@ -39,7 +39,7 @@
     },
     {
       "type": "adorablehamsterpets:dynamic_page",
-      "anchor": "spawn_all_permutations",
+      "anchor": "spawn_all_bases_3D",
       "header": "book.adorablehamsterpets.entry.ahp_commands.page5.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.ahp_commands.page5.body",
@@ -47,7 +47,7 @@
     },
     {
       "type": "adorablehamsterpets:dynamic_page",
-      "anchor": "print_genetics_report",
+      "anchor": "optional_arguments",
       "header": "book.adorablehamsterpets.entry.ahp_commands.page6.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.ahp_commands.page6.body",
@@ -55,7 +55,7 @@
     },
     {
       "type": "adorablehamsterpets:dynamic_page",
-      "anchor": "set_age",
+      "anchor": "genetics_visualizer",
       "header": "book.adorablehamsterpets.entry.ahp_commands.page7.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.ahp_commands.page7.body",
@@ -63,7 +63,7 @@
     },
     {
       "type": "adorablehamsterpets:dynamic_page",
-      "anchor": "reset_player_breeding",
+      "anchor": "spawn_all_permutations",
       "header": "book.adorablehamsterpets.entry.ahp_commands.page8.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.ahp_commands.page8.body",
@@ -71,7 +71,7 @@
     },
     {
       "type": "adorablehamsterpets:dynamic_page",
-      "anchor": "reset_hamster_breeding",
+      "anchor": "print_genetics_report",
       "header": "book.adorablehamsterpets.entry.ahp_commands.page9.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.ahp_commands.page9.body",
@@ -79,10 +79,34 @@
     },
     {
       "type": "adorablehamsterpets:dynamic_page",
-      "anchor": "reset_tree_heist",
+      "anchor": "set_age",
       "header": "book.adorablehamsterpets.entry.ahp_commands.page10.header",
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.ahp_commands.page10.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "reset_player_breeding",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page11.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page11.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "reset_hamster_breeding",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page12.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page12.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "reset_tree_heist",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page13.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page13.body",
       "text_color": "000000"
     }
   ]

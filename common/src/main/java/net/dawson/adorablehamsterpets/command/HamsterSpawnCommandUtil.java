@@ -181,22 +181,31 @@ public class HamsterSpawnCommandUtil {
     /**
      * Executes the command to spawn all base variants mapped to their 3D color space coordinates.
      */
-    public static int executeSpawnAllBases3D(ServerCommandSource source, boolean withOverlays, String author) throws CommandSyntaxException {
+    public static int executeSpawnAllBases3D(ServerCommandSource source, boolean withOverlays, boolean withSampleBreeding, String author) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrThrow();
-        List<HamsterGenome> genomes = getGenomesToSpawn(player.getServerWorld().getRandom(), withOverlays, author); // Number being spawned
+        List<HamsterGenome> genomes = getGenomesToSpawn(player.getServerWorld().getRandom(), withOverlays, withSampleBreeding, author); // Number being spawned
 
-        // Dynamic scale based on total number
-        double scale = Math.max(2.0,
-                Math.min(15.0, // Cap at 15
-                        Math.cbrt(genomes.size()) // Number being spawned
-                                * 2.0)); // Spacing multiplier
+        // --- Spacing ---
+        // Dynamically scale 3D cylinder based on total number
+        double scale;
+        if (withSampleBreeding) {
+            scale = 25.0; // Tier 3: ~9,600 hamsters
+        } else if (withOverlays) {
+            scale = 15.0; // Tier 2: ~3,200 hamsters
+        } else {
+            scale = Math.max(2.0, Math.cbrt(genomes.size()) * 2.0); // Tier 1: ~45 base coats
+        }
+
         boolean centerTagged = false;
 
         for (HamsterGenome genome : genomes) {
             PaletteDefinition def = HamsterPaletteManager.PALETTE_REGISTRY.get(genome.basePaletteId());
             if (def == null) continue;
             Vec3d hsbPos = def.colorSpacePos();
-            double offsetAmount = withOverlays ? 2.5 : 0.0;
+
+            // Tiered micro-scattering to prevent suffocation/overlap
+            double offsetAmount = withSampleBreeding ? 4.0 : (withOverlays ? 2.5 : 0.0);
+
             double dx = (hsbPos.x * scale) + (player.getServerWorld().random.nextDouble() - 0.5) * offsetAmount;
             double dy = (hsbPos.z * scale) + (player.getServerWorld().random.nextDouble() - 0.5) * offsetAmount;
             double dz = (hsbPos.y * scale) + (player.getServerWorld().random.nextDouble() - 0.5) * offsetAmount;
@@ -230,9 +239,9 @@ public class HamsterSpawnCommandUtil {
     /**
      * Executes the command to spawn all base variants mapped onto a flat 2D grid.
      */
-    public static int executeSpawnAllBases2D(ServerCommandSource source, boolean withOverlays, String author) throws CommandSyntaxException {
+    public static int executeSpawnAllBases2D(ServerCommandSource source, boolean withOverlays, boolean withSampleBreeding, String author) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrThrow();
-        List<HamsterGenome> genomes = getGenomesToSpawn(player.getServerWorld().getRandom(), withOverlays, author);
+        List<HamsterGenome> genomes = getGenomesToSpawn(player.getServerWorld().getRandom(), withOverlays, withSampleBreeding, author);
 
         // Group genomes by their genetic color zone
         Map<HamsterColorZone, List<HamsterGenome>> groupedGenomes = new EnumMap<>(HamsterColorZone.class);
@@ -423,7 +432,7 @@ public class HamsterSpawnCommandUtil {
         return hamster;
     }
 
-    private static List<HamsterGenome> getGenomesToSpawn(Random random, boolean withOverlays, String targetAuthor) {
+    private static List<HamsterGenome> getGenomesToSpawn(Random random, boolean withOverlays, boolean withSampleBreeding, String targetAuthor) {
         List<HamsterGenome> genomes = new ArrayList<>();
         for (PaletteDefinition def : HamsterPaletteManager.PALETTE_REGISTRY.values()) {
             if (!targetAuthor.equals("all") && !def.author().equals(targetAuthor)) continue; // Filter base colors by author
@@ -457,6 +466,32 @@ public class HamsterSpawnCommandUtil {
                 }
             }
         }
+
+        if (withSampleBreeding) {
+            List<HamsterGenome> breedingGenomes = new ArrayList<>();
+            String[] samplePalettes = {"tortoise_shell", "silver", "rust"};
+            int maxPattern = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.size() - 1;
+
+            for (HamsterGenome baseGenome : genomes) {
+                for (String bPalId : samplePalettes) {
+                    int bPat;
+                    do {
+                        bPat = random.nextBetween(1, maxPattern);
+                    } while (bPat == baseGenome.wildOverlayPattern());
+
+                    breedingGenomes.add(new HamsterGenome(
+                            baseGenome.basePaletteId(),
+                            baseGenome.wildOverlayPattern(),
+                            baseGenome.wildOverlayPaletteId(),
+                            bPat,
+                            bPalId,
+                            baseGenome.eyeGenotype()
+                    ));
+                }
+            }
+            return breedingGenomes;
+        }
+
         return genomes;
     }
 }
