@@ -16,6 +16,9 @@ import java.util.UUID;
  * referencing the mixin class directly.
  */
 public interface PlayerEntityAccessor {
+    int ahp$getLastRandomMessageIndex(String context);
+    void ahp$setLastRandomMessageIndex(String context, int index);
+
     NbtCompound getShoulderHamster(ShoulderLocation location);
     void setShoulderHamster(ShoulderLocation location, NbtCompound nbt);
     boolean hasAnyShoulderHamster();

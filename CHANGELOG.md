@@ -212,6 +212,10 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - Each environment rolls against weighted hamster color groups. This ensures that whether a texture is procedurally generated or community-made, it mathematically evaluates its own color and automatically spawns in a biologically appropriate location.
 - **Modular Rendering Pipeline**
   - Sliced the hamster model's visual components (Fur, Skin, Eyes, Overlays) into distinct, independent render layers to allow for infinite, non-destructive stacking of genetic traits.
+- **Diamond Sniffing Visuals & Audio**
+  - Added directional animations to indicate whether a buried diamond ore is above or below the hamster when it's sniffing for one and the path is obstructed.
+  - Added a dynamic "quick bounce" animation that intermittently triggers when the diamond ore is hidden somewhere above the hamster.
+  - Added a new head-shake sound effect that plays when the hamster is sniffing for ore and gets confused.
 - **Sweet Potato Easter Egg**
   - The "Sweet Potato" Easter egg now applies a unique custom texture to the hamster, thanks to [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!
   - Renaming a hamster "Sweet Potato" hides its normal genetics (base coat, overlays, and eye color) without permanently deleting them.

@@ -171,6 +171,7 @@ public class ModSounds {
     public static final RegistrySupplier<SoundEvent> MAGIC_SPARKLING3 = registerSoundEvent("magic_sparkling3");
     public static final RegistrySupplier<SoundEvent> MAGIC_SPARKLING4 = registerSoundEvent("magic_sparkling4");
     public static final RegistrySupplier<SoundEvent> MAGIC_SPARKLING5 = registerSoundEvent("magic_sparkling5");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_HEAD_SHAKE_FAST = registerSoundEvent("hamster_head_shake_fast");
 
     // --- 3. Public Sound Lists (using RegistrySuppliers) ---
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_ATTACK_SOUNDS = List.of(HAMSTER_ATTACK1, HAMSTER_ATTACK2, HAMSTER_ATTACK3, HAMSTER_ATTACK4);

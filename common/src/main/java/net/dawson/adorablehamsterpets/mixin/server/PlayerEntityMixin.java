@@ -132,6 +132,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private int ahp$transitTimer = 0;
 
     // --- State Flags & Trackers ---
+    @Unique private final Map<String, Integer> ahp$randomMessageIndices = new HashMap<>();
     @Unique private String adorablehamsterpets$lastDismountMessageKey = "";
     @Unique private boolean adorablehamsterpets$isDiamondAlertConditionMet = false;
     @Unique private int adorablehamsterpets$lastGoldMessageIndex = -1;
@@ -175,6 +176,13 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     @Inject(method = "writeCustomDataToNbt", at = @At("TAIL"))
     private void adorablehamsterpets$writeNbt(NbtCompound nbt, CallbackInfo ci) {
+        // --- Action Bar Randomized Message History ---
+        if (!this.ahp$randomMessageIndices.isEmpty()) {
+            NbtCompound msgNbt = new NbtCompound();
+            this.ahp$randomMessageIndices.forEach(msgNbt::putInt);
+            nbt.put("AHPRandomMessageIndices", msgNbt);
+        }
+
         // --- Shoulder Data ---
         if (!this.ahp$hamsterState.isEmpty()) {
             nbt.put("ShoulderHamsters", this.ahp$hamsterState);
@@ -187,11 +195,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 mountOrderList.add(NbtString.of(location.name()));
             }
             nbt.put("MountOrderQueue", mountOrderList);
-        }
-
-        // --- Gold Message History ---
-        if (this.adorablehamsterpets$lastGoldMessageIndex != -1) {
-            nbt.putInt("LastGoldMessageIndex", this.adorablehamsterpets$lastGoldMessageIndex);
         }
 
         // --- Tree Heist ---
@@ -254,6 +257,15 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     @Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
     private void adorablehamsterpets$readNbt(NbtCompound nbt, CallbackInfo ci) {
+        // --- Generic Message History ---
+        this.ahp$randomMessageIndices.clear();
+        if (nbt.contains("AHPRandomMessageIndices", NbtElement.COMPOUND_TYPE)) {
+            NbtCompound msgNbt = nbt.getCompound("AHPRandomMessageIndices");
+            for (String key : msgNbt.getKeys()) {
+                this.ahp$randomMessageIndices.put(key, msgNbt.getInt(key));
+            }
+        }
+
         // --- Migrate Legacy Data ---
         if (nbt.contains("ShoulderHamster", NbtElement.COMPOUND_TYPE)) {
             NbtCompound oldHamsterNbt = nbt.getCompound("ShoulderHamster");
@@ -299,22 +311,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 if (!this.getShoulderHamster(location).isEmpty()) {
                     this.adorablehamsterpets$mountOrderQueue.addLast(location);
                 }
-            }
-        }
-
-        // --- Gold Message History ---
-        this.adorablehamsterpets$lastGoldMessageIndex = nbt.contains("LastGoldMessageIndex", NbtElement.INT_TYPE)
-                ? nbt.getInt("LastGoldMessageIndex")
-                : -1;
-
-        this.ahp$heistHistory.clear();
-        if (nbt.contains("AHPHeistHistory", NbtElement.LIST_TYPE)) {
-            NbtList historyList = nbt.getList("AHPHeistHistory", NbtElement.COMPOUND_TYPE);
-            for (int i = 0; i < historyList.size(); i++) {
-                NbtCompound tag = historyList.getCompound(i);
-                BlockPos pos = new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
-                long time = tag.getLong("t");
-                this.ahp$heistHistory.add(new TreeHeistUtil.HeistRecord(pos, time));
             }
         }
 
@@ -1211,22 +1207,22 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     @Unique
     @Override
+    public int ahp$getLastRandomMessageIndex(String context) {
+        return this.ahp$randomMessageIndices.getOrDefault(context, -1);
+    }
+
+    @Unique
+    @Override
+    public void ahp$setLastRandomMessageIndex(String context, int index) {
+        this.ahp$randomMessageIndices.put(context, index);
+    }
+
+    @Unique
+    @Override
     public boolean hasAnyShoulderHamster() {
         return !getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty() ||
                 !getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty() ||
                 !getShoulderHamster(ShoulderLocation.HEAD).isEmpty();
-    }
-
-    @Unique
-    @Override
-    public int ahp_getLastGoldMessageIndex() {
-        return this.adorablehamsterpets$lastGoldMessageIndex;
-    }
-
-    @Unique
-    @Override
-    public void ahp_setLastGoldMessageIndex(int index) {
-        this.adorablehamsterpets$lastGoldMessageIndex = index;
     }
 
     @Unique

@@ -410,5 +410,9 @@
   "magic_sparkling5": {
     "subtitle": "subtitles.adorablehamsterpets.magic_sparkling",
     "sounds": [ "adorablehamsterpets:magic_sparkling5" ]
+  },
+  "hamster_head_shake_fast": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_head_shake",
+    "sounds": [ "adorablehamsterpets:hamster_head_shake_fast" ]
   }
 }

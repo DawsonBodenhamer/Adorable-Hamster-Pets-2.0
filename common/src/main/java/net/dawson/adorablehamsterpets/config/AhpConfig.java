@@ -594,6 +594,20 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Master switch. If false, hamsters will suppress their playful urges and remain stoic professionals.")
     public boolean enableTagGame = true;
 
+    @NonSync
+    @Translatable.Name("Enable Creeper Sniffing")
+    @Translatable.Desc("May save your inventory. Or your ears. Allows hamsters to sniff for any aggressive creepers that have begun hunting you.")
+    public boolean enableShoulderCreeperDetection = true;
+
+    @NonSync
+    @Translatable.Name("Enable Diamond Sniffing")
+    @Translatable.Desc("Because we all enjoy unsolicited financial advice from rodents. Allows hamsters to sniff for shinies from their shoulder perch.")
+    public boolean enableShoulderDiamondDetection = true;
+
+    @Translatable.Name("Enable Diamond Seeking")
+    @Translatable.Desc("Permit hamsters to embark on solo get-rich-quick schemes?")
+    public boolean enableIndependentDiamondSeeking = true;
+
     @Translatable.Name("Enable Armor Perks")
     @Translatable.Desc("If true, upgraded armor grants special perks. If false (because you hate fun?), armor acts only as a damage shield/visual. Each perk can also be individually configured in 'Armor Settings.'")
     public ValidatedBoolean enableArmorPerks = new ValidatedBoolean(true);
@@ -1096,19 +1110,9 @@ public class AhpConfig extends Config {
     public boolean enableShoulderMountKeybind = false;
 
     @NonSync
-    @Translatable.Name("Enable Creeper Detection")
-    @Translatable.Desc("May save your inventory. Or your ears.")
-    public boolean enableShoulderCreeperDetection = true;
-
-    @NonSync
     @Translatable.Name("Creeper Detection Radius")
     @Translatable.Desc("Adjust paranoia levels. (Distance in blocks)")
     public ValidatedDouble shoulderCreeperDetectionRadius = new ValidatedDouble(16.0, 16.0, 1.0);
-
-    @NonSync
-    @Translatable.Name("Enable Diamond Detection")
-    @Translatable.Desc("Because who doesn’t enjoy unsolicited financial advice from a rodent?")
-    public boolean enableShoulderDiamondDetection = true;
 
     @NonSync
     @ConfigGroup.Pop
@@ -1374,10 +1378,6 @@ public class AhpConfig extends Config {
     @Translatable.Name("Independent Diamond Seeking Settings")
     @Translatable.Desc("Unleash free-range prospectors. What could go wrong?")
     public ConfigGroup independentDiamondSeeking = new ConfigGroup("independentDiamondSeeking", true);
-
-    @Translatable.Name("Enable Independent Diamond Seeking")
-    @Translatable.Desc("Permit hamsters to embark on solo get-rich-quick schemes?")
-    public boolean enableIndependentDiamondSeeking = true;
 
     @Translatable.Name("Diamond Seek Scan Radius")
     @Translatable.Desc("How far (in blocks) a hamster scans once it’s decided to play prospector.")
