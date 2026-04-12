@@ -261,6 +261,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int IS_PLAYING_TAG_FLAG = 1 << 23;
     public static final int CELEBRATING_BABY_FLAG = 1 << 24;
     public static final int GENETICS_VISUALIZER_MEMBER_FLAG = 1 << 25;
+    public static final int IS_ORE_TARGET_ABOVE_FLAG = 1 << 26;
 
     // --- Data Trackers ---
     public static final TrackedData<Integer> HAMSTER_FLAGS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -326,7 +327,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation SULK_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sulk");
     private static final RawAnimation SULKING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sulking");
     private static final RawAnimation SEEKING_ORE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_seeking_ore");
-    private static final RawAnimation WANTS_TO_SEEK_ORE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wants_to_seek_ore");
+    private static final RawAnimation WANTS_TO_SEEK_ORE_ABOVE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wants_to_seek_ore_above");
+    private static final RawAnimation WANTS_TO_SEEK_ORE_BELOW_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wants_to_seek_ore_below");
     private static final RawAnimation POUNCE_ON_ITEM_ANIM = RawAnimation.begin().thenPlay("anim_hamster_pounce_on_item");
     private static final RawAnimation TAUNTING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_taunt_with_item");
     private static final RawAnimation PRESENTING_ITEM_ANIM = RawAnimation.begin().thenPlay("anim_hamster_presenting_item");
@@ -336,6 +338,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation LAYING_DOWN_HEAD_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_head");
     private static final RawAnimation LAYING_DOWN_RIGHT_SHOULDER_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_right_shoulder");
     private static final RawAnimation LAYING_DOWN_LEFT_SHOULDER_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_left_shoulder");
+    private static final RawAnimation QUICK_BOUNCE_ON_BACK_LEGS_ANIM = RawAnimation.begin().thenPlay("anim_hamster_quick_bounce_on_back_legs");
 
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -536,6 +539,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public boolean isCelebratingDiamond() {return getHamsterFlag(CELEBRATING_DIAMOND_FLAG);}
     public boolean isCelebratingBaby() { return getHamsterFlag(CELEBRATING_BABY_FLAG); }
     public void setCelebratingBaby(boolean celebratingBaby) { setHamsterFlag(CELEBRATING_BABY_FLAG, celebratingBaby); }
+    public boolean isOreTargetAbove() { return getHamsterFlag(IS_ORE_TARGET_ABOVE_FLAG); }
+    public void setOreTargetAbove(boolean above) { setHamsterFlag(IS_ORE_TARGET_ABOVE_FLAG, above); }
     public boolean isGeneticsVisualizerMember() { return getHamsterFlag(GENETICS_VISUALIZER_MEMBER_FLAG); }
     public void setGeneticsVisualizerMember(boolean isGeneticsVisualizerMember) { setHamsterFlag(GENETICS_VISUALIZER_MEMBER_FLAG, isGeneticsVisualizerMember); }
     // --- Riding State Accessors ---
@@ -2176,7 +2181,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 if (horizontalSpeedSquared > 1.0E-6) { // Use a very small threshold to detect any movement
                     return event.setAndContinue(SEEKING_ORE_ANIM); // Hamster is moving
                 } else {
-                    return event.setAndContinue(WANTS_TO_SEEK_ORE_ANIM); // Hamster is not moving
+                    // Check if the target is above or below hamster
+                    if (this.isOreTargetAbove()) {
+                        return event.setAndContinue(WANTS_TO_SEEK_ORE_ABOVE_ANIM);
+                    } else {
+                        return event.setAndContinue(WANTS_TO_SEEK_ORE_BELOW_ANIM);
+                    }
                 }
             }
 
@@ -2300,6 +2310,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             .triggerableAnim("sitting_headshake", SITTING_HEADSHAKE_ANIM)
             .triggerableAnim("moving_headshake", MOVING_HEADSHAKE_ANIM)
             .triggerableAnim("attack", ATTACK_ANIM)
+            .triggerableAnim("quick_bounce_on_back_legs", QUICK_BOUNCE_ON_BACK_LEGS_ANIM)
             .triggerableAnim("sit1", SIT1_ANIM)
             .triggerableAnim("sit2", SIT2_ANIM)
             .triggerableAnim("sit3", SIT3_ANIM)
@@ -2332,6 +2343,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             .setSoundKeyframeHandler(event -> {
                 // This just sets a flag. The renderer will handle it on the client.
                 this.soundEffectId = event.getKeyframeData().getSound();
+            })
+
+            // --- Handle Keyframe Instructions ---
+            .setCustomInstructionKeyframeHandler(event -> {
+                // Dynamically trigger quick bounce animation
+                if (event.getKeyframeData().getInstructions().contains("trigger_jump_anim")) {
+                    this.triggerAnim("mainController", "quick_bounce_on_back_legs");
+                }
             })
         );
     }

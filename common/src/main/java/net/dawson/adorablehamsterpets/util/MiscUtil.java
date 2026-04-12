@@ -1,16 +1,83 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
+import net.minecraft.advancement.Advancement;
+import net.minecraft.advancement.AdvancementProgress;
+import net.minecraft.advancement.PlayerAdvancementTracker;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * A centralized utility for miscellaneous things that don't fit in other utilities.
  */
 public final class MiscUtil {
+
+    /**
+     * Utility for managing dynamic or randomized messages sent to players.
+     */
+    public final class MessagingUtil {
+
+        private MessagingUtil() {}
+
+        /**
+         * Selects and sends a randomized sequential message to the player, ensuring it doesn't repeat the
+         * last message shown. Also handles "first-time" experience logic via a specific advancement.
+         *
+         * @param player           The player receiving the message.
+         * @param advancementId    The ID of the "first time" advancement.
+         * @param messageBaseKey   The translation base key (e.g., "message.mymod.some_event"). Will append ".1", ".2", etc.
+         * @param messageCount     The total number of available localized messages in the pool.
+         * @param memoryContextKey The NBT dictionary key used to remember the last message shown for this specific event.
+         */
+        public static void sendRandomizedSequentialMessage(ServerPlayerEntity player, Identifier advancementId, String messageBaseKey, int messageCount, String memoryContextKey) {
+            PlayerAdvancementTracker tracker = player.getAdvancementTracker();
+            Identifier advId = Identifier.of(AdorableHamsterPets.MOD_ID, "technical/hamster_found_gold_first_time");
+            Advancement advancement = player.server.getAdvancementLoader().get(advId);
+
+            if (advancement == null) {
+                AdorableHamsterPets.LOGGER.error("[GoldMessage] CRITICAL: Could not find advancement '{}'. Message will not be sent. Check file path and JSON validity.", advId);
+                return;
+            }
+
+            AdvancementProgress progress = tracker.getProgress(advancement);
+            int messageIndex;
+
+            if (!progress.isDone()) {
+                // First time ever for this player
+                messageIndex = 0;
+                // Grant the criterion using the Advancement object so this block doesn't run again
+                for (String criterion : advancement.getCriteria().keySet()) {
+                    tracker.grantCriterion(advancement, criterion);
+                }
+            } else {
+                // Subsequent times
+                PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
+                int lastIndex = accessor.ahp$getLastRandomMessageIndex(memoryContextKey);
+
+                List<Integer> possibleIndices = IntStream.range(0, messageCount).boxed().collect(Collectors.toList());
+                if (lastIndex >= 0 && lastIndex < messageCount) {
+                    possibleIndices.remove(Integer.valueOf(lastIndex));
+                }
+
+                messageIndex = possibleIndices.get(player.getWorld().random.nextInt(possibleIndices.size()));
+            }
+
+            // Save the new index and send the message
+            ((PlayerEntityAccessor) player).ahp$setLastRandomMessageIndex(memoryContextKey, messageIndex);
+            String messageKey = messageBaseKey + "." + (messageIndex + 1);
+            player.sendMessage(Text.translatable(messageKey).formatted(Formatting.GOLD), true);
+        }
+    }
 
     private MiscUtil() {}
 

@@ -28,6 +28,7 @@ public class HamsterAnimationScheduler {
         ANIMATION_DURATIONS.put("sitting_headshake", 25);
         ANIMATION_DURATIONS.put("moving_headshake", 25);
         ANIMATION_DURATIONS.put("attack", 23);
+        ANIMATION_DURATIONS.put("quick_bounce_on_back_legs", 17);
         ANIMATION_DURATIONS.put("sit1", 13);
         ANIMATION_DURATIONS.put("sit2", 13);
         ANIMATION_DURATIONS.put("sit3", 13);
