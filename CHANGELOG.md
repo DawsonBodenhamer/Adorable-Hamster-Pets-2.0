@@ -33,115 +33,189 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
 ```
 
 ### Added
-- **Procedural Genetics Engine**
-  - Hamsters are no longer pre-defined, hardcoded variants. Every hamster now possesses a fully serialized `HamsterGenome` detailing its precise genetic makeup across six distinct traits.
-  - This was accomplished by developing a 3D Hue/Saturation/Brightness (HSB) Cartesian color space. The mod uses this to mathematically map the exact color coordinates of every hamster variant into a three-dimensional neural network, which is dynamically used to calculate genetic relationships, mutations, overlay exclusion rules, and environment-spawning rules on the fly.
-  - I got the idea for creating the textures programmatically like this because that's how I made the original textures in Photoshop— using various Gradient Maps applied to a single, grayscale texture. Then I realized Java code can do the same thing!
-  - The total number of unique hamster types that spawn in the wild is now **3,231** by default, and the number of genetically inheritable hamster permutations from breeding is now **over 2.2 Million**.
-  - **Want to understand the math?** Keep reading below— look for the _"Advanced Spawning & Testing Commands"_ section. I have added all sorts of fancy commands and tools to walk you through the breeding system in a way that is (hopefully) easy to understand.
-- **Significant Performance Improvements**
-  - Flattened the entire visual stack (base coat, wild overlays, breeding overlays, skin, eyes, armor, and accessories) into a single, dynamically composited texture at runtime.
-  - This completely eliminates all secondary `GeoRenderLayer` passes. Every hamster, regardless of its complex genetics or equipped items, now costs exactly one draw call to render (instead of up to 8!), resulting in a massive performance boost. Especially noticeable when numerous hamsters are on screen at the same time.
-- **Bare-Bones Ultra Performance Mode**
-  - Added a new `Performance Mode` toggle in the config (and an assignable keybind) designed specifically for viewing absurd numbers of hamsters simultaneously without melting your GPU.
-  - When enabled, it bypasses the dynamic texture engine entirely (falling back to a single flat texture) and hides almost all the model's geometry.
-  - The hamsters essentially become grayscale cubes, stripping away nearly all matrix-calculation overhead.
-  - The Jade HUD overlay will still display their exact genetic information, because the server never forgets what they are actually supposed to look like.
-- **Dynamic Palette Swapping**
-  - Built an optimized, client-side dynamic texture generator. Instead of bloating your hard drive with over 2 million distinct PNG files, the mod dynamically recolors grayscale fur templates at runtime using custom genetic palette hex code data I designed based off my Photoshop workflow, then mixes them with hard-coded PNGs from the community.
-  - I realized the original hamster variants were just gradient maps applied to a grayscale texture in Photoshop. So, naturally, I invested an unreasonable amount of effort rebuilding Photoshop's Gradient Map tool inside Java.
-  - Does this save file space? Sort of, though tiny PNGs don't take up much space anyway. But it makes the system infinitely scalable. If I add just one new grayscale pattern or community-made texture in the future, the Java math will automatically multiply it across every single other variant in the game. For now, consider it an over-engineered proof of concept.
-- **Community Hamster Textures**
-  - Developed a parallel pipeline that automatically scans, analyzes, and genetically categorizes static, community-made PNG textures directly from the mod's JAR file. These static textures are seamlessly integrated into the procedural breeding pool alongside my programmatic colors.
-  - The rendering engine can automatically composite custom community textures into overlay masks. This means hamsters can spawn with community-made palettes serving as the color for their overlay spots and splotches!
-  - Thanks to [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com), we have 18 brand-new base hamster variants spawning in the wild! (Including *Cheesecake Mocha, Blue Fawn, Pearl Rose, Sable,* and 14 more). You can see them all in-game using the new spawn commands (see below).
-- **Expanded Overlays**
-  - Overlays are no longer just white.
-  - **Wild Overlays:** Naturally spawning hamsters can now have overlays in any color that is closely related to White, Cream, or Gray, with a few configurable exceptions. To keep things looking natural, the default config ensures wild overlays are always brighter & less saturated than the base coat, Cream is disallowed on a Lavender or Blue base coat, and cave-spawned hamsters can only receive Gray overlays to help them blend in.
-  - **Breeding Overlays:** A completely new secondary overlay layer, unlocked exclusively through breeding (45% chance when two first-generation wild hamsters breed). These are chosen based on the midpoint between the parents' base color in the 3D color-space coordinate system, with a bit of jitter so the baby won't always look the same when you breed two parents repeatedly, so the possibilities are nearly endless. These overlays will mathematically avoid copying the same shape/pattern as the wild overlay, to ensure they are not hidden/covered up by it.
-- **Wild Overlay Configurability**
-  - Added new `Allowed Wild Overlay Zones` list to the `World Gen & Loot` config. This allows server owners/modpack makers to explicitly control which color zones the genetics engine is allowed to use when picking an overlay for a naturally spawning hamster. Defaults to natural colors (`WHITE`, `LIGHT_GRAY`, `DARK_GRAY`, and `CREAM`).
-  - Added new `Restricted Base Colors` and `Clashing Overlay Colors` lists. By default, these prevent `CREAM` and `DARK_GRAY` wild overlays from spawning on top of `BLUE` and `LAVENDER` base coats, as these color combinations tend to look a bit strange visually.
-  - Added new `Enforce Brighter Overlays` and `Enforce Muted Overlays` toggles. Allows players to disable the overlay filtering that prevents saturated colors (like Cream) from spawning on muted bases (like Black) and darker colors from being used as overlays on top of lighter bases.
-- **Advanced Spawning & Testing Commands**
-  - Added `/ahp spawn hamster <basePalette> <wildPattern> <wildPalette> <breedPattern> <breedPalette> <eyes>`. This command features a custom Brigadier auto-complete engine that suggests exact, human-readable palette and pattern names as you type, allowing you to easily test specific genetic combinations.
-  - Added `/ahp spawn_all_bases_2D`. Systematically lines up every single hamster color base in the game (including custom community additions), sorted cleanly into rows by their dynamically determined, mathematical color zone.
-  - Added `/ahp spawn_all_bases_3D`. Spawns the hamsters hovering in a physical 3D "cylinder" representing their Hue/Saturation/Brightness coordinates. This is useful for the **Breeding Inheritance and Visualization Tool** (see below).
-    - **Hue** = the degree of the circle (0-360)
-    - **Saturation** = the radius of the circle (more saturated colors are closer to the edge)
-    - **Brightness** = the height of the cylinder (brighter hamsters are closer to the top)
-    - By default, each `/ahp spawn_all_bases...` command spawns just the 45 base colors, but each one comes with 3 optional arguments to change the number of hamsters spawned:
-    1. `[with_wild_overlays]` Displays all 3,231 hamster variants that can spawn naturally in the wild.
-    2. `[with_sample_breeding_overlays]` Displays genetic combinations of every wild hamster but adds in a small sample of three breeding overlays (Tortoise Shell, Silver, and Rust). Due to the triple-multiplication math involved, this heavily increases the total number of hamsters spawned (from 3,231 up to 9,693) creating a much bigger display.
-    3. `[author]` only uses color palletes from a certain author (e.g., `jimcerberus` or `default`).
-  - Added `/ahp spawn_all_possible_permutations_THIS_CAN_BREAK_YOUR_WORLD`. Exactly what it sounds like. Don't run it unless you have a super-flat world, a fire extinguisher for your PC, and a lot of patience. Note that every time I have run this command, my server tick speed never quite returned to baseline— even after deleting all the hamsters that were spawned using `/kill @e[type=!player]`.
-  - Added `/ahp print_genetics_report` command, allowing server operators to recalculate and view the current 3D color-space math of the genetics engine at runtime. Useful because it dynamically updates its readout based on your exact `AhpWorldGenConfig` wild overlay settings, so you can see how your changes are affecting the total possible variant numbers without having to spawn them all.
-- **Breeding Inheritance and Visualization Tool**
-  - **Overview:** When breeding two hamsters together, the color for the baby (and its overlay colors) are chosen based on a connected line between the two parents in the 3D color-space coordinate system. This means babies will tend towards the mathematical center, but occasionally one parent's color traits will strongly dominate the outcome, mimicking real-world genetics and providing visual variety within a single hamster family even if you breed the same two parents together repeatedly.
-  - **Outcome Visualization:** You can right-click two hamsters inside the 3D variants layout (`/ahp spawn_all_bases_3D`) with the Hamster Tips guidebook to visualize the genetic probability distribution for their offspring via a cloud of End Rod particles. The particle spawning logic uses the exact same probability math that is used when creating babies, so it gives you a perfectly accurate representation of potential outcomes.
-  - **Config Settings for Genetic Inheritance**: These settings will instantly take effect on the breeding math, which will in turn alter the visualization:
-    - **Genetic Variance**: Adjusts how much a baby's base color can deviate from the exact center between its parents. Think of this as the "length" of the line between the parents.
-    - **Genetic Mutation Rate**: Adjusts the random color scatter/mutations applied to babies. Think of this as the "thickness" of the line.
-    - **Simulated Offspring Per Second**: Adjust the density of the 3D visualizer particle cloud. Each particle represents a potential baby.
-    - **Real-time Controls:** While holding the guidebook, you can dynamically tweak the shape of the genetic probability cloud using the arrow keys: Left/Right Arrows adjust Genetic Variance; Up/Down Arrows adjust Genetic Mutation Rate.
-- **Recessive Eye Genetics**
-  - Hamsters now possess dominant (Black) and recessive (Red) eye genetics.
-  - Red eyes do not exist in the wild. They are genetically tied to the "diluteness" (brightness/saturation) of the hamster's coat. A fully dilute hamster has up to a 50% chance of spawning with a recessive red eye gene. By selectively breeding highly dilute hamsters, players can uncover carriers (`Br`) and eventually breed Red-Eyed (`rr`) variants.
-- **Baby Growth Mechanics**
-  - You can now feed baby hamsters standard hamster food items to accelerate their growth.
-  - To balance this with their natural pickiness, a new config option (`Disable Baby Food Refusal`) allows you to bypass their desire for dietary variety specifically for babies if you want. This is turned off by default, so you'll still need lots of *Hamster Food Mix* to quickly grow up the babies without them refusing the food.
-  - Feeding baby hamsters visually and mechanically accelerates their growth in smooth, continuous increments, similar to vanilla horses. Their "extra big head" proportions scale dynamically as they grow.
-- **Breeding Limitations**
-  - Added comprehensive config settings to manage hamster breeding for server owners who want to keep the population under control.
-  - Added a global `Enable Breeding` toggle (on by default) to instantly shut down all romance.
-  - Added a configurable `Max Breeding Cycles` limit per hamster to stop them from infinitely multiplying (off by default).
-  - Added a `Limit Breeding By Player` toggle. (also off by default). Limits can be assigned per-player based on Minecraft days or Real Life days, or simply capped as a lifetime maximum limit. Includes feedback to explain what's happening when attempting to over-feed beyond the limit.
-  - Added a `/ahp reset_player_breeding_history` command for server operators to reset their own breeding history.
-  - Added a `/ahp reset_hamster_breeding_history` command for server operators to reset a specific hamster's `timesBred` quota to zero.
-  - Added a convenient "Reset Breeding History" button in the Config screen that executes the command for the user (requires OP permissions).
-- **Configurable Litter Size**
-  - Added to config sliders allowing you to set the minimum and maximum litter size when hamsters get into hanky-panky. The final size of the litter will be a random number between the min and max.
-- **Breeder Whitelist**
-  - Added a config list allowing specific players to bypass the global breeding ban. In case your server needs a designated rodent baron.
-- **Post-Breeding Animation**
-  - Hamsters will now crouch down and lovingly inspect their baby(s) after the litter is born, spawn heart particles, and make affectionate sounds shortly after successfully contributing to your growing population problem.
-- **Wild Baby Configuration**
-  - Added `Babies Spawn Wild` setting. When enabled, babies are born feral and do not inherit their parent's ownership status, letting multiplayer groups decide who claims them.
-  - When untamed, babies no longer flee from players, making them easier to manage.
-- **Parent-Following**
-  - Babies will now randomly select a parent to follow until adulthood, instead of following their owner.
-  - Wild baby hamsters will switch to following the player if their parent is currently mounted on the player's shoulder. They will automatically resume following the parent once it is dismounted.
-  - If you want the baby to follow you instead, you must first tame it, then you can break its connection to the parent by right-clicking it with a Lure Item (Cheese by default).
-  - Added a config toggle to disable the action bar message that warns you when a newly tamed baby hamster refuses to follow you because it's still attached to its parent.
-- **Jade Integration**
-  - Added comprehensive Jade overlay integration that reveals a hamster's exact genetic makeup (Base Palette, Wild/Breeding Overlays, and Eye Genotype) when you look at them.
-  - Enabled without needing to turn on debug mode to help with breeding.
-- **Age Tracking**
-  - Hamsters now track their absolute lifetime age in ticks.
-  - Wild hamsters spawn with a random age between 1 and 30 days.
-  - Added `/ahp set_age` command to manually override a hamster's age (since older hamsters will start at 0 days old upon updating to this version of the mod). It accepts units (`days`, `months`, `years`) and provides autocomplete suggestions.
-  - If you do not specify a target, it will automatically apply to the hamster you are currently looking at.
-  - The Jade HUD overlay displays the hamster's age alongside its genetic data.
-  - Added a new `Display IRL Age` config setting that dictates how fast the hamster ages. If true, their age progresses at 1/72nd the normal speed (matching the real-world 24-hour cycle).
-- **Red Eye Config Toggle**
-  - Don't like the red eye hamsters? You can visually disable that for your own client via a new config toggle, which makes them appear to have black eyes.
-- **Friendly Fire Config Toggle**
-  - Added `Prevent Owner Friendly Fire` to the Core config toggles.
-  - When enabled, players can no longer accidentally damage their own tamed hamsters. Disabled by default to remain vanilla-friendly.
-  - In the next update (hopefully), this setting will be tied to a new item: the **Acorn Ring**. I also plan to integrate with the **Trinkets** mod so you can use a trinket slot for it.
-- **GUI Renaming System**
-  - Players can now rename their hamsters directly from the Hamster Inventory screen.
-  - Features dynamic down-scaling to ensure long names always fit perfectly within the UI constraints.
-  - An interactive pencil icon and underline display when hovering/typing.
-  - **New Config Options (`UI & Quality of Life > Hamster Renaming`)**
-    - `Enable GUI Renaming`: Master toggle for the feature.
-    - `Consume Name Tag`: Forces players to sacrifice a Name Tag from their inventory (or the hamster's cheeks) to finalize the rename.
-    - `Pencil Icon Placement`: Allows swapping the icon to the left or right of the text for those who read in different directions.
+- **Procedural Genetics & Texture System**
+  - **Procedural Genetics Engine**
+    - Hamsters are no longer pre-defined, hardcoded variants. Every hamster now possesses a fully serialized `HamsterGenome` detailing its precise genetic makeup across six distinct traits.
+    - This was accomplished by developing a 3D Hue/Saturation/Brightness (HSB) Cartesian color space. The mod uses this to mathematically map the exact color coordinates of every hamster variant into a three-dimensional neural network, which is dynamically used to calculate genetic relationships, mutations, overlay exclusion rules, and environment-spawning rules on the fly.
+    - I got the idea for creating the textures programmatically like this because that's how I made the original textures in Photoshop— using various Gradient Maps applied to a single, grayscale texture. Then I realized Java code can do the same thing!
+    - The total number of unique hamster types that spawn in the wild is now **3,231** by default, and the number of genetically inheritable hamster permutations from breeding is now **over 2.2 Million**.
+    - **Want to understand the math?** Keep reading below— look for the _"Advanced Spawning & Testing Commands"_ section. I have added all sorts of fancy commands and tools to walk you through the breeding system in a way that is (hopefully) easy to understand.
+  - **Dynamic Palette Swapping**
+    - Built an optimized, client-side dynamic texture generator. Instead of bloating your hard drive with over 2 million distinct PNG files, the mod dynamically recolors grayscale fur templates at runtime using custom genetic palette hex code data I designed based off my Photoshop workflow, then mixes them with hard-coded PNGs from the community.
+    - I realized the original hamster variants were just gradient maps applied to a grayscale texture in Photoshop. So, naturally, I invested an unreasonable amount of effort rebuilding Photoshop's Gradient Map tool inside Java.
+    - Does this save file space? Sort of, though tiny PNGs don't take up much space anyway. But it makes the system infinitely scalable. If I add just one new grayscale pattern or community-made texture in the future, the Java math will automatically multiply it across every single other variant in the game. For now, consider it an over-engineered proof of concept.
+  - **Community Hamster Textures**
+    - Developed a parallel pipeline that automatically scans, analyzes, and genetically categorizes static, community-made PNG textures directly from the mod's JAR file. These static textures are seamlessly integrated into the procedural breeding pool alongside my programmatic colors.
+    - The rendering engine can automatically composite custom community textures into overlay masks. This means hamsters can spawn with community-made palettes serving as the color for their overlay spots and splotches!
+    - Thanks to [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com), we have 18 brand-new base hamster variants spawning in the wild! (Including *Cheesecake Mocha, Blue Fawn, Pearl Rose, Sable,* and 14 more). You can see them all in-game using the new spawn commands (see below).
+  - **Expanded Overlays**
+    - Overlays are no longer just white.
+    - **Wild Overlays:** Naturally spawning hamsters can now have overlays in any color that is closely related to White, Cream, or Gray, with a few configurable exceptions. To keep things looking natural, the default config ensures wild overlays are always brighter & less saturated than the base coat, Cream is disallowed on a Lavender or Blue base coat, and cave-spawned hamsters can only receive Gray overlays to help them blend in.
+    - **Breeding Overlays:** A completely new secondary overlay layer, unlocked exclusively through breeding (45% chance when two first-generation wild hamsters breed). These are chosen based on the midpoint between the parents' base color in the 3D color-space coordinate system, with a bit of jitter so the baby won't always look the same when you breed two parents repeatedly, so the possibilities are nearly endless. These overlays will mathematically avoid copying the same shape/pattern as the wild overlay, to ensure they are not hidden/covered up by it.
+- **Breeding & Lifecycle Mechanics**
+  - **Breeding Inheritance and Visualization Tool**
+    - **Here's how it works:** When breeding two hamsters together, the color for the baby (and its overlay colors) are chosen based on a connected line between the two parents in the 3D color-space coordinate system. This means babies will tend towards the mathematical center, but occasionally one parent's color traits will strongly dominate the outcome, mimicking real-world genetics and providing visual variety within a single hamster family even if you breed the same two parents together repeatedly.
+    - **Outcome Visualizer:** You can right-click two hamsters inside the 3D variants layout (`/ahp spawn_all_bases_3D`) with the Hamster Tips guidebook to visualize the genetic probability distribution for their offspring via a cloud of Wax On particles. The particle spawning logic uses the exact same probability math that is used when creating babies, so it gives you a perfectly accurate representation of potential outcomes.
+    - **Config Settings and Real-time Controls**
+      - **Genetic Variance**: Adjusts how much a baby's base color can deviate from the exact center between its parents. Think of this as the "length" of the line between the parents.
+      - **Genetic Mutation Rate**: Adjusts the random color scatter/mutations applied to babies. Think of this as the "thickness" of the line.
+      - **Simulated Offspring Per Second**: Adjust the density of the 3D visualizer particle cloud. Each particle represents a potential baby.
+      - **Real-time Controls:** While holding the guidebook, you can dynamically tweak the shape of the genetic probability cloud using the arrow keys: Left/Right Arrows adjust Genetic Variance; Up/Down Arrows adjust Genetic Mutation Rate.
+      - **Server and Client Sync:** Since the particle visualizer is driven by the literal server-side breeding math, which is driven by the config for your server, and the changes you make with the arrow keys directly alter that config, the changes will take effect immediately for any future babies.
+  - **Recessive Eye Genetics**
+    - Hamsters now possess dominant (Black) and recessive (Red) eye genetics.
+    - Red eyes do not exist in the wild. They are genetically tied to the "diluteness" (brightness/saturation) of the hamster's coat. A fully dilute hamster has up to a 50% chance of spawning with a recessive red eye gene. By selectively breeding highly dilute hamsters, players can uncover carriers (`Br`) and eventually breed Red-Eyed (`rr`) variants. Uses punnet squares.
+  - **Baby Growth Mechanics**
+    - You can now feed baby hamsters standard hamster food items to accelerate their growth.
+    - To balance this with their natural pickiness, a new config option (`Disable Baby Food Refusal`) allows you to bypass their desire for dietary variety specifically for babies if you want. This is turned off by default, so to bypass their pickiness you'll need lots of **Hamster Food Mix** if you want to quickly grow them up.
+    - Feeding baby hamsters visually and mechanically accelerates their growth in smooth, continuous increments, similar to vanilla horses. Their "extra big head" proportions scale dynamically as they grow.
+  - **Breeding Limitations**
+    - Added comprehensive config settings to manage hamster breeding for server owners who want to keep the population under control.
+    - Added a global `Enable Breeding` toggle (on by default) to instantly shut down all romance.
+    - Added a configurable `Max Breeding Cycles` limit per hamster to stop them from infinitely multiplying (off by default).
+    - Added a `Limit Breeding By Player` toggle. (also off by default). Limits can be assigned per-player based on Minecraft days or Real Life days, or simply capped as a lifetime maximum limit. Includes feedback to explain what's happening when attempting to over-feed beyond the limit.
+    - Added a `/ahp reset_player_breeding_history` command for server operators to reset their own breeding history.
+    - Added a `/ahp reset_hamster_breeding_history` command for server operators to reset a specific hamster's `timesBred` quota to zero.
+    - Added a convenient "Reset Breeding History" button in the Config screen that executes the command for the user (requires OP permissions).
+  - **Configurable Litter Size**
+    - Added to config sliders allowing you to set the minimum and maximum litter size when hamsters get into hanky-panky. The final size of the litter will be a random number between the min and max.
+  - **Breeder Whitelist**
+    - Added a config list allowing specific players to bypass the global breeding ban. In case your server needs a designated rodent baron.
+  - **Post-Breeding Animation**
+    - Hamsters will now crouch down and lovingly inspect their baby(s) after the litter is born, spawn heart particles, and make affectionate sounds shortly after successfully contributing to your growing population problem.
+  - **Wild Baby Configuration**
+    - Added `Babies Spawn Wild` setting. When enabled, babies are born feral and do not inherit their parent's ownership status, letting multiplayer groups decide who claims them.
+    - When untamed, babies no longer flee from players, making them easier to manage.
+  - **Parent-Following**
+    - Babies will now randomly select a parent to follow until adulthood, instead of following their owner.
+    - Wild baby hamsters will switch to following the player if their parent is currently mounted on the player's shoulder. They will automatically resume following the parent once it is dismounted.
+    - If you want the baby to follow you instead, you must first tame it, then you can break its connection to the parent by right-clicking it with a Lure Item (Cheese by default).
+    - Added a config toggle to disable the action bar message that warns you when a newly tamed baby hamster refuses to follow you because it's still attached to its parent.
+  - **Age Tracking**
+    - Hamsters now track their absolute lifetime age in ticks.
+    - Wild hamsters spawn with a random age between 1 and 30 days.
+    - Added `/ahp set_age` command to manually override a hamster's age (since older hamsters will start at 0 days old upon updating to this version of the mod). It accepts units (`days`, `months`, `years`) and provides autocomplete suggestions.
+    - If you do not specify a target, it will automatically apply to the hamster you are currently looking at.
+    - The Jade HUD overlay displays the hamster's age alongside its genetic data.
+    - Added a new `Display IRL Age` config setting that dictates how fast the hamster ages. If true, their age progresses at 1/72nd the normal speed (matching the real-world 24-hour cycle).
+- **Performance Improvements**
+  - **Significant Overall Improvements**
+    - Flattened the entire visual render layer stack (base coat, wild overlays, breeding overlays, skin, eyes, armor, and accessories) into a single, dynamically composited texture at runtime.
+    - This completely eliminates all secondary `GeoRenderLayer` passes. Every hamster, regardless of its complex genetics or equipped items, now costs exactly one draw call to render (previously it was anywhere from 2 to 8!), resulting in a massive performance boost. Especially noticeable when numerous hamsters are on screen at the same time.
+  - **Bare-Bones Ultra Performance Mode**
+    - Added a new `Performance Mode` toggle in the config (and an assignable keybind) designed specifically for viewing absurd numbers of hamsters simultaneously without melting your GPU.
+    - When enabled, it bypasses the dynamic texture engine entirely (falling back to a single flat texture) and hides almost all the model's geometry.
+    - The hamsters essentially become grayscale cubes, stripping away nearly all matrix-calculation overhead.
+    - The Jade HUD overlay will still display their exact genetic information, because the server never forgets what they are actually supposed to look like.
+- **New Config Settings**
+  - **Wild Overlay Configurability**
+    - Added new `Allowed Wild Overlay Zones` list to the `World Gen & Loot` config. This allows server owners/modpack makers to explicitly control which color zones the genetics engine is allowed to use when picking an overlay for a naturally spawning hamster. Defaults to natural colors (`WHITE`, `LIGHT_GRAY`, `DARK_GRAY`, and `CREAM`).
+    - Added new `Restricted Base Colors` and `Clashing Overlay Colors` lists. By default, these prevent `CREAM` and `DARK_GRAY` wild overlays from spawning on top of `BLUE` and `LAVENDER` base coats, as these color combinations tend to look a bit strange visually.
+    - Added new `Enforce Brighter Overlays` and `Enforce Muted Overlays` toggles. Allows players to disable the overlay filtering that prevents saturated colors (like Cream) from spawning on muted bases (like Black) and darker colors from being used as overlays on top of lighter bases.
+    - Modifying the overlay settings can dramatically change the number of possible combinations for wild hamsters (3,231 by default).
+  - **Red Eye Config Toggle**
+    - Don't like the red eye hamsters? You can visually disable that for your own client via a new config toggle, which makes them appear to have black eyes.
+  - **Friendly Fire Config Toggle**
+    - Added `Prevent Owner Friendly Fire` to the Core config toggles.
+    - When enabled, players can no longer accidentally damage their own tamed hamsters. Disabled by default to remain vanilla-friendly.
+    - In the next update (hopefully), this setting will be tied to a new item: the **Acorn Ring**. I also plan to integrate with the **Trinkets** mod so you can use a trinket slot for it.
+  - **Configurable Cuisine**
+    - You can now configure the nutrition and saturation values for all food items added by the mod (Cucumbers, Green Beans, Food Mix).
+    - Changed nutrition/saturation values are dynamically reflected in AppleSkin's "on-eat" HUD preview. **Unfortunately due to major API changes between MC versions, this only works on 1.21.1.*
+  - **Max Mounted Hamsters Config**
+    - Added a configuration slider under 'Shoulder Hamster Settings > Core Settings' allowing players to limit the maximum number of hamsters that can be mounted simultaneously (1 to 3).
+- **Gameplay Mechanics & Interactions**
+  - **Tag Mini-Game**
+    - Hamsters can now initiate a playful game of tag. If you maintain eye contact with a hamster for a few seconds, it will squeak and excitedly run away.
+    - **The Chase:** The hamster will flee if you get too close and stop to playfully taunt you if you fall too far behind.
+    - **Payoff:** Successfully "catching" (right-clicking) the hamster before it gets bored ends the game triggers a celebration. The hamster will then spit out a random item from its cheek pouches as a gift (pulling from the configurable cheek pouch loot lists).
+    - **Stranger Danger:** By default, you can play tag with wild hamsters and hamsters owned by other players. (Can be disabled in config).
+    - **Configurable Limits and Rewards**
+      - Added configs to control how often they want to play, the cooldown between games, and an anti-abuse cap on how many times a single player can play the game per in-game day (so they can't farm rewards).
+      - Added configs to control rewards: By default, hamsters will randomly pick an item from their configurable "Cheek Pouch Loot" list (the list of potential items a wild hamster might spawn with). The item does not have to be in the hamster's cheek pouch for it to give it as a gift.
+      - That can be disabled, in which case the hamster will choose the gift from a separate "Custom Tag Rewards" list in the config, which means you can make your hamster give you a diamond or any modded item (or whatever you want) when you catch it after a game of tag. Only server moderators can modify this of course.
+  - **Dynamic Gaze**
+    - Hamsters will now sustain eye contact with you indefinitely, provided you continue looking back at them, and they don't start a game of tag.
+  - **Target Block Integration**
+    - Thrown hamsters now interact with Target Blocks exactly like arrows. Hitting the bullseye grants a stronger redstone signal and even counts towards the vanilla "Bullseye" advancement.
+    - Hamster yeeting mini games anyone?
+  - **Precision Tree Heists**
+    - Right-clicking Oak Leaves with a lure item (Cheese) while a hamster is on your shoulder will now initiate a "Precision Tree Heist."
+    - This sets that specific leaf block as the guaranteed exit point for the hamster.
+    - While a precision heist is active, right-clicking in the air with the lure item will set the hamster's exit direction to match the direction you are currently looking.
+    - **Why?** This allows you to precisely control the exact block and angle by which your hamster will exit the tree, which makes for much more predictable recording sessions.
+  - **Moonwalking Easter Egg**
+    - Name your hamster "Michael Jackson" or "Steve Irwin" and it will rotate backwards and remain that way until you change the name again.
+  - **Expanded Default Diet**
+    - Hamsters can now eat seeds from almost any mod out-of-the-box. Added a robust union tag to the default config that automatically syncs with `#c:seeds` and `#forge:seeds` to ensure compatibility across all versions and mod loaders.
+- **Failsafes & Rescues**
+  - **Teleport Rescue Protocol**
+    - Overhauled how hamsters follow you across vast distances or dimensions (e.g., when using Waystones).
+    - Instead of relying on their tiny legs and pathfinding AI to catch up, your player code will now safely scoop up any actively following hamsters (and their babies if the babies are following them), hold them in a little NBT pocket while the world loads, and drop them at your new location 0.75 seconds later.
+  - **Void Rescue Protocol**
+    - If a player falls into the void and dies with hamsters on their shoulders, the hamsters will no longer spawn in the void and immediately perish. The system will safely teleport them back to their linked bed. If they do not have a linked bed, they will be sent to the player's personal respawn point or the world spawn.
+    - I also overhauled the shoulder-hamster data synchronization to prevent them from becoming invisible upon player respawn if they were configured to respawn with the player when the player fell into the void.
+- **UI, HUD, & Audio**
+  - **Jade Integration**
+    - Added comprehensive Jade overlay integration that reveals a hamster's exact genetic makeup (base coat, wild overlay, breeding overlay, eye genotype, etc.) when you look at them.
+    - Enabled without needing to turn on debug mode to help with breeding.
+    - Fully customizable. Each setting comes with its own toggle, and you can decide which ones show up when you sneak to keep the Jade HUD de-cluttered.
+  - **GUI Renaming System**
+    - Players can now rename their hamsters directly from the Hamster Inventory screen.
+    - Features dynamic down-scaling to ensure long names always fit perfectly within the UI constraints.
+    - An interactive pencil icon and underline display when hovering/typing.
+    - **New Config Options (`UI & Quality of Life > Hamster Renaming`)**
+      - `Enable GUI Renaming`: Master toggle for the feature.
+      - `Consume Name Tag`: Forces players to sacrifice a Name Tag from their inventory (or the hamster's cheeks) to finalize the rename.
+      - `Pencil Icon Placement`: Allows swapping the icon to the left or right of the text for those who read in different directions.
+  - **New Audio & Visuals**
+    - Added a brand new `anim_hamster_cheek_unload` animation used for gifting items, complete with item and spit particle effects.
+    - Added 4 new scratching sound variations for the cleaning animation, and switched to keyframes for the SFX to make it less repetitive and more realistic. This also has the side effect of muting the sound effect if the hamster is not on screen, and thus not being rendered. This means you will no longer hear nearby hamsters cleaning unless you can also see them.
+    - Added dynamic item sounds (clink, squish, thud, etc.) to the new gifting sequence.
+- **Commands & Admin Tools**
+  - **Advanced Spawning & Testing Commands**
+    - Added `/ahp spawn hamster <basePalette> <wildPattern> <wildPalette> <breedPattern> <breedPalette> <eyes>`. This command features a custom Brigadier auto-complete engine that suggests exact, human-readable palette and pattern names as you type, allowing you to easily test specific genetic combinations.
+    - Added `/ahp spawn_all_bases_2D`. Systematically lines up every single hamster color base in the game (including custom community additions), sorted cleanly into rows by their dynamically determined, mathematical color zone.
+    - Added `/ahp spawn_all_bases_3D`. Spawns the hamsters hovering in a physical 3D "cylinder" representing their Hue/Saturation/Brightness coordinates. This is useful for the **Breeding Inheritance and Visualization Tool** (see below).
+      - **Hue** = the degree of the circle (0-360)
+      - **Saturation** = the radius of the circle (more saturated colors are closer to the edge)
+      - **Brightness** = the height of the cylinder (brighter hamsters are closer to the top)
+      - By default, each `/ahp spawn_all_bases...` command spawns just the 45 base colors, but each one comes with 3 optional arguments to change the number of hamsters spawned:
+      1. `[with_wild_overlays]` Displays all 3,231 hamster variants that can spawn naturally in the wild.
+      2. `[with_sample_breeding_overlays]` Displays genetic combinations of every wild hamster but adds in a small sample of three breeding overlays (Tortoise Shell, Silver, and Rust). Due to the triple-multiplication math involved, this heavily increases the total number of hamsters spawned (from 3,231 up to 9,693) creating a much bigger display.
+      3. `[author]` only uses color palletes from a certain author (e.g., `jimcerberus` or `default`).
+    - Added `/ahp spawn_all_possible_permutations_THIS_CAN_BREAK_YOUR_WORLD`. Exactly what it sounds like. Don't run it unless you have a super-flat world, a fire extinguisher for your PC, and a lot of patience. Note that every time I have run this command, my server tick speed never quite returned to baseline— even after deleting all the hamsters that were spawned using `/kill @e[type=!player]`.
+    - Added `/ahp print_genetics_report` command, allowing server operators to recalculate and view the current 3D color-space math of the genetics engine at runtime. Useful because it dynamically updates its readout based on your exact `AhpWorldGenConfig` wild overlay settings, so you can see how your changes are affecting the total possible variant numbers without having to spawn them all.
+  - **Tree Heist History Command**
+    - Added `/ahp reset_tree_economy` for quick clearing of tree depletion memory without needing to open the config screen.
+- **Advancements**
+  - **Advancement: Carat Confusion**
+    - Triggers when a hamster leads you to Gold Ore instead of Diamond.
+  - **Advancement: Load-Bearing Human**
+    - Triggers when you mount 3 hamsters simultaneously (Right, Left, Head).
+  - **Genetic Progression Advancements**
+    - Added "The Collector" advancement path tracking unique wild variants tamed (up to dynamic maximum based on configuration limits).
+    - Added "The Breeder" advancement path tracking unique bred combinations (up to 1,000,000).
+    - Added a conditional advancement "Seeing Red" for successfully breeding the recessive eye trait. Does not trigger if red eyes have been turned off in the config.
+    - Implemented high-performance, non-bloating NBT storage using IntArrays to track thousands of `HamsterGenome` hashes without lagging the player entity.
+- **Guidebook Enhancements**
+  - **Guidebook Delivery Fallback**
+    - Added a new configuration option that acts as a fallback for modpacks that disable auto-guidebook delivery on login.
+    - If enabled (default), players will automatically be given the Hamster Tips guidebook and receive a chat prompt the very first time they spot a wild hamster from <=10 blocks away.
+    - Targeting calculation includes wiggle room to ensure the event triggers even if the player's crosshair isn't perfectly on the hamster's hit box.
+    - Only triggers once, and only if the player has never yet received the guidebook (regardless of current inventory status).
+  - **Lectern Reading**
+    - Added code for placing the Hamster Tips guide book into a lectern and an event handler so you can read it. You can now display your rodent knowledge in your base or wherever.
+  - **Hamster Tips Guidebook Improvements**
+    - The *Hamster Tips* guidebook now uses a custom string processor to pull live data directly into the text, so I can do things like automatically displaying the exact number of mathematically possible wild variants or the name of your dynamically configured Lure Item instead of hardcoding "Cheese".
+    - Updated the "Regional Rodents" entry to explain the new biome-adaptive color logic, Wild Overlays and Jade integration.
+    - Added a new "Breeding" entry in _The Hamster Life_ chapter detailing the genetic mechanics, recessive red eyes, and feral youth mechanics.
+    - Added a new "Admin Commands" entry in _The Kitchen Drawer_ chapter detailing the various new (and old) commands the mod has to offer since some of them (especially the new ones) are super useful.
 - **Pixie-Dust Crown for Supporters**
   - Added a dynamic, spinning, bobbing particle crown that renders above the heads of mod supporters. Uses a custom `Pixie Dust` particle system featuring a dense, short-lived, shimmering effect.
   - Emits a subtle sparkling sound and includes 5 different themes (Gold, Crimson, Lavender, Ice, Emerald) by manipulating the HSB color values of a single grayscale texture at runtime.
   - Automatically hides in first-person view to prevent visual obstruction.
-  - Powered by a remote manager that pulls configuration data asynchronously from GitHub and caches it for offline use.
+  - Powered by a remote manager that pulls configuration data asynchronously from GitHub and caches it for offline use. You will need to briefly connect to the Internet while launching Minecraft at least once to verify your ownership of the Crown. After that you can play offline and still see it!
   - **Configurable Aesthetics**
     - Added a new `Supporter Perks` config group.
     - Added a global toggle to disable rendering of all crowns if you hate fun.
@@ -150,64 +224,6 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
     - Added sliders for sound volume, particle count, crown radius, crown height, crown thickness, and vertical offset.
     - Added a new "Toggle Supporter Crown" keybind allowing users to show/hide their own crown from both themselves and the rest of the server. A single press cycles the crown to the next available color theme, while a double-tap toggles the crown's visibility.
     - Supporters can pick their own crown color. Your preference syncs instantly to all other players looking at you utilizing `DataTracker` networking.
-- **Tag Mini-Game**
-  - Hamsters can now initiate a playful game of tag. If you maintain eye contact with a hamster for a few seconds, it will squeak and excitedly run away.
-  - **The Chase:** The hamster will flee if you get too close and stop to playfully taunt you if you fall too far behind.
-  - **Payoff:** Successfully "catching" (right-clicking) the hamster before it gets bored ends the game triggers a celebration. The hamster will then spit out a random item from its cheek pouches as a gift (pulling from the configurable cheek pouch loot lists).
-  - **Stranger Danger:** By default, you can play tag with wild hamsters and hamsters owned by other players. (Can be disabled in config).
-  - **Configurable Limits and Rewards**
-    - Added configs to control how often they want to play, the cooldown between games, and an anti-abuse cap on how many times a single player can play the game per in-game day (so they can't farm rewards).
-    - Added configs to control rewards: By default, hamsters will randomly pick an item from their configurable "Cheek Pouch Loot" list (the list of potential items a wild hamster might spawn with). The item does not have to be in the hamster's cheek pouch for it to give it as a gift.
-    - That can be disabled, in which case the hamster will choose the gift from a separate "Custom Tag Rewards" list in the config, which means you can make your hamster give you a diamond or any modded item (or whatever you want) when you catch it after a game of tag. Only server moderators can modify this of course.
-- **Dynamic Gaze**
-  - Hamsters will now sustain eye contact with you indefinitely, provided you continue looking back at them, and they don't start a game of tag.
-- **New Audio & Visuals**
-  - Added a brand new `anim_hamster_cheek_unload` animation used for gifting items, complete with item and spit particle effects.
-  - Added 4 new scratching sound variations for the cleaning animation, and switched to keyframes for the SFX to make it less repetitive and more realistic. This also has the side effect of muting the sound effect if the hamster is not on screen, and thus not being rendered. This means you will no longer hear nearby hamsters cleaning unless you can also see them.
-  - Added dynamic item sounds (clink, squish, thud, etc.) to the new gifting sequence.
-- **Teleport Rescue Protocol**
-  - Overhauled how hamsters follow you across vast distances or dimensions (e.g., when using Waystones).
-  - Instead of relying on their tiny legs and pathfinding AI to catch up, your player code will now safely scoop up any actively following hamsters (and their babies if the babies are following them), hold them in a little NBT pocket while the world loads, and drop them at your new location 0.75 seconds later.
-- **Advancement: Carat Confusion**
-  - Triggers when a hamster leads you to Gold Ore instead of Diamond.
-- **Advancement: Load-Bearing Human**
-  - Triggers when you mount 3 hamsters simultaneously (Right, Left, Head).
-- **Genetic Progression Advancements**
-  - Added "The Collector" advancement path tracking unique wild variants tamed (up to dynamic maximum based on configuration limits).
-  - Added "The Breeder" advancement path tracking unique bred combinations (up to 1,000,000).
-  - Added a conditional advancement "Seeing Red" for successfully breeding the recessive eye trait. Does not trigger if red eyes have been turned off in the config.
-  - Implemented high-performance, non-bloating NBT storage using IntArrays to track thousands of `HamsterGenome` hashes without lagging the player entity.
-- **Guidebook Delivery Fallback**
-  - Added a new configuration option that acts as a fallback for modpacks that disable auto-guidebook delivery on login.
-  - If enabled (default), players will automatically be given the Hamster Tips guidebook and receive a chat prompt the very first time they spot a wild hamster from <=10 blocks away.
-  - Targeting calculation includes wiggle room to ensure the event triggers even if the player's crosshair isn't perfectly on the hamster's hit box.
-  - Only triggers once, and only if the player has never yet received the guidebook (regardless of current inventory status).
-- **Configurable Cuisine**
-  - You can now configure the nutrition and saturation values for all food items added by the mod (Cucumbers, Green Beans, Food Mix).
-  - Changed nutrition/saturation values are dynamically reflected in AppleSkin's "on-eat" HUD preview. **Unfortunately due to major API changes between MC versions, this only works on 1.21.1.*
-- **Lectern Reading**
-  - Added code for placing the Hamster Tips guide book into a lectern and an event handler so you can read it. You can now display your rodent knowledge in your base or wherever.
-- **Precision Tree Heists**
-  - Right-clicking Oak Leaves with a lure item (Cheese) while a hamster is on your shoulder will now initiate a "Precision Tree Heist."
-  - This sets that specific leaf block as the guaranteed exit point for the hamster.
-  - While a precision heist is active, right-clicking in the air with the lure item will set the hamster's exit direction to match the direction you are currently looking.
-  - **Why?** This allows you to precisely control the exact block and angle by which your hamster will exit the tree, which makes for much more predictable recording sessions.
-- **Tree Heist History Command**
-  - Added `/ahp reset_tree_economy` for quick clearing of tree depletion memory without needing to open the config screen.
-- **Moonwalking Easter Egg**
-  - Name your hamster "Michael Jackson" or "Steve Irwin" and it will permanently rotate backwards.
-- **Void Rescue Protocol**
-  - If a player falls into the void and dies with hamsters on their shoulders, the hamsters will no longer spawn in the void and immediately perish. The system will safely teleport them back to their linked bed. If they do not have a linked bed, they will be sent to the player's personal respawn point or the world spawn.
-  - I also overhauled the shoulder-hamster data synchronization to prevent them from becoming invisible upon player respawn if they were configured to respawn with the player when the player fell into the void.
-- **Expanded Default Diet**
-  - Hamsters can now eat seeds from almost any mod out-of-the-box. Added a robust union tag to the default config that automatically syncs with `#c:seeds` and `#forge:seeds` to ensure compatibility across all versions and mod loaders.
-- **Hamster Tips Guidebook Improvements**
-  - The *Hamster Tips* guidebook now uses a custom string processor to pull live data directly into the text, so I can do things like automatically displaying the exact number of mathematically possible wild variants or the name of your dynamically configured Lure Item instead of hardcoding "Cheese".
-  - Updated the "Regional Rodents" entry to explain the new biome-adaptive color logic, Wild Overlays and Jade integration.
-  - Added a new "Breeding" entry in _The Hamster Life_ chapter detailing the genetic mechanics, recessive red eyes, and feral youth mechanics.
-  - Added a new "Admin Commands" entry in _The Kitchen Drawer_ chapter detailing the various new (and old) commands the mod has to offer since some of them (especially the new ones) are super useful.
-- **Max Mounted Hamsters Config**
-  - Added a configuration slider under 'Shoulder Hamster Settings > Core Settings' allowing players to limit the maximum number of hamsters that can be mounted simultaneously (1 to 3).
 
 ### Changed
 - **Location-Centric Spawning Overhaul**

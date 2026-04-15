@@ -16,11 +16,14 @@ import net.dawson.adorablehamsterpets.entity.client.feature.ShoulderAnimationSta
 import net.dawson.adorablehamsterpets.entity.control.HamsterBodyControl;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
+import net.dawson.adorablehamsterpets.mixin.accessor.TargetBlockInvoker;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.*;
+import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.TargetBlock;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
@@ -65,6 +68,7 @@ import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
@@ -1504,9 +1508,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (blockHit.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockHitResult = (BlockHitResult) blockHit;
                 BlockPos hitPos = blockHitResult.getBlockPos();
+                BlockState hitState = world.getBlockState(hitPos);
 
                 // --- Tree Heist Trigger (Projectile) ---
-                if (world.getBlockState(hitPos).isOf(Blocks.OAK_LEAVES)) {
+                if (hitState.isOf(Blocks.OAK_LEAVES)) {
                     if (!world.isClient()) {
                         // 1. Scan first to identify the tree anchor
                         TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, hitPos);
@@ -1531,6 +1536,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                                 this.discard();
                                 return;
                             }
+                        }
+                    }
+                } else if (hitState.getBlock() instanceof TargetBlock) {
+
+                    // --- Target Block Interaction ---
+                    if (!world.isClient()) {
+                        int power = TargetBlockInvoker.adorablehamsterpets$callTrigger(world, hitState, blockHitResult, this);
+                        Entity owner = this.getOwner();
+                        if (owner instanceof ServerPlayerEntity serverPlayer) {
+                            serverPlayer.incrementStat(Stats.TARGET_HIT);
+                            Criteria.TARGET_HIT.trigger(serverPlayer, this, blockHitResult.getPos(), power);
                         }
                     }
                 }
