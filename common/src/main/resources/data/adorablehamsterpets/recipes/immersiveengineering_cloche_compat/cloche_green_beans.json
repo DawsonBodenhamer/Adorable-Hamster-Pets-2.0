@@ -24,7 +24,7 @@
   "results": [
     {
       "item": "adorablehamsterpets:green_beans",
-      "Count": 2
+      "count": 2
     },
     {
       "item": "adorablehamsterpets:green_bean_seeds"
@@ -32,7 +32,7 @@
   ],
   "time": 640,
   "render": {
-    "type": "immersiveengineering:crop",
+    "type": "crop",
     "block": "adorablehamsterpets:green_beans_crop"
   }
 }

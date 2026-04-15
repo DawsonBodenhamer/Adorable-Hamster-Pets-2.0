@@ -23,8 +23,8 @@
   },
   "results": [
     {
-      "item": "adorablehamsterpets:cucumber",
-      "Count": 2
+      "count": 2,
+      "item": "adorablehamsterpets:cucumber"
     },
     {
       "item": "adorablehamsterpets:cucumber_seeds"
@@ -32,7 +32,7 @@
   ],
   "time": 640,
   "render": {
-    "type": "immersiveengineering:crop",
+    "type": "crop",
     "block": "adorablehamsterpets:cucumber_crop"
   }
 }

@@ -306,6 +306,8 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - Fixed a bug where wild hamsters would still flee from players attempting to tame them using anything other than Sliced Cucumber. Now correctly uses the configurable "Taming Foods" from the config.
 - **Suicidal Hamsters**
   - Hamsters will no longer choose to run through lava or fire when cornered and fleeing from a player. They will now properly recognize these hazards as completely impassable terrain.
+- **Immersive Engineering Compatibility**
+  - Fixed a data formatting error in the Garden Cloche recipes for cucumbers and green beans that caused the game to crash upon world creation or loading. (Thanks to [@CasualAnimalEnjoyer](https://github.com/CasualAnimalEnjoyer) for the fix!)
 
 ---
 
