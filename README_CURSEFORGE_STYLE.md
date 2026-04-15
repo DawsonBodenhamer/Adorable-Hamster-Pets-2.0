@@ -1,6 +1,6 @@
 <p style="text-align: center;">
   <a href="https://mod.curseforge.com/minecraft-mod-of-the-year-2025/" target="_blank" rel="noopener noreferrer">
-    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_new_banner_for_mod_page.png" alt="Adorable Hamster Pets Banner" width="100%"/>
+    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_MOTY_banner_for_mod_page.png" alt="Adorable Hamster Pets Banner" width="100%"/>
   </a>
 </p>
 
