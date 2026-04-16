@@ -12,8 +12,7 @@
     "accessor.LookAtEntityGoalAccessor",
     "accessor.LookAroundGoalAccessor",
     "accessor.FollowOwnerGoalAccessor",
-    "accessor.ValidatedFieldAccessor",
-    "accessor.TargetBlockInvoker"
+    "accessor.ValidatedFieldAccessor"
   ],
   "client": [
     "client.GuiBookLandingMixin",
