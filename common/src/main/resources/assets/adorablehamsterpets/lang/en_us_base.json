@@ -323,6 +323,12 @@
   "message.adorablehamsterpets.supporter_crown_enabled": "You feel a sense of awesomeness rush over you.",
   "message.adorablehamsterpets.supporter_crown_disabled": "Time to mingle with the peasants again.",
   "message.adorablehamsterpets.supporter_crown_color_changed": "Color changed to %s.",
+  "message.adorablehamsterpets.crown_trial_used": "Only available for supporters of Adorable Hamster Pets.",
+  "message.adorablehamsterpets.crown_trial_prompt": "Try double-tapping to get a 30-second taste of the good life.",
+  "message.adorablehamsterpets.crown_trial_started": "30-second trial activated. Single-press to cycle crown colors.",
+  "message.adorablehamsterpets.crown_trial_countdown": "Supporter Crown: %d seconds remaining",
+  "message.adorablehamsterpets.crown_trial_ended": "Your 30 seconds of fame have expired.",
+  "message.adorablehamsterpets.crown_trial_discord": "§l§n[Click here]§r to join the Discord and learn how get your own Supporter Crown.",
 
   "subtitles.adorablehamsterpets.hamster_attack": "Hamster attacks",
   "subtitles.adorablehamsterpets.hamster_beg": "Hamster begs",

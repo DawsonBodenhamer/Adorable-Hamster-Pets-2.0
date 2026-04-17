@@ -52,6 +52,7 @@ public class ModPackets {
     public record HamsterInputC2SPacket(boolean jumpHeld, boolean sprintHeld) {}
     public record RenameHamsterC2SPacket(int entityId, String newName) {}
     public record UpdateCrownThemeC2SPacket(int themeOrdinal) {}
+    public record StartCrownTrialC2SPacket(int themeOrdinal) {}
 
     // S2C (Server-to-Client)
     public record PlayGuidebookEffectsS2CPacket(boolean closeScreen) {}
@@ -237,7 +238,24 @@ public class ModPackets {
                 (buf) -> new UpdateCrownThemeC2SPacket(buf.readInt()),
                 (packet, context) -> context.get().queue(() -> {
                     if (context.get().getPlayer() instanceof PlayerEntityAccessor player) {
-                        player.ahp$setCrownTheme(packet.themeOrdinal());
+                        player.ahp$setSupporterCrownTheme(packet.themeOrdinal());
+                    }
+                })
+        );
+
+        CHANNEL.register(StartCrownTrialC2SPacket.class,
+                (packet, buf) -> buf.writeInt(packet.themeOrdinal()),
+                (buf) -> new StartCrownTrialC2SPacket(buf.readInt()),
+                (packet, context) -> context.get().queue(() -> {
+                    if (context.get().getPlayer() instanceof ServerPlayerEntity player) {
+                        PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
+
+                        // Prevent users from requesting multiple trials per server by checking nbt flag
+                        if (!accessor.ahp$hasUsedSupporterCrownTrial()) {
+                            accessor.ahp$setHasUsedSupporterCrownTrial(true);
+                            accessor.ahp$setSupporterCrownTrialTicks(600); // 30 seconds
+                            accessor.ahp$setSupporterCrownTheme(packet.themeOrdinal());
+                        }
                     }
                 })
         );

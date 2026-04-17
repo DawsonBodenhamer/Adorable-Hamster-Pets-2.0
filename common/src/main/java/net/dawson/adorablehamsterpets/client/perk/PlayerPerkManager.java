@@ -95,9 +95,9 @@ public class PlayerPerkManager {
      * @return True if the player has the perk, false otherwise.
      */
     public boolean hasPerk(String username, String perkId) {
-        if (Platform.isDevelopmentEnvironment()) {
-            return true;
-        }
+//        if (Platform.isDevelopmentEnvironment()) {
+//            return true;
+//        }
 
         Set<String> users = this.perks.get(perkId);
         if (users == null) return false;

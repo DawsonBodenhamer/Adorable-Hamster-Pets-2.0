@@ -19,32 +19,35 @@ public enum PixieDustParticleTheme implements EnumTranslatable {
     ICE(145),
     EMERALD(100);
 
-    private final int[] colors = new int[8];
+    private final int[] colors = new int[7];
 
     PixieDustParticleTheme(int themeHueOffset) {
-        float base = 49f;
         float hOffset = themeHueOffset;
 
         // Slot math
-        colors[0] = toRgb(base + hOffset + 3, 30, 99);
-        colors[1] = toRgb(base + hOffset + 5, 42, 94);
-        colors[2] = toRgb(base + hOffset - 8, 77, 83);
-        colors[3] = toRgb(base + hOffset - 5, 67, 29);
-        colors[4] = toRgb(base + hOffset, 49, 98);
-        colors[5] = toRgb(base + hOffset + 5, 57, 67);
-        colors[6] = 0xFFFFFF; // Pure white
-        colors[7] = toRgb(base + hOffset - 2, 26, 96);
+        colors[0] = toRgb(47 + hOffset, 15, 100);
+        colors[1] = toRgb(50 + hOffset, 56, 99);
+        colors[2] = toRgb(49 + hOffset, 50, 90);
+        colors[3] = toRgb(41 + hOffset, 99, 81);
+        colors[4] = toRgb(45 + hOffset, 75, 75);
+        colors[5] = toRgb(42 + hOffset, 72, 39);
+        colors[6] = toRgb(44 + hOffset, 68, 29);
     }
 
     private static int toRgb(float h, float s, float b) {
-        // Normalize hue to 0-360 range to prevent negative hue errors
+        // Normalize hue to 0-360 range
         h = (h % 360f);
         if (h < 0) h += 360f;
+
+        // Clamp saturation and brightness to 0-100%
+        s = Math.max(0f, Math.min(100f, s));
+        b = Math.max(0f, Math.min(100f, b));
+
         return Color.HSBtoRGB(h / 360f, s / 100f, b / 100f) & 0xFFFFFF;
     }
 
     public int getRandomColor(Random random) {
-        return colors[random.nextInt(8)];
+        return colors[random.nextInt(colors.length)];
     }
 
     @NotNull

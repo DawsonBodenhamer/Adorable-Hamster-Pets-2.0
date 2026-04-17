@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.mixin.server;
 
 import com.mojang.authlib.GameProfile;
+import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
@@ -49,6 +50,9 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -129,6 +133,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private boolean ahp$cachedHasGuideBook = false;
     @Unique private boolean ahp$guideBookTrackingInitialized = false;
     @Unique private static final TrackedData<Integer> AHP_CROWN_THEME = DataTracker.registerData(PlayerEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    @Unique private static final TrackedData<Boolean> AHP_HAS_USED_CROWN_TRIAL = DataTracker.registerData(PlayerEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    @Unique private static final TrackedData<Integer> AHP_CROWN_TRIAL_TICKS = DataTracker.registerData(PlayerEntity.class, TrackedDataHandlerRegistry.INTEGER);
     @Unique private int ahp$crownAudioTimer = 0;
 
     // --- Collections ---
@@ -154,6 +160,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Inject(method = "initDataTracker", at = @At("TAIL"))
     private void adorablehamsterpets$initCrownData(CallbackInfo ci) { // 1.20.1: "zero arguments" = still requires CallbackInfo
         this.dataTracker.startTracking(AHP_CROWN_THEME, 0); // Default GOLD
+        this.dataTracker.startTracking(AHP_HAS_USED_CROWN_TRIAL, false);
+        this.dataTracker.startTracking(AHP_CROWN_TRIAL_TICKS, 0);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -223,6 +231,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         // --- Guidebook ---
         nbt.putBoolean(AHP_NBT_GUIDEBOOK_HAS_KEY, this.ahp$cachedHasGuideBook);
         nbt.putBoolean(AHP_NBT_GUIDEBOOK_INIT_KEY, this.ahp$guideBookTrackingInitialized);
+
+        // --- Supporter Crown Trial ---
+        nbt.putBoolean("AHPHasUsedCrownTrial", this.dataTracker.get(AHP_HAS_USED_CROWN_TRIAL));
 
         // --- Teleport Rescue  ---
         if (!this.ahp$inTransitHamsters.isEmpty()) {
@@ -330,6 +341,16 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
         if (nbt.contains(AHP_NBT_GUIDEBOOK_INIT_KEY, NbtElement.BYTE_TYPE)) {
             this.ahp$guideBookTrackingInitialized = nbt.getBoolean(AHP_NBT_GUIDEBOOK_INIT_KEY);
+        }
+
+        // --- Supporter Crown Trial ---
+        if (nbt.contains("AHPHasUsedCrownTrial", NbtElement.BYTE_TYPE)) {
+            boolean hasUsed = nbt.getBoolean("AHPHasUsedCrownTrial");
+            // Wipe slate clean if in dev environment
+            if (Platform.isDevelopmentEnvironment()) {
+                hasUsed = false;
+            }
+            this.dataTracker.set(AHP_HAS_USED_CROWN_TRIAL, hasUsed);
         }
 
         // --- Teleport Rescue ---
@@ -501,6 +522,30 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         // --- 3. Feature Ticks ---
         tickGuideBookTracking();
 
+        // Supporter Crown Trial Period Tick
+        if (!world.isClient()) {
+            int trialTicks = this.dataTracker.get(AHP_CROWN_TRIAL_TICKS);
+            if (trialTicks > 0) {
+                this.dataTracker.set(AHP_CROWN_TRIAL_TICKS, trialTicks - 1);
+
+                // Feedback
+                if (trialTicks - 1 == 0) {
+                    this.ahp$setSupporterCrownTheme(-1);
+
+                    MutableText message = Text.literal("\n")
+                            .append(Text.translatable("message.adorablehamsterpets.crown_trial_ended").formatted(Formatting.GOLD))
+                            .append("\n")
+                            .append(Text.translatable("message.adorablehamsterpets.crown_trial_discord")
+                                    .setStyle(Style.EMPTY
+                                            .withColor(Formatting.AQUA)
+                                            .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://discord.gg/w54mk5bqdf"))
+                                    ))
+                            .append("\n");
+                    self.sendMessage(message, false);
+                }
+            }
+        }
+
         // Glowing Sunflower Easter Egg (Server side only, low frequency)
         if (++this.ahp$sunflowerCheckTimer >= 20) {
             this.ahp$sunflowerCheckTimer = 0;
@@ -652,27 +697,52 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     @Unique
     @Override
-    public int ahp$getCrownTheme() {
+    public int ahp$getSupporterCrownTheme() {
         return this.dataTracker.get(AHP_CROWN_THEME);
     }
 
     @Unique
     @Override
-    public void ahp$setCrownTheme(int theme) {
+    public void ahp$setSupporterCrownTheme(int theme) {
         this.dataTracker.set(AHP_CROWN_THEME, theme);
     }
 
     @Unique
     @Override
-    public int ahp$getCrownAudioTimer() {
+    public int ahp$getSupporterCrownAudioTimer() {
         return this.ahp$crownAudioTimer;
     }
 
     @Unique
     @Override
-    public void ahp$setCrownAudioTimer(int timer) {
+    public void ahp$setSupporterCrownAudioTimer(int timer) {
         this.ahp$crownAudioTimer = timer;
     }
+
+    @Unique
+    @Override
+    public boolean ahp$hasUsedSupporterCrownTrial() {
+        return this.dataTracker.get(AHP_HAS_USED_CROWN_TRIAL);
+    }
+
+    @Unique
+    @Override
+    public void ahp$setHasUsedSupporterCrownTrial(boolean used) {
+        this.dataTracker.set(AHP_HAS_USED_CROWN_TRIAL, used);
+    }
+
+    @Unique
+    @Override
+    public int ahp$getSupporterCrownTrialTicks() {
+        return this.dataTracker.get(AHP_CROWN_TRIAL_TICKS);
+    }
+
+    @Unique
+    @Override
+    public void ahp$setSupporterCrownTrialTicks(int ticks) {
+        this.dataTracker.set(AHP_CROWN_TRIAL_TICKS, ticks);
+    }
+
 
     @Unique
     @Override

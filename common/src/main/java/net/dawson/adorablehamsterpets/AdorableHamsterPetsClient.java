@@ -139,7 +139,7 @@ public class AdorableHamsterPetsClient {
                 ModEntitySpawns.parseConfig();
                 ModWorldGeneration.parseConfig();
 
-                // Sync crown theme preference to server
+                // Sync supporter crown theme preference to server
                 if (MinecraftClient.getInstance().player != null) {
                     int payloadTheme = Configs.AHP.showMyCrown ? Configs.AHP.crownTheme.get().ordinal() : -1;
                     ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(payloadTheme)); // Typed packet for 1.20.1
@@ -172,7 +172,7 @@ public class AdorableHamsterPetsClient {
             ClientParticleManager.INSTANCE.clear();
             pendingGuidebookEffects = false;
 
-            // Sync initial crown theme preference to server
+            // Sync initial supporter crown theme preference to server
             int payloadTheme = Configs.AHP.showMyCrown ? Configs.AHP.crownTheme.get().ordinal() : -1;
             ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(payloadTheme)); // Typed packet for 1.20.1
         });
@@ -343,29 +343,41 @@ public class AdorableHamsterPetsClient {
             }
         }
 
-        // --- Handle Toggle Crown Keybind ---
+        // --- Handle Toggle Supporter Crown Keybind ---
         if (crownDoubleTapTimer > 0) {
             crownDoubleTapTimer--;
             if (crownDoubleTapTimer == 0 && isWaitingForCrownSecondTap) {
                 // --- Single Tap: Cycle Color ---
                 isWaitingForCrownSecondTap = false;
 
-                PixieDustParticleTheme[] themes = PixieDustParticleTheme.values();
-                int nextOrdinal = (Configs.AHP.crownTheme.get().ordinal() + 1) % themes.length;
-                PixieDustParticleTheme nextTheme = themes[nextOrdinal];
+                boolean hasPerk = PlayerPerkManager.INSTANCE.hasPerk(client.player.getGameProfile().getName(), "supporter_crown");
+                int trialTicks = ((PlayerEntityAccessor) client.player).ahp$getSupporterCrownTrialTicks();
+                boolean hasUsedTrial = ((PlayerEntityAccessor) client.player).ahp$hasUsedSupporterCrownTrial();
 
-                // Update config using the accessor
-                @SuppressWarnings("unchecked")
-                ValidatedFieldAccessor<PixieDustParticleTheme> accessor = (ValidatedFieldAccessor<PixieDustParticleTheme>) (Object) Configs.AHP.crownTheme;
-                accessor.adorablehamsterpets$set(nextTheme);
-                Configs.AHP.save();
+                if (hasPerk || trialTicks > 0) {
+                    PixieDustParticleTheme[] themes = PixieDustParticleTheme.values();
+                    int nextOrdinal = (Configs.AHP.crownTheme.get().ordinal() + 1) % themes.length;
+                    PixieDustParticleTheme nextTheme = themes[nextOrdinal];
 
-                // Broadcast to server if currently visible
-                if (Configs.AHP.showMyCrown) {
-                    ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(nextOrdinal)); // Typed packet for 1.20.1
+                    // Update config using the accessor
+                    @SuppressWarnings("unchecked")
+                    ValidatedFieldAccessor<PixieDustParticleTheme> accessor = (ValidatedFieldAccessor<PixieDustParticleTheme>) (Object) Configs.AHP.crownTheme;
+                    accessor.adorablehamsterpets$set(nextTheme);
+                    Configs.AHP.save();
+
+                    // Broadcast to server if currently visible or in trial
+                    if (Configs.AHP.showMyCrown || trialTicks > 0) {
+                        ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(nextOrdinal)); // Typed packet for 1.20.1
+                    }
+
+                    client.player.sendMessage(Text.translatable("message.adorablehamsterpets.supporter_crown_color_changed", Text.translatable(nextTheme.translationKey())).formatted(Formatting.WHITE), true);
+                } else {
+                    if (hasUsedTrial) {
+                        client.player.sendMessage(Text.translatable("message.adorablehamsterpets.crown_trial_used").formatted(Formatting.RED), true);
+                    } else {
+                        client.player.sendMessage(Text.translatable("message.adorablehamsterpets.crown_trial_prompt").formatted(Formatting.GOLD), true);
+                    }
                 }
-
-                client.player.sendMessage(Text.translatable("message.adorablehamsterpets.supporter_crown_color_changed", Text.translatable(nextTheme.translationKey())).formatted(Formatting.WHITE), true);
             }
         }
 
@@ -381,18 +393,46 @@ public class AdorableHamsterPetsClient {
                 isWaitingForCrownSecondTap = false;
                 crownDoubleTapTimer = 0;
 
-                Configs.AHP.showMyCrown = !Configs.AHP.showMyCrown;
-                Configs.AHP.save();
+                boolean hasPerk = PlayerPerkManager.INSTANCE.hasPerk(client.player.getGameProfile().getName(), "supporter_crown");
+                PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) client.player;
+                int trialTicks = playerAccessor.ahp$getSupporterCrownTrialTicks();
+                boolean hasUsedTrial = playerAccessor.ahp$hasUsedSupporterCrownTrial();
 
-                int payloadTheme = Configs.AHP.showMyCrown ? Configs.AHP.crownTheme.get().ordinal() : -1;
-                ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(payloadTheme)); // Typed packet for 1.20.1
+                if (hasPerk) {
+                    Configs.AHP.showMyCrown = !Configs.AHP.showMyCrown;
+                    Configs.AHP.save();
 
-                client.player.sendMessage(Text.translatable(Configs.AHP.showMyCrown ? "message.adorablehamsterpets.supporter_crown_enabled" : "message.adorablehamsterpets.supporter_crown_disabled").formatted(Formatting.GOLD), true);
+                    int payloadTheme = Configs.AHP.showMyCrown ? Configs.AHP.crownTheme.get().ordinal() : -1;
+                    ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(payloadTheme)); // Typed packet for 1.20.1
+
+                    client.player.sendMessage(Text.translatable(Configs.AHP.showMyCrown ? "message.adorablehamsterpets.supporter_crown_enabled" : "message.adorablehamsterpets.supporter_crown_disabled").formatted(Formatting.GOLD), true);
+                } else {
+                    if (trialTicks > 0) {
+                        // Allow user to hide supporter crown manually during trial period
+                        ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(-1)); // Typed packet for 1.20.1
+                        client.player.sendMessage(Text.translatable("message.adorablehamsterpets.supporter_crown_disabled").formatted(Formatting.GOLD), true);
+                    } else if (hasUsedTrial) {
+                        client.player.sendMessage(Text.translatable("message.adorablehamsterpets.crown_trial_used").formatted(Formatting.RED), true);
+                    } else {
+                        // Start trial
+                        Configs.AHP.showMyCrown = true;
+                        Configs.AHP.save();
+                        ModPackets.CHANNEL.sendToServer(new ModPackets.StartCrownTrialC2SPacket(Configs.AHP.crownTheme.get().ordinal())); // Typed packet for 1.20.1
+                        client.player.sendMessage(Text.translatable("message.adorablehamsterpets.crown_trial_started").formatted(Formatting.WHITE), true);
+                    }
+                }
             } else {
                 // First tap detected: Start double-tap listening window (10 ticks = 0.5 seconds)
                 isWaitingForCrownSecondTap = true;
                 crownDoubleTapTimer = 10;
             }
+        }
+
+        // Supporter crown trial period countdown
+        int trialTicks = ((PlayerEntityAccessor) client.player).ahp$getSupporterCrownTrialTicks();
+        if (trialTicks > 0 && trialTicks % 60 == 0) {
+            int seconds = trialTicks / 20;
+            client.player.sendMessage(Text.translatable("message.adorablehamsterpets.crown_trial_countdown", seconds).formatted(Formatting.WHITE), false);
         }
 
         // --- 4. Render State Tracking ---
@@ -456,18 +496,22 @@ public class AdorableHamsterPetsClient {
                 if (player == client.player && !Configs.AHP.showCrownInFirstPerson && isFirstPerson) continue;
 
                 // Get theme from synced DataTracker
-                int themeOrdinal = ((PlayerEntityAccessor) player).ahp$getCrownTheme();
+                int themeOrdinal = ((PlayerEntityAccessor) player).ahp$getSupporterCrownTheme();
 
-                // If themeOrdinal is < 0, it means the player toggled their crown off
+                // If themeOrdinal is < 0, it means the player toggled their supporter crown off
                 if (themeOrdinal < 0) continue;
 
-                if (PlayerPerkManager.INSTANCE.hasPerk(player.getGameProfile().getName(), "supporter_crown")) {
+                boolean hasPerk = PlayerPerkManager.INSTANCE.hasPerk(player.getGameProfile().getName(), "supporter_crown");
+                boolean inTrial = ((PlayerEntityAccessor) player).ahp$getSupporterCrownTrialTicks() > 0;
+
+                if (hasPerk || inTrial) {
+
                     // --- Audio ---
                     PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
-                    int audioTimer = accessor.ahp$getCrownAudioTimer();
+                    int audioTimer = accessor.ahp$getSupporterCrownAudioTimer();
 
                     if (audioTimer > 0) {
-                        accessor.ahp$setCrownAudioTimer(audioTimer - 1);
+                        accessor.ahp$setSupporterCrownAudioTimer(audioTimer - 1);
                     } else {
                         if (Configs.AHP.enableCrownAudio) {
                             float volume = Configs.AHP.crownAudioVolume.get();
@@ -477,7 +521,7 @@ public class AdorableHamsterPetsClient {
                             }
                         }
                         // Reset timer to ~3 seconds +/- 20 ticks for randomness
-                        accessor.ahp$setCrownAudioTimer(60 + client.world.random.nextBetween(-20, 20));
+                        accessor.ahp$setSupporterCrownAudioTimer(60 + client.world.random.nextBetween(-20, 20));
                     }
 
                     // --- 1.20.1 Polyfill for getScale() ---
