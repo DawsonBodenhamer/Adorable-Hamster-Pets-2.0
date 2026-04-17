@@ -42,7 +42,7 @@ public class HamsterTagGoal extends Goal {
         // --- 3. Entity State Checks ---
         // TODO: Prevent start if hamster is being petted by owner. (Petting is future planned feature)
         if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() ||
-                this.hamster.isHoldingMouthItem() || this.hamster.isThrown() || this.hamster.isCelebratingDiamond() ||
+                this.hamster.isHoldingMouthItem() || this.hamster.isCelebratingDiamond() ||
                 this.hamster.isSulking() || this.hamster.isCelebratingBaby()) return false;
 
         // --- 4. Context Check ---

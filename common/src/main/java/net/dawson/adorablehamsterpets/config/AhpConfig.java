@@ -1257,10 +1257,14 @@ public class AhpConfig extends Config {
     @Translatable.Desc("The base throw speed of your furry projectile.")
     public ValidatedDouble hamsterThrowVelocity = new ValidatedDouble(1.5, 5.0, 0.1);
 
-    @ConfigGroup.Pop
     @Translatable.Name("Throw Velocity (Buffed)")
     @Translatable.Desc("The throw speed of your furry projectile when under the influence of Steamed Green Beans. Goes from 'yeet' to 'yote'.")
     public ValidatedDouble hamsterThrowVelocityBuffed = new ValidatedDouble(2.5, 5.0, 0.1);
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Friendly Fire")
+    @Translatable.Desc("If true, throwing your own hamster straight up above your head will eventually result in a concussive reunion on the way back down. High-velocity rodents tend to hurt, even if they love you.")
+    public boolean yeetFriendlyFire = true;
 
     // --- Tamed Sleep Settings ---
     @Translatable.Name("Tamed Sleep Settings")

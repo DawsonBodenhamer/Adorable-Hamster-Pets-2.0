@@ -16,7 +16,8 @@
     "accessor.TemptGoalAccessor",
     "accessor.ValidatedFieldAccessor",
     "enchantment.EnchantmentMixin",
-    "enchantment.EnchantmentHelperMixin"
+    "enchantment.EnchantmentHelperMixin",
+    "accessor.LivingEntityInvoker"
   ],
   "client": [
     "client.GuiBookLandingMixin",

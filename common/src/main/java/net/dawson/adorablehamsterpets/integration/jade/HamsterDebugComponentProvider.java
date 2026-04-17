@@ -62,8 +62,6 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
 
         if (hamster.isKnockedOut()) {
             tooltip.add(fText("State: %s", Text.literal("Knocked Out").formatted(Formatting.RED, Formatting.BOLD)));
-        } else if (hamster.isThrown()) {
-            tooltip.add(fText("State: %s", Text.literal("Thrown").formatted(Formatting.AQUA)));
         } else if (hamster.isSulking()) {
             tooltip.add(fText("State: %s", Text.literal("Sulking").formatted(Formatting.DARK_PURPLE, Formatting.BOLD)));
         } else if (hamster.isCelebratingDiamond()) {

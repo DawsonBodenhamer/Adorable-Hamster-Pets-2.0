@@ -506,7 +506,6 @@ public class HamsterTreeSearcherEntity extends Entity {
                 newHamster.setVelocity(Vec3d.ZERO);
             }
 
-            newHamster.setThrown(false);
             newHamster.setKnockedOut(false);
             newHamster.setSitting(false);
             newHamster.velocityDirty = true;

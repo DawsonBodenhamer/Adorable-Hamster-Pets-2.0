@@ -40,14 +40,11 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.CreeperEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
@@ -64,12 +61,9 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.world.*;
@@ -140,42 +134,34 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
     /**
      * Spawns a HamsterEntity from NBT data near the player, handling position and spawning.
-     * This is typically called when a player dismounts a hamster or respawns. It can accept a
-     * pre-configured hamster instance (for throws) or create one from NBT (for dismounts/respawns).
+     * This is typically called when a player dismounts a hamster or respawns.
      *
      * @param world The server world to spawn the entity in.
      * @param player The player who is dismounting the hamster.
      * @param nbt The NbtCompound containing the hamster's data.
      * @param wasDiamondAlertActive True if the hamster should be primed for diamond seeking.
-     * @param preconfiguredHamster An optional, pre-configured HamsterEntity instance. If provided, this instance is used directly.
      */
-    public static void spawnFromNbt(ServerWorld world, PlayerEntity player, NbtCompound nbt, boolean wasDiamondAlertActive, @Nullable HamsterEntity preconfiguredHamster) {
-        // --- 1. Use Pre-configured Hamster or Create from NBT ---
-        HamsterEntity hamster = preconfiguredHamster != null ? preconfiguredHamster : HamsterNbtUtil.createFromNbt(world, player, nbt);
+    public static void spawnFromNbt(ServerWorld world, PlayerEntity player, NbtCompound nbt, boolean wasDiamondAlertActive) {
+        // Create from NBT
+        HamsterEntity hamster = HamsterNbtUtil.createFromNbt(world, player, nbt);
         if (hamster == null) {
             return;
         }
 
-        // --- Set the suffocation grace period ---
+        // Set suffocation grace period
         hamster.suffocationGracePeriod = 200; // 10 seconds
 
-        // --- 2. Prime for Diamond Seeking (if applicable) ---
+        // Prime for Diamond Seeking (if applicable)
         if (wasDiamondAlertActive && Configs.AHP.enableIndependentDiamondSeeking) {
             hamster.isPrimedToSeekDiamonds = true;
             AdorableHamsterPets.LOGGER.debug("[HamsterEntity {}] Primed for diamond seeking upon dismount.", hamster.getId());
         }
 
-        // --- 3. Find Safe Spawn Position ---
-        if (hamster.isThrown()) {
-            // If thrown, its position and velocity were already set. Just spawn it.
-            world.spawnEntity(hamster);
-            AdorableHamsterPets.LOGGER.debug("[HamsterEntity] Spawned THROWN Hamster ID {} from NBT data near Player {}.", hamster.getId(), player.getName().getString());
-        } else {
-            // If not thrown (standard dismount), find a safe landing spot.
-            BlockPos initialSearchPos;
-            BlockPos ultimateFallbackPos = player.getBlockPos(); // Player's feet as the last resort
+        // Find safe landing spot
+        BlockPos initialSearchPos;
+        BlockPos ultimateFallbackPos = player.getBlockPos(); // Player's feet = last resort
 
-        // Raycast to find where the player is looking
+        // Raycast to find where player is looking
         HitResult hitResult = player.raycast(4.5, 0.0f, false);
         if (hitResult.getType() == HitResult.Type.BLOCK) {
             initialSearchPos = ((net.minecraft.util.hit.BlockHitResult) hitResult).getBlockPos();
@@ -186,7 +172,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // Determine pos with safe spawning algorithm
         Optional<BlockPos> safePosOpt = HamsterPlacementUtil.findSafeSpawnPosition(initialSearchPos, world, 5, hamster);
 
-        // --- 4. Set Position and Spawn ---
+        // --- Set Position and Spawn ---
         safePosOpt.ifPresentOrElse(
                 safePos -> {
                     // Spawn at the center of the safe block
@@ -202,7 +188,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         world.spawnEntityAndPassengers(hamster);
         AdorableHamsterPets.LOGGER.debug("[HamsterEntity] Spawned Hamster ID {} from NBT data near Player {}.", hamster.getId(), player.getName().getString());
-        }
     }
 
     /**
@@ -238,7 +223,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int BEGGING_FLAG = 1 << 2;
     public static final int IN_LOVE_FLAG = 1 << 3;
     public static final int REFUSING_FOOD_FLAG = 1 << 4;
-    public static final int THROWN_FLAG = 1 << 5;
     public static final int LEFT_CHEEK_FULL_FLAG = 1 << 6;
     public static final int RIGHT_CHEEK_FULL_FLAG = 1 << 7;
     public static final int KNOCKED_OUT_FLAG = 1 << 8;
@@ -344,18 +328,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * ────────────────────────────────────────────────────────────────────────────*/
 
     // --- Unique Instance Fields ---
+    @Unique public transient boolean isProjectileDummy = false;
     @Unique public long totalAgeTicks = 0L;
     @Unique private UUID parentUuid = null;
     @Unique public transient double lastRenderTime = -1.0;
     @Unique public int interactionCooldown = 0;
-    @Unique public int throwTicks = 0;
     @Unique public int wakingUpTicks = 0;
     @Unique private int ejectionCheckCooldown = 20;
     @Unique private int preAutoEatDelayTicks = 0;
     @Unique private int quiescentSitDurationTimer = 0;
     @Unique private int driftingOffTimer = 0;
     @Unique private int settleSleepAnimationCooldown = 0;
-    @Unique private String activeCustomGoalDebugName = "None";
     @Unique public boolean isPrimedToSeekDiamonds = false;
     @Unique public long foundOreCooldownEndTick = 0L;
     @Unique public BlockPos currentOreTarget = null;
@@ -390,7 +373,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique private float thumpSoundVolume = 0.2f;
     @Unique public int pathingFailures = 0;
     @Nullable @Unique public BlockPos lastFailedTarget = null;
-    @Unique private boolean hasPlayedIncomingSound = false;
     @Unique private boolean isLoadingNbt = false; // Guard to prevent sounds during load
     @Unique private boolean isSilentInventoryUpdate = false;
     private boolean armorAbsorbedDamage = false;
@@ -474,8 +456,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void setCelebrationTarget(Entity target) { this.celebrationTarget = target; }
     public void setCelebrationRetrievalTicks(int ticks) { this.celebrationRetrievalTicks = ticks; }
     public void setSilentInventoryUpdate(boolean silent) { this.isSilentInventoryUpdate = silent; }
-    public boolean hasPlayedIncomingSound() { return this.hasPlayedIncomingSound; }
-    public void setHasPlayedIncomingSound(boolean value) { this.hasPlayedIncomingSound = value; }
     public int getQuiescentSitTimer() { return this.quiescentSitDurationTimer; }
     public void setQuiescentSitTimer(int ticks) { this.quiescentSitDurationTimer = ticks; }
     public int getDriftingOffTimer() { return this.driftingOffTimer; }
@@ -513,13 +493,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void setInLove(boolean value) { setHamsterFlag(IN_LOVE_FLAG, value); }
     public boolean isRefusingFood() { return getHamsterFlag(REFUSING_FOOD_FLAG); }
     public void setRefusingFood(boolean value) { setHamsterFlag(REFUSING_FOOD_FLAG, value); }
-    public boolean isThrown() { return getHamsterFlag(THROWN_FLAG); }
-    public void setThrown(boolean thrown) {
-        setHamsterFlag(THROWN_FLAG, thrown);
-        if (thrown) {
-            this.hasPlayedIncomingSound = false; // Reset sound flag on new throw
-        }
-    }
     public boolean isLeftCheekFull() { return getHamsterFlag(LEFT_CHEEK_FULL_FLAG); }
     public void setLeftCheekFull(boolean full) { setHamsterFlag(LEFT_CHEEK_FULL_FLAG, full); }
     public boolean isRightCheekFull() { return getHamsterFlag(RIGHT_CHEEK_FULL_FLAG); }
@@ -795,15 +768,11 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // If checks fail, apply health damage normally
         super.applyDamage(source, amount);
     }
-    @Override
-    public boolean canMoveVoluntarily() {
-        return super.canMoveVoluntarily() && !this.isThrown();
-    }
 
     @Override
     public boolean isPushable() {
-        // Not pushable if AI disabled, if being thrown, or if sleeping in a bed
-        if (this.isAiDisabled() || this.isThrown() || (this.isSleeping() && this.getLinkedBedPos().isPresent())) {
+        // Not pushable if AI disabled or sleeping in bed
+        if (this.isAiDisabled() || (this.isSleeping() && this.getLinkedBedPos().isPresent())) {
             return false;
         }
         return super.isPushable();
@@ -872,9 +841,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      */
     public boolean shouldRenderFlying() {
         if (this.isSitting()) return false;
-
-        // Thrown state overrides immunity
-        if (this.isThrown()) return true;
 
         // Prevent visual glitch where entities loading in apparently have enough downward velocity to trigger flying
         if (this.dataTracker.get(FALL_IMMUNITY_ACTIVE) && this.localSpawnImmunityTicks > 0) return false;
@@ -1511,202 +1477,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 2. Thrown State Logic ---
-        if (this.isThrown()) {
-            this.throwTicks++; // Increment throw timer
-
-            Vec3d currentPos = this.getPos();
-            Vec3d currentVel = this.getVelocity();
-            Vec3d nextPos = currentPos.add(currentVel);
-            World world = this.getWorld();
-
-            HitResult blockHit = world.raycast(new RaycastContext(currentPos, nextPos, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, this));
-
-            boolean stopped = false;
-
-            if (blockHit.getType() == HitResult.Type.BLOCK) {
-                BlockHitResult blockHitResult = (BlockHitResult) blockHit;
-                BlockPos hitPos = blockHitResult.getBlockPos();
-
-                // --- Tree Heist Trigger (Projectile) ---
-                if (world.getBlockState(hitPos).isOf(Blocks.OAK_LEAVES)) {
-                    if (!world.isClient()) {
-                        // 1. Scan first to identify the tree anchor
-                        TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, hitPos);
-
-                        // 2. Check occupancy
-                        if (HamsterTreeSearcherEntity.isTreeBlocked(world, scanResult.treeId())) {
-                            // Tree is busy
-                            if (this.getOwner() instanceof PlayerEntity owner) {
-                                owner.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
-                            }
-                            // Proceed to "Standard Block Collision Handling" below
-                        } else {
-                            // Tree is free. Start Heist.
-                            triggerLeafPopEffects(hitPos, true);
-                            HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(world);
-                            if (searcher != null) {
-                                NbtCompound nbt = new NbtCompound();
-                                this.writeNbt(nbt); // Use writeNbt to capture full entity state (Owner, Attributes, etc.)
-                                // Pass the already-calculated scan result
-                                searcher.initializeSearch(hitPos, scanResult, nbt);
-                                world.spawnEntity(searcher);
-                                this.discard();
-                                return;
-                            }
-                        }
-                    }
-                }
-
-                // --- Standard Block Collision Handling ---
-                BlockPos adjacentPos = blockHitResult.getBlockPos().offset(blockHitResult.getSide());
-
-                // Place the hamster in the air next to the impacted block face.
-                this.setPosition(adjacentPos.getX() + 0.5, adjacentPos.getY(), adjacentPos.getZ() + 0.5);
-
-                // Apply the "tumble" state immediately. Vanilla gravity will handle the fall.
-                this.setVelocity(currentVel.multiply(0.6, 0.0, 0.6));
-                this.setThrown(false);
-
-                // Play impact sound (Main + Armor if applicable) via custom packet logic
-                HamsterPhysicsUtil.broadcastImpactSound(this, SoundEvents.ENTITY_GENERIC_SMALL_FALL, 1.2f);
-
-                this.setKnockedOut(true);
-                this.setInSittingPose(true);
-                if (!world.isClient()) {
-                    this.triggerAnimOnServer("mainController", "crash");
-                }
-                stopped = true;
-
-            } else {
-                EntityHitResult entityHit = ProjectileUtil.getEntityCollision(world, this, currentPos, nextPos, this.getBoundingBox().stretch(currentVel).expand(1.0), this::canHitEntity);
-
-                if (entityHit != null && entityHit.getEntity() != null) {
-                    // --- 2b. Entity Collision Handling ---
-                    Entity hitEntity = entityHit.getEntity();
-                    BlockPos impactPos = hitEntity.getBlockPos();
-                    boolean playEffects = false;
-
-                    if (hitEntity instanceof ArmorStandEntity) {
-                        playEffects = true;
-                    } else if (hitEntity instanceof LivingEntity livingHit) {
-
-                        // --- Throw Damage Logic ---
-                        // 1. Calculate Damage
-                        float damageAmount = HamsterPhysicsUtil.calculateThrowDamage(this, this.getArmorStack());
-
-                        // 2. Create a DamageSource where the thrown hamster is the attacker.
-                        DamageSource damageSource = this.getDamageSources().mobAttack(this);
-
-                        // 3. Deal the damage to the target using the correct source.
-                        boolean damaged = livingHit.damage(damageSource, damageAmount);
-
-                        if (damaged) {
-                            // Apply damage
-                            livingHit.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 20, 0, false, false, false));
-                            // Calculate knockback direction based on velocity
-                            double knockbackStrength = 0.5;
-                            double dx = currentVel.x;
-                            double dz = currentVel.z;
-                            // Apply knockback
-                            livingHit.takeKnockback(knockbackStrength, -dx, -dz);
-                            playEffects = true;
-                        }
-                    } else {
-                        playEffects = true;
-                    }
-
-                    if (playEffects) {
-                        // Feedback
-                        HamsterPhysicsUtil.broadcastImpactSound(this, ModSounds.HAMSTER_IMPACT.get(), 1.0f);
-                        ParticleEffectsUtil.spawnParticles(
-                                world,
-                                new Vec3d(this.getX(), this.getY() + this.getHeight() / 2.0, this.getZ()),
-                                ParticleTypes.POOF,
-                                50,
-                                new Vec3d(0.4, 0.4, 0.4),
-                                0.1
-                        );
-                    }
-
-                    // Determine pos with safe spawning algorithm
-                    Optional<BlockPos> safePosOpt = HamsterPlacementUtil.findSafeSpawnPosition(impactPos, world, 2, this);
-
-                    safePosOpt.ifPresentOrElse(
-                            safePos -> this.setPosition(safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5),
-                            () -> {
-                                AdorableHamsterPets.LOGGER.warn("[HamsterThrow] Could not find safe landing spot after hitting entity. Using entity's position {} as fallback.", impactPos);
-                                this.setPosition(impactPos.getX() + 0.5, impactPos.getY(), impactPos.getZ() + 0.5);
-                            }
-                    );
-
-                    this.setVelocity(currentVel.multiply(0.1, 0.1, 0.1));
-                    this.setThrown(false);
-                    this.setKnockedOut(true);
-                    this.setInSittingPose(true);
-                    if (!world.isClient()) {
-                        this.triggerAnimOnServer("mainController", "crash");
-                    }
-                    stopped = true;
-                }
-            }
-
-            // Apply gravity, update position, simulate trajectory audio, and spawn trail particles if still thrown
-            if (this.isThrown() && !stopped) {
-                if (!this.getWorld().isClient() && !this.hasPlayedIncomingSound) {
-                    HamsterPhysicsUtil.simulateTrajectoryAndCheckSound(this);
-                }
-
-                if (!this.hasNoGravity()) {
-                    this.setVelocity(this.getVelocity().add(0.0, HamsterPhysicsUtil.THROWN_GRAVITY, 0.0));
-                }
-
-                Vec3d currentVelocity = this.getVelocity();
-                if (Double.isNaN(currentVelocity.x) || Double.isNaN(currentVelocity.y) || Double.isNaN(currentVelocity.z)) {
-                    this.setVelocity(Vec3d.ZERO);
-                    this.setThrown(false);
-                    AdorableHamsterPets.LOGGER.warn("Hamster velocity became NaN, resetting and stopping throw.");
-                } else {
-                    this.setPosition(this.getX() + currentVelocity.x, this.getY() + currentVelocity.y, this.getZ() + currentVelocity.z);
-                    this.velocityDirty = true;
-
-                    // Determine the delay before particles start spawning.
-                    int particleDelay = this.hasGreenBeanBuff() ? 3 : 5;
-
-                    if (!world.isClient() && this.throwTicks > particleDelay) {
-                        // Define an offset to push the particle spawn point backwards along the velocity vector. Larger value pushes it back more.
-                        double offsetMultiplier = 1.5;
-
-                        // Calculate the spawn position based on the PREVIOUS position, offset backwards.
-                        double spawnX = this.prevX - (currentVelocity.x * offsetMultiplier);
-                        double spawnY = this.prevY + (this.getHeight() / 2.0) - (currentVelocity.y * offsetMultiplier);
-                        double spawnZ = this.prevZ - (currentVelocity.z * offsetMultiplier);
-
-                        // Effects
-                        ParticleEffectsUtil.spawnParticles(
-                                world,
-                                new Vec3d(spawnX, spawnY, spawnZ),
-                                ParticleTypes.CLOUD, // CLOUD instead of GUST on 1.20.1
-                                1,
-                                new Vec3d(0.1, 0.1, 0.1),
-                                0.0
-                        );
-                    }
-                }
-            } else {
-                if (this.throwTicks != 0) {
-                    this.throwTicks = 0;
-                }
-            }
-        }
-
-        // --- 3. Tamed Hamster "Path to Slumber" State Machine ---
+        // --- 2. Tamed Hamster "Path to Slumber" State Machine ---
         // This logic only applies to tamed hamsters and runs on the server
         if (!this.getWorld().isClient() && this.isTamed() && !this.isKnockedOut()) {
             HamsterSleepUtil.tickTamedSleepLogic(this);
         }
 
-        // Call super.tick() *after* processing thrown state and timers
         super.tick();
 
         // --- Check for Armor Changes & Update Attributes ---
@@ -1738,7 +1514,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 4. Server-Side Logic ---
+        // --- 3. Server-Side Logic ---
         World world = this.getWorld();
         if (!world.isClient()) {
 
@@ -1809,10 +1585,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // --- Auto Eating Logic ---
             // This section now handles the multi-stage auto-eating: considering, eating, healing.
             // --- Stage 1: Check Eligibility and Start "Considering" ---
-            if (this.isTamed() && this.getHealth() < this.getMaxHealth() &&
-                    !this.isAutoEating() && !this.isConsideringAutoEat() && // Not already eating or considering
-                    this.autoEatCooldownTicks == 0 &&
-                    !this.isThrown() && !this.isKnockedOut()) {
+            if (this.isTamed()
+                    && this.getHealth() < this.getMaxHealth()
+                    && !this.isAutoEating()
+                    && !this.isConsideringAutoEat()
+                    && this.autoEatCooldownTicks == 0
+                    && !this.isKnockedOut()) {
                 // Check inventory for eligible food
                 for (int i = 0; i < this.items.size(); ++i) {
                     ItemStack stack = this.items.get(i);
@@ -1820,7 +1598,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                         // Found food, start "considering" phase
                         setHamsterFlag(CONSIDERING_AUTO_EAT_FLAG, true);
                         this.preAutoEatDelayTicks = 40; // 2-second delay
-                        AdorableHamsterPets.LOGGER.trace("[HamsterTick {}] Eligible to auto-eat. Starting 2s pre-eat delay.", this.getId());
                         break; // Stop searching for food once consideration starts
                     }
                 }
@@ -1846,8 +1623,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
 
                 if (foodStillAvailable) {
-                    AdorableHamsterPets.LOGGER.trace("[HamsterTick {}] Pre-eat delay finished. Starting auto-eat on {} from slot {}", this.getId(), foodToEat.getItem(), foodSlot);
-                    this.isAutoEating = true; // Use the boolean flag for the eating animation state
+                    this.isAutoEating = true; // Use boolean flag for eating animation state
                     this.autoEatProgressTicks = 60; // 3 seconds eating time
 
                     // Feedback
@@ -1864,9 +1640,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                         this.items.set(foodSlot, ItemStack.EMPTY);
                     }
                     HamsterInventoryUtil.updateCheekStates(this);
-                } else {
-                    AdorableHamsterPets.LOGGER.trace("[HamsterTick {}] Pre-eat delay finished, but food no longer available.", this.getId());
-                    // No food, so don't proceed to eating state. Cooldowns remain 0.
                 }
             }
 
@@ -1875,7 +1648,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 this.heal(Configs.AHP.hamsterFoodMixHealing.get());
                 this.autoEatCooldownTicks = 60; // Set main cooldown (3 seconds)
                 this.isAutoEating = false; // Reset eating animation flag
-                AdorableHamsterPets.LOGGER.trace("[HamsterTick {}] Auto-eat finished. Healed. Cooldown set to 60.", this.getId());
 
                 if (this.getOwner() instanceof ServerPlayerEntity serverPlayerOwner) {
                     ModCriteria.HAMSTER_AUTO_FED.trigger(serverPlayerOwner, this);
@@ -1984,7 +1756,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 5. Client-Side Logic ---
+        // --- 4. Client-Side Logic ---
         // --- Buff Particle Logic (Zoomies) ---
         if (world.isClient && this.hasGreenBeanBuff()) {
             if (this.random.nextInt(2) == 0) {
@@ -2022,8 +1794,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.prevClientFallPitchProgress = this.clientFallPitchProgress;
 
             // Determine whether to pitch down
-            // Thrown hamsters handle their own pitch in the Model based on velocity
-            if (this.shouldRenderFlying() && !this.isThrown()) {
+            if (this.shouldRenderFlying()) {
                 // Ease in pitch for natural falls
                 this.clientFallPitchProgress += 1.0f / NORMAL_FALL_PITCH_DURATION;
             } else {
@@ -2035,7 +1806,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.clientFallPitchProgress = MathHelper.clamp(this.clientFallPitchProgress, 0.0f, 1.0f);
         }
 
-        // --- 6. Other Non-Movement Tick Logic ---
+        // --- 5. Other Non-Movement Tick Logic ---
         if (this.isRefusingFood() && refuseTimer > 0) {
             if (--refuseTimer <= 0) this.setRefusingFood(false);
         }
@@ -2114,7 +1885,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         controllers.add(new AnimationController<>(this, "mainController", 3, event -> {
 
             // --- AI Disabled ---
-            if (this.isAiDisabled()) {
+            if (this.isAiDisabled() && !this.isProjectileDummy) {
                 // Freeze on the first frame
                 event.getController().setAnimationSpeed(0);
                 return event.setAndContinue(this.isSitting() ? SITTING_POSE2_ANIM : IDLE1_ANIM);
@@ -2161,7 +1932,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // --- Sulking State ---
             if (this.isSulking()) {return event.setAndContinue(SULKING_ANIM);}
             // --- Flying/Falling/Thrown State ---
-            if (this.shouldRenderFlying()) {
+            if (this.isProjectileDummy || this.shouldRenderFlying()) {
                 return event.setAndContinue(FLYING_ANIM);
             }
             // --- Taunting State ---
@@ -2608,21 +2379,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
     }
-    public boolean canHitEntity(Entity entity) {
-        // --- 1. Check if Entity Can Be Hit ---
-        // Allow hitting armor stands specifically
-        if (entity instanceof net.minecraft.entity.decoration.ArmorStandEntity) {
-            return !entity.isSpectator(); // Can hit non-spectator armor stands
-        }
-
-        // Original logic for other entities
-        if (!entity.isSpectator() && entity.isAlive() && entity.canHit()) {
-            Entity owner = this.getOwner();
-            // Prevent hitting self or owner or entities owner is riding
-            return entity != this && (owner == null || !owner.isConnectedThroughVehicle(entity));
-        }
-        return false;
-    }
 
     @Nullable
     @Override
@@ -2669,8 +2425,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     protected BodyControl createBodyControl() {
         return new HamsterBodyControl(this);
     }
-
-
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       6. Private Helper Methods

@@ -33,6 +33,7 @@ import net.dawson.adorablehamsterpets.client.sound.HamsterTreeLoopSoundInstance;
 import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
+import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterProjectileRenderer;
 import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterTreeSearcherRenderer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
@@ -249,6 +250,7 @@ public class AdorableHamsterPetsClient {
     public static void initEntityRenderers() {
         EntityRendererRegistry.register(ModEntities.HAMSTER, HamsterRenderer::new);
         EntityRendererRegistry.register(ModEntities.HAMSTER_TREE_SEARCHER, HamsterTreeSearcherRenderer::new);
+        EntityRendererRegistry.register(ModEntities.HAMSTER_PROJECTILE, HamsterProjectileRenderer::new);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
