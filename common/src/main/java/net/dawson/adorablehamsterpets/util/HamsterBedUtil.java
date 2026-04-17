@@ -301,7 +301,7 @@ public final class HamsterBedUtil {
      * Ensures the block state is correctly marked as occupied if a hamster is actively sleeping in it.
      */
     public static void autoHealBedState(HamsterEntity hamster) {
-        if (hamster.isSleeping() && hamster.getLinkedBedPos().isPresent() && !hamster.isThrown() && !hamster.isKnockedOut()) {
+        if (hamster.isSleeping() && hamster.getLinkedBedPos().isPresent() && !hamster.isKnockedOut()) {
             World world = hamster.getWorld();
             GlobalPos bedGlobalPos = hamster.getLinkedBedPos().get();
 

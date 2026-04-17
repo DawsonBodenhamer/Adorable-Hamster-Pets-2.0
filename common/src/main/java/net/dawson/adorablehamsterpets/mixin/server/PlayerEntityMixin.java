@@ -16,6 +16,7 @@ import net.dawson.adorablehamsterpets.entity.AI.HamsterSniffForOreGoal;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterProjectileEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
@@ -1145,12 +1146,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 return;
             }
 
-            // Prep for launch
-            hamster.refreshPositionAndAngles(self.getX(), self.getEyeY() - 0.1, self.getZ(), self.getYaw(), self.getPitch());
-            hamster.setThrown(true);
-            hamster.interactionCooldown = 10;
-            hamster.throwCooldownEndTick = currentTime + config.hamsterThrowCooldown.get();
-
             // Calculate Yeet Speed
             boolean isBuffed = hamster.hasGreenBeanBuff();
             float throwSpeed = isBuffed ? config.hamsterThrowVelocityBuffed.get().floatValue() : config.hamsterThrowVelocity.get().floatValue();
@@ -1162,23 +1157,26 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 }
             }
 
+            // Update Hamster timers before packaging into projectile NBT
+            hamster.throwCooldownEndTick = currentTime + config.hamsterThrowCooldown.get();
+            NbtCompound updatedShoulderNbt = HamsterNbtUtil.saveToHamsterState(hamster).toNbt();
+
+            // Create Projectile
+            HamsterProjectileEntity projectile = new HamsterProjectileEntity(world, self);
+            projectile.refreshPositionAndAngles(self.getX(), self.getEyeY() - 0.1, self.getZ(), self.getYaw(), self.getPitch());
+            projectile.setHamsterData(updatedShoulderNbt); // Pass NBT into projectile
+
             Vec3d lookVec = self.getRotationVec(1.0f);
             Vec3d throwVec = new Vec3d(lookVec.x, lookVec.y + 0.1f, lookVec.z).normalize();
-            hamster.setVelocity(throwVec.multiply(throwSpeed));
-            hamster.velocityDirty = true;
-        }
+            projectile.setVelocity(throwVec.multiply(throwSpeed));
 
-        // --- 4. Finalize Dismount ---
-        if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
-        else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+            // Clean up original NBT slot
+            if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
+            else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+            this.setShoulderHamster(locationToProcess, new NbtCompound());
 
-        this.setShoulderHamster(locationToProcess, new NbtCompound());
+            world.spawnEntity(projectile);
 
-        // Spawn & Alert check
-        HamsterEntity.spawnFromNbt((ServerWorld) world, self, shoulderNbt, this.adorablehamsterpets$isDiamondAlertConditionMet, hamster);
-        this.adorablehamsterpets$isDiamondAlertConditionMet = false;
-
-        if (isThrow) {
             world.playSound(null, self.getX(), self.getY(), self.getZ(), ModSounds.HAMSTER_THROW.get(), SoundCategory.PLAYERS, 1.0f, 1.0f);
             // Delayed celebration squeak
             this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(world.getTime() + 3, () -> {
@@ -1188,20 +1186,31 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 }
             }));
             ModCriteria.HAMSTER_THROWN.get().trigger((ServerPlayerEntity) self);
-        } else {
-            world.playSound(null, self.getBlockPos(), ModSounds.HAMSTER_DISMOUNT.get(), SoundCategory.PLAYERS, 0.7f, 1.0f + random.nextFloat() * 0.2f);
-            if (config.enableShoulderDismountMessages && !DISMOUNT_MESSAGE_KEYS.isEmpty()) {
-                String chosenKey;
-                if (DISMOUNT_MESSAGE_KEYS.size() == 1) {
-                    chosenKey = DISMOUNT_MESSAGE_KEYS.get(0);
-                } else {
-                    List<String> availableKeys = new ArrayList<>(DISMOUNT_MESSAGE_KEYS);
-                    availableKeys.remove(this.adorablehamsterpets$lastDismountMessageKey);
-                    chosenKey = availableKeys.isEmpty() ? this.adorablehamsterpets$lastDismountMessageKey : availableKeys.get(random.nextInt(availableKeys.size()));
-                }
-                self.sendMessage(Text.translatable(chosenKey), true);
-                this.adorablehamsterpets$lastDismountMessageKey = chosenKey;
+            this.adorablehamsterpets$isDiamondAlertConditionMet = false;
+            return;
+        }
+
+        // --- 4. Finalize Dismount ---
+        if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
+        else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+
+        this.setShoulderHamster(locationToProcess, new NbtCompound());
+
+        HamsterEntity.spawnFromNbt((ServerWorld) world, self, shoulderNbt, this.adorablehamsterpets$isDiamondAlertConditionMet);
+        this.adorablehamsterpets$isDiamondAlertConditionMet = false;
+
+        world.playSound(null, self.getBlockPos(), ModSounds.HAMSTER_DISMOUNT.get(), SoundCategory.PLAYERS, 0.7f, 1.0f + random.nextFloat() * 0.2f);
+        if (config.enableShoulderDismountMessages && !DISMOUNT_MESSAGE_KEYS.isEmpty()) {
+            String chosenKey;
+            if (DISMOUNT_MESSAGE_KEYS.size() == 1) {
+                chosenKey = DISMOUNT_MESSAGE_KEYS.get(0);
+            } else {
+                List<String> availableKeys = new ArrayList<>(DISMOUNT_MESSAGE_KEYS);
+                availableKeys.remove(this.adorablehamsterpets$lastDismountMessageKey);
+                chosenKey = availableKeys.isEmpty() ? this.adorablehamsterpets$lastDismountMessageKey : availableKeys.get(random.nextInt(availableKeys.size()));
             }
+            self.sendMessage(Text.translatable(chosenKey), true);
+            this.adorablehamsterpets$lastDismountMessageKey = chosenKey;
         }
     }
 

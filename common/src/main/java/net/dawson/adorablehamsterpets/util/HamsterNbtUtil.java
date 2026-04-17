@@ -103,9 +103,6 @@ public final class HamsterNbtUtil {
         nbt.putBoolean("BypassNextSleepDelay", hamster.shouldBypassNextSleepDelay());
         nbt.putBoolean("StuckSearchingForBed", hamster.isStuckSearchingForBed());
         nbt.putBoolean("IsRescueSleeping", hamster.isRescueSleeping());
-
-        // --- 8. Flight ---
-        nbt.putBoolean("HasPlayedIncomingSound", hamster.hasPlayedIncomingSound());
     }
 
     public static void readCustomDataFromNbt(HamsterEntity hamster, NbtCompound nbt) {
@@ -226,10 +223,7 @@ public final class HamsterNbtUtil {
             hamster.setHamsterFlag(HamsterEntity.SLEEPING_FLAG, true);
         }
 
-        // --- 8. Flight ---
-        hamster.setHasPlayedIncomingSound(nbt.getBoolean("HasPlayedIncomingSound"));
-
-        // --- 9. Reconcile Accessory State ---
+        // --- 8. Reconcile Accessory State ---
         hamster.updateAccessoryState();
 
         hamster.setLoadingNbt(false);
@@ -317,7 +311,7 @@ public final class HamsterNbtUtil {
      * Does NOT set the entity's position or spawn it in the world.
      */
     @Nullable
-    public static HamsterEntity createFromNbt(ServerWorld world, PlayerEntity player, NbtCompound nbt) {
+    public static HamsterEntity createFromNbt(ServerWorld world, @Nullable PlayerEntity player, NbtCompound nbt) {
         Optional<HamsterState> dataOpt = HamsterState.fromNbt(nbt);
         if (dataOpt.isEmpty()) {
             AdorableHamsterPets.LOGGER.error("Failed to deserialize HamsterState from NBT: {}", nbt);
@@ -325,7 +319,6 @@ public final class HamsterNbtUtil {
         }
         HamsterState data = dataOpt.get();
 
-        AdorableHamsterPets.LOGGER.debug("[HamsterNbtUtil] createFromNbt called for player {} with data: {}", player.getName().getString(), data);
         HamsterEntity hamster = ModEntities.HAMSTER.get().create(world);
 
         if (hamster != null) {
@@ -333,7 +326,7 @@ public final class HamsterNbtUtil {
             hamster.setUuid(data.entityUuid());
             hamster.setGenome(HamsterGenome.readFromNbt(data.genomeNbt()));
             hamster.setHealth(data.health());
-            hamster.setOwnerUuid(player.getUuid());
+            if (player != null) {hamster.setOwnerUuid(player.getUuid());}
             hamster.setTamed(true, true);
             hamster.setBreedingAge(data.breedingAge());
             hamster.throwCooldownEndTick = data.throwCooldownEndTick();

@@ -135,10 +135,13 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
       - Added configs to control rewards: By default, hamsters will randomly pick an item from their configurable "Cheek Pouch Loot" list (the list of potential items a wild hamster might spawn with). The item does not have to be in the hamster's cheek pouch for it to give it as a gift.
       - That can be disabled, in which case the hamster will choose the gift from a separate "Custom Tag Rewards" list in the config, which means you can make your hamster give you a diamond or any modded item (or whatever you want) when you catch it after a game of tag. Only server moderators can modify this of course.
   - **Dynamic Gaze**
-    - Hamsters will now sustain eye contact with you indefinitely, provided you continue looking back at them, and they don't start a game of tag.
-  - **Target Block Integration**
-    - Thrown hamsters now interact with Target Blocks exactly like arrows. Hitting the bullseye grants a stronger redstone signal and even counts towards the vanilla "Bullseye" advancement.
-    - Hamster yeeting mini games anyone?
+    - Hamsters will now sustain eye contact with you indefinitely, provided you are nearby and continue looking back at them, and of course as long as they don't start a game of tag.
+  - **Hamster Yeet Overhaul**
+    - Thrown hamsters are now officially registered as `ProjectileEntity` instances while airborne. This provides automatic, out-of-the-box compatibility with external mods that use targets or hoops (such as the Tin Hoops in Caverns and Chasms).
+    - Thrown hamsters now experience dynamic physics upon impact. They will ricochet backward off of walls and entities, or skip forward when hitting floors and ceilings.
+    - Thrown hamsters now dynamically query and broadcast the native sound of the block or entity they strike (including modded blocks/entities).
+    - Impact physics are magnified when hitting Slime blocks, and completely absorbed by Honey blocks.
+    - Added a new config toggle (true by default) allowing thrown hamsters to damage their owner. Throwing your own rodent straight up in the air will now result in a realistic, concussive reunion on the way back down.
   - **Precision Tree Heists**
     - Right-clicking Oak Leaves with a lure item (Cheese) while a hamster is on your shoulder will now initiate a "Precision Tree Heist."
     - This sets that specific leaf block as the guaranteed exit point for the hamster.

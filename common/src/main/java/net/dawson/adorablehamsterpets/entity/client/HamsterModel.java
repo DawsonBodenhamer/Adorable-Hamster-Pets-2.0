@@ -175,7 +175,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             float pitchOffset = 0.0f;
 
             // --- Dynamic Pitch Rotation ---
-            if (entity.isThrown()) {
+            if (entity.isProjectileDummy) {
                 // Projectile Mode: Align with velocity vector (follow flight arc)
                 Vec3d velocity = entity.getVelocity();
                 double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
