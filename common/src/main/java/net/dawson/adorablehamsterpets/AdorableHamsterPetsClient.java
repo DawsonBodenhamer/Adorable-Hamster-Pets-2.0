@@ -558,8 +558,12 @@ public class AdorableHamsterPetsClient {
                     // Add distance between the eyes and the neck to config offset
                     double adjustedYOffset = Configs.AHP.crownYOffset.get() + (player.getStandingEyeHeight() - pivotOffset);
 
-                    // Add 0.1 to radius if 3D Skin Layers is installed
-                    double adjustedRadius = Configs.AHP.crownRadius.get() + (IS_SKIN_LAYERS_3D_LOADED ? 0.1 : 0.0);
+                    // --- Helmet Multiplier ---
+                    ItemStack helmet = player.getInventory().getArmorStack(3);
+                    double helmetMultiplier = !helmet.isEmpty() ? 1.15 : 1.0;
+
+                    // --- 3D Skin Layers Compat ---
+                    double adjustedRadius = (Configs.AHP.crownRadius.get() + (IS_SKIN_LAYERS_3D_LOADED ? 0.1 : 0.0)) * helmetMultiplier;
 
                     ParticleEffectsUtil.spawnOrientedSpinningRing(
                             client.world,
