@@ -72,7 +72,7 @@ public final class HamsterPhysicsUtil {
                     simPos,
                     nextPos,
                     projectileDummy.getBoundingBox().stretch(simVel).expand(1.0),
-                    projectileDummy::canHitEntity
+                    projectileDummy::isHitTargetValid
             );
 
             Vec3d impactPos = null;

@@ -138,7 +138,7 @@ public class HamsterProjectileEntity extends ThrownEntity {
         return this.hasPlayedIncomingSound;
     }
 
-    public boolean canHitEntity(Entity entity) {
+    public boolean isHitTargetValid(Entity entity) {
         return this.canHit(entity);
     }
 
