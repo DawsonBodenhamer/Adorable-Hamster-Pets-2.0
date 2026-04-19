@@ -980,7 +980,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     protected void onGrowUp() {
         super.onGrowUp();
         // Apply configured breeding cooldown when reaching adulthood naturally
-        if (!this.getWorld().isClient()) {
+        // Only apply to babies on 1.20.1
+        if (!this.getWorld().isClient() && !this.isBaby()) {
             this.setBreedingAge(Configs.AHP.breedingCooldownSeconds.get() * 20);
         }
     }
