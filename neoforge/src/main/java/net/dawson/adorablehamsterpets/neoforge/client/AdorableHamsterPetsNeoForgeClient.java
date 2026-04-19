@@ -12,6 +12,7 @@ import net.dawson.adorablehamsterpets.client.render.LeafJiggleRenderer;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.client.feature.HamsterShoulderFeatureRenderer;
+import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterProjectileRenderer;
 import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterTreeSearcherRenderer;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
@@ -109,6 +110,7 @@ public final class AdorableHamsterPetsNeoForgeClient {
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.HAMSTER.get(), HamsterRenderer::new);
         event.registerEntityRenderer(ModEntities.HAMSTER_TREE_SEARCHER.get(), HamsterTreeSearcherRenderer::new);
+        event.registerEntityRenderer(ModEntities.HAMSTER_PROJECTILE.get(), HamsterProjectileRenderer::new);
     }
 
     @SubscribeEvent
