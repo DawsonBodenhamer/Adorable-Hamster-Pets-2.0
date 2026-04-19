@@ -147,6 +147,10 @@ public final class HamsterMovementUtil {
             if (ownerPlayer instanceof PlayerEntityAccessor accessor) {
                 NbtCompound nbt = new NbtCompound();
                 hamster.writeNbt(nbt); // Save full state
+
+                // Save target (parent or player)
+                nbt.putUuid("AHPTransitTargetUuid", target.getUuid());
+
                 accessor.ahp$getInTransitHamsters().add(nbt);
                 accessor.ahp$setTransitTimer(15); // Wait 15 ticks for client to load
                 hamster.discard();

@@ -443,16 +443,31 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                             if (newHamster != null) {
                                 newHamster.readNbt(nbt);
 
-                                // Find unique spawn point for every hamster
-                                Optional<BlockPos> safePos = HamsterPlacementUtil.findSafeSpawnPosition(self.getBlockPos(), newWorld, 6, occupiedPositions, newHamster);
+                                // --- Determine Target Position ---
+                                // Default to player position
+                                Vec3d baseTargetPos = self.getPos();
+                                BlockPos baseTargetBlockPos = self.getBlockPos();
+
+                                // If specific target saved, override default
+                                if (nbt.containsUuid("AHPTransitTargetUuid")) {
+                                    Entity transitTarget = newWorld.getEntity(nbt.getUuid("AHPTransitTargetUuid"));
+                                    if (transitTarget != null) {
+                                        baseTargetPos = transitTarget.getPos();
+                                        baseTargetBlockPos = transitTarget.getBlockPos();
+                                    }
+                                }
+
+                                // Find unique spawn point for every hamster near target
+                                Optional<BlockPos> safePos = HamsterPlacementUtil.findSafeSpawnPosition(baseTargetBlockPos, newWorld, 6, occupiedPositions, newHamster);
 
                                 // Reserve spot
                                 safePos.ifPresent(occupiedPositions::add);
 
+                                Vec3d finalBaseTargetPos = baseTargetPos;
                                 Vec3d targetPos = safePos.map(Vec3d::ofBottomCenter).orElseGet(() -> {
                                     double offsetX = (newWorld.getRandom().nextDouble() - 0.5) * 3.0;
                                     double offsetZ = (newWorld.getRandom().nextDouble() - 0.5) * 3.0;
-                                    return self.getPos().add(offsetX, 0, offsetZ);
+                                    return finalBaseTargetPos.add(offsetX, 0, offsetZ);
                                 });
 
                                 // --- Sledgehammer Server/Client Sync 1 ---
