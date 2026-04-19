@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.6.0] - 2025-03-03
 
-# **The Genetics Update**
+# **The Procedural Genetics Update**
 
 Hamsters now utilize a fully procedural and configurable genetics engine with **3,158** new wild variants, **2,285,046** potential breeding outcomes, recessive red eyes, 13 new advancements, and a guidebook update that explains everything. Added comprehensive breeding settings to balance obsessions with server tick speed (looking at you, Janet). Also many bugs were squashed, and hamsters learned to play tag and spit out gifts from their cheeks. Make sure you update Patchouli to the latest version or your game won't launch!
 
