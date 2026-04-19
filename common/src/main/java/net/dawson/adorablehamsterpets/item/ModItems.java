@@ -85,27 +85,27 @@ public class ModItems {
     public static final RegistrySupplier<Item> CUCUMBER = registerItem("cucumber",
             () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.CUCUMBER),
                     Configs.AHP.cucumberNutrition, Configs.AHP.cucumberSaturation,
-                    "tooltip.adorablehamsterpets.cucumber"));
+                    2, 0.3F, "tooltip.adorablehamsterpets.cucumber"));
 
     public static final RegistrySupplier<Item> SLICED_CUCUMBER = registerItem("sliced_cucumber",
             () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.SLICED_CUCUMBER),
                     Configs.AHP.slicedCucumberNutrition, Configs.AHP.slicedCucumberSaturation,
-                    "tooltip.adorablehamsterpets.sliced_cucumber"));
+                    1, 0.3F, "tooltip.adorablehamsterpets.sliced_cucumber"));
 
     public static final RegistrySupplier<Item> GREEN_BEANS = registerItem("green_beans",
             () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.GREEN_BEANS),
                     Configs.AHP.greenBeansNutrition, Configs.AHP.greenBeansSaturation,
-                    "tooltip.adorablehamsterpets.green_beans"));
+                    2, 0.3F, "tooltip.adorablehamsterpets.green_beans"));
 
     public static final RegistrySupplier<Item> STEAMED_GREEN_BEANS = registerItem("steamed_green_beans",
             () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.STEAMED_GREEN_BEANS),
                     Configs.AHP.steamedGreenBeansNutrition, Configs.AHP.steamedGreenBeansSaturation,
-                    "tooltip.adorablehamsterpets.steamed_green_beans"));
+                    3, 0.6F, "tooltip.adorablehamsterpets.steamed_green_beans"));
 
     public static final RegistrySupplier<Item> HAMSTER_FOOD_MIX = registerItem("hamster_food_mix",
             () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.HAMSTER_FOOD_MIX).maxCount(16),
                     Configs.AHP.hamsterFoodMixNutrition, Configs.AHP.hamsterFoodMixSaturation,
-                    "tooltip.adorablehamsterpets.hamster_food_mix"));
+                    4, 0.4F, "tooltip.adorablehamsterpets.hamster_food_mix"));
 
     public static final RegistrySupplier<Item> CHEESE = registerItem("cheese",
             () -> new CheeseItem(new Item.Settings().food(ModFoodComponents.CHEESE)));

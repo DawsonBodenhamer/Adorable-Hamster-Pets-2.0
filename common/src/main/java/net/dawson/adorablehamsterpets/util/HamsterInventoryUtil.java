@@ -234,6 +234,9 @@ public final class HamsterInventoryUtil {
                 fillCheek.accept(random.nextBoolean() ? 0 : 3, 1);
             }
         }
+
+        // Synced visual state flags immediately on 1.20.1
+        updateCheekStates(hamster);
     }
 
     /**

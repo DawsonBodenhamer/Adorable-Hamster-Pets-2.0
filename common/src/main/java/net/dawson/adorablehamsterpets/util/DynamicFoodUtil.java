@@ -18,14 +18,17 @@ public final class DynamicFoodUtil {
     /**
      * Appends standard tooltips and <s>dynamic nutrition stats</s> (only dynamic on 1.21.1+).
      */
-    public static void appendTooltip(List<Text> tooltip, String tooltipBaseKey, int nutrition, float saturation) {
+    public static void appendTooltip(List<Text> tooltip, String tooltipBaseKey, int nutrition, float saturation, int defaultNutrition, float defaultSaturation) {
         if (Configs.AHP.enableItemTooltips) {
             tooltip.add(Text.translatable(tooltipBaseKey + ".hint1").formatted(Formatting.GOLD));
             tooltip.add(Text.translatable(tooltipBaseKey + ".hint2").formatted(Formatting.GRAY));
 
             if (Platform.isModLoaded("appleskin")) {
-                // Display a warning that AppleSkin cannot read live config changes on 1.20.1 without a restart
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cheese.appleskin_warning").formatted(Formatting.DARK_GRAY));
+                // If values have been altered from defaults, display a warning that AppleSkin
+                // cannot read live config changes on 1.20.1 without a restart
+                if (nutrition != defaultNutrition || Float.compare(saturation, defaultSaturation) != 0) {
+                    tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cheese.appleskin_warning").formatted(Formatting.DARK_GRAY));
+                }
             } else {
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.appleskin.hint",
                         nutrition,

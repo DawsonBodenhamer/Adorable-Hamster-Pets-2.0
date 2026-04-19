@@ -163,7 +163,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     @Inject(method = "initDataTracker", at = @At("TAIL"))
     private void adorablehamsterpets$initCrownData(CallbackInfo ci) { // 1.20.1: "zero arguments" = still requires CallbackInfo
-        this.dataTracker.startTracking(AHP_CROWN_THEME, 0); // Default GOLD
+        this.dataTracker.startTracking(AHP_CROWN_THEME, -1); // Default to disabled
         this.dataTracker.startTracking(AHP_HAS_USED_CROWN_TRIAL, false);
         this.dataTracker.startTracking(AHP_CROWN_TRIAL_TICKS, 0);
     }

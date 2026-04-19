@@ -15,7 +15,7 @@ import net.minecraft.world.World;
 public class CheeseItem extends ConfigurableFoodItem {
 
     public CheeseItem(Settings settings) {
-        super(settings, Configs.AHP.cheeseNutrition, Configs.AHP.cheeseSaturation, "tooltip.adorablehamsterpets.cheese");
+        super(settings, Configs.AHP.cheeseNutrition, Configs.AHP.cheeseSaturation, 8, 0.8F, "tooltip.adorablehamsterpets.cheese");
     }
 
     /**
