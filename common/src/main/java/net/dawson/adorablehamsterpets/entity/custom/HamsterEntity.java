@@ -1202,18 +1202,19 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (!player.isSneaking() && !isPotentialFood && !ConfigDataCache.isLureItem(stack)) {
                 ActionResult vanillaResult = super.interactMob(player, hand);
                 if (vanillaResult.isAccepted()) return vanillaResult;
+
+                // Sitting Toggle (Final Fallback for Owners)
+                if (!world.isClient()) {
+                    this.setSitting(!this.isSitting());
+                    this.setJumping(false);
+                    this.getNavigation().stop();
+                    this.setTarget(null);
+                    return ActionResult.CONSUME_PARTIAL;
+                }
+                return ActionResult.success(world.isClient());
             }
 
-            // Sitting Toggle (Final Fallback for Owners)
-            if (!world.isClient() && !player.isSneaking()) {
-                this.setSitting(!this.isSitting());
-                this.setJumping(false);
-                this.getNavigation().stop();
-                this.setTarget(null);
-                return ActionResult.CONSUME_PARTIAL;
-            }
-
-            return ActionResult.success(world.isClient());
+            return ActionResult.PASS;
         }
 
         // --- 4. Non-Owner Tamed Fallback ---

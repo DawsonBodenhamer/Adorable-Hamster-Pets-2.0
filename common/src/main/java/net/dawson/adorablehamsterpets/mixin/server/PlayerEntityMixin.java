@@ -411,100 +411,108 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // --- 1. Process In-Transit Hamsters ---
         if (self.isAlive() && this.ahp$transitTimer > 0) {
-            // Schedule incoming shimmer sound to play 15 ticks after arrival window
-            if (this.ahp$transitTimer == 15 && !this.ahp$inTransitHamsters.isEmpty()) {
-                this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(world.getTime() + 10, () -> {
-                    world.playSound(null, this.getBlockPos(), ModSounds.MAGIC_SHIMMER.get(), SoundCategory.NEUTRAL, 1.5f, 1.2f);
-                }));
-            }
+            boolean isSafeToSpawn = self.isOnGround() || self.isTouchingWater() || self.isClimbing() || self.hasVehicle();
 
-            this.ahp$transitTimer--;
-
-            if (this.ahp$transitTimer <= 0 && !this.ahp$inTransitHamsters.isEmpty()) {
-                ServerWorld newWorld = (ServerWorld) world;
-
-                // Track occupied blocks
-                Set<BlockPos> occupiedPositions = new HashSet<>();
-                int soundsScheduled = 0;
-                long currentWorldTime = newWorld.getTime();
-
-                for (NbtCompound nbt : this.ahp$inTransitHamsters) {
-                    // Stagger spawns over 1-5 ticks
-                    int delay = newWorld.getRandom().nextBetween(1, 5);
-
-                    // Hard limit sound effect to 7 times per rescue event
-                    boolean playSound = soundsScheduled < 7;
-                    if (playSound) {
-                        soundsScheduled++;
-                    }
-
-                    this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(currentWorldTime + delay, () -> {
-                        HamsterEntity newHamster = ModEntities.HAMSTER.get().create(newWorld);
-                        if (newHamster != null) {
-                            newHamster.readNbt(nbt);
-
-                            // Find unique spawn point for every hamster
-                            Optional<BlockPos> safePos = HamsterPlacementUtil.findSafeSpawnPosition(self.getBlockPos(), newWorld, 3, occupiedPositions, newHamster);
-
-                            // Reserve spot
-                            safePos.ifPresent(occupiedPositions::add);
-
-                            Vec3d targetPos = safePos.map(Vec3d::ofBottomCenter).orElse(self.getPos());
-
-                            // --- Sledgehammer Server/Client Sync 1 ---
-                            // Drop them with downward velocity
-                            newHamster.refreshPositionAndAngles(targetPos.x, targetPos.y + 0.1, targetPos.z, newHamster.getYaw(), newHamster.getPitch());
-                            newHamster.setVelocity(0, -0.05, 0);
-                            newHamster.velocityDirty = true;
-                            newHamster.getNavigation().stop();
-                            newHamster.setSitting(false);
-
-                            // Prevent flight animation upon spawning
-                            newHamster.setFallFlyImmunityTicks(20);
-
-                            newWorld.spawnEntity(newHamster);
-
-                            // --- Sledgehammer Server/Client Sync 2 ---
-                            // Force explicit delayed positional update
-                            newHamster.scheduleTask(currentWorldTime + delay + 5, "sledgehammer_teleport_sync", () -> {
-                                if (newHamster.isAlive() && !newHamster.isRemoved()) {
-                                    newHamster.requestTeleport(newHamster.getX(), newHamster.getY(), newHamster.getZ());
-                                }
-                            });
-
-                            // Feedback
-                            if (playSound) {
-                                newWorld.playSound(
-                                        null,
-                                        BlockPos.ofFloored(targetPos),
-                                        SoundEvents.ENTITY_FOX_TELEPORT,
-                                        SoundCategory.NEUTRAL,
-                                        0.20f,
-                                        1.5f + (newWorld.getRandom().nextFloat() - 0.5f) * 0.5f
-                                );
-                            }
-                            ParticleEffectsUtil.spawnDecayingParticleCloud(
-                                    newHamster,
-                                    ParticleTypes.PORTAL,
-                                    60,
-                                    1,
-                                    0.1,
-                                    0.1,
-                                    -0.2
-                            );
-                            ParticleEffectsUtil.spawnDecayingParticleCloud(
-                                    newHamster,
-                                    ModParticles.PIXIE_DUST.get(PixieDustParticleTheme.LAVENDER).get(),
-                                    80,
-                                    5,
-                                    0.2,
-                                    0.2,
-                                    0.2
-                            );
-                        }
+            if (isSafeToSpawn) {
+                // Schedule incoming shimmer sound to play 15 ticks after arrival window
+                if (this.ahp$transitTimer == 15 && !this.ahp$inTransitHamsters.isEmpty()) {
+                    this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(world.getTime() + 10, () -> {
+                        world.playSound(null, this.getBlockPos(), ModSounds.MAGIC_SHIMMER.get(), SoundCategory.NEUTRAL, 1.5f, 1.2f);
                     }));
                 }
-                this.ahp$inTransitHamsters.clear();
+
+                this.ahp$transitTimer--;
+
+                if (this.ahp$transitTimer <= 0 && !this.ahp$inTransitHamsters.isEmpty()) {
+                    ServerWorld newWorld = (ServerWorld) world;
+
+                    // Track occupied blocks
+                    Set<BlockPos> occupiedPositions = new HashSet<>();
+                    int soundsScheduled = 0;
+                    long currentWorldTime = newWorld.getTime();
+
+                    for (NbtCompound nbt : this.ahp$inTransitHamsters) {
+                        // Stagger spawns over 1-5 ticks
+                        int delay = newWorld.getRandom().nextBetween(1, 5);
+
+                        // Hard limit sound effect to 7 times per rescue event
+                        boolean playSound = soundsScheduled < 7;
+                        if (playSound) {
+                            soundsScheduled++;
+                        }
+
+                        this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(currentWorldTime + delay, () -> {
+                            HamsterEntity newHamster = ModEntities.HAMSTER.get().create(newWorld);
+                            if (newHamster != null) {
+                                newHamster.readNbt(nbt);
+
+                                // Find unique spawn point for every hamster
+                                Optional<BlockPos> safePos = HamsterPlacementUtil.findSafeSpawnPosition(self.getBlockPos(), newWorld, 6, occupiedPositions, newHamster);
+
+                                // Reserve spot
+                                safePos.ifPresent(occupiedPositions::add);
+
+                                Vec3d targetPos = safePos.map(Vec3d::ofBottomCenter).orElseGet(() -> {
+                                    double offsetX = (newWorld.getRandom().nextDouble() - 0.5) * 3.0;
+                                    double offsetZ = (newWorld.getRandom().nextDouble() - 0.5) * 3.0;
+                                    return self.getPos().add(offsetX, 0, offsetZ);
+                                });
+
+                                // --- Sledgehammer Server/Client Sync 1 ---
+                                // Drop them with downward velocity
+                                newHamster.refreshPositionAndAngles(targetPos.x, targetPos.y + 0.1, targetPos.z, newHamster.getYaw(), newHamster.getPitch());
+                                newHamster.setVelocity(0, -0.05, 0);
+                                newHamster.velocityDirty = true;
+                                newHamster.getNavigation().stop();
+                                newHamster.setSitting(false);
+
+                                // Prevent flight animation upon spawning
+                                newHamster.setFallFlyImmunityTicks(20);
+
+                                newWorld.spawnEntity(newHamster);
+
+                                // --- Sledgehammer Server/Client Sync 2 ---
+                                // Force explicit delayed positional update
+                                newHamster.scheduleTask(currentWorldTime + delay + 5, "sledgehammer_teleport_sync", () -> {
+                                    if (newHamster.isAlive() && !newHamster.isRemoved()) {
+                                        newHamster.requestTeleport(newHamster.getX(), newHamster.getY(), newHamster.getZ());
+                                    }
+                                });
+
+                                // Feedback
+                                if (playSound) {
+                                    newWorld.playSound(
+                                            null,
+                                            BlockPos.ofFloored(targetPos),
+                                            SoundEvents.ENTITY_FOX_TELEPORT,
+                                            SoundCategory.NEUTRAL,
+                                            0.20f,
+                                            1.5f + (newWorld.getRandom().nextFloat() - 0.5f) * 0.5f
+                                    );
+                                }
+                                ParticleEffectsUtil.spawnDecayingParticleCloud(
+                                        newHamster,
+                                        ParticleTypes.PORTAL,
+                                        60,
+                                        1,
+                                        0.1,
+                                        0.1,
+                                        -0.2
+                                );
+                                ParticleEffectsUtil.spawnDecayingParticleCloud(
+                                        newHamster,
+                                        ModParticles.PIXIE_DUST.get(PixieDustParticleTheme.LAVENDER).get(),
+                                        80,
+                                        5,
+                                        0.2,
+                                        0.2,
+                                        0.2
+                                );
+                            }
+                        }));
+                    }
+                    this.ahp$inTransitHamsters.clear();
+                }
             }
         }
 
