@@ -157,7 +157,6 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
     - Instead of relying on their tiny legs and pathfinding AI to catch up, your player code will now safely scoop up any actively following hamsters (and their babies if the babies are following them), hold them in a little NBT pocket while the world loads, and drop them at your new location 0.75 seconds later.
   - **Void Rescue Protocol**
     - If a player falls into the void and dies with hamsters on their shoulders, the hamsters will no longer spawn in the void and immediately perish. The system will safely teleport them back to their linked bed. If they do not have a linked bed, they will be sent to the player's personal respawn point or the world spawn.
-    - I also overhauled the shoulder-hamster data synchronization to prevent them from becoming invisible upon player respawn if they were configured to respawn with the player when the player fell into the void.
 - **UI, HUD, & Audio**
   - **Jade Integration**
     - Added comprehensive Jade overlay integration that reveals a hamster's exact genetic makeup (base coat, wild overlay, breeding overlay, eye genotype, etc.) when you look at them.
@@ -232,8 +231,6 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
 - **Location-Centric Spawning Overhaul**
   - Completely rewrote the world generation spawning logic. Instead of mapping individual hamster colors to biomes, biomes are now grouped into 9 "Spawning Environments" (e.g., Icy, Sandy, Forest, etc.)
   - Each environment rolls against weighted hamster color groups. This ensures that whether a texture is procedurally generated or community-made, it mathematically evaluates its own color and automatically spawns in a biologically appropriate location.
-- **Modular Rendering Pipeline**
-  - Sliced the hamster model's visual components (Fur, Skin, Eyes, Overlays) into distinct, independent render layers to allow for infinite, non-destructive stacking of genetic traits.
 - **Diamond Sniffing Visuals & Audio**
   - Added directional animations to indicate whether a buried diamond ore is above or below the hamster when it's sniffing for one and the path is obstructed.
   - Added a dynamic "quick bounce" animation that intermittently triggers when the diamond ore is hidden somewhere above the hamster.
@@ -307,9 +304,10 @@ Hamsters now utilize a fully procedural and configurable genetics engine with **
   - Fixed an issue where Pink Petals would visually apply to all three locations simultaneously when first equipping them or reloading a world.
 - **Hamster Bed Linking**
   - Reduced the maximum stack size of Hamster Beds to 1. Not only does this feel like the way it always should have been, it resolves an issue where holding a stack of beds and right-clicking a hamster would link the entire stack simultaneously.
-- **Invisible Hamster Teleport Glitch**
+- **Invisible Hamster Glitches**
   - Solved a vanilla Minecraft issue where hamsters (and other pets) get left behind in unloaded chunks because their AI stops ticking before they can teleport.
   - Fixed a related bug where teleporting hamsters would sometimes successfully arrive but remain completely invisible to the client until you relogged. The new Teleport Rescue Protocol bypasses these vanilla quirks entirely.
+  - Overhauled shoulder-hamster data synchronization to prevent them from becoming invisible upon player respawn if they were configured to respawn with the player when the player fell into the void.
 - **Ghost Bed Crash**
   - Fixed a server crash that occurred when a hamster's linked bed was destroyed while the hamster was sleeping or unloaded. Hamsters will now detect the missing bed, cancel their sleep effects, and unlink themselves to prevent future issues.
 - **Bed State**
