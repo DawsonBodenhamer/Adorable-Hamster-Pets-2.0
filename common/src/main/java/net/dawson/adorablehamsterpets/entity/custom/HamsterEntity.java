@@ -1220,10 +1220,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     this.setJumping(false);
                     this.getNavigation().stop();
                     this.setTarget(null);
-                } else {
-                    player.swingHand(hand);
                 }
-                return ActionResult.CONSUME;
+                return ActionResult.SUCCESS;
             }
 
             return ActionResult.PASS;

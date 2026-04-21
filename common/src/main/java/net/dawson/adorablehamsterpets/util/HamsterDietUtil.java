@@ -31,8 +31,8 @@ public final class HamsterDietUtil {
     private HamsterDietUtil() {}
 
     /**
-     * Checks if hamster should refuse being fed same item twice consecutively
-     * Triggers refusal animation and chat feedback if so
+     * Checks if hamster should refuse being fed same item twice consecutively.
+     * Triggers refusal animation and chat feedback if so.
      */
     public static boolean checkAndHandleRefusal(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         if (ConfigDataCache.isRepeatableFood(stack)) return false;
@@ -42,13 +42,14 @@ public final class HamsterDietUtil {
 
         ItemStack lastFood = hamster.getLastFoodItem();
         if (lastFood != null && !lastFood.isEmpty() && ItemStack.areItemsEqual(lastFood, stack)) {
-            hamster.setRefusingFood(true);
-            hamster.setRefuseTimer(REFUSE_FOOD_TIMER_TICKS);
-            player.sendMessage(Text.translatable("message.adorablehamsterpets.food_refusal"), true);
+            if (!hamster.getWorld().isClient()) {
+                hamster.setRefusingFood(true);
+                hamster.setRefuseTimer(REFUSE_FOOD_TIMER_TICKS);
+                player.sendMessage(Text.translatable("message.adorablehamsterpets.food_refusal"), true);
 
-            // Trigger refusal animation based on movement state
-            hamster.playRefusalAnimation();
-
+                // Trigger refusal animation based on movement state
+                hamster.playRefusalAnimation();
+            }
             return true;
         }
         return false;
@@ -58,7 +59,7 @@ public final class HamsterDietUtil {
      * Processes feeding logic for pouch unlocking, buff application, healing, and breeding.
      * Evaluates in strict priority order.
      *
-     * @return 1 if successfully fed, 2 if refused, 0 if not handled.
+     * @return 1 if successfully fed, 2 if refused, 0 if not handled (hamster doesn't want it).
      */
     public static int tryFeeding(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         World world = hamster.getWorld();
@@ -66,23 +67,24 @@ public final class HamsterDietUtil {
 
         // --- 1. Process Pouch Unlock ---
         if (ConfigDataCache.isPouchUnlockFood(stack) && !hamster.isCheekPouchUnlocked()) {
-            hamster.setCheekPouchUnlocked(true);
+            if (!world.isClient()) {
+                hamster.setCheekPouchUnlocked(true);
 
-            if (player instanceof ServerPlayerEntity serverPlayer) {
-                ModCriteria.CHEEK_POUCH_UNLOCKED.trigger(serverPlayer, hamster);
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    ModCriteria.CHEEK_POUCH_UNLOCKED.trigger(serverPlayer, hamster);
+                }
+
+                // Feedback
+                world.playSound(null, hamster.getBlockPos(), SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.NEUTRAL, 0.5f, 1.5f);
+                ParticleEffectsUtil.spawnParticles(
+                        world,
+                        new Vec3d(hamster.getX(), hamster.getBodyY(0.2D), hamster.getZ()),
+                        new ItemStackParticleEffect(ParticleTypes.ITEM, stack.copy()),
+                        25,
+                        new Vec3d(0.25, 0.15, 0.25),
+                        0.0
+                );
             }
-
-            // Feedback
-            world.playSound(null, hamster.getBlockPos(), SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.NEUTRAL, 0.5f, 1.5f);
-            ParticleEffectsUtil.spawnParticles(
-                    world,
-                    new Vec3d(hamster.getX(), hamster.getBodyY(0.2D), hamster.getZ()),
-                    new ItemStackParticleEffect(ParticleTypes.ITEM, stack.copy()),
-                    25,
-                    new Vec3d(0.25, 0.15, 0.25),
-                    0.0
-            );
-
             return 1;
         }
 
@@ -92,31 +94,35 @@ public final class HamsterDietUtil {
 
             // Reject if still on cooldown
             if (hamster.getGreenBeanBuffEndTick() > currentTime) {
-                long totalSeconds = (hamster.getGreenBeanBuffEndTick() - currentTime) / 20;
-                player.sendMessage(Text.translatable("message.adorablehamsterpets.beans_cooldown", totalSeconds / 60, totalSeconds % 60).formatted(Formatting.RED), true);
+                if (!world.isClient()) {
+                    long totalSeconds = (hamster.getGreenBeanBuffEndTick() - currentTime) / 20;
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.beans_cooldown", totalSeconds / 60, totalSeconds % 60).formatted(Formatting.RED), true);
+                }
                 return 2;
             }
 
-            // Apply config buffs
-            int duration = config.greenBeanBuffDuration.get();
-            hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, duration, config.greenBeanBuffAmplifierSpeed.get()));
-            hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, duration, config.greenBeanBuffAmplifierStrength.get()));
-            hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, duration, config.greenBeanBuffAmplifierAbsorption.get()));
-            hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, duration, config.greenBeanBuffAmplifierRegen.get()));
+            if (!world.isClient()) {
+                // Apply config buffs
+                int duration = config.greenBeanBuffDuration.get();
+                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, duration, config.greenBeanBuffAmplifierSpeed.get()));
+                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, duration, config.greenBeanBuffAmplifierStrength.get()));
+                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, duration, config.greenBeanBuffAmplifierAbsorption.get()));
+                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, duration, config.greenBeanBuffAmplifierRegen.get()));
 
-            // Init zoomies behavior
-            hamster.enableZoomies(player);
+                // Init zoomies behavior
+                hamster.enableZoomies(player);
 
-            // Feedback
-            world.playSound(null, hamster.getBlockPos(), ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, hamster.getRandom()), SoundCategory.NEUTRAL, 1.0F, 1.0F);
+                // Feedback
+                world.playSound(null, hamster.getBlockPos(), ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, hamster.getRandom()), SoundCategory.NEUTRAL, 1.0F, 1.0F);
 
-            // Update state trackers
-            hamster.getDataTracker().set(HamsterEntity.GREEN_BEAN_BUFF_DURATION, currentTime + duration);
-            hamster.setGreenBeanBuffEndTick(currentTime + config.steamedGreenBeansBuffCooldown.get());
+                // Update state trackers
+                hamster.getDataTracker().set(HamsterEntity.GREEN_BEAN_BUFF_DURATION, currentTime + duration);
+                hamster.setGreenBeanBuffEndTick(currentTime + config.steamedGreenBeansBuffCooldown.get());
 
-            // Trigger Advancement
-            if (player instanceof ServerPlayerEntity serverPlayer) {
-                ModCriteria.FED_HAMSTER_STEAMED_BEANS.trigger(serverPlayer, hamster);
+                // Trigger Advancement
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    ModCriteria.FED_HAMSTER_STEAMED_BEANS.trigger(serverPlayer, hamster);
+                }
             }
             return 1;
         }
@@ -127,35 +133,41 @@ public final class HamsterDietUtil {
 
             // Heal if injured
             if (hamster.getHealth() < hamster.getMaxHealth()) {
-                hamster.heal(config.standardFoodHealing.get());
+                if (!world.isClient()) {
+                    hamster.heal(config.standardFoodHealing.get());
+                }
                 consumed = true;
             }
 
             // Grow if baby
             if (hamster.isBaby()) {
-                // Grow by ~10% of remaining time, but at least 1 minute per feed
-                int remainingTicks = -hamster.getBreedingAge();
-                int ticksToGrow = Math.max(1200, (int) (remainingTicks * 0.1F));
+                if (!world.isClient()) {
+                    // Grow by ~10% of remaining time, but at least 1 minute per feed
+                    int remainingTicks = -hamster.getBreedingAge();
+                    int ticksToGrow = Math.max(1200, (int) (remainingTicks * 0.1F));
 
-                // Convert to seconds since vanilla's growUp() multiplies by 20
-                int secondsToGrow = ticksToGrow / 20;
+                    // Convert to seconds since vanilla's growUp() multiplies by 20
+                    int secondsToGrow = ticksToGrow / 20;
 
-                // Track state before growth
-                boolean wasBaby = hamster.isBaby();
+                    // Track state before growth
+                    boolean wasBaby = hamster.isBaby();
 
-                // Prevent vanilla from storing 'forcedAge' penalty
-                hamster.growUp(secondsToGrow, false);
-                consumed = true;
+                    // Prevent vanilla from storing 'forcedAge' penalty
+                    hamster.growUp(secondsToGrow, false);
 
-                // If just reached adulthood, apply configured cooldown
-                if (wasBaby && !hamster.isBaby()) {
-                    hamster.setBreedingAge(config.breedingCooldownSeconds.get() * 20);
+                    // If just reached adulthood, apply configured cooldown
+                    if (wasBaby && !hamster.isBaby()) {
+                        hamster.setBreedingAge(config.breedingCooldownSeconds.get() * 20);
+                    }
                 }
+                consumed = true;
             }
 
             if (consumed) {
-                // Feedback
-                world.playSound(null, hamster.getBlockPos(), SoundEvents.ENTITY_GENERIC_EAT, SoundCategory.NEUTRAL, 0.5f, 1.2f + (hamster.getRandom().nextFloat() - 0.5f) * 0.2f);
+                if (!world.isClient()) {
+                    // Feedback
+                    world.playSound(null, hamster.getBlockPos(), SoundEvents.ENTITY_GENERIC_EAT, SoundCategory.NEUTRAL, 0.5f, 1.2f + (hamster.getRandom().nextFloat() - 0.5f) * 0.2f);
+                }
                 return 1;
             }
 
@@ -169,32 +181,38 @@ public final class HamsterDietUtil {
 
                 if (isBreedingAllowed && hamster.timesBred < config.maxLittersPerHamster.get()) {
 
-                    // --- Player Litter Limit Check ---
-                    if (player instanceof PlayerEntityAccessor accessor) {
-                        if (!accessor.ahp$canBreedHamsters()) {
-                            player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.player_limit_reached").formatted(Formatting.RED), true);
-                            hamster.playRefusalAnimation();
-                            return 2;
+                    if (!world.isClient()) {
+                        // --- Player Litter Limit Check ---
+                        if (player instanceof PlayerEntityAccessor accessor) {
+                            if (!accessor.ahp$canBreedHamsters()) {
+                                player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.player_limit_reached").formatted(Formatting.RED), true);
+                                hamster.playRefusalAnimation();
+                                return 2;
+                            }
+                            accessor.ahp$incrementHamstersFedForBreeding();
                         }
-                        accessor.ahp$incrementHamstersFedForBreeding();
-                    }
 
-                    hamster.setSitting(false, true);
-                    hamster.setCustomInLove(player);
-                    hamster.setInLove(true);
+                        hamster.setSitting(false, true);
+                        hamster.setCustomInLove(player);
+                        hamster.setInLove(true);
+                    }
                     return 1;
                 } else if (!isBreedingAllowed) {
-                    player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.disabled").formatted(Formatting.RED), true);
-                    hamster.playRefusalAnimation();
+                    if (!world.isClient()) {
+                        player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.disabled").formatted(Formatting.RED), true);
+                        hamster.playRefusalAnimation();
+                    }
                     return 2;
                 } else {
-                    player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.hamster_limit_reached").formatted(Formatting.RED), true);
-                    hamster.playRefusalAnimation();
+                    if (!world.isClient()) {
+                        player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.hamster_limit_reached").formatted(Formatting.RED), true);
+                        hamster.playRefusalAnimation();
+                    }
                     return 2;
                 }
             }
         }
 
-        return 0;
+        return 0; // Not interested
     }
 }
