@@ -329,10 +329,6 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Because 'Hamster #42' lacks a certain personal touch, here are some settings to control how hamsters get renamed.")
     public ConfigGroup naming = new ConfigGroup("naming", true);
 
-    @Translatable.Name("Enable GUI Renaming")
-    @Translatable.Desc("Lets you rename hamsters directly from their inventory screen. Much more civilized than slapping them with a name tag.")
-    public boolean enableGuiRenaming = true;
-
     @Translatable.Name("Consume Name Tag")
     @Translatable.Desc("If true, you must have a Name Tag in your inventory (or the hamster's cheeks) to confirm the rename, and it will be consumed. True by default to keep things vanilla-friendly-ish.")
     public boolean consumeNameTagForGuiRename = true;
@@ -627,6 +623,10 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Changes the default entity name from 'Hamster' to 'Hampter'. Note: This has no visible effect in vanilla Minecraft, as mobs don't show nameplates by default. It's primarily for use with mods like Auto Leveling that display entity names.")
     public boolean useHampterName = false;
 
+    @Translatable.Name("Enable GUI Renaming")
+    @Translatable.Desc("Lets you rename hamsters directly from their inventory screen. Much more civilized than slapping them with a name tag.")
+    public boolean enableGuiRenaming = true;
+
     @Translatable.Name("Allow Taming to Re-Enable AI")
     @Translatable.Desc("If true, players can tame frozen, AI-disabled hamsters, instantly breathing life into them like some sort of furry necromancer. Turn this off if you're using command-spawned hamsters as statues or shop displays and don't want your patrons walking off with the merchandise happily following.")
     public boolean allowTamingAiDisabled = true;
@@ -835,7 +835,7 @@ public class AhpConfig extends Config {
     @Translatable.Desc("How much random 'scatter' is added to the baby's color across all dimensions (Hue, Saturation, Brightness). Higher values mean the baby could end up a completely unexpected color instead of a mixture between the two parents.")
     public ValidatedDouble geneticMutationRate = new ValidatedDouble(0.3, 2.0, 0.0);
 
-    @Translatable.Name("Simulated Offspring Per Second")
+    @Translatable.Name("Simulated Offspring Per Tick")
     @Translatable.Desc("How many theoretical babies the 3D visualizer calculates every tick (20 ticks = 1 second) to build the probability particle cloud. Each particle spawned represents a baby hamster. Higher numbers create a denser, clearer picture of the genetic potential.")
     public ValidatedInt simulatedOffspringPerTick = new ValidatedInt(20, 300, 1);
 
