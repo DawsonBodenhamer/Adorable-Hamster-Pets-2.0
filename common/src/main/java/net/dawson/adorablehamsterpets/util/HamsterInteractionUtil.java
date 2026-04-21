@@ -15,7 +15,6 @@ import net.dawson.adorablehamsterpets.item.custom.HamsterBedItem;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.advancement.criterion.Criteria;
-import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -35,7 +34,6 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,10 +67,8 @@ public final class HamsterInteractionUtil {
                         newSetting ? "message.adorablehamsterpets.debug_overlay_enabled" : "message.adorablehamsterpets.debug_overlay_disabled"
                 ).formatted(newSetting ? Formatting.WHITE : Formatting.RED);
                 player.sendMessage(message, true);
-
-                return clientInteract(player, hand, stack);
             }
-            return ActionResult.CONSUME;
+            return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
     }
@@ -102,10 +98,8 @@ public final class HamsterInteractionUtil {
                         accessor.ahp$setGeneticParent2Uuid(target);
                         player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.set_parent2").formatted(Formatting.WHITE), true);
                     }
-                } else {
-                    return clientInteract(player, hand, stack);
                 }
-                return ActionResult.CONSUME;
+                return ActionResult.SUCCESS;
             }
         }
         return ActionResult.PASS;
@@ -197,10 +191,8 @@ public final class HamsterInteractionUtil {
                             });
                         }
                     });
-                } else {
-                    return clientInteract(player, hand, null);
                 }
-                return ActionResult.CONSUME;
+                return ActionResult.SUCCESS;
             }
         }
         return ActionResult.PASS;
@@ -214,10 +206,8 @@ public final class HamsterInteractionUtil {
             if (hamster.isAiDisabled() && !AdorableHamsterPets.CONFIG.allowTamingAiDisabled) {
                 if (!hamster.getWorld().isClient()) {
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.taming_statue_refusal").formatted(Formatting.RED), true);
-                } else {
-                    return clientInteract(player, hand, stack);
                 }
-                return ActionResult.CONSUME;
+                return ActionResult.SUCCESS;
             }
 
             if (!hamster.getWorld().isClient()) {
@@ -260,10 +250,8 @@ public final class HamsterInteractionUtil {
                 } else {
                     hamster.getWorld().sendEntityStatus(hamster, (byte) 6);
                 }
-            } else {
-                return clientInteract(player, hand, stack);
             }
-            return ActionResult.CONSUME;
+            return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
     }
@@ -333,10 +321,8 @@ public final class HamsterInteractionUtil {
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.wander_distance_set", hamster.getName(), nextDistance.asString()), true);
                     hamster.getWorld().playSound(null, hamster.getBlockPos(), SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.PLAYERS, 0.5f, 1.0f);
                 }
-            } else {
-                return clientInteract(player, hand, stack);
             }
-            return ActionResult.CONSUME;
+            return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
     }
@@ -356,10 +342,8 @@ public final class HamsterInteractionUtil {
                         player.dropItem(currentArmor, false);
                     }
                 }
-            } else {
-                return clientInteract(player, hand, stack);
             }
-            return ActionResult.CONSUME;
+            return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
     }
@@ -368,51 +352,30 @@ public final class HamsterInteractionUtil {
     public static ActionResult handleStateRestoration(HamsterEntity hamster, PlayerEntity player, Hand hand) {
         World world = hamster.getWorld();
 
-        if (hamster.isSleeping()) {
+        if (hamster.isSleeping() || hamster.isKnockedOut() || hamster.isCelebratingDiamond() || hamster.isSulking()) {
             if (!world.isClient()) {
-                HamsterBedUtil.wakeUpFromBed(hamster, true);
-            } else {
-                return clientInteract(player, hand, null);
+                if (hamster.isSleeping()) {
+                    HamsterBedUtil.wakeUpFromBed(hamster, true);
+                } else if (hamster.isKnockedOut()) {
+                    SoundEvent wakeUpSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_WAKE_UP_SOUNDS, hamster.getRandom());
+                    if (wakeUpSound != null)
+                        world.playSound(null, hamster.getBlockPos(), wakeUpSound, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+                    hamster.setKnockedOut(false);
+                    hamster.setSitting(false, true);
+                    hamster.triggerAnimOnServer("mainController", "wakeup_from_ko");
+                } else if (hamster.isCelebratingDiamond()) {
+                    hamster.setCelebratingDiamond(false);
+                    hamster.setSitting(false, true);
+                    SoundEvent affectionSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, hamster.getRandom());
+                    world.playSound(null, hamster.getBlockPos(), affectionSound != null ? affectionSound : SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.NEUTRAL, affectionSound != null ? 1.0f : 0.5f, affectionSound != null ? hamster.getSoundPitch() : 1.5f);
+                } else if (hamster.isSulking()) {
+                    hamster.setSulking(false);
+                    hamster.setSitting(false, true);
+                    SoundEvent affectionSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, hamster.getRandom());
+                    world.playSound(null, hamster.getBlockPos(), affectionSound != null ? affectionSound : SoundEvents.ENTITY_CHICKEN_STEP, SoundCategory.NEUTRAL, affectionSound != null ? 1.0f : 0.5f, affectionSound != null ? hamster.getSoundPitch() : 1.5f);
+                }
             }
-            return ActionResult.CONSUME;
-        }
-
-        if (hamster.isKnockedOut()) {
-            if (!world.isClient()) {
-                SoundEvent wakeUpSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_WAKE_UP_SOUNDS, hamster.getRandom());
-                if (wakeUpSound != null)
-                    world.playSound(null, hamster.getBlockPos(), wakeUpSound, SoundCategory.NEUTRAL, 1.0F, 1.0F);
-                hamster.setKnockedOut(false);
-                hamster.setSitting(false, true);
-                hamster.triggerAnimOnServer("mainController", "wakeup_from_ko");
-            } else {
-                return clientInteract(player, hand, null);
-            }
-            return ActionResult.CONSUME;
-        }
-
-        if (hamster.isCelebratingDiamond()) {
-            if (!world.isClient()) {
-                hamster.setCelebratingDiamond(false);
-                hamster.setSitting(false, true);
-                SoundEvent affectionSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, hamster.getRandom());
-                world.playSound(null, hamster.getBlockPos(), affectionSound != null ? affectionSound : SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.NEUTRAL, affectionSound != null ? 1.0f : 0.5f, affectionSound != null ? hamster.getSoundPitch() : 1.5f);
-            } else {
-                return clientInteract(player, hand, null);
-            }
-            return ActionResult.CONSUME;
-        }
-
-        if (hamster.isSulking()) {
-            if (!world.isClient()) {
-                hamster.setSulking(false);
-                hamster.setSitting(false, true);
-                SoundEvent affectionSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, hamster.getRandom());
-                world.playSound(null, hamster.getBlockPos(), affectionSound != null ? affectionSound : SoundEvents.ENTITY_CHICKEN_STEP, SoundCategory.NEUTRAL, affectionSound != null ? 1.0f : 0.5f, affectionSound != null ? hamster.getSoundPitch() : 1.5f);
-            } else {
-                return clientInteract(player, hand, null);
-            }
-            return ActionResult.CONSUME;
+            return ActionResult.SUCCESS;
         }
 
         return ActionResult.PASS;
@@ -441,10 +404,8 @@ public final class HamsterInteractionUtil {
                     hamster.getWorld().playSound(null, hamster.getBlockPos(), pounceSound, SoundCategory.NEUTRAL, volume, 1.7f);
                     ParticleEffectsUtil.spawnParticles(hamster.getWorld(), new Vec3d(hamster.getX(), hamster.getBodyY(0.5), hamster.getZ()), new ItemStackParticleEffect(ParticleTypes.ITEM, retrievedStack), 10, new Vec3d(0.2, 0.2, 0.2), 0.05);
                 }
-            } else {
-                return clientInteract(player, hand, null);
             }
-            return ActionResult.CONSUME;
+            return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
     }
@@ -479,10 +440,8 @@ public final class HamsterInteractionUtil {
                         ModCriteria.APPLIED_PINK_PETAL.get().trigger(serverPlayer, hamster);
                     }
                 }
-            } else {
-                return clientInteract(player, hand, stack);
             }
-            return ActionResult.CONSUME;
+            return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
     }
@@ -497,46 +456,43 @@ public final class HamsterInteractionUtil {
             ItemStack armorStack = hamster.getArmorStack();
             if (!armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem) {
                 actionTaken = true;
+                if (!world.isClient()) {
+                    hamster.dropStack(armorStack);
+                    hamster.setSilentInventoryUpdate(true);
+                    hamster.setArmorStack(ItemStack.EMPTY);
+                    hamster.setSilentInventoryUpdate(false);
+                    hamster.playSound(SoundEvents.ITEM_ARMOR_UNEQUIP_WOLF, 0.8f, 1.5f);
+                    if (!player.getAbilities().creativeMode) {
+                        stack.damage(1, player, LivingEntity.getSlotForHand(hand));
+                    }
+                }
             }
 
             // Secondary: Remove Accessory
             ItemStack accessoryStack = hamster.getItems().get(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX);
             if (!actionTaken && !accessoryStack.isEmpty()) {
                 actionTaken = true;
+                if (!world.isClient()) {
+                    ItemStack particleStack = accessoryStack.copy();
+                    hamster.dropStack(accessoryStack);
+
+                    hamster.setSilentInventoryUpdate(true);
+                    hamster.setStack(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX, ItemStack.EMPTY);
+                    hamster.setSilentInventoryUpdate(false);
+
+                    hamster.updateAccessoryState();
+
+                    world.playSound(null, hamster.getBlockPos(), SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.PLAYERS, 0.9f, 1.0f + hamster.getRandom().nextFloat() * 0.1f);
+                    ParticleEffectsUtil.spawnParticles(world, new Vec3d(hamster.getX(), hamster.getY() + hamster.getHeight() * 0.5, hamster.getZ()), new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack), 5, new Vec3d(hamster.getWidth() / 2.0, hamster.getHeight() / 2.0, hamster.getWidth() / 2.0), 0.05);
+
+                    if (!player.getAbilities().creativeMode) {
+                        stack.damage(1, player, LivingEntity.getSlotForHand(hand));
+                    }
+                }
             }
 
             if (actionTaken) {
-                if (!world.isClient()) {
-                    if (!armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem) {
-                        hamster.dropStack(armorStack);
-                        hamster.setSilentInventoryUpdate(true);
-                        hamster.setArmorStack(ItemStack.EMPTY);
-                        hamster.setSilentInventoryUpdate(false);
-                        hamster.playSound(SoundEvents.ITEM_ARMOR_UNEQUIP_WOLF, 0.8f, 1.5f);
-                        if (!player.getAbilities().creativeMode) {
-                            stack.damage(1, player, LivingEntity.getSlotForHand(hand));
-                        }
-                    } else if (!accessoryStack.isEmpty()) {
-                        ItemStack particleStack = accessoryStack.copy();
-                        hamster.dropStack(accessoryStack);
-
-                        hamster.setSilentInventoryUpdate(true);
-                        hamster.setStack(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX, ItemStack.EMPTY);
-                        hamster.setSilentInventoryUpdate(false);
-
-                        hamster.updateAccessoryState();
-
-                        world.playSound(null, hamster.getBlockPos(), SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.PLAYERS, 0.9f, 1.0f + hamster.getRandom().nextFloat() * 0.1f);
-                        ParticleEffectsUtil.spawnParticles(world, new Vec3d(hamster.getX(), hamster.getY() + hamster.getHeight() * 0.5, hamster.getZ()), new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack), 5, new Vec3d(hamster.getWidth() / 2.0, hamster.getHeight() / 2.0, hamster.getWidth() / 2.0), 0.05);
-
-                        if (!player.getAbilities().creativeMode) {
-                            stack.damage(1, player, LivingEntity.getSlotForHand(hand));
-                        }
-                    }
-                } else {
-                    return clientInteract(player, hand, stack);
-                }
-                return ActionResult.CONSUME;
+                return ActionResult.SUCCESS;
             }
         }
         return ActionResult.PASS;
@@ -555,10 +511,8 @@ public final class HamsterInteractionUtil {
                 if (!player.getAbilities().creativeMode && Configs.AHP.consumeLureItem) {
                     stack.decrement(1);
                 }
-            } else {
-                return clientInteract(player, hand, stack);
             }
-            return ActionResult.CONSUME;
+            return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
     }
@@ -568,10 +522,8 @@ public final class HamsterInteractionUtil {
         if (ConfigDataCache.isLureItem(stack)) {
             if (!hamster.getWorld().isClient()) {
                 executeShoulderMount(hamster, player, stack);
-            } else {
-                return clientInteract(player, hand, stack);
             }
-            return ActionResult.CONSUME;
+            return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
     }
@@ -586,10 +538,8 @@ public final class HamsterInteractionUtil {
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.cheek_pouch_locked").formatted(Formatting.WHITE), true);
                     hamster.playRefusalAnimation();
                 }
-            } else {
-                return clientInteract(player, hand, null);
             }
-            return ActionResult.CONSUME;
+            return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
     }
@@ -599,24 +549,30 @@ public final class HamsterInteractionUtil {
         boolean isPotentialFood = ConfigDataCache.isStandardFood(stack) || ConfigDataCache.isBuffFood(stack) || ConfigDataCache.isPouchUnlockFood(stack);
 
         if (!player.isSneaking() && isPotentialFood) {
-            if (!hamster.getWorld().isClient()) {
-                if (HamsterDietUtil.checkAndHandleRefusal(hamster, player, stack)) {
-                    return ActionResult.CONSUME;
-                }
+            boolean willRefuse = HamsterDietUtil.checkAndHandleRefusal(hamster, player, stack);
 
-                int feedResult = HamsterDietUtil.tryFeeding(hamster, player, stack);
+            if (willRefuse) {
+                return ActionResult.SUCCESS; // Handled: refuse, trigger headshake anim, player hand swing
+            }
 
-                if (feedResult == 1) {
-                    // Fed successfully
+            int feedResult = HamsterDietUtil.tryFeeding(hamster, player, stack);
+
+            if (feedResult == 1) {
+                // Fed successfully
+                if (!hamster.getWorld().isClient()) {
                     hamster.setLastFoodItem(stack.copy());
                     if (!player.getAbilities().creativeMode) {
                         stack.decrement(1);
                     }
                 }
-            } else {
-                return clientInteract(player, hand, stack);
+                return ActionResult.SUCCESS;
+            } else if (feedResult == 2) {
+                // Refused (e.g., limit reached, cooldown active)
+                return ActionResult.SUCCESS;
             }
-            return ActionResult.CONSUME;
+
+            // If feedResult == 0, hamster is full and not interested.
+            return ActionResult.PASS;
         }
         return ActionResult.PASS;
     }
@@ -624,18 +580,6 @@ public final class HamsterInteractionUtil {
     /* ──────────────────────────────────────────────────────────────────────────────
      *                           Public/Private Utilities
      * ────────────────────────────────────────────────────────────────────────────*/
-
-    /**
-     * Executes client-side visual feedback for interactions and applies a micro-cooldown
-     * to food items to prevent the "eating" animation from overriding the hand swing.
-     */
-    private static ActionResult clientInteract(PlayerEntity player, Hand hand, @Nullable ItemStack stack) {
-        player.swingHand(hand);
-        if (stack != null && !stack.isEmpty() && stack.contains(DataComponentTypes.FOOD)) {
-            player.getItemCooldownManager().set(stack.getItem(), 5);
-        }
-        return ActionResult.CONSUME;
-    }
 
     /**
      * Executes the logic to mount a hamster to a player's shoulder.
