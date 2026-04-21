@@ -513,6 +513,8 @@
   "config.adorablehamsterpets.enum.icon_position.top_right": "Top Right",
   "config.adorablehamsterpets.enum.icon_position.bottom_left": "Bottom Left",
   "config.adorablehamsterpets.enum.icon_position.bottom_right": "Bottom Right",
+  "config.adorablehamsterpets.enum.rename_icon_placement.left": "Left",
+  "config.adorablehamsterpets.enum.rename_icon_placement.right": "Right",
   "config.adorablehamsterpets.enum.wander_distance.near": "Near",
   "config.adorablehamsterpets.enum.wander_distance.medium": "Medium",
   "config.adorablehamsterpets.enum.wander_distance.far": "Far",

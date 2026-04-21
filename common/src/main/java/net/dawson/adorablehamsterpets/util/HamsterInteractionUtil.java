@@ -540,10 +540,8 @@ public final class HamsterInteractionUtil {
                 if (!player.getAbilities().creativeMode && Configs.AHP.consumeLureItem) {
                     stack.decrement(1);
                 }
-            } else {
-                player.swingHand(hand);
             }
-            return ActionResult.CONSUME;
+            return ActionResult.success(hamster.getWorld().isClient());
         }
         return ActionResult.PASS;
     }
@@ -553,10 +551,8 @@ public final class HamsterInteractionUtil {
         if (ConfigDataCache.isLureItem(stack)) {
             if (!hamster.getWorld().isClient()) {
                 executeShoulderMount(hamster, player, stack);
-            } else {
-                player.swingHand(hand);
             }
-            return ActionResult.CONSUME;
+            return ActionResult.success(hamster.getWorld().isClient());
         }
         return ActionResult.PASS;
     }
@@ -572,7 +568,7 @@ public final class HamsterInteractionUtil {
                     hamster.playRefusalAnimation();
                 }
             }
-            return ActionResult.CONSUME;
+            return ActionResult.success(hamster.getWorld().isClient());
         }
         return ActionResult.PASS;
     }
@@ -581,23 +577,27 @@ public final class HamsterInteractionUtil {
     public static ActionResult handleFeeding(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         boolean isPotentialFood = ConfigDataCache.isStandardFood(stack) || ConfigDataCache.isBuffFood(stack) || ConfigDataCache.isPouchUnlockFood(stack);
 
-        if (!hamster.getWorld().isClient() && !player.isSneaking() && isPotentialFood) {
-            if (HamsterDietUtil.checkAndHandleRefusal(hamster, player, stack)) {
-                return ActionResult.CONSUME;
-            }
-
-            int feedResult = HamsterDietUtil.tryFeeding(hamster, player, stack);
-
-            if (feedResult == 1) {
-                // Fed successfully
-                hamster.setLastFoodItem(stack.copy());
-                if (!player.getAbilities().creativeMode) {
-                    stack.decrement(1);
+        if (!player.isSneaking() && isPotentialFood) {
+            if (!hamster.getWorld().isClient()) {
+                if (HamsterDietUtil.checkAndHandleRefusal(hamster, player, stack)) {
+                    return ActionResult.success(false);
                 }
-                return ActionResult.CONSUME;
-            } else if (feedResult == 2) {
-                // Handled but refused
-                return ActionResult.CONSUME;
+
+                int feedResult = HamsterDietUtil.tryFeeding(hamster, player, stack);
+
+                if (feedResult == 1) {
+                    // Fed successfully
+                    hamster.setLastFoodItem(stack.copy());
+                    if (!player.getAbilities().creativeMode) {
+                        stack.decrement(1);
+                    }
+                    return ActionResult.SUCCESS;
+                } else if (feedResult == 2) {
+                    // Handled but refused
+                    return ActionResult.success(false); // Skip hand swing
+                }
+            } else {
+                return ActionResult.SUCCESS;
             }
         }
         return ActionResult.PASS;
