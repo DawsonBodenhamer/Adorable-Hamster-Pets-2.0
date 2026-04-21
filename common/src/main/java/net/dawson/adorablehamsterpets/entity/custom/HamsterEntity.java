@@ -1144,16 +1144,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         World world = this.getWorld();
 
         // --- 1. Global Interactions ---
-        ActionResult result = HamsterInteractionUtil.handleDebugToggle(this, player, stack);
+        ActionResult result = HamsterInteractionUtil.handleDebugToggle(this, player, stack, hand);
         if (result != ActionResult.PASS) return result;
 
-        result = HamsterInteractionUtil.handleGeneticsVisualizer(this, player, stack);
+        result = HamsterInteractionUtil.handleGeneticsVisualizer(this, player, stack, hand);
         if (result != ActionResult.PASS) return result;
 
-        result = HamsterInteractionUtil.handleTagGame(this, player);
+        result = HamsterInteractionUtil.handleTagGame(this, player, hand);
         if (result != ActionResult.PASS) return result;
 
-        result = HamsterInteractionUtil.handleTaming(this, player, stack);
+        result = HamsterInteractionUtil.handleTaming(this, player, stack, hand);
         if (result != ActionResult.PASS) return result;
 
         // --- 2. Fallback for Untamed ---
@@ -1165,10 +1165,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             result = HamsterInteractionUtil.handleBedLinking(this, player, stack, hand);
             if (result != ActionResult.PASS) return result;
 
-            result = HamsterInteractionUtil.handleArmorEquip(this, player, stack);
+            result = HamsterInteractionUtil.handleArmorEquip(this, player, stack, hand);
             if (result != ActionResult.PASS) return result;
 
-            result = HamsterInteractionUtil.handleStateRestoration(this, player);
+            result = HamsterInteractionUtil.handleStateRestoration(this, player, hand);
             if (result != ActionResult.PASS) return result;
 
             // State reset that falls through
@@ -1176,10 +1176,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 HamsterSleepUtil.resetSleepState(this);
             }
 
-            result = HamsterInteractionUtil.handleMouthItemReturn(this, player);
+            result = HamsterInteractionUtil.handleMouthItemReturn(this, player, hand);
             if (result != ActionResult.PASS) return result;
 
-            result = HamsterInteractionUtil.handleAccessoryInteraction(this, player, stack);
+            result = HamsterInteractionUtil.handleAccessoryInteraction(this, player, stack, hand);
             if (result != ActionResult.PASS) return result;
 
             result = HamsterInteractionUtil.handleShearing(this, player, stack, hand);
@@ -1191,10 +1191,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             result = HamsterInteractionUtil.handleShoulderMount(this, player, stack, hand);
             if (result != ActionResult.PASS) return result;
 
-            result = HamsterInteractionUtil.handleInventoryOpen(this, player);
+            result = HamsterInteractionUtil.handleInventoryOpen(this, player, hand);
             if (result != ActionResult.PASS) return result;
 
-            result = HamsterInteractionUtil.handleFeeding(this, player, stack);
+            result = HamsterInteractionUtil.handleFeeding(this, player, stack, hand);
             if (result != ActionResult.PASS) return result;
 
             // Vanilla Fallback
@@ -1209,9 +1209,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     this.setJumping(false);
                     this.getNavigation().stop();
                     this.setTarget(null);
-                    return ActionResult.CONSUME_PARTIAL;
+                } else {
+                    player.swingHand(hand);
                 }
-                return ActionResult.success(world.isClient());
+                return ActionResult.CONSUME;
             }
 
             return ActionResult.PASS;
