@@ -317,6 +317,8 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
 
     private void saveAndStopRenaming() {
         this.isRenaming = false;
+        // Dispatch the packet to consume name tag while screen is open
+        this.sendRenamePacket();
     }
 
     /**
