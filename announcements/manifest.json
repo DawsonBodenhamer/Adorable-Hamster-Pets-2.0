@@ -7,7 +7,7 @@
       "kind": "update_available",
       "semver": "3.6.0",
       "published": "2026-04-19T12:00:00Z",
-      "markdown": "messages/v3.6.0-update-available.md",
+      "markdown": "messages/v3.6.0-update.md",
       "mandatory": true
     },
     {
