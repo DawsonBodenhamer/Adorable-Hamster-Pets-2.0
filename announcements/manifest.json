@@ -1,6 +1,24 @@
 {
-  "latest_version": "3.5.0",
+  "latest_version": "3.6.0",
   "messages": [
+    {
+      "id": "update-3.6.0",
+      "title": "New Update: v3.6.0!",
+      "kind": "update_available",
+      "semver": "3.6.0",
+      "published": "2026-04-19T12:00:00Z",
+      "markdown": "messages/v3.6.0-update-available.md",
+      "mandatory": true
+    },
+    {
+      "id": "whats-new-3.6.0",
+      "title": "What's New in v3.6.0?",
+      "kind": "patch_notes",
+      "semver": "3.6.0",
+      "published": "2026-04-19T12:00:00Z",
+      "markdown": "messages/v3.6.0-whats-new.md",
+      "mandatory": true
+    },
     {
       "id": "update-3.5.0",
       "title": "New Update: v3.5.0!",
