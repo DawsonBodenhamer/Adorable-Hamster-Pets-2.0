@@ -622,6 +622,14 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Changes the default entity name from 'Hamster' to 'Hampter'. Note: This has no visible effect in vanilla Minecraft, as mobs don't show nameplates by default. It's primarily for use with mods like Auto Leveling that display entity names.")
     public boolean useHampterName = false;
 
+    @Translatable.Name("Enable Petting")
+    @Translatable.Desc("If true, looking affectionately at your hamster might result in spontaneous petting. Also enables the Pet Hamster keybind.")
+    public boolean enablePetting = true;
+
+    @Translatable.Name("Auto-Petting Chance")
+    @Translatable.Desc("The 1-in-X chance per tick (20 ticks per second) to initiate petting when looking at your hamster. The hamster must be either standing or sitting, and not involved in any other activity. The default is 600. This means on average, it will require about ~30 seconds of uninterrupted staring to trigger, so it's quite rare. If you're impatient, it also comes with a keybind to trigger it manually.")
+    public ValidatedInt pettingChanceDenominator = new ValidatedInt(600, 1200, 20);
+
     @Translatable.Name("Enable GUI Renaming")
     @Translatable.Desc("Lets you rename hamsters directly from their inventory screen. Much more civilized than slapping them with a name tag.")
     public boolean enableGuiRenaming = true;

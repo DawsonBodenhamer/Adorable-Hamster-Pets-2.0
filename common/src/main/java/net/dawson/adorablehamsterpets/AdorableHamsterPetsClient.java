@@ -45,6 +45,7 @@ import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.ClientParticleManager;
+import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
@@ -65,6 +66,7 @@ import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Quaternionf;
@@ -94,6 +96,11 @@ public class AdorableHamsterPetsClient {
     private static int dismountKeyHeldTicks = 0;
     private static int crownDoubleTapTimer = 0;
     private static boolean isWaitingForCrownSecondTap = false;
+
+    // --- Throw Queue State ---
+    public static final int THROW_QUEUE_REQUIRED_TICKS = 15;
+    public static boolean isQueuingThrow = false;
+    public static int throwQueueTicks = 0;
 
     // --- Announcement System ---
     private static final AnnouncementHudRenderer announcementHudRenderer = new AnnouncementHudRenderer();
@@ -347,19 +354,41 @@ public class AdorableHamsterPetsClient {
         }
 
         // Handle Throw Hamster Keybind
-        if (ModKeyBindings.THROW_HAMSTER_KEY.wasPressed()) {
+        if (ModKeyBindings.THROW_HAMSTER_KEY.isPressed()) {
             final AhpConfig currentConfig = AdorableHamsterPets.CONFIG;
             if (!currentConfig.enableHamsterThrowing) {
-                client.player.sendMessage(Text.translatable("message.adorablehamsterpets.throwing_disabled"), true);
+                if (!isQueuingThrow) {
+                    client.player.sendMessage(Text.translatable("message.adorablehamsterpets.throwing_disabled"), true);
+                    isQueuingThrow = true; // Use flag to debounce message
+                }
             } else {
                 boolean lookingAtReachableBlock = client.crosshairTarget != null && client.crosshairTarget.getType() == HitResult.Type.BLOCK;
                 boolean hasShoulderHamsterClient = ((PlayerEntityAccessor) client.player).hasAnyShoulderHamster();
 
                 if (!lookingAtReachableBlock && hasShoulderHamsterClient) {
+                    if (!isQueuingThrow) {
+                        isQueuingThrow = true;
+                        throwQueueTicks = 0;
+                    }
+                    throwQueueTicks++;
+                } else {
+                    // Reset if they look at a block while charging (prioritize tree heist)
+                    isQueuingThrow = false;
+                    throwQueueTicks = 0;
+                }
+            }
+        } else {
+            // Key was released
+            if (isQueuingThrow) {
+                if (throwQueueTicks >= THROW_QUEUE_REQUIRED_TICKS && AdorableHamsterPets.CONFIG.enableHamsterThrowing) {
                     // Send a typed packet for 1.20.1
                     ModPackets.CHANNEL.sendToServer(new ModPackets.ThrowHamsterC2SPacket());
                 }
+                isQueuingThrow = false;
+                throwQueueTicks = 0;
             }
+            // Consume buffer to prevent old presses from triggering later
+            while (ModKeyBindings.THROW_HAMSTER_KEY.wasPressed()) {}
         }
 
         // Handle Toggle Performance Mode Keybind
@@ -372,6 +401,38 @@ public class AdorableHamsterPetsClient {
             ).formatted(Configs.AHP.performanceMode ? Formatting.GREEN : Formatting.RED);
 
             client.player.sendMessage(message, false);
+        }
+
+        // Handle Pet Hamster Keybind
+        while (ModKeyBindings.PET_HAMSTER_KEY.wasPressed()) {
+            // If Punchy is installed & petting enabled
+            if (Configs.AHP.enablePetting && Platform.isModLoaded("punchy")) {
+                // Find nearby tamed hamsters that fit criteria
+                Box searchBox = client.player.getBoundingBox().expand(5.0);
+                List<HamsterEntity> nearbyHamsters = client.world.getEntitiesByClass(
+                        HamsterEntity.class,
+                        searchBox,
+                        hamster ->
+                                hamster.isTamed()
+                                        && hamster.isOwner(client.player)
+                                        && !hamster.isShoulderPet()
+                                        && !hamster.isAiDisabled()
+                                        && !hamster.isSleeping()
+                                        && !hamster.isKnockedOut()
+                                        && !hamster.isSulking()
+                                        && !hamster.isCelebratingBaby()
+                                        && !hamster.isCelebratingDiamond()
+                                        && !hamster.isCelebratingRetrieval()
+                );
+                for (HamsterEntity hamster : nearbyHamsters) {
+                    // Use targeting utility to see if player is looking at it
+                    if (EntityTargetingUtil.isLookingAt(client.player, hamster, 5.0, 0)) {
+                        // Typed packet for 1.20.1
+                        ModPackets.CHANNEL.sendToServer(new ModPackets.RequestPetHamsterC2SPacket(hamster.getId()));
+                        break; // Only pet one at a time
+                    }
+                }
+            }
         }
 
         // --- Handle Toggle Supporter Crown Keybind ---

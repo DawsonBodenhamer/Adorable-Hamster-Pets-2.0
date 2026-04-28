@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.networking;
 
 import dev.architectury.networking.NetworkChannel;
+import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
@@ -52,6 +53,7 @@ public class ModPackets {
     public record RequestHamsterMountC2SPacket(int entityId) {}
     public record ResetHeistHistoryC2SPacket() {}
     public record RequestHamsterRideC2SPacket(int entityId) {}
+    public record RequestPetHamsterC2SPacket(int entityId) {}
     public record HamsterInputC2SPacket(boolean jumpHeld, boolean sprintHeld) {}
     public record RenameHamsterC2SPacket(int entityId, String newName) {}
     public record UpdateCrownThemeC2SPacket(int themeOrdinal) {}
@@ -168,6 +170,16 @@ public class ModPackets {
                         if (hamster.squaredDistanceTo(player) < 64.0) {
                             hamster.putPlayerOnBack(player);
                         }
+                    }
+                })
+        );
+
+        CHANNEL.register(RequestPetHamsterC2SPacket.class,
+                (packet, buf) -> buf.writeInt(packet.entityId()),
+                (buf) -> new RequestPetHamsterC2SPacket(buf.readInt()),
+                (packet, context) -> context.get().queue(() -> {
+                    if (context.get().getPlayer() instanceof PlayerEntityAccessor accessor) {
+                        accessor.ahp$startPettingHamster(packet.entityId());
                     }
                 })
         );

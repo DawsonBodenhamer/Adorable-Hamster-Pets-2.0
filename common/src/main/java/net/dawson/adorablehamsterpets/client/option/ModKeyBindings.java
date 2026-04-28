@@ -11,6 +11,7 @@ public class ModKeyBindings {
     public static final String KEY_THROW_HAMSTER = "key.adorablehamsterpets.throw_hamster";
     public static final String KEY_TOGGLE_SUPPORTER_CROWN = "key.adorablehamsterpets.toggle_supporter_crown";
     public static final String KEY_DISMOUNT_HAMSTER = "key.adorablehamsterpets.dismount_hamster";
+    public static final String KEY_PET_HAMSTER = "key.adorablehamsterpets.pet_hamster";
     public static final String KEY_FORCE_MOUNT_HAMSTER = "key.adorablehamsterpets.force_mount_hamster";
     public static final String KEY_RIDE_HAMSTER = "key.adorablehamsterpets.ride_hamster";
     public static final String KEY_GENETICS_VISUALIZER_VAR_UP = "key.adorablehamsterpets.genetics_visualization.variance_up";
@@ -23,6 +24,7 @@ public class ModKeyBindings {
     public static KeyBinding THROW_HAMSTER_KEY;
     public static KeyBinding TOGGLE_SUPPORTER_CROWN_KEY;
     public static KeyBinding DISMOUNT_HAMSTER_KEY;
+    public static KeyBinding PET_HAMSTER_KEY;
     public static KeyBinding FORCE_MOUNT_HAMSTER_KEY;
     public static KeyBinding RIDE_HAMSTER_KEY;
     public static KeyBinding GENETICS_VISUALIZER_VAR_UP_KEY;
@@ -51,6 +53,12 @@ public class ModKeyBindings {
 
         DISMOUNT_HAMSTER_KEY = new DynamicDismountKeyBinding(
                 KEY_DISMOUNT_HAMSTER,
+                InputUtil.UNKNOWN_KEY.getCode(), // Unbound by default
+                KEY_CATEGORY_AHP
+        );
+
+        PET_HAMSTER_KEY = new KeyBinding(
+                KEY_PET_HAMSTER,
                 InputUtil.UNKNOWN_KEY.getCode(), // Unbound by default
                 KEY_CATEGORY_AHP
         );
