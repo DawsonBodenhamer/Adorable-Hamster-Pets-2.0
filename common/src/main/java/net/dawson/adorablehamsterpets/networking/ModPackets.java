@@ -112,6 +112,14 @@ public class ModPackets {
                 })
         );
 
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, RequestPetHamsterPayload.ID, RequestPetHamsterPayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    if (context.getPlayer() instanceof PlayerEntityAccessor accessor) {
+                        accessor.ahp$startPettingHamster(payload.entityId());
+                    }
+                })
+        );
+
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, HamsterInputPayload.ID, HamsterInputPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
                     if (!Configs.AHP.enableMountableHamsters.get()) return;

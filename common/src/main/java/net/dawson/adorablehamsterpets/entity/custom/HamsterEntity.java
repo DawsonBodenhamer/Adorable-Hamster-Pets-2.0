@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
+import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
@@ -238,6 +239,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int CELEBRATING_BABY_FLAG = 1 << 24;
     public static final int GENETICS_VISUALIZER_MEMBER_FLAG = 1 << 25;
     public static final int IS_ORE_TARGET_ABOVE_FLAG = 1 << 26;
+    public static final int IS_BEING_PET_FLAG = 1 << 27;
 
     // --- Data Trackers ---
     public static final TrackedData<Integer> HAMSTER_FLAGS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -315,6 +317,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation LAYING_DOWN_RIGHT_SHOULDER_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_right_shoulder");
     private static final RawAnimation LAYING_DOWN_LEFT_SHOULDER_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_left_shoulder");
     private static final RawAnimation QUICK_BOUNCE_ON_BACK_LEGS_ANIM = RawAnimation.begin().thenPlay("anim_hamster_quick_bounce_on_back_legs");
+    private static final RawAnimation ASSUME_THROW_POSE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_assume_throw_pose");
+    private static final RawAnimation WAITING_FOR_THROW_ANIM = RawAnimation.begin().thenPlay("anim_hamster_waiting_for_throw");
 
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -508,6 +512,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void setOreTargetAbove(boolean above) { setHamsterFlag(IS_ORE_TARGET_ABOVE_FLAG, above); }
     public boolean isGeneticsVisualizerMember() { return getHamsterFlag(GENETICS_VISUALIZER_MEMBER_FLAG); }
     public void setGeneticsVisualizerMember(boolean isGeneticsVisualizerMember) { setHamsterFlag(GENETICS_VISUALIZER_MEMBER_FLAG, isGeneticsVisualizerMember); }
+    public boolean isBeingPet() { return getHamsterFlag(IS_BEING_PET_FLAG); }
+    public void setBeingPet(boolean beingPet) { setHamsterFlag(IS_BEING_PET_FLAG, beingPet); }
     // --- Riding State Accessors ---
     public int getRiderJumpCooldown() { return this.riderJumpCooldown; }
     public void setRiderJumpCooldown(int ticks) { this.riderJumpCooldown = ticks; }
@@ -1368,7 +1374,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.animScheduler.tick(this.getWorld().getTime());
         }
 
-        // --- 1. Decrement Simple Timers ---
+        // --- Decrement Simple Timers ---
         if (this.interactionCooldown > 0) this.interactionCooldown--;
         if (this.suffocationGracePeriod > 0) this.suffocationGracePeriod--;
         if (this.wakingUpTicks > 0) this.wakingUpTicks--;
@@ -1452,10 +1458,36 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 2. Tamed Hamster "Path to Slumber" State Machine ---
+        // --- Tamed Hamster "Path to Slumber" State Machine ---
         // This logic only applies to tamed hamsters and runs on the server
         if (!this.getWorld().isClient() && this.isTamed() && !this.isKnockedOut()) {
             HamsterSleepUtil.tickTamedSleepLogic(this);
+        }
+
+        // --- Auto-Petting Logic ---
+        if (!this.getWorld().isClient() && Configs.AHP.enablePetting && Platform.isModLoaded("punchy")) {
+            if (this.isTamed() && this.getOwner() instanceof ServerPlayerEntity serverPlayer) {
+                // Ensure player is not looking inside a GUI
+                if (serverPlayer.currentScreenHandler == serverPlayer.playerScreenHandler) {
+                    // Ensure hamster is in a pet-able state & within 5 blocks
+                    if (!this.isShoulderPet()
+                            && !this.isAiDisabled()
+                            && !this.isSleeping()
+                            && !this.isKnockedOut()
+                            && !this.isSulking()
+                            && !this.isCelebratingDiamond()
+                            && !this.isCelebratingBaby()
+                            && !this.isCelebratingRetrieval()
+                            && this.squaredDistanceTo(serverPlayer) < 25.0) {
+                        // Verify player is looking at hamster
+                        if (EntityTargetingUtil.isLookingAt(serverPlayer, this, 5.0, 0)) {
+                            if (this.getRandom().nextInt(Configs.AHP.pettingChanceDenominator.get()) == 0) {
+                                ((PlayerEntityAccessor) serverPlayer).ahp$startPettingHamster(this.getId());
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         super.tick();
@@ -1489,7 +1521,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 3. Server-Side Logic ---
+        // --- 2. Server-Side Logic ---
         World world = this.getWorld();
         if (!world.isClient()) {
 
@@ -2073,6 +2105,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             .triggerableAnim("anim_hamster_celebrate_chase", CELEBRATE_CHASE_ANIM)
             .triggerableAnim("anim_hamster_cheek_unload", CHEEK_UNLOAD_ANIM)
             .triggerableAnim("anim_hamster_crouch_and_investigate", CROUCH_INVESTIGATE_ANIM)
+            .triggerableAnim("anim_hamster_assume_throw_pose", ASSUME_THROW_POSE_ANIM)
 
             // --- Handle Keyframe Particles ---
             .setParticleKeyframeHandler(event -> {

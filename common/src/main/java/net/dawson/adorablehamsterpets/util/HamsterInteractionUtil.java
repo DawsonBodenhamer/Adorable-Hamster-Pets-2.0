@@ -34,6 +34,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -582,41 +583,47 @@ public final class HamsterInteractionUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
+     * Calculates which slot the hamster will occupy based on current player state and config.
+     * Exposed for external mods (like Punchy) to accurately predict mounting logic for client-side animations.
+     *
+     * @param player The player mounting the hamster.
+     * @return The next available ShoulderLocation, or null if full.
+     */
+    @Nullable
+    public static ShoulderLocation getNextAvailableSlot(PlayerEntity player) {
+        PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
+        MountPriority priority = Configs.AHP.mountPriority.get();
+
+        // --- Capacity Check ---
+        if (playerAccessor.adorablehamsterpets$getMountOrderQueue().size() >= Configs.AHP.maxShoulderHamsters.get()) {
+            return null;
+        }
+
+        // --- Priority Logic ---
+        if (priority == MountPriority.HEAD_FIRST) {
+            // Check Head -> Right -> Left
+            if (playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty()) return ShoulderLocation.HEAD;
+            if (playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty()) return ShoulderLocation.RIGHT_SHOULDER;
+            if (playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) return ShoulderLocation.LEFT_SHOULDER;
+        } else {
+            // Default: Shoulders -> Head
+            if (playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty()) return ShoulderLocation.RIGHT_SHOULDER;
+            if (playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) return ShoulderLocation.LEFT_SHOULDER;
+            if (playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty()) return ShoulderLocation.HEAD;
+        }
+
+        return null;
+    }
+
+    /**
      * Executes the logic to mount a hamster to a player's shoulder.
      * Accessible by both right-click interactions and force-mount keybinds.
      */
     public static void executeShoulderMount(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
 
-        // --- Capacity Check ---
-        if (playerAccessor.adorablehamsterpets$getMountOrderQueue().size() >= Configs.AHP.maxShoulderHamsters.get()) {
-            player.sendMessage(Text.translatable("message.adorablehamsterpets.shoulder_occupied"), true);
-            return;
-        }
-
         // --- Mount Priority Logic ---
-        ShoulderLocation availableSlot = null;
-        MountPriority priority = Configs.AHP.mountPriority.get();
-
-        if (priority == MountPriority.HEAD_FIRST) {
-            // Check Head -> Right -> Left
-            if (playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty()) {
-                availableSlot = ShoulderLocation.HEAD;
-            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty()) {
-                availableSlot = ShoulderLocation.RIGHT_SHOULDER;
-            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) {
-                availableSlot = ShoulderLocation.LEFT_SHOULDER;
-            }
-        } else {
-            // Default: Shoulders -> Head
-            if (playerAccessor.getShoulderHamster(ShoulderLocation.RIGHT_SHOULDER).isEmpty()) {
-                availableSlot = ShoulderLocation.RIGHT_SHOULDER;
-            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.LEFT_SHOULDER).isEmpty()) {
-                availableSlot = ShoulderLocation.LEFT_SHOULDER;
-            } else if (playerAccessor.getShoulderHamster(ShoulderLocation.HEAD).isEmpty()) {
-                availableSlot = ShoulderLocation.HEAD;
-            }
-        }
+        ShoulderLocation availableSlot = getNextAvailableSlot(player);
 
         // --- Mounting Logic ---
         if (availableSlot != null) {

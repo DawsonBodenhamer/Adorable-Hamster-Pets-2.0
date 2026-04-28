@@ -70,4 +70,6 @@ public interface PlayerEntityAccessor {
     List<NbtCompound> ahp$getInTransitHamsters();
     int ahp$getTransitTimer();
     void ahp$setTransitTimer(int timer);
+
+    void ahp$startPettingHamster(int entityId);
 }

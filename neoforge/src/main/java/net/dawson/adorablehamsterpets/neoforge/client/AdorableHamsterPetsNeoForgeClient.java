@@ -87,6 +87,7 @@ public final class AdorableHamsterPetsNeoForgeClient {
         event.register(ModKeyBindings.THROW_HAMSTER_KEY);
         event.register(ModKeyBindings.TOGGLE_SUPPORTER_CROWN_KEY);
         event.register(ModKeyBindings.DISMOUNT_HAMSTER_KEY);
+        event.register(ModKeyBindings.PET_HAMSTER_KEY);
         event.register(ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY);
         event.register(ModKeyBindings.RIDE_HAMSTER_KEY);
         event.register(ModKeyBindings.GENETICS_VISUALIZER_VAR_UP_KEY);

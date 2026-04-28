@@ -132,6 +132,10 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private final List<NbtCompound> ahp$inTransitHamsters = new ArrayList<>();
     @Unique private int ahp$transitTimer = 0;
 
+    // --- Petting Tracking ---
+    @Unique private NbtCompound ahp$pettingHamster = new NbtCompound();
+    @Unique private int ahp$pettingTimer = 0;
+
     // --- State Flags & Trackers ---
     @Unique private final Map<String, Integer> ahp$randomMessageIndices = new HashMap<>();
     @Unique private String adorablehamsterpets$lastDismountMessageKey = "";
@@ -254,6 +258,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             nbt.put("AHPInTransitHamsters", transitList);
             nbt.putInt("AHPTransitTimer", this.ahp$transitTimer);
         }
+
+        // --- Petting Persistence ---
+        if (!this.ahp$pettingHamster.isEmpty()) {
+            nbt.put("AHPPettingHamster", this.ahp$pettingHamster);
+            nbt.putInt("AHPPettingTimer", this.ahp$pettingTimer);
+        }
     }
 
     @Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
@@ -368,6 +378,20 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
             this.ahp$transitTimer = nbt.getInt("AHPTransitTimer");
         }
+
+        // --- Petting Persistence ---
+        this.ahp$pettingHamster = new NbtCompound();
+        this.ahp$pettingTimer = 0;
+        if (nbt.contains("AHPPettingHamster", NbtElement.COMPOUND_TYPE)) {
+            this.ahp$pettingHamster = nbt.getCompound("AHPPettingHamster");
+            this.ahp$pettingTimer = nbt.getInt("AHPPettingTimer");
+
+            // If logging back in with a hamster in pocket, ensure timer is at least 15 ticks
+            // so it spawns safely after the client finishes loading the world
+            if (this.ahp$pettingTimer <= 0) {
+                this.ahp$pettingTimer = 15;
+            }
+        }
     }
 
     @Inject(method = "tick", at = @At("HEAD"))
@@ -400,6 +424,19 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         PlayerEntity self = (PlayerEntity) (Object) this;
         if (!self.getWorld().isClient() && Configs.AHP.enableTeleportRescue) {
             this.ahp$pocketFollowingHamsters(self.getPos(), self.getWorld().getRegistryKey());
+        }
+
+        // Rescue petted hamster if player dies mid-pet
+        if (!this.ahp$pettingHamster.isEmpty()) {
+            if (Configs.AHP.enableTeleportRescue) {
+                // Hand off to transit system to drop near the player's respawn point
+                this.ahp$inTransitHamsters.add(this.ahp$pettingHamster);
+            } else {
+                // Fallback: Drop at the death location
+                HamsterEntity.spawnFromNbt((ServerWorld) self.getWorld(), self, this.ahp$pettingHamster, false);
+            }
+            this.ahp$pettingHamster = new NbtCompound();
+            this.ahp$pettingTimer = 0;
         }
     }
 
@@ -531,10 +568,22 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
+        // --- 2. Process Petting Animation Logic ---
+        if (!this.ahp$pettingHamster.isEmpty()) {
+            if (this.ahp$pettingTimer > 0) {
+                this.ahp$pettingTimer--;
+            }
+
+            if (this.ahp$pettingTimer <= 0 && self.isAlive()) {
+                HamsterEntity.spawnFromNbt((ServerWorld) world, self, this.ahp$pettingHamster, false);
+                this.ahp$pettingHamster = new NbtCompound();
+            }
+        }
+
         Random random = world.getRandom();
         final AhpConfig config = AdorableHamsterPets.CONFIG;
 
-        // --- 2. Process Tasks & Cooldowns ---
+        // --- 3. Process Tasks & Cooldowns ---
         long currentTime = world.getTime();
         adorablehamsterpets$scheduledTasks.removeIf(task -> {
             if (currentTime >= task.executionTick()) {
@@ -548,7 +597,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         if (adorablehamsterpets$creeperSoundCooldownTicks > 0) adorablehamsterpets$creeperSoundCooldownTicks--;
 
 
-        // --- 3. Feature Ticks ---
+        // --- 4. Feature Ticks ---
         tickGuideBookTracking();
 
         // Supporter Crown Trial Period Tick
@@ -601,7 +650,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
-        // --- 4. Shoulder Hamster Sensing ---
+        // --- 5. Shoulder Hamster Sensing ---
         if (this.hasAnyShoulderHamster()) {
             // Diamond Detection
             if (config.enableShoulderDiamondDetection) {
@@ -1335,6 +1384,40 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         this.ahp$heistHistory.clear();
         AdorableHamsterPets.LOGGER.info("[TreeHeist] Cleared heist history for player {}.", this.getName().getString());
         ((PlayerEntity)(Object)this).sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_history_reset").formatted(Formatting.WHITE), true);
+    }
+
+    @Unique
+    @Override
+    public void ahp$startPettingHamster(int entityId) {
+        PlayerEntity self = (PlayerEntity) (Object) this;
+        World world = self.getWorld();
+        if (world.isClient) return;
+
+        // Prevent multiple simultaneous petting animations
+        if (!this.ahp$pettingHamster.isEmpty()) return;
+
+        Entity entity = world.getEntityById(entityId);
+        if (entity instanceof HamsterEntity hamster) {
+            // Must meet criteria
+            if (!hamster.isAlive()
+                    || hamster.isAiDisabled()
+                    || hamster.isShoulderPet()
+                    || hamster.isKnockedOut()
+                    || hamster.isSleeping()
+                    || hamster.isSulking()
+                    || hamster.isCelebratingRetrieval()
+                    || hamster.isCelebratingBaby()
+                    || hamster.isCelebratingDiamond())
+                return;
+
+            // Strict distance check to prevent remote manipulation
+            if (hamster.squaredDistanceTo(self) > 64.0) return;
+
+            this.ahp$pettingHamster = HamsterNbtUtil.saveToHamsterState(hamster).toNbt();
+            this.ahp$pettingTimer = 100; // 5 seconds for animation
+
+            hamster.discard();
+        }
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
