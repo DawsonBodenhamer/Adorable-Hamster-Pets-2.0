@@ -22,10 +22,10 @@
 
 </div>
 
-<a href="https://www.youtube.com/watch?v=-kpqJSetTBY">
-<img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_thumbnail_noxus_showcase.png"
-     alt="Watch the Complete YouTube Showcase by Noxus"
-     width="55%">
+<a href="https://youtu.be/18-uvVcPgdg">
+<img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_thumbnail_updatev3.6.0_showcase.png"
+     alt="Watch the Procedural Genetics Update showcase"
+     width="75%">
 </a>
 
 # <font color="orange">The cutest, most useful pet in Minecraft.</font>
@@ -40,7 +40,8 @@ These hamsters like to bounce, shoulder-surf, hoard snacks, sniff for things, an
 
 # <font color="orange">TL;DR Features, for the Impatient</font>
 
-* **73 Fur Variants** – <font color="gray">*(genetics! science! questionable breeding decisions!)*</font>
+* **3000+ Wild Variants** – <font color="gray">*(discovery! science! questionable taming decisions!)*</font>
+* **Procedural Breeding** – <font color="gray">*discover up to 2.2 million unique variants through breeding*</font>
 * **Acorn Armor** – <font color="gray">*from biodegradable Acorn shells to Netherite plating*</font>
 * **Dynamic Animations** – <font color="gray">*procedural napping, cleaning, and personality-based sit/sleep poses*</font>
 * **Wear Up to Three Hamsters** – <font color="gray">*mount them on your shoulders & head, jiggle physics included*</font>
@@ -60,7 +61,33 @@ These hamsters like to bounce, shoulder-surf, hoard snacks, sniff for things, an
 * **Hyper-Configurable** – <font color="gray">*customize everything, from spawning to yeet velocity*</font>
 * **Widely-Compatible** – <font color="gray">*all interactions & mechanics based on configurable c:tags*</font>
 
-# <font color="orange">Or If You Prefer Juicy Details</font>
+<br> <p> <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_showcases_banner.png" alt="Adorable Hamster Pets Showcases" width="100%"> </p>
+
+<p align="center">
+
+<a href="https://youtu.be/-kpqJSetTBY">
+<img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_showcases_thumbnail_noxus.png" alt="Showcase by Noxus" width="32%">
+</a>
+
+<a href="https://youtu.be/QCzbNhzo1mg">
+<img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_showcases_thumbnail_atlas.png" alt="Showcase by Atlas" width="32%">
+</a>
+
+<a href="https://youtu.be/mKkwQfjFNJw?t=234">
+<img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_showcases_thumbnail_boodlyneck.png" alt="Showcase by Boodlyneck" width="32%">
+</a>
+
+<a href="https://youtu.be/SsnFzMOVdvI">
+<img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_showcases_thumbnail_wero-lovernite.png" alt="Showcase by Wero Lovernite" width="32%">
+</a>
+
+<a href="https://youtu.be/qGjH25FbPOg?t=592">
+<img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_showcases_thumbnail_enderverse.png" alt="Showcase by Enderverse" width="32%">
+</a>
+
+</p>
+
+<br> <p> <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_showroom_banner.png" alt="Adorable Hamster Pets Showroom" width="100%"> </p>
 
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_basics_but_cuter.png" alt="The Basics" width="100%"></p>
 
@@ -151,6 +178,8 @@ Your hamster's love for shiny things may have evolved into full-blown kleptomani
 </p>
 
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_biome_variants_genetics.png" alt="Variants" width="100%"></p>
+
+## <font color="red">OUTDATED AS OF v3.6.0 - UNDER CONSTRUCTION</font>
 
 73+ variants spawn based on biome (White in snow, Black in caves, Lavender in magical biomes). Compatible with Terralith/Biomes O' Plenty/Oh the Biomes You'll Go out of the box. Configurable enough to work with any other mod that adds custom biomes. When bred, they pass their diverse fur coat palettes on to their offspring, with a polite attempt to not *exactly* copy their parents' overlay patterns, ensuring maximum genetic variety in your ever-growing population.
 
