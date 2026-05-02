@@ -1084,23 +1084,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // Sync logic
         if (!this.getWorld().isClient()) {
-            ModPackets.SyncHamsterStateS2CPacket packet = new ModPackets.SyncHamsterStateS2CPacket(this.getId(), this.ahp$hamsterState);
-            PlayerEntity self = (PlayerEntity) (Object) this;
-
-            // Send to self
-            if (self instanceof ServerPlayerEntity serverSelf) {
-                ModPackets.CHANNEL.sendToPlayer(serverSelf, packet);
-            }
-
-            // Send to watchers
-            // Manual loop on 1.20.1
-            if (self.getWorld() instanceof ServerWorld serverWorld) {
-                for (ServerPlayerEntity otherPlayer : serverWorld.getPlayers()) {
-                    if (otherPlayer != self && otherPlayer.squaredDistanceTo(self) < 6400) {
-                        ModPackets.CHANNEL.sendToPlayer(otherPlayer, packet);
-                    }
-                }
-            }
+            this.adorablehamsterpets$syncHamsterState();
         }
     }
 
@@ -1108,17 +1092,46 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Override
     public void adorablehamsterpets$setRawHamsterState(NbtCompound nbt) {
         this.ahp$hamsterState = nbt;
+
+        // Rebuild queue on client
+        if (nbt.contains("ClientSyncQueue", NbtElement.LIST_TYPE)) {
+            this.adorablehamsterpets$mountOrderQueue.clear();
+            NbtList list = nbt.getList("ClientSyncQueue", NbtElement.STRING_TYPE);
+            for (NbtElement e : list) {
+                try {
+                    this.adorablehamsterpets$mountOrderQueue.add(ShoulderLocation.valueOf(e.asString()));
+                } catch (Exception ignored) {}
+            }
+        }
     }
 
     @Unique
     @Override
     public void adorablehamsterpets$syncHamsterState() {
-        if (!this.getWorld().isClient() && !this.ahp$hamsterState.isEmpty()) {
+        if (!this.getWorld().isClient()) { // Always sync (even if empty) to clear client state
+            // Pack queue into compound for client
+            NbtList mountOrderList = new NbtList();
+            for (ShoulderLocation location : this.adorablehamsterpets$mountOrderQueue) {
+                mountOrderList.add(NbtString.of(location.name()));
+            }
+            this.ahp$hamsterState.put("ClientSyncQueue", mountOrderList);
+
             PlayerEntity self = (PlayerEntity) (Object) this;
-            if (self instanceof ServerPlayerEntity serverPlayer) {
-                // On 1.20.1, use ModPackets.CHANNEL and the inner record class
-                var packet = new ModPackets.SyncHamsterStateS2CPacket(this.getId(), this.ahp$hamsterState);
-                ModPackets.CHANNEL.sendToPlayer(serverPlayer, packet);
+            var packet = new ModPackets.SyncHamsterStateS2CPacket(this.getId(), this.ahp$hamsterState);
+
+            // Send to self
+            if (self instanceof ServerPlayerEntity serverSelf) {
+                // Typed packet for 1.20.1
+                ModPackets.CHANNEL.sendToPlayer(serverSelf, packet);
+            }
+
+            // Send to watchers (Manual loop for 1.20.1)
+            if (self.getWorld() instanceof ServerWorld serverWorld) {
+                for (ServerPlayerEntity otherPlayer : serverWorld.getPlayers()) {
+                    if (otherPlayer != self && otherPlayer.squaredDistanceTo(self) < 6400) {
+                        ModPackets.CHANNEL.sendToPlayer(otherPlayer, packet);
+                    }
+                }
             }
         }
     }
