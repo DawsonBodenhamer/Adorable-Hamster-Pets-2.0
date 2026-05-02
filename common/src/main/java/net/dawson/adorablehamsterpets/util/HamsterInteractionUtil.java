@@ -21,6 +21,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -36,6 +37,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -616,6 +618,53 @@ public final class HamsterInteractionUtil {
     }
 
     /**
+     * Identifies which shoulder slot will be dismounted/thrown next, based on the player's config
+     * and the synced Mount Order Queue.
+     *
+     * @param player The player to check.
+     * @return The ShoulderLocation that is next in line to be dismounted, or null if shoulders are empty.
+     */
+    @Nullable
+    public static ShoulderLocation getNextSlotToDismount(PlayerEntity player) {
+        PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
+
+        ArrayDeque<ShoulderLocation> queue = playerAccessor.adorablehamsterpets$getMountOrderQueue();
+
+        // Failsafe rebuild if queue is empty but data exists
+        if (queue.isEmpty() && playerAccessor.hasAnyShoulderHamster()) {
+            for (ShoulderLocation location : ShoulderLocation.values()) {
+                if (!playerAccessor.getShoulderHamster(location).isEmpty()) {
+                    queue.addLast(location);
+                }
+            }
+        }
+
+        if (queue.isEmpty()) {
+            return null;
+        }
+
+        DismountOrder order = Configs.AHP.dismountOrder.get();
+        return order == DismountOrder.LIFO ? queue.peekLast() : queue.peekFirst();
+    }
+
+    /**
+     * Gets the NBT data of the hamster that is queued to be thrown or dismounted next.
+     * Exposed for external mods (like Punchy) to accurately predict throwing logic
+     * during client-side animation charge phases.
+     *
+     * @param player The player throwing the hamster.
+     * @return The NBT data of the hamster, or null if no hamster is mounted.
+     */
+    @Nullable
+    public static NbtCompound getNextHamsterToDismountData(PlayerEntity player) {
+        ShoulderLocation nextSlot = getNextSlotToDismount(player);
+        if (nextSlot != null) {
+            return ((PlayerEntityAccessor) player).getShoulderHamster(nextSlot);
+        }
+        return null;
+    }
+
+    /**
      * Executes the logic to mount a hamster to a player's shoulder.
      * Accessible by both right-click interactions and force-mount keybinds.
      */
@@ -634,10 +683,11 @@ public final class HamsterInteractionUtil {
             hamster.setHamsterFlag(HamsterEntity.CLEANING_FLAG, false);
             hamster.cleaningTimer = 0;
 
-            // Save, set, and update queue
+            // Save, update queue, and set state
             HamsterState data = HamsterNbtUtil.saveToHamsterState(hamster);
-            playerAccessor.setShoulderHamster(availableSlot, data.toNbt());
+            // Add to queue before setting state so sync packet captures it
             playerAccessor.adorablehamsterpets$getMountOrderQueue().addLast(availableSlot);
+            playerAccessor.setShoulderHamster(availableSlot, data.toNbt());
 
             BlockPos hamsterPosForMountSound = hamster.getBlockPos();
             hamster.discard(); // Remove hamster from world

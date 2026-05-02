@@ -1086,12 +1086,44 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // Sync logic
         if (!this.getWorld().isClient()) {
-            SyncHamsterStatePayload packet = new SyncHamsterStatePayload(this.getId(), this.ahp$hamsterState);
+            this.adorablehamsterpets$syncHamsterState();
+        }
+    }
+
+    @Unique
+    @Override
+    public void adorablehamsterpets$setRawHamsterState(NbtCompound nbt) {
+        this.ahp$hamsterState = nbt;
+
+        // Rebuild queue on client
+        if (nbt.contains("ClientSyncQueue", NbtElement.LIST_TYPE)) {
+            this.adorablehamsterpets$mountOrderQueue.clear();
+            NbtList list = nbt.getList("ClientSyncQueue", NbtElement.STRING_TYPE);
+            for (NbtElement e : list) {
+                try {
+                    this.adorablehamsterpets$mountOrderQueue.add(ShoulderLocation.valueOf(e.asString()));
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    @Unique
+    @Override
+    public void adorablehamsterpets$syncHamsterState() {
+        if (!this.getWorld().isClient()) { // Always sync (even if empty) to clear client state
+            // Pack queue into compound for client
+            NbtList mountOrderList = new NbtList();
+            for (ShoulderLocation location : this.adorablehamsterpets$mountOrderQueue) {
+                mountOrderList.add(NbtString.of(location.name()));
+            }
+            this.ahp$hamsterState.put("ClientSyncQueue", mountOrderList);
+
             PlayerEntity self = (PlayerEntity) (Object) this;
+            SyncHamsterStatePayload packet = new SyncHamsterStatePayload(this.getId(), this.ahp$hamsterState);
 
             // Send to self
-            if (self instanceof ServerPlayerEntity serverSelf) {
-                NetworkManager.sendToPlayer(serverSelf, packet);
+            if (self instanceof ServerPlayerEntity serverPlayer) {
+                NetworkManager.sendToPlayer(serverPlayer, packet);
             }
 
             // Send to watchers
@@ -1101,24 +1133,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                         NetworkManager.sendToPlayer(otherPlayer, packet);
                     }
                 }
-            }
-        }
-    }
-
-    @Unique
-    @Override
-    public void adorablehamsterpets$setRawHamsterState(NbtCompound nbt) {
-        this.ahp$hamsterState = nbt;
-    }
-
-    @Unique
-    @Override
-    public void adorablehamsterpets$syncHamsterState() {
-        if (!this.getWorld().isClient() && !this.ahp$hamsterState.isEmpty()) {
-            PlayerEntity self = (PlayerEntity) (Object) this;
-            if (self instanceof ServerPlayerEntity serverPlayer) {
-                SyncHamsterStatePayload packet = new SyncHamsterStatePayload(this.getId(), this.ahp$hamsterState);
-                NetworkManager.sendToPlayer(serverPlayer, packet);
             }
         }
     }
