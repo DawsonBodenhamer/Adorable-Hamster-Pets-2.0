@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.1] - 2025-04-27
+
+# **The Punchy Patch**
+
+This patch introduces a nice batch of gorgeous, first-person animations to your rodent-handling experience, courtesy of the amazing [**Punchy**](https://modrinth.com/mod/punchy-fpa) mod! I've been working closely with [**@Dev Punchy Man**](https://modrinth.com/mod/punchy-fpa) to overhaul how it feels to pick up, pet, and yeet your hamsters.
+
+### Added
+- **First-Person Animation Overhaul (Requires Punchy)**
+  - **Dynamic Shoulder Mounting Animations:** Luring a hamster to your shoulder is no longer a boring teleport. You will now physically lift them up, complete with the hamster adorably bouncing on your hands or running up your arm. Three new unique animations; dynamically changing depending on their destination (left shoulder, right shoulder, head).
+  - **The Yeet Queuing System:** Throwing a hamster is no longer instant. Holding down the throw key (`G`) grabs a specific hamster off your shoulder and holds it in front of your face.
+    - While queued up, the hamster also plays its own new animation (only available with Punchy) where it eagerly wiggles its butt and kicks its back feet in anticipation of being hurled through the air.
+    - Releasing the throw key (`G`) executes the throw, which is immediately followed by a new Punchy animation where you wave goodbye to your furry projectile.
+  - **Throw Cancellation:** If you release the key before the short charging period (`15 ticks`) is over, you safely abort the throw. Your character will politely place the hamster back onto the exact shoulder it came from. This charging period of `15 ticks` is not configurable, due to its duration needing to match the animation. But it's quite short— only `0.75 seconds`— so hopefully it won't impact gameplay too much.
+  - **First-Person Petting:** You can finally pet your hamster! If you stare affectionately at your hamster for a while (about 30 seconds on average), you might just reach down and give it some cuddles. Also added a dedicated "Pet Hamster" keybind (unbound by default) for when you don't feel like waiting for the random chance to kick in.
+- **FOV Zoom for Hamster Yeet**
+  - Added a smooth FOV zoom effect while queueing the Hamster Yeet, identical to drawing a vanilla bow. This FOV zoom will help indicate the new charging period for anyone who doesn't have Punchy installed, since the new animations cannot work without it.
+
+---
+
 ## [3.6.0] - 2025-03-03
 
 # **The Procedural Genetics Update**
