@@ -477,6 +477,30 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                         animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                 ));
                 break;
+            case "hamster_swish_sound":
+                client.getSoundManager().play(new PositionedSoundInstance(
+                        ModSounds.HAMSTER_SWISH.get(), SoundCategory.NEUTRAL, 0.1f, 1.0f + (animatable.getRandom().nextFloat() * 0.5f),
+                        animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
+                ));
+                break;
+            case "hamster_affection_sound":
+                SoundEvent affectionSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, animatable.getRandom());
+                if (affectionSound != null) {
+                    client.getSoundManager().play(new PositionedSoundInstance(
+                            affectionSound, SoundCategory.NEUTRAL, 1.0f, 1.0f,
+                            animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
+                    ));
+                }
+                break;
+            case "hamster_celebrate_sound":
+                SoundEvent celebrateSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, animatable.getRandom());
+                if (celebrateSound != null) {
+                    client.getSoundManager().play(new PositionedSoundInstance(
+                            celebrateSound, SoundCategory.NEUTRAL, 1.0f, 1.0f,
+                            animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
+                    ));
+                }
+                break;
         }
         animatable.soundEffectId = null;
     }
