@@ -400,8 +400,9 @@ public class AdorableHamsterPetsClient {
 
         // Handle Pet Hamster Keybind
         while (ModKeyBindings.PET_HAMSTER_KEY.wasPressed()) {
-            // If Punchy is installed & petting enabled
-            if (Configs.AHP.enablePetting && Platform.isModLoaded("punchy")) {
+            if (!Platform.isModLoaded("punchy")) {
+                client.player.sendMessage(Text.translatable("message.adorablehamsterpets.punchy_missing").formatted(Formatting.RED), true);
+            } else if (Configs.AHP.enablePetting) {
                 // Find nearby tamed hamsters that fit criteria
                 Box searchBox = client.player.getBoundingBox().expand(5.0);
                 List<HamsterEntity> nearbyHamsters = client.world.getEntitiesByClass(
