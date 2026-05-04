@@ -1430,9 +1430,25 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             this.ahp$pettingTimer = 180; // 9 seconds for animation
 
             hamster.discard();
+
+            if (self instanceof ServerPlayerEntity serverPlayer) {
+                // Typed packet for 1.20.1
+                ModPackets.CHANNEL.sendToPlayer(serverPlayer, new ModPackets.SyncPettingStateS2CPacket(true));
+            }
         }
     }
 
+    @Unique
+    @Override
+    public void ahp$cancelPettingHamster() {
+        if (!this.ahp$pettingHamster.isEmpty()) {
+            this.ahp$pettingTimer = 0; // Instantly trigger hamster respawn in next tick
+            if (((Object) this) instanceof ServerPlayerEntity serverPlayer) {
+                // Typed packet for 1.20.1
+                ModPackets.CHANNEL.sendToPlayer(serverPlayer, new ModPackets.SyncPettingStateS2CPacket(false));
+            }
+        }
+    }
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Overrides
      * ────────────────────────────────────────────────────────────────────────────*/

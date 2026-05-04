@@ -59,12 +59,14 @@ public class ModPackets {
     public record UpdateCrownThemeC2SPacket(int themeOrdinal) {}
     public record StartCrownTrialC2SPacket(int themeOrdinal) {}
     public record AdjustGeneticsConfigC2SPacket(boolean isVariance, boolean increase) {}
+    public record CancelPettingC2SPacket() {}
 
     // S2C (Server-to-Client)
     public record PlayGuidebookEffectsS2CPacket(boolean closeScreen) {}
     public record SpawnBeddingParticlesS2CPacket(BlockPos pos, Direction direction, WoodVariant variant) {}
     public record SyncHamsterStateS2CPacket(int entityId, NbtCompound data) {}
     public record PlayDistantSoundS2CPacket(Identifier soundId, float volume, float pitch) {}
+    public record SyncPettingStateS2CPacket(boolean isPetting) {}
 
     /**
      * Registers all packet definitions and their handlers.
@@ -309,6 +311,16 @@ public class ModPackets {
                 })
         );
 
+        CHANNEL.register(CancelPettingC2SPacket.class,
+                (packet, buf) -> {},
+                (buf) -> new CancelPettingC2SPacket(),
+                (packet, context) -> context.get().queue(() -> {
+                    if (context.get().getPlayer() instanceof PlayerEntityAccessor accessor) {
+                        accessor.ahp$cancelPettingHamster();
+                    }
+                })
+        );
+
         // --- Server to Client (S2C) ---
         CHANNEL.register(SpawnBeddingParticlesS2CPacket.class,
                 (packet, buf) -> {
@@ -358,6 +370,20 @@ public class ModPackets {
                 ),
                 (packet, context) -> context.get().queue(() ->
                         EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handlePlayDistantSound(packet))
+                )
+        );
+
+        CHANNEL.register(SyncPettingStateS2CPacket.class,
+                (packet, buf) -> buf.writeBoolean(packet.isPetting()),
+                (buf) -> new SyncPettingStateS2CPacket(buf.readBoolean()),
+                (packet, context) -> context.get().queue(() ->
+                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
+                            if (packet.isPetting()) {
+                                AdorableHamsterPetsClient.clientPettingTicks = 180; // Sync client state for 9 seconds
+                            } else {
+                                AdorableHamsterPetsClient.clientPettingTicks = 0;
+                            }
+                        })
                 )
         );
     }
