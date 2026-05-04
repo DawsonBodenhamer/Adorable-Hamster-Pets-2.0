@@ -86,6 +86,7 @@ public class HamsterProjectileRenderer extends EntityRenderer<HamsterProjectileE
             // Sync physics states
             entity.clientDummyHamster.isProjectileDummy = true;
             entity.clientDummyHamster.setVelocity(entity.getVelocity());
+            entity.clientDummyHamster.setPosition(entity.getX(), entity.getY(), entity.getZ());
             entity.clientDummyHamster.age = entity.age;
 
             // Force yaw sync

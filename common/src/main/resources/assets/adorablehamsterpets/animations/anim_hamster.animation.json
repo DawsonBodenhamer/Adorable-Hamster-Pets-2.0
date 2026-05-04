@@ -23078,8 +23078,7 @@
 			}
 		},
 		"anim_hamster_receiving_pets": {
-			"loop": true,
-			"animation_length": 9,
+			"animation_length": 11,
 			"bones": {
 				"tail": {
 					"position": {
@@ -23442,7 +23441,15 @@
 							"vector": [1, 1.14, 1],
 							"easing": "easeInOutCirc"
 						},
-						"9.0": {
+						"8.4167": {
+							"vector": [1, 1, 1],
+							"easing": "easeInOutCirc"
+						},
+						"9.8333": {
+							"vector": [1, 1.14, 1],
+							"easing": "easeInOutCirc"
+						},
+						"11.0": {
 							"vector": [1, 1, 1],
 							"easing": "easeInOutCirc"
 						}
