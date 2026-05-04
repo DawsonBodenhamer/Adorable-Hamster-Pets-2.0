@@ -319,7 +319,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation QUICK_BOUNCE_ON_BACK_LEGS_ANIM = RawAnimation.begin().thenPlay("anim_hamster_quick_bounce_on_back_legs");
     private static final RawAnimation ASSUME_THROW_POSE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_assume_throw_pose");
     private static final RawAnimation WAITING_FOR_THROW_ANIM = RawAnimation.begin().thenPlay("anim_hamster_waiting_for_throw");
-
+    private static final RawAnimation RECEIVING_PETS_ANIM = RawAnimation.begin().thenPlay("anim_hamster_receiving_pets");
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *                                  2. Fields
@@ -2106,6 +2106,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             .triggerableAnim("anim_hamster_cheek_unload", CHEEK_UNLOAD_ANIM)
             .triggerableAnim("anim_hamster_crouch_and_investigate", CROUCH_INVESTIGATE_ANIM)
             .triggerableAnim("anim_hamster_assume_throw_pose", ASSUME_THROW_POSE_ANIM)
+            .triggerableAnim("anim_hamster_receiving_pets", RECEIVING_PETS_ANIM)
 
             // --- Handle Keyframe Particles ---
             .setParticleKeyframeHandler(event -> {
