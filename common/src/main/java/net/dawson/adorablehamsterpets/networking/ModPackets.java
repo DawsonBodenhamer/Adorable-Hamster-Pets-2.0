@@ -6,18 +6,15 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
 import net.dawson.adorablehamsterpets.networking.payload.*;
 import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
 import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.component.ComponentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -232,15 +229,6 @@ public class ModPackets {
                 })
         );
 
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SyncPettingStatePayload.ID, SyncPettingStatePayload.CODEC,
-                (payload, context) -> context.queue(() -> {
-                    if (payload.isPetting()) {
-                        AdorableHamsterPetsClient.clientPettingTicks = 180; // Sync client state for 9 seconds
-                    } else {
-                        AdorableHamsterPetsClient.clientPettingTicks = 0;
-                    }
-                })
-        );
     }
 
     /**
@@ -273,6 +261,16 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, PlayDistantSoundPayload.ID, PlayDistantSoundPayload.CODEC,
                 (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handlePlayDistantSound(payload))
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SyncPettingStatePayload.ID, SyncPettingStatePayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    if (payload.isPetting()) {
+                        AdorableHamsterPetsClient.clientPettingTicks = 180; // Sync client state for 9 seconds
+                    } else {
+                        AdorableHamsterPetsClient.clientPettingTicks = 0;
+                    }
+                })
         );
     }
 

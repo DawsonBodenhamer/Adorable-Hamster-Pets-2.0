@@ -18885,7 +18885,7 @@
 		},
 		"anim_hamster_waiting_for_throw": {
 			"loop": true,
-			"animation_length": 6,
+			"animation_length": 3,
 			"bones": {
 				"body_parent": {
 					"rotation": {
@@ -18941,7 +18941,7 @@
 							"easing": "easeInOutCirc"
 						},
 						"0.5": {
-							"vector": ["-50.6584 + Math.cos((query.anim_time - 0) * 1000) * 1", -10.15872, "4.9219 + Math.cos((query.anim_time - 4) * 2500)"],
+							"vector": ["-50.6584 + Math.cos((query.anim_time - 0) * 1000) * 1", -10.15872, "4.9219 + Math.cos((query.anim_time - 4) * 2500) * -1"],
 							"easing": "easeInOutCirc"
 						},
 						"1.0": {
@@ -18949,15 +18949,15 @@
 							"easing": "easeInOutCirc"
 						},
 						"1.5417": {
-							"vector": ["-50.6584 + Math.cos((query.anim_time - 0) * 1000) * 1", -10.15872, "4.9219 + Math.cos((query.anim_time - 4) * 2500) *"],
+							"vector": ["-50.6584 + Math.cos((query.anim_time - 0) * 1000) * 1", -10.15872, "4.9219 + Math.cos((query.anim_time - 4) * 2500) * -1"],
 							"easing": "easeInOutCirc"
 						},
 						"1.75": {
-							"vector": ["-50.305 + Math.cos((query.anim_time - 0) * 1000) * 1", 0.36478, "5.8155 + Math.cos((query.anim_time - 4) * 2500)"],
+							"vector": ["-50.305 + Math.cos((query.anim_time - 0) * 1000) * 1", 0.36478, "5.8155 + Math.cos((query.anim_time - 4) * 2500) * -1"],
 							"easing": "easeInOutCirc"
 						},
 						"2.7917": {
-							"vector": ["-50.305 + Math.cos((query.anim_time - 0) * 1000) * 1", 0.36478, "5.8155 + Math.cos((query.anim_time - 4) * 2500)"],
+							"vector": ["-50.305 + Math.cos((query.anim_time - 0) * 1000) * 1", 0.36478, "5.8155 + Math.cos((query.anim_time - 4) * 2500) * -1"],
 							"easing": "easeInOutCirc"
 						},
 						"3.0": {
@@ -18991,11 +18991,11 @@
 							"easing": "easeInOutCirc"
 						},
 						"0.7917": {
-							"vector": ["(Math.cos((query.anim_time - 0.2) * 3000) * -30)", 0, 0],
+							"vector": ["0 + Math.cos((query.anim_time - 0.2) * 3000) * -30", 0, 0],
 							"easing": "easeInOutSine"
 						},
 						"1.0": {
-							"vector": ["Math.cos((query.anim_time - 1) * 2500) * -3", 0, "Math.cos((query.anim_time - 1) * 2500) * -3"],
+							"vector": ["0 + Math.cos((query.anim_time - 1) * 2500) * -3", 0, "0 + Math.cos((query.anim_time - 1) * 2500) * -3"],
 							"easing": "easeInOutCirc"
 						}
 					},

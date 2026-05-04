@@ -56,7 +56,7 @@ public class HamsterProjectileEntity extends ThrownEntity {
 
     // Used exclusively by client renderer
     @Environment(EnvType.CLIENT)
-    public HamsterEntity clientDummyHamster = null;
+    public HamsterEntity clientDummyHamster;
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constructors

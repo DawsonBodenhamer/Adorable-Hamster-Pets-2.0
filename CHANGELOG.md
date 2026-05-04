@@ -26,6 +26,10 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
 - **FOV Zoom for Hamster Yeet**
   - Added a smooth FOV zoom effect while queueing the Hamster Yeet, identical to drawing a vanilla bow. This FOV zoom will help indicate the new charging period for anyone who doesn't have Punchy installed, since the new animations cannot work without it.
 
+### Fixed
+- **Forge/NeoForge Server Yeet Bug**
+  - Resolved a crash on Forge and NeoForge dedicated servers caused by environment annotations running on the server thread. Super niche little insect that slipped by because it doesn't exist on Fabric. You should be able to throw your hamsters in multiplayer again!
+
 ---
 
 ## [3.6.0] - 2025-03-03
