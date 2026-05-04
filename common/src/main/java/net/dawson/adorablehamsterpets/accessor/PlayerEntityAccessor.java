@@ -72,4 +72,5 @@ public interface PlayerEntityAccessor {
     void ahp$setTransitTimer(int timer);
 
     void ahp$startPettingHamster(int entityId);
+    void ahp$cancelPettingHamster();
 }

@@ -23314,7 +23314,16 @@
 				},
 				"body_parent": {
 					"rotation": {
-						"vector": [0, -17.5, 0]
+						"0.1667": {
+							"vector": [0, -90, 0]
+						},
+						"0.25": {
+							"vector": [0, -112.5, 0],
+							"easing": "easeInOutSine"
+						}
+					},
+					"position": {
+						"vector": [-2, 0, -2.4]
 					},
 					"scale": {
 						"1.2083": {

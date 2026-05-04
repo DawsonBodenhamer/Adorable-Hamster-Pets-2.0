@@ -97,6 +97,9 @@ public class AdorableHamsterPetsClient {
     private static int crownDoubleTapTimer = 0;
     private static boolean isWaitingForCrownSecondTap = false;
 
+    // --- Petting State ---
+    public static int clientPettingTicks = 0;
+
     // --- Throw Queue State ---
     public static final int THROW_QUEUE_REQUIRED_TICKS = 15;
     public static boolean isQueuingThrow = false;
@@ -304,6 +307,17 @@ public class AdorableHamsterPetsClient {
             renderedHamsterIdsThisTick.clear();
             renderedHamsterIdsLastTick.clear();
             return;
+        }
+
+        // --- Handle Petting Cancellation ---
+        if (clientPettingTicks > 0) {
+            clientPettingTicks--;
+            if (clientPettingTicks < 170) { // 10 tick grace period
+                if (client.options.attackKey.isPressed() || client.options.useKey.isPressed() || ModKeyBindings.PET_HAMSTER_KEY.isPressed()) {
+                    NetworkManager.sendToServer(new CancelPettingPayload());
+                    clientPettingTicks = 0;
+                }
+            }
         }
 
         // Hamster riding inputs

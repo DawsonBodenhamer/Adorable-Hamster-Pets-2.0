@@ -38,6 +38,7 @@ public class ModPackets {
         NetworkManager.registerS2CPayloadType(SpawnBeddingParticlesPayload.ID, SpawnBeddingParticlesPayload.CODEC);
         NetworkManager.registerS2CPayloadType(PlayGuidebookEffectsPayload.ID, PlayGuidebookEffectsPayload.CODEC);
         NetworkManager.registerS2CPayloadType(SyncHamsterStatePayload.ID, SyncHamsterStatePayload.CODEC);
+        NetworkManager.registerS2CPayloadType(SyncPettingStatePayload.ID, SyncPettingStatePayload.CODEC);
         NetworkManager.registerS2CPayloadType(PlayDistantSoundPayload.ID, PlayDistantSoundPayload.CODEC);
     }
 
@@ -219,6 +220,24 @@ public class ModPackets {
                         } else {
                             player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.no_permission").formatted(Formatting.RED), true);
                         }
+                    }
+                })
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, CancelPettingPayload.ID, CancelPettingPayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    if (context.getPlayer() instanceof PlayerEntityAccessor accessor) {
+                        accessor.ahp$cancelPettingHamster();
+                    }
+                })
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SyncPettingStatePayload.ID, SyncPettingStatePayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    if (payload.isPetting()) {
+                        AdorableHamsterPetsClient.clientPettingTicks = 180; // Sync client state for 9 seconds
+                    } else {
+                        AdorableHamsterPetsClient.clientPettingTicks = 0;
                     }
                 })
         );

@@ -22,6 +22,7 @@ import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.networking.payload.PlayGuidebookEffectsPayload;
 import net.dawson.adorablehamsterpets.networking.payload.SyncHamsterStatePayload;
+import net.dawson.adorablehamsterpets.networking.payload.SyncPettingStatePayload;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.*;
@@ -1431,9 +1432,23 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             this.ahp$pettingTimer = 180; // 9 seconds for animation
 
             hamster.discard();
+
+            if (self instanceof ServerPlayerEntity serverPlayer) {
+                NetworkManager.sendToPlayer(serverPlayer, new SyncPettingStatePayload(true));
+            }
         }
     }
 
+    @Unique
+    @Override
+    public void ahp$cancelPettingHamster() {
+        if (!this.ahp$pettingHamster.isEmpty()) {
+            this.ahp$pettingTimer = 0; // Instantly trigger hamster respawn in next tick
+            if (((Object) this) instanceof ServerPlayerEntity serverPlayer) {
+                NetworkManager.sendToPlayer(serverPlayer, new SyncPettingStatePayload(false));
+            }
+        }
+    }
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Overrides
      * ────────────────────────────────────────────────────────────────────────────*/
