@@ -2,12 +2,10 @@ package net.dawson.adorablehamsterpets.item.custom;
 
 import net.dawson.adorablehamsterpets.util.DynamicFoodUtil;
 import net.minecraft.component.ComponentMap;
-import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
-import net.minecraft.world.World;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -31,11 +29,6 @@ public class ConfigurableFoodItem extends Item {
     @Override
     public ComponentMap getComponents() {
         return DynamicFoodUtil.getDynamicComponents(super.getComponents(), nutritionSupplier.get(), saturationSupplier.get());
-    }
-
-    @Override
-    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        DynamicFoodUtil.syncFoodComponent(stack, world, nutritionSupplier.get(), saturationSupplier.get());
     }
 
     @Override
