@@ -145,6 +145,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
 
                 // --- 3. Respawn Status & Hint ---
                 boolean configEnabled = Configs.AHP.enableRespawnInBed.get();
+                boolean freeRespawns = Configs.AHP.freeBedRespawns.get();
 
                 Text statusText;
                 Text hintText;
@@ -152,6 +153,9 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                 if (!configEnabled) {
                     statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.disabled_config");
                     hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.disabled_config");
+                } else if (freeRespawns) {
+                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.active");
+                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.active_free");
                 } else {
                     // Items in inventory are always "Inactive" regarding respawn state
                     statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.inactive");

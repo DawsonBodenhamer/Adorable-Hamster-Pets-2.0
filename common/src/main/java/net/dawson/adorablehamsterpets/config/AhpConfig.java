@@ -220,7 +220,7 @@ public class AhpConfig extends Config {
 
     @NonSync
     @Translatable.Name("Seen Warning Players")
-    @Translatable.Desc("A list of UUIDs for players who have already seen the missing guidebook warning. Ensures that everyone sees this, but only once unless you delete your name from this list.")
+    @Translatable.Desc("A list of usernames for players who have already seen the missing guidebook warning. Ensures that everyone sees this, but only once unless you delete your name from this list.")
     public List<String> playersWhoHaveSeenGuidebookWarning = new ArrayList<>();
 
     @NonSync
@@ -1007,8 +1007,18 @@ public class AhpConfig extends Config {
     @Translatable.Desc("The Master Switch. Affects all Hamster Beds. If true, hamsters linked to a bed can be resurrected there. Cheating? Maybe. Convenient? Absolutely.")
     public ValidatedBoolean enableRespawnInBed = new ValidatedBoolean(false);
 
+    // Helper field for gating
+    private final ValidatedField<Boolean> isRespawnInBedEnabled = enableRespawnInBed.map(b -> b, b -> b);
+
+    @Translatable.Name("Free Bed Respawns")
+    @Translatable.Desc("If true, Hamster Beds do not require a tribute item to function as a respawn point. They will work indefinitely for free.")
+    public ValidatedCondition<Boolean> freeBedRespawns = new ValidatedBoolean(false)
+            .toCondition(isRespawnInBedEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.respawn_enabled"),
+                    () -> false);
+
     @Translatable.Name("Resurrection Tributes")
-    @Translatable.Desc("The specific items accepted by the Hamster Bed to enable the Respawn Protocol. Defaults to the Totem of Undying, because immortality isn't cheap. Accepts item IDs (e.g. 'minecraft:totem_of_undying') or tags.")
+    @Translatable.Desc("IGNORED IF 'Free Bed Respawns' IS ENABLED. The specific items accepted by the Hamster Bed to enable the Respawn Protocol. Defaults to the Totem of Undying. Accepts item IDs (e.g. 'minecraft:totem_of_undying') or tags.")
     public List<String> resurrectionTributes = new ArrayList<>(List.of("minecraft:totem_of_undying"));
 
     @Translatable.Name("Avoid Unlinked Beds")

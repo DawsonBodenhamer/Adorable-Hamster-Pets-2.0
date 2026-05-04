@@ -68,6 +68,7 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
 
                 // --- 2. Respawn Status & Hint ---
                 boolean isConfigRespawnEnabled = serverData.getBoolean("ConfigRespawnEnabled");
+                boolean isFreeRespawns = serverData.getBoolean("FreeBedRespawns");
                 boolean isRespawnEnabled = serverData.getBoolean("RespawnEnabled");
 
                 Text statusText;
@@ -77,12 +78,16 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
                     // State 1: Global config disabled
                     statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.disabled_config");
                     hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.disabled_config");
+                } else if (isFreeRespawns) {
+                    // State 2: Free Respawns Active
+                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.active");
+                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.active_free");
                 } else if (isRespawnEnabled) {
-                    // State 2: Active
+                    // State 3: Active (Tribute Required)
                     statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.active");
                     hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.active");
                 } else {
-                    // State 3: Globally enabled, but inactive (Needs Tribute)
+                    // State 4: Globally enabled, but inactive (Tribute Required)
                     statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.inactive");
                     // Dynamic Item Name Lookup
                     Text tributeName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.resurrectionTributes);
@@ -147,6 +152,7 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
             data.putBoolean("AllowSleepInBed", bedEntity.isSleepingAllowed());
             data.putBoolean("RespawnEnabled", bedEntity.isRespawnEnabled());
             data.putBoolean("ConfigRespawnEnabled", Configs.AHP.enableRespawnInBed.get());
+            data.putBoolean("FreeBedRespawns", Configs.AHP.freeBedRespawns.get());
         }
     }
 

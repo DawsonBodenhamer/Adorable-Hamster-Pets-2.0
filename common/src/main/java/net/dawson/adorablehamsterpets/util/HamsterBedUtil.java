@@ -72,7 +72,11 @@ public final class HamsterBedUtil {
 
         // Check bed-specific enablement
         BlockEntity beCheck = bedWorld.getBlockEntity(bedPos);
-        if (!(beCheck instanceof HamsterBedBlockEntity bedEntity) || !bedEntity.isRespawnEnabled()) {
+        if (!(beCheck instanceof HamsterBedBlockEntity bedEntity)) {
+            return false;
+        }
+
+        if (!Configs.AHP.freeBedRespawns.get() && !bedEntity.isRespawnEnabled()) {
             // Bed exists, but respawn is not paid for/enabled
             // Silent fail
             return false;
@@ -149,8 +153,10 @@ public final class HamsterBedUtil {
             Text name = newHamster.hasCustomName() ? newHamster.getCustomName() : newHamster.getDisplayName();
             finalBedEntity.setLinkedHamster(newHamster.getUuid(), name, finalBedEntity.getWanderDistance());
 
-            // Consume charge
-            finalBedEntity.setRespawnEnabled(false);
+            // Don't consume charge if respawns are free
+            if (!Configs.AHP.freeBedRespawns.get()) {
+                finalBedEntity.setRespawnEnabled(false);
+            }
         }
 
         // Spawn

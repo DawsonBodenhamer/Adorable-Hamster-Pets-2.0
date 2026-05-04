@@ -324,6 +324,10 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                     return ActionResult.SUCCESS;
                 }
 
+                if (Configs.AHP.freeBedRespawns.get()) {
+                    return ActionResult.PASS;
+                }
+
                 // B. Toggle Logic
                 if (!bedEntity.isRespawnEnabled()) {
                     // Activate

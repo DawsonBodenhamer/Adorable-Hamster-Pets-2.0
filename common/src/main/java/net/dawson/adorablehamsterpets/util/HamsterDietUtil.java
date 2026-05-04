@@ -128,7 +128,7 @@ public final class HamsterDietUtil {
         }
 
         // --- 3. Process Standard Food ---
-        if (ConfigDataCache.isStandardFood(stack)) {
+        if (ConfigDataCache.isStandardFood(stack) || ConfigDataCache.isTamingFood(stack)) {
             boolean consumed = false;
 
             // Heal if injured

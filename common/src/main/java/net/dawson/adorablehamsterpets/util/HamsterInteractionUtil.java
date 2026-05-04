@@ -566,7 +566,11 @@ public final class HamsterInteractionUtil {
 
     // --- Feeding ---
     public static ActionResult handleFeeding(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
-        boolean isPotentialFood = ConfigDataCache.isStandardFood(stack) || ConfigDataCache.isBuffFood(stack) || ConfigDataCache.isPouchUnlockFood(stack);
+        boolean isPotentialFood =
+                ConfigDataCache.isStandardFood(stack)
+                        || ConfigDataCache.isBuffFood(stack)
+                        || ConfigDataCache.isPouchUnlockFood(stack)
+                        || ConfigDataCache.isTamingFood(stack);
 
         if (!player.isSneaking() && isPotentialFood) {
             boolean willRefuse = HamsterDietUtil.checkAndHandleRefusal(hamster, player, stack);
