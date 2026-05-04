@@ -63,28 +63,28 @@ public class HamsterProjectileRenderer extends EntityRenderer<HamsterProjectileE
             if (entity.clientDummyHamster != null) {
                 entity.clientDummyHamster.setNoGravity(true);
                 entity.clientDummyHamster.setAiDisabled(true); // Disable AI ticking
+                entity.clientDummyHamster.isProjectileDummy = true;
+
+                // Decode NBT for visuals
+                NbtCompound nbt = entity.getHamsterData();
+                if (nbt != null && !nbt.isEmpty()) {
+                    HamsterState.fromNbt(nbt).ifPresent(state -> {
+                        entity.clientDummyHamster.setGenome(HamsterGenome.readFromNbt(state.genomeNbt()));
+                        entity.clientDummyHamster.setBaby(state.breedingAge() < 0);
+                        entity.clientDummyHamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, state.pinkPetalType());
+
+                        if (!state.inventoryNbt().isEmpty()) {
+                            entity.clientDummyHamster.getItems().clear();
+                            Inventories.readNbt(state.inventoryNbt(), entity.clientDummyHamster.getItems(), entity.getWorld().getRegistryManager());
+                            HamsterInventoryUtil.syncEquipmentTrackers(entity.clientDummyHamster);
+                        }
+                    });
+                }
             }
         }
 
         if (entity.clientDummyHamster != null) {
-            // Decode NBT for visuals
-            NbtCompound nbt = entity.getHamsterData();
-            if (nbt != null && !nbt.isEmpty()) {
-                HamsterState.fromNbt(nbt).ifPresent(state -> {
-                    entity.clientDummyHamster.setGenome(HamsterGenome.readFromNbt(state.genomeNbt()));
-                    entity.clientDummyHamster.setBaby(state.breedingAge() < 0);
-                    entity.clientDummyHamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, state.pinkPetalType());
-
-                    if (!state.inventoryNbt().isEmpty()) {
-                        entity.clientDummyHamster.getItems().clear();
-                        Inventories.readNbt(state.inventoryNbt(), entity.clientDummyHamster.getItems(), entity.getWorld().getRegistryManager());
-                        HamsterInventoryUtil.syncEquipmentTrackers(entity.clientDummyHamster);
-                    }
-                });
-            }
-
             // Sync physics states
-            entity.clientDummyHamster.isProjectileDummy = true;
             entity.clientDummyHamster.setVelocity(entity.getVelocity());
             entity.clientDummyHamster.setPosition(entity.getX(), entity.getY(), entity.getZ());
             entity.clientDummyHamster.age = entity.age;

@@ -130,7 +130,7 @@ public final class HamsterInventoryUtil {
      * Syncs equipment visually onto the client DataTrackers.
      */
     public static void syncEquipmentTrackers(HamsterEntity hamster) {
-        if (hamster.getWorld().isClient() && !hamster.isShoulderPet()) return;
+        if (hamster.getWorld().isClient() && !hamster.isShoulderPet() && !hamster.isProjectileDummy) return;
 
         ItemStack accessory = hamster.getItems().get(ACCESSORY_SLOT_INDEX);
         ItemStack armor = hamster.getItems().get(ARMOR_SLOT_INDEX);

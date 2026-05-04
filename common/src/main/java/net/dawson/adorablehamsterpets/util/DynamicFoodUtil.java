@@ -5,10 +5,8 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.minecraft.component.ComponentMap;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.FoodComponent;
-import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.world.World;
 
 import java.util.List;
 
@@ -34,26 +32,6 @@ public final class DynamicFoodUtil {
                 .build();
 
         return ComponentMap.of(baseComponents, override);
-    }
-
-    /**
-     * Synchronizes the ItemStack's FoodComponent on the client side.
-     */
-    public static void syncFoodComponent(ItemStack stack, World world, int expectedNutrition, float expectedSaturation) {
-        if (!world.isClient) return;
-
-        FoodComponent currentFoodComponent = stack.get(DataComponentTypes.FOOD);
-
-        if (currentFoodComponent != null &&
-                (currentFoodComponent.nutrition() != expectedNutrition ||
-                        currentFoodComponent.saturation() != expectedSaturation)) {
-
-            FoodComponent updatedFoodComponent = new FoodComponent.Builder()
-                    .nutrition(expectedNutrition)
-                    .saturationModifier(expectedSaturation)
-                    .build();
-            stack.set(DataComponentTypes.FOOD, updatedFoodComponent);
-        }
     }
 
     /**

@@ -25,10 +25,20 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
       - If you release the key before the short charging period (`15 ticks`) is over, you safely abort the throw. Your character will politely place the hamster back onto the exact shoulder it came from. This charging period of `15 ticks` is not configurable, due to its duration needing to match the animation. But it's quite short— only `0.75 seconds`— so hopefully it won't impact gameplay too much.
 - **FOV Zoom for Hamster Yeet**
   - Added a smooth FOV zoom effect while queueing the Hamster Yeet, identical to drawing a vanilla bow. This FOV zoom will help indicate the new charging period for anyone who doesn't have Punchy installed, since the new animations cannot work without it.
+- **Free Bed Respawn Toggle**
+  - Added a config toggle to allow hamsters to respawn at their linked beds indefinitely without requiring a tribute item charge (like a Totem of Undying). Disabled by default.
 
 ### Fixed
-- **Forge/NeoForge Server Yeet Bug**
-  - Resolved a crash on Forge and NeoForge dedicated servers caused by environment annotations running on the server thread. Super niche little insect that slipped by because it doesn't exist on Fabric. You should be able to throw your hamsters in multiplayer again!
+- **Hamster Yeet Bug**
+  - Resolved an bug that prevented hamsters from being thrown on Forge and NeoForge dedicated servers, caused by environment annotations running on the server thread. Super niche little insect that slipped by because it doesn't exist on Fabric. You should be able to throw your hamsters in multiplayer again!
+- **Food Item Stacking**
+  - Resolved an issue on 1.21.1 where the configurable food items became unstackable in the inventory GUI after being split or spread.
+  - Implemented a stable ComponentMap caching system to ensure GUI right-click dragging correctly identifies dynamic food stacks as equal.
+- **Taming Food Feeding**
+  - Resolved a bug where already-tamed hamsters would refuse to eat their taming food (e.g. Sliced Cucumber) to heal or breed.
+- **Projectile Accessories**
+  - Fixed a visual bug where a hamster's equipped armor and accessories would temporarily vanish while they were airborne during a throw.
+
 
 ---
 

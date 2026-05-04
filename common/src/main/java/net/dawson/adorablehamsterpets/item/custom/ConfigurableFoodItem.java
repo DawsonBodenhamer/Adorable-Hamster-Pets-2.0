@@ -19,6 +19,11 @@ public class ConfigurableFoodItem extends Item {
     private final Supplier<Float> saturationSupplier;
     private final String tooltipBaseKey;
 
+    // Cache dynamically generated component map to preserve object identity
+    private ComponentMap cachedComponents = null;
+    private int lastNutrition = -1;
+    private float lastSaturation = -1.0f;
+
     public ConfigurableFoodItem(Settings settings, Supplier<Integer> nutritionSupplier, Supplier<Float> saturationSupplier, String tooltipBaseKey) {
         super(settings);
         this.nutritionSupplier = nutritionSupplier;
@@ -28,12 +33,22 @@ public class ConfigurableFoodItem extends Item {
 
     @Override
     public ComponentMap getComponents() {
-        return DynamicFoodUtil.getDynamicComponents(super.getComponents(), nutritionSupplier.get(), saturationSupplier.get());
+        int currentNutrition = this.nutritionSupplier.get();
+        float currentSaturation = this.saturationSupplier.get();
+
+        // Rebuild and cache only when the configuration values change or on first run
+        if (this.cachedComponents == null || currentNutrition != this.lastNutrition || currentSaturation != this.lastSaturation) {
+            this.lastNutrition = currentNutrition;
+            this.lastSaturation = currentSaturation;
+            this.cachedComponents = DynamicFoodUtil.getDynamicComponents(super.getComponents(), currentNutrition, currentSaturation);
+        }
+
+        return this.cachedComponents;
     }
 
     @Override
     public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
-        DynamicFoodUtil.appendTooltip(tooltip, tooltipBaseKey, nutritionSupplier.get(), saturationSupplier.get());
+        DynamicFoodUtil.appendTooltip(tooltip, this.tooltipBaseKey, this.nutritionSupplier.get(), this.saturationSupplier.get());
         super.appendTooltip(stack, context, tooltip, type);
     }
 }
