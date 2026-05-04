@@ -284,6 +284,9 @@ public class HamsterShoulderFeatureRenderer
         // --- 2. Apply animation clock from client data ---
         dummyHamster.age = clientData.getAnimationAge(location);
 
+        // Sync position so audio/particle keyframes play at the player's location instead of world origin
+        dummyHamster.setPosition(owner.getX(), owner.getY(), owner.getZ());
+
         // --- 3. Apply animation state from client data ---
         ShoulderHamsterState state = clientData.getHamsterState(location);
         if (state != null) {

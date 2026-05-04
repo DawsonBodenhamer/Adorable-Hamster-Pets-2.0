@@ -31,15 +31,4 @@ public class ShoulderHamsterRenderer extends HamsterRenderer {
         this.shadowRadius = entity.isBaby() ? 0.1F : 0.2F;
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
     }
-
-    /**
-     * Overrides the final render step to prevent keyframe-triggered particles
-     * and sounds from being processed for the shoulder model.
-     */
-    @Override
-    public void renderFinal(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel model,
-                            VertexConsumerProvider bufferSource, @Nullable VertexConsumer buffer,
-                            float partialTick, int packedLight, int packedOverlay, int colour) {
-        super.renderFinal(poseStack, animatable, model, bufferSource, buffer, partialTick, packedLight, packedOverlay, colour);
-    }
 }
