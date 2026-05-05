@@ -27,6 +27,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -378,23 +379,36 @@ public final class HamsterBedUtil {
                 .map(GlobalPos::pos)
                 .orElse(null);
 
-        for (int i = 0; i < path.getLength(); ++i) {
+        World world = hamster.getWorld();
+        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+
+        // Only scan the next 15 nodes
+        int startIndex = path.getCurrentNodeIndex();
+        int endIndex = Math.min(path.getLength(), startIndex + 15);
+
+        for (int i = startIndex; i < endIndex; ++i) {
             PathNode node = path.getNode(i);
-            // Use direct method to get BlockPos from the node
-            BlockPos pos = node.getBlockPos();
-            if (isUnlinkedBed(hamster, pos, linkedBed) || isUnlinkedBed(hamster, pos.down(), linkedBed)) {
-                AdorableHamsterPets.LOGGER.trace(
-                        "[AHP Nav Debug] Path intersects unlinked bed at {}, linkedBed={} for hamster {}",
-                        pos, linkedBed, hamster.getUuid()
-                );
+            mutablePos.set(node.x, node.y, node.z);
+
+            // Skip unloaded chunks
+            if (!world.isChunkLoaded(mutablePos.getX() >> 4, mutablePos.getZ() >> 4)) {
+                continue;
+            }
+
+            if (isUnlinkedBed(world, mutablePos, linkedBed)) {
+                return true;
+            }
+
+            mutablePos.move(Direction.DOWN);
+            if (isUnlinkedBed(world, mutablePos, linkedBed)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean isUnlinkedBed(HamsterEntity hamster, BlockPos pos, BlockPos linkedBed) {
-        if (hamster.getWorld().getBlockState(pos).getBlock() instanceof HamsterBedBlock) {
+    private static boolean isUnlinkedBed(World world, BlockPos pos, BlockPos linkedBed) {
+        if (world.getBlockState(pos).isOf(ModBlocks.HAMSTER_BED.get())) {
             // If the node is a bed, check if it's NOT this hamster's linked bed
             // True if no linked bed, or if position doesn't match
             return linkedBed == null || !pos.equals(linkedBed);

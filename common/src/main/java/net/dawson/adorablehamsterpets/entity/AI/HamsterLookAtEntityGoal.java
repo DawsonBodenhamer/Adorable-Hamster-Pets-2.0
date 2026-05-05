@@ -16,6 +16,7 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
     // --- Fields ---
     private final MobEntity hamsterMob;
     private final float chance;
+    private int gazeCheckTimer = 0;
 
     // --- Constructors ---
     public HamsterLookAtEntityGoal(MobEntity mob, Class<? extends LivingEntity> targetType, float range) {
@@ -96,6 +97,7 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
         super.stop();
         if (this.mob instanceof HamsterEntity hamster) {
             hamster.isLookAtEntityGoalActive = false;
+            hamster.hasMutualGaze = false;
             if (hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
                 hamster.setActiveCustomGoalDebugName("None");
             }
@@ -119,8 +121,17 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
             );
 
             // --- Dynamic Gaze Logic ---
-            // If player's crosshair is on hamster, sustain eye contact
-            if (target instanceof LivingEntity livingTarget && EntityTargetingUtil.isLookingAt(livingTarget, this.mob, 5.0, 0.0)) {
+            if (this.gazeCheckTimer-- <= 0) {
+                this.gazeCheckTimer = 5;
+                // If player's crosshair is on hamster, sustain eye contact
+                if (target instanceof LivingEntity livingTarget && EntityTargetingUtil.isLookingAt(livingTarget, this.mob, 5.0, 0.0)) {
+                    if (this.mob instanceof HamsterEntity hamster) hamster.hasMutualGaze = true;
+                } else {
+                    if (this.mob instanceof HamsterEntity hamster) hamster.hasMutualGaze = false;
+                }
+            }
+
+            if (this.mob instanceof HamsterEntity hamster && hamster.hasMutualGaze) {
                 // Reset timer to 60 ticks to sustain gaze
                 accessor.setLookTime(60);
             } else {

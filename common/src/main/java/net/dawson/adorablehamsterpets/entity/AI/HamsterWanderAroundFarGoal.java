@@ -43,9 +43,8 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
             return false;
         }
 
-        // Prevent wandering if LookAtEntityGoal is active and player is looking back (unless zooming)
-        PlayerEntity closestPlayer = this.hamster.getWorld().getClosestPlayer(this.hamster, 5.0);
-        if (this.hamster.isLookAtEntityGoalActive && closestPlayer != null && EntityTargetingUtil.isLookingAt(closestPlayer, this.hamster, 5.0, 0.0) && !this.hamster.hasGreenBeanBuff()) {
+        // Prevent wandering if mutual gaze established and not zooming
+        if (this.hamster.hasMutualGaze && !this.hamster.hasGreenBeanBuff()) {
             return false;
         }
 
@@ -96,9 +95,8 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
             return !(this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut())
                     && !this.mob.getNavigation().isIdle();
         } else {
-            // Stop wandering if mutual eye contact is established
-            PlayerEntity closestPlayer = this.hamster.getWorld().getClosestPlayer(this.hamster, 5.0);
-            if (this.hamster.isLookAtEntityGoalActive && closestPlayer != null && EntityTargetingUtil.isLookingAt(closestPlayer, this.hamster, 5.0, 0.0)) {
+            // Stop wandering if mutual eye contact established
+            if (this.hamster.hasMutualGaze) {
                 return false;
             }
             // For normal wandering, use default behavior

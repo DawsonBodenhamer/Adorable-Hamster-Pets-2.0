@@ -72,6 +72,7 @@ public class HamsterPlayWithItemGoal extends Goal {
     private int repositionAttempts;
     private int lungeTicks;
     private int itemInterestTimer;
+    private int checkTimer = 0;
 
     // --- State Management ---
     // Defines the mode for the current action:
@@ -119,7 +120,14 @@ public class HamsterPlayWithItemGoal extends Goal {
             return true; // Resume the goal
         }
 
-        // --- 2. Start Logic ---
+        // --- 2. Throttle Queries ---
+        if (this.checkTimer > 0) {
+            this.checkTimer--;
+            return false;
+        }
+        this.checkTimer = this.getTickCount(10); // Twice per second
+
+        // --- 3. Start Logic ---
         // Initial Checks
         if (!Configs.AHP.enableItemStealing) {
             return false;

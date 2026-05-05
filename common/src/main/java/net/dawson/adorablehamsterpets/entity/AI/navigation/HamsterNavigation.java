@@ -25,7 +25,7 @@ public class HamsterNavigation extends MobNavigation {
     private int unsafeCycles = 0;
 
     // --- Tuning ---
-    private static final int MAX_ALT_ATTEMPTS = 10;
+    private static final int MAX_ALT_ATTEMPTS = 2;
     private static final int ALT_RADIUS = 4;
     private static final double WAYPOINT_REACH_DIST_SQ = 1.5 * 1.5;
     private static final double TARGET_MOVE_REPATH_DIST_SQ = 5 * 5;
@@ -42,7 +42,10 @@ public class HamsterNavigation extends MobNavigation {
         AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] HamsterNavigation constructed for hamster {}", hamster.getUuid());
     }
 
-    // --- High-Level Routing Entrypoints ---
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        High-Level Routing Entrypoints
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     /**
      * Starts the hamster moving towards a specific coordinate, planning a path that avoids unlinked beds.
      * If a safe detour (waypoint) is already active and still valid for the target, it will continue pathing
@@ -54,11 +57,25 @@ public class HamsterNavigation extends MobNavigation {
     @Override
     public boolean startMovingTo(double x, double y, double z, double speed) {
         BlockPos target = BlockPos.ofFloored(x, y, z);
-        AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] startMovingTo(xyz={}, speed={})  waypoint={}",
-                target, speed, avoidanceWaypoint);
 
-        // If there is a valid waypoint, stick to it
+        // 1. Fast-Path: Use vanilla's pathfinding
+        Path direct = super.findPathTo(target, 0);
+
+        if (direct != null && !HamsterBedUtil.isPathThroughUnlinkedBed(this.hamster, direct)) {
+            this.hamster.pathingFailures = 0;
+            this.hamster.lastFailedTarget = null;
+            clearWaypoint();
+            return this.startMovingAlong(direct, speed);
+        }
+
+        // 2. More Complex Waypoint Check
         if (isWaypointValidForTarget(target, null)) {
+            Path currentPath = this.getCurrentPath();
+            if (currentPath != null && this.avoidanceWaypoint.equals(currentPath.getTarget())) {
+                this.setSpeed(speed);
+                return true; // Use existing path
+            }
+
             Path wp = super.findPathTo(avoidanceWaypoint, 0);
             if (wp != null) {
                 AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Using existing waypoint {} toward {}", avoidanceWaypoint, target);
@@ -69,8 +86,8 @@ public class HamsterNavigation extends MobNavigation {
             }
         }
 
-        // Plan a path; this call can select a new waypoint
-        Path planned = planPathWithWaypoint(target, null);
+        // 3. Fallback: Plan new detour
+        Path planned = planPathWithWaypoint(target, null, direct);
         return planned != null && this.startMovingAlong(planned, speed);
     }
 
@@ -85,10 +102,25 @@ public class HamsterNavigation extends MobNavigation {
     @Override
     public boolean startMovingTo(Entity entity, double speed) {
         BlockPos target = entity.getBlockPos();
-        AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] startMovingTo(entity={}, speed={}) waypoint={}",
-                entity.getName().getString(), speed, avoidanceWaypoint);
 
+        // 1. Fast-Path: Use vanilla's entity pathfinding
+        Path direct = super.findPathTo(entity, 0);
+
+        if (direct != null && !HamsterBedUtil.isPathThroughUnlinkedBed(this.hamster, direct)) {
+            this.hamster.pathingFailures = 0;
+            this.hamster.lastFailedTarget = null;
+            clearWaypoint();
+            return this.startMovingAlong(direct, speed);
+        }
+
+        // 2. More Complex Waypoint Check
         if (isWaypointValidForTarget(target, entity)) {
+            Path currentPath = this.getCurrentPath();
+            if (currentPath != null && this.avoidanceWaypoint.equals(currentPath.getTarget())) {
+                this.setSpeed(speed);
+                return true; // Use existing path
+            }
+
             Path wp = super.findPathTo(avoidanceWaypoint, 0);
             if (wp != null) {
                 AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Using existing waypoint {} toward entity {}", avoidanceWaypoint, entity.getName().getString());
@@ -99,7 +131,8 @@ public class HamsterNavigation extends MobNavigation {
             }
         }
 
-        Path planned = planPathWithWaypoint(target, entity);
+        // 3. Fallback: Plan new detour
+        Path planned = planPathWithWaypoint(target, entity, direct);
         return planned != null && this.startMovingAlong(planned, speed);
     }
 
@@ -117,7 +150,10 @@ public class HamsterNavigation extends MobNavigation {
         return super.findPathTo(pos, range);
     }
 
-    // --- Tick Logic ---
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Tick Logic
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     @Override
     public void tick() {
         super.tick();
@@ -134,7 +170,10 @@ public class HamsterNavigation extends MobNavigation {
         }
     }
 
-    // --- Planning ---
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Planning
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     /**
      * Plans a path to the target, creating a detour waypoint if the direct path is unsafe.
      * If the direct path is blocked by an unlinked hamster bed, this method attempts to find a safe
@@ -143,21 +182,15 @@ public class HamsterNavigation extends MobNavigation {
      * unsafe direct path as a last resort to prevent the hamster from getting stuck.
      */
     @Nullable
-    private Path planPathWithWaypoint(BlockPos targetPos, @Nullable Entity targetEntity) {
+    private Path planPathWithWaypoint(BlockPos targetPos, @Nullable Entity targetEntity, @Nullable Path direct) {
         AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] planPathWithWaypoint target={}", targetPos);
 
-        Path direct = super.findPathTo(targetPos, 0);
-        boolean directUnsafe = direct != null && HamsterBedUtil.isPathThroughUnlinkedBed(this.hamster, direct);
-
-        // If the direct path is safe, reset everything.
-        if (!directUnsafe) {
-            hamster.pathingFailures = 0;
-            hamster.lastFailedTarget = null;
-            if (avoidanceWaypoint != null) {
-                AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Direct path safe; clearing previous waypoint {}", avoidanceWaypoint);
-                clearWaypoint();
-            }
-            return direct;
+        // If the vanilla pathfinder cannot find a path at all, don't waste CPU
+        if (direct == null) {
+            this.hamster.pathingFailures = 0;
+            this.hamster.lastFailedTarget = null;
+            clearWaypoint();
+            return null;
         }
 
         // Increment failure count as soon as a detour is needed
@@ -198,7 +231,10 @@ public class HamsterNavigation extends MobNavigation {
         return null; // Do nothing this tick; caller won't start moving
     }
 
-    // --- Waypoint validity ---
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     private boolean isWaypointValidForTarget(BlockPos currentTargetPos, @Nullable Entity currentEntityTarget) {
         if (avoidanceWaypoint == null) return false;
 
@@ -221,14 +257,6 @@ public class HamsterNavigation extends MobNavigation {
                 clearWaypoint();
                 return false;
             }
-        }
-
-        // If a direct path to the current target is now safe, drop the waypoint
-        Path directNow = super.findPathTo(currentTargetPos, 0);
-        if (directNow != null && !HamsterBedUtil.isPathThroughUnlinkedBed(this.hamster, directNow)) {
-            AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Direct path became safe; clearing waypoint {}", avoidanceWaypoint);
-            clearWaypoint();
-            return false;
         }
 
         return true;

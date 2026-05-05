@@ -2,15 +2,14 @@ package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.dawson.adorablehamsterpets.mixin.accessor.LandPathNodeMakerInvoker;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.ShapeContext;
-import net.minecraft.entity.ai.pathing.PathNodeType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,17 +21,6 @@ import java.util.Set;
  * bed exiting, and anti-suffocation mechanics.
  */
 public class HamsterPlacementUtil {
-
-    private static final Set<PathNodeType> HAZARDOUS_FLOOR_TYPES = EnumSet.of(
-            PathNodeType.LAVA,
-            PathNodeType.DAMAGE_FIRE,
-            PathNodeType.DANGER_FIRE,
-            PathNodeType.POWDER_SNOW,
-            PathNodeType.DAMAGE_OTHER,
-            PathNodeType.DANGER_OTHER,
-            PathNodeType.DAMAGE_CAUTIOUS,
-            PathNodeType.WATER
-    );
 
     /**
      * Checks if the hamster needs to be rescued from suffocation and performs the rescue if possible.
@@ -136,31 +124,45 @@ public class HamsterPlacementUtil {
      * 4. The two blocks at the spawn position (for feet and head) have no collision shape *for this specific hamster*.
      */
     public static boolean isSafeSpawnLocation(BlockPos pos, World world, HamsterEntity hamster) {
-        // --- 1. Check body position for hazards ---
-        PathNodeType bodyType = LandPathNodeMakerInvoker.callGetCommonNodeType(world, pos);
-        if (HAZARDOUS_FLOOR_TYPES.contains(bodyType)) {
-            return false;
-        }
+        // --- 1. Fast Collision Checks (Cheapest) ---
+        ShapeContext entityContext = ShapeContext.of(hamster);
 
-        // --- 2. Check for a valid, non-hazardous floor ---
+        // Ensure physical surface to stand on first
         BlockPos floorPos = pos.down();
         BlockState floorState = world.getBlockState(floorPos);
-
-        // Use invoker to get pathfinding node type of the floor.
-        PathNodeType floorType = LandPathNodeMakerInvoker.callGetCommonNodeType(world, floorPos);
-        if (HAZARDOUS_FLOOR_TYPES.contains(floorType)) {
-            return false; // Floor is a known hazard
-        }
-
-        // Ensure physical surface to stand on
         if (floorState.getCollisionShape(world, floorPos).isEmpty()) {
             return false;
         }
 
-        // --- 3. Check for empty body/head space using entity-specific context ---
-        // The block is considered safe if it has no collision for the HamsterEntity
-        ShapeContext entityContext = ShapeContext.of(hamster);
-        return world.getBlockState(pos).getCollisionShape(world, pos, entityContext).isEmpty() &&
-                world.getBlockState(pos.up()).getCollisionShape(world, pos.up(), entityContext).isEmpty();
+        // Ensure body and head space are empty
+        BlockState bodyState = world.getBlockState(pos);
+        if (!bodyState.getCollisionShape(world, pos, entityContext).isEmpty()) {
+            return false;
+        }
+
+        BlockState headState = world.getBlockState(pos.up());
+        if (!headState.getCollisionShape(world, pos.up(), entityContext).isEmpty()) {
+            return false;
+        }
+
+        // --- 2. Hazard Checks ---
+        // Fluid: unsafe
+        if (!bodyState.getFluidState().isEmpty()) {
+            return false;
+        }
+
+        // Explicit block hazards
+        Block bodyBlock = bodyState.getBlock();
+        if (bodyBlock == Blocks.FIRE || bodyBlock == Blocks.SOUL_FIRE || bodyBlock == Blocks.LAVA || bodyBlock == Blocks.POWDER_SNOW || bodyBlock == Blocks.SWEET_BERRY_BUSH || bodyBlock == Blocks.WITHER_ROSE || bodyBlock == Blocks.CACTUS || bodyBlock == Blocks.WATER) {
+            return false;
+        }
+
+        // Floor hazards
+        Block floorBlock = floorState.getBlock();
+        if (floorBlock == Blocks.MAGMA_BLOCK || floorBlock == Blocks.CACTUS || floorBlock == Blocks.CAMPFIRE || floorBlock == Blocks.SOUL_CAMPFIRE || floorBlock == Blocks.LAVA || floorBlock == Blocks.FIRE || floorBlock == Blocks.SOUL_FIRE) {
+            return false;
+        }
+
+        return true;
     }
 }
