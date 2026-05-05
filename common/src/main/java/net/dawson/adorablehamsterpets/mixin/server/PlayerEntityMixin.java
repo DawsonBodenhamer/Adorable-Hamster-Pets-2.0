@@ -1431,6 +1431,17 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             this.ahp$pettingHamster = HamsterNbtUtil.saveToHamsterState(hamster).toNbt();
             this.ahp$pettingTimer = 220; //11 seconds for animation
 
+            // Swish SFX on pick up
+            world.playSound(
+                    null,
+                    self.getX(),
+                    self.getY(),
+                    self.getZ(),
+                    ModSounds.HAMSTER_SWISH.get(),
+                    SoundCategory.PLAYERS,
+                    0.1f,
+                    1.0f + world.getRandom().nextFloat() * 0.5f);
+
             hamster.discard();
 
             if (self instanceof ServerPlayerEntity serverPlayer) {
@@ -1443,12 +1454,26 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Override
     public void ahp$cancelPettingHamster() {
         if (!this.ahp$pettingHamster.isEmpty()) {
+            PlayerEntity self = (PlayerEntity) (Object) this;
+
+            // Swish SFX if terminated before 9 sec
+            if (this.ahp$pettingTimer > 41) {
+                self.getWorld().playSound(
+                        null,
+                        self.getBlockPos(),
+                        ModSounds.HAMSTER_SWISH.get(),
+                        SoundCategory.NEUTRAL,
+                        0.1f,
+                        1.0f + self.getWorld().getRandom().nextFloat() * 0.5f);
+            }
+
             this.ahp$pettingTimer = 0; // Instantly trigger hamster respawn in next tick
-            if (((Object) this) instanceof ServerPlayerEntity serverPlayer) {
+            if (self instanceof ServerPlayerEntity serverPlayer) {
                 NetworkManager.sendToPlayer(serverPlayer, new SyncPettingStatePayload(false));
             }
         }
     }
+
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Overrides
      * ────────────────────────────────────────────────────────────────────────────*/
