@@ -34,7 +34,7 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
 - **Food Item Stacking**
   - Resolved an issue on 1.21.1 where the configurable food items became unstackable in the inventory GUI after being split or spread.
   - Implemented a stable ComponentMap caching system to ensure GUI right-click dragging correctly identifies dynamic food stacks as equal.
-- **Taming Food Feeding**
+- **Sliced Cucumber Feeding**
   - Resolved a bug where already-tamed hamsters would refuse to eat their taming food (e.g. Sliced Cucumber) to heal or breed.
 - **Projectile Accessories**
   - Fixed a visual bug where a hamster's equipped armor and accessories would temporarily vanish while they were airborne during a throw.
