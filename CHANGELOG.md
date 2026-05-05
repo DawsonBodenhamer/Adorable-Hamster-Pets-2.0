@@ -39,7 +39,7 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
 - **Projectile Accessories**
   - Fixed a visual bug where a hamster's equipped armor and accessories would temporarily vanish while they were airborne during a throw.
 - **Server Performance**
-  - Resolved a few pathfinding and AI issues where tamed hamsters following the player would sometimes experience server-tick lag spikes.
+  - Resolved a few pathfinding and AI issues where tamed hamsters following the player would sometimes experience server-tick lag spikes. Usually you wouldn't notice these unless you had a lot of hamsters following you at once.
 
 
 ---
