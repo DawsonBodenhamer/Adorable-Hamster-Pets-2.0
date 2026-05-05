@@ -9,7 +9,6 @@
     "server.PlayerEntityMixin",
     "accessor.SlotAccessor",
     "accessor.MeleeAttackGoalAccessor",
-    "accessor.LandPathNodeMakerInvoker",
     "accessor.LookAtEntityGoalAccessor",
     "accessor.LookAroundGoalAccessor",
     "accessor.FollowOwnerGoalAccessor",

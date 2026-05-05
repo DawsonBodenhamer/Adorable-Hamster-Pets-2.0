@@ -160,7 +160,12 @@ public final class HamsterMovementUtil {
         }
 
         // --- Standard Vanilla Teleport ---
-        Optional<BlockPos> safePosOpt = HamsterPlacementUtil.findSafeSpawnPosition(target.getBlockPos(), world, 3, hamster);
+        // Apply a random offset so multiple hamsters don't all teleport into the exact same BlockPos and cause massive collision lag
+        int offsetX = hamster.getRandom().nextBetween(-2, 2);
+        int offsetZ = hamster.getRandom().nextBetween(-2, 2);
+        BlockPos searchStart = target.getBlockPos().add(offsetX, 0, offsetZ);
+
+        Optional<BlockPos> safePosOpt = HamsterPlacementUtil.findSafeSpawnPosition(searchStart, world, 3, hamster);
 
         safePosOpt.ifPresent(safePos -> {
             hamster.refreshPositionAndAngles(safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5, hamster.getYaw(), hamster.getPitch());

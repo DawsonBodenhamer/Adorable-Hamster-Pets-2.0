@@ -393,6 +393,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique private Boolean is3dCenter = null;
     @Unique private double parsed3dScale = 1.0;
     @Unique private int parsed3dY = 0;
+    @Unique public transient boolean hasMutualGaze = false;
 
     // --- Inventory ---
     private final DefaultedList<ItemStack> items = ImplementedInventory.create(HamsterInventoryUtil.INVENTORY_SIZE);
@@ -1492,23 +1493,28 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         // --- Auto-Petting Logic ---
         if (!this.getWorld().isClient() && Configs.AHP.enablePetting && Platform.isModLoaded("punchy")) {
-            if (this.isTamed() && this.getOwner() instanceof ServerPlayerEntity serverPlayer) {
-                // Ensure player is not looking inside a GUI
-                if (serverPlayer.currentScreenHandler == serverPlayer.playerScreenHandler) {
-                    // Ensure hamster is in a pet-able state & within 5 blocks
-                    if (!this.isShoulderPet()
-                            && !this.isAiDisabled()
-                            && !this.isSleeping()
-                            && !this.isKnockedOut()
-                            && !this.isSulking()
-                            && !this.isCelebratingDiamond()
-                            && !this.isCelebratingBaby()
-                            && !this.isCelebratingRetrieval()
-                            && this.squaredDistanceTo(serverPlayer) < 25.0) {
-                        // Verify player is looking at hamster
-                        if (EntityTargetingUtil.isLookingAt(serverPlayer, this, 5.0, 0)) {
-                            if (this.getRandom().nextInt(Configs.AHP.pettingChanceDenominator.get()) == 0) {
-                                ((PlayerEntityAccessor) serverPlayer).ahp$startPettingHamster(this.getId());
+            // Check twice per second
+            if (this.age % 10 == 0) {
+                if (this.isTamed() && this.getOwner() instanceof ServerPlayerEntity serverPlayer) {
+                    // Ensure player is not looking inside a GUI
+                    if (serverPlayer.currentScreenHandler == serverPlayer.playerScreenHandler) {
+                        // Ensure hamster is in a pet-able state & within 5 blocks
+                        if (!this.isShoulderPet()
+                                && !this.isAiDisabled()
+                                && !this.isSleeping()
+                                && !this.isKnockedOut()
+                                && !this.isSulking()
+                                && !this.isCelebratingDiamond()
+                                && !this.isCelebratingBaby()
+                                && !this.isCelebratingRetrieval()
+                                && this.squaredDistanceTo(serverPlayer) < 25.0) {
+                            // Verify player is looking at hamster
+                            if (EntityTargetingUtil.isLookingAt(serverPlayer, this, 5.0, 0)) {
+                                // Divide chance denominator by 10 so rarity is still the same
+                                int chance = Math.max(1, Configs.AHP.pettingChanceDenominator.get() / 10);
+                                if (this.getRandom().nextInt(chance) == 0) {
+                                    ((PlayerEntityAccessor) serverPlayer).ahp$startPettingHamster(this.getId());
+                                }
                             }
                         }
                     }

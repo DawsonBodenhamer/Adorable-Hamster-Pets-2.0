@@ -70,6 +70,16 @@ public class HamsterFleeGoal<T extends LivingEntity> extends FleeEntityGoal<T> {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
+    public boolean canStart() {
+        // Bypass for performance
+        if (this.hamster.isTamed() || this.hamster.isBaby()) {
+            return false;
+        }
+
+        return super.canStart();
+    }
+
+    @Override
     public void start() {
         super.start();
         this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());

@@ -78,6 +78,7 @@ public class HamsterSniffForOreGoal extends Goal {
     private boolean isSeekingDisappointingOre;
     private SeekingState currentState = SeekingState.IDLE;
     private int pathingTickTimer;
+    private int searchCooldown = 0;
 
     @Nullable
     private Path path;
@@ -119,7 +120,17 @@ public class HamsterSniffForOreGoal extends Goal {
             return false;
         }
 
-        return findNewTargetOreAndSetState();
+        // Prevent scanning every tick
+        if (this.searchCooldown > 0) {
+            this.searchCooldown--;
+            return false;
+        }
+
+        boolean foundTarget = findNewTargetOreAndSetState();
+        if (!foundTarget) {
+            this.searchCooldown = 10; // Check twice per second
+        }
+        return foundTarget;
     }
 
     @Override
@@ -193,6 +204,7 @@ public class HamsterSniffForOreGoal extends Goal {
 
         this.currentState = SeekingState.IDLE;
         this.targetOrePos = null;
+        this.searchCooldown = 0;
     }
 
     @Override
