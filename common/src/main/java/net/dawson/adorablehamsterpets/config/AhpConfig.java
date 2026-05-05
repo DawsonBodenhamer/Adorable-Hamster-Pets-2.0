@@ -627,8 +627,8 @@ public class AhpConfig extends Config {
     public boolean enablePetting = true;
 
     @Translatable.Name("Auto-Petting Chance")
-    @Translatable.Desc("The 1-in-X chance per tick (20 ticks per second) to initiate petting when looking at your hamster. The hamster must be either standing or sitting, and not involved in any other activity. The default is 600. This means on average, it will require about ~30 seconds of uninterrupted staring to trigger, so it's quite rare. If you're impatient, it also comes with a keybind to trigger it manually.")
-    public ValidatedInt pettingChanceDenominator = new ValidatedInt(600, 1200, 20);
+    @Translatable.Desc("The 1-in-X chance per tick (20 ticks per second) to initiate petting when looking at your hamster. The hamster must be either standing or sitting, and not involved in any other activity. The default is 1000. This means on average, it will require about ~30 seconds of uninterrupted staring to trigger, so it's quite rare. If you're impatient, it also comes with a keybind to trigger it manually.")
+    public ValidatedInt pettingChanceDenominator = new ValidatedInt(1000, 3000, 20);
 
     @Translatable.Name("Enable GUI Renaming")
     @Translatable.Desc("Lets you rename hamsters directly from their inventory screen. Much more civilized than slapping them with a name tag.")
