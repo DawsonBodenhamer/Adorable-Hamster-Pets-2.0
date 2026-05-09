@@ -18872,6 +18872,9 @@
 				}
 			},
 			"sound_effects": {
+				"0.5": {
+					"effect": "hamster_swish_sound"
+				},
 				"1.0833": {
 					"effect": "hamster_scratch_sound"
 				},
@@ -23617,15 +23620,15 @@
 							"easing": "easeInOutCirc"
 						},
 						"1.2917": {
-							"vector": [0, -2.1, 0],
+							"vector": [-0.84078, -2.1, 1.10594],
 							"easing": "easeInOutSine"
 						},
 						"1.375": {
-							"vector": [0, -2, 0],
+							"vector": [-0.84078, -1.6, 1.10594],
 							"easing": "easeInOutSine"
 						},
 						"6.9167": {
-							"vector": [0, -2, 0],
+							"vector": [-0.84078, -1.6, 1.10594],
 							"easing": "easeInOutSine"
 						},
 						"7.6667": {
