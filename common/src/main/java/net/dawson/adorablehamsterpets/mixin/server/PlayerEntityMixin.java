@@ -136,6 +136,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     // --- Petting Tracking ---
     @Unique private NbtCompound ahp$pettingHamster = new NbtCompound();
     @Unique private int ahp$pettingTimer = 0;
+    @Unique private int ahp$mountSoundTimer = 0;
 
     // --- State Flags & Trackers ---
     @Unique private final Map<String, Integer> ahp$randomMessageIndices = new HashMap<>();
@@ -576,6 +577,16 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
 
             if (this.ahp$pettingTimer <= 0 && self.isAlive()) {
+                // Swish sound when player places hamster back down
+                world.playSound(
+                        null,
+                        self.getBlockPos(),
+                        ModSounds.HAMSTER_SWISH.get(),
+                        SoundCategory.NEUTRAL,
+                        0.1f,
+                        1.0f + world.getRandom().nextFloat() * 0.5f
+                );
+
                 HamsterEntity.spawnFromNbt((ServerWorld) world, self, this.ahp$pettingHamster, false);
                 this.ahp$pettingHamster = new NbtCompound();
             }
@@ -600,6 +611,17 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // --- 4. Feature Ticks ---
         tickGuideBookTracking();
+
+        if (this.ahp$mountSoundTimer > 0) {
+            this.ahp$mountSoundTimer--;
+            if (this.ahp$mountSoundTimer == 0) {
+                SoundEvent mountSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SHOULDER_MOUNT_SOUNDS, random);
+                if (mountSound != null) {
+                    // Dynamic delayed mount sound
+                    world.playSound(null, self.getBlockPos(), mountSound, SoundCategory.PLAYERS, 1.0f, 1.0f + (random.nextFloat() - random.nextFloat()) * 0.2f);
+                }
+            }
+        }
 
         // Supporter Crown Trial Period Tick
         if (!world.isClient()) {
@@ -1456,22 +1478,17 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         if (!this.ahp$pettingHamster.isEmpty()) {
             PlayerEntity self = (PlayerEntity) (Object) this;
 
-            // Swish SFX if terminated before 9 sec
-            if (this.ahp$pettingTimer > 41) {
-                self.getWorld().playSound(
-                        null,
-                        self.getBlockPos(),
-                        ModSounds.HAMSTER_SWISH.get(),
-                        SoundCategory.NEUTRAL,
-                        0.1f,
-                        1.0f + self.getWorld().getRandom().nextFloat() * 0.5f);
-            }
-
             this.ahp$pettingTimer = 0; // Instantly trigger hamster respawn in next tick
             if (self instanceof ServerPlayerEntity serverPlayer) {
                 NetworkManager.sendToPlayer(serverPlayer, new SyncPettingStatePayload(false));
             }
         }
+    }
+
+    @Unique
+    @Override
+    public void ahp$queueShoulderMountSound(int ticks) {
+        this.ahp$mountSoundTimer = ticks;
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────

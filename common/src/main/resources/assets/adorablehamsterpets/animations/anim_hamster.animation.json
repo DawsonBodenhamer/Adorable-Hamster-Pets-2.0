@@ -24209,7 +24209,7 @@
 					"effect": "hamster_celebrate_sound"
 				},
 				"4.5": {
-					"effect": "hamster_celebrate_sound"
+					"effect": "hamster_affection_sound"
 				},
 				"8.1667": {
 					"effect": "hamster_head_shake_fast_sound"

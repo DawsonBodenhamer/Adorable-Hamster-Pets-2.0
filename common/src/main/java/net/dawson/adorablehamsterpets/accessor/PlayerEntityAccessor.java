@@ -73,4 +73,5 @@ public interface PlayerEntityAccessor {
 
     void ahp$startPettingHamster(int entityId);
     void ahp$cancelPettingHamster();
+    void ahp$queueShoulderMountSound(int ticks);
 }

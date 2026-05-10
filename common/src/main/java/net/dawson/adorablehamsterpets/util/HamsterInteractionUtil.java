@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
+import dev.architectury.platform.Platform;
 import dev.architectury.registry.menu.MenuRegistry;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
@@ -709,9 +710,16 @@ public final class HamsterInteractionUtil {
             }
             player.sendMessage(Text.translatable("message.adorablehamsterpets.shoulder_mount_success"), true);
 
-            SoundEvent mountSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SHOULDER_MOUNT_SOUNDS, hamster.getRandom());
-            if (mountSound != null) {
-                hamster.getWorld().playSound(null, player.getBlockPos(), mountSound, SoundCategory.PLAYERS, 1.0f, hamster.getSoundPitch());
+            if (Platform.isModLoaded("punchy")) {
+                if (player instanceof PlayerEntityAccessor accessor) {
+                    accessor.ahp$queueShoulderMountSound(20); // 1 second delay for Punchy animation
+                }
+            } else {
+                // Instant feedback if Punchy not present
+                SoundEvent mountSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SHOULDER_MOUNT_SOUNDS, hamster.getRandom());
+                if (mountSound != null) {
+                    hamster.getWorld().playSound(null, player.getBlockPos(), mountSound, SoundCategory.PLAYERS, 1.0f, hamster.getSoundPitch());
+                }
             }
 
             // --- Item-Specific Feedback ---

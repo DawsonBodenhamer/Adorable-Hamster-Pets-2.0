@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 In addition to a few bug fixes, this patch introduces a new batch of super cute, first-person animations to your rodent-handling experience, courtesy of the amazing [**Punchy**](https://modrinth.com/mod/punchy-fpa) mod! I've been working closely with [**@Dev Punchy Man**](https://modrinth.com/mod/punchy-fpa) to overhaul how it feels to pick up, pet, and yeet your hamsters.
 
 ### Added
-- **New First-Person Animations (Requires Punchy)**
+- **New First-Person Animations (Requires Punchy v2.6.0+)**
   - **Petting/Tickling**
     - You can finally pet your hamster! If you stare affectionately at your hamster for a while (about 30 seconds on average), you might just reach down, pick it up and give it some tickles. Comes with a new animation where the hamster flips over on your hand and asks for a belly rub! Also added a dedicated "Pet Hamster" keybind (unbound by default) for when you don't feel like waiting for the random chance to kick in.
     - For those with the patience of a fruit bat, pressing your "Pet Hamster" key or clicking your mouse will cancel the petting animation.
@@ -20,7 +20,7 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
     - Luring a hamster to your shoulder is no longer a boring teleport. You will now physically lift them up, complete with the hamster adorably bouncing on your hands or running up your arm. Three new unique animations; dynamically changing depending on their destination (left shoulder, right shoulder, head).
   - **The Yeet Queuing System (Dynamic)**
     - Throwing a hamster is no longer instant. Holding down the throw key (`G`) grabs a specific hamster off your shoulder and holds it in front of your face.
-      - While queued up, the hamster also plays its own new animation (only available with Punchy) where it eagerly wiggles its butt and kicks its back feet in anticipation of being hurled through the air.
+      - While queued up, the hamster also plays its own new animation (only available with Punchy v2.6.0+) where it eagerly wiggles its butt and kicks its back feet in anticipation of being hurled through the air.
       - Releasing the throw key (`G`) executes the throw, which is immediately followed by a new Punchy animation where you wave goodbye to your furry projectile.
       - If you release the key before the short charging period (`15 ticks`) is over, you safely abort the throw. Your character will politely place the hamster back onto the exact shoulder it came from. This charging period of `15 ticks` is not configurable, due to its duration needing to match the animation. But it's quite short— only `0.75 seconds`— so hopefully it won't impact gameplay too much.
 - **FOV Zoom for Hamster Yeet**
