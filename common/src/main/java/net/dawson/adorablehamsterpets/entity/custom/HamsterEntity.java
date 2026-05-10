@@ -586,7 +586,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public int getZoomiesRadiusModifier() { return this.zoomiesRadiusModifier; }
     public boolean isShoulderPet() { return getHamsterFlag(IS_SHOULDER_PET_FLAG); }
     public void setShoulderPet(boolean isShoulderPet) { setHamsterFlag(IS_SHOULDER_PET_FLAG, isShoulderPet); }
-    public boolean isWanderModeActive() { return getHamsterFlag(IS_WANDER_MODE_ACTIVE_FLAG); }
+    public boolean isWanderModeActive() { return getHamsterFlag(IS_WANDER_MODE_ACTIVE_FLAG) && Configs.AHP.enableWanderMode.get(); }
     public void setWanderModeActive(boolean active) { setHamsterFlag(IS_WANDER_MODE_ACTIVE_FLAG, active); }
     public Optional<GlobalPos> getLinkedBedPos() { return this.linkedBedPos; }
     public void setLinkedBedPos(Optional<GlobalPos> pos) { this.linkedBedPos = pos; }
@@ -1471,7 +1471,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (this.age % 10 == 0) {
                 if (this.isTamed() && this.getOwner() instanceof ServerPlayerEntity serverPlayer) {
                     // Ensure player is not looking inside a GUI
-                    if (serverPlayer.currentScreenHandler == serverPlayer.playerScreenHandler) {
+                    if (serverPlayer.currentScreenHandler == serverPlayer.playerScreenHandler && serverPlayer.isSneaking()) {
                         // Ensure hamster is in a pet-able state & within 5 blocks
                         if (!this.isShoulderPet()
                                 && !this.isAiDisabled()

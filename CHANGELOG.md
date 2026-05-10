@@ -14,8 +14,8 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
 ### Added
 - **New First-Person Animations (Requires Punchy v2.6.0+)**
   - **Petting/Tickling**
-    - You can finally pet your hamster! If you stare affectionately at your hamster for a while (about 30 seconds on average), you might just reach down, pick it up and give it some tickles. Comes with a new animation where the hamster flips over on your hand and asks for a belly rub! Also added a dedicated "Pet Hamster" keybind (unbound by default) for when you don't feel like waiting for the random chance to kick in.
-    - For those with the patience of a fruit bat, pressing your "Pet Hamster" key or clicking your mouse will cancel the petting animation.
+    - You can finally pet your hamster! If you stare affectionately at your hamster for a while sneaking (about 15 seconds on average), you might just reach down, pick it up and give it some tickles. Comes with a new animation where the hamster flips over on your hand and asks for a belly rub! Also added a dedicated "Pet Hamster" keybind (unbound by default) for when you don't feel like waiting for the random chance to kick in.
+    - For those with the patience of a fruit bat, pressing your "Pet Hamster" key or clicking your mouse will cancel the petting animation. You don't need to be sneaking to use the keybind.
   - **Shoulder Mounting (Dynamic)**
     - Luring a hamster to your shoulder is no longer a boring teleport. You will now physically lift them up, complete with the hamster adorably bouncing on your hands or running up your arm. Three new unique animations; dynamically changing depending on their destination (left shoulder, right shoulder, head).
   - **The Yeet Queuing System (Dynamic)**
@@ -28,11 +28,14 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
 - **Free Bed Respawn Toggle**
   - Added a config toggle to allow hamsters to respawn at their linked beds indefinitely without requiring a tribute item charge (like a Totem of Undying). Disabled by default.
 - **Dynamic Trees Heist Compatibility**
-  - Added support for Dynamic Trees out-of-the-box via some new config settings.
+  - Added out-of-the-box support for [**Dynamic Trees**](https://modrinth.com/mod/dynamictrees) via some new config settings.
   - Replaced hardcoded oak leaves checks with a new `Heistable Leaves` list in the config, allowing modpack makers to easily add other modded leaves or trees to the heist feature.
   - Added a new `Heistable Logs` list to the `Tree Heist Settings` config, similar to the `Heistable Leaves` list. This means you can now start a tree heist by throwing the hamster at a branch or the trunk.
   - Developed a dumber but more compatible canopy-mapping algorithm that activates automatically if `Dynamic Trees` is installed, ensuring heist still works without the vanilla leaves' internal `distance from trunk` property.
   - **Acorn Note:** The Dynamic Trees mod adds their own type of acorns and drop methods. When that mod is installed, the only way to get the specific acorns from my mod is through the Tree Heist.
+- **Combustible Acorns**
+  - Acorns can now be used as furnace fuel, smelting exactly the same amount of items as a vanilla stick.
+  - Alternatively, placing an Acorn in the top slot of a furnace will smelt it down into a piece of Charcoal.
 
 ### Fixed
 - **Hamster Yeet & Evilcraft Bug**
@@ -47,7 +50,8 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Fixed a visual bug where a hamster's equipped armor and accessories would temporarily vanish while they were airborne during a throw.
 - **Server Performance**
   - Resolved a few pathfinding and AI issues where tamed hamsters following the player would sometimes experience server-tick lag spikes. Usually you wouldn't notice these unless you had a lot of hamsters following you at once.
-
+- **Wander Mode Override**
+  - Resolved a bug where disabling Wander Mode in the global config wouldn't stop already-wandering hamsters from lingering around their beds.
 
 ---
 

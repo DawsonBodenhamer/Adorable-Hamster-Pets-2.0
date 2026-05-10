@@ -100,6 +100,7 @@ public class AdorableHamsterPets {
 			HamsterPaletteManager.init();
 			ModRegistries.registerCompostables();
 			ModRegistries.registerDispenserBehaviors();
+			ModRegistries.registerFuels();
 			ModLootTableModifiers.init();
 
 			// --- Networking Registration ---

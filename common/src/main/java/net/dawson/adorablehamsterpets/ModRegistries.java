@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets;
 
 import dev.architectury.networking.NetworkManager;
+import dev.architectury.registry.fuel.FuelRegistry;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.item.ModItems;
@@ -74,5 +75,14 @@ public class ModRegistries {
                 return stack;
             }
         });
+    }
+
+    /**
+     * Registers burn times for items used as furnace fuel.
+     * This is called directly during the common setup phase.
+     */
+    public static void registerFuels() {
+        // 100 ticks = 0.5 items smelted (same as vanilla stick)
+        FuelRegistry.register(100, ModItems.ACORN.get());
     }
 }

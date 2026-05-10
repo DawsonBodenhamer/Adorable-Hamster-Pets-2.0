@@ -65,9 +65,12 @@ public class ModRecipeProvider extends FabricRecipeProvider {
     public void generate(RecipeExporter recipeExporter) {
         // --- Smelting Recipes ---
         // Smelting Green Beans to Steamed Green Beans
-        // The list should only contain items that can be smelted into the result.
         offerSmelting(recipeExporter, List.of(ModItems.GREEN_BEANS.get()), RecipeCategory.FOOD, ModItems.STEAMED_GREEN_BEANS.get(),
                 0.35f, 200, "steamed_green_beans");
+
+        // Smelting Acorns to Charcoal
+        offerSmelting(recipeExporter, List.of(ModItems.ACORN.get()), RecipeCategory.MISC, Items.CHARCOAL,
+                0.15f, 200, "charcoal");
 
         // --- Shaped Crafting Recipes ---
         // Hamster Bed
