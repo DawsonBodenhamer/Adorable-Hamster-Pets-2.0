@@ -128,7 +128,7 @@ public class AHPCommonEvents {
         }
 
         // --- 3. Precision Tree Heist ---
-        if (ConfigDataCache.isLureItem(stack) && state.isOf(Blocks.OAK_LEAVES)) {
+        if (ConfigDataCache.isLureItem(stack) && (ConfigDataCache.isHeistableLeaf(state) || ConfigDataCache.isHeistableLog(state))) {
             if (!world.isClient() && player instanceof PlayerEntityAccessor accessor) {
                 if (accessor.hasAnyShoulderHamster()) {
                     accessor.adorablehamsterpets$startPrecisionTreeHeist(pos);
