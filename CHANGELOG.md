@@ -27,12 +27,14 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Added a smooth FOV zoom effect while queueing the Hamster Yeet, identical to drawing a vanilla bow. This FOV zoom will help indicate the new charging period for anyone who doesn't have Punchy installed, since the new animations cannot work without it.
 - **Free Bed Respawn Toggle**
   - Added a config toggle to allow hamsters to respawn at their linked beds indefinitely without requiring a tribute item charge (like a Totem of Undying). Disabled by default.
-- **Dynamic Trees Heist Compatibility**
+- **Dynamic Trees Compatibility**
   - Added out-of-the-box support for [**Dynamic Trees**](https://modrinth.com/mod/dynamictrees) via some new config settings.
   - Replaced hardcoded oak leaves checks with a new `Heistable Leaves` list in the config, allowing modpack makers to easily add other modded leaves or trees to the heist feature.
   - Added a new `Heistable Logs` list to the `Tree Heist Settings` config, similar to the `Heistable Leaves` list. This means you can now start a tree heist by throwing the hamster at a branch or the trunk.
   - Developed a dumber but more compatible canopy-mapping algorithm that activates automatically if `Dynamic Trees` is installed, ensuring heist still works without the vanilla leaves' internal `distance from trunk` property.
   - **Acorn Note:** The Dynamic Trees mod adds their own type of acorns and drop methods. When that mod is installed, the only way to get the specific acorns from my mod is through the Tree Heist.
+- **Dehydration and NutritionZ Compatibility**
+  - Added built-in datapacks for the [**Dehydration**](https://modrinth.com/mod/dehydration) and [**NutritionZ**](https://modrinth.com/mod/nutritionz) mods. Cucumbers will now hydrate you, and Cheese will finally clog your arteries properly.
 - **Combustible Acorns**
   - Acorns can now be used as furnace fuel, smelting exactly the same amount of items as a vanilla stick.
   - Alternatively, placing an Acorn in the top slot of a furnace will smelt it down into a piece of Charcoal.
