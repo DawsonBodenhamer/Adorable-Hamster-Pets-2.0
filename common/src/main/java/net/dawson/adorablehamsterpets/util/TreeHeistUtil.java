@@ -1,9 +1,10 @@
 package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterProjectileEntity;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.LeavesBlock;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.ParticleTypes;
@@ -11,21 +12,28 @@ import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.math.*;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class TreeHeistUtil {
 
-    // --- Constants ---
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constants and Static Utilities
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     private static final int MAX_TRUNK_SEARCH_DIST = 10; // Max radius to look for a log from the hit leaf
     private static final int MAX_LOG_COUNT = 128;        // Max logs in a single tree (prevent giant tree lag)
     private static final int MAX_CANOPY_COUNT = 300;     // Max leaves to map
     private static final int MAX_BUSH_COUNT = 48;        // Max leaves for a log-less bush
     private static final int MAX_CANOPY_DISTANCE = 5;    // Max distance property for a leaf to be considered connected
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Inner Classes & Records
+     * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
      * A record to store the results of a tree scan.
@@ -34,26 +42,58 @@ public class TreeHeistUtil {
 
     public record HeistRecord(BlockPos pos, long timestamp) {}
 
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructors
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private TreeHeistUtil() {}
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Public API Methods
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     /**
      * Scans the structure connected to the given start position to identify a unique Tree ID and its canopy.
      * Uses a robust "Leaf -> Log -> Tree" algorithm similar to tree chopper mods.
      */
     public static TreeScanResult scanForTree(World world, BlockPos startPos) {
         BlockState startState = world.getBlockState(startPos);
-        if (!startState.isOf(Blocks.OAK_LEAVES)) {
-            // Fallback for non-leaf start
+        boolean isLeaf = ConfigDataCache.isHeistableLeaf(startState);
+        boolean isLog = ConfigDataCache.isHeistableLog(startState);
+
+        if (!isLeaf && !isLog) {
+            // Fallback for invalid start
             if (Configs.AHP.debugTreeDetection) {
-                AdorableHamsterPets.LOGGER.warn("[TreeHeist-Scan] Aborted: Start pos {} is not an Oak Leaf block (Found: {}).", startPos.toShortString(), startState.getBlock());
+                AdorableHamsterPets.LOGGER.warn("[TreeHeist-Scan] Aborted: Start pos {} is not a valid Heistable Leaf or Log block (Found: {}).", startPos.toShortString(), startState.getBlock());
             }
             return new TreeScanResult(startPos, Collections.singleton(startPos));
         }
 
-        // --- Step A: Find the Trunk ---
-        if (Configs.AHP.debugTreeDetection) {
-            AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Starting scan at HitPos: {}. Searching for connected logs...", startPos.toShortString());
+        // --- Bypass for Dynamic Trees ---
+        // If Dynamic Trees is installed, its canopy structure breaks vanilla BFS logic.
+        // We bypass the smart log-finding and just map a localized leaf cluster around the impact point.
+        if (dev.architectury.platform.Platform.isModLoaded("dynamictrees")) {
+            if (Configs.AHP.debugTreeDetection) {
+                AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Dynamic Trees detected. Bypassing smart algorithm for localized canopy scan.");
+            }
+            return mapLocalizedCanopy(world, startPos);
         }
 
-        BlockPos foundLog = findConnectedLog(world, startPos);
+        // --- Step A: Determine Trunk ---
+        BlockPos foundLog = null;
+        if (isLog) {
+            // We hit a log directly
+            foundLog = startPos;
+            if (Configs.AHP.debugTreeDetection) {
+                AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Started heist directly on a log at {}.", startPos.toShortString());
+            }
+        } else {
+            // We hit a leaf, find the connected log
+            if (Configs.AHP.debugTreeDetection) {
+                AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Starting scan at HitPos: {}. Searching for connected logs...", startPos.toShortString());
+            }
+            foundLog = findConnectedLog(world, startPos);
+        }
 
         if (foundLog != null) {
             // --- Step B: Trunk Found -> Map Full Tree ---
@@ -68,217 +108,6 @@ public class TreeHeistUtil {
             }
             return mapFloatingBush(world, startPos);
         }
-    }
-
-    /**
-     * Helper Step A: Performs a gradient-descent BFS to find the nearest log connected to the leaves.
-     */
-    private static BlockPos findConnectedLog(World world, BlockPos startNode) {
-        Queue<BlockPos> queue = new ArrayDeque<>();
-        Set<BlockPos> visited = new HashSet<>();
-
-        queue.add(startNode);
-        visited.add(startNode);
-
-        int startDist = getLeafDistance(world.getBlockState(startNode));
-
-        // Safety cap for search iterations
-        int iterations = 0;
-        int maxIterations = 64;
-
-        while (!queue.isEmpty() && iterations < maxIterations) {
-            BlockPos current = queue.poll();
-            iterations++;
-
-            // Check all 6 neighbors
-            for (Direction dir : Direction.values()) {
-                BlockPos neighbor = current.offset(dir);
-                if (!visited.add(neighbor)) continue;
-
-                BlockState state = world.getBlockState(neighbor);
-
-                // Found a log. Return immediately.
-                if (state.isIn(BlockTags.LOGS)) {
-                    return neighbor;
-                }
-
-                // If Oak Leaf, traverse only if it gets closer to a log or maintains proximity.
-                if (state.isOf(Blocks.OAK_LEAVES)) {
-                    int dist = getLeafDistance(state);
-                    // Standard vanilla leaves max out at 7.
-                    // Follow the path of decreasing distance (towards trunk).
-                    if (dist <= startDist || dist < 7) {
-                        // Don't wander too far from origin
-                        if (neighbor.getManhattanDistance(startNode) <= MAX_TRUNK_SEARCH_DIST) {
-                            queue.add(neighbor);
-                        }
-                    }
-                }
-            }
-        }
-        return null; // No log found within range
-    }
-
-    /**
-     * Helper Step B: Maps an entire tree (logs + canopy) starting from a known log block.
-     * Calculates the Tree ID from the bottom-most log.
-     */
-    private static TreeScanResult mapTreeFromLog(World world, BlockPos initialLog) {
-        // 1. Scan Logs (Trunk & Branches)
-        Set<BlockPos> treeLogs = new HashSet<>();
-        Queue<BlockPos> logQueue = new ArrayDeque<>();
-        logQueue.add(initialLog);
-        treeLogs.add(initialLog);
-
-        BlockPos bottomMostLog = initialLog;
-
-        while (!logQueue.isEmpty() && treeLogs.size() < MAX_LOG_COUNT) {
-            BlockPos current = logQueue.poll();
-
-            // Track lowest Y for ID
-            if (current.getY() < bottomMostLog.getY()) {
-                bottomMostLog = current;
-            } else if (current.getY() == bottomMostLog.getY()) {
-                // Tie-breaker: Deterministic coordinate sort (min X then min Z)
-                if (current.getX() < bottomMostLog.getX() || (current.getX() == bottomMostLog.getX() && current.getZ() < bottomMostLog.getZ())) {
-                    bottomMostLog = current;
-                }
-            }
-
-            // Scan 3x3x3 area for connected logs (handles diagonal branches)
-            for (int x = -1; x <= 1; x++) {
-                for (int y = -1; y <= 1; y++) {
-                    for (int z = -1; z <= 1; z++) {
-                        if (x == 0 && y == 0 && z == 0) continue;
-
-                        BlockPos neighbor = current.add(x, y, z);
-                        if (!treeLogs.contains(neighbor)) {
-                            if (world.getBlockState(neighbor).isIn(BlockTags.LOGS)) {
-                                treeLogs.add(neighbor);
-                                logQueue.add(neighbor);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (Configs.AHP.debugTreeDetection) {
-            AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Tree Skeleton Mapped. Total Logs: {}. Anchor Established: {}", treeLogs.size(), bottomMostLog.toShortString());
-            if (treeLogs.size() >= MAX_LOG_COUNT) AdorableHamsterPets.LOGGER.warn("[TreeHeist-Scan] Log scan hit MAX limit ({})! Tree might be truncated.", MAX_LOG_COUNT);
-        }
-
-        // 2. Scan Canopy (Leaves connected to any found log)
-        Set<BlockPos> validCanopy = new HashSet<>();
-        Queue<BlockPos> leafQueue = new ArrayDeque<>();
-        Set<BlockPos> visitedLeaves = new HashSet<>(); // optimization to avoid checking logs again
-
-        // Seed with neighbors of all logs
-        for (BlockPos log : treeLogs) {
-            for (Direction dir : Direction.values()) {
-                BlockPos n = log.offset(dir);
-                // Mark visited immediately to prevent adding same leaf multiple times
-                if (!treeLogs.contains(n) && visitedLeaves.add(n)) {
-                    BlockState nState = world.getBlockState(n);
-                    if (nState.isOf(Blocks.OAK_LEAVES)) {
-                        int nDist = getLeafDistance(nState);
-                        // Only add valid, connected leaves (dist 1 to log is valid)
-                        if (nDist <= MAX_CANOPY_DISTANCE) {
-                            leafQueue.add(n);
-                        }
-                    }
-                }
-            }
-        }
-
-        while (!leafQueue.isEmpty() && validCanopy.size() < MAX_CANOPY_COUNT) {
-            BlockPos current = leafQueue.poll();
-            BlockState state = world.getBlockState(current);
-
-            // Double check validity (should be valid from queue, but safe)
-            if (state.isIn(BlockTags.LEAVES)) {
-                int dist = getLeafDistance(state);
-
-                // Add to result set
-                validCanopy.add(current);
-
-                // Expand to neighbors
-                for (Direction dir : Direction.values()) {
-                    BlockPos n = current.offset(dir);
-                    if (!treeLogs.contains(n) && visitedLeaves.add(n)) {
-                        BlockState nState = world.getBlockState(n);
-                        if (nState.isOf(Blocks.OAK_LEAVES)) {
-                            int nDist = getLeafDistance(nState);
-
-                            // Must be a valid connected leaf (<= 6) and moving away from the trunk or laterally (nDist >= dist).
-                            if (nDist <= MAX_CANOPY_DISTANCE && nDist >= dist) {
-                                leafQueue.add(n);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (Configs.AHP.debugTreeDetection) {
-            AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Canopy Mapped. Valid Oak Leaves: {}", validCanopy.size());
-            if (validCanopy.size() >= MAX_CANOPY_COUNT) AdorableHamsterPets.LOGGER.warn("[TreeHeist-Scan] Canopy scan hit MAX limit ({})!", MAX_CANOPY_COUNT);
-        }
-
-        return new TreeScanResult(bottomMostLog, validCanopy);
-    }
-
-    /**
-     * Helper Step C: Maps a "floating bush" (no logs).
-     * Calculates Tree ID from the spatially lowest/first block.
-     */
-    private static TreeScanResult mapFloatingBush(World world, BlockPos startPos) {
-        Set<BlockPos> validLeaves = new HashSet<>(); // The Result Set: Only confirmed leaves
-        Set<BlockPos> visited = new HashSet<>();     // The Checked Set: Leaves + Neighbors
-        Queue<BlockPos> queue = new ArrayDeque<>();
-
-        queue.add(startPos);
-        visited.add(startPos);
-        validLeaves.add(startPos); // startPos is checked in scanForTree
-
-        BlockPos lowestLeaf = startPos;
-
-        while (!queue.isEmpty() && validLeaves.size() < MAX_BUSH_COUNT) {
-            BlockPos current = queue.poll();
-
-            // Track Anchor
-            if (current.getY() < lowestLeaf.getY() ||
-                    (current.getY() == lowestLeaf.getY() && current.getX() < lowestLeaf.getX()) ||
-                    (current.getY() == lowestLeaf.getY() && current.getX() == lowestLeaf.getX() && current.getZ() < lowestLeaf.getZ())) {
-                lowestLeaf = current;
-            }
-
-            for (Direction dir : Direction.values()) {
-                BlockPos n = current.offset(dir);
-                // Mark as visited to prevent re-processing
-                if (visited.add(n)) {
-                    // Check if it is a valid leaf block before adding to queue or result
-                    if (world.getBlockState(n).isOf(Blocks.OAK_LEAVES)) {
-                        queue.add(n);
-                        validLeaves.add(n); // Only add to result if it is a leaf
-                    }
-                }
-            }
-        }
-        if (Configs.AHP.debugTreeDetection) {
-            AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Bush Mapped. Size: {}. Anchor: {}", validLeaves.size(), lowestLeaf.toShortString());
-        }
-        return new TreeScanResult(lowestLeaf, validLeaves);
-    }
-
-    /**
-     * Gets the 'distance' property from a leaf block state safely.
-     */
-    private static int getLeafDistance(BlockState state) {
-        if (state.contains(LeavesBlock.DISTANCE)) {
-            return state.get(LeavesBlock.DISTANCE);
-        }
-        return 7; // Treat as far/decayable if property missing
     }
 
     /**
@@ -366,6 +195,332 @@ public class TreeHeistUtil {
     }
 
     /**
+     * Sends the appropriate start message to the player based on the calculated profitability of the area.
+     */
+    public static void sendHeistStartMessage(PlayerEntity player, float profitability) {
+        if (!Configs.AHP.enableTreeHeistStartMessage) return;
+
+        String key = "message.adorablehamsterpets.tree_heist_start_high";
+        Formatting color = Formatting.WHITE;
+
+        if (profitability < 0.4f) {
+            key = "message.adorablehamsterpets.tree_heist_start_low";
+        } else if (profitability < 0.9f) {
+            key = "message.adorablehamsterpets.tree_heist_start_medium";
+        }
+
+        if (Configs.AHP.debugTreeDetection) {
+            AdorableHamsterPets.LOGGER.info("[TreeHeist] Starting heist for player {}. Profitability: {} ({}%). Selected Message Key: {}",
+                    player.getName().getString(),
+                    String.format("%.2f", profitability),
+                    (int) (profitability * 100),
+                    key);
+        }
+
+        player.sendMessage(Text.translatable(key).formatted(color), true);
+    }
+
+    /**
+     * Checks for collisions with non-solid heistable blocks (e.g. Dynamic Trees mod)
+     * by checking the projectile's swept volume.
+     */
+    @Nullable
+    public static BlockHitResult checkNonSolidCollision(HamsterProjectileEntity projectile) {
+
+        Box moveBox = projectile.getBoundingBox().stretch(projectile.getVelocity());
+        World world = projectile.getWorld();
+
+        for (BlockPos checkPos : BlockPos.iterate(
+                MathHelper.floor(moveBox.minX),
+                MathHelper.floor(moveBox.minY),
+                MathHelper.floor(moveBox.minZ),
+                MathHelper.floor(moveBox.maxX),
+                MathHelper.floor(moveBox.maxY),
+                MathHelper.floor(moveBox.maxZ)
+        )) {
+            BlockState state = world.getBlockState(checkPos);
+            if (ConfigDataCache.isHeistableLeaf(state) || ConfigDataCache.isHeistableLog(state)) {
+                Vec3d hitPos = new Vec3d(checkPos.getX() + 0.5, checkPos.getY() + 0.5, checkPos.getZ() + 0.5);
+                // Create fake block hit result to pass into collision handler
+                return new BlockHitResult(hitPos, Direction.UP, checkPos.toImmutable(), false);
+            }
+        }
+
+        return null;
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Helper Step A: Performs a gradient-descent BFS to find the nearest log connected to the leaves.
+     */
+    private static BlockPos findConnectedLog(World world, BlockPos startNode) {
+        Queue<BlockPos> queue = new ArrayDeque<>();
+        Set<BlockPos> visited = new HashSet<>();
+
+        queue.add(startNode);
+        visited.add(startNode);
+
+        int startDist = getLeafDistance(world.getBlockState(startNode));
+
+        // Safety cap for search iterations
+        int iterations = 0;
+        int maxIterations = 64;
+
+        while (!queue.isEmpty() && iterations < maxIterations) {
+            BlockPos current = queue.poll();
+            iterations++;
+
+            // Check all 6 neighbors
+            for (Direction dir : Direction.values()) {
+                BlockPos neighbor = current.offset(dir);
+                if (!visited.add(neighbor)) continue;
+
+                BlockState state = world.getBlockState(neighbor);
+
+                // Found a log. Return immediately.
+                if (state.isIn(BlockTags.LOGS)) {
+                    return neighbor;
+                }
+
+                // If valid leaf, traverse only if it gets closer to a log or maintains proximity.
+                if (ConfigDataCache.isHeistableLeaf(state)) {
+                    int dist = getLeafDistance(state);
+                    // Standard vanilla leaves max out at 7.
+                    // Follow the path of decreasing distance (towards trunk).
+                    if (dist <= startDist || dist < 7) {
+                        // Don't wander too far from origin
+                        if (neighbor.getManhattanDistance(startNode) <= MAX_TRUNK_SEARCH_DIST) {
+                            queue.add(neighbor);
+                        }
+                    }
+                }
+            }
+        }
+        return null; // No log found within range
+    }
+
+    /**
+     * Helper Step B: Maps an entire tree (logs + canopy) starting from a known log block.
+     * Calculates the Tree ID from the bottom-most log.
+     */
+    private static TreeScanResult mapTreeFromLog(World world, BlockPos initialLog) {
+        // 1. Scan Logs (Trunk & Branches)
+        Set<BlockPos> treeLogs = new HashSet<>();
+        Queue<BlockPos> logQueue = new ArrayDeque<>();
+        logQueue.add(initialLog);
+        treeLogs.add(initialLog);
+
+        BlockPos bottomMostLog = initialLog;
+
+        while (!logQueue.isEmpty() && treeLogs.size() < MAX_LOG_COUNT) {
+            BlockPos current = logQueue.poll();
+
+            // Track lowest Y for ID
+            if (current.getY() < bottomMostLog.getY()) {
+                bottomMostLog = current;
+            } else if (current.getY() == bottomMostLog.getY()) {
+                // Tie-breaker: Deterministic coordinate sort (min X then min Z)
+                if (current.getX() < bottomMostLog.getX() || (current.getX() == bottomMostLog.getX() && current.getZ() < bottomMostLog.getZ())) {
+                    bottomMostLog = current;
+                }
+            }
+
+            // Scan 3x3x3 area for connected logs (handles diagonal branches)
+            for (int x = -1; x <= 1; x++) {
+                for (int y = -1; y <= 1; y++) {
+                    for (int z = -1; z <= 1; z++) {
+                        if (x == 0 && y == 0 && z == 0) continue;
+
+                        BlockPos neighbor = current.add(x, y, z);
+                        if (!treeLogs.contains(neighbor)) {
+                            if (ConfigDataCache.isHeistableLog(world.getBlockState(neighbor))) {
+                                treeLogs.add(neighbor);
+                                logQueue.add(neighbor);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (Configs.AHP.debugTreeDetection) {
+            AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Tree Skeleton Mapped. Total Logs: {}. Anchor Established: {}", treeLogs.size(), bottomMostLog.toShortString());
+            if (treeLogs.size() >= MAX_LOG_COUNT) AdorableHamsterPets.LOGGER.warn("[TreeHeist-Scan] Log scan hit MAX limit ({})! Tree might be truncated.", MAX_LOG_COUNT);
+        }
+
+        // 2. Scan Canopy (Leaves connected to any found log)
+        Set<BlockPos> validCanopy = new HashSet<>();
+        Queue<BlockPos> leafQueue = new ArrayDeque<>();
+        Set<BlockPos> visitedLeaves = new HashSet<>(); // optimization to avoid checking logs again
+
+        // Seed with neighbors of all logs
+        for (BlockPos log : treeLogs) {
+            for (Direction dir : Direction.values()) {
+                BlockPos n = log.offset(dir);
+                // Mark visited immediately to prevent adding same leaf multiple times
+                if (!treeLogs.contains(n) && visitedLeaves.add(n)) {
+                    BlockState nState = world.getBlockState(n);
+                    if (ConfigDataCache.isHeistableLeaf(nState)) {
+                        int nDist = getLeafDistance(nState);
+                        // Only add valid, connected leaves (dist 1 to log is valid)
+                        if (nDist <= MAX_CANOPY_DISTANCE) {
+                            leafQueue.add(n);
+                        }
+                    }
+                }
+            }
+        }
+
+        while (!leafQueue.isEmpty() && validCanopy.size() < MAX_CANOPY_COUNT) {
+            BlockPos current = leafQueue.poll();
+            BlockState state = world.getBlockState(current);
+
+            // Double check validity (should be valid from queue, but safe)
+            if (state.isIn(BlockTags.LEAVES)) {
+                int dist = getLeafDistance(state);
+
+                // Add to result set
+                validCanopy.add(current);
+
+                // Expand to neighbors
+                for (Direction dir : Direction.values()) {
+                    BlockPos n = current.offset(dir);
+                    if (!treeLogs.contains(n) && visitedLeaves.add(n)) {
+                        BlockState nState = world.getBlockState(n);
+                        if (ConfigDataCache.isHeistableLeaf(nState)) {
+                            int nDist = getLeafDistance(nState);
+
+                            // Must be a valid connected leaf (<= 6) and moving away from the trunk or laterally (nDist >= dist).
+                            if (nDist <= MAX_CANOPY_DISTANCE && nDist >= dist) {
+                                leafQueue.add(n);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (Configs.AHP.debugTreeDetection) {
+            AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Canopy Mapped. Valid Oak Leaves: {}", validCanopy.size());
+            if (validCanopy.size() >= MAX_CANOPY_COUNT) AdorableHamsterPets.LOGGER.warn("[TreeHeist-Scan] Canopy scan hit MAX limit ({})!", MAX_CANOPY_COUNT);
+        }
+
+        return new TreeScanResult(bottomMostLog, validCanopy);
+    }
+
+    /**
+     * Helper Step C: Maps a "floating bush" (no logs).
+     * Calculates Tree ID from the spatially lowest/first block.
+     */
+    private static TreeScanResult mapFloatingBush(World world, BlockPos startPos) {
+        Set<BlockPos> validLeaves = new HashSet<>(); // The Result Set: Only confirmed leaves
+        Set<BlockPos> visited = new HashSet<>();     // The Checked Set: Leaves + Neighbors
+        Queue<BlockPos> queue = new ArrayDeque<>();
+
+        queue.add(startPos);
+        visited.add(startPos);
+        validLeaves.add(startPos); // startPos is checked in scanForTree
+
+        BlockPos lowestLeaf = startPos;
+
+        while (!queue.isEmpty() && validLeaves.size() < MAX_BUSH_COUNT) {
+            BlockPos current = queue.poll();
+
+            // Track Anchor
+            if (current.getY() < lowestLeaf.getY() ||
+                    (current.getY() == lowestLeaf.getY() && current.getX() < lowestLeaf.getX()) ||
+                    (current.getY() == lowestLeaf.getY() && current.getX() == lowestLeaf.getX() && current.getZ() < lowestLeaf.getZ())) {
+                lowestLeaf = current;
+            }
+
+            for (Direction dir : Direction.values()) {
+                BlockPos n = current.offset(dir);
+                // Mark as visited to prevent re-processing
+                if (visited.add(n)) {
+                    // Check if it is a valid leaf block before adding to queue or result
+                    if (ConfigDataCache.isHeistableLeaf(world.getBlockState(n))) {
+                        queue.add(n);
+                        validLeaves.add(n); // Only add to result if it is a leaf
+                    }
+                }
+            }
+        }
+        if (Configs.AHP.debugTreeDetection) {
+            AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Bush Mapped. Size: {}. Anchor: {}", validLeaves.size(), lowestLeaf.toShortString());
+        }
+        return new TreeScanResult(lowestLeaf, validLeaves);
+    }
+
+    /**
+     * Bypasses the smart trunk-finding algorithm and simply maps all valid leaves
+     * within a set radius from the starting point. Used for compatibility with mods
+     * like Dynamic Trees that don't use vanilla distance properties for their leaf blocks.
+     */
+    private static TreeScanResult mapLocalizedCanopy(World world, BlockPos startPos) {
+        Set<BlockPos> validLeaves = new HashSet<>();
+        Queue<BlockPos> queue = new ArrayDeque<>();
+        Set<BlockPos> visited = new HashSet<>();
+
+        // If hit leaf, start there. If hit log, still need to find nearby leaves
+        queue.add(startPos);
+        visited.add(startPos);
+        if (ConfigDataCache.isHeistableLeaf(world.getBlockState(startPos))) {
+            validLeaves.add(startPos);
+        }
+
+        int maxHorizontal = 5;
+        int maxVertical = 24;
+
+        while (!queue.isEmpty() && validLeaves.size() < MAX_CANOPY_COUNT) {
+            BlockPos current = queue.poll();
+
+            for (Direction dir : Direction.values()) {
+                BlockPos n = current.offset(dir);
+
+                // Keep within radius to prevent scanning the entire forest
+                int dx = Math.abs(n.getX() - startPos.getX());
+                int dy = Math.abs(n.getY() - startPos.getY());
+                int dz = Math.abs(n.getZ() - startPos.getZ());
+
+                if (dx > maxHorizontal || dz > maxHorizontal || dy > maxVertical) {
+                    continue;
+                }
+
+                if (visited.add(n)) {
+                    BlockState state = world.getBlockState(n);
+                    if (ConfigDataCache.isHeistableLeaf(state)) {
+                        queue.add(n);
+                        validLeaves.add(n);
+                    } else if (ConfigDataCache.isHeistableLog(state)) {
+                        // Traverse through branches to help find more leaves
+                        queue.add(n);
+                    }
+                }
+            }
+        }
+
+        if (Configs.AHP.debugTreeDetection) {
+            AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Localized Canopy Mapped. Size: {}. Anchor: {}", validLeaves.size(), startPos.toShortString());
+        }
+
+        // Use the start position as the unique Tree ID
+        return new TreeScanResult(startPos, validLeaves);
+    }
+
+    /**
+     * Gets the 'distance' property from a leaf block state safely.
+     */
+    private static int getLeafDistance(BlockState state) {
+        if (state.contains(LeavesBlock.DISTANCE)) {
+            return state.get(LeavesBlock.DISTANCE);
+        }
+        return 7; // Treat as far/decayable if property missing
+    }
+
+    /**
      * Determines if a position is a valid, safe exit point for the hamster.
      * Checks for collision and ensures the spot isn't a 1x1 enclosed pocket.
      */
@@ -424,31 +579,5 @@ public class TreeHeistUtil {
 
         // If we finished the loop without hitting the limit, we are in a small enclosed space.
         return true;
-    }
-
-    /**
-     * Sends the appropriate start message to the player based on the calculated profitability of the area.
-     */
-    public static void sendHeistStartMessage(PlayerEntity player, float profitability) {
-        if (!Configs.AHP.enableTreeHeistStartMessage) return;
-
-        String key = "message.adorablehamsterpets.tree_heist_start_high";
-        Formatting color = Formatting.WHITE;
-
-        if (profitability < 0.4f) {
-            key = "message.adorablehamsterpets.tree_heist_start_low";
-        } else if (profitability < 0.9f) {
-            key = "message.adorablehamsterpets.tree_heist_start_medium";
-        }
-
-        if (Configs.AHP.debugTreeDetection) {
-            AdorableHamsterPets.LOGGER.info("[TreeHeist] Starting heist for player {}. Profitability: {} ({}%). Selected Message Key: {}",
-                    player.getName().getString(),
-                    String.format("%.2f", profitability),
-                    (int) (profitability * 100),
-                    key);
-        }
-
-        player.sendMessage(Text.translatable(key).formatted(color), true);
     }
 }

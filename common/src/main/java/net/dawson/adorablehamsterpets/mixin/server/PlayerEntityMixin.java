@@ -1209,7 +1209,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         HitResult hitResult = self.raycast(5.0, 0.0f, false);
         if (hitResult.getType() == HitResult.Type.BLOCK) {
             BlockPos hitPos = ((BlockHitResult) hitResult).getBlockPos();
-            if (world.getBlockState(hitPos).isOf(Blocks.OAK_LEAVES)) {
+            BlockState hitState = world.getBlockState(hitPos);
+
+            if (ConfigDataCache.isHeistableLeaf(hitState) || ConfigDataCache.isHeistableLog(hitState)) {
 
                 TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, hitPos);
 

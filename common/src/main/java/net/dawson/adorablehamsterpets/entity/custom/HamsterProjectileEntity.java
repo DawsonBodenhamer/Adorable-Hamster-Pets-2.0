@@ -1,5 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
+import dev.architectury.platform.Platform;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
@@ -10,7 +12,6 @@ import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -32,8 +33,9 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.*;
+import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 
 /**
@@ -76,6 +78,17 @@ public class HamsterProjectileEntity extends ThrownEntity {
 
     @Override
     public void tick() {
+        // --- Custom Collision Check ---
+        // Used for non-solid heistable blocks (e.g. Dynamic Trees mod)
+        if (!this.getWorld().isClient()) {
+            BlockHitResult bhr = TreeHeistUtil.checkNonSolidCollision(this);
+
+            if (bhr != null) {
+                this.onCollision(bhr);
+                return; // Stop tick, entity is discarded in onCollision
+            }
+        }
+
         super.tick();
 
         // Simulate trajectory to play warning sound
@@ -273,7 +286,7 @@ public class HamsterProjectileEntity extends ThrownEntity {
                 BlockPos hitPos = blockHitResult.getBlockPos();
                 BlockState hitState = this.getWorld().getBlockState(hitPos);
 
-                if (hitState.isOf(Blocks.OAK_LEAVES)) {
+                if (ConfigDataCache.isHeistableLeaf(hitState) || ConfigDataCache.isHeistableLog(hitState)) {
                     // 1. Scan first to identify the tree anchor
                     TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(this.getWorld(), hitPos);
 

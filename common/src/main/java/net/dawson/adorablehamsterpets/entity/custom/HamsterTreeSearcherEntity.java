@@ -4,6 +4,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.item.ModItems;
@@ -12,7 +13,6 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -325,7 +325,7 @@ public class HamsterTreeSearcherEntity extends Entity {
         for (int i = 0; i < samples; i++) {
             long posLong = this.validLeafPositions.get(this.random.nextInt(this.validLeafPositions.size()));
             BlockPos pos = BlockPos.fromLong(posLong);
-            if (!this.getWorld().getBlockState(pos).isOf(Blocks.OAK_LEAVES)) {
+            if (!ConfigDataCache.isHeistableLeaf(this.getWorld().getBlockState(pos))) {
                 failures++;
             }
         }

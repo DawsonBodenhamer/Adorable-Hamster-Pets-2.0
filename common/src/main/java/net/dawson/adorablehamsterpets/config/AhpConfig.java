@@ -981,6 +981,18 @@ public class AhpConfig extends Config {
     @Translatable.Desc("The likelihood (0.0 to 1.0) of an acorn dropping each time your hamster rummages. Default is very low at 0.03 (3%), because the hamster rummages roughly ~5 times per second. Crank it up if you want to crash the local squirrel economy. (Maximum output is 1 acorn per second even if you turn it all the way up).")
     public ValidatedFloat acornDropChance = new ValidatedFloat(0.03f, 1.0f, 0.0f);
 
+    @Translatable.Name("Heistable Leaves")
+    @Translatable.Desc("A list of block IDs or tags that are considered valid leaves for the Tree Heist. Defaults to vanilla Oak Leaves and Dynamic Trees' Oak Leaves. Note: The Dynamic Trees mod adds their own type of acorns and drop methods. When that mod is installed, the only way to get the specific acorns from my mod is through the Tree Heist.")
+    public List<String> heistableLeaves = new ArrayList<>(List.of(
+            "minecraft:oak_leaves", "dynamictrees:oak_leaves"
+    ));
+
+    @Translatable.Name("Heistable Logs")
+    @Translatable.Desc("A list of block IDs or tags that are considered valid logs/branches for the Tree Heist. Throwing a hamster at these will start a heist.")
+    public List<String> heistableLogs = new ArrayList<>(List.of(
+            "#minecraft:oak_logs", "dynamictrees:oak_branch"
+    ));
+
     @NonSync
     @Translatable.Name("Reset History")
     public ConfigAction resetHeistHistory = new ConfigAction.Builder()

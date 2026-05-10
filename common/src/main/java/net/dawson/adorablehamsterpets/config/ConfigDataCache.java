@@ -71,6 +71,10 @@ public class ConfigDataCache {
     private static final Set<TagKey<Block>> celebrationOreTags = new HashSet<>();
     private static final Set<Block> sulkingOreBlocks = new HashSet<>();
     private static final Set<TagKey<Block>> sulkingOreTags = new HashSet<>();
+    private static final Set<Block> heistableLeavesBlocks = new HashSet<>();
+    private static final Set<TagKey<Block>> heistableLeavesTags = new HashSet<>();
+    private static final Set<Block> heistableLogsBlocks = new HashSet<>();
+    private static final Set<TagKey<Block>> heistableLogsTags = new HashSet<>();
 
     // --- Cached Lists for Environment-Spawning Performance ---
     private static final List<EnvironmentDefinition> ENVIRONMENTS = new ArrayList<>();
@@ -121,6 +125,8 @@ public class ConfigDataCache {
         // --- Parse Block Lists ---
         parseBlockList(Configs.AHP.celebrationOres, celebrationOreBlocks, celebrationOreTags, "celebrationOres");
         parseBlockList(Configs.AHP.sulkingOres, sulkingOreBlocks, sulkingOreTags, "sulkingOres");
+        parseBlockList(Configs.AHP.heistableLeaves, heistableLeavesBlocks, heistableLeavesTags, "heistableLeaves");
+        parseBlockList(Configs.AHP.heistableLogs, heistableLogsBlocks, heistableLogsTags, "heistableLogs");
 
         // --- Parse Spawning Environments ---
         ENVIRONMENTS.clear();
@@ -181,6 +187,8 @@ public class ConfigDataCache {
     // --- Public Block Checker Methods ---
     public static boolean isCelebrationOre(BlockState state) { return matchesBlock(state, celebrationOreBlocks, celebrationOreTags); }
     public static boolean isSulkingOre(BlockState state) { return matchesBlock(state, sulkingOreBlocks, sulkingOreTags); }
+    public static boolean isHeistableLeaf(BlockState state) { return matchesBlock(state, heistableLeavesBlocks, heistableLeavesTags); }
+    public static boolean isHeistableLog(BlockState state) { return matchesBlock(state, heistableLogsBlocks, heistableLogsTags); }
 
     // --- Public Environment Checker Methods ---
     /**
@@ -403,6 +411,10 @@ public class ConfigDataCache {
         celebrationOreTags.clear();
         sulkingOreBlocks.clear();
         sulkingOreTags.clear();
+        heistableLeavesBlocks.clear();
+        heistableLeavesTags.clear();
+        heistableLogsBlocks.clear();
+        heistableLogsTags.clear();
     }
 
     /**
