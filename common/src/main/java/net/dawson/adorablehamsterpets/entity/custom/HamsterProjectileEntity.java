@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
-import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
@@ -33,9 +32,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.*;
-import net.minecraft.world.RaycastContext;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 /**
@@ -56,8 +54,6 @@ public class HamsterProjectileEntity extends ThrownEntity {
 
     private boolean hasPlayedIncomingSound = false;
 
-    // Used exclusively by client renderer
-    @Environment(EnvType.CLIENT)
     public HamsterEntity clientDummyHamster;
 
     /* ──────────────────────────────────────────────────────────────────────────────

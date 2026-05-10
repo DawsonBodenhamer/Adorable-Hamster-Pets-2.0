@@ -35,8 +35,9 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - **Acorn Note:** The Dynamic Trees mod adds their own type of acorns and drop methods. When that mod is installed, the only way to get the specific acorns from my mod is through the Tree Heist.
 
 ### Fixed
-- **Hamster Yeet Bug**
+- **Hamster Yeet & Evilcraft Bug**
   - Resolved an bug that prevented hamsters from being thrown on Forge and NeoForge dedicated servers, caused by environment annotations running on the server thread. Super niche little insect that slipped by because it doesn't exist on Fabric. You should be able to throw your hamsters in multiplayer again!
+  - This also resolves a server startup crash when playing with EvilCraft, which attempts to instantiate the projectile to check its blood levels. Lol.
 - **Food Item Stacking**
   - Resolved an issue on 1.21.1 where the configurable food items became unstackable in the inventory GUI after being split or spread.
   - Implemented a stable ComponentMap caching system to ensure GUI right-click dragging correctly identifies dynamic food stacks as equal.
