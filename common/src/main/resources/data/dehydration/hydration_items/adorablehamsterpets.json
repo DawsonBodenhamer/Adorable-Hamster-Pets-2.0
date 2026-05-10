@@ -1,0 +1,16 @@
+{
+  "1": {
+    "replace": false,
+    "items":[
+      "adorablehamsterpets:sliced_cucumber",
+      "adorablehamsterpets:green_beans",
+      "adorablehamsterpets:steamed_green_beans"
+    ]
+  },
+  "3": {
+    "replace": false,
+    "items":[
+      "adorablehamsterpets:cucumber"
+    ]
+  }
+}

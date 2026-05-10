@@ -1,0 +1,44 @@
+{
+  "adorablehamsterpets:cucumber": {
+    "carbohydrates": 2,
+    "protein": 1,
+    "fat": 0,
+    "vitamins": 4,
+    "minerals": 2
+  },
+  "adorablehamsterpets:sliced_cucumber": {
+    "carbohydrates": 1,
+    "protein": 0,
+    "fat": 0,
+    "vitamins": 1,
+    "minerals": 1
+  },
+  "adorablehamsterpets:green_beans": {
+    "carbohydrates": 4,
+    "protein": 2,
+    "fat": 0,
+    "vitamins": 3,
+    "minerals": 3
+  },
+  "adorablehamsterpets:steamed_green_beans": {
+    "carbohydrates": 4,
+    "protein": 2,
+    "fat": 0,
+    "vitamins": 4,
+    "minerals": 3
+  },
+  "adorablehamsterpets:hamster_food_mix": {
+    "carbohydrates": 6,
+    "protein": 4,
+    "fat": 5,
+    "vitamins": 2,
+    "minerals": 3
+  },
+  "adorablehamsterpets:cheese": {
+    "carbohydrates": 1,
+    "protein": 7,
+    "fat": 9,
+    "vitamins": 2,
+    "minerals": 6
+  }
+}
