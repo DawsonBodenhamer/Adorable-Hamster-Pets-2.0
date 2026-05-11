@@ -54,6 +54,8 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Resolved a few pathfinding and AI issues where tamed hamsters following the player would sometimes experience server-tick lag spikes. Usually you wouldn't notice these unless you had a lot of hamsters following you at once.
 - **Wander Mode Override**
   - Resolved a bug where disabling Wander Mode in the global config wouldn't stop already-wandering hamsters from lingering around their beds.
+- **Cheese Item Texture**
+  - Finally fixed the 99% transparent pixel in the bottom left corner of the cheese item texture. I only recently realized what was causing it to look so strange. Lol
 
 ---
 
