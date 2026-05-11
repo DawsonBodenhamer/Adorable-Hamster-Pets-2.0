@@ -140,7 +140,7 @@ public class AhpWorldGenConfig extends Config {
     public ConfigGroup wildSpawnOverlays = new ConfigGroup("wildSpawnOverlays", true);
 
     @Translatable.Name("Allowed Wild Overlays")
-    @Translatable.Desc("A list of mathematical 3D color groups permitted to spawn as overlays on wild hamsters. By default, it's set to natural boring color groups like WHITE, LIGHT_GRAY, DARK_GRAY, and CREAM so your world doesn't look like a clown exploded. Available zones: WHITE, BLUE, SKY, LAVENDER, ROSE, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE.")
+    @Translatable.Desc("A list of mathematical 3D color groups permitted to spawn as overlays on wild hamsters. By default, it's set to natural boring color groups like WHITE, LIGHT_GRAY, DARK_GRAY, and CREAM so your world doesn't look like a clown exploded. Available zones: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE.")
     public List<String> allowedWildOverlayZones = new ArrayList<>(List.of("WHITE", "LIGHT_GRAY", "DARK_GRAY", "CREAM"));
 
     @Translatable.Name("Enforce Brighter Overlays")
@@ -164,9 +164,26 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("For the aspiring digital zoologist. This is where you control which hamster types appear in which biomes. This maps environments to specific ranges of hamster types for spawning. The system checks environments from top to bottom. The first environment a hamster type qualifies for dictates the genetics used to generate that hamster. If you see unfamiliar tags like 'adorablehamsterpets:is_icy,' note that those are my own custom union tags which point to Fabric's Convention tags on 1.21 like 'c:is_icy' and Forge tags on 1.20 like 'forge:is_icy.'")
     public ConfigGroup spawningEnvironments = new ConfigGroup("spawningEnvironments", true);
 
+    // --- 0. Wildcard Environment ---
+    @Translatable.Name("Priority 0: The Wildcard")
+    @Translatable.Desc("Checked before everything else. Empty by default. Use this if you want to surgically extract a specific biome from a broader group below to give it a unique color (e.g., pulling 'Cherry Groves' out of 'Magical Environments' and putting it here, so it only spawns CHERRY hamsters). Make sense? Good.")
+    public ConfigGroup wildcardEnvironment = new ConfigGroup("wildcardEnvironment", true);
+    @Translatable.Name("Included Biomes")
+    public List<String> wildcardBiomes = new ArrayList<>();
+    @Translatable.Name("Included Tags")
+    public List<String> wildcardTags = new ArrayList<>();
+    @Translatable.Name("Excluded Biomes")
+    public List<String> wildcardExclusionBiomes = new ArrayList<>();
+    @Translatable.Name("Excluded Tags")
+    public List<String> wildcardExclusionTags = new ArrayList<>();
+    @ConfigGroup.Pop
+    @Translatable.Name("Zone Weights")
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
+    public List<String> wildcardWeights = new ArrayList<>();
+
     // --- 1. Icy Environments ---
     @Translatable.Name("Priority 1: Icy Environments")
-    @Translatable.Desc("Checked before all others. If a biome matches these rules, it will get white-ish (and occasionally blue-ish) hamsters, even if it also matches rules for other colors below.")
+    @Translatable.Desc("Checked after the Wildcard, but before the rest. If a biome matches these rules, it will get white-ish (and occasionally blue-ish) hamsters, even if it also matches rules for other colors below.")
     public ConfigGroup icyEnvironment = new ConfigGroup("icyEnvironment", true);
     @Translatable.Name("Included Biomes")
     public List<String> icyBiomes = new ArrayList<>(List.of(
@@ -180,16 +197,16 @@ public class AhpWorldGenConfig extends Config {
     public List<String> icyExclusionTags = new ArrayList<>();
     @ConfigGroup.Pop
     @Translatable.Name("Zone Weights")
-    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, ROSE, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE. Join The Cheek Pouch Discord server to suggest new groupings if you designed a custom hamster texture that you think belongs in its own unique grouping (i.e. maybe a 'mossy' green hamster?).")
-    public List<String> icyWeights = new ArrayList<>(List.of("BLUE:25", "SKY:25", "WHITE:50"));
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
+    public List<String> icyWeights = new ArrayList<>(List.of("BLUE:85", "SKY:15"));
 
     // --- 2. Magical Environments ---
     @Translatable.Name("Priority 2: Magical Environments")
-    @Translatable.Desc("Checked after Icy, but before all others.")
+    @Translatable.Desc("Checked after Icy, but before the rest.")
     public ConfigGroup magicalEnvironment = new ConfigGroup("magicalEnvironment", true);
     @Translatable.Name("Included Biomes")
     public List<String> magicalBiomes = new ArrayList<>(List.of(
-            "minecraft:cherry_grove", "terralith:sakura_valley", "biomesoplenty:fungi_forest", "biomesoplenty:mystic_grove"
+            "biomesoplenty:mystic_grove"
     ));
     @Translatable.Name("Included Tags")
     public List<String> magicalTags = new ArrayList<>(List.of("adorablehamsterpets:is_magical", "adorablehamsterpets:is_mushroom", "terralith:mystical"));
@@ -199,12 +216,29 @@ public class AhpWorldGenConfig extends Config {
     public List<String> magicalExclusionTags = new ArrayList<>();
     @ConfigGroup.Pop
     @Translatable.Name("Zone Weights")
-    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, ROSE, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE. Join The Cheek Pouch Discord server to suggest new groupings if you designed a custom hamster texture that you think belongs in its own unique grouping (i.e. maybe a 'mossy' green hamster?).")
-    public List<String> magicalWeights = new ArrayList<>(List.of("LAVENDER:70", "ROSE:30"));
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
+    public List<String> magicalWeights = new ArrayList<>(List.of("LAVENDER:85", "CHERRY:15"));
 
-    // --- 3. Snowy Environments ---
-    @Translatable.Name("Priority 3: Snowy Environments")
+    // --- 3. Cherry Environments ---
+    @Translatable.Name("Priority 3: Cherry Environments")
     @Translatable.Desc("Checked after Icy and Magical, but before the rest.")
+    public ConfigGroup cherryEnvironment = new ConfigGroup("cherryEnvironment", true);
+    @Translatable.Name("Included Biomes")
+    public List<String> cherryBiomes = new ArrayList<>(List.of("minecraft:cherry_grove"));
+    @Translatable.Name("Included Tags")
+    public List<String> cherryTags = new ArrayList<>();
+    @Translatable.Name("Excluded Biomes")
+    public List<String> cherryExclusionBiomes = new ArrayList<>();
+    @Translatable.Name("Excluded Tags")
+    public List<String> cherryExclusionTags = new ArrayList<>();
+    @ConfigGroup.Pop
+    @Translatable.Name("Zone Weights")
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
+    public List<String> cherryWeights = new ArrayList<>(List.of("CHERRY:100"));
+
+    // --- 4. Snowy Environments ---
+    @Translatable.Name("Priority 4: Snowy Environments")
+    @Translatable.Desc("Checked after Icy, Magical and Cherry but before the rest.")
     public ConfigGroup snowyEnvironment = new ConfigGroup("snowyEnvironment", true);
     @Translatable.Name("Included Biomes")
     public List<String> snowyBiomes = new ArrayList<>(List.of(
@@ -216,18 +250,37 @@ public class AhpWorldGenConfig extends Config {
     public List<String> snowyExclusionBiomes = new ArrayList<>(List.of(
             "minecraft:deep_frozen_ocean", "minecraft:frozen_ocean", "minecraft:stony_shore", "minecraft:windswept_forest",
             "minecraft:windswept_gravelly_hills", "minecraft:windswept_hills", "minecraft:taiga",
-            "minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga"
+            "minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga", "terralith:skylands_winter"
     ));
     @Translatable.Name("Excluded Tags")
     public List<String> snowyExclusionTags = new ArrayList<>();
     @ConfigGroup.Pop
     @Translatable.Name("Zone Weights")
-    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, ROSE, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE. Join The Cheek Pouch Discord server to suggest new groupings if you designed a custom hamster texture that you think belongs in its own unique grouping (i.e. maybe a 'mossy' green hamster?).")
-    public List<String> snowyWeights = new ArrayList<>(List.of("WHITE:100"));
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
+    public List<String> snowyWeights = new ArrayList<>(List.of("WHITE:85", "SKY:15"));
 
-    // --- 4. Stony Environments ---
-    @Translatable.Name("Priority 4: Rocky Environments")
-    @Translatable.Desc("Checked after Icy, Magical and Snowy, but before the rest.")
+    // --- 5. Sky Environments ---
+    @Translatable.Name("Priority 5: Sky Environments")
+    @Translatable.Desc("Checked after Icy, Magical, Cherry and Snowy, but before the rest. By default this targets floating islands from mods, which don't exist in the Vanilla game.")
+    public ConfigGroup skyEnvironment = new ConfigGroup("skyEnvironment", true);
+    @Translatable.Name("Included Biomes")
+    public List<String> skyBiomes = new ArrayList<>(List.of(
+            "terralith:skylands_winter", "terralith:skylands_autumn", "terralith:skylands_spring", "terralith:skylands_summer", "terralith:skylands"
+    ));
+    @Translatable.Name("Included Tags")
+    public List<String> skyTags = new ArrayList<>();
+    @Translatable.Name("Excluded Biomes")
+    public List<String> skyExclusionBiomes = new ArrayList<>();
+    @Translatable.Name("Excluded Tags")
+    public List<String> skyExclusionTags = new ArrayList<>();
+    @ConfigGroup.Pop
+    @Translatable.Name("Zone Weights")
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
+    public List<String> skyWeights = new ArrayList<>(List.of("SKY:100"));
+
+    // --- 6. Stony Environments ---
+    @Translatable.Name("Priority 6: Rocky Environments")
+    @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy and Sky, but before the rest.")
     public ConfigGroup rockyEnvironment = new ConfigGroup("rockyEnvironment", true);
     @Translatable.Name("Included Biomes")
     public List<String> rockyBiomes = new ArrayList<>(List.of("minecraft:stony_shore", "terralith:stony_spires"));
@@ -242,12 +295,12 @@ public class AhpWorldGenConfig extends Config {
     ));
     @ConfigGroup.Pop
     @Translatable.Name("Zone Weights")
-    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, ROSE, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE. Join The Cheek Pouch Discord server to suggest new groupings if you designed a custom hamster texture that you think belongs in its own unique grouping (i.e. maybe a 'mossy' green hamster?).")
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> rockyWeights = new ArrayList<>(List.of("LIGHT_GRAY:50", "DARK_GRAY:50"));
 
-    // --- 5. Dark Environments ---
-    @Translatable.Name("Priority 5: Dark Environments")
-    @Translatable.Desc("Checked after Icy, Magical, Snowy and Stony, but before the rest.")
+    // --- 7. Dark Environments ---
+    @Translatable.Name("Priority 7: Dark Environments")
+    @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy, Sky and Rocky, but before the rest.")
     public ConfigGroup darkEnvironment = new ConfigGroup("darkEnvironment", true);
     @Translatable.Name("Included Biomes")
     public List<String> darkBiomes = new ArrayList<>(List.of("minecraft:deep_dark"));
@@ -259,12 +312,12 @@ public class AhpWorldGenConfig extends Config {
     public List<String> darkExclusionTags = new ArrayList<>(List.of("minecraft:is_jungle", "minecraft:is_beach"));
     @ConfigGroup.Pop
     @Translatable.Name("Zone Weights")
-    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, ROSE, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE. Join The Cheek Pouch Discord server to suggest new groupings if you designed a custom hamster texture that you think belongs in its own unique grouping (i.e. maybe a 'mossy' green hamster?).")
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> darkWeights = new ArrayList<>(List.of("BLACK:80", "DARK_GRAY:20"));
 
-    // --- 6. Sandy Environments ---
-    @Translatable.Name("Priority 6: Sandy Environments")
-    @Translatable.Desc("Checked after Icy, Magical, Snowy, Stony and Dark, but before the rest.")
+    // --- 8. Sandy Environments ---
+    @Translatable.Name("Priority 8: Sandy Environments")
+    @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy, Sky, Rocky and Dark, but before the rest.")
     public ConfigGroup sandyEnvironment = new ConfigGroup("sandyEnvironment", true);
     @Translatable.Name("Included Biomes")
     public List<String> sandyBiomes = new ArrayList<>(List.of(
@@ -279,15 +332,15 @@ public class AhpWorldGenConfig extends Config {
     public List<String> sandyExclusionTags = new ArrayList<>(List.of("minecraft:is_badlands"));
     @ConfigGroup.Pop
     @Translatable.Name("Zone Weights")
-    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, ROSE, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE. Join The Cheek Pouch Discord server to suggest new groupings if you designed a custom hamster texture that you think belongs in its own unique grouping (i.e. maybe a 'mossy' green hamster?).")
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> sandyWeights = new ArrayList<>(List.of("CREAM:100"));
 
-    // --- 7. Forest Environments ---
-    @Translatable.Name("Priority 7: Forest Environments")
-    @Translatable.Desc("Checked after Icy, Magical, Snowy, Stony, Dark and Sandy, but before Plains.")
+    // --- 9. Forest Environments ---
+    @Translatable.Name("Priority 9: Forest Environments")
+    @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy, Sky, Rocky, Dark and Sandy, but before the rest.")
     public ConfigGroup forestEnvironment = new ConfigGroup("forestEnvironment", true);
     @Translatable.Name("Included Biomes")
-    public List<String> forestBiomes = new ArrayList<>(List.of("terralith:cloud_forest", "biomesoplenty:redwood_forest"));
+    public List<String> forestBiomes = new ArrayList<>(List.of("terralith:cloud_forest", "biomesoplenty:redwood_forest", "biomesoplenty:fungi_forest"));
     @Translatable.Name("Included Tags")
     public List<String> forestTags = new ArrayList<>(List.of("adorablehamsterpets:is_forest", "adorablehamsterpets:is_dense_vegetation"));
     @Translatable.Name("Excluded Biomes")
@@ -296,18 +349,35 @@ public class AhpWorldGenConfig extends Config {
     public List<String> forestExclusionTags = new ArrayList<>(List.of("adorablehamsterpets:is_plains"));
     @ConfigGroup.Pop
     @Translatable.Name("Zone Weights")
-    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, ROSE, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE. Join The Cheek Pouch Discord server to suggest new groupings if you designed a custom hamster texture that you think belongs in its own unique grouping (i.e. maybe a 'mossy' green hamster?).")
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> forestWeights = new ArrayList<>(List.of("CHOCOLATE:100"));
 
-    // --- 8. Plains Environments ---
-    @Translatable.Name("Priority 8: Plains Environments")
+    // --- 10. Auburn Environments ---
+    @Translatable.Name("Priority 10: Auburn Environments")
+    @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy, Sky, Rocky, Dark, Sandy, and Forest, but before Plains.")
+    public ConfigGroup auburnEnvironment = new ConfigGroup("auburnEnvironment", true);
+    @Translatable.Name("Included Biomes")
+    public List<String> auburnBiomes = new ArrayList<>(List.of("terralith:sakura_valley"));
+    @Translatable.Name("Included Tags")
+    public List<String> auburnTags = new ArrayList<>(List.of("minecraft:is_badlands"));
+    @Translatable.Name("Excluded Biomes")
+    public List<String> auburnExclusionBiomes = new ArrayList<>();
+    @Translatable.Name("Excluded Tags")
+    public List<String> auburnExclusionTags = new ArrayList<>();
+    @ConfigGroup.Pop
+    @Translatable.Name("Zone Weights")
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
+    public List<String> auburnWeights = new ArrayList<>(List.of("RUST:100"));
+
+    // --- 11. Plains Environments ---
+    @Translatable.Name("Priority 11: Plains Environments")
     @Translatable.Desc("The ultimate fallback, checked after everything else. If a biome slips through all the zones above, it will land here and use these weights.")
     public ConfigGroup plainsEnvironment = new ConfigGroup("plainsEnvironment", true);
     @ConfigGroup.Pop
     @ConfigGroup.Pop
     @ConfigGroup.Pop
     @Translatable.Name("Zone Weights")
-    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, ROSE, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE. Join The Cheek Pouch Discord server to suggest new groupings if you designed a custom hamster texture that you think belongs in its own unique grouping (i.e. maybe a 'mossy' green hamster?).")
+    @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> plainsWeights = new ArrayList<>(List.of("ORANGE:100"));
 
     // --- Cheek Pouch & World Loot Settings ---

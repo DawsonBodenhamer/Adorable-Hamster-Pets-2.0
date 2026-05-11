@@ -132,13 +132,17 @@ public class ConfigDataCache {
         ENVIRONMENTS.clear();
         AhpWorldGenConfig wgc = Configs.AHP_WORLDGEN;
 
+        ENVIRONMENTS.add(parseEnvironment(wgc.wildcardBiomes, wgc.wildcardTags, wgc.wildcardExclusionBiomes, wgc.wildcardExclusionTags, wgc.wildcardWeights, "Wildcard"));
         ENVIRONMENTS.add(parseEnvironment(wgc.icyBiomes, wgc.icyTags, wgc.icyExclusionBiomes, wgc.icyExclusionTags, wgc.icyWeights, "Icy"));
         ENVIRONMENTS.add(parseEnvironment(wgc.magicalBiomes, wgc.magicalTags, wgc.magicalExclusionBiomes, wgc.magicalExclusionTags, wgc.magicalWeights, "Magical"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.cherryBiomes, wgc.cherryTags, wgc.cherryExclusionBiomes, wgc.cherryExclusionTags, wgc.cherryWeights, "Cherry"));
         ENVIRONMENTS.add(parseEnvironment(wgc.snowyBiomes, wgc.snowyTags, wgc.snowyExclusionBiomes, wgc.snowyExclusionTags, wgc.snowyWeights, "Snowy"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.skyBiomes, wgc.skyTags, wgc.skyExclusionBiomes, wgc.skyExclusionTags, wgc.skyWeights, "Sky"));
         ENVIRONMENTS.add(parseEnvironment(wgc.rockyBiomes, wgc.rockyTags, wgc.rockyExclusionBiomes, wgc.rockyExclusionTags, wgc.rockyWeights, "Rocky"));
         ENVIRONMENTS.add(parseEnvironment(wgc.darkBiomes, wgc.darkTags, wgc.darkExclusionBiomes, wgc.darkExclusionTags, wgc.darkWeights, "Cave"));
         ENVIRONMENTS.add(parseEnvironment(wgc.sandyBiomes, wgc.sandyTags, wgc.sandyExclusionBiomes, wgc.sandyExclusionTags, wgc.sandyWeights, "Sandy"));
         ENVIRONMENTS.add(parseEnvironment(wgc.forestBiomes, wgc.forestTags, wgc.forestExclusionBiomes, wgc.forestExclusionTags, wgc.forestWeights, "Forested"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.auburnBiomes, wgc.auburnTags, wgc.auburnExclusionBiomes, wgc.auburnExclusionTags, wgc.auburnWeights, "Auburn"));
 
         // Fallback: Plains environment doesn't need biome checks, just the weights
         FALLBACK_WEIGHTS = parseWeights(wgc.plainsWeights, "Plains");
