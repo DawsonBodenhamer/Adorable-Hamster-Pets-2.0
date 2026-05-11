@@ -243,7 +243,7 @@ public class AhpWorldGenConfig extends Config {
     @ConfigGroup.Pop
     @Translatable.Name("Zone Weights")
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, ROSE, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE. Join The Cheek Pouch Discord server to suggest new groupings if you designed a custom hamster texture that you think belongs in its own unique grouping (i.e. maybe a 'mossy' green hamster?).")
-    public List<String> mountainWeights = new ArrayList<>(List.of("LIGHT_GRAY:50", "DARK_GRAY:50"));
+    public List<String> rockyWeights = new ArrayList<>(List.of("LIGHT_GRAY:50", "DARK_GRAY:50"));
 
     // --- 5. Dark Environments ---
     @Translatable.Name("Priority 5: Dark Environments")
