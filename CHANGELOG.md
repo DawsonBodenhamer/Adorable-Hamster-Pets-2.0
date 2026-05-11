@@ -39,6 +39,20 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Acorns can now be used as furnace fuel, smelting exactly the same amount of items as a vanilla stick.
   - Alternatively, placing an Acorn in the top slot of a furnace will smelt it down into a piece of Charcoal.
 
+### Changed
+- **Hamster Color Groups**
+  - Renamed `ROSE` color group to `CHERRY` since the only hamster in that group at the moment is the "Pearl Rose" hamster, which is basically pink.
+  - Added a new `RUST` color group so the "Rust" hamster's spawning rules can be separated from the "Orange" hamsters. The "Rust" hamster will no longer be considered part of the `ORANGE` color group
+- **Hamster Spawning**
+  - Added a new `Wildcard Environments` spawning zone to the config. This allows server owners to easily siphon specific biomes out of broader categories and assign them unique color rules without having to completely overhaul the other lists. (i.e., If you wanted to separate the environments in which light and dark gray hamsters spawn, now you can do so).
+  - Expanded the procedural spawning logic from 10 environments to 12 to provide modpack makers with complete granular control over all 12 color zones.
+  - Added a dedicated `Sky Environments` spawning zone, isolating the new `SKY` color grouping to floating island biomes (like Terralith's skylands). There's still a 15% chance to find `SKY` hamsters in snowy areas in regular Vanilla Minecraft.
+  - Added a dedicated `Cherry Environments` spawning zone, pulling `minecraft:cherry_grove` out of the Magical environments so they can be balanced independently. By default, this environment will only spawn `CHERRY` hamsters.
+  - Added a dedicated `Auburn Environments` spawning zone, targetting `minecraft:badlands`. By default, this environment will only spawn `RUST` hamsters. This means `ORANGE` hamsters will no longer spawn in Badlands by default.
+  - Re-balanced the spawning weights across `Icy`, `Magical`, and `Snowy` environmentS to fit the new setup. (i.e., in v3.6.0, you would have seen `"BLUE:25", "SKY:25", "WHITE:50"` in `icyWeights`. The new default is `"BLUE:85", "SKY:15"`, since `SKY` hamsters can also be found on floating islands. You might need to use the "Restore Defaults" buttons to see these changes. See "Config Note" below for more info.
+- **Config Note**
+  - You might need to right-click these specific config settings in the config screen and select "Restore Defaults" on each one to apply the changes. Otherwise, your old customizations will take priority. You can also click the "Changes" button (bottom-right corner of the config screen) and then click "Restore Defaults" to reset your entire config all at once.
+
 ### Fixed
 - **Hamster Yeet & Evilcraft Bug**
   - Resolved an bug that prevented hamsters from being thrown on Forge and NeoForge dedicated servers, caused by environment annotations running on the server thread. Super niche little insect that slipped by because it doesn't exist on Fabric. You should be able to throw your hamsters in multiplayer again!

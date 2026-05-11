@@ -12,7 +12,7 @@ data merge entity @e[type=adorablehamsterpets:hamster,distance=..3,tag=!temp_dat
 data modify entity @e[type=adorablehamsterpets:hamster,distance=..3,tag=!temp_data_tag,limit=1,sort=nearest] Owner set from entity @s UUID
 tag @e[type=adorablehamsterpets:hamster,distance=..3,tag=!temp_data_tag,limit=1,sort=nearest] add temp_data_tag
 
-# Catherine the Great (ROSE)
+# Catherine the Great (CHERRY)
 ahp spawn hamster pearl_rose torso_fold white none none black
 data merge entity @e[type=adorablehamsterpets:hamster,distance=..3,tag=!temp_data_tag,limit=1,sort=nearest] {CustomName:'{"text":"Catherine the Great"}', NoAI:0b, NoGravity:0b, Sitting:0b}
 data modify entity @e[type=adorablehamsterpets:hamster,distance=..3,tag=!temp_data_tag,limit=1,sort=nearest] Owner set from entity @s UUID
