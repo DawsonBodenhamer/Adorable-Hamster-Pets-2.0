@@ -128,7 +128,7 @@ public class ConfigDataCache {
         parseBlockList(Configs.AHP.heistableLeaves, heistableLeavesBlocks, heistableLeavesTags, "heistableLeaves");
         parseBlockList(Configs.AHP.heistableLogs, heistableLogsBlocks, heistableLogsTags, "heistableLogs");
 
-        // --- Parse Spawning Environments ---
+        // --- Parse Region-Based Color Filters ---
         ENVIRONMENTS.clear();
         AhpWorldGenConfig wgc = Configs.AHP_WORLDGEN;
 
