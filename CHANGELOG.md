@@ -71,6 +71,8 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Resolved a bug where disabling Wander Mode in the global config wouldn't stop already-wandering hamsters from lingering around their beds.
 - **Cheese Item Texture**
   - Finally fixed the 99% transparent pixel in the bottom left corner of the cheese item texture. I only recently realized what was causing it to look so strange. Lol
+- **Console Log Spam**
+  - Resolved an issue where players with internet disabled (or those playing in regions where GitHub is blocked) would receive a massive, screen-filling error stack trace in their console every 5 minutes when the mod silently checked for updates in the background. Background network failures are now politely logged as a single warning line.
 
 ---
 
