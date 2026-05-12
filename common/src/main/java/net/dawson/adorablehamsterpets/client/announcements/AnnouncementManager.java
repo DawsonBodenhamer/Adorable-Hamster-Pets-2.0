@@ -144,7 +144,7 @@ public class AnnouncementManager {
                         return CompletableFuture.completedFuture(response.body());
                     } else {
                         // Primary failed (probably 404), Log warning and try fallback
-                        AdorableHamsterPets.LOGGER.warn("Failed to fetch markdown from Primary '{}' (Status {}). Attempting fallback...", relativePath, response.statusCode());
+                        AdorableHamsterPets.LOGGER.warn("[Announcements] Failed to fetch markdown from Primary '{}' (Status {}). Attempting fallback...", relativePath, response.statusCode());
 
                         HttpRequest fallbackRequest = HttpRequest.newBuilder()
                                 .uri(URI.create(FALLBACK_URL + relativePath))
@@ -155,11 +155,11 @@ public class AnnouncementManager {
                         return httpClient.sendAsync(fallbackRequest, HttpResponse.BodyHandlers.ofString())
                                 .thenApply(fallbackResponse -> {
                                     if (fallbackResponse.statusCode() == 200) {
-                                        AdorableHamsterPets.LOGGER.info("Successfully fetched markdown from Fallback '{}'.", relativePath);
+                                        AdorableHamsterPets.LOGGER.info("[Announcements] Successfully fetched markdown from Fallback '{}'.", relativePath);
                                         return fallbackResponse.body();
                                     } else {
                                         // Fallback failed too
-                                        AdorableHamsterPets.LOGGER.warn("Failed to fetch markdown from Fallback '{}' (Status {}).", relativePath, fallbackResponse.statusCode());
+                                        AdorableHamsterPets.LOGGER.warn("[Announcements] Failed to fetch markdown from Fallback '{}' (Status {}).", relativePath, fallbackResponse.statusCode());
                                         return getOfflineMessage();
                                     }
                                 });
@@ -167,7 +167,7 @@ public class AnnouncementManager {
                 })
                 .exceptionally(e -> {
                     // Network error on either request
-                    AdorableHamsterPets.LOGGER.error("Exception while fetching markdown (Primary or Fallback) for '" + relativePath + "'", e);
+                    AdorableHamsterPets.LOGGER.warn("[Announcements] Exception while fetching markdown (Primary or Fallback) for '{}': {}", relativePath, e.toString());
                     return getOfflineMessage();
                 });
     }
@@ -624,7 +624,7 @@ public class AnnouncementManager {
                         AdorableHamsterPets.LOGGER.warn("[Announcements] Failed to fetch manifest, status code: {}", response.statusCode());
                     }
                 }).exceptionally(e -> {
-                    AdorableHamsterPets.LOGGER.error("[Announcements] Exception while fetching manifest. Using cached version or offline fallback.", e);
+                    AdorableHamsterPets.LOGGER.warn("[Announcements] Exception while fetching manifest: {}. Using cached version or offline fallback.", e.toString());
                     // If the manifest is STILL empty (meaning no cache was loaded), create the fallback.
                     if (this.manifest == null || this.manifest.messages().isEmpty()) {
                         this.manifest = createOfflineFallbackManifest();

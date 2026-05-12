@@ -81,7 +81,7 @@ public class PlayerPerkManager {
                     }
                 })
                 .exceptionally(e -> {
-                    AdorableHamsterPets.LOGGER.warn("[Perks] Exception while fetching perks from remote. Using cached data if available.", e);
+                    AdorableHamsterPets.LOGGER.warn("[Perks] Exception while fetching perks from remote: {}. Using cached data if available.", e.toString());
                     return null;
                 });
     }
