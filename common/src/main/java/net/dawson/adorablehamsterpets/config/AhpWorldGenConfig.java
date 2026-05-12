@@ -47,6 +47,10 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Maximum hamsters per spawn group. Because sometimes one just isn't cute enough.")
     public ValidatedInt maxGroupSize = new ValidatedInt(1, 10, 1);
 
+    @Translatable.Name("Allow Spawns In")
+    @Translatable.Desc("Step One: Do hamsters exist here at all? If a biome matches these tags or IDs, the universe permits their presence. Once allowed to spawn, they fall through the 'Region-Based Color Filters' filters below to figure out what color they should be.")
+    public ConfigGroup allowTheseSpawnsGlobally = new ConfigGroup("allowTheseSpawnsGlobally", true);
+
     @Translatable.Name("Vanilla Biome Tags")
     @Translatable.Desc("A list of biome tags where hamsters can spawn. Format: 'mod_id:tag_name'. For example, 'minecraft:is_forest'.")
     public List<String> spawnBiomeTags = new ArrayList<>(List.of(
@@ -71,7 +75,8 @@ public class AhpWorldGenConfig extends Config {
             "adorablehamsterpets:is_sparse_vegetation"
     ));
 
-    @Translatable.Name("Include Specific Biomes")
+    @ConfigGroup.Pop
+    @Translatable.Name("Specific Biome Names")
     @Translatable.Desc("A list of specific biome IDs to ALWAYS allow spawns in, even if they don't match the tags above. Format: 'mod_id:biome_name'. For example, 'minecraft:plains'.")
     public List<String> includeBiomes = new ArrayList<>(List.of(
             "minecraft:snowy_plains", "minecraft:snowy_taiga", "minecraft:snowy_slopes",
@@ -123,11 +128,12 @@ public class AhpWorldGenConfig extends Config {
             "byg:tropical_rainforest", "byg:weeping_witch_forest", "byg:white_mangrove_marshes", "byg:windswept_desert", "byg:zelkova_forest"
     ));
 
-    @Translatable.Name("Exclude Specific Biomes")
-    @Translatable.Desc("A list of specific biome IDs to NEVER allow spawns in, even if they match a tag. This overrides all other settings. Format: 'mod_id:biome_name'. For example, 'minecraft:plains'.")
-    public List<String> excludeBiomes = new ArrayList<>(List.of("mod_id:biome_name"));
 
-    @Translatable.Name("Exclude Biome Tags")
+    @Translatable.Name("Prevent Spawns In")
+    @Translatable.Desc("The absolute veto. If a biome is listed here, hamsters are strictly forbidden from spawning, completely ignoring the allow lists above. Use this to keep them out of oceans, or your pristine zen garden where you do your morning meditation.")
+    public ConfigGroup preventTheseSpawnsGlobally = new ConfigGroup("preventTheseSpawnsGlobally", true);
+
+    @Translatable.Name("Biome Tags")
     @Translatable.Desc("A list of Biome Tags to NEVER allow spawns in. For excluding broad categories like Oceans or Rivers without listing every single ID. Overrides inclusions.")
     public List<String> excludeBiomeTags = new ArrayList<>(List.of(
             "minecraft:is_ocean",
@@ -135,37 +141,17 @@ public class AhpWorldGenConfig extends Config {
             "minecraft:is_deep_ocean"
     ));
 
-    @Translatable.Name("Wild-Spawn Overlay Settings")
-    @Translatable.Desc("Here's where you can fulfil your urges for genetic alchemy. Note: these filtering settings only apply to hamsters that spawn in the wild, to keep things looking 'natural.' When breeding hamsters together, YOU are the filter.")
-    public ConfigGroup wildSpawnOverlays = new ConfigGroup("wildSpawnOverlays", true);
-
-    @Translatable.Name("Allowed Wild Overlays")
-    @Translatable.Desc("A list of mathematical 3D color groups permitted to spawn as overlays on wild hamsters. By default, it's set to natural boring color groups like WHITE, LIGHT_GRAY, DARK_GRAY, and CREAM so your world doesn't look like a clown exploded. Available zones: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE.")
-    public List<String> allowedWildOverlayZones = new ArrayList<>(List.of("WHITE", "LIGHT_GRAY", "DARK_GRAY", "CREAM"));
-
-    @Translatable.Name("Enforce Brighter Overlays")
-    @Translatable.Desc("If true, wild overlays must be strictly brighter than the base coat. True by default to prevent Black overlays on Cream hamsters.")
-    public boolean enforceBrighterOverlays = true;
-
-    @Translatable.Name("Enforce Muted Overlays")
-    @Translatable.Desc("If true, wild overlays must be less saturated than the base coat. On by default to prevent Cream overlays on Black and Gray hamsters.")
-    public boolean enforceMoreMutedOverlays = true;
-
-    @Translatable.Name("Restricted Base Colors")
-    @Translatable.Desc("Hamsters in these base coat color groups will refuse to spawn with wild overlays from the 'Clashing Overlay Colors' list.")
-    public List<String> restrictedBaseZones = new ArrayList<>(List.of("BLUE", "LAVENDER"));
-
     @ConfigGroup.Pop
-    @Translatable.Name("Clashing Overlay Colors")
-    @Translatable.Desc("A list of wild overlays that look unnatural when combined with the 'Clashing Base Colors'. By default, this prevents Cream and Dark Gray wild overlays on Blue and Lavender hamsters.")
-    public List<String> clashingOverlayZones = new ArrayList<>(List.of("CREAM", "DARK_GRAY"));
+    @Translatable.Name("Specific Biome Names")
+    @Translatable.Desc("A list of specific biome IDs to NEVER allow spawns in, even if they match a tag. This overrides all other settings. Format: 'mod_id:biome_name'. For example, 'minecraft:plains'.")
+    public List<String> excludeBiomes = new ArrayList<>(List.of("mod_id:biome_name"));
 
-    @Translatable.Name("Spawning Environments")
-    @Translatable.Desc("For the aspiring digital zoologist. This is where you control which hamster types appear in which biomes. This maps environments to specific ranges of hamster types for spawning. The system checks environments from top to bottom. The first environment a hamster type qualifies for dictates the genetics used to generate that hamster. If you see unfamiliar tags like 'adorablehamsterpets:is_icy,' note that those are my own custom union tags which point to Fabric's Convention tags on 1.21 like 'c:is_icy' and Forge tags on 1.20 like 'forge:is_icy.'")
-    public ConfigGroup spawningEnvironments = new ConfigGroup("spawningEnvironments", true);
+    @Translatable.Name("Region-Based Color Filters")
+    @Translatable.Desc("For the aspiring digital zoologist. Once a hamster is approved to spawn by the global lists above, it falls through this sorting funnel to figure out what color it should be. The system checks configurable regions from top to bottom. The first one the biome qualifies for dictates the fur palette the hamster will receive when spawning in that biome.\n\n(Note: If you see unfamiliar tags like 'adorablehamsterpets:is_icy,' note that those are my own custom union tags which point to Fabric's Convention tags on 1.21 like 'c:is_icy' and Forge tags on 1.20 like 'forge:is_icy.')")
+    public ConfigGroup regionBasedColorFilters = new ConfigGroup("regionBasedColorFilters", true);
 
-    // --- 0. Wildcard Environment ---
-    @Translatable.Name("Priority 0: The Wildcard")
+    // --- 1. Wildcard Environment ---
+    @Translatable.Name("Priority 1: The Wildcard")
     @Translatable.Desc("Checked before everything else. Empty by default. Use this if you want to surgically extract a specific biome from a broader group below to give it a unique color (e.g., pulling 'Cherry Groves' out of 'Magical Environments' and putting it here, so it only spawns CHERRY hamsters). Make sense? Good.")
     public ConfigGroup wildcardEnvironment = new ConfigGroup("wildcardEnvironment", true);
     @Translatable.Name("Included Biomes")
@@ -181,8 +167,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> wildcardWeights = new ArrayList<>();
 
-    // --- 1. Icy Environments ---
-    @Translatable.Name("Priority 1: Icy Environments")
+    // --- 2. Icy Environments ---
+    @Translatable.Name("Priority 2: Icy Environments")
     @Translatable.Desc("Checked after the Wildcard, but before the rest. If a biome matches these rules, it will get white-ish (and occasionally blue-ish) hamsters, even if it also matches rules for other colors below.")
     public ConfigGroup icyEnvironment = new ConfigGroup("icyEnvironment", true);
     @Translatable.Name("Included Biomes")
@@ -200,8 +186,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> icyWeights = new ArrayList<>(List.of("BLUE:85", "SKY:15"));
 
-    // --- 2. Magical Environments ---
-    @Translatable.Name("Priority 2: Magical Environments")
+    // --- 3. Magical Environments ---
+    @Translatable.Name("Priority 3: Magical Environments")
     @Translatable.Desc("Checked after Icy, but before the rest.")
     public ConfigGroup magicalEnvironment = new ConfigGroup("magicalEnvironment", true);
     @Translatable.Name("Included Biomes")
@@ -219,8 +205,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> magicalWeights = new ArrayList<>(List.of("LAVENDER:85", "CHERRY:15"));
 
-    // --- 3. Cherry Environments ---
-    @Translatable.Name("Priority 3: Cherry Environments")
+    // --- 4. Cherry Environments ---
+    @Translatable.Name("Priority 4: Cherry Environments")
     @Translatable.Desc("Checked after Icy and Magical, but before the rest.")
     public ConfigGroup cherryEnvironment = new ConfigGroup("cherryEnvironment", true);
     @Translatable.Name("Included Biomes")
@@ -236,8 +222,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> cherryWeights = new ArrayList<>(List.of("CHERRY:100"));
 
-    // --- 4. Snowy Environments ---
-    @Translatable.Name("Priority 4: Snowy Environments")
+    // --- 5. Snowy Environments ---
+    @Translatable.Name("Priority 5: Snowy Environments")
     @Translatable.Desc("Checked after Icy, Magical and Cherry but before the rest.")
     public ConfigGroup snowyEnvironment = new ConfigGroup("snowyEnvironment", true);
     @Translatable.Name("Included Biomes")
@@ -259,8 +245,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> snowyWeights = new ArrayList<>(List.of("WHITE:85", "SKY:15"));
 
-    // --- 5. Sky Environments ---
-    @Translatable.Name("Priority 5: Sky Environments")
+    // --- 6. Sky Environments ---
+    @Translatable.Name("Priority 6: Sky Environments")
     @Translatable.Desc("Checked after Icy, Magical, Cherry and Snowy, but before the rest. By default this targets floating islands from mods, which don't exist in the Vanilla game.")
     public ConfigGroup skyEnvironment = new ConfigGroup("skyEnvironment", true);
     @Translatable.Name("Included Biomes")
@@ -278,8 +264,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> skyWeights = new ArrayList<>(List.of("SKY:100"));
 
-    // --- 6. Stony Environments ---
-    @Translatable.Name("Priority 6: Rocky Environments")
+    // --- 7. Stony Environments ---
+    @Translatable.Name("Priority 7: Rocky Environments")
     @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy and Sky, but before the rest.")
     public ConfigGroup rockyEnvironment = new ConfigGroup("rockyEnvironment", true);
     @Translatable.Name("Included Biomes")
@@ -298,8 +284,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> rockyWeights = new ArrayList<>(List.of("LIGHT_GRAY:50", "DARK_GRAY:50"));
 
-    // --- 7. Dark Environments ---
-    @Translatable.Name("Priority 7: Dark Environments")
+    // --- 8. Dark Environments ---
+    @Translatable.Name("Priority 8: Dark Environments")
     @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy, Sky and Rocky, but before the rest.")
     public ConfigGroup darkEnvironment = new ConfigGroup("darkEnvironment", true);
     @Translatable.Name("Included Biomes")
@@ -315,8 +301,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> darkWeights = new ArrayList<>(List.of("BLACK:80", "DARK_GRAY:20"));
 
-    // --- 8. Sandy Environments ---
-    @Translatable.Name("Priority 8: Sandy Environments")
+    // --- 9. Sandy Environments ---
+    @Translatable.Name("Priority 9: Sandy Environments")
     @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy, Sky, Rocky and Dark, but before the rest.")
     public ConfigGroup sandyEnvironment = new ConfigGroup("sandyEnvironment", true);
     @Translatable.Name("Included Biomes")
@@ -335,8 +321,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> sandyWeights = new ArrayList<>(List.of("CREAM:100"));
 
-    // --- 9. Forest Environments ---
-    @Translatable.Name("Priority 9: Forest Environments")
+    // --- 10. Forest Environments ---
+    @Translatable.Name("Priority 10: Forest Environments")
     @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy, Sky, Rocky, Dark and Sandy, but before the rest.")
     public ConfigGroup forestEnvironment = new ConfigGroup("forestEnvironment", true);
     @Translatable.Name("Included Biomes")
@@ -352,8 +338,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> forestWeights = new ArrayList<>(List.of("CHOCOLATE:100"));
 
-    // --- 10. Auburn Environments ---
-    @Translatable.Name("Priority 10: Auburn Environments")
+    // --- 11. Auburn Environments ---
+    @Translatable.Name("Priority 11: Auburn Environments")
     @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy, Sky, Rocky, Dark, Sandy, and Forest, but before Plains.")
     public ConfigGroup auburnEnvironment = new ConfigGroup("auburnEnvironment", true);
     @Translatable.Name("Included Biomes")
@@ -369,16 +355,41 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> auburnWeights = new ArrayList<>(List.of("RUST:100"));
 
-    // --- 11. Plains Environments ---
-    @Translatable.Name("Priority 11: Plains Environments")
-    @Translatable.Desc("The ultimate fallback, checked after everything else. If a biome slips through all the zones above, it will land here and use these weights.")
+    // --- 12. Plains Environments ---
+    @Translatable.Name("Priority 12: Plains Environments")
+    @Translatable.Desc("The bottom of the funnel. If a biome successfully generated a hamster (see 'ALLOW Spawns In'), but that biome slipped through all the priority filters above, it lands here. That is why there are no biome lists to configure here— it's just the catch-all bucket. Defaults to Orange, making them the most common type for most worlds.")
     public ConfigGroup plainsEnvironment = new ConfigGroup("plainsEnvironment", true);
-    @ConfigGroup.Pop
     @ConfigGroup.Pop
     @ConfigGroup.Pop
     @Translatable.Name("Zone Weights")
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> plainsWeights = new ArrayList<>(List.of("ORANGE:100"));
+
+    @Translatable.Name("Wild Fur Overlay Settings")
+    @Translatable.Desc("Here's where you can fulfil your urges for genetic alchemy. Note: these filtering settings only apply to hamsters that spawn in the wild, to keep things looking 'natural.' When breeding hamsters together, YOU are the filter.")
+    public ConfigGroup wildFurOverlays = new ConfigGroup("wildFurOverlays", true);
+
+    @Translatable.Name("Allowed Wild Overlays")
+    @Translatable.Desc("A list of mathematical 3D color groups permitted to spawn as overlays on wild hamsters. By default, it's set to natural boring color groups like WHITE, LIGHT_GRAY, DARK_GRAY, and CREAM so your world doesn't look like a clown exploded. Available zones: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, ORANGE.")
+    public List<String> allowedWildOverlayZones = new ArrayList<>(List.of("WHITE", "LIGHT_GRAY", "DARK_GRAY", "CREAM"));
+
+    @Translatable.Name("Enforce Brighter Overlays")
+    @Translatable.Desc("If true, wild overlays must be strictly brighter than the base coat. True by default to prevent Black overlays on Cream hamsters.")
+    public boolean enforceBrighterOverlays = true;
+
+    @Translatable.Name("Enforce Muted Overlays")
+    @Translatable.Desc("If true, wild overlays must be less saturated than the base coat. On by default to prevent Cream overlays on Black and Gray hamsters.")
+    public boolean enforceMoreMutedOverlays = true;
+
+    @Translatable.Name("Restricted Base Colors")
+    @Translatable.Desc("Hamsters in these base coat color groups will refuse to spawn with wild overlays from the 'Clashing Overlay Colors' list.")
+    public List<String> restrictedBaseZones = new ArrayList<>(List.of("BLUE", "LAVENDER"));
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Clashing Overlay Colors")
+    @Translatable.Desc("A list of wild overlays that look unnatural when combined with the 'Clashing Base Colors'. By default, this prevents Cream and Dark Gray wild overlays on Blue and Lavender hamsters.")
+    public List<String> clashingOverlayZones = new ArrayList<>(List.of("CREAM", "DARK_GRAY"));
 
     // --- Cheek Pouch & World Loot Settings ---
     @Translatable.Name("Cheek Pouch & World Loot Settings")
