@@ -38,6 +38,8 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
 - **Combustible Acorns**
   - Acorns can now be used as furnace fuel, smelting exactly the same amount of items as a vanilla stick.
   - Alternatively, placing an Acorn in the top slot of a furnace will smelt it down into a piece of Charcoal.
+- **World Gen Compatibility Enhancements**
+  - Added massive out-of-the-box biome compatibility configuration data for [**Oh The Biomes We've Gone**](https://modrinth.com/mod/oh-the-biomes-weve-gone), ensuring hamster variants properly disperse across their beautiful landscapes. Huge thanks to the community members who helped configure these lists!
 
 ### Changed
 - **Genetics & Color Groups**
