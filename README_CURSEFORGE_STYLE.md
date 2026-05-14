@@ -17,7 +17,7 @@
 
 <p style="text-align: center;">
   <a href="https://discord.gg/w54mk5bqdf"><img src="https://img.shields.io/discord/1382334723333820568.svg?label=Discord&logo=discord&logoColor=white&color=c37301&labelColor=555555&style=for-the-badge" alt="Discord"></a>
-  <a href="https://github.com/DawsonBodenhamer/AdorableHamsterPets-Public"><img src="https://img.shields.io/badge/Source%20Code-GitHub-c37301?labelColor=555555&logo=github&style=for-the-badge" alt="GitHub"></a>
+  <a href="https://github.com/DawsonBodenhamer/AdorableHamsterPets-Source"><img src="https://img.shields.io/badge/Source%20Code-GitHub-c37301?labelColor=555555&logo=github&style=for-the-badge" alt="GitHub"></a>
   <a href="https://ko-fi.com/dawsonbodenhamer"><img src="https://img.shields.io/badge/Ko--Fi-9_Coffees-c37301?labelColor=555555&logo=kofi&logoColor=white&style=for-the-badge" alt="Ko-fi"></a>
   <a href="https://www.patreon.com/c/dawson_bodenhamer"><img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3Ddawson_bodenhamer%26type%3Dpatrons&style=for-the-badge&logo=patreon&logoColor=white&labelColor=555555&color=c37301" alt="Patreon"></a>
 </p>
