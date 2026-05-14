@@ -125,9 +125,11 @@ public class AhpWorldGenConfig extends Config {
             "byg:frosted_taiga", "byg:howling_peaks", "byg:ironwood_gour", "byg:jacaranda_jungle", "byg:maple_taiga", "byg:mojave_desert",
             "byg:overgrowth_woodlands", "byg:pumpkin_valley", "byg:rainbow_beach", "byg:red_rock_valley", "byg:redwood_thicket",
             "byg:rugged_badlands", "byg:sakura_grove", "byg:shattered_glacier", "byg:sierra_badlands", "byg:skyrise_vale",
-            "byg:tropical_rainforest", "byg:weeping_witch_forest", "byg:white_mangrove_marshes", "byg:windswept_desert", "byg:zelkova_forest"
+            "byg:tropical_rainforest", "byg:weeping_witch_forest", "byg:white_mangrove_marshes", "byg:windswept_desert", "byg:zelkova_forest",
+            "biomeswevegone:crag_gardens", "biomeswevegone:dacite_ridges", "biomeswevegone:firecracker_chaparral",
+            "biomeswevegone:lush_stacks", "biomeswevegone:orchard", "biomeswevegone:temperate_grove",
+            "biomeswevegone:tropical_rainforest", "biomeswevegone:white_mangrove_marshes"
     ));
-
 
     @Translatable.Name("Prevent Spawns In")
     @Translatable.Desc("The absolute veto. If a biome is listed here, hamsters are strictly forbidden from spawning, completely ignoring the allow lists above. Use this to keep them out of oceans, or your pristine zen garden where you do your morning meditation.")
@@ -144,7 +146,9 @@ public class AhpWorldGenConfig extends Config {
     @ConfigGroup.Pop
     @Translatable.Name("Specific Biome Names")
     @Translatable.Desc("A list of specific biome IDs to NEVER allow spawns in, even if they match a tag. This overrides all other settings. Format: 'mod_id:biome_name'. For example, 'minecraft:plains'.")
-    public List<String> excludeBiomes = new ArrayList<>(List.of("mod_id:biome_name"));
+    public List<String> excludeBiomes = new ArrayList<>(List.of(
+            "biomeswevegone:basalt_barrera", "biomeswevegone:shattered_glacier"
+    ));
 
     @Translatable.Name("Region-Based Color Filters")
     @Translatable.Desc("For the aspiring digital zoologist. Once a hamster is approved to spawn by the global lists above, it falls through this sorting funnel to figure out what color it should be. The system checks configurable regions from top to bottom. The first one the biome qualifies for dictates the fur palette the hamster will receive when spawning in that biome.\n\n(Note: If you see unfamiliar tags like 'adorablehamsterpets:is_icy,' note that those are my own custom union tags which point to Fabric's Convention tags on 1.21 like 'c:is_icy' and Forge tags on 1.20 like 'forge:is_icy.')")
@@ -173,7 +177,8 @@ public class AhpWorldGenConfig extends Config {
     public ConfigGroup icyEnvironment = new ConfigGroup("icyEnvironment", true);
     @Translatable.Name("Included Biomes")
     public List<String> icyBiomes = new ArrayList<>(List.of(
-            "terralith:glacial_chasm", "terralith:mirage_isles", "terralith:moonlight_valley", "biomesoplenty:enchanted_garden"
+            "terralith:glacial_chasm", "terralith:mirage_isles", "terralith:moonlight_valley", "biomesoplenty:enchanted_garden",
+            "biomeswevegone:eroded_borealis"
     ));
     @Translatable.Name("Included Tags")
     public List<String> icyTags = new ArrayList<>(List.of("adorablehamsterpets:is_icy"));
@@ -192,7 +197,10 @@ public class AhpWorldGenConfig extends Config {
     public ConfigGroup magicalEnvironment = new ConfigGroup("magicalEnvironment", true);
     @Translatable.Name("Included Biomes")
     public List<String> magicalBiomes = new ArrayList<>(List.of(
-            "biomesoplenty:mystic_grove"
+            "biomesoplenty:mystic_grove",
+            "biomeswevegone:pumpkin_valley", "biomeswevegone:weeping_witch_forest", "biomeswevegone:jacaranda_jungle",
+            "biomeswevegone:bayou", "biomeswevegone:cypress_swamplands", "biomeswevegone:cypress_wetlands",
+            "biomeswevegone:black_forest", "biomeswevegone:ebony_woodss", "biomeswevegone:overgrowth_woodlands"
     ));
     @Translatable.Name("Included Tags")
     public List<String> magicalTags = new ArrayList<>(List.of("adorablehamsterpets:is_magical", "adorablehamsterpets:is_mushroom", "terralith:mystical"));
@@ -210,7 +218,10 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Checked after Icy and Magical, but before the rest.")
     public ConfigGroup cherryEnvironment = new ConfigGroup("cherryEnvironment", true);
     @Translatable.Name("Included Biomes")
-    public List<String> cherryBiomes = new ArrayList<>(List.of("minecraft:cherry_grove"));
+    public List<String> cherryBiomes = new ArrayList<>(List.of(
+            "minecraft:cherry_grove",
+            "biomeswevegone:sakura_grove", "biomeswevegone:windswept_desert"
+    ));
     @Translatable.Name("Included Tags")
     public List<String> cherryTags = new ArrayList<>();
     @Translatable.Name("Excluded Biomes")
@@ -228,7 +239,8 @@ public class AhpWorldGenConfig extends Config {
     public ConfigGroup snowyEnvironment = new ConfigGroup("snowyEnvironment", true);
     @Translatable.Name("Included Biomes")
     public List<String> snowyBiomes = new ArrayList<>(List.of(
-            "terralith:snowy_maple_forest", "terralith:wintry_forest", "terralith:alpine_grove", "terralith:siberian_grove"
+            "terralith:snowy_maple_forest", "terralith:wintry_forest", "terralith:alpine_grove", "terralith:siberian_grove",
+            "biomeswevegone:frosted_coniferous_forest", "biomeswevegone:frosted_taiga", "biomeswevegone:howling_peaks"
     ));
     @Translatable.Name("Included Tags")
     public List<String> snowyTags = new ArrayList<>(List.of("adorablehamsterpets:is_cold", "adorablehamsterpets:is_snowy"));
@@ -251,7 +263,8 @@ public class AhpWorldGenConfig extends Config {
     public ConfigGroup skyEnvironment = new ConfigGroup("skyEnvironment", true);
     @Translatable.Name("Included Biomes")
     public List<String> skyBiomes = new ArrayList<>(List.of(
-            "terralith:skylands_winter", "terralith:skylands_autumn", "terralith:skylands_spring", "terralith:skylands_summer", "terralith:skylands"
+            "terralith:skylands_winter", "terralith:skylands_autumn", "terralith:skylands_spring", "terralith:skylands_summer", "terralith:skylands",
+            "biomeswevegone:coconino_meadow"
     ));
     @Translatable.Name("Included Tags")
     public List<String> skyTags = new ArrayList<>();
@@ -308,7 +321,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Name("Included Biomes")
     public List<String> sandyBiomes = new ArrayList<>(List.of(
             "minecraft:old_growth_birch_forest", "minecraft:birch_forest", "terralith:ancient_sands",
-            "terralith:sandstone_valley", "biomesoplenty:wasteland"
+            "terralith:sandstone_valley", "biomesoplenty:wasteland",
+            "biomeswevegone:mojave_desert", "biomeswevegone:aspen_boreal", "biomeswevegone:dacite_shore"
     ));
     @Translatable.Name("Included Tags")
     public List<String> sandyTags = new ArrayList<>(List.of("adorablehamsterpets:is_sandy"));
@@ -326,7 +340,12 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy, Sky, Rocky, Dark and Sandy, but before the rest.")
     public ConfigGroup forestEnvironment = new ConfigGroup("forestEnvironment", true);
     @Translatable.Name("Included Biomes")
-    public List<String> forestBiomes = new ArrayList<>(List.of("terralith:cloud_forest", "biomesoplenty:redwood_forest", "biomesoplenty:fungi_forest"));
+    public List<String> forestBiomes = new ArrayList<>(List.of(
+            "terralith:cloud_forest", "biomesoplenty:redwood_forest", "biomesoplenty:fungi_forest", "minecraft:taiga",
+            "biomeswevegone:overgrowth_woodlands", "biomeswevegone:forgotten_forest", "biomeswevegone:ironwood_gour",
+            "biomeswevegone:tropical_rainforest", "biomeswevegone:fragment_jungle", "biomeswevegone:coniferous_forest",
+            "biomeswevegone:canadian_shield"
+    ));
     @Translatable.Name("Included Tags")
     public List<String> forestTags = new ArrayList<>(List.of("adorablehamsterpets:is_forest", "adorablehamsterpets:is_dense_vegetation"));
     @Translatable.Name("Excluded Biomes")
@@ -343,7 +362,13 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Checked after Icy, Magical, Cherry, Snowy, Sky, Rocky, Dark, Sandy, and Forest, but before Plains.")
     public ConfigGroup auburnEnvironment = new ConfigGroup("auburnEnvironment", true);
     @Translatable.Name("Included Biomes")
-    public List<String> auburnBiomes = new ArrayList<>(List.of("terralith:sakura_valley"));
+    public List<String> auburnBiomes = new ArrayList<>(List.of(
+            "terralith:sakura_valley", "biomesoplenty:redwood_forest", "biomesoplenty:wasteland",
+            "biomeswevegone:araucaria_savanna", "biomeswevegone:atacama_outback", "biomeswevegone:baobab_savanna",
+            "biomeswevegone:cika_woods", "biomeswevegone:crimson_tundra", "biomeswevegone:maple_taiga",
+            "biomeswevegone:red_rock_peaks", "biomeswevegone:redwood_thicket", "biomeswevegone:rose_fields",
+            "biomeswevegone:rugged_badlands", "biomeswevegone:sierra_badlands", "biomeswevegone:zelkova_forest"
+    ));
     @Translatable.Name("Included Tags")
     public List<String> auburnTags = new ArrayList<>(List.of("minecraft:is_badlands"));
     @Translatable.Name("Excluded Biomes")
