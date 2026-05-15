@@ -138,6 +138,11 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private int ahp$pettingTimer = 0;
     @Unique private int ahp$mountSoundTimer = 0;
 
+    // --- Gesture Tracking ---
+    @Unique private boolean ahp$wasSneaking = false;
+    @Unique private int ahp$sneakToggleCount = 0;
+    @Unique private int ahp$sneakToggleTimer = 0;
+
     // --- State Flags & Trackers ---
     @Unique private final Map<String, Integer> ahp$randomMessageIndices = new HashMap<>();
     @Unique private String adorablehamsterpets$lastDismountMessageKey = "";
@@ -611,6 +616,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // --- 4. Feature Ticks ---
         tickGuideBookTracking();
+        PlayerGestureUtil.tickSneakTracking(self);
 
         if (this.ahp$mountSoundTimer > 0) {
             this.ahp$mountSoundTimer--;
@@ -787,6 +793,13 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Public API (PlayerEntityAccessor)
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    @Unique @Override public boolean ahp$getWasSneaking() { return this.ahp$wasSneaking; }
+    @Unique @Override public void ahp$setWasSneaking(boolean sneaking) { this.ahp$wasSneaking = sneaking; }
+    @Unique @Override public int ahp$getSneakToggleCount() { return this.ahp$sneakToggleCount; }
+    @Unique @Override public void ahp$setSneakToggleCount(int count) { this.ahp$sneakToggleCount = count; }
+    @Unique @Override public int ahp$getSneakToggleTimer() { return this.ahp$sneakToggleTimer; }
+    @Unique @Override public void ahp$setSneakToggleTimer(int timer) { this.ahp$sneakToggleTimer = timer; }
 
     @Unique
     @Override

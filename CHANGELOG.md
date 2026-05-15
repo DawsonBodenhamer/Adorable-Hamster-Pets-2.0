@@ -42,6 +42,10 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Added massive out-of-the-box biome compatibility configuration data for [**Oh The Biomes We've Gone**](https://modrinth.com/mod/oh-the-biomes-weve-gone), ensuring hamster variants properly disperse across their beautiful landscapes. Huge thanks to the community members who helped configure these lists!
 
 ### Changed
+- **Tag Mini-Game**
+  - Wild hamsters can no longer initiate a game of tag to prevent interference with taming. Tamed hamsters can still play tag with strangers if enabled in the config.
+  - The game will no longer randomly start while you are sneaking, preventing interference with petting.
+  - You can now manually start a game of tag on-demand by rapidly sneaking and un-sneaking while maintaining eye contact with a tamed hamster.
 - **Genetics & Color Groups**
   - Renamed the `ROSE` color group to `CHERRY` since the only hamster in that group is the "Pearl Rose" hamster, which is basically pink anyway.
   - Added a new `RUST` color group. The "Rust" hamster has officially been evicted from the `ORANGE` category, allowing it to have its own dedicated spawning rules.

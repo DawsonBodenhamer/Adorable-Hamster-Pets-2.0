@@ -7,6 +7,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
+import net.dawson.adorablehamsterpets.util.PlayerGestureUtil;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.sound.SoundEvent;
@@ -40,10 +41,15 @@ public class HamsterTagGoal extends Goal {
         if (this.hamster.getWorld().getTime() < this.hamster.tagGameCooldownEndTick) return false;
 
         // --- 3. Entity State Checks ---
-        // TODO: Prevent start if hamster is being petted by owner. (Petting is future planned feature)
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() ||
-                this.hamster.isHoldingMouthItem() || this.hamster.isCelebratingDiamond() ||
-                this.hamster.isSulking() || this.hamster.isCelebratingBaby()) return false;
+        if (!this.hamster.isTamed()
+                || this.hamster.isSitting()
+                || this.hamster.isSleeping()
+                || this.hamster.isKnockedOut()
+                || this.hamster.isHoldingMouthItem()
+                || this.hamster.isCelebratingDiamond()
+                || this.hamster.isSulking()
+                || this.hamster.isCelebratingBaby())
+            return false;
 
         // --- 4. Context Check ---
         // Must be currently "sustaining eye contact" with the player
@@ -62,13 +68,13 @@ public class HamsterTagGoal extends Goal {
 
         this.targetPlayer = player;
 
-        // --- 5. Taming Check ---
-        // If untamed and player is holding taming food, prioritize taming over tag
-        if (!this.hamster.isTamed()) {
-            if (ConfigDataCache.isTamingFood(player.getMainHandStack()) ||
-                    ConfigDataCache.isTamingFood(player.getOffHandStack())) {
-                return false;
-            }
+        // --- 5. Sneak Check & Manual Initiation ---
+        // 6 toggles = press, release, press, release, press, release
+        boolean isSpammingSneak = PlayerGestureUtil.isSpammingSneak(player, 6);
+
+        // Prevent automatic tag initiation if sneaking
+        if (player.isSneaking() && !isSpammingSneak) {
+            return false;
         }
 
         // --- 6. Permission Check ---
@@ -86,7 +92,14 @@ public class HamsterTagGoal extends Goal {
         // Player must be looking at hamster
         if (!EntityTargetingUtil.isLookingAt(player, this.hamster, 5.0, 0.0)) return false;
 
-        // --- 9. RNG Check ---
+        // --- 9. Final Initiation Check ---
+        // Bypass RNG if explicitly requesting game
+        if (isSpammingSneak) {
+            PlayerGestureUtil.consumeSneakSpam(player);
+            return true;
+        }
+
+        // RNG Check
         return this.hamster.getRandom().nextInt(Configs.AHP.tagGameChanceDenominator.get()) == 0;
     }
 
