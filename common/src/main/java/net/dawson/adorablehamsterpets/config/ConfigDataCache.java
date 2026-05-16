@@ -4,6 +4,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterColorZone;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.Monster;
@@ -504,10 +505,11 @@ public class ConfigDataCache {
      * <p>
      * This is designed for dynamic tooltips that need to reference a specific item required for an action
      * (e.g., "Right-click with [Item]"), ensuring the text adapts automatically if the user changes the config.
+     * If the first entry is a tag, it randomly selects an item from that tag to display.
      *
      * @param configList The list of strings (Item IDs or Tags) from the config.
-     * @return The formatted {@link Text} component of the item name. Returns the raw string if it is a tag
-     *         or an invalid ID. Returns "Air" if the list is empty.
+     * @return The formatted {@link Text} component of the item name. Returns the raw string if it is an
+     *         invalid ID. Returns "Air" if the list is empty.
      */
     public static Text getFirstItemNameFromList(List<String> configList) {
         if (configList.isEmpty()) {
@@ -515,22 +517,53 @@ public class ConfigDataCache {
         }
 
         String firstEntry = configList.get(0);
+
+        // Check if entry starts with hash indicating tag
         if (firstEntry.startsWith("#")) {
-            // If it's a tag, just return the tag string visually
+            try {
+                Identifier tagId = Identifier.of(firstEntry.substring(1));
+                TagKey<Item> tagKey = TagKey.of(RegistryKeys.ITEM, tagId);
+
+                // --- 1. Client-Side Tag Resolution ---
+                // Query active world's dynamic registry manager
+                MinecraftClient client = MinecraftClient.getInstance();
+                if (client != null && client.world != null) {
+                    var registry = client.world.getRegistryManager().getWrapperOrThrow(RegistryKeys.ITEM);
+                    var entryListOpt = registry.getOptional(tagKey);
+
+                    if (entryListOpt.isPresent() && entryListOpt.get().size() > 0) {
+                        var entryList = entryListOpt.get();
+                        int randomIndex = (int) (Math.random() * entryList.size());
+                        Item randomItem = entryList.get(randomIndex).value();
+                        return randomItem.getName();
+                    }
+                }
+
+                // --- 2. Server-Side / Fallback Resolution ---
+                var entryListOpt = Registries.ITEM.getEntryList(tagKey);
+                if (entryListOpt.isPresent() && entryListOpt.get().size() > 0) {
+                    var entryList = entryListOpt.get();
+                    int randomIndex = (int) (Math.random() * entryList.size());
+                    Item randomItem = entryList.get(randomIndex).value();
+                    return randomItem.getName();
+                }
+            } catch (Exception e) {
+                // Fallback to raw string if tag invalid
+            }
             return Text.literal(firstEntry);
         } else {
             try {
-                // Try to resolve the Item ID to a localized name
+                // Try to resolve item ID to localized name
                 Identifier itemId = Identifier.of(firstEntry);
                 Item item = Registries.ITEM.get(itemId);
 
-                // If registry returns default (Air) and input wasn't explicitly air, it's invalid or from a missing mod
+                // Fallback to raw string if registry returns default air
                 if (item == Items.AIR && !firstEntry.equals("minecraft:air")) {
                     return Text.literal(firstEntry);
                 }
                 return item.getName();
             } catch (Exception e) {
-                // Fallback if ID is malformed
+                // Fallback if ID malformed
                 return Text.literal(firstEntry);
             }
         }

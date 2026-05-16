@@ -31,6 +31,8 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - **Standard:** Feed them Sunflower Seeds to factory-reset them back to their normal, wolf-like defensive behavior.
   - **Menace:** Feed them a Spider Eye to unleash their inner demon. They will actively hunt down anything on the configurable "Menace Targets" list (which defaults to all monsters and bosses).
   - All trigger items are fully configurable, and changing a hamster's state produces a visual and audio confirmation.
+  - **Hamster Tips Guidebook Entry**
+    - The *Hamster Tips* guidebook now features a dedicated "Aggression States" page to explain the new mechanics. It utilizes dynamic text injection to accurately display your configured trigger items, ensuring the book is always up-to-date even if a modpack creator changes the required diets.
 - **Free Bed Respawn Toggle**
   - Added a config toggle to allow hamsters to respawn at their linked beds indefinitely without requiring a tribute item charge (like a Totem of Undying). Disabled by default.
 - **Dynamic Trees Compatibility**
@@ -48,6 +50,8 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Added massive out-of-the-box biome compatibility configuration data for [**Oh The Biomes We've Gone**](https://modrinth.com/mod/oh-the-biomes-weve-gone), ensuring hamster variants properly disperse across their beautiful landscapes. Huge thanks to the community members who helped configure these lists!
 
 ### Changed
+- **Hamster Tips Guidebook**
+  - Now utilizes dynamic text injection to accurately display your configured resurrection tribute items. So now if a server owner or modpack creator changes the default item from a Totem of Undying, the guidebook will update itself automatically.
 - **Tag Mini-Game**
   - Wild hamsters can no longer initiate a game of tag to prevent interference with taming. Tamed hamsters can still play tag with strangers if enabled in the config.
   - The game will no longer randomly start while you are sneaking, preventing interference with petting.
