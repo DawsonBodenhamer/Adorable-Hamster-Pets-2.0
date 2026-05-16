@@ -33,7 +33,7 @@ public class DynamicStringProcessor implements IComponentProcessor {
                 rawText = I18n.translate(rawText);
             }
 
-            // --- Token Injection ---
+            // --- Genetics Token Injections ---
             if (rawText.contains("{BASE_PALETTES}")) {
                 long basePalettes = HamsterPaletteManager.PALETTE_REGISTRY.size();
                 String formattedNum = NumberFormat.getIntegerInstance().format(basePalettes);
@@ -68,9 +68,30 @@ public class DynamicStringProcessor implements IComponentProcessor {
                 rawText = rawText.replace("{TOTAL_POSSIBLE_VARIANTS}", formattedNum);
             }
 
+            // --- Interaction Token Injections ---
             if (rawText.contains("{LURE_ITEM}")) {
                 Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.lureItems);
                 rawText = rawText.replace("{LURE_ITEM}", lureName.getString());
+            }
+
+            if (rawText.contains("{PACIFIST_ITEM}")) {
+                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.becomePacifistItems);
+                rawText = rawText.replace("{PACIFIST_ITEM}", itemName.getString());
+            }
+
+            if (rawText.contains("{NEUTRAL_ITEM}")) {
+                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.becomeNeutralItems);
+                rawText = rawText.replace("{NEUTRAL_ITEM}", itemName.getString());
+            }
+
+            if (rawText.contains("{MENACE_ITEM}")) {
+                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.becomeMenaceItems);
+                rawText = rawText.replace("{MENACE_ITEM}", itemName.getString());
+            }
+
+            if (rawText.contains("{RESURRECTION_TRIBUTE}")) {
+                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.resurrectionTributes);
+                rawText = rawText.replace("{RESURRECTION_TRIBUTE}", itemName.getString());
             }
 
             this.processedText = rawText;
