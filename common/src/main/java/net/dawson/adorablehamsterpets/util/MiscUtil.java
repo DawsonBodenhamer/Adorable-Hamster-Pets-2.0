@@ -129,34 +129,17 @@ public final class MiscUtil {
             }
             try {
                 String versionStr = Platform.getMod("punchy").getVersion();
-                AdorableHamsterPets.LOGGER.info("[AHP] Detected Punchy version string: '{}'", versionStr);
-
-                // --- 1. Handle Developer Placeholders ---
-                if (versionStr.contains("${") || versionStr.equals("1.0.0") || versionStr.equals("0.0.0")) {
-                    AdorableHamsterPets.LOGGER.info("[AHP] Punchy version is a dev placeholder. Bypassing version check.");
-                    return true;
-                }
-
-                // --- 2. Strip Extraneous Data ---
-                if (versionStr.matches("^1\\.\\d+(\\.\\d+)?[\\-+].*")) {
-                    int splitIndex = Math.max(versionStr.indexOf('-'), versionStr.indexOf('+'));
-                    versionStr = versionStr.substring(splitIndex);
-                }
-
-                // Strip leading non-digits
-                versionStr = versionStr.replaceAll("^[^\\d]+", "");
-
-                // --- 3. Parse Semantic Version ---
-                String[] parts = versionStr.split("\\D+");
-                int major = parts.length > 0 && !parts[0].isEmpty() ? Integer.parseInt(parts[0]) : 0;
-                int minor = parts.length > 1 && !parts[1].isEmpty() ? Integer.parseInt(parts[1]) : 0;
-                int patch = parts.length > 2 && !parts[2].isEmpty() ? Integer.parseInt(parts[2]) : 0;
+                // Split version string by standard delimiters to extract semantic digits
+                String[] parts = versionStr.split("[.\\-+]");
+                int major = Integer.parseInt(parts[0]);
+                int minor = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
+                int patch = parts.length > 2 ? Integer.parseInt(parts[2]) : 0;
 
                 if (major > 2) return true;
                 if (major == 2 && minor > 6) return true;
                 return major == 2 && minor == 6 && patch >= 0;
             } catch (Exception e) {
-                AdorableHamsterPets.LOGGER.warn("[AHP] Failed to parse Punchy version. Assuming incompatible.", e);
+                AdorableHamsterPets.LOGGER.warn("Failed to parse Punchy version", e);
                 return false;
             }
         }
