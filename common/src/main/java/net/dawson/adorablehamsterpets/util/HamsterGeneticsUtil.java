@@ -275,7 +275,7 @@ public final class HamsterGeneticsUtil {
                 }
 
                 wildPaletteId = HamsterPaletteManager.getRandomPalette(random, Set.of(fallbackZone), false).id();
-                AdorableHamsterPets.LOGGER.warn("[HamsterGenetics] Failed to find a brighter/less-saturated wild overlay for '{}'. Defaulting to {} Color Group: {}", basePalette.id(), fallbackZone.name(), wildPaletteId);
+                AdorableHamsterPets.LOGGER.trace("[HamsterGenetics] Failed to find a brighter/less-saturated wild overlay for '{}'. Defaulting to {} Color Group: {}", basePalette.id(), fallbackZone.name(), wildPaletteId);
             }
         }
 
