@@ -348,6 +348,9 @@
   "message.adorablehamsterpets.performance_mode_enabled": "AHP Performance Mode: ENABLED",
   "message.adorablehamsterpets.performance_mode_disabled": "AHP Performance Mode: DISABLED",
   "message.adorablehamsterpets.punchy_missing": "The Punchy mod is outdated or missing. Keep your blocky hands to yourself.",
+  "message.adorablehamsterpets.aggression.pacifist": "Your hamster embraces inner peace. It will no longer attack anything.",
+  "message.adorablehamsterpets.aggression.standard": "Your hamster returns to its standard neutral demeanor.",
+  "message.adorablehamsterpets.aggression.menace": "Your hamster is now a menace. Aggression level: Angry Rodent.",
 
   "subtitles.adorablehamsterpets.hamster_attack": "Hamster attacks",
   "subtitles.adorablehamsterpets.hamster_beg": "Hamster begs",

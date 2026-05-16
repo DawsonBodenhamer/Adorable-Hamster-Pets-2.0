@@ -25,6 +25,12 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
       - If you release the key before the short charging period (`15 ticks`) is over, you safely abort the throw. Your character will politely place the hamster back onto the exact shoulder it came from. This charging period of `15 ticks` is not configurable, due to its duration needing to match the animation. But it's quite short— only `0.75 seconds`— so hopefully it won't impact gameplay too much.
 - **FOV Zoom for Hamster Yeet**
   - Added a smooth FOV zoom effect while queueing the Hamster Yeet, identical to drawing a vanilla bow. This FOV zoom will help indicate the new charging period for anyone who doesn't have Punchy installed, since the new animations cannot work without it.
+- **Configurable Aggression States**
+  - Hamsters now have three distinct aggression states controlled by their diet.
+  - **Pacifist:** Feed them any vanilla flower (e.g., `#minecraft:flowers`). They become total hippies and will refuse to attack anything, even if you are being actively mauled.
+  - **Standard:** Feed them Sunflower Seeds to factory-reset them back to their normal, wolf-like defensive behavior.
+  - **Menace:** Feed them a Spider Eye to unleash their inner demon. They will actively hunt down anything on the configurable "Menace Targets" list (which defaults to all monsters and bosses).
+  - All trigger items are fully configurable, and changing a hamster's state produces a visual and audio confirmation.
 - **Free Bed Respawn Toggle**
   - Added a config toggle to allow hamsters to respawn at their linked beds indefinitely without requiring a tribute item charge (like a Totem of Undying). Disabled by default.
 - **Dynamic Trees Compatibility**
@@ -79,6 +85,7 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Finally fixed the 99% transparent pixel in the bottom left corner of the cheese item texture. I only recently realized what was causing it to look so strange. Lol
 - **Console Log Spam**
   - Resolved an issue where players with internet disabled (or those playing in regions where GitHub is blocked) would receive a massive, screen-filling error stack trace in their console every 5 minutes when the mod silently checked for updates in the background. Background network failures are now politely logged as a single warning line.
+  - Resolved an issue where the genetics engine would spam the server console with warnings when attempting to generate wild overlays for hamsters with extremely bright base coats (like Coconut).
 
 ---
 
