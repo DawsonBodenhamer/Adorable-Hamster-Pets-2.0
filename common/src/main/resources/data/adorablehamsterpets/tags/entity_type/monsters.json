@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "#c:monsters", "required": false },
+    { "id": "#forge:monsters", "required": false }
+  ]
+}

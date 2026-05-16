@@ -116,6 +116,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         DEEP_SLEEP             // Looping one of the anim_hamster_sleep_poseX animations
     }
 
+    public enum AggressionState {
+        STANDARD, // Ordinal 0 (Default)
+        PACIFIST, // Ordinal 1
+        MENACE    // Ordinal 2
+    }
+
     public static final int CELEBRATION_PARTICLE_DURATION_TICKS = 600;
     private static final float DEFAULT_FOOTSTEP_VOLUME = 0.10F;
     private static final float GRAVEL_VOLUME_MODIFIER = 0.60F;
@@ -246,6 +252,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int GENETICS_VISUALIZER_MEMBER_FLAG = 1 << 25;
     public static final int IS_ORE_TARGET_ABOVE_FLAG = 1 << 26;
     public static final int IS_BEING_PET_FLAG = 1 << 27;
+    public static final int AGGRESSION_STATE_BIT_1 = 1 << 28;
+    public static final int AGGRESSION_STATE_BIT_2 = 1 << 29;
 
     // --- Data Trackers ---
     public static final TrackedData<Integer> HAMSTER_FLAGS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -445,6 +453,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * ────────────────────────────────────────────────────────────────────────────*/
 
     // --- Data Tracker Getters/Setters ---
+    public AggressionState getAggressionState() {
+        int flags = this.dataTracker.get(HAMSTER_FLAGS);
+        int val = ((flags & AGGRESSION_STATE_BIT_1) != 0 ? 1 : 0) | ((flags & AGGRESSION_STATE_BIT_2) != 0 ? 2 : 0);
+        return AggressionState.values()[val];
+    }
+
+    public void setAggressionState(AggressionState state) {
+        int val = state.ordinal();
+        setHamsterFlag(AGGRESSION_STATE_BIT_1, (val & 1) != 0);
+        setHamsterFlag(AGGRESSION_STATE_BIT_2, (val & 2) != 0);
+    }
     public void scheduleTask(long executionTick, String debugName, Runnable action) {
         this.animScheduler.scheduleTask(executionTick, debugName, action);
     }
@@ -1105,10 +1124,15 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     // --- Target Exclusion Override ---
     @Override
     public boolean canAttackWithOwner(LivingEntity target, LivingEntity owner) {
+        // --- 1. Check for Pacifist Mode ---
+        if (this.getAggressionState() == AggressionState.PACIFIST) {
+            return false;
+        }
+
         UUID ownerUuid = owner.getUuid();
         AdorableHamsterPets.LOGGER.trace("[canAttackWithOwner] Hamster: {}, Target: {}, Owner: {}", this.getName().getString(), target.getName().getString(), owner.getName().getString());
 
-        // --- 1. Basic Exclusions (Self, Owner) ---
+        // --- 2. Basic Exclusions (Self, Owner) ---
         if (target == this || target == owner) {
             return false;
         }
@@ -1116,12 +1140,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             return false;
         }
 
-        // --- 2. Exclude Creepers and Armor Stands ---
+        // --- 3. Exclude Creepers and Armor Stands ---
         if (target instanceof CreeperEntity || target instanceof ArmorStandEntity) {
             return false;
         }
 
-        // --- 3. Explicitly Check for TameableEntity ---
+        // --- 4. Explicitly Check for TameableEntity ---
         if (target instanceof TameableEntity tameablePet) {
             UUID petOwnerUuid = tameablePet.getOwnerUuid();
             if (petOwnerUuid != null && petOwnerUuid.equals(ownerUuid)) {
@@ -1130,7 +1154,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 4. Explicitly Check for AbstractHorseEntity ---
+        // --- 5. Explicitly Check for AbstractHorseEntity ---
         else if (target instanceof net.minecraft.entity.passive.AbstractHorseEntity horsePet) {
             Entity horseOwnerEntity = horsePet.getOwner();
             if (horseOwnerEntity != null && horseOwnerEntity.getUuid().equals(ownerUuid)) {
@@ -1139,7 +1163,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 5. General Ownable Check (Fallback) ---
+        // --- 6. General Ownable Check (Fallback) ---
         else if (target instanceof Ownable ownableFallback) {
             Entity fallbackOwnerEntity = ownableFallback.getOwner();
             if (fallbackOwnerEntity != null && fallbackOwnerEntity.getUuid().equals(ownerUuid)) {
@@ -1148,7 +1172,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 6. Default: Allow Attack ---
+        // --- 7. Default: Allow Attack ---
         return true;
     }
 
@@ -2220,9 +2244,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     // --- AI Goals ---
     @Override
     protected void initGoals() {
-        AdorableHamsterPets.LOGGER.trace("[AI Init {} Tick {}] Initializing goals. Current State: isSleeping={}, isSittingPose={}",
-                this.getId(), this.getWorld().isClient ? "ClientTick?" : this.getWorld().getTime(), this.isSleeping(), this.isInSittingPose());
-        // --- 1. Initialize Goals ---
+        // --- Standard Goals ---
         this.goalSelector.add(0, new SwimGoal(this));
         this.goalSelector.add(1, new HamsterSniffForOreGoal(this));
         this.goalSelector.add(1, new HamsterPlayWithItemGoal(this));
@@ -2244,9 +2266,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.targetSelector.add(1, new TrackOwnerAttackerGoal(this));
         this.targetSelector.add(2, new AttackWithOwnerGoal(this));
         this.targetSelector.add(3, new RevengeGoal(this).setGroupRevenge());
-        // --- End 1. Initialize Goals ---
-        AdorableHamsterPets.LOGGER.trace("[AI Init {} Tick {}] Finished initializing goals.",
-                this.getId(), this.getWorld().isClient ? "ClientTick?" : this.getWorld().getTime());
+        this.targetSelector.add(4, new HamsterMenaceTargetGoal(this));
     }
 
     // --- Prevent walking over un-linked Hamster Beds ---
@@ -2266,12 +2286,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     */
     @Override
     public void setTarget(@Nullable LivingEntity target) {
-        if (target == null) {
+        // --- 1. Check for Pacifist Mode ---
+        if (this.getAggressionState() == AggressionState.PACIFIST && target != null) {
             super.setTarget(null);
             return;
         }
 
-        // --- 1. Check if Tamed and Has Owner ---
+        // --- 2. Check if Tamed and Has Owner ---
         if (this.isTamed() && this.getOwner() != null) {
             LivingEntity owner = this.getOwner();
             UUID ownerUuid = owner.getUuid();

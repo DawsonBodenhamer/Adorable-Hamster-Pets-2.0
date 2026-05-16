@@ -4,6 +4,9 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterColorZone;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.mob.Monster;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -65,6 +68,16 @@ public class ConfigDataCache {
     private static final Set<TagKey<Item>> pouchDisallowedTags = new HashSet<>();
     private static final Set<Item> resurrectionTributeItems = new HashSet<>();
     private static final Set<TagKey<Item>> resurrectionTributeTags = new HashSet<>();
+    private static final Set<Item> becomePacifistItems = new HashSet<>();
+    private static final Set<TagKey<Item>> becomePacifistTags = new HashSet<>();
+    private static final Set<Item> becomeNeutralItems = new HashSet<>();
+    private static final Set<TagKey<Item>> becomeNeutralTags = new HashSet<>();
+    private static final Set<Item> becomeMenaceItems = new HashSet<>();
+    private static final Set<TagKey<Item>> becomeMenaceTags = new HashSet<>();
+
+    // --- Cached Sets for Entity Performance ---
+    private static final Set<EntityType<?>> menaceTargetEntities = new HashSet<>();
+    private static final Set<TagKey<EntityType<?>>> menaceTargetTags = new HashSet<>();
 
     // --- Cached Sets for Block Performance ---
     private static final Set<Block> celebrationOreBlocks = new HashSet<>();
@@ -100,6 +113,7 @@ public class ConfigDataCache {
      */
     public static void parseConfig() {
         clearAllItemSets();
+        clearAllEntitySets();
         clearAllBlockSets();
 
         // --- Parse Item Lists ---
@@ -121,6 +135,12 @@ public class ConfigDataCache {
         parseLootGenerationList(Configs.AHP_WORLDGEN.extraCheekLootList, flattenedExtraCheekLoot, "extraCheekLootList");
         parseLootGenerationList(Configs.AHP_WORLDGEN.caveCheekLootList, flattenedCaveCheekLoot, "caveCheekLootList");
         parseLootGenerationList(Configs.AHP.customTagRewards, flattenedCustomTagRewards, "customTagRewards");
+        parseItemList(Configs.AHP.becomePacifistItems, becomePacifistItems, becomePacifistTags, "becomePacifistItems");
+        parseItemList(Configs.AHP.becomeNeutralItems, becomeNeutralItems, becomeNeutralTags, "becomeNeutralItems");
+        parseItemList(Configs.AHP.becomeMenaceItems, becomeMenaceItems, becomeMenaceTags, "becomeMenaceItems");
+
+        // --- Parse Entity Lists ---
+        parseEntityList(Configs.AHP.menaceTargetEntities, menaceTargetEntities, menaceTargetTags, "menaceTargetEntities");
 
         // --- Parse Block Lists ---
         parseBlockList(Configs.AHP.celebrationOres, celebrationOreBlocks, celebrationOreTags, "celebrationOres");
@@ -170,6 +190,18 @@ public class ConfigDataCache {
     }
 
     // --- Public Item Checker Methods ---
+    /**
+     * Bundles all ingestible config lists into one check.
+     */
+    public static boolean isDietaryItem(ItemStack stack) {
+        return isStandardFood(stack)
+                || isBuffFood(stack)
+                || isPouchUnlockFood(stack)
+                || isTamingFood(stack)
+                || isPacifistItem(stack)
+                || isStandardAggressionItem(stack)
+                || isMenaceItem(stack);
+    }
     public static boolean isTamingFood(ItemStack stack) { return matchesItem(stack, tamingItems, tamingTags); }
     public static boolean isStandardFood(ItemStack stack) { return matchesItem(stack, standardFoodItems, standardFoodTags); }
     public static boolean isStealableItem(ItemStack stack) { return matchesItem(stack, stealableItems, stealableTags); }
@@ -187,6 +219,27 @@ public class ConfigDataCache {
     public static Item getRandomCustomLootItem(Random random) {if (flattenedExtraCheekLoot.isEmpty()) return Items.AIR;return flattenedExtraCheekLoot.get(random.nextInt(flattenedExtraCheekLoot.size()));}
     public static Item getRandomCaveLootItem(Random random) {if (flattenedCaveCheekLoot.isEmpty()) return Items.AIR;return flattenedCaveCheekLoot.get(random.nextInt(flattenedCaveCheekLoot.size()));}
     public static Item getRandomCustomTagReward(Random random) {if (flattenedCustomTagRewards.isEmpty()) return Items.AIR;return flattenedCustomTagRewards.get(random.nextInt(flattenedCustomTagRewards.size()));}
+    public static boolean isPacifistItem(ItemStack stack) { return matchesItem(stack, becomePacifistItems, becomePacifistTags); }
+    public static boolean isStandardAggressionItem(ItemStack stack) { return matchesItem(stack, becomeNeutralItems, becomeNeutralTags); }
+    public static boolean isMenaceItem(ItemStack stack) { return matchesItem(stack, becomeMenaceItems, becomeMenaceTags); }
+
+    // --- Public Entity Checker Methods ---
+    public static boolean isMenaceTarget(LivingEntity entity) {
+        if (entity == null) return false;
+        EntityType<?> type = entity.getType();
+
+        if (menaceTargetEntities.contains(type)) return true;
+        for (TagKey<EntityType<?>> tag : menaceTargetTags) {
+            if (type.isIn(tag)) return true;
+        }
+
+        // Smart fallback: If user included custom AHP monster tag,
+        // fall back to the Monster interface to ensure all hostiles are caught
+        if (Configs.AHP.menaceTargetEntities.contains("#adorablehamsterpets:monsters")) {
+            if (entity instanceof Monster) return true;
+        }
+        return false;
+    }
 
     // --- Public Block Checker Methods ---
     public static boolean isCelebrationOre(BlockState state) { return matchesBlock(state, celebrationOreBlocks, celebrationOreTags); }
@@ -255,6 +308,28 @@ public class ConfigDataCache {
                     Registries.ITEM.getOrEmpty(itemId).ifPresent(targetList::add);
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[LootConfig] Invalid item ID in '{}': '{}'", listName, entry);
+                }
+            }
+        }
+    }
+
+    private static void parseEntityList(List<String> configList, Set<EntityType<?>> entitySet, Set<TagKey<EntityType<?>>> tagSet, String listName) {
+        for (String entry : configList) {
+            if (entry.startsWith("#")) {
+                try {
+                    // 1.20.1: Use new Identifier()
+                    Identifier tagId = new Identifier(entry.substring(1));
+                    tagSet.add(TagKey.of(RegistryKeys.ENTITY_TYPE, tagId));
+                } catch (Exception e) {
+                    AdorableHamsterPets.LOGGER.warn("[EntityTagManager] Invalid entity tag identifier in '{}' config list: '{}'", listName, entry);
+                }
+            } else {
+                try {
+                    // 1.20.1: Use new Identifier()
+                    Identifier entityId = new Identifier(entry);
+                    Registries.ENTITY_TYPE.getOrEmpty(entityId).ifPresent(entitySet::add);
+                } catch (Exception e) {
+                    AdorableHamsterPets.LOGGER.warn("[EntityTagManager] Invalid entity identifier in '{}' config list: '{}'", listName, entry);
                 }
             }
         }
@@ -408,6 +483,17 @@ public class ConfigDataCache {
         flattenedExtraCheekLoot.clear();
         flattenedCaveCheekLoot.clear();
         flattenedCustomTagRewards.clear();
+        becomePacifistItems.clear();
+        becomePacifistTags.clear();
+        becomeNeutralItems.clear();
+        becomeNeutralTags.clear();
+        becomeMenaceItems.clear();
+        becomeMenaceTags.clear();
+    }
+
+    private static void clearAllEntitySets() {
+        menaceTargetEntities.clear();
+        menaceTargetTags.clear();
     }
 
     private static void clearAllBlockSets() {

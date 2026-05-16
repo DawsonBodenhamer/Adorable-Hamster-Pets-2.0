@@ -161,6 +161,7 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
             tooltip.add(fText("  Owner: %s", Text.literal(hamster.getOwner().getName().getString()).formatted(Formatting.WHITE)));
         }
         tooltip.add(fText("Age: %s", hamster.isBaby() ? Text.literal("Baby").formatted(Formatting.AQUA) : Text.literal("Adult").formatted(Formatting.WHITE)));
+        tooltip.add(fText("Aggression State: %s", Text.literal(hamster.getAggressionState().name()).formatted(Formatting.AQUA)));
     }
 
     @Override

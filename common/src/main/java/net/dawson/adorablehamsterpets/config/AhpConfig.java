@@ -825,6 +825,28 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Toggle this off if you find the rare, recessive red-eyed hamsters to be a bit too... scary. Reverts them to standard black, but only for you. They will still appear red for everyone else.")
     public boolean enableRedEyes = true;
 
+    // --- Aggression States & Diets ---
+    @Translatable.Name("Aggression States & Diets")
+    @Translatable.Desc("Configure what foods turns your adorable pet into a pacifist, a standard follower, or a bloodthirsty menace.")
+    public ConfigGroup aggressionSettings = new ConfigGroup("aggressionSettings", true);
+
+    @Translatable.Name("Pacifist Snacks")
+    @Translatable.Desc("Items that turn the hamster into a total hippie. They will refuse to attack anything, even to defend you.")
+    public List<String> becomePacifistItems = new ArrayList<>(List.of("#minecraft:flowers"));
+
+    @Translatable.Name("Amnesia Snacks")
+    @Translatable.Desc("Items that factory-reset the hamster to normal wolf-like neutral behavior (defends you, attacks what you attack).")
+    public List<String> becomeNeutralItems = new ArrayList<>(List.of("adorablehamsterpets:sunflower_seeds"));
+
+    @Translatable.Name("Menace Snacks")
+    @Translatable.Desc("Items that unleash the hamster's inner demon. They will actively hunt down anything in the Menace Targets list.")
+    public List<String> becomeMenaceItems = new ArrayList<>(List.of("minecraft:spider_eye"));
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Menace Targets")
+    @Translatable.Desc("The hit list. What should the hamster hunt when in Menace mode? Add 'minecraft:cow' if you want a tiny slaughterhouse. Accepts Entity IDs or Tags. NOTE: The default '#adorablehamsterpets:monsters' tag is a custom tag that targets all hostile mobs.")
+    public List<String> menaceTargetEntities = new ArrayList<>(List.of("#adorablehamsterpets:monsters", "#adorablehamsterpets:bosses", "minecraft:slime", "minecraft:magma_cube"));
+
     // --- Breeding Settings ---
     @Translatable.Name("Breeding Settings")
     @Translatable.Desc("Control the rate of hamster reproduction. Genetics are fun, but we don't want your server to start begging for mercy. Note: the global 'Enable Breeding' toggle is in the 'Core Feature Toggles' section.")

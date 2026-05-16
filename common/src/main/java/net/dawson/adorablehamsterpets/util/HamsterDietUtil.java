@@ -12,14 +12,18 @@ import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ItemStackParticleEffect;
+import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+
+import static net.dawson.adorablehamsterpets.sound.ModSounds.getRandomSoundFrom;
 
 /**
  * Handles diet, feeding, healing, buffs, and refusal logic for tamed hamsters.
@@ -127,7 +131,19 @@ public final class HamsterDietUtil {
             return 1;
         }
 
-        // --- 3. Process Standard Food ---
+        // --- 3. Process Aggression State Changes ---
+        if (ConfigDataCache.isPacifistItem(stack)) {
+            int result = trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.PACIFIST);
+            if (result > 0) return result;
+        } else if (ConfigDataCache.isStandardAggressionItem(stack)) {
+            int result = trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.STANDARD);
+            if (result > 0) return result;
+        } else if (ConfigDataCache.isMenaceItem(stack)) {
+            int result = trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.MENACE);
+            if (result > 0) return result;
+        }
+
+        // --- 4. Process Standard Food ---
         if (ConfigDataCache.isStandardFood(stack) || ConfigDataCache.isTamingFood(stack)) {
             boolean consumed = false;
 
@@ -214,5 +230,41 @@ public final class HamsterDietUtil {
         }
 
         return 0; // Not interested
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private static int trySetAggressionState(HamsterEntity hamster, PlayerEntity player, ItemStack stack, HamsterEntity.AggressionState targetState) {
+        if (hamster.getAggressionState() == targetState) {
+            return 0; // Already in this state. Fall through
+        }
+
+        if (!hamster.getWorld().isClient()) {
+            hamster.setAggressionState(targetState);
+
+            // Audio Feedback
+            SoundEvent sound = targetState == HamsterEntity.AggressionState.MENACE ? SoundEvents.ENTITY_ENDER_DRAGON_GROWL : getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, hamster.getRandom());
+            float volume = targetState == HamsterEntity.AggressionState.MENACE ? 0.15f : 1.0f;
+            float pitch = targetState == HamsterEntity.AggressionState.MENACE ? 5.0f : 1.0f;
+            hamster.getWorld().playSound(null, hamster.getBlockPos(), sound, SoundCategory.NEUTRAL, volume, pitch);
+
+            // Visual Feedback
+            ParticleEffect particle = targetState == HamsterEntity.AggressionState.MENACE ? ParticleTypes.ANGRY_VILLAGER : ParticleTypes.HAPPY_VILLAGER;
+            ParticleEffectsUtil.spawnParticlesOnEntity(hamster, particle, 15, 0.5, 0.5, 0.0, 0.2);
+
+            // Message Feedback
+            String msgKey = switch (targetState) {
+                case PACIFIST -> "message.adorablehamsterpets.aggression.pacifist";
+                case MENACE -> "message.adorablehamsterpets.aggression.menace";
+                default -> "message.adorablehamsterpets.aggression.standard";
+            };
+            player.sendMessage(Text.translatable(msgKey).formatted(Formatting.WHITE), true);
+
+            // Clear active target if switching out of menace or into pacifist
+            hamster.setTarget(null);
+        }
+        return 1;
     }
 }
