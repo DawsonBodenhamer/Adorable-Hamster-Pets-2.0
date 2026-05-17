@@ -313,7 +313,8 @@ public class AdorableHamsterPetsClient {
         // --- Handle Petting Cancellation ---
         if (clientPettingTicks > 0) {
             clientPettingTicks--;
-            if (clientPettingTicks < 170) { // 10 tick grace period
+            // 10 tick grace period (200 - 10 = 190)
+            if (clientPettingTicks < 190) {
                 if (client.options.attackKey.isPressed() || client.options.useKey.isPressed() || ModKeyBindings.PET_HAMSTER_KEY.isPressed()) {
                     NetworkManager.sendToServer(new CancelPettingPayload());
                     clientPettingTicks = 0;

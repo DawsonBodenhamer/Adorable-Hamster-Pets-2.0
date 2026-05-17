@@ -266,7 +266,8 @@ public class ModPackets {
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, SyncPettingStatePayload.ID, SyncPettingStatePayload.CODEC,
                 (payload, context) -> context.queue(() -> {
                     if (payload.isPetting()) {
-                        AdorableHamsterPetsClient.clientPettingTicks = 180; // Sync client state for 9 seconds
+                        // Sync client state for 10 seconds
+                        AdorableHamsterPetsClient.clientPettingTicks = 200;
                     } else {
                         AdorableHamsterPetsClient.clientPettingTicks = 0;
                     }

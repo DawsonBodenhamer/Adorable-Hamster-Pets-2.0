@@ -1478,7 +1478,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             if (hamster.squaredDistanceTo(self) > 64.0) return;
 
             this.ahp$pettingHamster = HamsterNbtUtil.saveToHamsterState(hamster).toNbt();
-            this.ahp$pettingTimer = 220; //11 seconds for animation
+            this.ahp$pettingTimer = 200; // 10 seconds for petting
 
             // Swish SFX on pick up
             world.playSound(
