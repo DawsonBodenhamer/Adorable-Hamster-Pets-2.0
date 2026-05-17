@@ -86,6 +86,9 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
                                   SpriteProvider sprites) {
         super(world, x, y, z, vx, vy, vz);
 
+        // Set size to match leaf textures on bed
+        this.scale *= 2.0f;
+
         // Use floaty physics if spawned from the Hamster Bedding item
         this.useFloatyPhysics = (vy == BEDDING_ITEM_FLAG);
 

@@ -100,7 +100,7 @@ public class HamsterTagGoal extends Goal {
         }
 
         // RNG Check
-        return this.hamster.getRandom().nextInt(Configs.AHP.tagGameChanceDenominator.get()) == 0;
+        return this.hamster.getRandom().nextInt(Configs.AHP.tagChanceDenominator.get()) == 0;
     }
 
     @Override

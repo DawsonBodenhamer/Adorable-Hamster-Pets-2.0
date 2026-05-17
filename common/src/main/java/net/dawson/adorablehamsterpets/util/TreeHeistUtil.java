@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
+import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
@@ -53,13 +54,24 @@ public class TreeHeistUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
+     * Checks if the given block state is a valid starting point for a tree heist.
+     * Only allows logs if the Dynamic Trees mod is installed.
+     */
+    public static boolean isValidHeistStartBlock(BlockState state) {
+        if (ConfigDataCache.isHeistableLeaf(state)) {
+            return true;
+        }
+        return ConfigDataCache.isHeistableLog(state) && Platform.isModLoaded("dynamictrees");
+    }
+
+    /**
      * Scans the structure connected to the given start position to identify a unique Tree ID and its canopy.
      * Uses a robust "Leaf -> Log -> Tree" algorithm similar to tree chopper mods.
      */
     public static TreeScanResult scanForTree(World world, BlockPos startPos) {
         BlockState startState = world.getBlockState(startPos);
         boolean isLeaf = ConfigDataCache.isHeistableLeaf(startState);
-        boolean isLog = ConfigDataCache.isHeistableLog(startState);
+        boolean isLog = ConfigDataCache.isHeistableLog(startState) && Platform.isModLoaded("dynamictrees");
 
         if (!isLeaf && !isLog) {
             // Fallback for invalid start
@@ -70,9 +82,9 @@ public class TreeHeistUtil {
         }
 
         // --- Bypass for Dynamic Trees ---
-        // If Dynamic Trees is installed, its canopy structure breaks vanilla BFS logic.
-        // We bypass the smart log-finding and just map a localized leaf cluster around the impact point.
-        if (dev.architectury.platform.Platform.isModLoaded("dynamictrees")) {
+        // Dynamic Trees breaks vanilla BFS logic
+        // Bypass smart log-finding and just map localized leaf cluster around impact point
+        if (Platform.isModLoaded("dynamictrees")) {
             if (Configs.AHP.debugTreeDetection) {
                 AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Dynamic Trees detected. Bypassing smart algorithm for localized canopy scan.");
             }
@@ -82,13 +94,13 @@ public class TreeHeistUtil {
         // --- Step A: Determine Trunk ---
         BlockPos foundLog = null;
         if (isLog) {
-            // We hit a log directly
+            // Hit log directly
             foundLog = startPos;
             if (Configs.AHP.debugTreeDetection) {
                 AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Started heist directly on a log at {}.", startPos.toShortString());
             }
         } else {
-            // We hit a leaf, find the connected log
+            // Hit leaf, find connected log
             if (Configs.AHP.debugTreeDetection) {
                 AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Starting scan at HitPos: {}. Searching for connected logs...", startPos.toShortString());
             }
@@ -239,7 +251,7 @@ public class TreeHeistUtil {
                 MathHelper.floor(moveBox.maxZ)
         )) {
             BlockState state = world.getBlockState(checkPos);
-            if (ConfigDataCache.isHeistableLeaf(state) || ConfigDataCache.isHeistableLog(state)) {
+            if (TreeHeistUtil.isValidHeistStartBlock(state)) {
                 Vec3d hitPos = new Vec3d(checkPos.getX() + 0.5, checkPos.getY() + 0.5, checkPos.getZ() + 0.5);
                 // Create fake block hit result to pass into collision handler
                 return new BlockHitResult(hitPos, Direction.UP, checkPos.toImmutable(), false);
