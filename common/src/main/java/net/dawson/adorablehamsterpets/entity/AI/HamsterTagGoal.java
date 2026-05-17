@@ -7,10 +7,17 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
+import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.util.PlayerGestureUtil;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.EnumSet;
@@ -108,10 +115,27 @@ public class HamsterTagGoal extends Goal {
         this.hamster.setPlayingTag(true);
         this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
 
-        // Play start sound
+        // Feedback
         SoundEvent startSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BEG_SOUNDS, this.hamster.getRandom());
         if (startSound != null) {
             this.hamster.playSound(startSound, 1.0f, 1.2f);
+        }
+
+        if (!this.hamster.getWorld().isClient() && this.targetPlayer instanceof ServerPlayerEntity serverPlayer) {
+            this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.NEUTRAL, 0.5f, 1.5f);
+            ParticleEffectsUtil.spawnParticlesOnEntity(
+                    this.hamster,
+                    ParticleTypes.HAPPY_VILLAGER,
+                    15,
+                    0.5,
+                    0.5,
+                    0.0,
+                    0.2
+            );
+
+            // Randomly select one of our 4 messages
+            int msgIndex = this.hamster.getRandom().nextInt(4) + 1; // 1 to 4
+            serverPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.tag_game_start." + msgIndex).formatted(Formatting.WHITE), true);
         }
 
         // Init timeout from config
