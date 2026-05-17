@@ -65,6 +65,7 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - The game will no longer randomly start while you are sneaking, preventing interference with petting.
   - You can now manually start a game of tag on-demand by rapidly sneaking and un-sneaking while maintaining eye contact with a tamed hamster.
   - Since there is now a manual trigger, the chance of the game starting is now much lower. You will need to stare at a hamster for ~15 seconds on average for the game to automatically start.
+  - Starting a game of tag now plays a sound, spawns particles, and displays an action bar message to clearly indicate that it is a fun event and not a bug. Don't ask.
 - **Genetics & Color Groups**
   - Renamed the `ROSE` color group to `CHERRY` since the only hamster in that group is the "Pearl Rose" hamster, which is basically pink anyway.
   - Added a new `RUST` color group. The "Rust" hamster has officially been evicted from the `ORANGE` category, allowing it to have its own dedicated spawning rules.
