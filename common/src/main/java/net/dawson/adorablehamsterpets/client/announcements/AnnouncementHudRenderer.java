@@ -30,8 +30,8 @@ public class AnnouncementHudRenderer {
         final AhpConfig config = Configs.AHP;
 
         // --- 1. Pre-render Checks ---
-        // Do not render if the config disables it, a GUI is open, or there are no notifications.
-        if (!config.enableHudIcon.get() || client.currentScreen != null) {
+        // Do not render if the config disables it, a GUI is open, or there are no notifications
+        if (!config.enableHudIcon.get() || config.serverDisableAnnouncements || client.currentScreen != null) {
             return;
         }
         List<AnnouncementManager.PendingNotification> notifications = AdorableHamsterPetsClient.getPendingNotifications();

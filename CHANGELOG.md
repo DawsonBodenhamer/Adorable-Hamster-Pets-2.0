@@ -48,6 +48,14 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Alternatively, placing an Acorn in the top slot of a furnace will smelt it down into a piece of Charcoal.
 - **World Gen Compatibility Enhancements**
   - Added massive out-of-the-box biome compatibility configuration data for [**Oh The Biomes We've Gone**](https://modrinth.com/mod/oh-the-biomes-weve-gone), ensuring hamster variants properly disperse across their beautiful landscapes. Huge thanks to the community members who helped configure these lists!
+- **Armor Tier Jumping** 
+  - You can now upgrade Hamster Armor between any tiers using the Smithing Table (e.g., Iron to Diamond, Diamond to Netherite). Previously, all upgrades had to start from base Acorn Armor. You can also downgrade it... should you decide to do so.
+- **Infinite Bed Respawns**
+  - Added a new `Tribute One-Time Use` config setting. When enabled, a bed only requires the tribute item (Totem of Undying by default) once, permanently unlocking infinite respawns for that specific bed and hamster.
+- **Taming Feedback**
+  - The mod will now provide snarky chat feedback if you try to tame a hamster incorrectly (such as not sneaking or offering them the wrong food) and will point you to the guidebook for help.
+- **Global Notification Toggle**
+  - Added a `Server Disable Announcements` config setting. Server owners can now globally disable the notification bell icon for all connected players.
 
 ### Changed
 - **Hamster Tips Guidebook**

@@ -16,6 +16,7 @@ import net.dawson.adorablehamsterpets.item.custom.HamsterBedItem;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.advancement.criterion.Criteria;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -29,6 +30,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
@@ -204,58 +208,106 @@ public final class HamsterInteractionUtil {
 
     // --- Taming ---
     public static ActionResult handleTaming(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
-        if (!hamster.isTamed() && player.isSneaking() && ConfigDataCache.isTamingFood(stack)) {
+        if (!hamster.isTamed()) {
+            boolean isTamingFood = ConfigDataCache.isTamingFood(stack);
+            boolean isSneaking = player.isSneaking();
 
-            // Block taming if it is an ai-disabled statue and config forbids it
-            if (hamster.isAiDisabled() && !AdorableHamsterPets.CONFIG.allowTamingAiDisabled) {
+            // --- 1. Normal Taming Path ---
+            if (isSneaking && isTamingFood) {
+                // Block taming if it is an ai-disabled statue and config forbids it
+                if (hamster.isAiDisabled() && !AdorableHamsterPets.CONFIG.allowTamingAiDisabled) {
+                    if (!hamster.getWorld().isClient()) {
+                        player.sendMessage(Text.translatable("message.adorablehamsterpets.taming_statue_refusal").formatted(Formatting.RED), true);
+                    }
+                    return ActionResult.SUCCESS;
+                }
+
                 if (!hamster.getWorld().isClient()) {
-                    player.sendMessage(Text.translatable("message.adorablehamsterpets.taming_statue_refusal").formatted(Formatting.RED), true);
+                    if (!player.getAbilities().creativeMode) {
+                        stack.decrement(1);
+                    }
+
+                    // Use config value for taming chance
+                    final AhpConfig config = AdorableHamsterPets.CONFIG;
+                    int denominator = Math.max(1, config.tamingChanceDenominator.get()); // Ensure denominator is at least 1
+                    if (hamster.getRandom().nextInt(denominator) == 0) {
+                        hamster.setOwnerUuid(player.getUuid());
+                        hamster.setTamed(true, true);
+                        hamster.getNavigation().stop();
+                        hamster.setSitting(false, true);
+                        hamster.setSleeping(false);
+                        hamster.setTarget(null);
+                        hamster.getWorld().sendEntityStatus(hamster, (byte) 7);
+
+                        // Re-awaken if AI was disabled and reset statue physics
+                        if (hamster.isAiDisabled()) {
+                            hamster.setAiDisabled(false);
+                            hamster.setNoGravity(false);
+                        }
+
+                        // Play celebrate sound only on success
+                        SoundEvent celebrateSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, hamster.getRandom());
+                        hamster.getWorld().playSound(null, hamster.getBlockPos(), celebrateSound, SoundCategory.NEUTRAL, 0.7F, 1.0F);
+
+                        if (player instanceof ServerPlayerEntity serverPlayer) {
+                            Criteria.TAME_ANIMAL.trigger(serverPlayer, hamster);
+                            HamsterGeneticsAdvancementUtil.trackTamedHamster(serverPlayer, hamster);
+                        }
+
+                        // Baby link warning
+                        if (Configs.AHP.enableTamedBabyWarningMessage && hamster.isBaby() && hamster.getParentUuid() != null) {
+                            Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
+                            player.sendMessage(Text.translatable("message.adorablehamsterpets.tamed_baby_still_linked_warning", lureName).formatted(Formatting.WHITE), true);
+                        }
+                    } else {
+                        hamster.getWorld().sendEntityStatus(hamster, (byte) 6);
+                    }
                 }
                 return ActionResult.SUCCESS;
             }
 
-            if (!hamster.getWorld().isClient()) {
-                if (!player.getAbilities().creativeMode) {
-                    stack.decrement(1);
+            // --- 2. Failure Feedback Path ---
+            if (!hamster.getWorld().isClient() && hand == Hand.MAIN_HAND && hamster.interactionCooldown <= 0) {
+                boolean isAnyFood = stack.contains(DataComponentTypes.FOOD) || ConfigDataCache.isDietaryItem(stack);
+                boolean isFailure = false;
+                String messageKey = null;
+
+                if (isTamingFood && !isSneaking) {
+                    messageKey = "message.adorablehamsterpets.taming_failure_sneaking";
+                    isFailure = true;
+                } else if (!isTamingFood && isAnyFood) {
+                    messageKey = "message.adorablehamsterpets.taming_failure_food";
+                    isFailure = true;
                 }
 
-                // Use config value for taming chance
-                final AhpConfig config = AdorableHamsterPets.CONFIG;
-                int denominator = Math.max(1, config.tamingChanceDenominator.get()); // Ensure denominator is at least 1
-                if (hamster.getRandom().nextInt(denominator) == 0) {
-                    hamster.setOwnerUuid(player.getUuid());
-                    hamster.setTamed(true, true);
-                    hamster.getNavigation().stop();
-                    hamster.setSitting(false, true);
-                    hamster.setSleeping(false);
-                    hamster.setTarget(null);
-                    hamster.getWorld().sendEntityStatus(hamster, (byte) 7);
+                if (isFailure) {
+                    hamster.interactionCooldown = 20; // Prevent spam
 
-                    // Re-awaken if AI was disabled and reset statue physics
-                    if (hamster.isAiDisabled()) {
-                        hamster.setAiDisabled(false);
-                        hamster.setNoGravity(false);
+                    // Audio feedback
+                    hamster.getWorld().playSound(null, hamster.getBlockPos(), SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.PLAYERS, 1.2f, 0.5f);
+
+                    MutableText msg = Text.literal("\n").append(Text.translatable(messageKey).formatted(Formatting.RED));
+
+                    // If player is also missing guidebook
+                    if (!((PlayerEntityAccessor) player).ahp$computeHasGuideBook(player)) {
+                        msg.append("\n\n").append(
+                                Text.translatable("message.adorablehamsterpets.taming_failure_guidebook_link")
+                                        .setStyle(Style.EMPTY
+                                                .withColor(Formatting.GREEN)
+                                                .withBold(true)
+                                                .withUnderline(true)
+                                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ahp_open_config_screen"))
+                                        )
+                        ).append("\n");
+                    } else {
+                        msg.append("\n");
                     }
 
-                    // Play celebrate sound only on success
-                    SoundEvent celebrateSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, hamster.getRandom());
-                    hamster.getWorld().playSound(null, hamster.getBlockPos(), celebrateSound, SoundCategory.NEUTRAL, 0.7F, 1.0F);
-
-                    if (player instanceof ServerPlayerEntity serverPlayer) {
-                        Criteria.TAME_ANIMAL.trigger(serverPlayer, hamster);
-                        HamsterGeneticsAdvancementUtil.trackTamedHamster(serverPlayer, hamster);
-                    }
-
-                    // --- Baby Link Warning ---
-                    if (Configs.AHP.enableTamedBabyWarningMessage && hamster.isBaby() && hamster.getParentUuid() != null) {
-                        Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
-                        player.sendMessage(Text.translatable("message.adorablehamsterpets.tamed_baby_still_linked_warning", lureName).formatted(Formatting.WHITE), true);
-                    }
-                } else {
-                    hamster.getWorld().sendEntityStatus(hamster, (byte) 6);
+                    player.sendMessage(msg, false);
+                    hamster.playRefusalAnimation();
+                    return ActionResult.SUCCESS; // Consume interaction so player doesn't accidentally eat item
                 }
             }
-            return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
     }

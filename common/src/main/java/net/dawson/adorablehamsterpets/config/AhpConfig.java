@@ -357,13 +357,17 @@ public class AhpConfig extends Config {
 
     // --- Announcements & Update Notes ---
     @Translatable.Name("Announcements & Update Notes")
-    @Translatable.Desc("Tweak the little bell icon that appears when I have something important to tell you. Or turn if off if you hate fun.")
+    @Translatable.Desc("Tweak the little bell icon that appears when I have something important to tell you. Or turn if off if you hate fun. Aside from the 'Disable Announcements (Server)' setting, the rest of the notification settings in this group are client-side (meaning they only affect your personal computer).")
     public ConfigGroup announcements = new ConfigGroup("announcements", true);
 
     @NonSync
-    @Translatable.Name("Enable Announcements")
-    @Translatable.Desc("The master switch for all announcement notifications. Turning this off is the same as clicking 'Disable All' in the announcement screen. Announcements can still be viewed in the §f§lHamster Tips§r guide book.")
+    @Translatable.Name("Enable Announcements (Client)")
+    @Translatable.Desc("Your personal switch for all announcement notifications. Turning this off is the same as clicking 'Disable All' in the announcement screen. Announcements can still be viewed in the §f§lHamster Tips§r guide book.")
     public ValidatedBoolean enableNotificationIcons = new ValidatedBoolean(true); // plain boolean; with special functionality wired it up in the constructor
+
+    @Translatable.Name("Disable Announcements (Server)")
+    @Translatable.Desc("If true, completely disables the announcement bell icon for all players on the server, overriding their client settings, including 'Enable Announcements (Client).'")
+    public boolean serverDisableAnnouncements = false;
 
     // Re-entrancy guard so the listeners don’t bounce events back and forth forever.
     private boolean updatingAnnouncementToggles = false;
@@ -1043,6 +1047,13 @@ public class AhpConfig extends Config {
 
     // Helper field for gating
     private final ValidatedField<Boolean> isRespawnInBedEnabled = enableRespawnInBed.map(b -> b, b -> b);
+
+    @Translatable.Name("Tribute One-Time Use")
+    @Translatable.Desc("If true, the bed only requires the resurrection tribute item once to be permanently activated for infinite respawns. (Ignored if 'Free Bed Respawns' is already enabled).")
+    public ValidatedCondition<Boolean> infiniteRespawnsAfterTribute = new ValidatedBoolean(false)
+            .toCondition(isRespawnInBedEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.respawn_enabled"),
+                    () -> false);
 
     @Translatable.Name("Free Bed Respawns")
     @Translatable.Desc("If true, Hamster Beds do not require a tribute item to function as a respawn point. They will work indefinitely for free.")

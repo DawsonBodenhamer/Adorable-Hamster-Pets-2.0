@@ -351,6 +351,9 @@
   "message.adorablehamsterpets.aggression.pacifist": "Your hamster embraces inner peace. It will no longer attack anything.",
   "message.adorablehamsterpets.aggression.standard": "Your hamster returns to its standard neutral demeanor.",
   "message.adorablehamsterpets.aggression.menace": "Your hamster is now a menace. Aggression level: Angry Rodent.",
+  "message.adorablehamsterpets.taming_failure_sneaking": "Charging at a wild rodent like a caffeinated rhinoceros is not going to win its trust. You didn't read the §6§lHamster Tips§c guidebook, did you?",
+  "message.adorablehamsterpets.taming_failure_food": "You're using the wrong taming bait. Let me guess— you skipped the §6§lHamster Tips§c guidebook, didn't you?",
+  "message.adorablehamsterpets.taming_failure_guidebook_link": "[Don't have the book? Click here.]",
 
   "subtitles.adorablehamsterpets.hamster_attack": "Hamster attacks",
   "subtitles.adorablehamsterpets.hamster_beg": "Hamster begs",
