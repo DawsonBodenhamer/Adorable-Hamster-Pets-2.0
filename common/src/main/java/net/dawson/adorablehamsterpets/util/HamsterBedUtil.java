@@ -117,36 +117,33 @@ public final class HamsterBedUtil {
 
         // --- Spawn Logic Branch ---
         if (isBedFree) {
-            // Scenario A: Bed is free -> Sleep in it
+            // Scenario A: Bed free -> Sleep in it
             Vec3d bedCenter = Vec3d.ofCenter(bedPos).add(0, 0.1, 0);
             newHamster.refreshPositionAndAngles(bedCenter.x, bedCenter.y, bedCenter.z, 0f, 0f);
 
-            // Set to 5% health
-            newHamster.setHealth(Math.max(1.0f, newHamster.getMaxHealth() * 0.05f));
-
-            // Force sleep state
-            newHamster.setDozingPhase(HamsterEntity.DozingPhase.DEEP_SLEEP);
-            newHamster.setSleeping(true);
-            newHamster.setInSittingPose(true); // Lock AI
-
-            // Select sleep pose based on personality ID to match original hamster
-            int personality = newHamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
-            int poseIndex = (personality >= 1 && personality <= 3) ? personality : 1;
-            String sleepAnim = "anim_hamster_sleep_pose" + poseIndex;
-            newHamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, sleepAnim);
-
-            // Update block state
+            // Update block state & feedback
             bedWorld.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
-
-            // Trigger bed animation
+            // HamsterBedBlockEntity explicitly implements GeoBlockEntity, so checking if it is an
+            // instance of its own guaranteed supertype is treated as a compilation error on 1.20.1.
+            // To fix this, I'm just calling triggerAnim directly on it without the redundant instanceof check
             bedEntity.triggerAnim("hamster_bed_controller", "anim_bed_becoming_occupied");
-
         } else {
-            // Scenario B: Bed occupied -> Spawn nearby standing up
+            // Scenario B: Bed occupied -> Spawn nearby
             newHamster.refreshPositionAndAngles(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, hamster.getYaw(), 0f);
-            newHamster.setHealth(newHamster.getMaxHealth());
-            newHamster.setSitting(false);
         }
+
+        // Set states
+        newHamster.setDozingPhase(HamsterEntity.DozingPhase.DEEP_SLEEP);
+        newHamster.setSleeping(true);
+        newHamster.setRescueSleeping(true);
+        newHamster.setInSittingPose(true); // Lock AI
+        newHamster.setHealth(Math.max(1.0f, newHamster.getMaxHealth() * 0.05f)); // 5% health
+
+        // Select sleep pose based on personality ID
+        int personality = newHamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+        int poseIndex = (personality >= 1 && personality <= 3) ? personality : 1;
+        String sleepAnim = "anim_hamster_sleep_pose" + poseIndex;
+        newHamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, sleepAnim);
 
         // --- Linkage Update & Charge Consumption ---
         // Created a new entity, so it has a new UUID. Update the bed block entity
@@ -154,8 +151,8 @@ public final class HamsterBedUtil {
             Text name = newHamster.hasCustomName() ? newHamster.getCustomName() : newHamster.getDisplayName();
             finalBedEntity.setLinkedHamster(newHamster.getUuid(), name, finalBedEntity.getWanderDistance());
 
-            // Don't consume charge if respawns are free
-            if (!Configs.AHP.freeBedRespawns.get()) {
+            // Don't consume charge if respawns are free or infinite after tribute
+            if (!Configs.AHP.freeBedRespawns.get() && !Configs.AHP.infiniteRespawnsAfterTribute.get()) {
                 finalBedEntity.setRespawnEnabled(false);
             }
         }

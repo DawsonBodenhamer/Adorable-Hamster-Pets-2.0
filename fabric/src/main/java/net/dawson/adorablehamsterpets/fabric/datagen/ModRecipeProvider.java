@@ -51,7 +51,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
     private void offerHamsterArmorUpgrade(Consumer<RecipeJsonProvider> exporter, Item template, Item material, Item result) {
         SmithingTransformRecipeJsonBuilder.create(
                         Ingredient.ofItems(template),
-                        Ingredient.ofItems(ModItems.HAMSTER_ARMOR_ACORN.get()), // Base is always Acorn Armor
+                        Ingredient.fromTag(ModItemTagProvider.HAMSTER_ARMOR_ENCHANTABLE), // Allow any armor tier as base
                         Ingredient.ofItems(material),
                         RecipeCategory.COMBAT,
                         result
