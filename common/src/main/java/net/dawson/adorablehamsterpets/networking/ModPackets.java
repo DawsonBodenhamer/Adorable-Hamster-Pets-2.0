@@ -379,7 +379,7 @@ public class ModPackets {
                 (packet, context) -> context.get().queue(() ->
                         EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
                             if (packet.isPetting()) {
-                                AdorableHamsterPetsClient.clientPettingTicks = 180; // Sync client state for 9 seconds
+                                AdorableHamsterPetsClient.clientPettingTicks = 200; // Sync client state for 10 seconds
                             } else {
                                 AdorableHamsterPetsClient.clientPettingTicks = 0;
                             }

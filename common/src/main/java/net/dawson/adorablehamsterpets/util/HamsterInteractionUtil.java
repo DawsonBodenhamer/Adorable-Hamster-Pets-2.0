@@ -775,7 +775,11 @@ public final class HamsterInteractionUtil {
 
             if (Platform.isModLoaded("punchy")) {
                 if (player instanceof PlayerEntityAccessor accessor) {
-                    accessor.ahp$queueShoulderMountSound(20); // 1 second delay for Punchy animation
+                    // Match Punchy animation timing
+                    // Right shoulder = 1.14s
+                    // Left shoulder/head = 1.97s
+                    int soundDelay = (availableSlot == ShoulderLocation.RIGHT_SHOULDER) ? 23 : 39;
+                    accessor.ahp$queueShoulderMountSound(soundDelay);
                 }
             } else {
                 // Instant feedback if Punchy not present
