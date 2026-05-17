@@ -1005,31 +1005,43 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
 
         // --- 2. Tree Heist Trigger ---
-        TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, leafPos);
+        // If looking at valid block, check for heist start
+        HitResult hitResult = self.raycast(5.0, 0.0f, false);
+        if (hitResult.getType() == HitResult.Type.BLOCK) {
+            BlockPos hitPos = ((BlockHitResult) hitResult).getBlockPos();
+            BlockState hitState = world.getBlockState(hitPos);
 
-        if (HamsterTreeSearcherEntity.isTreeBlocked(world, scanResult.treeId())) {
-            self.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
-        } else {
-            // Start Heist
-            HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(world);
-            if (searcher != null) {
-                hamster.triggerLeafPopEffects(leafPos, false);
-                NbtCompound fullNbt = new NbtCompound();
-                hamster.writeNbt(fullNbt);
+            if (TreeHeistUtil.isValidHeistStartBlock(hitState)) {
 
-                searcher.initializeSearch(leafPos, scanResult, fullNbt);
-                searcher.setForcedExitPos(leafPos); // Apply Precision Exit
+                TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, hitPos);
 
-                world.spawnEntity(searcher);
+                if (HamsterTreeSearcherEntity.isTreeBlocked(world, scanResult.treeId())) {
+                    self.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
+                } else {
+                    // Start Heist
+                    HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(world);
+                    if (searcher != null) {
+                        hamster.triggerLeafPopEffects(hitPos, false);
+                        NbtCompound fullNbt = new NbtCompound();
+                        hamster.writeNbt(fullNbt);
 
-                // Clear Data
-                if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
-                else this.adorablehamsterpets$mountOrderQueue.pollFirst();
-                this.setShoulderHamster(locationToProcess, new NbtCompound());
+                        searcher.initializeSearch(hitPos, scanResult, fullNbt);
+                        searcher.setForcedExitPos(hitPos); // Apply Precision Exit
 
-                // Feedback
-                world.playSound(null, self.getBlockPos(), ModSounds.HAMSTER_DISMOUNT.get(), SoundCategory.PLAYERS, 0.7f, 1.0f + world.getRandom().nextFloat() * 0.2f);
-                self.sendMessage(Text.translatable("message.adorablehamsterpets.precision_tree_heist_started").formatted(Formatting.GREEN), true);            }
+                        world.spawnEntity(searcher);
+
+                        // Clear Data
+                        if (config.dismountOrder.get() == DismountOrder.LIFO)
+                            this.adorablehamsterpets$mountOrderQueue.pollLast();
+                        else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+                        this.setShoulderHamster(locationToProcess, new NbtCompound());
+
+                        // Feedback
+                        world.playSound(null, self.getBlockPos(), ModSounds.HAMSTER_DISMOUNT.get(), SoundCategory.PLAYERS, 0.7f, 1.0f + world.getRandom().nextFloat() * 0.2f);
+                        self.sendMessage(Text.translatable("message.adorablehamsterpets.precision_tree_heist_started").formatted(Formatting.GREEN), true);
+                    }
+                }
+            }
         }
     }
 

@@ -1506,8 +1506,8 @@ public class AhpConfig extends Config {
     public boolean allowStrangerTag = true;
 
     @Translatable.Name("Game Initiation Chance")
-    @Translatable.Desc("The 1-in-X chance per tick a hamster will start a game of tag if you make too much eye contact. Since the game runs at 20 ticks per second, a 1-in-100-tick chance means you'll need to maintain eye contact for about 5-10 seconds on average. Set to 1 if you want the game to start instantly upon eye contact.")
-    public ValidatedInt tagGameChanceDenominator = new ValidatedInt(100, 1200, 1);
+    @Translatable.Desc("The 1-in-X chance per tick a hamster will start a game of tag if you make too much eye contact. Since the game runs at 20 ticks per second, a 1-in-500-tick chance means you'll need to maintain eye contact for about ~15 seconds on average. Set to 1 if you want the game to start instantly upon eye contact.")
+    public ValidatedInt tagChanceDenominator = new ValidatedInt(500, 1200, 1);
 
     @Translatable.Name("Enable Player Daily Limit")
     @Translatable.Desc("If true, players are capped on how many games they can play per day. If false, you can play until your legs fall off.")

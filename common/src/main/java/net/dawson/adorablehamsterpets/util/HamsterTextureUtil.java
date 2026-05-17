@@ -45,12 +45,10 @@ public class HamsterTextureUtil {
         if (Configs.AHP.performanceMode) {
             return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/performance_mode.png");
         }
-        if (hamster.isSweetPotato()) {
-            return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/easter_egg/sweet_potato.png");
-        }
 
         HamsterGenome genome = hamster.getGenome();
         boolean redEyes = genome.eyeGenotype() == 2 && Configs.AHP.enableRedEyes;
+        boolean isSweetPotato = hamster.isSweetPotato();
 
         // --- Extract Equipment States ---
         ItemStack armorStack = hamster.getArmorStack();
@@ -74,7 +72,7 @@ public class HamsterTextureUtil {
         boolean hasPinkPetals = hamster.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE) > 0;
 
         // --- Generate Cache Key ---
-        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_h%b_p%b",
+        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_h%b_p%b_sp%b",
                 genome.basePaletteId(),
                 genome.wildOverlayPattern(),
                 genome.wildOverlayPaletteId() != null ? genome.wildOverlayPaletteId() : "",
@@ -83,7 +81,8 @@ public class HamsterTextureUtil {
                 redEyes,
                 armorMaterial,
                 hasAcornHat,
-                hasPinkPetals);
+                hasPinkPetals,
+                isSweetPotato);
 
         Identifier cachedId = CACHED_TEXTURES.get(cacheKey);
         if (cachedId != null) {
@@ -94,28 +93,37 @@ public class HamsterTextureUtil {
 
         try {
             // --- 1. Base Coat ---
-            NativeImage composite = createLayerImage("fur_base_pattern/fur_pattern.png", genome.basePaletteId());
+            NativeImage composite;
+            if (isSweetPotato) {
+                composite = readRawImage("textures/entity/hamster/easter_egg/sweet_potato.png");
+            } else {
+                composite = createLayerImage("fur_base_pattern/fur_pattern.png", genome.basePaletteId());
+            }
+
             if (composite == null) {
                 return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png"); // Ultimate fallback
             }
 
-            // --- 2. Wild Overlay ---
-            if (genome.wildOverlayPattern() > 0 && genome.wildOverlayPaletteId() != null) {
-                String patternName = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.get(genome.wildOverlayPattern());
-                NativeImage wildLayer = createLayerImage("overlays/fur_overlay_pattern/" + patternName + ".png", genome.wildOverlayPaletteId());
-                if (wildLayer != null) {
-                    blendImages(composite, wildLayer);
-                    wildLayer.close();
+            // Prevent overlays if Sweet Potato
+            if (!isSweetPotato) {
+                // --- 2. Wild Overlay ---
+                if (genome.wildOverlayPattern() > 0 && genome.wildOverlayPaletteId() != null) {
+                    String patternName = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.get(genome.wildOverlayPattern());
+                    NativeImage wildLayer = createLayerImage("overlays/fur_overlay_pattern/" + patternName + ".png", genome.wildOverlayPaletteId());
+                    if (wildLayer != null) {
+                        blendImages(composite, wildLayer);
+                        wildLayer.close();
+                    }
                 }
-            }
 
-            // --- 3. Breeding Overlay ---
-            if (genome.breedingOverlayPattern() > 0 && genome.breedingOverlayPaletteId() != null) {
-                String patternName = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.get(genome.breedingOverlayPattern());
-                NativeImage breedLayer = createLayerImage("overlays/fur_overlay_pattern/" + patternName + ".png", genome.breedingOverlayPaletteId());
-                if (breedLayer != null) {
-                    blendImages(composite, breedLayer);
-                    breedLayer.close();
+                // --- 3. Breeding Overlay ---
+                if (genome.breedingOverlayPattern() > 0 && genome.breedingOverlayPaletteId() != null) {
+                    String patternName = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.get(genome.breedingOverlayPattern());
+                    NativeImage breedLayer = createLayerImage("overlays/fur_overlay_pattern/" + patternName + ".png", genome.breedingOverlayPaletteId());
+                    if (breedLayer != null) {
+                        blendImages(composite, breedLayer);
+                        breedLayer.close();
+                    }
                 }
             }
 

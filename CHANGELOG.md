@@ -64,6 +64,7 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Wild hamsters can no longer initiate a game of tag to prevent interference with taming. Tamed hamsters can still play tag with strangers if enabled in the config.
   - The game will no longer randomly start while you are sneaking, preventing interference with petting.
   - You can now manually start a game of tag on-demand by rapidly sneaking and un-sneaking while maintaining eye contact with a tamed hamster.
+  - Since there is now a manual trigger, the chance of the game starting is now much lower. You will need to stare at a hamster for ~15 seconds on average for the game to automatically start.
 - **Genetics & Color Groups**
   - Renamed the `ROSE` color group to `CHERRY` since the only hamster in that group is the "Pearl Rose" hamster, which is basically pink anyway.
   - Added a new `RUST` color group. The "Rust" hamster has officially been evicted from the `ORANGE` category, allowing it to have its own dedicated spawning rules.
@@ -77,6 +78,8 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - **Re-balanced Weights:** Adjusted the default spawning weights across the `Icy`, `Magical`, and `Snowy` environments to accommodate the new color zones.
 - **⚠ Important Config Note for Existing Worlds**
   - If you are updating an existing modpack, your old config files will obstinately hold on to their old settings. This is good, otherwise you would lose all your work every time I pushed out an update. However, this means that in order to see these new default spawn weights, you will need to right-click specific settings in the config screen and select "Restore Defaults." Alternatively, click the "Changes" button (bottom-right corner) and click "Restore Defaults" to reset everything at once (only affects the config from my mod).
+- **Hamster Bedding Leaf Particles**
+  - Doubled the visual size of the Hamster Bedding particles to better match the leaves on the trees and on the hamster bed itself.
 
 ### Fixed
 - **Hamster Yeet & Evilcraft Bug**
@@ -98,6 +101,8 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
 - **Console Log Spam**
   - Resolved an issue where players with internet disabled (or those playing in regions where GitHub is blocked) would receive a massive, screen-filling error stack trace in their console every 5 minutes when the mod silently checked for updates in the background. Background network failures are now politely logged as a single warning line.
   - Resolved an issue where the genetics engine would spam the server console with warnings when attempting to generate wild overlays for hamsters with extremely bright base coats (like Coconut).
+- **Sweet Potato Easter Egg**
+  - Renaming a hamster to "Sweet Potato" now correctly applies the easter egg texture without accidentally deleting the hamster's eyes, skin layer, and accessories. So that's good.
 
 ---
 

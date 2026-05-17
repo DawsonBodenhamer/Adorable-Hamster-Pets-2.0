@@ -281,7 +281,7 @@ public class HamsterProjectileEntity extends ThrownEntity {
                 BlockPos hitPos = blockHitResult.getBlockPos();
                 BlockState hitState = this.getWorld().getBlockState(hitPos);
 
-                if (ConfigDataCache.isHeistableLeaf(hitState) || ConfigDataCache.isHeistableLog(hitState)) {
+                if (TreeHeistUtil.isValidHeistStartBlock(hitState)) {
                     // 1. Scan first to identify the tree anchor
                     TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(this.getWorld(), hitPos);
 

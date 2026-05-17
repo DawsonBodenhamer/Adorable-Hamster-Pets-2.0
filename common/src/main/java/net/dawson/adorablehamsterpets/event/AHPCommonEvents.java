@@ -15,6 +15,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.mixin.accessor.SlotAccessor;
+import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
 import net.minecraft.block.BlockState;
@@ -128,7 +129,7 @@ public class AHPCommonEvents {
         }
 
         // --- 3. Precision Tree Heist ---
-        if (ConfigDataCache.isLureItem(stack) && (ConfigDataCache.isHeistableLeaf(state) || ConfigDataCache.isHeistableLog(state))) {
+        if (ConfigDataCache.isLureItem(stack) && TreeHeistUtil.isValidHeistStartBlock(state)) {
             if (!world.isClient() && player instanceof PlayerEntityAccessor accessor) {
                 if (accessor.hasAnyShoulderHamster()) {
                     accessor.adorablehamsterpets$startPrecisionTreeHeist(pos);
