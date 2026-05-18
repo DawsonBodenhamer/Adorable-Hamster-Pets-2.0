@@ -76,8 +76,8 @@ public class HamsterTagGoal extends Goal {
         this.targetPlayer = player;
 
         // --- 5. Sneak Check & Manual Initiation ---
-        // 6 toggles = press, release, press, release, press, release
-        boolean isSpammingSneak = PlayerGestureUtil.isSpammingSneak(player, 6);
+        // 8 toggles = press, release, press, release, press, release, press, release
+        boolean isSpammingSneak = PlayerGestureUtil.isSpammingSneak(player, 8);
 
         // Prevent automatic tag initiation if sneaking
         if (player.isSneaking() && !isSpammingSneak) {
