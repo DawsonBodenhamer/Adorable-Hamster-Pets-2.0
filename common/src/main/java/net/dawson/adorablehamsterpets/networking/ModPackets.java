@@ -67,6 +67,7 @@ public class ModPackets {
     public record SyncHamsterStateS2CPacket(int entityId, NbtCompound data) {}
     public record PlayDistantSoundS2CPacket(Identifier soundId, float volume, float pitch) {}
     public record SyncPettingStateS2CPacket(boolean isPetting) {}
+    public record PlayMountSoundS2CPacket(Identifier soundId, float pitch, int delay) {}
 
     /**
      * Registers all packet definitions and their handlers.
@@ -386,6 +387,18 @@ public class ModPackets {
                                 AdorableHamsterPetsClient.clientPettingTicks = 0;
                             }
                         })
+                )
+        );
+
+        CHANNEL.register(PlayMountSoundS2CPacket.class,
+                (packet, buf) -> {
+                    buf.writeIdentifier(packet.soundId());
+                    buf.writeFloat(packet.pitch());
+                    buf.writeInt(packet.delay());
+                },
+                (buf) -> new PlayMountSoundS2CPacket(buf.readIdentifier(), buf.readFloat(), buf.readInt()),
+                (packet, context) -> context.get().queue(() ->
+                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handlePlayMountSound(packet.soundId(), packet.pitch(), packet.delay()))
                 )
         );
     }

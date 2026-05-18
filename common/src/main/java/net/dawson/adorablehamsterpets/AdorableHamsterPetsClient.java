@@ -54,6 +54,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -65,6 +66,7 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -100,6 +102,11 @@ public class AdorableHamsterPetsClient {
 
     // --- Petting State ---
     public static int clientPettingTicks = 0;
+
+    // --- Shoulder Mount SFX State ---
+    private static int mountSoundDelayTicks = 0;
+    private static Identifier pendingMountSoundId = null;
+    private static float pendingMountSoundPitch = 1.0f;
 
     // --- Throw Queue State ---
     public static final int THROW_QUEUE_REQUIRED_TICKS = 15;
@@ -677,6 +684,21 @@ public class AdorableHamsterPetsClient {
                 }
             }
         }
+
+        // --- 10. Delayed Shoulder Mount Sound ---
+        if (mountSoundDelayTicks > 0) {
+            mountSoundDelayTicks--;
+            if (mountSoundDelayTicks == 0 && pendingMountSoundId != null) {
+                if (client.player != null) {
+                    client.getSoundManager().play(new PositionedSoundInstance(
+                            SoundEvent.of(pendingMountSoundId), SoundCategory.PLAYERS,
+                            1.0f, pendingMountSoundPitch, client.player.getRandom(),
+                            client.player.getX(), client.player.getY(), client.player.getZ()
+                    ));
+                }
+                pendingMountSoundId = null;
+            }
+        }
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -937,6 +959,28 @@ public class AdorableHamsterPetsClient {
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       4. Network Packet Handlers
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Handles the PlayMountSoundPayload packet.
+     * Determines whether to delay the mount sound based on the player's active perspective.
+     */
+    public static void handlePlayMountSound(Identifier soundId, float pitch, int delay) {
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        if (MiscUtil.ModCompatUtil.hasRequiredPunchyVersion() && client.options.getPerspective().isFirstPerson()) {
+            pendingMountSoundId = soundId;
+            pendingMountSoundPitch = pitch;
+            mountSoundDelayTicks = delay;
+        } else {
+            if (client.player != null) {
+                client.getSoundManager().play(new PositionedSoundInstance(
+                        SoundEvent.of(soundId), SoundCategory.PLAYERS,
+                        1.0f, pitch, client.player.getRandom(),
+                        client.player.getX(), client.player.getY(), client.player.getZ()
+                ));
+            }
+        }
+    }
 
     /**
      * Handles the SyncHamsterState packet on the client.

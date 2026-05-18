@@ -132,7 +132,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     // --- Petting Tracking ---
     @Unique private NbtCompound ahp$pettingHamster = new NbtCompound();
     @Unique private int ahp$pettingTimer = 0;
-    @Unique private int ahp$mountSoundTimer = 0;
 
     // --- Gesture Tracking ---
     @Unique private boolean ahp$wasSneaking = false;
@@ -613,17 +612,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         // --- 4. Feature Ticks ---
         tickGuideBookTracking();
         PlayerGestureUtil.tickSneakTracking(self);
-
-        if (this.ahp$mountSoundTimer > 0) {
-            this.ahp$mountSoundTimer--;
-            if (this.ahp$mountSoundTimer == 0) {
-                SoundEvent mountSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SHOULDER_MOUNT_SOUNDS, random);
-                if (mountSound != null) {
-                    // Dynamic delayed mount sound
-                    world.playSound(null, self.getBlockPos(), mountSound, SoundCategory.PLAYERS, 1.0f, 1.0f + (random.nextFloat() - random.nextFloat()) * 0.2f);
-                }
-            }
-        }
 
         // Supporter Crown Trial Period Tick
         if (!world.isClient()) {
@@ -1509,12 +1497,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 // Typed packet for 1.20.1
                 ModPackets.CHANNEL.sendToPlayer(serverPlayer, new ModPackets.SyncPettingStateS2CPacket(false));            }
         }
-    }
-
-    @Unique
-    @Override
-    public void ahp$queueShoulderMountSound(int ticks) {
-        this.ahp$mountSoundTimer = ticks;
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
