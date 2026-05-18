@@ -104,6 +104,8 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Resolved an issue where the genetics engine would spam the server console with warnings when attempting to generate wild overlays for hamsters with extremely bright base coats (like Coconut).
 - **Sweet Potato Easter Egg**
   - Renaming a hamster to "Sweet Potato" now correctly applies the easter egg texture without accidentally deleting the hamster's eyes, skin layer, and accessories. So that's good.
+  - Resolved an issue where the effects would trigger immediately upon renaming a hamster via the GUI, before the screen was closed.
+  - Resolved an issue where the affects would not trigger at all on 1.20.1 if a hamster was renamed via the GUI.
 
 ---
 

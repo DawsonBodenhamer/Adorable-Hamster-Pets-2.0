@@ -152,17 +152,19 @@ public class ModPackets {
                                 } else {
                                     hamster.setCustomName(Text.literal(newName));
 
-                                    // Manually grant Sweet Potato advancement for easter egg
+                                    // Trigger Sweet Potato easter egg effects after GUI closes
                                     if (hamster.isSweetPotato()) {
-                                        PlayerAdvancementTracker tracker = player.getAdvancementTracker();
-                                        Identifier advId = Identifier.of(AdorableHamsterPets.MOD_ID, "technical/sweet_potato_named");
-                                        net.minecraft.advancement.AdvancementEntry adv = player.server.getAdvancementLoader().get(advId);
-
-                                        if (adv != null) {
-                                            for (String criterion : adv.value().criteria().keySet()) {
-                                                tracker.grantCriterion(adv, criterion);
+                                        Runnable easterEggTask = new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                if (player.currentScreenHandler != player.playerScreenHandler) {
+                                                    hamster.scheduleTask(hamster.getWorld().getTime() + 5, "sweet_potato_delay", this);
+                                                } else {
+                                                    player.server.getCommandManager().executeWithPrefix(player.getCommandSource(), "function adorablehamsterpets:technical/sweet_potato_effects");
+                                                }
                                             }
-                                        }
+                                        };
+                                        easterEggTask.run();
                                     }
                                 }
                             }

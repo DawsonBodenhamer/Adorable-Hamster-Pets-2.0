@@ -170,7 +170,7 @@ public final class HamsterBedUtil {
                 0.1
         );
         if (hamster.getOwner() instanceof PlayerEntity owner) {
-            owner.sendMessage(Text.translatable("message.adorablehamsterpets.respawn.success").formatted(Formatting.GOLD), true);
+            owner.sendMessage(Text.translatable("message.adorablehamsterpets.respawn.success").formatted(Formatting.WHITE), true);
         }
 
         return true;
