@@ -1,0 +1,21 @@
+{
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "createaddition" }
+  ],
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "createaddition" }
+  ],
+  "fabric:load_conditions": [
+    { "condition": "fabric:all_mods_loaded", "values": ["createaddition"] }
+  ],
+  "type": "create:compacting",
+  "ingredients": [
+    { "item": "adorablehamsterpets:sunflower_seeds" }
+  ],
+  "results": [
+    {
+      "fluid": "createaddition:seed_oil",
+      "amount": 200
+    }
+  ]
+}

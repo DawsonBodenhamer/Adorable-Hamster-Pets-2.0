@@ -1,0 +1,19 @@
+{
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "create_bic_bit" }
+  ],
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "create_bic_bit" }
+  ],
+  "fabric:load_conditions": [
+    { "condition": "fabric:all_mods_loaded", "values": ["create_bic_bit"] }
+  ],
+  "type": "create:milling",
+  "ingredients": [
+    { "item": "adorablehamsterpets:sunflower_seeds" }
+  ],
+  "results": [
+    { "item": "create_bic_bit:crushed_sunflower_seeds" }
+  ],
+  "processingTime": 200
+}

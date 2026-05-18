@@ -47,7 +47,10 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Acorns can now be used as furnace fuel, smelting exactly the same amount of items as a vanilla stick.
   - Alternatively, placing an Acorn in the top slot of a furnace will smelt it down into a piece of Charcoal.
 - **World Gen Compatibility Enhancements**
-  - Added massive out-of-the-box biome compatibility configuration data for [**Oh The Biomes We've Gone**](https://modrinth.com/mod/oh-the-biomes-weve-gone), ensuring hamster variants properly disperse across their beautiful landscapes. Huge thanks to the community members who helped configure these lists!
+  - Added massive out-of-the-box biome compatibility configuration data for [**Oh The Biomes We've Gone**](https://modrinth.com/mod/oh-the-biomes-weve-gone), ensuring hamster variants properly disperse across their beautiful landscapes. Huge thanks to [**@jlk2003r**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)  for helping configure these lists!
+- **Create Mod Compatibility**
+  - Added out-of-the-box recipe compatibility for [**Create: Bitterballen**](https://modrinth.com/mod/create-bitterballen) and [**Create Crafts & Additions**](https://modrinth.com/mod/createaddition).
+  - You can now mill, crush, compact, roast, and smoke AHP Sunflower Seeds to progress through the Bitterballen tech tree seamlessly, bypassing the need to hunt down vanilla sunflowers. Thanks to [**@jlk2003r**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) for teaching me about Create so I knew what recipes to add!
 - **Armor Tier Jumping** 
   - You can now upgrade Hamster Armor between any tiers using the Smithing Table (e.g., Iron to Diamond, Diamond to Netherite). Previously, all upgrades had to start from base Acorn Armor. You can also downgrade it... should you decide to do so.
 - **Infinite Bed Respawns**
@@ -106,6 +109,8 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Renaming a hamster to "Sweet Potato" now correctly applies the easter egg texture without accidentally deleting the hamster's eyes, skin layer, and accessories. So that's good.
   - Resolved an issue where the effects would trigger immediately upon renaming a hamster via the GUI, before the screen was closed.
   - Resolved an issue where the affects would not trigger at all on 1.20.1 if a hamster was renamed via the GUI.
+- **Missing Vanilla Tags**
+  - The custom AHP Sunflower block is now properly registered under the vanilla `#minecraft:flowers` and `#minecraft:tall_flowers` tags. This resolves compatibility issues with mods like Alex's Mobs that rely on these tags to identify flowers in the world.
 
 ---
 
