@@ -10,7 +10,6 @@ import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
 import net.dawson.adorablehamsterpets.networking.payload.*;
 import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
-import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -18,7 +17,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 
 public class ModPackets {
@@ -37,6 +35,7 @@ public class ModPackets {
         NetworkManager.registerS2CPayloadType(SyncHamsterStatePayload.ID, SyncHamsterStatePayload.CODEC);
         NetworkManager.registerS2CPayloadType(SyncPettingStatePayload.ID, SyncPettingStatePayload.CODEC);
         NetworkManager.registerS2CPayloadType(PlayDistantSoundPayload.ID, PlayDistantSoundPayload.CODEC);
+        NetworkManager.registerS2CPayloadType(PlayShoulderMountSoundPayload.ID, PlayShoulderMountSoundPayload.CODEC);
     }
 
     /**
@@ -274,6 +273,10 @@ public class ModPackets {
                         AdorableHamsterPetsClient.clientPettingTicks = 0;
                     }
                 })
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, PlayShoulderMountSoundPayload.ID, PlayShoulderMountSoundPayload.CODEC,
+                (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handlePlayMountSound(payload.soundId(), payload.pitch(), payload.delay()))
         );
     }
 

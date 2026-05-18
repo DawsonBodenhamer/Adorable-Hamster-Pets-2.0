@@ -1,6 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
-import dev.architectury.platform.Platform;
+import dev.architectury.networking.NetworkManager;
 import dev.architectury.registry.menu.MenuRegistry;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
@@ -13,6 +13,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.item.custom.HamsterBedItem;
+import net.dawson.adorablehamsterpets.networking.payload.PlayShoulderMountSoundPayload;
 import net.dawson.adorablehamsterpets.screen.HamsterScreenHandlerFactory;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.advancement.criterion.Criteria;
@@ -756,19 +757,23 @@ public final class HamsterInteractionUtil {
             }
             player.sendMessage(Text.translatable("message.adorablehamsterpets.shoulder_mount_success"), true);
 
-            if (Platform.isModLoaded("punchy")) {
-                if (player instanceof PlayerEntityAccessor accessor) {
-                    // Match Punchy animation timing
-                    // Right shoulder = 1.14s
-                    // Left shoulder/head = 1.97s
+            // Calculate randomized SFX pitch once for client and server
+            float pitch = 1.0f + (hamster.getRandom().nextFloat() - hamster.getRandom().nextFloat()) * 0.2f;
+            SoundEvent mountSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SHOULDER_MOUNT_SOUNDS, hamster.getRandom());
+
+            if (mountSound != null) {
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    // Play immediately for everyone except mounting player
+                    hamster.getWorld().playSound(player, player.getBlockPos(), mountSound, SoundCategory.PLAYERS, 1.0f, pitch);
+
+                    // Calculate delay based on destination
                     int soundDelay = (availableSlot == ShoulderLocation.RIGHT_SHOULDER) ? 23 : 39;
-                    accessor.ahp$queueShoulderMountSound(soundDelay);
-                }
-            } else {
-                // Instant feedback if Punchy not present
-                SoundEvent mountSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SHOULDER_MOUNT_SOUNDS, hamster.getRandom());
-                if (mountSound != null) {
-                    hamster.getWorld().playSound(null, player.getBlockPos(), mountSound, SoundCategory.PLAYERS, 1.0f, hamster.getSoundPitch());
+
+                    // Send packet to mounting player to handle their own sound timing dynamically
+                    NetworkManager.sendToPlayer(serverPlayer, new PlayShoulderMountSoundPayload(mountSound.getId(), pitch, soundDelay));
+                } else {
+                    // Fallback: Instant feedback for everyone
+                    hamster.getWorld().playSound(null, player.getBlockPos(), mountSound, SoundCategory.PLAYERS, 1.0f, pitch);
                 }
             }
 
