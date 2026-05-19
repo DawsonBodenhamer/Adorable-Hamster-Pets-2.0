@@ -828,9 +828,8 @@ public class AdorableHamsterPetsClient {
 
     /**
      * Handles the complex client-side logic for a hamster dismounting from the player's
-     * shoulder. Checks the user's configuration to determine if dismount requires
-     * Single Press or Double Tap. Includes debounce logic and an OS Key Repeat
-     * filter to prevent accidental dismounts when the button is held down.
+     * shoulder. Uses an unbound fallback strategy: if the custom dismount key is
+     * unbound, defaults to the vanilla Sneak key.
      *
      * @param client The MinecraftClient instance.
      */
@@ -847,7 +846,16 @@ public class AdorableHamsterPetsClient {
             hasShoulderHamster = false;
         }
 
-        // --- 2. Handle Mount Transition ---
+        // --- 2. Determine Active Keybind ---
+        // If custom dismount key unbound, fall back to sneak key
+        boolean isCustomKeyBound = !ModKeyBindings.DISMOUNT_HAMSTER_KEY.isUnbound();
+        KeyBinding keyToListenFor = isCustomKeyBound
+                ? ModKeyBindings.DISMOUNT_HAMSTER_KEY
+                : client.options.sneakKey;
+
+        if (keyToListenFor == null) return;
+
+        // --- 3. Handle Mount Transition ---
         if (hasShoulderHamster && !hadShoulderHamsterLastTick) {
             // Player just mounted a hamster this tick
             dismountDebounceTicks = DISMOUNT_DEBOUNCE_DEFAULT;
@@ -855,11 +863,11 @@ public class AdorableHamsterPetsClient {
             doubleTapTimer = 0;
 
             // Flush buffer to prevent accumulated presses from triggering instant/accidental dismounts
-            while (ModKeyBindings.DISMOUNT_HAMSTER_KEY.wasPressed()) {}
+            while (keyToListenFor.wasPressed()) {}
         }
         hadShoulderHamsterLastTick = hasShoulderHamster;
 
-        // --- 3. Decrement Timers ---
+        // --- 4. Decrement Timers ---
         if (dismountDebounceTicks > 0) {
             dismountDebounceTicks--;
         }
@@ -870,14 +878,10 @@ public class AdorableHamsterPetsClient {
             }
         }
 
-        // --- 4. Early Exit if No Hamster ---
+        // --- 5. Early Exit if No Hamster ---
         if (!hasShoulderHamster) {
             return;
         }
-
-        // --- 5. Determine Active Keybind ---
-        final AhpConfig config = AdorableHamsterPets.CONFIG;
-        KeyBinding keyToListenFor = ModKeyBindings.DISMOUNT_HAMSTER_KEY;
 
         // --- 6. Count Hardware Presses & Filter OS Repeats ---
         boolean isCurrentlyPressed = keyToListenFor.isPressed();
@@ -916,7 +920,15 @@ public class AdorableHamsterPetsClient {
         }
 
         // --- 7. Apply Logic Based on Config ---
-        if (config.dismountButtonPressBehavior.get() == DismountButtonPressBehavior.SINGLE_PRESS) {
+        final AhpConfig config = AdorableHamsterPets.CONFIG;
+        DismountButtonPressBehavior activePressType = config.dismountButtonPressBehavior.get();
+
+        // Apply override if custom key bound and override toggle enabled
+        if (isCustomKeyBound && config.singlePressOverrideForCustomKey) {
+            activePressType = DismountButtonPressBehavior.SINGLE_PRESS;
+        }
+
+        if (activePressType == DismountButtonPressBehavior.SINGLE_PRESS) {
             // Send a typed packet for 1.20.1
             ModPackets.CHANNEL.sendToServer(new ModPackets.DismountHamsterC2SPacket());
         } else { // DOUBLE_TAP
