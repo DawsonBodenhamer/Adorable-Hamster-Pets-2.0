@@ -50,6 +50,7 @@ import net.dawson.adorablehamsterpets.util.MiscUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
@@ -67,6 +68,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -386,17 +388,27 @@ public class AdorableHamsterPetsClient {
                     isQueuingThrow = true; // Use flag to debounce message
                 }
             } else {
-                boolean lookingAtReachableBlock = client.crosshairTarget != null && client.crosshairTarget.getType() == HitResult.Type.BLOCK;
+                boolean lookingAtSolidBlock = false;
+                if (client.crosshairTarget != null && client.crosshairTarget.getType() == HitResult.Type.BLOCK) {
+                    BlockHitResult hitResult = (BlockHitResult) client.crosshairTarget;
+                    BlockState targetState = client.world.getBlockState(hitResult.getBlockPos());
+
+                    // Cancel throw if looking directly at a block with collision
+                    if (!targetState.getCollisionShape(client.world, hitResult.getBlockPos()).isEmpty()) {
+                        lookingAtSolidBlock = true;
+                    }
+                }
+
                 boolean hasShoulderHamsterClient = ((PlayerEntityAccessor) client.player).hasAnyShoulderHamster();
 
-                if (!lookingAtReachableBlock && hasShoulderHamsterClient) {
+                if (!lookingAtSolidBlock && hasShoulderHamsterClient) {
                     if (!isQueuingThrow) {
                         isQueuingThrow = true;
                         throwQueueTicks = 0;
                     }
                     throwQueueTicks++;
                 } else {
-                    // Reset if they look at a block while charging (prioritize tree heist)
+                    // Reset if they look at a solid block while charging (prioritize tree heist)
                     isQueuingThrow = false;
                     throwQueueTicks = 0;
                 }
