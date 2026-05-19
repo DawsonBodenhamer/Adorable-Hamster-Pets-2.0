@@ -72,6 +72,8 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
   - Added a `Custom Key Behavior Override` config toggle (true by default). When you bind a custom key for dismounting, it automatically overrides the `Double Tap` behavior and makes it a `Single Press`. I assume if you assigned a dedicated key to it, you don't want to have to tap it twice.
 - **Keybind Names**
   - Renamed several of the key binds to make the `Controls > Key Binds` menu more intuitive.
+- **The Hamster Yeet**
+  -  Throwing a hamster is no longer canceled/prevented if the player's crosshair is over non-solid blocks like tall grass, flowers, sugar cane etc.
 - **Hamster Tips Guidebook**
   - "The Great Escape" has been renamed to "Beds & Wander Mode," and "Acorn Armor" has been renamed to "Tree Heist & Armor" so you guys won't keep coming into my Discord server asking how the beds work and where to find acorns 😂
   - This has another super useful perk: Now whenever you search through the guidebook for a specific topic, you can search for things like "bed," "tree heist," or "armor" and those specific entries will pop up in the results.
