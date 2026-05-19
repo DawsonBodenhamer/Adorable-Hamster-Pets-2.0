@@ -7,7 +7,5 @@
   "ingredient": {
     "tag": "adorablehamsterpets:green_beans"
   },
-  "result": {
-    "id": "adorablehamsterpets:steamed_green_beans"
-  }
+  "result": "adorablehamsterpets:steamed_green_beans"
 }

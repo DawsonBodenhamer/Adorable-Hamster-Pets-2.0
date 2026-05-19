@@ -60,6 +60,9 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - The mod will now provide snarky chat feedback if you try to tame a hamster incorrectly (such as not sneaking or offering them the wrong food) and will point you to the guidebook for help.
 - **Global Notification Toggle**
   - Added a `Server Disable Announcements` config setting. Server owners can now globally disable the notification bell icon for all connected players.
+### Added
+- **Smoker Support**
+  - Green Beans can now be cooked into Steamed Green Beans using a Smoker, which cooks them twice as fast as a standard furnace.
 
 ### Changed
 - **Dismount Keybinding Simplification**
