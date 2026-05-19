@@ -65,6 +65,7 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.collection.DefaultedList;
@@ -1788,6 +1789,22 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                                 0.1
                         );
                     }
+                }
+            }
+
+            // --- Pacifist Break on Owner Attack ---
+            if (Configs.AHP.pacifistBreakOnOwnerAttack && this.getAggressionState() == AggressionState.PACIFIST && this.isTamed()) {
+                if (this.getOwner() instanceof PlayerEntity owner && owner.getAttacking() != null) {
+                    this.setAggressionState(AggressionState.STANDARD);
+
+                    // Audio Feedback
+                    SoundEvent sound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_HURT_SOUNDS, this.getRandom());
+                    if (sound != null) {
+                        this.getWorld().playSound(null, this.getBlockPos(), sound, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+                    }
+
+                    // Visual Feedback
+                    ParticleEffectsUtil.spawnParticlesOnEntity(this, ParticleTypes.ANGRY_VILLAGER, 5, 0.5, 0.5, 0.0, 0.2);
                 }
             }
         }

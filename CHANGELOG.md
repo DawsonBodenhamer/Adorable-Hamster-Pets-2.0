@@ -33,6 +33,7 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - All trigger items are fully configurable, and changing a hamster's state produces a visual and audio confirmation.
   - **Hamster Tips Guidebook Entry**
     - The *Hamster Tips* guidebook now features a dedicated "Aggression States" page to explain the new mechanics. It utilizes dynamic text injection to accurately display your configured trigger items, ensuring the book is always up-to-date even if a modpack creator changes the required diets.
+  - **Pacifist Break:** Added a `Pacifist Break on Attack` config toggle (false by default). When enabled, a passive hamster will automatically revert to neutral if it sees you attacking something.
 - **Free Bed Respawn Toggle**
   - Added a config toggle to allow hamsters to respawn at their linked beds indefinitely without requiring a tribute item charge (like a Totem of Undying). Disabled by default.
 - **Dynamic Trees Compatibility**
@@ -61,7 +62,13 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
   - Added a `Server Disable Announcements` config setting. Server owners can now globally disable the notification bell icon for all connected players.
 
 ### Changed
+- **Dismount Keybinding Simplification**
+  - Removed the confusing config toggle that forced players to enable a custom keybind in the config before they could rebind the "Dismount Hamster" key in the `Controls > Key Binds` menu. The keybind is now permanently exposed.
+  - The only downside to this is that the "Dismount Hamster" keybind now defaults to `Left Shift` (Vanilla Sneak key), instead of being dynamic. Previously, even if you rebound your sneak key to something else (i.e., "Control" instead of "Shift"), dismounting would dynamically recognize the change. Now you will need to rebind them individually.
+  - The default "Button-Press Behavior" config setting has been changed from `Single Press` to `Double Tap` to prevent accidental dismounts when sneaking near ledges. Originally it was set to single press to mimic vanilla parrot behavior, but it's just so annoying. I finally can't stand it anymore. Lol.
 - **Hamster Tips Guidebook**
+  - "The Great Escape" has been renamed to "Beds & Wander Mode," and "Acorn Armor" has been renamed to "Tree Heist & Armor" so you guys won't keep coming into my Discord server asking how the beds work and where to find acorns 😂
+  - This has another super useful perk: Now whenever you search through the guidebook for a specific topic, you can search for things like "bed," "tree heist," or "armor" and those specific entries will pop up in the results.
   - Now utilizes dynamic text injection to accurately display your configured resurrection tribute items. So now if a server owner or modpack creator changes the default item from a Totem of Undying, the guidebook will update itself automatically.
 - **Tag Mini-Game**
   - Wild hamsters can no longer initiate a game of tag to prevent interference with taming. Tamed hamsters can still play tag with strangers if enabled in the config.

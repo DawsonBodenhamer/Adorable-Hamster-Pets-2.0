@@ -252,7 +252,7 @@ public final class HamsterDietUtil {
 
             // Visual Feedback
             ParticleEffect particle = targetState == HamsterEntity.AggressionState.MENACE ? ParticleTypes.ANGRY_VILLAGER : ParticleTypes.HAPPY_VILLAGER;
-            ParticleEffectsUtil.spawnParticlesOnEntity(hamster, particle, 15, 0.5, 0.5, 0.0, 0.2);
+            ParticleEffectsUtil.spawnParticlesOnEntity(hamster, particle, 5, 0.5, 0.5, 0.0, 0.2);
 
             // Message Feedback
             String msgKey = switch (targetState) {

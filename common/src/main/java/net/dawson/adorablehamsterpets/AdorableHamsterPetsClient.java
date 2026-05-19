@@ -56,7 +56,6 @@ import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
@@ -811,13 +810,9 @@ public class AdorableHamsterPetsClient {
 
     /**
      * Handles the complex client-side logic for a hamster dismounting from the player's
-     * shoulder. Checks the user's configuration to determine if dismount requires:
-     * <ul>
-     *     <li>Sneak Key vs. Custom Keybind</li>
-     *     <li>Single Press vs. Double Tap</li>
-     * </ul>
-     * Includes debounce logic and an OS Key Repeat filter to prevent accidental dismounts
-     * when the button is held down.
+     * shoulder. Checks the user's configuration to determine if dismount requires
+     * Single Press or Double Tap. Includes debounce logic and an OS Key Repeat
+     * filter to prevent accidental dismounts when the button is held down.
      *
      * @param client The MinecraftClient instance.
      */
@@ -841,15 +836,8 @@ public class AdorableHamsterPetsClient {
             isWaitingForSecondTap = false;
             doubleTapTimer = 0;
 
-            // Flush buffers to prevent accumulated vanilla presses from triggering instant/accidental dismounts
-            KeyBinding vanillaSneak = client.options.sneakKey;
-            KeyBinding customDismount = ModKeyBindings.DISMOUNT_HAMSTER_KEY;
-            if (vanillaSneak != null) {
-                while (vanillaSneak.wasPressed()) {}
-            }
-            if (customDismount != null) {
-                while (customDismount.wasPressed()) {}
-            }
+            // Flush buffer to prevent accumulated presses from triggering instant/accidental dismounts
+            while (ModKeyBindings.DISMOUNT_HAMSTER_KEY.wasPressed()) {}
         }
         hadShoulderHamsterLastTick = hasShoulderHamster;
 
@@ -871,11 +859,7 @@ public class AdorableHamsterPetsClient {
 
         // --- 5. Determine Active Keybind ---
         final AhpConfig config = AdorableHamsterPets.CONFIG;
-        KeyBinding keyToListenFor = (config.dismountTriggerType == DismountTriggerType.CUSTOM_KEYBIND)
-                ? ModKeyBindings.DISMOUNT_HAMSTER_KEY
-                : client.options.sneakKey;
-
-        if (keyToListenFor == null) return;
+        KeyBinding keyToListenFor = ModKeyBindings.DISMOUNT_HAMSTER_KEY;
 
         // --- 6. Count Hardware Presses & Filter OS Repeats ---
         boolean isCurrentlyPressed = keyToListenFor.isPressed();
@@ -914,7 +898,7 @@ public class AdorableHamsterPetsClient {
         }
 
         // --- 7. Apply Logic Based on Config ---
-        if (config.dismountPressType.get() == DismountPressType.SINGLE_PRESS) {
+        if (config.dismountButtonPressBehavior.get() == DismountButtonPressBehavior.SINGLE_PRESS) {
             NetworkManager.sendToServer(new DismountHamsterPayload());
         } else { // DOUBLE_TAP
             // Handle edge case where player double-tapped so fast it occurred within a single tick
