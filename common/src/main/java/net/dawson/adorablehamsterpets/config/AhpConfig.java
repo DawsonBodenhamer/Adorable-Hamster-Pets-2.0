@@ -1209,6 +1209,11 @@ public class AhpConfig extends Config {
             );
 
     @NonSync
+    @Translatable.Name("Custom Key Behavior Override")
+    @Translatable.Desc("If true, binding a custom key to 'Dismount Hamster' will automatically force it to be a single press, ignoring the Button-Press Behavior setting. I assume if you gave it a dedicated key, you don't want to tap it twice.")
+    public boolean singlePressOverrideForCustomKey = true;
+
+    @NonSync
     @ConfigGroup.Pop
     @Translatable.Name("Double-Tap Delay")
     @Translatable.Desc("Max time between sneak key presses to count as a double-tap. (20 ticks = 1 second)")

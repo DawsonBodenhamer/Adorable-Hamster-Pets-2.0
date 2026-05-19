@@ -67,8 +67,11 @@ In addition to a few bug fixes, this patch introduces a new batch of super cute,
 ### Changed
 - **Dismount Keybinding Simplification**
   - Removed the confusing config toggle that forced players to enable a custom keybind in the config before they could rebind the "Dismount Hamster" key in the `Controls > Key Binds` menu. The keybind is now permanently exposed.
-  - The only downside to this is that the "Dismount Hamster" keybind now defaults to `Left Shift` (Vanilla Sneak key), instead of being dynamic. Previously, even if you rebound your sneak key to something else (i.e., "Control" instead of "Shift"), dismounting would dynamically recognize the change. Now you will need to rebind them individually.
+  - The "Dismount Hamster" keybind now utilizes an unbound fallback system. By default, the keybind is set to `Unbound`, and the game will naturally listen to your vanilla `Sneak` key to dismount hamsters. However, if you manually assign a key to it in the controls menu, it will override the sneak behavior and listen exclusively to your custom key.
   - The default "Button-Press Behavior" config setting has been changed from `Single Press` to `Double Tap` to prevent accidental dismounts when sneaking near ledges. Originally it was set to single press to mimic vanilla parrot behavior, but it's just so annoying. I finally can't stand it anymore. Lol.
+  - Added a `Custom Key Behavior Override` config toggle (true by default). When you bind a custom key for dismounting, it automatically overrides the `Double Tap` behavior and makes it a `Single Press`. I assume if you assigned a dedicated key to it, you don't want to have to tap it twice.
+- **Keybind Names**
+  - Renamed several of the key binds to make the `Controls > Key Binds` menu more intuitive.
 - **Hamster Tips Guidebook**
   - "The Great Escape" has been renamed to "Beds & Wander Mode," and "Acorn Armor" has been renamed to "Tree Heist & Armor" so you guys won't keep coming into my Discord server asking how the beds work and where to find acorns 😂
   - This has another super useful perk: Now whenever you search through the guidebook for a specific topic, you can search for things like "bed," "tree heist," or "armor" and those specific entries will pop up in the results.
