@@ -6,10 +6,7 @@ import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
-import net.minecraft.data.server.recipe.RecipeJsonProvider;
-import net.minecraft.data.server.recipe.ShapedRecipeJsonBuilder;
-import net.minecraft.data.server.recipe.ShapelessRecipeJsonBuilder;
-import net.minecraft.data.server.recipe.SmithingTransformRecipeJsonBuilder;
+import net.minecraft.data.server.recipe.*;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.recipe.Ingredient;
@@ -68,6 +65,12 @@ public class ModRecipeProvider extends FabricRecipeProvider {
         // Smelting Green Beans to Steamed Green Beans
         offerSmelting(exporter, List.of(ModItems.GREEN_BEANS.get()), RecipeCategory.FOOD, ModItems.STEAMED_GREEN_BEANS.get(),
                 0.35f, 200, "steamed_green_beans");
+
+        // Smoking Green Beans to Steamed Green Beans
+        CookingRecipeJsonBuilder.createSmoking(Ingredient.ofItems(ModItems.GREEN_BEANS.get()), RecipeCategory.FOOD, ModItems.STEAMED_GREEN_BEANS.get(), 0.35f, 100)
+                .group("steamed_green_beans")
+                .criterion("has_green_beans", conditionsFromItem(ModItems.GREEN_BEANS.get()))
+                .offerTo(exporter, Identifier.of(AdorableHamsterPets.MOD_ID, "steamed_green_beans_from_smoking_green_beans"));
 
         // Smelting Acorns to Charcoal
         offerSmelting(exporter, List.of(ModItems.ACORN.get()), RecipeCategory.MISC, Items.CHARCOAL,

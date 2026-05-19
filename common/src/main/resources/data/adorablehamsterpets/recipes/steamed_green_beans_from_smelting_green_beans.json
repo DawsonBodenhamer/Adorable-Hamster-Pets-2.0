@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "food",
+  "cookingtime": 200,
+  "experience": 0.35,
+  "group": "steamed_green_beans",
+  "ingredient": {
+    "tag": "adorablehamsterpets:green_beans"
+  },
+  "result": "adorablehamsterpets:steamed_green_beans"
+}
