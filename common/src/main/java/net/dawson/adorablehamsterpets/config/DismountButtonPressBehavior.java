@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
-public enum DismountPressType implements EnumTranslatable {
+public enum DismountButtonPressBehavior implements EnumTranslatable {
     SINGLE_PRESS,
     DOUBLE_TAP;
 

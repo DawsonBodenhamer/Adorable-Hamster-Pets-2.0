@@ -834,6 +834,10 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Configure what foods turns your adorable pet into a pacifist, a standard follower, or a bloodthirsty menace.")
     public ConfigGroup aggressionSettings = new ConfigGroup("aggressionSettings", true);
 
+    @Translatable.Name("Pacifist Break on Attack")
+    @Translatable.Desc("If true, a Passive hamster will automatically revert to Neutral if it sees its owner attacking something.")
+    public boolean pacifistBreakOnOwnerAttack = false;
+
     @Translatable.Name("Pacifist Snacks")
     @Translatable.Desc("Items that turn the hamster into a total hippie. They will refuse to attack anything, even to defend you.")
     public List<String> becomePacifistItems = new ArrayList<>(List.of("#minecraft:flowers"));
@@ -1193,20 +1197,15 @@ public class AhpConfig extends Config {
     public ValidatedEnum<DismountOrder> dismountOrder = new ValidatedEnum<>(DismountOrder.LIFO);
 
     @NonSync
-    @Translatable.Name("Dismount Button")
-    @Translatable.Desc("Choose what action dismounts the hamster. 'SNEAK_KEY' uses your sneak key, obviously. 'CUSTOM_KEYBIND' uses a separate key you must set in Controls > Key Binds.")
-    public DismountTriggerType dismountTriggerType = DismountTriggerType.SNEAK_KEY;
-
-    @NonSync
     @Translatable.Name("Button‑Press Behavior")
     @Translatable.Desc("Choose whether a single press or a quick double‑tap dismounts the hamster.")
-    public ValidatedEnum<DismountPressType> dismountPressType =
-            new ValidatedEnum<>(DismountPressType.SINGLE_PRESS);
+    public ValidatedEnum<DismountButtonPressBehavior> dismountButtonPressBehavior =
+            new ValidatedEnum<>(DismountButtonPressBehavior.DOUBLE_TAP);
 
     private final ValidatedField<Boolean> isDoubleTap =
-            dismountPressType.map(
-                    pt -> pt == DismountPressType.DOUBLE_TAP,
-                    b -> b ? DismountPressType.DOUBLE_TAP : DismountPressType.SINGLE_PRESS
+            dismountButtonPressBehavior.map(
+                    pt -> pt == DismountButtonPressBehavior.DOUBLE_TAP,
+                    b -> b ? DismountButtonPressBehavior.DOUBLE_TAP : DismountButtonPressBehavior.SINGLE_PRESS
             );
 
     @NonSync

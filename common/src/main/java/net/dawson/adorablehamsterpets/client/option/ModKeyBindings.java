@@ -51,9 +51,10 @@ public class ModKeyBindings {
                 KEY_CATEGORY_AHP
         );
 
-        DISMOUNT_HAMSTER_KEY = new DynamicDismountKeyBinding(
+        DISMOUNT_HAMSTER_KEY = new KeyBinding(
                 KEY_DISMOUNT_HAMSTER,
-                InputUtil.UNKNOWN_KEY.getCode(), // Unbound by default
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_LEFT_SHIFT,
                 KEY_CATEGORY_AHP
         );
 
