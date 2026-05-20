@@ -782,7 +782,7 @@ public final class HamsterInteractionUtil {
                     int soundDelay = (availableSlot == ShoulderLocation.RIGHT_SHOULDER) ? 23 : 39;
 
                     // Send typed packet to mounting player to handle their own sound timing dynamically
-                    ModPackets.CHANNEL.sendToServer(new ModPackets.PlayMountSoundS2CPacket(mountSound.getId(), pitch, soundDelay));
+                    ModPackets.CHANNEL.sendToPlayer(serverPlayer, new ModPackets.PlayMountSoundS2CPacket(mountSound.getId(), pitch, soundDelay));
                 } else {
                     // Fallback: Instant feedback for everyone
                     hamster.getWorld().playSound(null, player.getBlockPos(), mountSound, SoundCategory.PLAYERS, 1.0f, pitch);
