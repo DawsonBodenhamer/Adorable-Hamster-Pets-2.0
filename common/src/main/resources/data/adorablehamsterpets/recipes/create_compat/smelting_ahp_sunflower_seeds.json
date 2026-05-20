@@ -15,7 +15,5 @@
   "ingredient": {
     "item": "adorablehamsterpets:sunflower_seeds"
   },
-  "result": {
-    "id": "create_bic_bit:roasted_sunflower_seeds"
-  }
+  "result": "create_bic_bit:roasted_sunflower_seeds"
 }
