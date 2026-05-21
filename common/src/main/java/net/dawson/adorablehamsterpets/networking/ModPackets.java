@@ -8,6 +8,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
+import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
@@ -15,6 +16,8 @@ import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
 import net.minecraft.advancement.Advancement;
 import net.minecraft.advancement.PlayerAdvancementTracker;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -356,7 +359,16 @@ public class ModPackets {
                 },
                 (buf) -> new SyncHamsterStateS2CPacket(buf.readInt(), buf.readNbt()),
                 (packet, context) -> context.get().queue(() ->
-                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handleSyncHamsterState(packet.entityId(), packet.data()))
+                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
+                            MinecraftClient client = MinecraftClient.getInstance();
+                            if (client.world != null) {
+                                Entity entity = client.world.getEntityById(packet.entityId());
+                                if (entity instanceof PlayerEntity player && entity instanceof PlayerEntityAccessor accessor) {
+                                    accessor.adorablehamsterpets$setRawHamsterState(packet.data());
+                                    ClientShoulderHamsterData.REPLAY_CACHE.put(player.getUuid(), packet.data());
+                                }
+                            }
+                        })
                 )
         );
 

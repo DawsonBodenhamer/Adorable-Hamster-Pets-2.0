@@ -148,12 +148,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * @param player The player who is dismounting the hamster.
      * @param nbt The NbtCompound containing the hamster's data.
      * @param wasDiamondAlertActive True if the hamster should be primed for diamond seeking.
+     * @param forceStand True if the hamster should be forced to stand up upon spawning.
      */
-    public static void spawnFromNbt(ServerWorld world, PlayerEntity player, NbtCompound nbt, boolean wasDiamondAlertActive) {
+    public static void spawnFromNbt(ServerWorld world, PlayerEntity player, NbtCompound nbt, boolean wasDiamondAlertActive, boolean forceStand) {
         // Create from NBT
         HamsterEntity hamster = HamsterNbtUtil.createFromNbt(world, player, nbt);
         if (hamster == null) {
             return;
+        }
+
+        if (forceStand) {
+            hamster.setSitting(false, true);
         }
 
         // Set suffocation grace period
@@ -231,6 +236,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int BEGGING_FLAG = 1 << 2;
     public static final int IN_LOVE_FLAG = 1 << 3;
     public static final int REFUSING_FOOD_FLAG = 1 << 4;
+    public static final int THROW_COOLDOWN_FLAG = 1 << 5;
     public static final int LEFT_CHEEK_FULL_FLAG = 1 << 6;
     public static final int RIGHT_CHEEK_FULL_FLAG = 1 << 7;
     public static final int KNOCKED_OUT_FLAG = 1 << 8;
@@ -1566,7 +1572,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             HamsterPhysicsUtil.updateArmorModifiers(this, this.getArmorStack());
         }
 
-        // --- Apply extra gravity during sulking jump ---
+// --- Apply extra gravity during sulking jump ---
         // This runs on the server to ensure physics are authoritative.
         if (!this.getWorld().isClient()) {
             // If the hamster is sulking, not on the ground, and is currently falling (negative Y velocity)
@@ -1588,6 +1594,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             int ageProgressInterval = Configs.AHP.displayAgeInIrlTime ? 72 : 1;
             if (this.age % ageProgressInterval == 0) {
                 this.totalAgeTicks++;
+            }
+
+            // --- Sync Throw Cooldown Flag ---
+            boolean hasThrowCooldown = this.throwCooldownEndTick > world.getTime();
+            if (this.getHamsterFlag(THROW_COOLDOWN_FLAG) != hasThrowCooldown) {
+                this.setHamsterFlag(THROW_COOLDOWN_FLAG, hasThrowCooldown);
             }
 
             // --- Process Deferred Armor Breakage ---

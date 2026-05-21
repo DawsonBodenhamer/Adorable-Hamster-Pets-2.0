@@ -1,6 +1,5 @@
 package net.dawson.adorablehamsterpets.util;
 
-import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterProjectileEntity;
@@ -21,7 +20,6 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -39,8 +37,6 @@ public final class HamsterPhysicsUtil {
     private static final UUID ARMOR_SPEED_BOOST_UUID = UUID.fromString("74ba7508-3010-449e-97c7-573531b7987e");
     private static final UUID ARMOR_KNOCKBACK_RESISTANCE_UUID = UUID.fromString("a8470a74-d2ca-4c8d-806d-6215d290680d");
 
-    public static final double THROWN_GRAVITY = -0.05;
-
     private HamsterPhysicsUtil() {}
 
     /**
@@ -53,7 +49,7 @@ public final class HamsterPhysicsUtil {
 
         for (int i = 1; i <= 20; i++) {
             if (!projectileDummy.hasNoGravity()) {
-                simVel = simVel.add(0.0, THROWN_GRAVITY, 0.0);
+                simVel = simVel.add(0.0, -Configs.AHP.hamsterThrowGravity.get(), 0.0);
             }
 
             Vec3d nextPos = simPos.add(simVel);

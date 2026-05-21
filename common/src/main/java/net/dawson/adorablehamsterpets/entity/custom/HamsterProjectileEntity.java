@@ -1,6 +1,6 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
-import net.dawson.adorablehamsterpets.config.ConfigDataCache;
+import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
@@ -8,8 +8,6 @@ import net.dawson.adorablehamsterpets.util.HamsterNbtUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPhysicsUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -179,7 +177,7 @@ public class HamsterProjectileEntity extends ThrownEntity {
 
     @Override
     protected float getGravity() {
-        return (float) Math.abs(HamsterPhysicsUtil.THROWN_GRAVITY); // 1.20.1: getGravity expects float
+        return (float) Math.abs(AdorableHamsterPets.CONFIG.hamsterThrowGravity.get()); // 1.20.1: getGravity expects float
     }
 
     @Override

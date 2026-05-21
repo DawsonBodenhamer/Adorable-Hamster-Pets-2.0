@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A client-side data holder attached to each player to manage the state of their shoulder pets.
@@ -35,6 +37,9 @@ public class ClientShoulderHamsterData {
     private static final float IMPACT_SQUASH_INTENSITY = 5.0f;
     private static final float IMPACT_SQUASH_DECAY = 0.4f; // Speed at which the impact squash wears off
     private static final float MAX_VERTICAL_OFFSET = 0.35f; // Maximum height a hamster can float off the shoulder
+
+    // --- Replay/Flashback Mod Cache ---
+    public static final Map<UUID, NbtCompound> REPLAY_CACHE = new ConcurrentHashMap<>();
 
     private final Map<ShoulderLocation, ShoulderHamsterState> hamsterStates = new EnumMap<>(ShoulderLocation.class);
     private final Map<ShoulderLocation, Integer> animationAges = new EnumMap<>(ShoulderLocation.class);
