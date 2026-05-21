@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
+import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
@@ -178,7 +179,7 @@ public class HamsterProjectileEntity extends ThrownEntity {
 
     @Override
     protected double getGravity() {
-        return Math.abs(HamsterPhysicsUtil.THROWN_GRAVITY);
+        return AdorableHamsterPets.CONFIG.hamsterThrowGravity.get();
     }
 
     @Override

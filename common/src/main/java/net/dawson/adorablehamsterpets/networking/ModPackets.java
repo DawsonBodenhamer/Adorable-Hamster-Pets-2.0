@@ -4,6 +4,7 @@ import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
+import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
@@ -252,9 +253,10 @@ public class ModPackets {
                     MinecraftClient client = MinecraftClient.getInstance();
                     if (client.world != null) {
                         Entity entity = client.world.getEntityById(payload.entityId());
-                        // Check if the entity is a player and has my accessor
-                        if (entity instanceof PlayerEntity && entity instanceof PlayerEntityAccessor accessor) {
+                        // Check if the entity is a player and has AHP accessor
+                        if (entity instanceof PlayerEntity player && entity instanceof PlayerEntityAccessor accessor) {
                             accessor.adorablehamsterpets$setRawHamsterState(payload.data());
+                            ClientShoulderHamsterData.REPLAY_CACHE.put(player.getUuid(), payload.data());
                         }
                     }
                 })

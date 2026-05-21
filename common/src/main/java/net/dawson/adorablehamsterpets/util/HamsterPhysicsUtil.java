@@ -37,7 +37,6 @@ public final class HamsterPhysicsUtil {
 
     public static final Identifier ARMOR_SPEED_BOOST_ID = Identifier.of(AdorableHamsterPets.MOD_ID, "armor_speed_boost");
     public static final Identifier ARMOR_KNOCKBACK_RESISTANCE_ID = Identifier.of(AdorableHamsterPets.MOD_ID, "armor_knockback_resistance");
-    public static final double THROWN_GRAVITY = -0.05;
 
     private HamsterPhysicsUtil() {}
 
@@ -51,7 +50,7 @@ public final class HamsterPhysicsUtil {
 
         for (int i = 1; i <= 20; i++) {
             if (!projectileDummy.hasNoGravity()) {
-                simVel = simVel.add(0.0, THROWN_GRAVITY, 0.0);
+                simVel = simVel.add(0.0, -Configs.AHP.hamsterThrowGravity.get(), 0.0);
             }
 
             Vec3d nextPos = simPos.add(simVel);

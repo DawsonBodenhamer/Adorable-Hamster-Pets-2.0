@@ -142,6 +142,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private int ahp$sneakToggleTimer = 0;
 
     // --- State Flags & Trackers ---
+    @Unique private int ahp$shoulderSyncTimer = 0;
     @Unique private final Map<String, Integer> ahp$randomMessageIndices = new HashMap<>();
     @Unique private String adorablehamsterpets$lastDismountMessageKey = "";
     @Unique private boolean adorablehamsterpets$isDiamondAlertConditionMet = false;
@@ -438,7 +439,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 this.ahp$inTransitHamsters.add(this.ahp$pettingHamster);
             } else {
                 // Fallback: Drop at the death location
-                HamsterEntity.spawnFromNbt((ServerWorld) self.getWorld(), self, this.ahp$pettingHamster, false);
+                HamsterEntity.spawnFromNbt((ServerWorld) self.getWorld(), self, this.ahp$pettingHamster, false, false);
             }
             this.ahp$pettingHamster = new NbtCompound();
             this.ahp$pettingTimer = 0;
@@ -590,7 +591,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                         1.0f + world.getRandom().nextFloat() * 0.5f
                 );
 
-                HamsterEntity.spawnFromNbt((ServerWorld) world, self, this.ahp$pettingHamster, false);
+                HamsterEntity.spawnFromNbt((ServerWorld) world, self, this.ahp$pettingHamster, false, false);
                 this.ahp$pettingHamster = new NbtCompound();
             }
         }
@@ -616,7 +617,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         tickGuideBookTracking();
         PlayerGestureUtil.tickSneakTracking(self);
 
-        // Supporter Crown Trial Period Tick
+        // --- Supporter Crown Trial Period Tick ---
         if (!world.isClient()) {
             int trialTicks = this.dataTracker.get(AHP_CROWN_TRIAL_TICKS);
             if (trialTicks > 0) {
@@ -640,7 +641,17 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
-        // Glowing Sunflower Easter Egg (Server)
+        // --- Periodic Shoulder Sync (For Replay/Flashback Mods) ---
+        if (!world.isClient() && this.hasAnyShoulderHamster()) {
+            if (++this.ahp$shoulderSyncTimer >= 20) { // Once per second
+                this.ahp$shoulderSyncTimer = 0;
+                this.adorablehamsterpets$syncHamsterState();
+            }
+        } else {
+            this.ahp$shoulderSyncTimer = 0;
+        }
+
+        // --- Glowing Sunflower Easter Egg (Server) ---
         if (++this.ahp$sunflowerCheckTimer >= 20) {
             this.ahp$sunflowerCheckTimer = 0;
             if (Configs.AHP_WORLDGEN.enableGlowingSunflowers && !world.isDay()) {
@@ -1319,7 +1330,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         this.setShoulderHamster(locationToProcess, new NbtCompound());
 
-        HamsterEntity.spawnFromNbt((ServerWorld) world, self, shoulderNbt, this.adorablehamsterpets$isDiamondAlertConditionMet);
+        HamsterEntity.spawnFromNbt((ServerWorld) world, self, shoulderNbt, this.adorablehamsterpets$isDiamondAlertConditionMet, true);
         this.adorablehamsterpets$isDiamondAlertConditionMet = false;
 
         world.playSound(null, self.getBlockPos(), ModSounds.HAMSTER_DISMOUNT.get(), SoundCategory.PLAYERS, 0.7f, 1.0f + random.nextFloat() * 0.2f);

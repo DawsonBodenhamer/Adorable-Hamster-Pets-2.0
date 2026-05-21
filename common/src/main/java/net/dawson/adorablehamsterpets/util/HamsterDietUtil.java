@@ -227,6 +227,29 @@ public final class HamsterDietUtil {
                     return 2;
                 }
             }
+
+            // Reduce throw cooldown if active
+            if (hamster.getHamsterFlag(HamsterEntity.THROW_COOLDOWN_FLAG)) {
+                if (!world.isClient()) {
+                    long currentTime = world.getTime();
+                    long reduction = Math.max(100L, (long) (config.hamsterThrowCooldown.get() * 0.15F));
+                    hamster.throwCooldownEndTick -= reduction;
+
+                    if (hamster.throwCooldownEndTick <= currentTime) {
+                        hamster.throwCooldownEndTick = 0L;
+                        hamster.setHamsterFlag(HamsterEntity.THROW_COOLDOWN_FLAG, false); // Update flag for client sync
+                        player.sendMessage(Text.translatable("message.adorablehamsterpets.throw_cooldown_reset").formatted(Formatting.WHITE), true);
+                    } else {
+                        long remainingTicks = hamster.throwCooldownEndTick - currentTime;
+                        long totalSecondsRemaining = Math.max(1, remainingTicks / 20);
+                        player.sendMessage(Text.translatable("message.adorablehamsterpets.throw_cooldown_decrement", totalSecondsRemaining).formatted(Formatting.YELLOW), true);
+                    }
+
+                    // Feedback
+                    world.playSound(null, hamster.getBlockPos(), SoundEvents.ENTITY_GENERIC_EAT, SoundCategory.NEUTRAL, 0.5f, 1.2f + (hamster.getRandom().nextFloat() - 0.5f) * 0.2f);
+                }
+                return 1;
+            }
         }
 
         return 0; // Not interested

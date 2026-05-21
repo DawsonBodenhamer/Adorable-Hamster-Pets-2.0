@@ -30,6 +30,7 @@ import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
 import net.dawson.adorablehamsterpets.client.perk.PlayerPerkManager;
 import net.dawson.adorablehamsterpets.client.render.LeafJiggleManager;
 import net.dawson.adorablehamsterpets.client.sound.HamsterTreeLoopSoundInstance;
+import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
@@ -45,10 +46,7 @@ import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreen;
 import net.dawson.adorablehamsterpets.screen.ModScreenHandlers;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.util.ClientParticleManager;
-import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
-import net.dawson.adorablehamsterpets.util.MiscUtil;
-import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
+import net.dawson.adorablehamsterpets.util.*;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
 import net.minecraft.block.BlockState;
@@ -59,6 +57,7 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.particle.SimpleParticleType;
 import net.minecraft.sound.SoundCategory;
@@ -103,6 +102,7 @@ public class AdorableHamsterPetsClient {
 
     // --- Petting State ---
     public static int clientPettingTicks = 0;
+    public static int clientPettingStartDelay = 0;
 
     // --- Shoulder Mount SFX State ---
     private static int mountSoundDelayTicks = 0;
@@ -189,6 +189,7 @@ public class AdorableHamsterPetsClient {
         ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(player -> {
             clientSessionTimer = 0;
             ClientParticleManager.INSTANCE.clear();
+            ClientShoulderHamsterData.REPLAY_CACHE.clear();
             pendingGuidebookEffects = false;
 
             // Sync initial supporter crown theme preference to server
@@ -318,18 +319,6 @@ public class AdorableHamsterPetsClient {
             return;
         }
 
-        // --- Handle Petting Cancellation ---
-        if (clientPettingTicks > 0) {
-            clientPettingTicks--;
-            // 10 tick grace period (200 - 10 = 190)
-            if (clientPettingTicks < 190) {
-                if (client.options.attackKey.isPressed() || client.options.useKey.isPressed() || ModKeyBindings.PET_HAMSTER_KEY.isPressed()) {
-                    NetworkManager.sendToServer(new CancelPettingPayload());
-                    clientPettingTicks = 0;
-                }
-            }
-        }
-
         // Hamster riding inputs
         boolean ridingHamster = client.player != null && client.player.getVehicle() instanceof HamsterEntity;
 
@@ -396,11 +385,33 @@ public class AdorableHamsterPetsClient {
                 boolean hasShoulderHamsterClient = ((PlayerEntityAccessor) client.player).hasAnyShoulderHamster();
 
                 if (!lookingAtSolidBlock && hasShoulderHamsterClient) {
-                    if (!isQueuingThrow) {
-                        isQueuingThrow = true;
+                    // --- Check Throw Cooldown ---
+                    boolean cooldownActive = false;
+                    NbtCompound hamsterData = HamsterInteractionUtil.getNextHamsterToDismountData(client.player);
+
+                    if (hamsterData != null && hamsterData.contains("throwCooldownEndTick")) {
+                        long cooldownEnd = hamsterData.getLong("throwCooldownEndTick");
+                        if (cooldownEnd > client.world.getTime()) {
+                            cooldownActive = true;
+                            if (!isQueuingThrow) {
+                                long remainingTicks = cooldownEnd - client.world.getTime();
+                                long totalSecondsRemaining = Math.max(1L, remainingTicks / 20L);
+                                client.player.sendMessage(Text.translatable("message.adorablehamsterpets.throw_cooldown", totalSecondsRemaining).formatted(Formatting.RED), true);
+                                isQueuingThrow = true; // Use flag to debounce message
+                            }
+                        }
+                    }
+
+                    if (!cooldownActive) {
+                        if (!isQueuingThrow) {
+                            isQueuingThrow = true;
+                            throwQueueTicks = 0;
+                        }
+                        throwQueueTicks++;
+                    } else {
+                        // Prevent queue increment if cooldown active
                         throwQueueTicks = 0;
                     }
-                    throwQueueTicks++;
                 } else {
                     // Reset if they look at a solid block while charging (prioritize tree heist)
                     isQueuingThrow = false;
@@ -412,6 +423,38 @@ public class AdorableHamsterPetsClient {
             if (isQueuingThrow) {
                 if (throwQueueTicks >= THROW_QUEUE_REQUIRED_TICKS && AdorableHamsterPets.CONFIG.enableHamsterThrowing) {
                     NetworkManager.sendToServer(new ThrowHamsterPayload());
+                } else if (throwQueueTicks > 0 && AdorableHamsterPets.CONFIG.enableHamsterThrowing && Configs.AHP.enableThrowCancellationWarning) {
+                    // --- Trigger Premature Release Warning ---
+                    if (client.player != null) {
+                        client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), 1.2f, 0.5f);
+
+                        MutableText msg = Text.literal("\n").append(Text.translatable("message.adorablehamsterpets.throw_warning.1").formatted(Formatting.RED));
+
+                        // Only show Punchy recommendation if they don't already have it
+                        if (!MiscUtil.ModCompatUtil.hasRequiredPunchyVersion()) {
+                            msg.append("\n\n").append(Text.translatable("message.adorablehamsterpets.throw_warning.2").formatted(Formatting.WHITE));
+                            msg.append("\n\n").append(Text.translatable("message.adorablehamsterpets.throw_warning.punchy_link")
+                                    .setStyle(Style.EMPTY
+                                            .withColor(Formatting.GOLD)
+                                            .withBold(true)
+                                            .withUnderline(true)
+                                            .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/DawsonBodenhamer/AdorableHamsterPets-Source/blob/develop/CHANGELOG.md#the-punchy-patch"))
+                                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.translatable("message.adorablehamsterpets.throw_warning.punchy_hover")))
+                                    ));
+                        }
+
+                        msg.append("  ").append(Text.translatable("message.adorablehamsterpets.throw_warning.disable_link")
+                                .setStyle(Style.EMPTY
+                                        .withColor(Formatting.GRAY)
+                                        .withBold(true)
+                                        .withUnderline(true)
+                                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ahp_disable_throw_warning"))
+                                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.translatable("message.adorablehamsterpets.throw_warning.disable_hover")))
+                                ));
+                        msg.append("\n");
+
+                        client.player.sendMessage(msg, false);
+                    }
                 }
                 isQueuingThrow = false;
                 throwQueueTicks = 0;
@@ -432,8 +475,24 @@ public class AdorableHamsterPetsClient {
             client.player.sendMessage(message, false);
         }
 
-        // Handle Pet Hamster Keybind
+        // Handle Petting Keybind
+        boolean cancelTap = client.options.attackKey.wasPressed() || client.options.useKey.wasPressed();
+        boolean cancelHeld = client.options.attackKey.isPressed() || client.options.useKey.isPressed();
+
+        int petKeyPresses = 0;
         while (ModKeyBindings.PET_HAMSTER_KEY.wasPressed()) {
+            petKeyPresses++;
+        }
+
+        if (clientPettingTicks > 0) {
+            clientPettingTicks--;
+
+            // If player clicks, attacks, or presses pet key again, cancel immediately
+            if (cancelTap || cancelHeld || petKeyPresses > 0) {
+                NetworkManager.sendToServer(new CancelPettingPayload());
+                clientPettingTicks = 0;
+            }
+        } else if (petKeyPresses > 0) {
             if (!Platform.isModLoaded("punchy")) {
                 client.player.sendMessage(Text.translatable("message.adorablehamsterpets.punchy_missing").formatted(Formatting.RED), true);
             } else if (Configs.AHP.enablePetting) {
@@ -454,10 +513,17 @@ public class AdorableHamsterPetsClient {
                                         && !hamster.isCelebratingDiamond()
                                         && !hamster.isCelebratingRetrieval()
                 );
+
                 for (HamsterEntity hamster : nearbyHamsters) {
                     // Use targeting utility to see if player is looking at it
                     if (EntityTargetingUtil.isLookingAt(client.player, hamster, 5.0, 0)) {
                         NetworkManager.sendToServer(new RequestPetHamsterPayload(hamster.getId()));
+
+                        // Immediately cancel right after starting if multiple presses registered in single tick
+                        if (petKeyPresses > 1) {
+                            NetworkManager.sendToServer(new CancelPettingPayload());
+                        }
+
                         break; // Only pet one at a time
                     }
                 }

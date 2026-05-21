@@ -14,8 +14,9 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
 ### Added
 - **New First-Person Animations (Requires Punchy v2.6.0+)**
   - **Petting/Tickling**
-    - You can finally pet your hamster! If you stare affectionately at your hamster for a while sneaking (about 15 seconds on average), you might just reach down, pick it up and give it some tickles. Comes with a new animation where the hamster flips over on your hand and asks for a belly rub! Also added a dedicated "Pet Hamster" keybind (unbound by default) for when you don't feel like waiting for the random chance to kick in.
+    - You can finally pet your hamster! If you stare affectionately at your hamster for a **while sneaking** (about 15 seconds on average), you might just reach down, pick it up and give it some tickles. Comes with a new animation where the hamster flips over on your hand and asks for a belly rub! Also added a dedicated "Pet Hamster" keybind (unbound by default) for when you don't feel like waiting for the random chance to kick in.
     - For those with the patience of a fruit bat, pressing your "Pet Hamster" key or clicking your mouse will cancel the petting animation. You don't need to be sneaking to use the keybind.
+    - If the hamster was sitting before you picked it up to pet it, it will remain seated when you place it back down, making this a great way to manually re-position tamed hamsters around your base.
   - **Shoulder Mounting (Dynamic)**
     - Luring a hamster to your shoulder is no longer a boring teleport. You will now physically lift them up, complete with the hamster adorably bouncing on your hands or running up your arm. Three new unique animations; dynamically changing depending on their destination (left shoulder, right shoulder, head).
   - **The Yeet Queuing System (Dynamic)**
@@ -23,8 +24,13 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
       - While queued up, the hamster also plays its own new animation (only available with Punchy v2.6.0+) where it eagerly wiggles its butt and kicks its back feet in anticipation of being hurled through the air.
       - Releasing the throw key (`G`) executes the throw, which is immediately followed by a new Punchy animation where you wave goodbye to your furry projectile.
       - If you release the key before the short charging period (`15 ticks`) is over, you safely abort the throw. Your character will politely place the hamster back onto the exact shoulder it came from. This charging period of `15 ticks` is not configurable, due to its duration needing to match the animation. But it's quite short— only `0.75 seconds`— so hopefully it won't impact gameplay too much.
-- **FOV Zoom for Hamster Yeet**
-  - Added a smooth FOV zoom effect while queueing the Hamster Yeet, identical to drawing a vanilla bow. This FOV zoom will help indicate the new charging period for anyone who doesn't have Punchy installed, since the new animations cannot work without it.
+- **Hamster Yeet Mechanics**
+  - Added a `Downward Force (Gravity)` slider to the config, allowing you to fine-tune how far hamsters fly without needing to increase their initial thrust. (Useful for the Flashback mod, which gets buggy when entities are moving quickly).
+  - **FOV Zoom**
+    - Added a smooth FOV zoom effect while queueing the Hamster Yeet, identical to drawing a vanilla bow. This FOV zoom will help indicate the new charging period for anyone who doesn't have Punchy installed, since the new animations cannot work without it.
+  - **Cooldown Recovery**
+    - If you're impatient, feeding your hamster will now incrementally reduce its throw cooldown (similar to how feeding accelerates baby growth).
+  - A new action bar message will let you know when the hamster has recovered from its concussion and is ready for launch.
 - **Configurable Aggression States**
   - Hamsters now have three distinct aggression states controlled by their diet.
   - **Pacifist:** Feed them any vanilla flower (e.g., `#minecraft:flowers`). They become total hippies and will refuse to attack anything, even if you are being actively mauled.
@@ -60,7 +66,6 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
   - The mod will now provide snarky chat feedback if you try to tame a hamster incorrectly (such as not sneaking or offering them the wrong food) and will point you to the guidebook for help.
 - **Global Notification Toggle**
   - Added a `Server Disable Announcements` config setting. Server owners can now globally disable the notification bell icon for all connected players.
-### Added
 - **Smoker Support**
   - Green Beans can now be cooked into Steamed Green Beans using a Smoker, which cooks them twice as fast as a standard furnace.
 
@@ -74,6 +79,7 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
   - Renamed several of the key binds to make the `Controls > Key Binds` menu more intuitive.
 - **The Hamster Yeet**
   -  Throwing a hamster is no longer canceled/prevented if the player's crosshair is over non-solid blocks like tall grass, flowers, sugar cane etc.
+  - Reduced the default gravity applied to thrown hamsters by 30%, resulting in naturally longer, flatter arcs out-of-the-box. Hamsters will feel less "heavy" now during throws.
 - **Hamster Tips Guidebook**
   - "The Great Escape" has been renamed to "Beds & Wander Mode," and "Acorn Armor" has been renamed to "Tree Heist & Armor" so you guys won't keep coming into my Discord server asking how the beds work and where to find acorns 😂
   - This has another super useful perk: Now whenever you search through the guidebook for a specific topic, you can search for things like "bed," "tree heist," or "armor" and those specific entries will pop up in the results.
@@ -126,6 +132,9 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
   - Resolved an issue where the affects would not trigger at all on 1.20.1 if a hamster was renamed via the GUI.
 - **Missing Vanilla Tags**
   - The custom AHP Sunflower block is now properly registered under the vanilla `#minecraft:flowers` and `#minecraft:tall_flowers` tags. This resolves compatibility issues with mods like Alex's Mobs that rely on these tags to identify flowers in the world.
+- **Flashback Mod**
+  - Resolved a server crash that occurred when scrubbing through replay timelines using the Flashback mod, caused by missing NBT data on Hamster Beds.
+  - Resolved a persistent desync issue where shoulder hamsters would disappear when scrubbing backwards or jumping to different points on the replay timeline. Future replays will hopefully be fixed via a periodic server-side data sync that runs once per second.
 
 ---
 

@@ -133,6 +133,7 @@ public final class HamsterNbtUtil {
         }
         hamster.setHamsterFlag(HamsterEntity.SLEEPING_FLAG, loadedSleeping);
         hamster.throwCooldownEndTick = nbt.getLong("ThrowCooldownEnd");
+        hamster.setHamsterFlag(HamsterEntity.THROW_COOLDOWN_FLAG, hamster.throwCooldownEndTick > hamster.getWorld().getTime());
         hamster.getDataTracker().set(HamsterEntity.GREEN_BEAN_BUFF_DURATION, nbt.getLong("GreenBeanBuffDuration"));
         hamster.setAutoEatCooldownTicks(nbt.getInt("AutoEatCooldown"));
         hamster.setEjectionCheckCooldown(nbt.contains("EjectionCheckCooldown", NbtElement.INT_TYPE) ? nbt.getInt("EjectionCheckCooldown") : 20);
@@ -337,8 +338,8 @@ public final class HamsterNbtUtil {
             hamster.totalAgeTicks = data.totalAgeTicks();
             hamster.timesBred = data.timesBred();
 
-            // Explicitly clear the sitting flag to ensure the hamster always dismounts standing.
-            hamster.setHamsterFlag(HamsterEntity.SITTING_FLAG, false);
+            // Sync vanilla sitting pose with restored flag
+            hamster.setInSittingPose(hamster.getHamsterFlag(HamsterEntity.SITTING_FLAG));
 
             // --- 2. Load Custom Name ---
             data.customName().ifPresent(name -> {

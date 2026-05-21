@@ -305,6 +305,11 @@ public class AhpConfig extends Config {
     public ValidatedInt actionBarDuration = new ValidatedInt(100, 300, 40);
 
     @NonSync
+    @Translatable.Name("Throw Cancellation Warning")
+    @Translatable.Desc("Whether to display the chat warning when you cancel a hamster throw by releasing the button too early.")
+    public boolean enableThrowCancellationWarning = true;
+
+    @NonSync
     @Translatable.Name("Shoulder Dismount Messages")
     @Translatable.Desc("Little status mumbles when your co-pilot disembarks.")
     public boolean enableShoulderDismountMessages = true;
@@ -1327,6 +1332,10 @@ public class AhpConfig extends Config {
     @Translatable.Name("Throw Velocity (Buffed)")
     @Translatable.Desc("The throw speed of your furry projectile when under the influence of Steamed Green Beans. Goes from 'yeet' to 'yote'.")
     public ValidatedDouble hamsterThrowVelocityBuffed = new ValidatedDouble(2.5, 5.0, 0.1);
+
+    @Translatable.Name("Downward Force (Gravity)")
+    @Translatable.Desc("How fast the hamster falls while airborne. Lower values result in flatter, longer flights without increasing the initial thrust. Only affects the projectile entity during the throw.")
+    public ValidatedDouble hamsterThrowGravity = new ValidatedDouble(0.035, 0.2, 0.0);
 
     @ConfigGroup.Pop
     @Translatable.Name("Friendly Fire")

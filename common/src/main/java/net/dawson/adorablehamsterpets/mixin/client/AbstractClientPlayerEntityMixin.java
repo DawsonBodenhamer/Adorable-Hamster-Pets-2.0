@@ -4,6 +4,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.nbt.NbtCompound;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,7 +25,18 @@ public abstract class AbstractClientPlayerEntityMixin {
         AbstractClientPlayerEntity thisPlayer = (AbstractClientPlayerEntity) (Object) this;
         // The tick method can be called on the integrated server thread, so we must check.
         if (thisPlayer.getWorld().isClient) {
-            ClientShoulderHamsterData clientData = ((PlayerEntityAccessor) thisPlayer).adorablehamsterpets$getClientHamsterState();
+            PlayerEntityAccessor accessor = (PlayerEntityAccessor) thisPlayer;
+
+            // --- Flashback Replay Rescue Logic ---
+            // If local state is empty, but there is a cached state for this player, restore it
+            if (!accessor.hasAnyShoulderHamster()) {
+                NbtCompound cachedState = ClientShoulderHamsterData.REPLAY_CACHE.get(thisPlayer.getUuid());
+                if (cachedState != null && !cachedState.isEmpty()) {
+                    accessor.adorablehamsterpets$setRawHamsterState(cachedState);
+                }
+            }
+
+            ClientShoulderHamsterData clientData = accessor.adorablehamsterpets$getClientHamsterState();
             if (clientData != null) {
                 clientData.clientTick(thisPlayer);
             }
