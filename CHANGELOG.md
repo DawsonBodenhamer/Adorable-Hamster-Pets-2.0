@@ -68,6 +68,8 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
   - Added a `Server Disable Announcements` config setting. Server owners can now globally disable the notification bell icon for all connected players.
 - **Smoker Support**
   - Green Beans can now be cooked into Steamed Green Beans using a Smoker, which cooks them twice as fast as a standard furnace.
+- **Compostable Sunflowers**
+  - The custom Adorable Hamster Pets Sunflower can now be placed in a composter (matching the 65% compost chance of vanilla sunflowers).
 
 ### Changed
 - **Dismount Keybinding Simplification**
