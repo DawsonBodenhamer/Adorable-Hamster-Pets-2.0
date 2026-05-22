@@ -300,28 +300,55 @@ public final class HamsterBedUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
-     * Ensures the block state is correctly marked as occupied if a hamster is actively sleeping in it.
+     * Checks if the hamster is actively sleeping near its linked bed.
+     */
+    public static boolean isSleepingInBed(HamsterEntity hamster) {
+        if (!hamster.isSleeping()) return false;
+        Optional<GlobalPos> bedPosOpt = hamster.getLinkedBedPos();
+        if (bedPosOpt.isEmpty()) return false;
+
+        GlobalPos globalPos = bedPosOpt.get();
+        if (hamster.getWorld().getRegistryKey() != globalPos.dimension()) return false;
+
+        return hamster.getBlockPos().isWithinDistance(globalPos.pos(), 2.0);
+    }
+
+    /**
+     * Ensures the block state is correctly marked as occupied if a hamster is actively sleeping in it,
+     * and correctly un-marked if the hamster has left.
      */
     public static void autoHealBedState(HamsterEntity hamster) {
-        if (hamster.isSleeping() && hamster.getLinkedBedPos().isPresent() && !hamster.isKnockedOut()) {
-            World world = hamster.getWorld();
-            GlobalPos bedGlobalPos = hamster.getLinkedBedPos().get();
+        Optional<GlobalPos> bedPosOpt = hamster.getLinkedBedPos();
+        if (bedPosOpt.isEmpty()) return;
 
-            if (world.getRegistryKey() == bedGlobalPos.dimension()) {
-                BlockPos bedPos = bedGlobalPos.pos();
+        GlobalPos bedGlobalPos = bedPosOpt.get();
+        World world = hamster.getWorld();
 
-                // Ensure chunk is loaded to prevent loading newly generated chunks via ticks
-                if (world.isChunkLoaded(bedPos.getX() >> 4, bedPos.getZ() >> 4)) {
-                    BlockState bedState = world.getBlockState(bedPos);
+        if (world.getRegistryKey() == bedGlobalPos.dimension()) {
+            BlockPos bedPos = bedGlobalPos.pos();
+            // Ensure chunk is loaded to prevent loading newly generated chunks via ticks
+            if (world.isChunkLoaded(bedPos.getX() >> 4, bedPos.getZ() >> 4)) {
+                BlockState bedState = world.getBlockState(bedPos);
 
-                    if (bedState.getBlock() instanceof HamsterBedBlock && !bedState.get(HamsterBedBlock.OCCUPIED)) {
+                if (bedState.getBlock() instanceof HamsterBedBlock) {
+                    boolean isOccupied = bedState.get(HamsterBedBlock.OCCUPIED);
+                    boolean shouldBeOccupied = hamster.isSleeping() && !hamster.isKnockedOut() && hamster.getBlockPos().isWithinDistance(bedPos, 2.0);
+
+                    if (shouldBeOccupied && !isOccupied) {
+                        // Fix falsely unoccupied bed
                         world.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
-
                         BlockEntity be = world.getBlockEntity(bedPos);
                         if (be instanceof HamsterBedBlockEntity bedEntity) {
                             bedEntity.triggerAnim("hamster_bed_controller", "anim_bed_becoming_occupied");
                         }
                         AdorableHamsterPets.LOGGER.debug("[HamsterBedUtil] Auto-healed unoccupied bed block state at {}", bedPos);
+                    } else if (!shouldBeOccupied && isOccupied) {
+                        // Fix falsely occupied bed
+                        world.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, false), Block.NOTIFY_ALL);
+                        BlockEntity be = world.getBlockEntity(bedPos);
+                        if (be instanceof HamsterBedBlockEntity bedEntity) {
+                            bedEntity.triggerAnim("hamster_bed_controller", "anim_bed_becoming_unoccupied");
+                        }
                     }
                 }
             }

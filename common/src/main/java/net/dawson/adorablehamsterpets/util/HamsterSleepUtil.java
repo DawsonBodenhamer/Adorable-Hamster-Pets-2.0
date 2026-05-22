@@ -25,6 +25,12 @@ public final class HamsterSleepUtil {
      * Should be called from the entity's server-side tick method.
      */
     public static void tickTamedSleepLogic(HamsterEntity hamster) {
+        // Bypass if the hamster is actively sleeping in its bed
+        // The bed's own logic handles day/night and circadian wakeups
+        if (HamsterBedUtil.isSleepingInBed(hamster)) {
+            return;
+        }
+
         HamsterEntity.DozingPhase currentPhase = hamster.getDozingPhase();
         boolean canInitiate = evaluateSleepConditions(hamster, false);
         boolean canSustain = evaluateSleepConditions(hamster, true);

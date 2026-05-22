@@ -1585,8 +1585,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- Circadian Chaos Wake-Up Logic ---
             if (Configs.AHP.circadianChaos.get() &&
-                    this.isSleeping() &&
-                    this.getLinkedBedPos().isPresent() &&
+                    HamsterBedUtil.isSleepingInBed(this) &&
                     this.napInBedDurationTimer == 0) {
                 // Don't wake up if this is a rescue sleep waiting for player interaction
                 if (!this.isRescueSleeping()) {
@@ -1598,7 +1597,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.dataTracker.set(EXACT_AGE, this.getBreedingAge());
 
             // --- Day/Night Cycle Wake-Up Logic ---
-            if (!Configs.AHP.circadianChaos.get() && this.isSleeping() && this.getLinkedBedPos().isPresent()) {
+            if (!Configs.AHP.circadianChaos.get() && HamsterBedUtil.isSleepingInBed(this)) {
                 // If rescued, bypass time check entirely. Hamster stays asleep
                 if (!this.isRescueSleeping()) {
                     boolean isSleepTime = Configs.AHP.sleepDuringDay.get() ? world.isDay() : world.isNight();
