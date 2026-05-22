@@ -32,6 +32,7 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -273,16 +274,18 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
             this.linkedHamsterName = Optional.empty();
         }
 
+        String distanceStr = nbt.getString("WanderDistance").toUpperCase(Locale.ROOT);
         try {
-            this.wanderDistance = WanderDistance.valueOf(nbt.getString("WanderDistance").toUpperCase());
+            this.wanderDistance = distanceStr.isEmpty() ? Configs.AHP.defaultWanderDistance.get() : WanderDistance.valueOf(distanceStr);
         } catch (IllegalArgumentException e) {
-            this.wanderDistance = WanderDistance.MEDIUM;
+            this.wanderDistance = Configs.AHP.defaultWanderDistance.get();
         }
 
         this.isNewlyPlaced = nbt.contains("IsNewlyPlaced") ? nbt.getBoolean("IsNewlyPlaced") : false;
         this.allowSleep = !nbt.contains("AllowSleep") || nbt.getBoolean("AllowSleep");
         this.respawnEnabled = nbt.getBoolean("RespawnEnabled");
-        // Safety: If bed is upside down, force sleep to false
+
+        // Force sleep to false if bed is upside down
         if (this.getCachedState().contains(HamsterBedBlock.UPSIDE_DOWN) && this.getCachedState().get(HamsterBedBlock.UPSIDE_DOWN)) {
             this.allowSleep = false;
         }
