@@ -49,6 +49,7 @@ public class HamsterTextureUtil {
         HamsterGenome genome = hamster.getGenome();
         boolean redEyes = genome.eyeGenotype() == 2 && Configs.AHP.enableRedEyes;
         boolean isSweetPotato = hamster.isSweetPotato();
+        boolean isHamtaro = hamster.isHamtaro();
 
         // --- Extract Equipment States ---
         ItemStack armorStack = hamster.getArmorStack();
@@ -72,7 +73,7 @@ public class HamsterTextureUtil {
         boolean hasPinkPetals = hamster.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE) > 0;
 
         // --- Generate Cache Key ---
-        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_h%b_p%b_sp%b",
+        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_h%b_p%b_sp%b_hm%b",
                 genome.basePaletteId(),
                 genome.wildOverlayPattern(),
                 genome.wildOverlayPaletteId() != null ? genome.wildOverlayPaletteId() : "",
@@ -82,7 +83,8 @@ public class HamsterTextureUtil {
                 armorMaterial,
                 hasAcornHat,
                 hasPinkPetals,
-                isSweetPotato);
+                isSweetPotato,
+                isHamtaro);
 
         Identifier cachedId = CACHED_TEXTURES.get(cacheKey);
         if (cachedId != null) {
@@ -96,6 +98,8 @@ public class HamsterTextureUtil {
             NativeImage composite;
             if (isSweetPotato) {
                 composite = readRawImage("textures/entity/hamster/easter_egg/sweet_potato.png");
+            } else if (isHamtaro) {
+                composite = readRawImage("textures/entity/hamster/easter_egg/hamtaro.png");
             } else {
                 composite = createLayerImage("fur_base_pattern/fur_pattern.png", genome.basePaletteId());
             }
@@ -104,8 +108,8 @@ public class HamsterTextureUtil {
                 return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png"); // Ultimate fallback
             }
 
-            // Prevent overlays if Sweet Potato
-            if (!isSweetPotato) {
+            // Prevent overlays if Sweet Potato or Hamtaro
+            if (!isSweetPotato && !isHamtaro) {
                 // --- 2. Wild Overlay ---
                 if (genome.wildOverlayPattern() > 0 && genome.wildOverlayPaletteId() != null) {
                     String patternName = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.get(genome.wildOverlayPattern());

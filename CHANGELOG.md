@@ -40,6 +40,10 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
   - **Hamster Tips Guidebook Entry**
     - The *Hamster Tips* guidebook now features a dedicated "Aggression States" page to explain the new mechanics. It utilizes dynamic text injection to accurately display your configured trigger items, ensuring the book is always up-to-date even if a modpack creator changes the required diets.
   - **Pacifist Break:** Added a `Pacifist Break on Attack` config toggle (false by default). When enabled, a passive hamster will automatically revert to neutral if it sees you attacking something.
+- **"Hamtaro" Easter Egg**
+  - Renaming a hamster "Hamtaro" gives it a special texture. This functions identically to the "Sweet Potato" easter egg. Both base textures provided by [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!
+- **New "Panda" Overlay Pattern**
+  - Added a new "Panda" fur overlay pattern to the genetics engine, allowing you to breed panda-like hamsters. To get a "Panda" hamster, you'll need a Black base coat and a white overlay with the new "Panda" pattern. These can't be found in the wild, since black hamsters do not spawn with white overlays in the wild (breaks their camouflage). Thanks to [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) for the Panda inspiration!
 - **Free Bed Respawn Toggle**
   - Added a config toggle to allow hamsters to respawn at their linked beds indefinitely without requiring a tribute item charge (like a Totem of Undying). Disabled by default.
 - **Dynamic Trees Compatibility**
@@ -137,6 +141,8 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
 - **Flashback Mod**
   - Resolved a server crash that occurred when scrubbing through replay timelines using the Flashback mod, caused by missing NBT data on Hamster Beds.
   - Resolved a persistent desync issue where shoulder hamsters would disappear when scrubbing backwards or jumping to different points on the replay timeline. Future replays will hopefully be fixed via a periodic server-side data sync that runs once per second.
+- **File Parsing Crashes**
+  - Fixed a crash that occurred when reading corrupted `.json` cache files for the supporter perk system. It will now safely ignore the corrupted file and download a fresh copy from the internet.
 
 ---
 

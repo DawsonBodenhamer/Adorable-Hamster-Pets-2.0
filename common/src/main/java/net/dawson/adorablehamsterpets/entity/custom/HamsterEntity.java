@@ -872,12 +872,23 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     /**
-     * Checks if this hamster has been named "Sweet Potato" for the easter egg.
+     * Checks if this hamster has been named "Sweet Potato" for an easter egg.
      */
     public boolean isSweetPotato() {
         if (this.hasCustomName()) {
             String name = this.getCustomName().getString().toLowerCase(Locale.ROOT).trim();
             return name.equals("sweet potato") || name.equals("sweetpotato") || name.equals("sweet-potato");
+        }
+        return false;
+    }
+
+    /**
+     * Checks if this hamster has been named "Hamtaro" for an easter egg.
+     */
+    public boolean isHamtaro() {
+        if (this.hasCustomName()) {
+            String name = this.getCustomName().getString().toLowerCase(Locale.ROOT).trim();
+            return name.equals("hamtaro");
         }
         return false;
     }

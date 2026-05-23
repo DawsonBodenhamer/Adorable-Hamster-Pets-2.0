@@ -69,7 +69,7 @@ public class HamsterPaletteManager {
 
     // --- Genetic Dictionaries ---
     public static final List<String> BASE_PATTERN_NAMES = List.of("fur_pattern");
-    public static final List<String> OVERLAY_PATTERN_NAMES = List.of("none", "splotched_body", "body", "overlay_spots", "belly", "torso_fold", "torso_wrap", "splotched_ears", "inverted_spots", "piebald");
+    public static final List<String> OVERLAY_PATTERN_NAMES = List.of("none", "splotched_body", "body", "overlay_spots", "belly", "torso_fold", "torso_wrap", "splotched_ears", "inverted_spots", "piebald", "panda");
     public static final List<String> EYE_GENOTYPE_NAMES = List.of("black", "carrier_black", "red");
 
     /* ──────────────────────────────────────────────────────────────────────────────

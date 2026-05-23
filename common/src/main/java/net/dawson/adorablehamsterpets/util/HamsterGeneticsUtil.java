@@ -29,8 +29,12 @@ public final class HamsterGeneticsUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private static final Vec3d SWEET_POTATO_HSB;
-    static {SWEET_POTATO_HSB = ColorSpaceUtil.analyzeImage("assets/adorablehamsterpets/textures/entity/hamster/easter_egg/sweet_potato.png").position();}
+    private static final Vec3d HAMTARO_HSB;
 
+    static {
+        SWEET_POTATO_HSB = ColorSpaceUtil.analyzeImage("assets/adorablehamsterpets/textures/entity/hamster/easter_egg/sweet_potato.png").position();
+        HAMTARO_HSB = ColorSpaceUtil.analyzeImage("assets/adorablehamsterpets/textures/entity/hamster/easter_egg/hamtaro.png").position();
+    }
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
@@ -83,8 +87,8 @@ public final class HamsterGeneticsUtil {
         PaletteDefinition baseA = HamsterPaletteManager.PALETTE_REGISTRY.get(genomeA.basePaletteId());
         PaletteDefinition baseB = HamsterPaletteManager.PALETTE_REGISTRY.get(genomeB.basePaletteId());
 
-        Vec3d posA = parentAEntity.isSweetPotato() ? SWEET_POTATO_HSB : baseA.colorSpacePos();
-        Vec3d posB = parentB.isSweetPotato() ? SWEET_POTATO_HSB : baseB.colorSpacePos();
+        Vec3d posA = parentAEntity.isSweetPotato() ? SWEET_POTATO_HSB : (parentAEntity.isHamtaro() ? HAMTARO_HSB : baseA.colorSpacePos());
+        Vec3d posB = parentB.isSweetPotato() ? SWEET_POTATO_HSB : (parentB.isHamtaro() ? HAMTARO_HSB : baseB.colorSpacePos());
 
         // Find exact mathematical center between parent colors
         Vec3d baseMidpoint = ColorSpaceUtil.calculateGeneticMidpoint(posA, posB, random);
