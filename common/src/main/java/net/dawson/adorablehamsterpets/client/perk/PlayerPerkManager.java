@@ -133,8 +133,8 @@ public class PlayerPerkManager {
                 if (cached != null) {
                     this.perks = cached;
                 }
-            } catch (IOException e) {
-                AdorableHamsterPets.LOGGER.error("[Perks] Failed to load cached perks.", e);
+            } catch (Exception e) {
+                AdorableHamsterPets.LOGGER.error("[Perks] Failed to load cached perks or file was corrupted.", e);
             }
         }
     }
