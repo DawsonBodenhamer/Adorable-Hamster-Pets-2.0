@@ -1008,6 +1008,17 @@ public class AhpConfig extends Config {
                     () -> false
             );
 
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Render Pink Petals On Armor")
+    @Translatable.Desc("If true, Pink Petal accessories will pop out to render on the outside of equipped armor. If false, they will be hidden under the armor.")
+    public ValidatedCondition<Boolean> renderPinkPetalsWithArmor = new ValidatedBoolean(true)
+            .toCondition(
+                    isArmorVisualsEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
+                    () -> false
+            );
+
     @Translatable.Name("Tree Heist Settings")
     @Translatable.Desc("Configure the acorn-gathering operations.")
     public ConfigGroup treeHeist = new ConfigGroup("treeHeist", true);
