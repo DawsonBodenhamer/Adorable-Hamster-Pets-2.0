@@ -811,7 +811,7 @@ public class AdorableHamsterPetsClient {
         if (clientSessionTimer == 20) {
             if (hasGuideBook(client.player)) {
                 config.playersWhoHaveSeenGuidebookWarning.add(username);
-                config.save();
+                ModPackets.CHANNEL.sendToServer(new ModPackets.AcknowledgeGuidebookWarningC2SPacket());
             }
         }
 
@@ -822,7 +822,7 @@ public class AdorableHamsterPetsClient {
             } else {
                 // If they have the book now, mark as seen and don't proceed to Part 2
                 config.playersWhoHaveSeenGuidebookWarning.add(username);
-                config.save();
+                ModPackets.CHANNEL.sendToServer(new ModPackets.AcknowledgeGuidebookWarningC2SPacket());
             }
         }
 
@@ -832,10 +832,8 @@ public class AdorableHamsterPetsClient {
                 sendWarningPart2(client.player);
             }
             // Mark as seen regardless to prevent spamming next session
-            if (!config.playersWhoHaveSeenGuidebookWarning.contains(username)) {
-                config.playersWhoHaveSeenGuidebookWarning.add(username);
-                config.save();
-            }
+            config.playersWhoHaveSeenGuidebookWarning.add(username);
+            ModPackets.CHANNEL.sendToServer(new ModPackets.AcknowledgeGuidebookWarningC2SPacket());
         }
     }
 

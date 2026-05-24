@@ -53,6 +53,7 @@ public class ModPackets {
     public record DismountHamsterC2SPacket() {}
     public record UpdateHamsterRenderStateC2SPacket(List<Integer> hamsterEntityIds, boolean isRendering) {}
     public record RequestGuidebookC2SPacket() {}
+    public record AcknowledgeGuidebookWarningC2SPacket() {}
     public record RequestHamsterMountC2SPacket(int entityId) {}
     public record ResetHeistHistoryC2SPacket() {}
     public record RequestHamsterRideC2SPacket(int entityId) {}
@@ -133,6 +134,18 @@ public class ModPackets {
 
                     // Set cache
                     ((PlayerEntityAccessor) player).ahp$initGuideBookTracking(true);
+                })
+        );
+
+        CHANNEL.register(AcknowledgeGuidebookWarningC2SPacket.class,
+                (packet, buf) -> {},
+                (buf) -> new AcknowledgeGuidebookWarningC2SPacket(),
+                (packet, context) -> context.get().queue(() -> {
+                    String username = context.get().getPlayer().getGameProfile().getName();
+                    if (!Configs.AHP.playersWhoHaveSeenGuidebookWarning.contains(username)) {
+                        Configs.AHP.playersWhoHaveSeenGuidebookWarning.add(username);
+                        Configs.AHP.save();
+                    }
                 })
         );
 
