@@ -111,6 +111,8 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
   - If you are updating an existing modpack, your old config files will obstinately hold on to their old settings. This is good, otherwise you would lose all your work every time I pushed out an update. However, this means that in order to see these new default spawn weights, you will need to right-click specific settings in the config screen and select "Restore Defaults." Alternatively, click the "Changes" button (bottom-right corner) and click "Restore Defaults" to reset everything at once (only affects the config from my mod).
 - **Hamster Bedding Leaf Particles**
   - Doubled the visual size of the Hamster Bedding particles to better match the leaves on the trees and on the hamster bed itself.
+- **Pink Petal Accessories**
+  - Added a new config toggle (true by default) to dynamically render Pink Petal accessories on the outside of equipped armor, so your hamster can be safe and fabulous simultaneously.
 
 ### Fixed
 - **Hamster Yeet & Evilcraft Bug**

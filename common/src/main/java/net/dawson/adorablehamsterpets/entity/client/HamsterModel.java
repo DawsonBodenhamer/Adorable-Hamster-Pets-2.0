@@ -4,6 +4,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
+import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
@@ -87,9 +88,12 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         var rightCheekInfBone = processor.getBone("right_cheek_inflated");
         var rightEarBone = processor.getBone("right_ear");
         var acornHatBone = processor.getBone("acorn_hat");
-        var petalHeadBone = processor.getBone("pink_petal_head");
-        var petalSideBone = processor.getBone("pink_petal_side");
-        var petalBackBone = processor.getBone("pink_petal_lower_back");
+        var petalHeadNoArmorBone = processor.getBone("pink_petal_head_no_armor");
+        var petalSideNoArmorBone = processor.getBone("pink_petal_side_no_armor");
+        var petalBackNoArmorBone = processor.getBone("pink_petal_lower_back_no_armor");
+        var petalHeadWithArmorBone = processor.getBone("pink_petal_head_with_armor");
+        var petalSideWithArmorBone = processor.getBone("pink_petal_side_with_armor");
+        var petalBackWithArmorBone = processor.getBone("pink_petal_lower_back_with_armor");
 
         // --- Statue / AI Disabled Logic ---
         var closedEyesBone = processor.getBone("closed_eyes");
@@ -100,11 +104,21 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         // --- Easter Egg Logic ---
         boolean isMoonwalking = entity.isMoonwalking();
 
+        // --- Equipment State ---
+        ItemStack armorStack = entity.getArmorStack();
+        boolean isArmorVisible = Configs.AHP.enableArmorVisuals && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem;
+
         // --- Pink Petal Logic ---
         int petalType = entity.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE);
-        if (petalHeadBone != null) petalHeadBone.setHidden(petalType != 1);
-        if (petalSideBone != null) petalSideBone.setHidden(petalType != 2);
-        if (petalBackBone != null) petalBackBone.setHidden(petalType != 3);
+        boolean useArmorPetals = isArmorVisible && Configs.AHP.renderPinkPetalsWithArmor.get();
+
+        if (petalHeadNoArmorBone != null) petalHeadNoArmorBone.setHidden(petalType != 1 || useArmorPetals);
+        if (petalSideNoArmorBone != null) petalSideNoArmorBone.setHidden(petalType != 2 || useArmorPetals);
+        if (petalBackNoArmorBone != null) petalBackNoArmorBone.setHidden(petalType != 3 || useArmorPetals);
+
+        if (petalHeadWithArmorBone != null) petalHeadWithArmorBone.setHidden(petalType != 1 || !useArmorPetals);
+        if (petalSideWithArmorBone != null) petalSideWithArmorBone.setHidden(petalType != 2 || !useArmorPetals);
+        if (petalBackWithArmorBone != null) petalBackWithArmorBone.setHidden(petalType != 3 || !useArmorPetals);
 
         // --- Cheek Pouch Logic ---
         if (leftCheekDefBone != null && leftCheekInfBone != null) {
@@ -131,7 +145,6 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             }
 
             // Check armor slot 7 and config if not already showing hat
-            ItemStack armorStack = entity.getArmorStack();
             if (!shouldShowHat && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP.renderAcornHat.get()) {
                 shouldHideEar = true;
                 shouldShowHat = true;

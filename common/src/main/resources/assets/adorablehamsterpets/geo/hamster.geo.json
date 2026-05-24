@@ -29,7 +29,7 @@
 					]
 				},
 				{
-					"name": "pink_petal_lower_back",
+					"name": "pink_petal_lower_back_no_armor",
 					"parent": "body_child",
 					"pivot": [1.3, 4.7, 2.3],
 					"rotation": [0, -7.5, 0],
@@ -42,7 +42,20 @@
 					]
 				},
 				{
-					"name": "pink_petal_side",
+					"name": "pink_petal_lower_back_with_armor",
+					"parent": "body_child",
+					"pivot": [1.3, 5, 2.3],
+					"rotation": [0, -7.5, 0],
+					"cubes": [
+						{"origin": [0.8, 3, 1.8], "size": [1, 2, 1], "uv": [28, 2]},
+						{"origin": [0.8, 3, 2.8], "size": [1, 2, 1], "uv": [32, 2]},
+						{"origin": [0.8, 3, 0.8], "size": [1, 2, 1], "uv": [32, 2]},
+						{"origin": [1.8, 3, 1.8], "size": [1, 2, 1], "uv": [32, 2]},
+						{"origin": [-0.2, 3, 1.8], "size": [1, 2, 1], "uv": [32, 2]}
+					]
+				},
+				{
+					"name": "pink_petal_side_no_armor",
 					"parent": "body_child",
 					"pivot": [-3.2, 2.7, 0.6],
 					"rotation": [0, 7, -90],
@@ -52,6 +65,19 @@
 						{"origin": [-3.7, 0.7, -0.9], "size": [1, 2, 1], "uv": [32, 2]},
 						{"origin": [-2.7, 0.7, 0.1], "size": [1, 2, 1], "uv": [32, 2]},
 						{"origin": [-4.7, 0.7, 0.1], "size": [1, 2, 1], "uv": [32, 2]}
+					]
+				},
+				{
+					"name": "pink_petal_side_with_armor",
+					"parent": "body_child",
+					"pivot": [-3.5, 2.7, 0.6],
+					"rotation": [0, 7, -90],
+					"cubes": [
+						{"origin": [-4, 0.7, 0.1], "size": [1, 2, 1], "uv": [28, 2]},
+						{"origin": [-4, 0.7, 1.1], "size": [1, 2, 1], "uv": [32, 2]},
+						{"origin": [-4, 0.7, -0.9], "size": [1, 2, 1], "uv": [32, 2]},
+						{"origin": [-3, 0.7, 0.1], "size": [1, 2, 1], "uv": [32, 2]},
+						{"origin": [-5, 0.7, 0.1], "size": [1, 2, 1], "uv": [32, 2]}
 					]
 				},
 				{
@@ -89,7 +115,7 @@
 					]
 				},
 				{
-					"name": "pink_petal_head",
+					"name": "pink_petal_head_no_armor",
 					"parent": "head_skull",
 					"pivot": [0.6, 6.1, -2.4],
 					"rotation": [0, 10, 0],
@@ -99,6 +125,19 @@
 						{"origin": [0.1, 4.2, -3.9], "size": [1, 2, 1], "uv": [32, 2]},
 						{"origin": [1.1, 4.2, -2.9], "size": [1, 2, 1], "uv": [32, 2]},
 						{"origin": [-0.9, 4.2, -2.9], "size": [1, 2, 1], "uv": [32, 2]}
+					]
+				},
+				{
+					"name": "pink_petal_head_with_armor",
+					"parent": "head_skull",
+					"pivot": [0.6, 6.4, -2.4],
+					"rotation": [0, 10, 0],
+					"cubes": [
+						{"origin": [0.1, 4.5, -2.9], "size": [1, 2, 1], "uv": [28, 2]},
+						{"origin": [0.1, 4.5, -1.9], "size": [1, 2, 1], "uv": [32, 2]},
+						{"origin": [0.1, 4.5, -3.9], "size": [1, 2, 1], "uv": [32, 2]},
+						{"origin": [1.1, 4.5, -2.9], "size": [1, 2, 1], "uv": [32, 2]},
+						{"origin": [-0.9, 4.5, -2.9], "size": [1, 2, 1], "uv": [32, 2]}
 					]
 				},
 				{
