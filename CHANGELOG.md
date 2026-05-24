@@ -145,6 +145,9 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
   - Resolved a persistent desync issue where shoulder hamsters would disappear when scrubbing backwards or jumping to different points on the replay timeline. Future replays will hopefully be fixed via a periodic server-side data sync that runs once per second.
 - **File Parsing Crashes**
   - Fixed a crash that occurred when reading corrupted `.json` cache files for the supporter perk system. It will now safely ignore the corrupted file and download a fresh copy from the internet.
+- **Guidebook Server Synchronization**
+  - Resolved an issue where the "Missing Guidebook" chat warning would trigger repeatedly across multiple game sessions when playing on a dedicated server due to a configuration synchronization flaw.
+  - Fixed an issue where players were falsely led to believe they could locally disable Guidebook Auto-Delivery on dedicated servers. These settings now properly sync from the server to the client's config UI, reflecting the server's true authority over the book's delivery.
 
 ---
 
