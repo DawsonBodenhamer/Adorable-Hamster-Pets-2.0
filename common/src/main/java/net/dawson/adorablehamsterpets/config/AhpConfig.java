@@ -996,6 +996,16 @@ public class AhpConfig extends Config {
     private final ValidatedField<Boolean> isArmorVisualsEnabled = new ValidatedBoolean(true).map(b -> b, b -> enableArmorVisuals);
 
     @NonSync
+    @Translatable.Name("Emissive Armor Trims")
+    @Translatable.Desc("If true, armor trims will naturally glow in the dark and trigger bloom effects, which will be especially visible if you're using shaders. Turn it off if you prefer your rodents to remain grounded in a dull, non-luminescent reality.")
+    public ValidatedCondition<Boolean> emissiveArmorTrims = new ValidatedBoolean(true)
+            .toCondition(
+                    isArmorVisualsEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
+                    () -> false
+            );
+
+    @NonSync
     @Translatable.Name("Render Acorn Hat")
     @Translatable.Desc("Determines whether you are able to see the jaunty little Acorn Hat when hamsters are wearing the base Acorn Armor. Does not affect what other players see, and does not apply to the standalone Acorn Hat accessory.")
     public ValidatedCondition<Boolean> renderAcornHat = new ValidatedBoolean(true)

@@ -59,18 +59,9 @@ public class HamsterTextureUtil {
         String armorMaterial = "none";
         Identifier armorTextureId = null;
 
-        String trimPattern = "none";
-        String trimMaterialAsset = "none";
-
         if (Configs.AHP.enableArmorVisuals && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
             armorMaterial = armorItem.getMaterial().getName();
             armorTextureId = armorItem.getEntityTexture();
-
-            ArmorTrim trim = armorStack.get(DataComponentTypes.TRIM);
-            if (trim != null) {
-                trimPattern = trim.getPattern().getKey().map(key -> key.getValue().getPath()).orElse("none");
-                trimMaterialAsset = trim.getMaterial().value().assetName();
-            }
         }
 
         boolean hasAcornHat = false;
@@ -85,7 +76,7 @@ public class HamsterTextureUtil {
         boolean hasPinkPetals = hamster.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE) > 0;
 
         // --- Generate Cache Key ---
-        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_tp%s_tm%s_h%b_p%b_sp%b_hm%b",
+        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_h%b_p%b_sp%b_hm%b",
                 genome.basePaletteId(),
                 genome.wildOverlayPattern(),
                 genome.wildOverlayPaletteId() != null ? genome.wildOverlayPaletteId() : "",
@@ -93,8 +84,6 @@ public class HamsterTextureUtil {
                 genome.breedingOverlayPaletteId() != null ? genome.breedingOverlayPaletteId() : "",
                 redEyes,
                 armorMaterial,
-                trimPattern,
-                trimMaterialAsset,
                 hasAcornHat,
                 hasPinkPetals,
                 isSweetPotato,
@@ -160,21 +149,12 @@ public class HamsterTextureUtil {
                 eyeLayer.close();
             }
 
-            // --- 6.1 Armor Layer ---
+            // --- 6. Armor Layer ---
             if (armorTextureId != null) {
                 NativeImage armorLayer = readRawImage(armorTextureId.getPath());
                 if (armorLayer != null) {
                     blendImages(composite, armorLayer);
                     armorLayer.close();
-                }
-
-                // --- 6.2 Armor Trim Layer ---
-                if (!trimPattern.equals("none") && !trimMaterialAsset.equals("none")) {
-                    NativeImage trimLayer = createTrimLayerImage(trimPattern, trimMaterialAsset);
-                    if (trimLayer != null) {
-                        blendImages(composite, trimLayer);
-                        trimLayer.close();
-                    }
                 }
             }
 
@@ -280,6 +260,47 @@ public class HamsterTextureUtil {
     }
 
     /**
+     * Generates or retrieves a dynamically cached texture exclusively for the armor trim.
+     * Rendered separately so shaders can identify it as an emissive layer.
+     */
+    public static Identifier getHamsterTrimTexture(HamsterEntity hamster) {
+        if (Configs.AHP.performanceMode || !Configs.AHP.enableArmorVisuals) return null;
+
+        ItemStack armorStack = hamster.getArmorStack();
+        if (armorStack.isEmpty() || !(armorStack.getItem() instanceof HamsterArmorItem)) return null;
+
+        ArmorTrim trim = armorStack.get(DataComponentTypes.TRIM);
+        if (trim == null) return null;
+
+        String trimPattern = trim.getPattern().getKey().map(key -> key.getValue().getPath()).orElse("none");
+        String trimMaterialAsset = trim.getMaterial().value().assetName();
+
+        if (trimPattern.equals("none") || trimMaterialAsset.equals("none")) return null;
+
+        String cacheKey = "trim_" + trimPattern + "_" + trimMaterialAsset;
+
+        Identifier cachedId = CACHED_TEXTURES.get(cacheKey);
+        if (cachedId != null) {
+            return cachedId;
+        }
+
+        Identifier dynamicId = Identifier.of(AdorableHamsterPets.MOD_ID, cacheKey);
+
+        try {
+            NativeImage trimLayer = createTrimLayerImage(trimPattern, trimMaterialAsset);
+            if (trimLayer != null) {
+                MinecraftClient.getInstance().getTextureManager().registerTexture(dynamicId, new NativeImageBackedTexture(trimLayer));
+                CACHED_TEXTURES.put(cacheKey, dynamicId);
+                return dynamicId;
+            }
+        } catch (Exception e) {
+            AdorableHamsterPets.LOGGER.error("Failed to generate trim texture for " + cacheKey, e);
+        }
+
+        return null;
+    }
+
+    /**
      * Takes Hamster Armor Trim grayscale images and swaps the pixels with vanilla's material palette.
      */
     private static NativeImage createTrimLayerImage(String patternName, String materialAssetName) {
@@ -303,7 +324,10 @@ public class HamsterTextureUtil {
                 int pixelColor = trimMask.getColor(x, y);
                 int alpha = ColorHelper.Abgr.getAlpha(pixelColor);
 
-                if (alpha == 0) continue; // Skip transparent pixels
+                if (alpha == 0) {
+                    trimMask.setColor(x, y, 0x00000000); // Force pure transparent black
+                    continue; // Skip transparent pixels
+                }
 
                 // Strip alpha for exact RGB comparison (NativeImage uses ABGR)
                 int rgb = pixelColor & 0x00FFFFFF;
