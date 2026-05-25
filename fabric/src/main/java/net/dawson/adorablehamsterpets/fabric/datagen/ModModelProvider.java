@@ -90,6 +90,7 @@ public class ModModelProvider extends FabricModelProvider {
 
     @Override
     public void generateItemModels(ItemModelGenerator itemModelGenerator) {
+        itemModelGenerator.register(ModItems.MUSIC_DISC_CHEESE.get(), Models.GENERATED);
         itemModelGenerator.register(ModItems.ANNOUNCEMENT_BELL_ICON.get(), Models.GENERATED);
         itemModelGenerator.register(ModItems.HAMSTER_SPAWN_EGG.get(), Models.GENERATED);
         itemModelGenerator.register(ModItems.CUCUMBER.get(), Models.GENERATED);

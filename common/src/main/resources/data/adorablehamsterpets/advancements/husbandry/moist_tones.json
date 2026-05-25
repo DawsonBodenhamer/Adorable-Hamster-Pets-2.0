@@ -1,0 +1,30 @@
+{
+  "parent": "adorablehamsterpets:husbandry/throw_hamster",
+  "display": {
+    "icon": {
+      "item": "adorablehamsterpets:music_disc_cheese"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.moist_tones.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.moist_tones.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "obtained_disc": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": ["adorablehamsterpets:music_disc_cheese"]
+          }
+        ]
+      }
+    }
+  }
+}

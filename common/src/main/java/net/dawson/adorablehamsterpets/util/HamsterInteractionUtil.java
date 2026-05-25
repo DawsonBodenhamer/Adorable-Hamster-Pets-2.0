@@ -153,7 +153,7 @@ public final class HamsterInteractionUtil {
                     );
 
                     // Trigger Celebration Animation
-                    hamster.triggerAnimOnServer("mainController", "anim_hamster_celebrate_chase");
+                    hamster.triggerAnimOnServer("mainController", "anim_hamster_quick_bounce");
 
                     // 4. Schedule Gifting Sequence
                     long baseTime = hamster.getWorld().getTime();
@@ -464,7 +464,7 @@ public final class HamsterInteractionUtil {
                 hamster.setCelebratingRetrieval(true);
                 hamster.setCelebrationTarget(player);
                 hamster.setCelebrationRetrievalTicks(30);
-                hamster.triggerAnimOnServer("mainController", "anim_hamster_celebrate_chase");
+                hamster.triggerAnimOnServer("mainController", "anim_hamster_quick_bounce");
 
                 hamster.getWorld().playSound(null, hamster.getBlockPos(), ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, hamster.getRandom()), SoundCategory.NEUTRAL, 1.0f, hamster.getSoundPitch());
                 if (!retrievedStack.isEmpty()) {

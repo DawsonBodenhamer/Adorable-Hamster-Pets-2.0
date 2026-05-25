@@ -414,5 +414,13 @@
   "hamster_head_shake_fast": {
     "subtitle": "subtitles.adorablehamsterpets.hamster_head_shake",
     "sounds": [ "adorablehamsterpets:hamster_head_shake_fast" ]
+  },
+  "ahp_theme_song": {
+    "sounds": [
+      {
+        "name": "adorablehamsterpets:records/ahp_theme_song",
+        "stream": true
+      }
+    ]
   }
 }

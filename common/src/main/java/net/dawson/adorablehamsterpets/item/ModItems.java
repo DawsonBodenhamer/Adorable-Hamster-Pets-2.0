@@ -9,12 +9,15 @@ import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.item.custom.*;
+import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.item.*;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Rarity;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,9 +113,23 @@ public class ModItems {
     public static final RegistrySupplier<Item> CHEESE = registerItem("cheese",
             () -> new CheeseItem(new Item.Settings().food(ModFoodComponents.CHEESE)));
 
+    // --- Music Discs ---
+    public static final RegistrySupplier<Item> MUSIC_DISC_CHEESE = registerItem("music_disc_cheese",
+            () -> new MusicDiscItem(15, ModSounds.AHP_THEME_SONG.get(), new Item.Settings().maxCount(1).rarity(Rarity.RARE), 159) {
+                @Override
+                public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+                    if (Configs.AHP.enableItemTooltips) {
+                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.music_disc_cheese.hint").formatted(Formatting.GOLD));
+                    } else if (!Platform.isModLoaded("emi")) {
+                        tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
+                    }
+                    super.appendTooltip(stack, world, tooltip, context);
+                }
+            });
+
     // --- Acorn & Resources ---
     public static final RegistrySupplier<Item> ACORN = registerItem("acorn",
-            () -> new Item(new Item.Settings()) {
+            () -> new AliasedBlockItem(Blocks.OAK_SAPLING, new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
                     if (Configs.AHP.enableItemTooltips) {
@@ -124,7 +141,6 @@ public class ModItems {
                     super.appendTooltip(stack, world, tooltip, context);
                 }
             });
-
     public static final RegistrySupplier<Item> ACORN_HAT = registerItem("acorn_hat",
             () -> new Item(new Item.Settings()) {
                 @Override

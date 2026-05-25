@@ -77,6 +77,11 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
                 return false;
             }
 
+            // Reduce wander frequency by 50% if dancing to music disc
+            if (this.hamster.isDancing()) {
+                interval *= 2;
+            }
+
             // Dynamically update the chance based on config
             this.setChance(interval);
 
@@ -111,16 +116,28 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
             AdorableHamsterPets.LOGGER.trace("[WanderGoal-{}] tick (Zoomies): Navigation is idle. Finding new target.", this.hamster.getId());
             Vec3d newTarget = this.getWanderTarget();
             if (newTarget != null) {
-                this.mob.getNavigation().startMovingTo(newTarget.x, newTarget.y, newTarget.z, BUFFED_WANDER_SPEED);
+                // Apply 50% speed reduction if dancing
+                double activeSpeed = BUFFED_WANDER_SPEED;
+                if (this.hamster.isDancing()) {
+                    activeSpeed *= 0.5;
+                }
+                this.mob.getNavigation().startMovingTo(newTarget.x, newTarget.y, newTarget.z, activeSpeed);
             }
         }
         // For normal wandering, the superclass tick is empty, so we don't need to call it.
     }
 
+
     @Override
     public void start() {
         // --- Determine Speed Dynamically ---
         double currentSpeed = this.hamster.hasGreenBeanBuff() ? BUFFED_WANDER_SPEED : this.speed;
+
+        // Reduce speed by 50% if dancing
+        if (this.hamster.isDancing()) {
+            currentSpeed *= 0.5;
+        }
+
         this.mob.getNavigation().startMovingTo(this.targetX, this.targetY, this.targetZ, currentSpeed);
 
         this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName() + (this.hamster.hasGreenBeanBuff() ? " (Zoomies)" : ""));

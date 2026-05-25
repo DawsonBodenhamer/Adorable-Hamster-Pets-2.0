@@ -81,5 +81,9 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
         // 7. Vanilla Trimmable Armor Wrapper
         getOrCreateTagBuilder(ItemTags.TRIMMABLE_ARMOR)
                 .addTag(HAMSTER_ARMOR_ENCHANTABLE);
+
+        // 8. Music Discs (only neccessary on 1.20.1)
+        getOrCreateTagBuilder(ItemTags.MUSIC_DISCS)
+                .add(ModItems.MUSIC_DISC_CHEESE.get());
     }
 }

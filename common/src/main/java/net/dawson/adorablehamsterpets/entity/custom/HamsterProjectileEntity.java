@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.entity.custom;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
+import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterNbtUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPhysicsUtil;
@@ -19,8 +20,10 @@ import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.mob.CreeperEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.thrown.ThrownEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
@@ -28,6 +31,7 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -231,6 +235,11 @@ public class HamsterProjectileEntity extends ThrownEntity {
                     if (damaged) {
                         boolean isDeath = livingHit.isDead() || livingHit.getHealth() <= 0.0f;
                         impactSound = ModSounds.getDynamicEntitySound(hitEntity, isDeath, damageSource);
+
+                        // Music Disc Drop Logic
+                        if (isDeath && livingHit instanceof CreeperEntity creeper && creeper.shouldRenderOverlay()) {
+                            ItemScatterer.spawn(this.getWorld(), creeper.getX(), creeper.getY(), creeper.getZ(), new ItemStack(ModItems.MUSIC_DISC_CHEESE.get()));
+                        }
 
                         // Apply damage
                         livingHit.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 20, 0, false, false, false));
