@@ -5226,7 +5226,7 @@
 				}
 			}
 		},
-		"anim_hamster_quick_bounce_on_back_legs": {
+		"anim_hamster_quick_bounce_looking_up": {
 			"animation_length": 0.7,
 			"bones": {
 				"body_parent": {
@@ -16521,7 +16521,7 @@
 				}
 			}
 		},
-		"anim_hamster_begging": {
+		"anim_hamster_bouncing": {
 			"loop": true,
 			"animation_length": 3,
 			"bones": {
@@ -17223,7 +17223,7 @@
 				}
 			}
 		},
-		"anim_hamster_celebrate_chase": {
+		"anim_hamster_quick_bounce": {
 			"animation_length": 1.5,
 			"bones": {
 				"body_parent": {

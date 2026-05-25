@@ -49,6 +49,10 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - Renaming a hamster "Hamtaro" gives it a special texture. This functions identically to the "Sweet Potato" easter egg. Both base textures provided by [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!
 - **New "Panda" Overlay Pattern**
   - Added a new "Panda" fur overlay pattern to the genetics engine, allowing you to breed panda-like hamsters. To get a "Panda" hamster, you'll need a Black base coat and a white overlay with the new "Panda" pattern. These can't be found in the wild, since black hamsters do not spawn with white overlays in the wild (breaks their camouflage). Thanks to [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) for the Panda inspiration!
+- **Cheese Music Disc**
+  - A legendary new music disc with The Adorable Hamster Pets theme song, created by yours truly. Can only be obtained by orchestrating a high-velocity, terminal collision between an airborne hamster and a Charged Creeper.
+  - If playing in a Jukebox, nearby hamsters will dance to the music.
+  - Added the "Moist Tones" advancement.
 - **Free Bed Respawn Toggle**
   - Added a config toggle to allow hamsters to respawn at their linked beds indefinitely without requiring a tribute item charge (like a Totem of Undying). Disabled by default.
 - **Dynamic Trees Compatibility**
@@ -79,6 +83,8 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - Green Beans can now be cooked into Steamed Green Beans using a Smoker, which cooks them twice as fast as a standard furnace.
 - **Compostable Sunflowers**
   - The custom Adorable Hamster Pets Sunflower can now be placed in a composter (matching the 65% compost chance of vanilla sunflowers).
+- **Plantable Acorns**
+  - Acorns can now be planted directly on dirt/grass to grow vanilla Oak Trees. Once placed they will become Oak Saplings.
 
 ### Changed
 - **Dismount Keybinding Simplification**

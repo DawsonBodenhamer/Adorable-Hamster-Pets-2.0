@@ -173,6 +173,7 @@ public class ModSounds {
     public static final RegistrySupplier<SoundEvent> HAMSTER_ACORN_SEARCH_LOOP = registerSoundEvent("hamster_acorn_search_in_leaves");
 
     // --- Generic Misc Sounds ---
+    public static final RegistrySupplier<SoundEvent> AHP_THEME_SONG = registerSoundEvent("ahp_theme_song");
     public static final RegistrySupplier<SoundEvent> HAMSTER_DING = registerSoundEvent("ding");
     public static final RegistrySupplier<SoundEvent> MAGIC_SHIMMER = registerSoundEvent("magic_shimmer");
     public static final RegistrySupplier<SoundEvent> MAGIC_SPARKLING1 = registerSoundEvent("magic_sparkling1");

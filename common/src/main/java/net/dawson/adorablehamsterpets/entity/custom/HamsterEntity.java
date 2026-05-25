@@ -255,6 +255,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int IS_BEING_PET_FLAG = 1 << 27;
     public static final int AGGRESSION_STATE_BIT_1 = 1 << 28;
     public static final int AGGRESSION_STATE_BIT_2 = 1 << 29;
+    public static final int IS_DANCING_FLAG = 1 << 30;
 
     // --- Data Trackers ---
     public static final TrackedData<Integer> HAMSTER_FLAGS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -310,7 +311,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation RUNNING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_running");
     private static final RawAnimation WALKING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_walking");
     private static final RawAnimation SPRINTING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sprinting");
-    private static final RawAnimation BEGGING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_begging");
+    private static final RawAnimation BOUNCING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_bouncing");
     private static final RawAnimation IDLE1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_idle1");
     private static final RawAnimation IDLE2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_idle2");
     private static final RawAnimation IDLE_LOOKING_UP1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_idle_looking_up1");
@@ -325,13 +326,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation POUNCE_ON_ITEM_ANIM = RawAnimation.begin().thenPlay("anim_hamster_pounce_on_item");
     private static final RawAnimation TAUNTING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_taunt_with_item");
     private static final RawAnimation PRESENTING_ITEM_ANIM = RawAnimation.begin().thenPlay("anim_hamster_presenting_item");
-    private static final RawAnimation CELEBRATE_CHASE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_celebrate_chase");
+    private static final RawAnimation QUICK_BOUNCE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_quick_bounce");
     private static final RawAnimation CHEEK_UNLOAD_ANIM = RawAnimation.begin().thenPlay("anim_hamster_cheek_unload");
     private static final RawAnimation CROUCH_INVESTIGATE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_crouch_and_investigate");
     private static final RawAnimation LAYING_DOWN_HEAD_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_head");
     private static final RawAnimation LAYING_DOWN_RIGHT_SHOULDER_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_right_shoulder");
     private static final RawAnimation LAYING_DOWN_LEFT_SHOULDER_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_left_shoulder");
-    private static final RawAnimation QUICK_BOUNCE_ON_BACK_LEGS_ANIM = RawAnimation.begin().thenPlay("anim_hamster_quick_bounce_on_back_legs");
+    private static final RawAnimation QUICK_BOUNCE_LOOKING_UP = RawAnimation.begin().thenPlay("anim_hamster_quick_bounce_looking_up");
     private static final RawAnimation ASSUME_THROW_POSE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_assume_throw_pose");
     private static final RawAnimation WAITING_FOR_THROW_ANIM = RawAnimation.begin().thenPlay("anim_hamster_waiting_for_throw");
     private static final RawAnimation RECEIVING_PETS_ANIM = RawAnimation.begin().thenPlay("anim_hamster_receiving_pets");
@@ -541,6 +542,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void setGeneticsVisualizerMember(boolean isGeneticsVisualizerMember) { setHamsterFlag(GENETICS_VISUALIZER_MEMBER_FLAG, isGeneticsVisualizerMember); }
     public boolean isBeingPet() { return getHamsterFlag(IS_BEING_PET_FLAG); }
     public void setBeingPet(boolean beingPet) { setHamsterFlag(IS_BEING_PET_FLAG, beingPet); }
+    public boolean isDancing() { return getHamsterFlag(IS_DANCING_FLAG); }
+    public void setDancing(boolean dancing) { setHamsterFlag(IS_DANCING_FLAG, dancing); }
     // --- Riding State Accessors ---
     public int getRiderJumpCooldown() { return this.riderJumpCooldown; }
     public void setRiderJumpCooldown(int ticks) { this.riderJumpCooldown = ticks; }
@@ -1898,6 +1901,19 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- 5. Other Non-Movement Tick Logic ---
+        // Jukebox Dancing
+        if (!world.isClient() && this.age % 20 == 0) {
+            boolean dancing = false;
+            if (!this.isSitting() && !this.isSleeping() && !this.isKnockedOut() && !this.isSulking()) {
+                dancing = HamsterAIUtil.isCheeseSongPlayingNearby(this);
+            }
+
+            if (this.isDancing() != dancing) {
+                this.setDancing(dancing);
+            }
+        }
+
+        // Miscellaneous
         if (this.isRefusingFood() && refuseTimer > 0) {
             if (--refuseTimer <= 0) this.setRefusingFood(false);
         }
@@ -2052,7 +2068,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- Found Diamond Celebration ---
             if (this.isCelebratingDiamond()) {
-                return event.setAndContinue(BEGGING_ANIM); // Reuse begging animation for celebration
+                return event.setAndContinue(BOUNCING_ANIM);
+            }
+
+            // --- Jukebox Dancing ---
+            if (this.isDancing()) {
+                return event.setAndContinue(BOUNCING_ANIM);
             }
 
             // --- Sleeping States ---
@@ -2144,7 +2165,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
              // --- Begging State ---
             if (this.isBegging()) {
-                 return event.setAndContinue(BEGGING_ANIM);
+                 return event.setAndContinue(BOUNCING_ANIM);
             }
 
             // --- Idle Looking Up State ---
@@ -2170,7 +2191,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             .triggerableAnim("sitting_headshake", SITTING_HEADSHAKE_ANIM)
             .triggerableAnim("moving_headshake", MOVING_HEADSHAKE_ANIM)
             .triggerableAnim("attack", ATTACK_ANIM)
-            .triggerableAnim("quick_bounce_on_back_legs", QUICK_BOUNCE_ON_BACK_LEGS_ANIM)
+            .triggerableAnim("quick_bounce_on_back_legs", QUICK_BOUNCE_LOOKING_UP)
             .triggerableAnim("sit1", SIT1_ANIM)
             .triggerableAnim("sit2", SIT2_ANIM)
             .triggerableAnim("sit3", SIT3_ANIM)
@@ -2188,7 +2209,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             .triggerableAnim("anim_hamster_stand_settle_sleep3", STAND_SETTLE_SLEEP3_ANIM)
             .triggerableAnim("anim_hamster_sulk", SULK_ANIM)
             .triggerableAnim("anim_hamster_pounce_on_item", POUNCE_ON_ITEM_ANIM)
-            .triggerableAnim("anim_hamster_celebrate_chase", CELEBRATE_CHASE_ANIM)
+            .triggerableAnim("anim_hamster_quick_bounce", QUICK_BOUNCE_ANIM)
             .triggerableAnim("anim_hamster_cheek_unload", CHEEK_UNLOAD_ANIM)
             .triggerableAnim("anim_hamster_crouch_and_investigate", CROUCH_INVESTIGATE_ANIM)
             .triggerableAnim("anim_hamster_assume_throw_pose", ASSUME_THROW_POSE_ANIM)

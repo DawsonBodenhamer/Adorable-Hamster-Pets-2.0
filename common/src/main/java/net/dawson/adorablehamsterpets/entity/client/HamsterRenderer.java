@@ -436,6 +436,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                 }
                 break;
             case "hamster_bounce_sound":
+                if (animatable.isDancing()) break; // Mute bounce sound when dancing to music disc
                 SoundEvent bounceSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BOUNCE_SOUNDS, animatable.getRandom());
                 if (bounceSound != null) {
                     float basePitch = animatable.getSoundPitch();
