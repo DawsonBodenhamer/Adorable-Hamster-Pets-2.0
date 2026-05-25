@@ -46,7 +46,7 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
     @Override
     protected void configure(RegistryWrapper.WrapperLookup arg) {
         // 1. Define Hamster Armor Group
-        // Registering my own tags for future-proofing but they don't serve a purpose on 1.20.1
+        // Some of these tags don't serve a purpose on 1.20.1, so they are commmented out
         getOrCreateTagBuilder(HAMSTER_ARMOR_ENCHANTABLE)
                 .add(ModItems.HAMSTER_ARMOR_ACORN.get())
                 .add(ModItems.HAMSTER_ARMOR_IRON.get())
@@ -54,7 +54,7 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
                 .add(ModItems.HAMSTER_ARMOR_DIAMOND.get())
                 .add(ModItems.HAMSTER_ARMOR_NETHERITE.get());
 
-            // Only works on 1.21.1
+            // 2-6 only work on 1.21.1
 //        // 2. Add to Vanilla Durability (Enables Unbreaking/Mending)
 //        getOrCreateTagBuilder(ItemTags.DURABILITY_ENCHANTABLE)
 //                .addTag(HAMSTER_ARMOR_ENCHANTABLE);
@@ -77,5 +77,9 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
 //        // 6. Lectern Books Wrapper
 //        getOrCreateTagBuilder(ItemTags.LECTERN_BOOKS)
 //                .add(ModItems.HAMSTER_GUIDE_BOOK.get());
+
+        // 7. Vanilla Trimmable Armor Wrapper
+        getOrCreateTagBuilder(ItemTags.TRIMMABLE_ARMOR)
+                .addTag(HAMSTER_ARMOR_ENCHANTABLE);
     }
 }
