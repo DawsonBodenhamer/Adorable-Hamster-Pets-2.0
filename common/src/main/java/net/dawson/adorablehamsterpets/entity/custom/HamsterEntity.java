@@ -1128,18 +1128,33 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         return intersects;
     }
 
-    // --- Target Exclusion Override ---
+    // --- Target Exclusion Overrides ---
+    @Override
+    public boolean canTarget(LivingEntity target) {
+        if (this.getAggressionState() == AggressionState.PACIFIST) {
+            return false;
+        }
+        return super.canTarget(target);
+    }
     @Override
     public boolean canAttackWithOwner(LivingEntity target, LivingEntity owner) {
-        // --- 1. Check for Pacifist Mode ---
+        // 1. Check for pacifist mode
         if (this.getAggressionState() == AggressionState.PACIFIST) {
+            return false;
+        }
+
+        // 2. Stale target prevention for new tames
+        if (target == owner.getAttacking() && owner.age - owner.getLastAttackTime() > 100) {
+            return false;
+        }
+        if (target == owner.getAttacker() && owner.age - owner.getLastAttackedTime() > 100) {
             return false;
         }
 
         UUID ownerUuid = owner.getUuid();
         AdorableHamsterPets.LOGGER.trace("[canAttackWithOwner] Hamster: {}, Target: {}, Owner: {}", this.getName().getString(), target.getName().getString(), owner.getName().getString());
 
-        // --- 2. Basic Exclusions (Self, Owner) ---
+        // 3. Basic exclusions (self, owner)
         if (target == this || target == owner) {
             return false;
         }
@@ -1147,12 +1162,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             return false;
         }
 
-        // --- 3. Exclude Creepers and Armor Stands ---
+        // 4. Exclude Creepers and Armor Stands
         if (target instanceof CreeperEntity || target instanceof ArmorStandEntity) {
             return false;
         }
 
-        // --- 4. Explicitly Check for TameableEntity ---
+        // 5. Explicitly check for TameableEntity
         if (target instanceof TameableEntity tameablePet) {
             UUID petOwnerUuid = tameablePet.getOwnerUuid();
             if (petOwnerUuid != null && petOwnerUuid.equals(ownerUuid)) {
@@ -1161,7 +1176,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 5. Explicitly Check for AbstractHorseEntity ---
+        // 6. Explicitly check for AbstractHorseEntity
         else if (target instanceof net.minecraft.entity.passive.AbstractHorseEntity horsePet) {
             Entity horseOwnerEntity = horsePet.getOwner();
             if (horseOwnerEntity != null && horseOwnerEntity.getUuid().equals(ownerUuid)) {
@@ -1170,7 +1185,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 6. General Ownable Check (Fallback) ---
+        // 7. General Ownable check (fallback)
         else if (target instanceof Ownable ownableFallback) {
             Entity fallbackOwnerEntity = ownableFallback.getOwner();
             if (fallbackOwnerEntity != null && fallbackOwnerEntity.getUuid().equals(ownerUuid)) {
@@ -1179,7 +1194,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 7. Default: Allow Attack ---
+        // 8. Default: allow attack
         return true;
     }
 
@@ -1247,8 +1262,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (result != ActionResult.PASS) return result;
 
             // Vanilla Fallback
-            boolean isPotentialFood = ConfigDataCache.isStandardFood(stack) || ConfigDataCache.isBuffFood(stack) || ConfigDataCache.isPouchUnlockFood(stack);
-            if (!player.isSneaking() && !isPotentialFood && !ConfigDataCache.isLureItem(stack)) {
+            if (!player.isSneaking()) {
                 ActionResult vanillaResult = super.interactMob(player, hand);
                 if (vanillaResult.isAccepted()) return vanillaResult;
 
@@ -1817,16 +1831,19 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // --- Pacifist Break on Owner Attack ---
             if (Configs.AHP.pacifistBreakOnOwnerAttack && this.getAggressionState() == AggressionState.PACIFIST && this.isTamed()) {
                 if (this.getOwner() instanceof PlayerEntity owner && owner.getAttacking() != null) {
-                    this.setAggressionState(AggressionState.STANDARD);
+                    // Check if the attack was recent to prevent stale targets
+                    if (owner.age - owner.getLastAttackTime() < 100) {
+                        this.setAggressionState(AggressionState.STANDARD);
 
-                    // Audio Feedback
-                    SoundEvent sound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_HURT_SOUNDS, this.getRandom());
-                    if (sound != null) {
-                        this.getWorld().playSound(null, this.getBlockPos(), sound, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+                        // Audio Feedback
+                        SoundEvent sound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_HURT_SOUNDS, this.getRandom());
+                        if (sound != null) {
+                            this.getWorld().playSound(null, this.getBlockPos(), sound, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+                        }
+
+                        // Visual Feedback
+                        ParticleEffectsUtil.spawnParticlesOnEntity(this, ParticleTypes.ANGRY_VILLAGER, 5, 0.5, 0.5, 0.0, 0.2);
                     }
-
-                    // Visual Feedback
-                    ParticleEffectsUtil.spawnParticlesOnEntity(this, ParticleTypes.ANGRY_VILLAGER, 5, 0.5, 0.5, 0.0, 0.2);
                 }
             }
         }

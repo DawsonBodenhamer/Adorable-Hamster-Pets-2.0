@@ -151,6 +151,8 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
 - **Guidebook Server Synchronization**
   - Resolved an issue where the "Missing Guidebook" chat warning would trigger repeatedly across multiple game sessions when playing on a dedicated server due to a configuration synchronization flaw.
   - Fixed an issue where players were falsely led to believe they could locally disable Guidebook Auto-Delivery on dedicated servers. These settings now properly sync from the server to the client's config UI, reflecting the server's true authority over the book's delivery.
+- **Food Interactions**
+  - Fixed a bug where players could not toggle their hamster's sitting state if they were holding Hamster Food Mix or other food items.
 
 ---
 
