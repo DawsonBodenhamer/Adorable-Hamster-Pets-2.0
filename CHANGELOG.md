@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # **The Punchy Patch**
 
-In addition to a few bug fixes and a bunch of new quality-of-life features, this patch introduces a new batch of super cute, first-person animations to your rodent-handling experience, courtesy of the amazing [**Punchy**](https://modrinth.com/mod/punchy-fpa) mod! I've been working closely with [**@Dev Punchy Man**](https://modrinth.com/mod/punchy-fpa) to overhaul how it feels to pick up, pet, yeet, and dismount your hamsters.
+In addition to a few bug fixes and a bunch of new quality-of-life features (including hamster armor trims!), this patch introduces a new batch of super cute, first-person animations to your rodent-handling experience, courtesy of the amazing [**Punchy**](https://modrinth.com/mod/punchy-fpa) mod! I've been working closely with [**@Dev Punchy Man**](https://modrinth.com/mod/punchy-fpa) to overhaul how it feels to pick up, pet, yeet, and dismount your hamsters.
 
 ### Added
 - **New First-Person Animations (Requires Punchy v2.6.0+)**
@@ -40,6 +40,9 @@ In addition to a few bug fixes and a bunch of new quality-of-life features, this
   - **Hamster Tips Guidebook Entry**
     - The *Hamster Tips* guidebook now features a dedicated "Aggression States" page to explain the new mechanics. It utilizes dynamic text injection to accurately display your configured trigger items, ensuring the book is always up-to-date even if a modpack creator changes the required diets.
   - **Pacifist Break:** Added a `Pacifist Break on Attack` config toggle (false by default). When enabled, a passive hamster will automatically revert to neutral if it sees you attacking something.
+- **Armor Trims**
+  - Hamster Armor can now be customized with vanilla armor trims in the Smithing Table.
+  - The following trims are currently available: Coast, Border, Vex, Eye, Sentry, Wild
 - **"Hamtaro" Easter Egg**
   - Renaming a hamster "Hamtaro" gives it a special texture. This functions identically to the "Sweet Potato" easter egg. Both base textures provided by [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!
 - **New "Panda" Overlay Pattern**

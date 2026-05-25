@@ -12,7 +12,9 @@ import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.trim.ArmorTrim;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ColorHelper;
 
@@ -30,6 +32,7 @@ public class HamsterTextureUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private static final Map<String, Identifier> CACHED_TEXTURES = new ConcurrentHashMap<>();
+    private static final Map<String, int[]> TRIM_PALETTE_CACHE = new ConcurrentHashMap<>();
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Static Utilities
@@ -56,9 +59,18 @@ public class HamsterTextureUtil {
         String armorMaterial = "none";
         Identifier armorTextureId = null;
 
+        String trimPattern = "none";
+        String trimMaterialAsset = "none";
+
         if (Configs.AHP.enableArmorVisuals && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
             armorMaterial = armorItem.getMaterial().getName();
             armorTextureId = armorItem.getEntityTexture();
+
+            ArmorTrim trim = armorStack.get(DataComponentTypes.TRIM);
+            if (trim != null) {
+                trimPattern = trim.getPattern().getKey().map(key -> key.getValue().getPath()).orElse("none");
+                trimMaterialAsset = trim.getMaterial().value().assetName();
+            }
         }
 
         boolean hasAcornHat = false;
@@ -73,7 +85,7 @@ public class HamsterTextureUtil {
         boolean hasPinkPetals = hamster.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE) > 0;
 
         // --- Generate Cache Key ---
-        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_h%b_p%b_sp%b_hm%b",
+        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_tp%s_tm%s_h%b_p%b_sp%b_hm%b",
                 genome.basePaletteId(),
                 genome.wildOverlayPattern(),
                 genome.wildOverlayPaletteId() != null ? genome.wildOverlayPaletteId() : "",
@@ -81,6 +93,8 @@ public class HamsterTextureUtil {
                 genome.breedingOverlayPaletteId() != null ? genome.breedingOverlayPaletteId() : "",
                 redEyes,
                 armorMaterial,
+                trimPattern,
+                trimMaterialAsset,
                 hasAcornHat,
                 hasPinkPetals,
                 isSweetPotato,
@@ -146,12 +160,21 @@ public class HamsterTextureUtil {
                 eyeLayer.close();
             }
 
-            // --- 6. Armor Layer ---
+            // --- 6.1 Armor Layer ---
             if (armorTextureId != null) {
                 NativeImage armorLayer = readRawImage(armorTextureId.getPath());
                 if (armorLayer != null) {
                     blendImages(composite, armorLayer);
                     armorLayer.close();
+                }
+
+                // --- 6.2 Armor Trim Layer ---
+                if (!trimPattern.equals("none") && !trimMaterialAsset.equals("none")) {
+                    NativeImage trimLayer = createTrimLayerImage(trimPattern, trimMaterialAsset);
+                    if (trimLayer != null) {
+                        blendImages(composite, trimLayer);
+                        trimLayer.close();
+                    }
                 }
             }
 
@@ -256,9 +279,77 @@ public class HamsterTextureUtil {
         return maskImage;
     }
 
-    /* ──────────────────────────────────────────────────────────────────────────────
-     *        Private Helpers
-     * ────────────────────────────────────────────────────────────────────────────*/
+    /**
+     * Takes Hamster Armor Trim grayscale images and swaps the pixels with vanilla's material palette.
+     */
+    private static NativeImage createTrimLayerImage(String patternName, String materialAssetName) {
+        // 1. Get 8-color base palette and 8-color target material palette
+        int[] basePalette = getOrLoadVanillaTrimPalette("trim_palette");
+        int[] materialPalette = getOrLoadVanillaTrimPalette(materialAssetName);
+
+        if (basePalette == null || materialPalette == null) {
+            return null; // Missing vanilla resource, silently fail
+        }
+
+        // 2. Load grayscale pattern mask
+        NativeImage trimMask = readRawImage("textures/entity/hamster/armor/trims/hamster_armor_trim_" + patternName + ".png");
+        if (trimMask == null) {
+            return null; // If player applied trim I don't have a texture for yet
+        }
+
+        // 3. Pixel-by-pixel swap
+        for (int y = 0; y < trimMask.getHeight(); y++) {
+            for (int x = 0; x < trimMask.getWidth(); x++) {
+                int pixelColor = trimMask.getColor(x, y);
+                int alpha = ColorHelper.Abgr.getAlpha(pixelColor);
+
+                if (alpha == 0) continue; // Skip transparent pixels
+
+                // Strip alpha for exact RGB comparison (NativeImage uses ABGR)
+                int rgb = pixelColor & 0x00FFFFFF;
+
+                // Check if this pixel matches any of the 8 vanilla grays
+                for (int i = 0; i < 8; i++) {
+                    if (rgb == (basePalette[i] & 0x00FFFFFF)) {
+                        // Match found, swap RGB from material palette but keep my mask's alpha
+                        int newRgb = materialPalette[i] & 0x00FFFFFF;
+                        trimMask.setColor(x, y, newRgb | (alpha << 24));
+                        break;
+                    }
+                }
+            }
+        }
+
+        return trimMask;
+    }
+
+    /**
+    * Fetches and caches the 8-pixel wide color palette from vanilla Minecraft's files
+    */
+    private static int[] getOrLoadVanillaTrimPalette(String assetName) {
+        return TRIM_PALETTE_CACHE.computeIfAbsent(assetName, key -> {
+            Identifier paletteId = Identifier.of("minecraft", "textures/trims/color_palettes/" + key + ".png");
+
+            try {
+                var resource = MinecraftClient.getInstance().getResourceManager().getResource(paletteId);
+                if (resource.isPresent()) {
+                    try (NativeImage image = NativeImage.read(resource.get().getInputStream())) {
+                        // Ensure image is at least 8 pixels wide
+                        int width = Math.min(8, image.getWidth());
+                        int[] colors = new int[width];
+
+                        for (int i = 0; i < width; i++) {
+                            colors[i] = image.getColor(i, 0);
+                        }
+                        return colors;
+                    }
+                }
+            } catch (Exception e) {
+                AdorableHamsterPets.LOGGER.error("Failed to load vanilla trim palette: {}", paletteId, e);
+            }
+            return null; // Return null if failed to load to prevent caching an empty array
+        });
+    }
 
     /**
      * Reads a raw PNG image directly from the resource manager.

@@ -75,5 +75,9 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
         // 6. Lectern Books Wrapper
         getOrCreateTagBuilder(ItemTags.LECTERN_BOOKS)
                 .add(ModItems.HAMSTER_GUIDE_BOOK.get());
+
+        // 7. Vanilla Trimmable Armor Wrapper
+        getOrCreateTagBuilder(ItemTags.TRIMMABLE_ARMOR)
+                .addTag(HAMSTER_ARMOR_ENCHANTABLE);
     }
 }
