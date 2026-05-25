@@ -996,7 +996,6 @@ public class AhpConfig extends Config {
     private final ValidatedField<Boolean> isArmorVisualsEnabled = new ValidatedBoolean(true).map(b -> b, b -> enableArmorVisuals);
 
     @NonSync
-    @ConfigGroup.Pop
     @Translatable.Name("Render Acorn Hat")
     @Translatable.Desc("Determines whether you are able to see the jaunty little Acorn Hat when hamsters are wearing the base Acorn Armor. Does not affect what other players see, and does not apply to the standalone Acorn Hat accessory.")
     public ValidatedCondition<Boolean> renderAcornHat = new ValidatedBoolean(true)
