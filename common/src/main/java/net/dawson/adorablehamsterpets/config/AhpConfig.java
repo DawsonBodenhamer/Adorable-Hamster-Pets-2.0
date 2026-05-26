@@ -878,6 +878,10 @@ public class AhpConfig extends Config {
     @Translatable.Desc("How many theoretical babies the 3D visualizer calculates every tick (20 ticks = 1 second) to build the probability particle cloud. Each particle spawned represents a baby hamster. Higher numbers create a denser, clearer picture of the genetic potential.")
     public ValidatedInt simulatedOffspringPerTick = new ValidatedInt(20, 300, 1);
 
+    @Translatable.Name("Continuous Genetics Cylinder")
+    @Translatable.Desc("If true, the particles used in the genetics visualization command to mark the edge of the cylinder will spawn continuously. If false, they will only spawn for the first second to indicate the edges, then they will disappear.")
+    public boolean continuousGeneticsCylinder = true;
+
     @NonSync
     @Translatable.Name("Reset Your Breeding History")
     public ConfigAction resetBreedingHistory = new ConfigAction.Builder()

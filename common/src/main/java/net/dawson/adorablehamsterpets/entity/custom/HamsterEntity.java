@@ -1435,22 +1435,24 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- Cylinder Visuals for 3D Spawning Command ---
             if (this.is3dCenter && !this.getWorld().isClient()) {
-                BlockPos cylinderBase = new BlockPos(this.getBlockPos().getX(), this.parsed3dY, this.getBlockPos().getZ());
-                double bobbingAmplitude = this.parsed3dScale / 2.0;
-                double yOffset = bobbingAmplitude - 0.5;
+                if (Configs.AHP.continuousGeneticsCylinder || this.age <= 20) {
+                    BlockPos cylinderBase = new BlockPos(this.getBlockPos().getX(), this.parsed3dY, this.getBlockPos().getZ());
+                    double bobbingAmplitude = this.parsed3dScale / 2.0;
+                    double yOffset = bobbingAmplitude - 0.5;
 
-                ParticleEffectsUtil.spawnSpinningRing(
-                        this.getWorld(),
-                        cylinderBase,
-                        ParticleTypes.END_ROD,
-                        250,
-                        this.parsed3dScale,
-                        0.0,
-                        0.08,
-                        bobbingAmplitude,
-                        0.0,
-                        yOffset
-                );
+                    ParticleEffectsUtil.spawnSpinningRing(
+                            this.getWorld(),
+                            cylinderBase,
+                            ParticleTypes.END_ROD,
+                            250,
+                            this.parsed3dScale,
+                            0.0,
+                            0.08,
+                            bobbingAmplitude,
+                            0.0,
+                            yOffset
+                    );
+                }
             }
             return;
         }
