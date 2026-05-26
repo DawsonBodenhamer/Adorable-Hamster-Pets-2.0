@@ -1932,7 +1932,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // Jukebox Dancing
         if (!world.isClient() && this.age % 20 == 0) {
             boolean dancing = false;
-            if (!this.isSitting() && !this.isSleeping() && !this.isKnockedOut() && !this.isSulking()) {
+            boolean isSniffingForOre = this.getActiveCustomGoalDebugName().startsWith(HamsterSniffForOreGoal.class.getSimpleName());
+
+            if (!this.isSitting()
+                    && !this.isSleeping()
+                    && !this.isKnockedOut()
+                    && !this.isSulking()
+                    && !this.isPlayingTag()
+                    && !this.isCelebratingRetrieval()
+                    && !this.isCelebratingBaby()
+                    && !this.isCelebratingDiamond()
+                    && !isSniffingForOre) {
                 dancing = HamsterAIUtil.isCheeseSongPlayingNearby(this);
             }
 
