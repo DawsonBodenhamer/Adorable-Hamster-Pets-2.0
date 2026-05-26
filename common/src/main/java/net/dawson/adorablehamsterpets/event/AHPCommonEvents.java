@@ -15,9 +15,11 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.mixin.accessor.SlotAccessor;
+import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
@@ -31,16 +33,23 @@ import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.particle.BlockStateParticleEffect;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import vazkii.patchouli.api.PatchouliAPI;
@@ -139,6 +148,30 @@ public class AHPCommonEvents {
                 // Return success on client to swing hand and prevent placing/using item
                 return EventResult.interruptTrue();
             }
+        }
+
+        // --- 4. Sapling to Dead Bush Conversion ---
+        if (stack.isOf(Items.SHEARS) && state.isIn(BlockTags.SAPLINGS)) {
+            if (!world.isClient()) {
+                world.setBlockState(pos, Blocks.DEAD_BUSH.getDefaultState(), Block.NOTIFY_ALL);
+                world.playSound(null, pos, SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.BLOCKS, 1.0f, 1.0f);
+
+                if (player instanceof ServerPlayerEntity serverPlayer && !serverPlayer.getAbilities().creativeMode) {
+                    stack.damage(1, serverPlayer, LivingEntity.getSlotForHand(hand));
+                }
+
+                ParticleEffectsUtil.spawnParticles(
+                        world,
+                        Vec3d.ofCenter(pos),
+                        new BlockStateParticleEffect(ParticleTypes.BLOCK, state),
+                        15,
+                        new Vec3d(0.2, 0.2, 0.2),
+                        0.05
+                );
+            }
+
+            // Return interruptTrue to swing the hand and stop further interaction
+            return EventResult.interruptTrue();
         }
 
         return EventResult.pass();

@@ -53,6 +53,9 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - A legendary new music disc with The Adorable Hamster Pets theme song, created by yours truly. Can only be obtained by orchestrating a high-velocity, terminal collision between an airborne hamster and a Charged Creeper.
   - If playing in a Jukebox, nearby hamsters will dance to the music.
   - Added the "Moist Tones" advancement.
+- **Botanical Vandalism (Sapling Trimming)**
+  - You can now right-click any sapling with a pair of Shears to instantly turn it into a Dead Bush. This provides a much more accessible way to gather the necessary materials for crafting Hamster Bedding if you don't live near a desert.
+  - Added a new page to the *Hamster Tips* guidebook detailing this mechanic.
 - **Free Bed Respawn Toggle**
   - Added a config toggle to allow hamsters to respawn at their linked beds indefinitely without requiring a tribute item charge (like a Totem of Undying). Disabled by default.
 - **Dynamic Trees Compatibility**
