@@ -120,6 +120,11 @@ public class ModCommands {
 
         // --- 2. Genetics & Spawning Engine ---
         // OP Required
+        ahpRoot.then(CommandManager.literal("undo_last_spawn")
+                .requires(source -> source.hasPermissionLevel(2))
+                .executes(context -> HamsterSpawnCommandUtil.executeUndoLastSpawn(context.getSource()))
+        );
+
         ahpRoot.then(CommandManager.literal("spawn_all_bases_2D")
                 .requires(source -> source.hasPermissionLevel(2))
                 .then(CommandManager.argument("with_wild_overlays", BoolArgumentType.bool())
@@ -139,13 +144,16 @@ public class ModCommands {
                 .then(CommandManager.argument("with_wild_overlays", BoolArgumentType.bool())
                         .then(CommandManager.argument("with_sample_breeding_overlays", BoolArgumentType.bool())
                                 .then(CommandManager.argument("author", StringArgumentType.word()).suggests(AUTHOR_SUGGESTIONS)
-                                        .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), BoolArgumentType.getBool(context, "with_sample_breeding_overlays"), StringArgumentType.getString(context, "author")))
+                                        .then(CommandManager.argument("spacing_multiplier", DoubleArgumentType.doubleArg(0.1))
+                                                .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), BoolArgumentType.getBool(context, "with_sample_breeding_overlays"), StringArgumentType.getString(context, "author"), DoubleArgumentType.getDouble(context, "spacing_multiplier")))
+                                        )
+                                        .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), BoolArgumentType.getBool(context, "with_sample_breeding_overlays"), StringArgumentType.getString(context, "author"), 1.0))
                                 )
-                                .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), BoolArgumentType.getBool(context, "with_sample_breeding_overlays"), "all"))
+                                .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), BoolArgumentType.getBool(context, "with_sample_breeding_overlays"), "all", 1.0))
                         )
-                        .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), false, "all"))
+                        .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), false, "all", 1.0))
                 )
-                .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), false, false, "all"))
+                .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), false, false, "all", 1.0))
         );
 
         ahpRoot.then(CommandManager.literal("spawn_all_possible_permutations_THIS_CAN_BREAK_YOUR_WORLD")
