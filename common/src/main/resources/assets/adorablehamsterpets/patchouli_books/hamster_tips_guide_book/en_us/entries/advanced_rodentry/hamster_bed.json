@@ -37,6 +37,13 @@
       "text": "book.adorablehamsterpets.entry.hamster_bed.page4.body"
     },
     {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.hamster_bed.page4b.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.hamster_bed.page4b.body",
+      "text_color": "000000"
+    },
+    {
       "type": "patchouli:spotlight",
       "item": {
         "item": "adorablehamsterpets:hamster_bed_oak"

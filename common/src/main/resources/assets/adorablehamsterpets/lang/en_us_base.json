@@ -681,6 +681,8 @@
   "book.adorablehamsterpets.entry.hamster_bed.page2.body": "A hamster, <i>not</> actively stalking you.",
   "book.adorablehamsterpets.entry.hamster_bed.page3.body": "Here it is: the primary ingredient for the $(l:advanced_rodentry/hamster_bed#hamster_bed)<dark_green><b>Hamster Bed</>.$(br2)It also doubles as a portable, eco-friendly confetti cannon, but you didn't hear that from me.",
   "book.adorablehamsterpets.entry.hamster_bed.page4.body": "You'll need to combine:$(br)1. The finest debris the forest has to offer.$(br)2. Some twigs.$(br2)The result: incredible artisanal floor mulch.",
+  "book.adorablehamsterpets.entry.hamster_bed.page4b.header": "Botanical Vandalism",
+  "book.adorablehamsterpets.entry.hamster_bed.page4b.body": "Can't find a desert to scavenge Dead Bushes?$(br2)Take a pair of <b>Shears</> to any sapling and aggressively trim it until its will to live completely expires.$(br2)Boom. Instant Dead Bush.",
   "book.adorablehamsterpets.entry.hamster_bed.page5.body": "Ahh yes. The hamster bed.$(br2)It can be spiritually, emotionally, and digitally bonded to a single hamster.$(br2)The link can also be undone if you fused the bed to the wrong$(br)   hamster.",
   "book.adorablehamsterpets.entry.hamster_bed.page6.body": "<b>Right-click</> your tamed hamster with the bed item in hand to link them.$(br2)Now your hamster will blissfully ignore you and roam freely within range of the bed.",
   "book.adorablehamsterpets.entry.hamster_bed.page7.header": "Coordinate colors!",
