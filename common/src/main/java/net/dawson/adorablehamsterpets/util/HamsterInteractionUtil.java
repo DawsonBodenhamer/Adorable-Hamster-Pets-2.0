@@ -238,6 +238,7 @@ public final class HamsterInteractionUtil {
                         if (hamster.isAiDisabled()) {
                             hamster.setAiDisabled(false);
                             hamster.setNoGravity(false);
+                            hamster.setInvulnerable(false);
                         }
 
                         // Play celebrate sound only on success

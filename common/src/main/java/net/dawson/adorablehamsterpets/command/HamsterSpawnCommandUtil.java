@@ -10,6 +10,7 @@ import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.PaletteDefinition;
 import net.dawson.adorablehamsterpets.util.HamsterGeneticsUtil;
+import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -44,6 +45,7 @@ public class HamsterSpawnCommandUtil {
         String currentBaseId = "";
 
         int delayTicks = 0;
+        String batchId = "";
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -54,7 +56,7 @@ public class HamsterSpawnCommandUtil {
     private static ServerPlayerEntity promptPlayer = null;
 
     private static final PermutationState permState = new PermutationState();
-
+    public static String lastSpawnBatchId = null;
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Lifecycle Hooks
@@ -133,7 +135,10 @@ public class HamsterSpawnCommandUtil {
             double xOffset = (permState.baseIndex % 500) * 1.0;
 
             // Use cached start pos to ensure the grid doesn't drift if player moves
-            spawnFrozenHamster(permState.world, permState.startPos.add(xOffset, 0, zOffset), 0, genome);
+            HamsterEntity hamster = spawnFrozenHamster(permState.world, permState.startPos.add(xOffset, 0, zOffset), 0, genome);
+            if (hamster != null) {
+                hamster.addCommandTag("ahp_batch_" + permState.batchId);
+            }
 
             permState.currentIndex++;
             permState.baseIndex++;
@@ -155,6 +160,51 @@ public class HamsterSpawnCommandUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
+     * Undoes the very last executed spawn command by safely discarding all hamsters
+     * marked with the latest batch ID.
+     */
+    public static int executeUndoLastSpawn(ServerCommandSource source) {
+        if (lastSpawnBatchId == null) {
+            source.sendFeedback(() -> Text.literal("[Hamster Genetics] No recent spawn command found to undo.").formatted(Formatting.RED), false);
+            return 0;
+        }
+
+        // Abort active permutation sequence if that's what is being undone
+        if (permState.active && lastSpawnBatchId.equals(permState.batchId)) {
+            permState.active = false;
+            source.sendFeedback(() -> Text.literal("[Hamster Genetics] Halted ongoing permutation spawn sequence.").formatted(Formatting.YELLOW), false);
+        }
+
+        String targetTag = "ahp_batch_" + lastSpawnBatchId;
+        int count = 0;
+
+        List<HamsterEntity> toRemove = new ArrayList<>();
+
+        // Search all loaded entities for the targeted batch ID
+        for (ServerWorld world : source.getServer().getWorlds()) {
+            for (Entity entity : world.iterateEntities()) {
+                if (entity instanceof HamsterEntity hamster) {
+                    if (hamster.getCommandTags().contains(targetTag)) {
+                        toRemove.add(hamster);
+                    }
+                }
+            }
+        }
+
+        // Safely discard the collected entities
+        for (HamsterEntity hamster : toRemove) {
+            hamster.discard();
+            count++;
+        }
+
+        final int finalCount = count;
+        source.sendFeedback(() -> Text.literal("[Hamster Genetics] Undid last spawn. Removed " + finalCount + " hamster(s).").formatted(Formatting.GREEN), false);
+
+        lastSpawnBatchId = null;
+        return 1;
+    }
+
+    /**
      * Executes the command to spawn a highly specific hamster based on exact genetic traits.
      */
     public static int executeSpawnSpecific(ServerCommandSource source, String base, String wildPat, String wildPal, String breedPat, String breedPal, String eyes) throws CommandSyntaxException {
@@ -173,7 +223,12 @@ public class HamsterSpawnCommandUtil {
             return 0;
         }
 
-        spawnFrozenHamster(world, player.getPos(), player.getYaw(), new HamsterGenome(base, wPatInt, wPalStr, bPatInt, bPalStr, eyeInt));
+        lastSpawnBatchId = UUID.randomUUID().toString();
+        HamsterEntity hamster = spawnFrozenHamster(world, player.getPos(), player.getYaw(), new HamsterGenome(base, wPatInt, wPalStr, bPatInt, bPalStr, eyeInt));
+        if (hamster != null) {
+            hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
+        }
+
         source.sendFeedback(() -> Text.literal("[Hamster Genetics] Spawned requested hamster."), false);
         return 1;
     }
@@ -181,7 +236,7 @@ public class HamsterSpawnCommandUtil {
     /**
      * Executes the command to spawn all base variants mapped to their 3D color space coordinates.
      */
-    public static int executeSpawnAllBases3D(ServerCommandSource source, boolean withOverlays, boolean withSampleBreeding, String author) throws CommandSyntaxException {
+    public static int executeSpawnAllBases3D(ServerCommandSource source, boolean withOverlays, boolean withSampleBreeding, String author, double spacingMultiplier) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrThrow();
         List<HamsterGenome> genomes = getGenomesToSpawn(player.getServerWorld().getRandom(), withOverlays, withSampleBreeding, author); // Number being spawned
 
@@ -196,7 +251,10 @@ public class HamsterSpawnCommandUtil {
             scale = Math.max(2.0, Math.cbrt(genomes.size()) * 2.0); // Tier 1: ~45 base coats
         }
 
+        scale *= spacingMultiplier;
+
         boolean centerTagged = false;
+        lastSpawnBatchId = UUID.randomUUID().toString();
 
         for (HamsterGenome genome : genomes) {
             PaletteDefinition def = HamsterPaletteManager.PALETTE_REGISTRY.get(genome.basePaletteId());
@@ -204,7 +262,7 @@ public class HamsterSpawnCommandUtil {
             Vec3d hsbPos = def.colorSpacePos();
 
             // Tiered micro-scattering to prevent suffocation/overlap
-            double offsetAmount = withSampleBreeding ? 4.0 : (withOverlays ? 2.5 : 0.0);
+            double offsetAmount = (withSampleBreeding ? 4.0 : (withOverlays ? 2.5 : 0.0)) * spacingMultiplier;
 
             double dx = (hsbPos.x * scale) + (player.getServerWorld().random.nextDouble() - 0.5) * offsetAmount;
             double dy = (hsbPos.z * scale) + (player.getServerWorld().random.nextDouble() - 0.5) * offsetAmount;
@@ -215,6 +273,7 @@ public class HamsterSpawnCommandUtil {
             HamsterEntity hamster = spawnFrozenHamster(player.getServerWorld(), player.getPos().add(dx, dy, dz), yaw, genome);
 
             if (hamster != null) {
+                hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
                 hamster.addCommandTag("3d_layout_member");
                 hamster.setGeneticsVisualizerMember(true);
 
@@ -268,6 +327,8 @@ public class HamsterSpawnCommandUtil {
         // Calculate a dynamic max width to form a rough square layout
         double maxWidth = Math.max(15.0, Math.ceil(Math.sqrt(genomes.size())) * spacing * 1.2);
 
+        lastSpawnBatchId = UUID.randomUUID().toString();
+
         for (HamsterColorZone zone : sortedZones) {
             List<HamsterGenome> zoneGenomes = groupedGenomes.get(zone);
             if (zoneGenomes.isEmpty()) continue;
@@ -297,9 +358,13 @@ public class HamsterSpawnCommandUtil {
                 int localX = i % cols;
                 int localZ = i / cols;
 
-                spawnFrozenHamster(player.getServerWorld(),
+                HamsterEntity hamster = spawnFrozenHamster(player.getServerWorld(),
                         player.getPos().add(currentX + (localX * spacing), 0, currentZ + (localZ * spacing)),
                         0, zoneGenomes.get(i));
+
+                if (hamster != null) {
+                    hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
+                }
             }
 
             currentX += groupWidth + groupSpacing;
@@ -393,6 +458,9 @@ public class HamsterSpawnCommandUtil {
             permState.world = permState.player.getServerWorld();
             permState.startPos = permState.player.getPos();
 
+            permState.batchId = UUID.randomUUID().toString();
+            lastSpawnBatchId = permState.batchId;
+
             permState.genomesToSpawn = permutations;
             permState.currentIndex = 0;
             permState.baseIndex = 0;
@@ -423,6 +491,7 @@ public class HamsterSpawnCommandUtil {
             hamster.setAiDisabled(true);
             hamster.setNoGravity(true);
             hamster.setSitting(true, true);
+            hamster.setInvulnerable(true);
             hamster.refreshPositionAndAngles(pos.x, pos.y, pos.z, yaw, 0);
             hamster.setYaw(yaw);
             hamster.setBodyYaw(yaw);
