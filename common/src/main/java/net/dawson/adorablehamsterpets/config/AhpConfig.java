@@ -591,9 +591,13 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Permits hamsters to engage in spontaneous, high-stakes games of keep-away with your valuables.")
     public boolean enableItemStealing = true;
 
-    @Translatable.Name("Enable Tag Game")
-    @Translatable.Desc("Master switch. If false, hamsters will suppress their playful urges and remain stoic professionals.")
+    @Translatable.Name("Enable Hamster-vs-Player Tag")
+    @Translatable.Desc("Allow hamsters to give in to their playful urges and help you recover from your chronic stoicism.")
     public boolean enableTagGame = true;
+
+    @Translatable.Name("Enable Hamster-vs-Hamster Tag")
+    @Translatable.Desc("Allow hamsters to start a game of tag with each other.")
+    public boolean enableInterHamsterTag = true;
 
     @NonSync
     @Translatable.Name("Enable Creeper Sniffing")
@@ -1536,11 +1540,11 @@ public class AhpConfig extends Config {
     public ConfigGroup tagGame = new ConfigGroup("tagGame", true);
 
     @Translatable.Name("Allow Stranger Danger")
-    @Translatable.Desc("If true, hamsters can ask anyone to play. If false, they can only ask their owners.")
+    @Translatable.Desc("If true, hamsters can ask any player to play. If false, they can only ask their owners.")
     public boolean allowStrangerTag = true;
 
     @Translatable.Name("Game Initiation Chance")
-    @Translatable.Desc("The 1-in-X chance per tick a hamster will start a game of tag if you make too much eye contact. Since the game runs at 20 ticks per second, a 1-in-500-tick chance means you'll need to maintain eye contact for about ~15 seconds on average. Set to 1 if you want the game to start instantly upon eye contact.")
+    @Translatable.Desc("The 1-in-X chance per tick a hamster will start a game of tag with you if you make too much eye contact. Since the game runs at 20 ticks per second, a 1-in-500-tick chance means you'll need to maintain eye contact for about ~15 seconds on average. Set to 1 if you want the game to start instantly upon eye contact.")
     public ValidatedInt tagChanceDenominator = new ValidatedInt(500, 1200, 1);
 
     @Translatable.Name("Enable Player Daily Limit")
@@ -1562,11 +1566,19 @@ public class AhpConfig extends Config {
     @Translatable.Desc("If true, winning a game of tag rewards you with whatever random pocket lint generates in wild cheek pouches. (That list is configurable: see \"Cheek Pouch Loot\" in the World Gen Config.) If false, it strictly pulls from the custom list below.")
     public boolean usePouchLootForTagRewards = true;
 
-    @ConfigGroup.Pop
-    @ConfigGroup.Pop
     @Translatable.Name("Custom Tag Rewards")
     @Translatable.Desc("The specific items your hamster will regurgitate as a prize, assuming you disabled the toggle above. Format specific item names like this: 'minecraft:diamond' and you can use tags like this: '#minecraft:flowers'. If you leave this empty while custom rewards are active, your hamster will just stare at you awkwardly after you win.")
     public List<String> customTagRewards = new ArrayList<>();
+
+    @Translatable.Name("Average Time Between Games")
+    @Translatable.Desc("The average real-world seconds between hamster-vs-hamster tag games. If you set this lower than the actual duration of a game (15 seconds by default), you will allow multiple games of tag to occur simultaneously within the same group of hamsters.")
+    public ValidatedInt interHamsterTagAverageSeconds = new ValidatedInt(60, 3600, 5);
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Inter-Hamster Tag Duration")
+    @Translatable.Desc("How long (in seconds) the chase lasts before the instigator gets bored and the game ends. This only applies if the instigator hamster does not get caught by the chasing hamster.")
+    public ValidatedInt interHamsterTagMaxDurationSeconds = new ValidatedInt(15, 60, 5);
 
     @Translatable.Name("Commissioned Features")
     @Translatable.Desc("Specialized, unofficial mechanics that don't necessarily fit the theme of the mod, but were funded by various individuals in the community. Purposefully tucked away in the config to ensure most people don't notice them.")

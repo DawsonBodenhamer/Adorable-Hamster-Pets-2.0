@@ -51,6 +51,9 @@ public class ModSounds {
     public static final RegistrySupplier<SoundEvent> HAMSTER_ATTACK3 = registerSoundEvent("hamster_attack3");
     public static final RegistrySupplier<SoundEvent> HAMSTER_ATTACK4 = registerSoundEvent("hamster_attack4");
 
+    // --- Fake Attack Sound ---
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SLAP = registerSoundEvent("hamster_slap");
+
     // --- Beg Sounds ---
     public static final RegistrySupplier<SoundEvent> HAMSTER_BEG1 = registerSoundEvent("hamster_beg1");
     public static final RegistrySupplier<SoundEvent> HAMSTER_BEG2 = registerSoundEvent("hamster_beg2");

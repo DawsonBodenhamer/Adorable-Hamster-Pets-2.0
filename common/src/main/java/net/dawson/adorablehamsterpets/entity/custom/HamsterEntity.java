@@ -248,7 +248,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int HOLDING_MOUTH_ITEM_FLAG = 1 << 14;
     public static final int TAUNTING_FLAG = 1 << 15;
     public static final int PRESENTING_ITEM_FLAG = 1 << 20;
-    public static final int CELEBRATING_RETRIEVAL_FLAG = 1 << 16;
+    public static final int FREEZING_MOVEMENT_FLAG = 1 << 16;
     public static final int IS_SHOULDER_PET_FLAG = 1 << 17;
     public static final int IS_WANDER_MODE_ACTIVE_FLAG = 1 << 18;
     public static final int ON_THE_WAY_TO_BED_FLAG = 1 << 19;
@@ -342,6 +342,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation ASSUME_THROW_POSE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_assume_throw_pose");
     private static final RawAnimation WAITING_FOR_THROW_ANIM = RawAnimation.begin().thenPlay("anim_hamster_waiting_for_throw");
     private static final RawAnimation RECEIVING_PETS_ANIM = RawAnimation.begin().thenPlay("anim_hamster_receiving_pets");
+    private static final RawAnimation STUN_ANIM = RawAnimation.begin().thenPlay("anim_hamster_stun");
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *                                  2. Fields
@@ -405,6 +406,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique private boolean riderSprintHeld = false;
     @Unique private int localSpawnImmunityTicks = 60;
     @Unique public long tagGameCooldownEndTick = 0L;
+    @Unique public transient HamsterEntity tagGamePartner = null;
+    @Unique public transient boolean isTagChaser = false;
+    @Unique public transient boolean isInterHamsterTagActive = false;
+    @Unique public transient boolean tagGameSlapped = false;
     @Unique public transient boolean isLookAtEntityGoalActive = false;
     @Unique private Boolean is3dCenter = null;
     @Unique private double parsed3dScale = 1.0;
@@ -612,8 +617,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void setMouthItemStack(ItemStack stack) {this.dataTracker.set(MOUTH_ITEM_STACK, stack);}
     public boolean isPlayingTag() {return getHamsterFlag(IS_PLAYING_TAG_FLAG);}
     public void setPlayingTag(boolean playing) {setHamsterFlag(IS_PLAYING_TAG_FLAG, playing);}
-    public boolean isCelebratingRetrieval() { return getHamsterFlag(CELEBRATING_RETRIEVAL_FLAG); }
-    public void setCelebratingRetrieval(boolean celebrating) { setHamsterFlag(CELEBRATING_RETRIEVAL_FLAG, celebrating); }
+    public boolean isFrozenMovement() { return getHamsterFlag(FREEZING_MOVEMENT_FLAG); }
+    public void setFrozenMovement(boolean freezingMovement) { setHamsterFlag(FREEZING_MOVEMENT_FLAG, freezingMovement); }
     public boolean hasGreenBeanBuff() {return this.getDataTracker().get(GREEN_BEAN_BUFF_DURATION) > this.getWorld().getTime();}
     public boolean getZoomiesIsClockwise() { return this.zoomiesIsClockwise; }
     public double getLastZoomiesAngle() { return this.lastZoomiesAngle; }
@@ -1523,12 +1528,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- Celebration Logic (Tag Game; New Baby) ---
-        if (this.isCelebratingRetrieval() || this.isCelebratingBaby()) {
-            if (this.isCelebratingRetrieval()) {
+        if (this.isFrozenMovement() || this.isCelebratingBaby()) {
+            if (this.isFrozenMovement()) {
                 if (this.celebrationRetrievalTicks > 0) {
                     this.celebrationRetrievalTicks--;
                 } else {
-                    this.setCelebratingRetrieval(false);
+                    this.setFrozenMovement(false);
                     // Only clear target if baby celebration isn't active
                     if (!this.isCelebratingBaby()) {
                         this.celebrationTarget = null;
@@ -1537,7 +1542,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
 
             Entity target = this.celebrationTarget;
-            if (target == null && this.isCelebratingRetrieval()) {
+            if (target == null && this.isFrozenMovement()) {
                 target = this.getOwner();
             }
 
@@ -1567,7 +1572,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                                 && !this.isSulking()
                                 && !this.isCelebratingDiamond()
                                 && !this.isCelebratingBaby()
-                                && !this.isCelebratingRetrieval()
+                                && !this.isFrozenMovement()
                                 && this.squaredDistanceTo(serverPlayer) < 25.0) {
                             // Verify player is looking at hamster
                             if (EntityTargetingUtil.isLookingAt(serverPlayer, this, 5.0, 0)) {
@@ -1941,7 +1946,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     && !this.isKnockedOut()
                     && !this.isSulking()
                     && !this.isPlayingTag()
-                    && !this.isCelebratingRetrieval()
+                    && !this.isFrozenMovement()
                     && !this.isCelebratingBaby()
                     && !this.isCelebratingDiamond()
                     && !isSniffingForOre) {
@@ -2225,35 +2230,36 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
             return event.setAndContinue(this.random.nextBoolean() ? IDLE1_ANIM : IDLE2_ANIM);
             })
-            .triggerableAnim("crash", CRASH_ANIM)
-            .triggerableAnim("wakeup_from_ko", WAKE_UP_FROM_KO_ANIM)
-            .triggerableAnim("standing_headshake", STANDING_HEADSHAKE_ANIM)
-            .triggerableAnim("sitting_headshake", SITTING_HEADSHAKE_ANIM)
-            .triggerableAnim("moving_headshake", MOVING_HEADSHAKE_ANIM)
-            .triggerableAnim("attack", ATTACK_ANIM)
-            .triggerableAnim("quick_bounce_on_back_legs", QUICK_BOUNCE_LOOKING_UP)
-            .triggerableAnim("sit1", SIT1_ANIM)
-            .triggerableAnim("sit2", SIT2_ANIM)
-            .triggerableAnim("sit3", SIT3_ANIM)
-            .triggerableAnim("standup1", STANDUP1_ANIM)
-            .triggerableAnim("standup2", STANDUP2_ANIM)
-            .triggerableAnim("standup3", STANDUP3_ANIM)
-            .triggerableAnim("wakeup1", WAKE_UP_1_ANIM)
-            .triggerableAnim("wakeup2", WAKE_UP_2_ANIM)
-            .triggerableAnim("wakeup3", WAKE_UP_3_ANIM)
-            .triggerableAnim("anim_hamster_sit_settle_sleep1", SIT_SETTLE_SLEEP1_ANIM)
-            .triggerableAnim("anim_hamster_sit_settle_sleep2", SIT_SETTLE_SLEEP2_ANIM)
-            .triggerableAnim("anim_hamster_sit_settle_sleep3", SIT_SETTLE_SLEEP3_ANIM)
-            .triggerableAnim("anim_hamster_stand_settle_sleep1", STAND_SETTLE_SLEEP1_ANIM)
-            .triggerableAnim("anim_hamster_stand_settle_sleep2", STAND_SETTLE_SLEEP2_ANIM)
-            .triggerableAnim("anim_hamster_stand_settle_sleep3", STAND_SETTLE_SLEEP3_ANIM)
-            .triggerableAnim("anim_hamster_sulk", SULK_ANIM)
-            .triggerableAnim("anim_hamster_pounce_on_item", POUNCE_ON_ITEM_ANIM)
-            .triggerableAnim("anim_hamster_quick_bounce", QUICK_BOUNCE_ANIM)
-            .triggerableAnim("anim_hamster_cheek_unload", CHEEK_UNLOAD_ANIM)
-            .triggerableAnim("anim_hamster_crouch_and_investigate", CROUCH_INVESTIGATE_ANIM)
-            .triggerableAnim("anim_hamster_assume_throw_pose", ASSUME_THROW_POSE_ANIM)
-            .triggerableAnim("anim_hamster_receiving_pets", RECEIVING_PETS_ANIM)
+                .triggerableAnim("crash", CRASH_ANIM)
+                .triggerableAnim("wakeup_from_ko", WAKE_UP_FROM_KO_ANIM)
+                .triggerableAnim("standing_headshake", STANDING_HEADSHAKE_ANIM)
+                .triggerableAnim("sitting_headshake", SITTING_HEADSHAKE_ANIM)
+                .triggerableAnim("moving_headshake", MOVING_HEADSHAKE_ANIM)
+                .triggerableAnim("attack", ATTACK_ANIM)
+                .triggerableAnim("quick_bounce_on_back_legs", QUICK_BOUNCE_LOOKING_UP)
+                .triggerableAnim("sit1", SIT1_ANIM)
+                .triggerableAnim("sit2", SIT2_ANIM)
+                .triggerableAnim("sit3", SIT3_ANIM)
+                .triggerableAnim("standup1", STANDUP1_ANIM)
+                .triggerableAnim("standup2", STANDUP2_ANIM)
+                .triggerableAnim("standup3", STANDUP3_ANIM)
+                .triggerableAnim("wakeup1", WAKE_UP_1_ANIM)
+                .triggerableAnim("wakeup2", WAKE_UP_2_ANIM)
+                .triggerableAnim("wakeup3", WAKE_UP_3_ANIM)
+                .triggerableAnim("anim_hamster_sit_settle_sleep1", SIT_SETTLE_SLEEP1_ANIM)
+                .triggerableAnim("anim_hamster_sit_settle_sleep2", SIT_SETTLE_SLEEP2_ANIM)
+                .triggerableAnim("anim_hamster_sit_settle_sleep3", SIT_SETTLE_SLEEP3_ANIM)
+                .triggerableAnim("anim_hamster_stand_settle_sleep1", STAND_SETTLE_SLEEP1_ANIM)
+                .triggerableAnim("anim_hamster_stand_settle_sleep2", STAND_SETTLE_SLEEP2_ANIM)
+                .triggerableAnim("anim_hamster_stand_settle_sleep3", STAND_SETTLE_SLEEP3_ANIM)
+                .triggerableAnim("anim_hamster_sulk", SULK_ANIM)
+                .triggerableAnim("anim_hamster_pounce_on_item", POUNCE_ON_ITEM_ANIM)
+                .triggerableAnim("anim_hamster_quick_bounce", QUICK_BOUNCE_ANIM)
+                .triggerableAnim("anim_hamster_cheek_unload", CHEEK_UNLOAD_ANIM)
+                .triggerableAnim("anim_hamster_crouch_and_investigate", CROUCH_INVESTIGATE_ANIM)
+                .triggerableAnim("anim_hamster_assume_throw_pose", ASSUME_THROW_POSE_ANIM)
+                .triggerableAnim("anim_hamster_receiving_pets", RECEIVING_PETS_ANIM)
+                .triggerableAnim("stun", STUN_ANIM)
 
             // --- Handle Keyframe Particles ---
             .setParticleKeyframeHandler(event -> {
@@ -2341,6 +2347,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.goalSelector.add(2, new HamsterMeleeAttackGoal(this, 1.5D, true));
         this.goalSelector.add(3, new HamsterMateGoal(this, 0.75D));
         this.goalSelector.add(4, new HamsterTagGoal(this));
+        this.goalSelector.add(4, new HamsterInterHamsterTagGoal(this));
         this.goalSelector.add(5, new HamsterFollowParentGoal(this, 1.0D));
         this.goalSelector.add(6, new HamsterFollowOwnerGoal(this, 1.0D, 4.0F, 16.0F));
         this.goalSelector.add(7, new HamsterFleeGoal<>(this, LivingEntity.class, 8.0F, 0.75D, 1.5D));
@@ -2734,17 +2741,24 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
     /**
      * Called when this entity is removed from the world.
-     * This override ensures that any server-side tracking or client-side sounds
+     * This override ensures that any server-side tracking or client-side sounds/fields
      * associated with this specific hamster instance are properly cleaned up to prevent memory leaks.
      */
     @Override
     public void onRemoved() {
-        // --- 1. Call Superclass Method ---
         super.onRemoved();
 
-        // --- 2. Clean Up Trackers ---
+        // Clean up trackers
         if (!this.getWorld().isClient()) {
             HamsterRenderTracker.onEntityUnload(this.getId());
+        }
+
+        // Clean up transient Tag Game references
+        if (this.isInterHamsterTagActive && this.tagGamePartner != null) {
+            this.tagGamePartner.setPlayingTag(false);
+            this.tagGamePartner.isInterHamsterTagActive = false;
+            this.tagGamePartner.tagGamePartner = null;
+            this.tagGamePartner.tagGameSlapped = false;
         }
     }
 }

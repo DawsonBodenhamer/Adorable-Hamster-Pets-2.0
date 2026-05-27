@@ -1466,7 +1466,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                     || hamster.isKnockedOut()
                     || hamster.isSleeping()
                     || hamster.isSulking()
-                    || hamster.isCelebratingRetrieval()
+                    || hamster.isFrozenMovement()
                     || hamster.isCelebratingBaby()
                     || hamster.isCelebratingDiamond())
                 return;

@@ -284,6 +284,7 @@
   "message.adorablehamsterpets.tag_game_start.2": "Tag! You're it.",
   "message.adorablehamsterpets.tag_game_start.3": "Hamster demands enrichment. Unfortunately, you are the enrichment.",
   "message.adorablehamsterpets.tag_game_start.4": "A rodent is running laps around you both physically and emotionally",
+  "message.adorablehamsterpets.inter_hamster_tag_interrupted": "Game of tag interrupted. Hamsters are slightly miffed.",
   "message.adorablehamsterpets.cheek_pouch_locked": "This hamster's cheek pouches are currently shy. A gourmet meal might change its mind...",
   "message.adorablehamsterpets.debug_overlay_enabled": "Debug Hamster Overlay: ENABLED",
   "message.adorablehamsterpets.debug_overlay_disabled": "Debug Hamster Overlay: DISABLED",
@@ -405,6 +406,7 @@
   "subtitles.adorablehamsterpets.magic_shimmer": "Magical shimmer",
   "subtitles.adorablehamsterpets.magic_sparkling": "Sparkling",
   "subtitles.adorablehamsterpets.hamster_head_shake": "Hamster shakes its head",
+  "subtitles.adorablehamsterpets.hamster_slap": "Hamster slaps",
 
   "config.jade.plugin_adorablehamsterpets.wild_bush_tooltips": "Wild Bush Tooltip Hints",
   "config.jade.plugin_adorablehamsterpets.hamster_debug_info": "More Hamster Info (For Debugging)",
