@@ -1571,8 +1571,8 @@ public class AhpConfig extends Config {
     public List<String> customTagRewards = new ArrayList<>();
 
     @Translatable.Name("Average Time Between Games")
-    @Translatable.Desc("The average real-world seconds between hamster-vs-hamster tag games. If you set this lower than the actual duration of a game (15 seconds by default), you will allow multiple games of tag to occur simultaneously within the same group of hamsters.")
-    public ValidatedInt interHamsterTagAverageSeconds = new ValidatedInt(60, 3600, 5);
+    @Translatable.Desc("The average time (in seconds) between hamster-vs-hamster tag games. If you set this lower than the actual duration of a game (15 seconds by default), you will allow multiple games of tag to occur simultaneously within the same group of hamsters.")
+    public ValidatedInt interHamsterTagAverageSeconds = new ValidatedInt(60, 600, 5);
 
     @ConfigGroup.Pop
     @ConfigGroup.Pop
