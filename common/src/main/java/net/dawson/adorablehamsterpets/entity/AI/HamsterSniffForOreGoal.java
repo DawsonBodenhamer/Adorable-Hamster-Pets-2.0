@@ -107,7 +107,7 @@ public class HamsterSniffForOreGoal extends Goal {
             return false;
         }
 
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isCelebratingRetrieval() || this.hamster.isSulking()) {
+        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isFrozenMovement() || this.hamster.isSulking()) {
             return false;
         }
 

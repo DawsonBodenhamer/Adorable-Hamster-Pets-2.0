@@ -25,6 +25,55 @@ public final class HamsterMovementUtil {
     private HamsterMovementUtil() {}
 
     /**
+     * Calculates a precise point on a circle around a center entity and finds the nearest safe,
+     * reachable block.
+     * By varying the angle steps and radius, it can produce semi-smooth circular orbits or erratic zig-zags across the center.
+     *
+     * @param hamster         The hamster entity.
+     * @param centerEntity    The entity to orbit around.
+     * @param minRadius       The minimum distance from the center entity.
+     * @param maxRadius       The maximum distance from the center entity.
+     * @param minAngleDegrees The minimum angle step in degrees.
+     * @param maxAngleDegrees The maximum angle step in degrees.
+     * @return An Optional containing the safe BlockPos, or empty if none is found.
+     */
+    public static Optional<BlockPos> findOrbitingTarget(HamsterEntity hamster, Entity centerEntity, double minRadius, double maxRadius, int minAngleDegrees, int maxAngleDegrees) {
+        // --- Circular/Erratic Pathing Logic ---
+        double lastAngle = hamster.getLastZoomiesAngle();
+        boolean isClockwise = hamster.getZoomiesIsClockwise();
+
+        // Calculate the next angle step (degrees in radians)
+        double angleStep = Math.toRadians(hamster.getRandom().nextBetween(minAngleDegrees, maxAngleDegrees));
+        double newAngle = isClockwise ? lastAngle + angleStep : lastAngle - angleStep;
+        hamster.setLastZoomiesAngle(newAngle); // Persist the new angle on the entity
+
+        // Calculate a new random point on the circumference of a circle whose radius is bounded
+        double radius = minRadius + (hamster.getRandom().nextDouble() * (maxRadius - minRadius));
+        double targetX = centerEntity.getX() + radius * Math.cos(newAngle);
+        double targetZ = centerEntity.getZ() + radius * Math.sin(newAngle);
+
+        // --- Precise Position Finding ---
+        BlockPos idealPos = new BlockPos((int)targetX, (int)hamster.getY(), (int)targetZ);
+
+        // Use findSafeSpawnPosition to locate a valid block near the ideal point
+        Optional<BlockPos> finalTargetPos = HamsterPlacementUtil.findSafeSpawnPosition(idealPos, hamster.getWorld(), 2, hamster);
+
+        // --- LOGGING ---
+        AdorableHamsterPets.LOGGER.trace(
+                "[HamsterMovementUtil] findOrbitingTarget:\n  - IsClockwise: {}\n  - LastAngle(rad): {}\n  - AngleStep(rad): {}\n  - NewAngle(rad): {}\n  - Radius: {}\n  - IdealPos: {}\n  - FinalTarget: {}",
+                isClockwise,
+                String.format("%.2f", lastAngle),
+                String.format("%.2f", angleStep),
+                String.format("%.2f", newAngle),
+                String.format("%.2f", radius),
+                idealPos,
+                finalTargetPos.map(BlockPos::toString).orElse("null")
+        );
+
+        return finalTargetPos;
+    }
+
+    /**
      * Forces the mob to look at the target entity using this mod's fast rotation speed.
      *
      * @param mob    The observer.
@@ -104,7 +153,7 @@ public final class HamsterMovementUtil {
                 hamster.isKnockedOut() ||
                 hamster.isSulking() ||
                 hamster.isCelebratingDiamond() ||
-                hamster.isCelebratingRetrieval() ||
+                hamster.isFrozenMovement() ||
                 hamster.isPlayingTag() ||
                 hamster.isCelebratingBaby() ||
                 hamster.isWanderModeActive();

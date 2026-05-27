@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.WanderDistance;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.ai.FuzzyTargeting;
@@ -39,7 +40,7 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
     public boolean canStart() {
         // --- 1. Initial State Checks ---
         if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isSulking()
-                || this.hamster.isCelebratingDiamond() || this.hamster.isCelebratingRetrieval() || this.hamster.isCelebratingBaby()) {
+                || this.hamster.isCelebratingDiamond() || this.hamster.isFrozenMovement() || this.hamster.isCelebratingBaby()) {
             return false;
         }
 
@@ -202,7 +203,7 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
 
     /**
      * Calculates a precise point on a circle around the owner and finds the nearest safe,
-     * reachable block. This avoids the imprecision of FuzzyTargeting.
+     * reachable block.
      *
      * @return An Optional containing the safe BlockPos, or empty if none is found.
      */
@@ -211,42 +212,18 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
             return Optional.empty();
         }
 
-        // --- Circular Pathing Logic ---
-        double lastAngle = this.hamster.getLastZoomiesAngle();
-        boolean isClockwise = this.hamster.getZoomiesIsClockwise();
-
-        // Calculate the next angle step (degrees in radians).
-        double angleStep = Math.toRadians(this.hamster.getRandom().nextBetween(40, 70));
-        double newAngle = isClockwise ? lastAngle + angleStep : lastAngle - angleStep;
-        this.hamster.setLastZoomiesAngle(newAngle); // Persist the new angle on the entity.
-
-        // Calculate a new random point on the circumference of a circle whose radius is also randomized.
         int radiusModifier = this.hamster.getZoomiesRadiusModifier();
-        double radius = this.hamster.getRandom().nextBetween(3 + radiusModifier, 5 + radiusModifier);
-        double targetX = owner.getX() + radius * Math.cos(newAngle);
-        double targetZ = owner.getZ() + radius * Math.sin(newAngle);
 
-        // --- Precise Position Finding ---
-        BlockPos idealPos = new BlockPos((int)targetX, (int)this.hamster.getY(), (int)targetZ);
-        // Use the hamster's own safe spawn finder to locate a valid spot near our ideal point.
-
-        // --- LOGGING ---
-        Optional<BlockPos> finalTargetPos = HamsterPlacementUtil.findSafeSpawnPosition(idealPos, this.hamster.getWorld(), 2, this.hamster);
-        AdorableHamsterPets.LOGGER.trace(
-                "[WanderGoal-{}] getPreciseZoomiesTarget:\n  - IsClockwise: {}\n  - LastAngle(rad): {}\n  - AngleStep(rad): {}\n  - NewAngle(rad): {}\n  - Radius: {}\n  - IdealPos: {}\n  - FinalTarget: {}",
-                this.hamster.getId(),
-                isClockwise,
-                String.format("%.2f", lastAngle),
-                String.format("%.2f", angleStep),
-                String.format("%.2f", newAngle),
-                String.format("%.2f", radius),
-                idealPos,
-                finalTargetPos.map(BlockPos::toString).orElse("null")
+        // 3-5 block-radius, 40-70 degree angle steps
+        return HamsterMovementUtil.findOrbitingTarget(
+                this.hamster,
+                owner,
+                3.0 + radiusModifier,
+                5.0 + radiusModifier,
+                40,
+                70
         );
-
-        return finalTargetPos;
     }
-
 
     @Override
     public void stop() {

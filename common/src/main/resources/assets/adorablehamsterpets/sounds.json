@@ -422,5 +422,9 @@
         "stream": true
       }
     ]
+  },
+  "hamster_slap": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_slap",
+    "sounds": [ "adorablehamsterpets:hamster_slap" ]
   }
 }

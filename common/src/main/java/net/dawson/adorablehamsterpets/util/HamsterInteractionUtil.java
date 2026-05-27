@@ -117,6 +117,30 @@ public final class HamsterInteractionUtil {
     // --- Tag Game ---
     public static ActionResult handleTagGame(HamsterEntity hamster, PlayerEntity player, Hand hand) {
         if (hamster.isPlayingTag()) {
+            // Intercept Hamster-vs-Hamster Tag
+            if (hamster.isInterHamsterTagActive) {
+                if (!hamster.getWorld().isClient()) {
+                    // Cancel game for the clicked hamster
+                    hamster.setPlayingTag(false);
+                    hamster.isInterHamsterTagActive = false;
+                    hamster.getNavigation().stop();
+
+                    // Cancel game for the partner
+                    if (hamster.tagGamePartner != null) {
+                        hamster.tagGamePartner.setPlayingTag(false);
+                        hamster.tagGamePartner.isInterHamsterTagActive = false;
+                        hamster.tagGamePartner.getNavigation().stop();
+                        hamster.tagGamePartner.tagGamePartner = null;
+                    }
+                    hamster.tagGamePartner = null;
+
+                    // Feedback
+                    player.sendMessage(Text.translatable("message.adorablehamsterpets.inter_hamster_tag_interrupted").formatted(Formatting.WHITE), true);
+                }
+                return ActionResult.SUCCESS;
+            }
+
+            // Standard Player-vs-Hamster Tag
             if (hamster.isOwner(player) || AdorableHamsterPets.CONFIG.allowStrangerTag) {
                 if (!hamster.getWorld().isClient()) {
                     // 1. Stop Goal & Clear State
@@ -143,7 +167,7 @@ public final class HamsterInteractionUtil {
                     HamsterMovementUtil.faceEntity(hamster, player);
 
                     // Lock rotation to target (Owner or Stranger) for the duration of both animations
-                    hamster.setCelebratingRetrieval(true);
+                    hamster.setFrozenMovement(true);
                     hamster.setCelebrationRetrievalTicks(80);
                     hamster.interactionCooldown = 80;
 
@@ -450,7 +474,7 @@ public final class HamsterInteractionUtil {
                 hamster.setGenericInteractionTimer(0);
                 hamster.setHoldingMouthItem(false);
 
-                hamster.setCelebratingRetrieval(true);
+                hamster.setFrozenMovement(true);
                 hamster.setCelebrationTarget(player);
                 hamster.setCelebrationRetrievalTicks(30);
                 hamster.triggerAnimOnServer("mainController", "anim_hamster_quick_bounce");

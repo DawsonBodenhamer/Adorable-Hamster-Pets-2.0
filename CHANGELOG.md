@@ -53,9 +53,17 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - A legendary new music disc with The Adorable Hamster Pets theme song, created by yours truly. Can only be obtained by orchestrating a high-velocity, terminal collision between an airborne hamster and a Charged Creeper.
   - If playing in a Jukebox, nearby hamsters will dance to the music.
   - Added the "Moist Tones" advancement.
+- **Inter-Hamster Tag Mini-Game**
+  - Hamsters will now spontaneously instigate games of tag with each other.
+  - The instigator will sprint up to an unsuspecting victim, deliver a visual (damage-free) slap (using a new cowbell sound effect), and sprint away to begin the chase.
+  - If the chaser catches the instigator or if the 15-second timer runs out, the game ends and both hamsters celebrate.
+  - **Tethering:** The instigator dynamically restricts its flee path to stay within 14 blocks of you (if tamed), ensuring they don't sprint off a cliff or into an unloaded chunk during the heat of the chase.
+  - **Player Interruption:** Right-clicking either hamster while they are playing tag with each other will instantly break up the game and send them back to their normal routines, but will not reward you with a gift.
+  - **Population-Independent Rarity:** The probability math dynamically adjusts based on the local hamster population. Whether you have 2 hamsters in your base or an apocalyptic horde, you will only see an average of 1 game per minute in that area.
+  - **Configurability:** Added `Enable Hamster-vs-Hamster Tag`, `Average Minutes Between Games`, and `Inter-Hamster Tag Duration` settings to the config.
 - **Botanical Vandalism (Sapling Trimming)**
-  - You can now right-click any sapling with a pair of Shears to instantly turn it into a Dead Bush. This provides a much more accessible way to gather the necessary materials for crafting Hamster Bedding if you don't live near a desert.
-  - Added a new page to the *Hamster Tips* guidebook detailing this mechanic.
+    - You can now right-click any sapling with a pair of Shears to instantly turn it into a Dead Bush. This provides a much more accessible way to gather the necessary materials for crafting Hamster Bedding if you don't live near a desert.
+    - Added a new page to the *Hamster Tips* guidebook detailing this mechanic.
 - **Free Bed Respawn Toggle**
   - Added a config toggle to allow hamsters to respawn at their linked beds indefinitely without requiring a tribute item charge (like a Totem of Undying). Disabled by default.
 - **Dynamic Trees Compatibility**

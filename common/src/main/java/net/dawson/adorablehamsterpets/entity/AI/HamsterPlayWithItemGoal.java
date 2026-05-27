@@ -112,7 +112,7 @@ public class HamsterPlayWithItemGoal extends Goal {
         // --- 1. Resume Logic ---
         if (this.hamster.isHoldingMouthItem()) {
             if (this.hamster.isSitting()) return false; // Don't resume if sitting
-            if (this.hamster.isCelebratingRetrieval()) return false; // Don't resume during Tag Game gift sequence
+            if (this.hamster.isFrozenMovement()) return false; // Don't resume during Tag Game gift sequence
             if (!(this.hamster.getOwner() instanceof PlayerEntity)) return false; // Can't resume without an owner
 
             this.owner = (PlayerEntity) this.hamster.getOwner();
@@ -206,7 +206,7 @@ public class HamsterPlayWithItemGoal extends Goal {
         if (this.hamster.isSitting()) {
             return false;
         }
-        if (this.hamster.isCelebratingRetrieval()) {
+        if (this.hamster.isFrozenMovement()) {
             return false;
         }
         if (this.owner == null || !this.owner.isAlive()) {

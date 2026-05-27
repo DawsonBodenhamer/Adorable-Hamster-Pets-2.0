@@ -511,7 +511,7 @@ public class AdorableHamsterPetsClient {
                                         && !hamster.isSulking()
                                         && !hamster.isCelebratingBaby()
                                         && !hamster.isCelebratingDiamond()
-                                        && !hamster.isCelebratingRetrieval()
+                                        && !hamster.isFrozenMovement()
                 );
 
                 for (HamsterEntity hamster : nearbyHamsters) {
