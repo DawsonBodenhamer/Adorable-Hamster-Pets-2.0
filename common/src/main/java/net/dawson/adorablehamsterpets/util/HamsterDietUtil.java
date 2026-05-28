@@ -7,6 +7,8 @@ import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
@@ -285,8 +287,23 @@ public final class HamsterDietUtil {
             };
             player.sendMessage(Text.translatable(msgKey).formatted(Formatting.WHITE), true);
 
-            // Clear active target if switching out of menace or into pacifist
-            hamster.setTarget(null);
+            if (targetState == HamsterEntity.AggressionState.MENACE) {
+                // Aggression feedback
+                hamster.triggerAnimOnServer("mainController", "attack");
+                DamageSource damageSource = hamster.getDamageSources().mobAttack(hamster);
+                float damageAmount = (float) hamster.getAttributeValue(EntityAttributes.GENERIC_ATTACK_DAMAGE);
+                player.damage(damageSource, damageAmount);
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    MiscUtil.PlayerPhysicsUtil.applyKnockback(serverPlayer, hamster.getPos());
+                }
+                SoundEvent attackSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_ATTACK_SOUNDS, hamster.getRandom());
+                if (attackSound != null) {
+                    hamster.playSound(attackSound, 1.0F, hamster.getSoundPitch());
+                }
+            } else {
+                // Clear active target if switching out of menace or into pacifist
+                hamster.setTarget(null);
+            }
         }
         return 1;
     }

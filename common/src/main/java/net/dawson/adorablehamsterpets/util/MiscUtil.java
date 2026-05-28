@@ -6,11 +6,13 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
+import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,38 @@ import java.util.stream.IntStream;
  * A centralized utility for miscellaneous things that don't fit in other utilities.
  */
 public final class MiscUtil {
+
+    /**
+     * Utility for handling player-specific physics interactions and forced client synchronization.
+     */
+    public static final class PlayerPhysicsUtil {
+
+        public static final double KNOCKBACK_HORIZONTAL = 0.3;
+        public static final double KNOCKBACK_VERTICAL = 0.4;
+
+        private PlayerPhysicsUtil() {}
+
+        /**
+         * Applies reliable knockback to a player and forces the server to sync the velocity
+         * to the client, overriding client-side movement prediction.
+         *
+         * @param player    The player to knock back.
+         * @param sourcePos The origin position of the knockback.
+         */
+        public static void applyKnockback(ServerPlayerEntity player, Vec3d sourcePos) {
+            // 1. Calculate direction away from source
+            Vec3d knockbackDir = player.getPos().subtract(sourcePos).normalize();
+
+            // 2. Apply velocity
+            player.setVelocity(knockbackDir.x * KNOCKBACK_HORIZONTAL, KNOCKBACK_VERTICAL, knockbackDir.z * KNOCKBACK_HORIZONTAL);
+
+            // 3. Mark velocity as dirty
+            player.velocityDirty = true;
+
+            // 4. Force sync with client using vanilla velocity packet
+            player.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(player));
+        }
+    }
 
     /**
      * Utility for managing dynamic or randomized messages sent to players.
