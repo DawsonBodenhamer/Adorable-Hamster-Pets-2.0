@@ -33,7 +33,8 @@
     "client.accessor.GuiButtonEntryAccessor",
     "client.LivingEntityRendererMixin",
     "client.accessor.InGameHudAccessor",
-    "client.InGameHudMixin"
+    "client.InGameHudMixin",
+    "client.EntityRenderDispatcherMixin"
   ],
   "injectors": {
     "defaultRequire": 1

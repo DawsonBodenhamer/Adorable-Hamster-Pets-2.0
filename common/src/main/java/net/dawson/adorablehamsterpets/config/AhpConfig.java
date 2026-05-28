@@ -672,10 +672,6 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Mandatory hamster union breaks between heroic stunts.")
     public ConfigGroup cooldowns = new ConfigGroup("cooldowns", true);
 
-    @Translatable.Name("Cleaning Frequency")
-    @Translatable.Desc("How often a sitting hamster gets the sudden urge to clean. It's a 1-in-X chance per tick, so lower numbers mean a higher chance for cleaning. For example, 1200 means on average, it'll clean about once a minute. 300 ≈ every 15 secs, and 5000 ≈ every 4 mins. Congratulations— now you know enough to be dangerous.")
-    public ValidatedInt cleaningChanceDenominator = new ValidatedInt(1200, 5000, 300);
-
     @Translatable.Name("Throw Cooldown")
     @Translatable.Desc("Time-out after using your living projectile. (20 ticks = 1 second)")
     public ValidatedInt hamsterThrowCooldown = new ValidatedInt(2400, 20 * 60 * 10, 20);
@@ -1505,6 +1501,26 @@ public class AhpConfig extends Config {
             "minecraft:gold_ore", "minecraft:deepslate_gold_ore"
     ));
 
+    // --- Ambient Sitting Behaviors ---
+    @Translatable.Name("Ambient Sitting Behaviors")
+    @Translatable.Desc("Configure the random, spontaneous things your hamster does while sitting.")
+    public ConfigGroup ambientSittingBehaviors = new ConfigGroup("ambientSittingBehaviors", true);
+
+    @Translatable.Name("Cleaning Frequency")
+    @Translatable.Desc("How often a sitting hamster gets the sudden urge to clean. It's a 1-in-X chance per tick, so lower numbers mean a higher chance of it happening. (e.g., 1200 = roughly once per minute).")
+    public ValidatedInt cleaningChanceDenominator = new ValidatedInt(1200, 5000, 100);
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Rolling Frequency")
+    @Translatable.Desc("How often a sitting hamster playfully rolls onto its back. It's a 1-in-X chance per tick, so lower numbers mean a higher chance of it happening. (e.g., 1200 = roughly once per minute)")
+    public ValidatedInt rollingChanceDenominator = new ValidatedInt(1800, 5000, 100);
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Cartoon Rolling Sound")
+    @Translatable.Desc("If true, the hamster's rolling SFX will include a cartoon-ish slide whistle. It's subtle, but some people might get distracted easily or prefer more realism.")
+    public boolean enableRollingSlideWhistle = true;
+
     // --- Mini-Game Settings ---
     @Translatable.Name("Mini-Game Settings")
     @Translatable.Desc("Rules for when your hamster gets bored and decides to create its own entertainment.")
@@ -1577,8 +1593,8 @@ public class AhpConfig extends Config {
     @ConfigGroup.Pop
     @ConfigGroup.Pop
     @Translatable.Name("Inter-Hamster Tag Duration")
-    @Translatable.Desc("How long (in seconds) the chase lasts before the instigator gets bored and the game ends. This only applies if the instigator hamster does not get caught by the chasing hamster.")
-    public ValidatedInt interHamsterTagMaxDurationSeconds = new ValidatedInt(15, 60, 5);
+    @Translatable.Desc("How long (in seconds) the chase lasts before the hamsters get bored and the game ends. This only applies if the Chaser fails to catch the Instigator.")
+    public ValidatedInt interHamsterTagMaxDurationSeconds = new ValidatedInt(10, 60, 3);
 
     @Translatable.Name("Commissioned Features")
     @Translatable.Desc("Specialized, unofficial mechanics that don't necessarily fit the theme of the mod, but were funded by various individuals in the community. Purposefully tucked away in the config to ensure most people don't notice them.")

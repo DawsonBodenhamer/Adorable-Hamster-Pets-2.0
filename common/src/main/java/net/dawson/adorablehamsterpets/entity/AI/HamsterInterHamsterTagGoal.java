@@ -395,7 +395,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
         this.hamster.triggerAnimOnServer("mainController", "attack");
 
         // Feedback
-        this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), ModSounds.HAMSTER_SLAP.get(), SoundCategory.NEUTRAL, 0.4F, 1.0F);
+        this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), ModSounds.HAMSTER_SLAP.get(), SoundCategory.NEUTRAL, 0.5F, 1.0F);
 
         // Apply small physical knockback to partner
         HamsterEntity partner = this.hamster.tagGamePartner;

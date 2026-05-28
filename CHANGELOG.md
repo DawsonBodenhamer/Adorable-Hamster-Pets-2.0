@@ -61,6 +61,9 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - **Player Interruption:** Right-clicking either hamster while they are playing tag with each other will instantly break up the game and send them back to their normal routines, but will not reward you with a gift.
   - **Population-Independent Rarity:** The probability math dynamically adjusts based on the local hamster population. Whether you have 2 hamsters in your base or an apocalyptic horde, you will only see an average of 1 game per minute in that area.
   - **Configurability:** Added `Enable Hamster-vs-Hamster Tag`, `Average Minutes Between Games`, and `Inter-Hamster Tag Duration` settings to the config.
+- **New Ambient Sitting Animation**
+  - Added a new "sitting roll" animation where sitting hamsters occasionally roll on their backs. Comes with new sound effects, and it's configurable in the new "Ambient Sitting Behaviors" config group, which also controls cleaning frequency.
+  - Includes a "Cartoon Rolling Sound" config toggle. By default, the hamster's rolling SFX will include a cartoon-ish slide whistle. It's subtle, but some people might get distracted easily or prefer more realism.
 - **Botanical Vandalism (Sapling Trimming)**
     - You can now right-click any sapling with a pair of Shears to instantly turn it into a Dead Bush. This provides a much more accessible way to gather the necessary materials for crafting Hamster Bedding if you don't live near a desert.
     - Added a new page to the *Hamster Tips* guidebook detailing this mechanic.

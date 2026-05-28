@@ -36,6 +36,9 @@ public class ModSounds {
     public static final RegistrySupplier<SoundEvent> HAMSTER_BOUNCE = registerSoundEvent("hamster_bounce");
     public static final RegistrySupplier<SoundEvent> HAMSTER_THUMP = registerSoundEvent("hamster_thump");
     public static final RegistrySupplier<SoundEvent> HAMSTER_SWISH = registerSoundEvent("hamster_swish");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_ROLL_BACK = registerSoundEvent("hamster_roll_back");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_ROLL_FORWARD = registerSoundEvent("hamster_roll_forward");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_ROLL_BACK_NO_SLIDE_WHISTLE = registerSoundEvent("hamster_roll_back_no_slide_whistle");
 
     // --- Impact & Throw Sounds ---
     public static final RegistrySupplier<SoundEvent> HAMSTER_IMPACT = registerSoundEvent("hamster_impact");
