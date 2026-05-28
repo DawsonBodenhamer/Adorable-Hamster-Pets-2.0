@@ -152,6 +152,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
         // 1. Clear active flags
         this.hamster.isInterHamsterTagActive = false;
         this.hamster.tagGameSlapped = false;
+        this.hamster.tagGameWon = false;
         this.hamster.setTaunting(false);
 
         if (this.hamster.getActiveCustomGoalDebugName().startsWith(this.getClass().getSimpleName())) {
@@ -166,7 +167,6 @@ public class HamsterInterHamsterTagGoal extends Goal {
         // 3. Clear partner reference
         this.hamster.tagGamePartner = null;
     }
-
 
     @Override
     public void tick() {
@@ -187,9 +187,11 @@ public class HamsterInterHamsterTagGoal extends Goal {
             this.hamster.tagGameCooldownEndTick = cooldownEnd;
             if (partner != null) partner.tagGameCooldownEndTick = cooldownEnd;
 
-            // Only Instigator schedules celebration to prevent duplicate calls
+            // Only Instigator schedules celebration if caught to prevent duplicate calls
             if (!this.hamster.isTagChaser && partner != null && partner.isAlive()) {
-                triggerEndGameCelebration();
+                if (this.hamster.tagGameWon) {
+                    triggerEndGameCelebration();
+                }
             }
 
             this.currentState = State.RETURNING_TO_OWNER;
@@ -318,6 +320,8 @@ public class HamsterInterHamsterTagGoal extends Goal {
                 if (this.hamster.distanceTo(partner) < 0.6) { // Distance required for "physical contact"
                     // Caught, end game
                     this.gameTimerTicks = 0;
+                    this.hamster.tagGameWon = true;
+                    if (partner != null) partner.tagGameWon = true;
 
                     // Feedback
                     this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), ModSounds.HAMSTER_DING.get(), SoundCategory.NEUTRAL, 0.4F, this.hamster.getSoundPitch());

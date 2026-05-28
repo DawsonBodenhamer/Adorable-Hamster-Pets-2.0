@@ -234,8 +234,9 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         int boxHeight = 10;
         boolean hovered = mouseX >= boxX && mouseX <= boxX + boxWidth && mouseY >= boxY && mouseY <= boxY + boxHeight;
 
-        // Base text is either custom name, or "Hamster" if no name has been set
-        String baseText = this.currentName.isEmpty() && !this.isRenaming ? "Hamster" : this.currentName;
+        // Base text is either custom name, or configured default if no name has been set
+        String defaultName = Text.translatable(Configs.AHP.useHampterName ? "entity.adorablehamsterpets.hampter" : "entity.adorablehamsterpets.hamster").getString();
+        String baseText = this.currentName.isEmpty() && !this.isRenaming ? defaultName : this.currentName;
 
         // Append a blinking underscore if currently actively typing
         String displayText = baseText + (this.isRenaming && (Util.getMeasuringTimeMs() / 500 % 2 == 0) ? "_" : "");

@@ -629,7 +629,7 @@ public class AhpConfig extends Config {
     public boolean requireFoodMixToUnlockCheeks = true;
 
     @Translatable.Name("Use 'Hampter' as Default Name")
-    @Translatable.Desc("Changes the default entity name from 'Hamster' to 'Hampter'. Note: This has no visible effect in vanilla Minecraft, as mobs don't show nameplates by default. It's primarily for use with mods like Auto Leveling that display entity names.")
+    @Translatable.Desc("Changes the default entity name from 'Hamster' to 'Hampter'. Note: This has no visible effect in vanilla Minecraft, as mobs don't show nameplates by default. It's primarily for use with mods like Jade or Auto Leveling that display entity names.")
     public boolean useHampterName = false;
 
     @Translatable.Name("Enable Petting")
@@ -1510,7 +1510,6 @@ public class AhpConfig extends Config {
     @Translatable.Desc("How often a sitting hamster gets the sudden urge to clean. It's a 1-in-X chance per tick, so lower numbers mean a higher chance of it happening. (e.g., 1200 = roughly once per minute).")
     public ValidatedInt cleaningChanceDenominator = new ValidatedInt(1200, 5000, 100);
 
-    @ConfigGroup.Pop
     @Translatable.Name("Rolling Frequency")
     @Translatable.Desc("How often a sitting hamster playfully rolls onto its back. It's a 1-in-X chance per tick, so lower numbers mean a higher chance of it happening. (e.g., 1200 = roughly once per minute)")
     public ValidatedInt rollingChanceDenominator = new ValidatedInt(1800, 5000, 100);
@@ -1518,8 +1517,8 @@ public class AhpConfig extends Config {
     @NonSync
     @ConfigGroup.Pop
     @Translatable.Name("Cartoon Rolling Sound")
-    @Translatable.Desc("If true, the hamster's rolling SFX will include a cartoon-ish slide whistle. It's subtle, but some people might get distracted easily or prefer more realism.")
-    public boolean enableRollingSlideWhistle = true;
+    @Translatable.Desc("If true, the hamster's rolling SFX will include a cartoon-ish slide whistle. It's subtle, but some people might get distracted easily or prefer more realism so I turned it off by default.")
+    public boolean enableRollingSlideWhistle = false;
 
     // --- Mini-Game Settings ---
     @Translatable.Name("Mini-Game Settings")

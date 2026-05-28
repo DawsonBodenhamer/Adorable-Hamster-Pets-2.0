@@ -5,11 +5,10 @@ import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.dawson.adorablehamsterpets.util.EntityTargetingUtil;
-import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
-import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.dawson.adorablehamsterpets.util.PlayerGestureUtil;
+import net.dawson.adorablehamsterpets.util.*;
 import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -33,6 +32,7 @@ public class HamsterTagGoal extends Goal {
     }
 
     private State currentState = State.FLEEING;
+    private boolean hasPlayedStartEffects = false;
 
     public HamsterTagGoal(HamsterEntity hamster) {
         this.hamster = hamster;
@@ -116,26 +116,37 @@ public class HamsterTagGoal extends Goal {
         this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
 
         // Feedback
-        SoundEvent startSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BEG_SOUNDS, this.hamster.getRandom());
-        if (startSound != null) {
-            this.hamster.playSound(startSound, 1.0f, 1.2f);
-        }
+        this.hamster.triggerAnimOnServer("mainController", "attack");
+        this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), ModSounds.HAMSTER_SLAP.get(), SoundCategory.NEUTRAL, 0.5f, 1.0f);
 
         if (!this.hamster.getWorld().isClient() && this.targetPlayer instanceof ServerPlayerEntity serverPlayer) {
-            this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.NEUTRAL, 0.5f, 1.5f);
-            ParticleEffectsUtil.spawnParticlesOnEntity(
-                    this.hamster,
-                    ParticleTypes.HAPPY_VILLAGER,
-                    15,
-                    0.5,
-                    0.5,
-                    0.0,
-                    0.2
-            );
+            // Instant feedback
+            MiscUtil.PlayerPhysicsUtil.applyKnockback(serverPlayer, this.hamster.getPos());
+            serverPlayer.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 140, 1, false, false, false));
 
-            // Randomly select one of our 4 messages
+            // Randomly select one of 4 messages
             int msgIndex = this.hamster.getRandom().nextInt(4) + 1; // 1 to 4
             serverPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.tag_game_start." + msgIndex).formatted(Formatting.WHITE), true);
+
+            // Delayed feedback
+            this.hamster.scheduleTask(this.hamster.getWorld().getTime() + 20, "tag_game_start_effects", () -> {
+                if (this.hamster.isPlayingTag() && this.targetPlayer != null && this.targetPlayer.isAlive()) {
+                    SoundEvent startSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BEG_SOUNDS, this.hamster.getRandom());
+                    if (startSound != null) {
+                        this.hamster.playSound(startSound, 1.0f, 1.2f);
+                    }
+                    this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.NEUTRAL, 0.5f, 1.5f);
+                    ParticleEffectsUtil.spawnParticlesOnEntity(
+                            this.hamster,
+                            ParticleTypes.HEART,
+                            3,
+                            0.5,
+                            0.5,
+                            0.0,
+                            0.2
+                    );
+                }
+            });
         }
 
         // Init timeout from config

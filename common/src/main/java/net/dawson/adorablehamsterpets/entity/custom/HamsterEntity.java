@@ -420,6 +420,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique public transient boolean isTagChaser = false;
     @Unique public transient boolean isInterHamsterTagActive = false;
     @Unique public transient boolean tagGameSlapped = false;
+    @Unique public transient boolean tagGameWon = false;
     @Unique public transient boolean isLookAtEntityGoalActive = false;
     @Unique private Boolean is3dCenter = null;
     @Unique private double parsed3dScale = 1.0;
@@ -1018,6 +1019,28 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         return super.getDisplayName();
     }
 
+    /**
+     * Gets the base name for the hamster.
+     * This will be the hamster's custom name if it has one, otherwise it defaults
+     * to the configured fallback name ("Hampter" or "Hamster").
+     *
+     * @return The {@link Text} component to be used as the entity's name.
+     */
+    @Override
+    public Text getName() {
+        // Name tag gets priority
+        if (this.hasCustomName()) {
+            return super.getName();
+        }
+
+        // If no custom name, check config for default
+        if (Configs.AHP.useHampterName) {
+            return Text.translatable("entity.adorablehamsterpets.hampter");
+        }
+
+        // Vanilla fallback
+        return super.getName();
+    }
 
     @Override
     public boolean isValid(int slot, ItemStack stack) {
