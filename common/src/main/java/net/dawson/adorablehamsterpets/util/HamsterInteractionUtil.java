@@ -770,7 +770,7 @@ public final class HamsterInteractionUtil {
 
             // Prevent shoulder hamster from being permanently stuck cleaning
             hamster.setHamsterFlag(HamsterEntity.CLEANING_FLAG, false);
-            hamster.cleaningTimer = 0;
+            hamster.ambientSittingTimer = 0;
 
             // Save, update queue, and set state
             HamsterState data = HamsterNbtUtil.saveToHamsterState(hamster);

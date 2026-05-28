@@ -127,6 +127,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final float DEFAULT_FOOTSTEP_VOLUME = 0.10F;
     private static final float GRAVEL_VOLUME_MODIFIER = 0.60F;
 
+    // --- Vanilla Shadow Animation Tuning ---
+    private static final float SHADOW_HOLD_START_TICKS = 15.0f;
+    private static final float SHADOW_ROLL_BACK_TICKS = 8.0f;
+    private static final float SHADOW_HOLD_APEX_TICKS = 10.0f;
+    private static final float SHADOW_ROLL_FORWARD_TICKS = 8.0f;
+    private static final double SHADOW_MAX_OFFSET = 0.35;
+
     /**
      * Creates the attribute container for the Hamster entity.
      * @return The attribute container builder.
@@ -343,6 +350,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation WAITING_FOR_THROW_ANIM = RawAnimation.begin().thenPlay("anim_hamster_waiting_for_throw");
     private static final RawAnimation RECEIVING_PETS_ANIM = RawAnimation.begin().thenPlay("anim_hamster_receiving_pets");
     private static final RawAnimation STUN_ANIM = RawAnimation.begin().thenPlay("anim_hamster_stun");
+    private static final RawAnimation SITTING_ROLL_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sitting_roll");
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *                                  2. Fields
@@ -353,6 +361,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique public long totalAgeTicks = 0L;
     @Unique private UUID parentUuid = null;
     @Unique public transient double lastRenderTime = -1.0;
+    @Unique public int clientRollTimer = 0;
+    @Unique public int prevClientRollTimer = 0;
     @Unique public int interactionCooldown = 0;
     @Unique public int wakingUpTicks = 0;
     @Unique private int ejectionCheckCooldown = 20;
@@ -440,8 +450,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private int autoEatProgressTicks = 0; // Ticks remaining for the current eating action
     private int autoEatCooldownTicks = 0; // Ticks remaining before it can start eating again
 
-    public int cleaningTimer = 0;
-    private int cleaningCooldownTimer = 0;
+    public int ambientSittingTimer = 0;
+    public int ambientSittingCooldown = 0;
 
 
 
@@ -1108,20 +1118,20 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- 3. Update Core Sitting State ---
         setHamsterFlag(SITTING_FLAG, sitting);
 
-        // --- 4. Update Vanilla State ---
+// --- 4. Update Vanilla State ---
         this.setInSittingPose(sitting);
 
-        // --- 5. Manage Cleaning Timers and Quiescent Sit Timer on State Change ---
+        // --- 5. Manage Ambient Timers and Quiescent Sit Timer on State Change ---
         if (sitting) {
-            // When commanded to sit, ensure the cleaning timer is reset.
-            this.cleaningTimer = 0;
+            // When commanded to sit, ensure the ambient timer is reset.
+            this.ambientSittingTimer = 0;
             // quiescentSitDurationTimer will be set by the tick method when DozingPhase becomes QUIESCENT_SITTING.
         } else {
             // If standing up, reset the quiescent sit timer to prevent immediate re-entry into sleep sequence.
             this.quiescentSitDurationTimer = 0;
-            // Also ensure cleaning stops if it was active.
-            this.cleaningTimer = 0;
-            // Explicitly set the cleaning state to false.
+            // Also ensure ambient actions stop if they were active.
+            this.ambientSittingTimer = 0;
+            // Explicitly set continuous ambient flags to false.
             if (getHamsterFlag(CLEANING_FLAG)) {
                 setHamsterFlag(CLEANING_FLAG, false);
             }
@@ -1500,31 +1510,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- Bed Leaf Particle Effect ---
         HamsterBedUtil.tickBedLeafParticles(this);
 
-        // --- Cleaning Logic ---
-        if (this.cleaningCooldownTimer > 0) this.cleaningCooldownTimer--;
-        if (this.cleaningTimer > 0) {
-            this.cleaningTimer--;
-            if (this.cleaningTimer == 0) {
-                if (!this.getWorld().isClient) {
-                    setHamsterFlag(CLEANING_FLAG, false);
-                }
-                this.cleaningCooldownTimer = 200;
-            }
-        }
-        if (this.isKnockedOut() && getHamsterFlag(CLEANING_FLAG)) {
-            setHamsterFlag(CLEANING_FLAG, false);
-            this.cleaningTimer = 0;
-        }
-        DozingPhase currentPhase = this.getDozingPhase();
-        if (!this.getWorld().isClient() && this.isTamed() && this.isSitting() && !getHamsterFlag(CLEANING_FLAG) && this.cleaningCooldownTimer <= 0) {
-            // Allow cleaning if the hamster is just sitting, but not if it's actively sleeping.
-            if (currentPhase == DozingPhase.NONE || currentPhase == DozingPhase.QUIESCENT_SITTING) {
-                int chanceDenominator = Configs.AHP.cleaningChanceDenominator.get();
-                if (chanceDenominator > 0 && this.random.nextInt(chanceDenominator) == 0) {
-                    this.cleaningTimer = this.random.nextBetween(30, 60);
-                    setHamsterFlag(CLEANING_FLAG, true);
-                }
-            }
+        // --- Ambient Sitting Behaviors ---
+        if (!this.getWorld().isClient()) {
+            HamsterAIUtil.tickAmbientSittingBehaviors(this);
         }
 
         // --- Celebration Logic (Tag Game; New Baby) ---
@@ -1886,6 +1874,30 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- 4. Client-Side Logic ---
+        if (world.isClient()) {
+            // --- Rolling Animation State ---
+            this.prevClientRollTimer = this.clientRollTimer;
+            boolean isRolling = false;
+
+            var manager = this.getAnimatableInstanceCache().getManagerForId(this.getId());
+            if (manager != null) {
+                var controller = manager.getAnimationControllers().get("mainController");
+                if (controller != null) {
+                    var currentAnim = controller.getCurrentAnimation();
+                    if (currentAnim != null && "anim_hamster_sitting_roll".equals(currentAnim.animation().name())) {
+                        isRolling = true;
+                    }
+                }
+            }
+
+            if (isRolling) {
+                this.clientRollTimer++;
+            } else {
+                this.clientRollTimer = 0;
+                this.prevClientRollTimer = 0;
+            }
+        }
+
         // --- Buff Particle Logic (Zoomies) ---
         if (world.isClient && this.hasGreenBeanBuff()) {
             if (this.random.nextInt(2) == 0) {
@@ -2260,6 +2272,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 .triggerableAnim("anim_hamster_assume_throw_pose", ASSUME_THROW_POSE_ANIM)
                 .triggerableAnim("anim_hamster_receiving_pets", RECEIVING_PETS_ANIM)
                 .triggerableAnim("stun", STUN_ANIM)
+                .triggerableAnim("sitting_roll", SITTING_ROLL_ANIM)
 
             // --- Handle Keyframe Particles ---
             .setParticleKeyframeHandler(event -> {
@@ -2602,6 +2615,33 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             return getFireProtectionLevel(armorStack) > 0;
         }
         return true;
+    }
+
+    /**
+     * Calculates the backward Z-offset for the Vanilla circle shadow during the sitting_roll animation.
+     * Uses Sine Curve Easing for smoothness.
+     */
+    public double getRollShadowOffset(float tickDelta) {
+        float timer = MathHelper.lerp(tickDelta, this.prevClientRollTimer, this.clientRollTimer);
+        float totalDuration = SHADOW_HOLD_START_TICKS + SHADOW_ROLL_BACK_TICKS + SHADOW_HOLD_APEX_TICKS + SHADOW_ROLL_FORWARD_TICKS;
+
+        // Return 0 if not rolling/in hold phase/animation finished
+        if (timer <= SHADOW_HOLD_START_TICKS || timer >= totalDuration) {
+            return 0.0;
+        }
+
+        if (timer <= SHADOW_HOLD_START_TICKS + SHADOW_ROLL_BACK_TICKS) {
+            // Roll backwards → easing to max offset
+            float progress = (timer - SHADOW_HOLD_START_TICKS) / SHADOW_ROLL_BACK_TICKS;
+            return SHADOW_MAX_OFFSET * 0.5 * (1.0 - Math.cos(Math.PI * progress));
+        } else if (timer <= SHADOW_HOLD_START_TICKS + SHADOW_ROLL_BACK_TICKS + SHADOW_HOLD_APEX_TICKS) {
+            // Hold at apex
+            return SHADOW_MAX_OFFSET;
+        } else {
+            // Roll forwards → easing back to start
+            float progress = (timer - SHADOW_HOLD_START_TICKS - SHADOW_ROLL_BACK_TICKS - SHADOW_HOLD_APEX_TICKS) / SHADOW_ROLL_FORWARD_TICKS;
+            return SHADOW_MAX_OFFSET * 0.5 * (1.0 + Math.cos(Math.PI * progress));
+        }
     }
 
     /**

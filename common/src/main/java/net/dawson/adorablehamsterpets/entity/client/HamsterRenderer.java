@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
+import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.client.layer.HamsterTrimRenderLayer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
@@ -424,6 +425,22 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                             animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                     ));
                 }
+                break;
+            case "hamster_roll_back_sound":
+                SoundEvent rollBackSound = Configs.AHP.enableRollingSlideWhistle
+                        ? ModSounds.HAMSTER_ROLL_BACK.get()
+                        : ModSounds.HAMSTER_ROLL_BACK_NO_SLIDE_WHISTLE.get();
+
+                client.getSoundManager().play(new PositionedSoundInstance(
+                        rollBackSound, SoundCategory.NEUTRAL, 0.3f, 1.4f,
+                        animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
+                ));
+                break;
+            case "hamster_roll_forward_sound":
+                client.getSoundManager().play(new PositionedSoundInstance(
+                        ModSounds.HAMSTER_ROLL_FORWARD.get(), SoundCategory.NEUTRAL, 0.2f, 1.4f,
+                        animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
+                ));
                 break;
             case "hamster_step_sound":
                 BlockPos pos = animatable.getBlockPos();

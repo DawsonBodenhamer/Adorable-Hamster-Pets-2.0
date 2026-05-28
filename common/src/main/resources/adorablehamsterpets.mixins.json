@@ -39,7 +39,8 @@
     "client.LivingEntityRendererMixin",
     "client.accessor.InGameHudAccessor",
     "client.InGameHudMixin",
-    "client.accessor.ClickableWidgetAccessor"
+    "client.accessor.ClickableWidgetAccessor",
+    "client.EntityRenderDispatcherMixin"
   ],
   "injectors": {
     "defaultRequire": 1

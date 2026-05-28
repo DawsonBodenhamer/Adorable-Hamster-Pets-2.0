@@ -375,6 +375,18 @@
     "subtitle": "subtitles.adorablehamsterpets.hamster_swish",
     "sounds": [ "adorablehamsterpets:hamster_swish" ]
   },
+  "hamster_roll_back": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_roll_back",
+    "sounds": [ "adorablehamsterpets:hamster_roll_back" ]
+  },
+  "hamster_roll_forward": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_roll_forward",
+    "sounds": [ "adorablehamsterpets:hamster_roll_forward" ]
+  },
+  "hamster_roll_back_no_slide_whistle": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_roll_back",
+    "sounds": [ "adorablehamsterpets:hamster_roll_back_no_slide_whistle" ]
+  },
   "gentle_breeze": {
     "subtitle": "subtitles.adorablehamsterpets.gentle_breeze",
     "sounds": [ "adorablehamsterpets:gentle_breeze" ]

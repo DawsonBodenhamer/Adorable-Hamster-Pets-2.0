@@ -51,6 +51,7 @@ public class HamsterAnimationScheduler {
         ANIMATION_DURATIONS.put("anim_hamster_crouch_and_investigate", 63);
         ANIMATION_DURATIONS.put("anim_hamster_receiving_pets", 183);
         ANIMATION_DURATIONS.put("stun", 63);
+        ANIMATION_DURATIONS.put("sitting_roll", 63);
     }
 
     /**
