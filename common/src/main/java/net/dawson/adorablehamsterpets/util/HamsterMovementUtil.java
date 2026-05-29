@@ -74,6 +74,35 @@ public final class HamsterMovementUtil {
     }
 
     /**
+     * Scans for a nearby block that is safe, solid land (not water).
+     *
+     * @param world    The world.
+     * @param startPos The position to search from.
+     * @param radius   The search radius in blocks.
+     * @param hamster  The hamster entity for collision contexts.
+     * @return An Optional containing the nearest safe land BlockPos.
+     */
+    public static Optional<BlockPos> findNearbyLand(World world, BlockPos startPos, int radius, HamsterEntity hamster) {
+        BlockPos nearestLand = null;
+        double nearestDistSq = Double.MAX_VALUE;
+
+        for (BlockPos checkPos : BlockPos.iterateOutwards(startPos, radius, radius, radius)) {
+            // Check that block is not submerged and the space above is air/empty
+            if (world.getFluidState(checkPos).isEmpty() && world.getFluidState(checkPos.up()).isEmpty()) {
+                // Check if valid surface
+                if (HamsterPlacementUtil.isSafeSpawnLocation(checkPos, world, hamster)) {
+                    double distSq = checkPos.getSquaredDistance(startPos);
+                    if (distSq < nearestDistSq) {
+                        nearestDistSq = distSq;
+                        nearestLand = checkPos.toImmutable();
+                    }
+                }
+            }
+        }
+        return Optional.ofNullable(nearestLand);
+    }
+
+    /**
      * Forces the mob to look at the target entity using this mod's fast rotation speed.
      *
      * @param mob    The observer.

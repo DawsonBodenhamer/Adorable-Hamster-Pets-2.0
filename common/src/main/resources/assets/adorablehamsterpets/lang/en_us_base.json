@@ -409,6 +409,7 @@
   "subtitles.adorablehamsterpets.magic_sparkling": "Sparkling",
   "subtitles.adorablehamsterpets.hamster_head_shake": "Hamster shakes its head",
   "subtitles.adorablehamsterpets.hamster_slap": "Hamster slaps",
+  "subtitles.adorablehamsterpets.hamster_water_swish": "Hamster swims",
 
   "config.jade.plugin_adorablehamsterpets.wild_bush_tooltips": "Wild Bush Tooltip Hints",
   "config.jade.plugin_adorablehamsterpets.hamster_debug_info": "More Hamster Info (For Debugging)",
@@ -706,6 +707,9 @@
   "book.adorablehamsterpets.entry.cheek_pouches.page3.header": "Equipment Slots",
   "book.adorablehamsterpets.entry.cheek_pouches.page3.body": "The <dark_green><b>Bling</> and <dark_green><b>Armor</> slots provide manual control over $(l:accessories/acorn_hat)<dark_green><b>Accessories</> and $(l:advanced_rodentry/tree_heist_and_armor)<dark_green><b>Armor</>.$(br2)Strictly speaking, they are unnecessary since you can <i>also</> equip items by <b>right-clicking</>, and remove them by brandishing <b>Shears</>.",
   "book.adorablehamsterpets.entry.cheek_pouches.page4.body": "$(br)But I added them anyway.$(br2)You're welcome.$(br2)Anyway, civilized folks like yourself should <i>probably</> prefer using inventory slots rather than threatening their pets with garden tools.$(br2)Looking at you, John.",
+  "book.adorablehamsterpets.entry.crop_harvesting": "Crop Harvesting",
+  "book.adorablehamsterpets.entry.crop_harvesting.page1.body": "You might think your crops are safe while you're busy mining. You are incorrect.$(br2)If a tamed hamster is wandering around its bed near your farm, it might decide to perform a <i>'quality control'</> inspection and aggressively stuff the harvest into its$(br)   cheeks.",
+  "book.adorablehamsterpets.entry.crop_harvesting.page2.body": "$(br)Hamsters are messy and tend to accidentally re-plant seeds, so your crops won't go extinct instantly.$(br2)You can also raid their $(l:advanced_rodentry/cheek_pouches)<dark_green><b>Cheek Pouch</> later to get your crops back.$(br2)Head to the $(l:the_kitchen_drawer/config_heaven)<dark_green><b>config</> to customize crops, timing, and everything else.",
   "book.adorablehamsterpets.entry.subterranean_shinies": "Subterranean Shinies",
   "book.adorablehamsterpets.entry.subterranean_shinies.page1.body": "Those excited sniffs? Your pocket prospector smells <dark_aqua><b>Diamonds!</> Checks a 10-block radius by default.$(br2)It pauses between alerts, so listen carefully before you start digging... again.",
   "book.adorablehamsterpets.entry.psychological_warfare": "Psychological Warfare",

@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "#c:crops", "required": false },
+    { "id": "#forge:crops", "required": false },
+    { "id": "#c:vegetables", "required": false },
+    { "id": "#forge:vegetables", "required": false },
+    "minecraft:wheat",
+    "minecraft:carrot",
+    "minecraft:potato",
+    "minecraft:beetroot",
+    "adorablehamsterpets:cucumber",
+    "adorablehamsterpets:green_beans"
+  ]
+}

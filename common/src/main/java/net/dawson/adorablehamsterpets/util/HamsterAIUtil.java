@@ -3,11 +3,17 @@ package net.dawson.adorablehamsterpets.util;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.JukeboxBlockEntity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.ai.pathing.PathNodeType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Encapsulates passive, environment-scanning AI logic for Hamsters.
@@ -15,6 +21,36 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 public final class HamsterAIUtil {
 
     private HamsterAIUtil() {}
+
+    /**
+     * Scans for a nearby dropped item that matches the given filter and is physically reachable.
+     * Temporarily bypasses the water pathfinding penalty to ensure accurate reachability checks.
+     *
+     * @param hamster The hamster searching for items.
+     * @param radius  The search radius in blocks.
+     * @param filter  A predicate to determine if the item is desirable.
+     * @return An Optional containing the closest reachable ItemEntity, or empty if none found.
+     */
+    public static Optional<ItemEntity> findReachableItem(HamsterEntity hamster, double radius, Predicate<ItemEntity> filter) {
+        // Temporarily clear water penalty to allow pathing into water if that's where item is
+        float oldWaterPenalty = hamster.getPathfindingPenalty(PathNodeType.WATER);
+        hamster.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
+
+        List<ItemEntity> nearbyItems = hamster.getWorld().getEntitiesByClass(
+                ItemEntity.class,
+                hamster.getBoundingBox().expand(radius),
+                itemEntity -> !itemEntity.isRemoved() && filter.test(itemEntity)
+        );
+
+        Optional<ItemEntity> closestItem = nearbyItems.stream()
+                .filter(item -> hamster.getNavigation().findPathTo(item, 1) != null)
+                .min((item1, item2) -> Float.compare(item1.distanceTo(hamster), item2.distanceTo(hamster)));
+
+        // Restore penalty after evaluation
+        hamster.setPathfindingPenalty(PathNodeType.WATER, oldWaterPenalty);
+
+        return closestItem;
+    }
 
     /**
      * Centralized state machine for handling ambient/idle behaviors when a tamed hamster is sitting.

@@ -588,6 +588,10 @@ public class AhpConfig extends Config {
     @Translatable.Desc("For when you need some personal space. Allows tamed hamsters to be linked to a Hamster Bed, letting them wander freely within a set radius instead of clinging to you like melted duct-tape. You're welcome.")
     public ValidatedBoolean enableWanderMode = new ValidatedBoolean(true);
 
+    @Translatable.Name("Enable Crop Snacking")
+    @Translatable.Desc("Whether wandering hamsters are allowed to snack on nearby crops. If enabled, they will occasionally pillage your fully grown crops, accidentally replant seeds, and stuff the profits into their face.")
+    public boolean enableCropSnacking = true;
+
     @Translatable.Name("Enable Stealing/Fetching")
     @Translatable.Desc("Permits hamsters to engage in spontaneous, high-stakes games of keep-away with your valuables.")
     public boolean enableItemStealing = true;
@@ -684,6 +688,10 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Force a cool-down after striking it rich. Off by default, since this can't happen again anyway without another mount/dismount on the shoulder.")
     public boolean enableIndependentDiamondSeekCooldown = false;
 
+    @Translatable.Name("Crop-Snacking Cooldown")
+    @Translatable.Desc("How long a hamster must wait after a successfully de-foresting your garden before it decides to have another midnight snack. (20 ticks = 1 second, default = 3 minutes).")
+    public ValidatedInt cropSnackCooldownTicks = new ValidatedInt(3600, 24000, 20);
+
     @Translatable.Name("Diamond Seeking Cooldown")
     @Translatable.Desc("Cooldown before your hamster can go on another treasure hunt. (20 ticks = 1 second)")
     public ValidatedInt independentOreSeekCooldownTicks = new ValidatedInt(2400, 6000, 20);
@@ -705,59 +713,6 @@ public class AhpConfig extends Config {
     @Translatable.Name("Core Item Tag Overrides")
     @Translatable.Desc("For the advanced user who looks at a perfectly functional system and thinks, 'I can make this weirder.' Edit these lists to change what items your hamsters consider food, bait, treasure, and all other interactions. Use item IDs (e.g., 'minecraft:diamond') or tags (e.g., '#minecraft:fishes'). Mess it up? That's a you problem.")
     public ConfigGroup itemTags = new ConfigGroup("itemTags", true);
-
-    @Translatable.Name("Taming Baits")
-    @Translatable.Desc("The official list of bribes for convincing wild fluffballs to join your cause. By default, it's just sliced cucumbers. Feel free to add 'minecraft:nether_star' if you enjoy making poor life choices. Compatible with Cultural Delights by default!")
-    public List<String> tamingFoods = new ArrayList<>(List.of("adorablehamsterpets:sliced_cucumber", "culturaldelights:cut_cucumber"));
-
-    @Translatable.Name("Standard Diet")
-    @Translatable.Desc("The hamster's everyday menu. These items will heal them or, if they're at full health, might give them... ideas about starting a family. Don't make it weird.")
-    public List<String> standardDiet = new ArrayList<>(List.of(
-            "adorablehamsterpets:hamster_food_mix", "adorablehamsterpets:sunflower_seeds", "adorablehamsterpets:green_beans",
-            "adorablehamsterpets:cucumber", "adorablehamsterpets:green_bean_seeds", "adorablehamsterpets:cucumber_seeds",
-            "minecraft:apple", "minecraft:carrot", "minecraft:melon_slice", "minecraft:sweet_berries",
-            "minecraft:beetroot", "minecraft:wheat", "minecraft:wheat_seeds", "#adorablehamsterpets:seeds",
-
-            // Farmer's Delight
-            "farmersdelight:cabbage_leaf",
-            "farmersdelight:cooked_rice",
-            "farmersdelight:pumpkin_slice",
-
-            // Cultural Delights
-            "culturaldelights:cut_cucumber", "culturaldelights:corn_kernels"
-    ));
-
-    @Translatable.Name("High-Value Heistables")
-    @Translatable.Desc("The list of items a hamster might try to... 'borrow' if you leave them on the ground. A chase will ensue. You have been warned.")
-    public List<String> stealableItems = new ArrayList<>(List.of("minecraft:diamond"));
-
-    @Translatable.Name("Retrievable Items")
-    @Translatable.Desc("Items the hamster views as gifts or toys to bring back to you. Picking these up triggers Delivery Mode. Default: Acorns.")
-    public List<String> retrievableItems = new ArrayList<>(List.of("adorablehamsterpets:acorn"));
-
-    @Translatable.Name("Performance-Enhancers")
-    @Translatable.Desc("The list of questionable substances that grant your hamster temporary superpowers. By default, it's just steamed green beans.")
-    public List<String> buffFoods = new ArrayList<>(List.of("adorablehamsterpets:steamed_green_beans"));
-
-    @Translatable.Name("Lure Items")
-    @Translatable.Desc("The specific items that convince a tamed hamster your shoulder is the best seat in the house. Also acts as a bribe to lure them into their linked bed. Defaults to cheese, because of course it does.")
-    public List<String> lureItems = new ArrayList<>(List.of("adorablehamsterpets:cheese"));
-
-    @Translatable.Name("Rodent Repellent")
-    @Translatable.Desc("The list of specific items that, when used on a Hamster Bed, will set 'Wander Mode Settings > Allow Sleeping in Bed' to false. For when you need your hamster to stay awake and wander around for... reasons. This can be reversed by using a lure item (cheese by default) on the bed. Sneaking before right-clicking with this item will unlink the bed entirely.")
-    public List<String> bedAvoidanceFoods = new ArrayList<>(List.of("minecraft:rotten_flesh"));
-
-    @Translatable.Name("Cheek Pouch Keys")
-    @Translatable.Desc("The one-time offering required to earn a hamster's ultimate trust, unlocking their cheek inventory. Make it something special. Or don't. See if I care.")
-    public List<String> pouchUnlockFoods = new ArrayList<>(List.of("adorablehamsterpets:hamster_food_mix"));
-
-    @Translatable.Name("Picky Eater Solutions")
-    @Translatable.Desc("Items on this list are so delicious, your hamster will never refuse them, even if you feed it to them twice. For the truly spoiled rodent.")
-    public List<String> repeatableFoods = new ArrayList<>(List.of("adorablehamsterpets:hamster_food_mix", "adorablehamsterpets:steamed_green_beans"));
-
-    @Translatable.Name("Passively Munchable Snacks")
-    @Translatable.Desc("The specific items a hamster will eat directly from its cheek pouch to heal itself when injured. Keep it exclusive, or let them feast on enchanted apples. Your call.")
-    public List<String> autoHealFoods = new ArrayList<>(List.of("adorablehamsterpets:hamster_food_mix"));
 
     @Translatable.Name("Cheek Pouch Smuggling List")
     @Translatable.Desc("Fine-tune exactly what your hamster is (and isn't) allowed to carry. The 'Allowed' list acts as a high-priority override to the 'Disallowed' lists and general rules.")
@@ -784,7 +739,6 @@ public class AhpConfig extends Config {
     ));
 
     @ConfigGroup.Pop
-    @ConfigGroup.Pop
     @Translatable.Name("Pouch Disallowed Tags")
     @Translatable.Desc("A list of item tags that are NEVER allowed in the cheek pouch, unless they are on the 'Allowed' list above. A broad-spectrum approach to preventing your hamster from swallowing an entire sword.")
     public List<String> pouchDisallowedTags = new ArrayList<>(List.of(
@@ -792,6 +746,78 @@ public class AhpConfig extends Config {
             "#minecraft:trimmable_armor", "#minecraft:beds", "#minecraft:banners", "#minecraft:doors",
             "#minecraft:boats"
     ));
+
+    @Translatable.Name("Taming Baits")
+    @Translatable.Desc("The official list of bribes for convincing wild fluffballs to join your cause. By default, it's just sliced cucumbers. Feel free to add 'minecraft:nether_star' if you enjoy making poor life choices. Compatible with Cultural Delights by default!")
+    public List<String> tamingFoods = new ArrayList<>(List.of("adorablehamsterpets:sliced_cucumber", "culturaldelights:cut_cucumber"));
+
+    @Translatable.Name("Standard Diet")
+    @Translatable.Desc("The hamster's everyday menu. These items will heal them or, if they're at full health, might give them... ideas about starting a family. Don't make it weird.")
+    public List<String> standardDiet = new ArrayList<>(List.of(
+            "#adorablehamsterpets:seeds", "adorablehamsterpets:hamster_food_mix", "adorablehamsterpets:green_beans",
+            "adorablehamsterpets:cucumber",
+
+            // Farmer's Delight
+            "farmersdelight:cabbage_leaf",
+            "farmersdelight:cooked_rice",
+            "farmersdelight:pumpkin_slice",
+
+            // Cultural Delights
+            "culturaldelights:cut_cucumber", "culturaldelights:corn_kernels"
+    ));
+
+    @Translatable.Name("High-Value Heistables")
+    @Translatable.Desc("The list of items a hamster might try to... 'borrow' if you leave them on the ground. A chase will ensue. You have been warned.")
+    public List<String> stealableItems = new ArrayList<>(List.of("minecraft:diamond"));
+
+    @Translatable.Name("Retrievable Items")
+    @Translatable.Desc("Items the hamster views as gifts or toys to bring back to you. Picking these up triggers Delivery Mode. Default: Acorns.")
+    public List<String> retrievableItems = new ArrayList<>(List.of("adorablehamsterpets:acorn"));
+
+    @Translatable.Name("Stuffable Items")
+    @Translatable.Desc("The list of dropped items a hamster may hunt down and stuff in its cheeks. Accepts item IDs (e.g. 'minecraft:wheat') or tags (e.g. '#adorablehamsterpets:seeds'). Note that this is my own custom union tag which points to Fabric's Convention tag on 1.21 like 'c:seeds' and Forge tags on 1.20 like 'forge:seeds.'")
+    public List<String> snackableItems = new ArrayList<>(List.of(
+            "#adorablehamsterpets:seeds", "#adorablehamsterpets:crop_items"
+    ));
+
+    @Translatable.Name("Stuffable Items Blacklist")
+    @Translatable.Desc("Items or tags that hamsters are NOT allowed to hunt down and stuff in their cheeks. Overrides the 'Stuffable Items' list.")
+    public List<String> snackableItemsBlacklist = new ArrayList<>();
+
+    @Translatable.Name("Delicious Crop Blocks")
+    @Translatable.Desc("The list of crop blocks a hamster may decide to harvest and replant. Accepts specific block IDs (e.g. 'minecraft:wheat') or tags (e.g. '#adorablehamsterpets:crops'). Note that this is my own custom union tag which points to Fabric's Convention tag on 1.21 like 'c:crops' and Forge tags on 1.20 like 'forge:crops.'")
+    public List<String> snackableCrops = new ArrayList<>(List.of(
+            "#adorablehamsterpets:crops"
+    ));
+
+    @Translatable.Name("Delicious Crop Blacklist")
+    @Translatable.Desc("Crop blocks or tags that hamsters are NOT allowed to harvest. Overrides the 'Delicious Crop Blocks' list.")
+    public List<String> snackableCropsBlacklist = new ArrayList<>();
+
+    @Translatable.Name("Performance-Enhancers")
+    @Translatable.Desc("The list of questionable substances that grant your hamster temporary superpowers. By default, it's just steamed green beans.")
+    public List<String> buffFoods = new ArrayList<>(List.of("adorablehamsterpets:steamed_green_beans"));
+
+    @Translatable.Name("Lure Items")
+    @Translatable.Desc("The specific items that convince a tamed hamster your shoulder is the best seat in the house. Also acts as a bribe to lure them into their linked bed. Defaults to cheese, because of course it does.")
+    public List<String> lureItems = new ArrayList<>(List.of("adorablehamsterpets:cheese"));
+
+    @Translatable.Name("Rodent Repellent")
+    @Translatable.Desc("The list of specific items that, when used on a Hamster Bed, will set 'Wander Mode Settings > Allow Sleeping in Bed' to false. For when you need your hamster to stay awake and wander around for... reasons. This can be reversed by using a lure item (cheese by default) on the bed. Sneaking before right-clicking with this item will unlink the bed entirely.")
+    public List<String> bedAvoidanceFoods = new ArrayList<>(List.of("minecraft:rotten_flesh"));
+
+    @Translatable.Name("Cheek Pouch Keys")
+    @Translatable.Desc("The one-time offering required to earn a hamster's ultimate trust, unlocking their cheek inventory. Make it something special. Or don't. See if I care.")
+    public List<String> pouchUnlockFoods = new ArrayList<>(List.of("adorablehamsterpets:hamster_food_mix"));
+
+    @Translatable.Name("Picky Eater Solutions")
+    @Translatable.Desc("Items on this list are so delicious, your hamster will never refuse them, even if you feed it to them twice. For the truly spoiled rodent.")
+    public List<String> repeatableFoods = new ArrayList<>(List.of("adorablehamsterpets:hamster_food_mix", "adorablehamsterpets:steamed_green_beans"));
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Passively Munchable Items")
+    @Translatable.Desc("The specific items a hamster will eat directly from its cheek pouch to heal itself when injured. Keep it exclusive, or let them feast on enchanted apples. Your call.")
+    public List<String> autoHealFoods = new ArrayList<>(List.of("adorablehamsterpets:hamster_food_mix"));
 
     // --- Core Hamster Attributes ---
     @Translatable.Name("Core Hamster Attributes")
@@ -1171,6 +1197,27 @@ public class AhpConfig extends Config {
                     Text.translatable("config.adorablehamsterpets.condition.sleep_in_bed_allowed"),
                     () -> 300
             );
+
+    @Translatable.Name("Crop Snacking Settings")
+    @Translatable.Desc("Sometimes a hamster gets the munchies while wandering. If enabled, they will occasionally pillage your fully grown crops, accidentally replant seeds, and stuff the profits into their face. To see a list of crops and items hamsters may snack on, see the 'Core Item Tag Overrides' settings.")
+    public ConfigGroup cropSnacking = new ConfigGroup("cropSnacking", true);
+
+    @Translatable.Name("Snacking Chance")
+    @Translatable.Desc("How likely a wandering hamster is to attempt to steal crops. (1-in-X chance per tick). Default is 300 which equates to every 15 seconds on average. Set lower to increase the likelihood.")
+    public ValidatedInt cropSnackingChanceDenominator = new ValidatedInt(300, 10000, 1);
+
+    @Translatable.Name("Cleanliness")
+    @Translatable.Desc("The probability (0.0 to 1.0) that a hamster will accidentally replant a seed while aggressively harvesting a crop. At 0.0, they will perfectly uproot the crop, not spilling any seeds. At 1.0, they will be extremely messy and replant every time. Defaults to 0.75 (75%).")
+    public ValidatedFloat cropReplantChance = new ValidatedFloat(0.75f, 1.0f, 0.0f);
+
+    @Translatable.Name("Ignore Seeds")
+    @Translatable.Desc("If true, your hamster will ignore the seeds that drop during a midnight snack.")
+    public boolean ignoreSeeds = false;
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Restrict to Wander Mode")
+    @Translatable.Desc("If true, hamsters will only scavenge for dropped snack items if they are actively in Wander Mode. If false, they might snatch up your dropped snackables while following you around.")
+    public boolean restrictItemSnackingToWanderMode = true;
 
     // --- Shoulder Hamster Settings ---
     @Translatable.Name("Shoulder Hamster Settings")

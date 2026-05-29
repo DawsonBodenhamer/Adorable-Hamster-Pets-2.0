@@ -90,6 +90,46 @@ public final class HamsterInventoryUtil {
     }
 
     /**
+     * Checks if the hamster has at least one cheek pouch slot available that can accept the item.
+     */
+    public static boolean hasRoomInCheeks(HamsterEntity hamster, ItemStack stack) {
+        for (int i = 0; i < CHEEK_POUCH_SIZE; i++) {
+            ItemStack slotStack = hamster.getItems().get(i);
+            if (slotStack.isEmpty() || (ItemStack.areItemsEqual(slotStack, stack) && slotStack.getCount() < slotStack.getMaxCount())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Attempts to forcefully insert an item into the hamster's cheek pouches.
+     * Returns the remaining stack if it couldn't all fit.
+     */
+    public static ItemStack insertIntoCheeks(HamsterEntity hamster, ItemStack stack) {
+        ItemStack remaining = stack.copy();
+
+        for (int i = 0; i < CHEEK_POUCH_SIZE; i++) {
+            if (remaining.isEmpty()) break;
+
+            ItemStack slotStack = hamster.getItems().get(i);
+
+            if (slotStack.isEmpty()) {
+                hamster.setStack(i, remaining.split(remaining.getCount()));
+            } else if (ItemStack.areItemsEqual(slotStack, remaining) && slotStack.getCount() < slotStack.getMaxCount()) {
+                int spaceLeft = slotStack.getMaxCount() - slotStack.getCount();
+                int amountToMove = Math.min(spaceLeft, remaining.getCount());
+
+                slotStack.increment(amountToMove);
+                remaining.decrement(amountToMove);
+                hamster.setStack(i, slotStack); // trigger sync
+            }
+        }
+
+        return remaining;
+    }
+
+    /**
      * Updates visual and logic states for cheek fullness based on inventory content.
      */
     public static void updateCheekStates(HamsterEntity hamster) {

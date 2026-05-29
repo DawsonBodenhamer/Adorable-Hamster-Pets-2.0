@@ -82,14 +82,14 @@ public class HamsterFleeGoal<T extends LivingEntity> extends FleeEntityGoal<T> {
     @Override
     public void start() {
         super.start();
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
+        this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName());
     }
 
     @Override
     public void stop() {
         super.stop();
-        if (this.hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
+        if (this.hamster.getActiveCustomGoalName().equals(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalName("None");
         }
     }
 }

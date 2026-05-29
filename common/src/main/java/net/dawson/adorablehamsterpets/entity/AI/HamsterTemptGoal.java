@@ -23,7 +23,7 @@ public class HamsterTemptGoal extends TemptGoal {
     @Override
     public void start() {
         super.start();
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
+        this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName());
     }
 
     // --- 3. Public Methods (Overrides from TemptGoal/Goal) ---
@@ -88,8 +88,8 @@ public class HamsterTemptGoal extends TemptGoal {
     @Override
     public void stop() {
         super.stop(); // Calls vanilla TemptGoal's stop logic (clears navigation, sets cooldown).
-        if (this.hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
+        if (this.hamster.getActiveCustomGoalName().equals(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalName("None");
         }
         this.hamster.setBegging(false);
         this.recheckTimer = 0;

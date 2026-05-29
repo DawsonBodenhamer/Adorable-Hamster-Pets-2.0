@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:crops",
+    { "id": "#c:crops", "required": false },
+    { "id": "#forge:crops", "required": false }
+  ]
+}

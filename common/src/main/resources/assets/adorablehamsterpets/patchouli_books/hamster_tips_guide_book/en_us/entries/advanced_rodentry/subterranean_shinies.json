@@ -3,7 +3,7 @@
   "icon": "minecraft:diamond",
   "category": "adorablehamsterpets:advanced_rodentry",
   "entry_color": "00AAAA",
-  "sortnum": 2,
+  "sortnum": 5,
   "pages": [
     {
       "type": "adorablehamsterpets:dynamic_page",

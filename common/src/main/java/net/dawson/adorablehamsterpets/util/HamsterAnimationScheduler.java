@@ -45,7 +45,7 @@ public class HamsterAnimationScheduler {
         ANIMATION_DURATIONS.put("anim_hamster_stand_settle_sleep2", 35);
         ANIMATION_DURATIONS.put("anim_hamster_stand_settle_sleep3", 35);
         ANIMATION_DURATIONS.put("anim_hamster_sulk", 63);
-        ANIMATION_DURATIONS.put("anim_hamster_pounce_on_item", 23);
+        ANIMATION_DURATIONS.put("anim_hamster_pounce", 23);
         ANIMATION_DURATIONS.put("anim_hamster_quick_bounce", 33);
         ANIMATION_DURATIONS.put("anim_hamster_cheek_unload", 43);
         ANIMATION_DURATIONS.put("anim_hamster_crouch_and_investigate", 63);

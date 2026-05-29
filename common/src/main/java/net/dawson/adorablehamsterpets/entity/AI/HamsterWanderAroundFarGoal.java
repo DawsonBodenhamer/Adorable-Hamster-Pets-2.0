@@ -39,8 +39,14 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
     @Override
     public boolean canStart() {
         // --- 1. Initial State Checks ---
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isSulking()
-                || this.hamster.isCelebratingDiamond() || this.hamster.isFrozenMovement() || this.hamster.isCelebratingBaby()) {
+        if (this.hamster.isSitting()
+                || this.hamster.isSleeping()
+                || this.hamster.isKnockedOut()
+                || this.hamster.isSulking()
+                || this.hamster.isCelebratingDiamond()
+                || this.hamster.isFrozenMovement()
+                || this.hamster.isCelebratingBaby()
+                || this.hamster.getActiveCustomGoalName().equals("Escaping Water")) {
             return false;
         }
 
@@ -98,8 +104,12 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
         if (this.hamster.hasGreenBeanBuff()) {
             // For zoomies, the goal should now stop if it's interrupted OR if it has reached its destination.
             // This allows the canStart() cooldown to be checked again.
-            return !(this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut())
-                    && !this.mob.getNavigation().isIdle();
+            return !(this.hamster.isSitting()
+                    || this.hamster.isSleeping()
+                    || this.hamster.isKnockedOut()
+            )
+                    && !this.mob.getNavigation().isIdle()
+                    && !this.hamster.getActiveCustomGoalName().equals("Escaping Water");
         } else {
             // Stop wandering if mutual eye contact established
             if (this.hamster.hasMutualGaze) {
@@ -141,7 +151,7 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
 
         this.mob.getNavigation().startMovingTo(this.targetX, this.targetY, this.targetZ, currentSpeed);
 
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName() + (this.hamster.hasGreenBeanBuff() ? " (Zoomies)" : ""));
+        this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName() + (this.hamster.hasGreenBeanBuff() ? " (Zoomies)" : ""));
         AdorableHamsterPets.LOGGER.trace("[WanderGoal-{}] start: Goal has started. IsBuffed: {}", this.hamster.getId(), this.hamster.hasGreenBeanBuff());
     }
 
@@ -228,8 +238,8 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
     @Override
     public void stop() {
         super.stop();
-        if (this.hamster.getActiveCustomGoalDebugName().startsWith(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
+        if (this.hamster.getActiveCustomGoalName().startsWith(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalName("None");
         }
         AdorableHamsterPets.LOGGER.trace("[WanderGoal-{}] stop: Goal has stopped.", this.hamster.getId());
     }

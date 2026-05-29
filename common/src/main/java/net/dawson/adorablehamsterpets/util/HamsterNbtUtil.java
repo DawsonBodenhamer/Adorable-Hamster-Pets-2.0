@@ -87,6 +87,7 @@ public final class HamsterNbtUtil {
         // --- 6. Interaction & Mini-Game ---
         nbt.putLong("TagGameCooldownEnd", hamster.tagGameCooldownEndTick);
         nbt.putLong("StealingCooldownEnd", hamster.stealingCooldownEndTick);
+        nbt.putLong("CropSnackCooldownEnd", hamster.cropSnackCooldownEndTick);
         if (hamster.getGenericInteractionTimer() > 0) {
             nbt.putInt("GenericInteractionTimer", hamster.getGenericInteractionTimer());
         }
@@ -204,6 +205,7 @@ public final class HamsterNbtUtil {
         // --- 6. Interaction & Mini-Game ---
         hamster.tagGameCooldownEndTick = nbt.getLong("TagGameCooldownEnd");
         hamster.stealingCooldownEndTick = nbt.getLong("StealingCooldownEnd");
+        hamster.cropSnackCooldownEndTick = nbt.getLong("CropSnackCooldownEnd");
         hamster.setGenericInteractionTimer(nbt.getInt("GenericInteractionTimer"));
 
         boolean holding = nbt.getBoolean("IsHoldingMouthItem");
@@ -280,6 +282,7 @@ public final class HamsterNbtUtil {
         HamsterState.SeekingBehaviorData seekingData = new HamsterState.SeekingBehaviorData(
                 hamster.isPrimedToSeekDiamonds,
                 hamster.foundOreCooldownEndTick,
+                hamster.cropSnackCooldownEndTick,
                 Optional.ofNullable(hamster.currentOreTarget)
         );
         HamsterState.GreenBeanBuffData buffData = new HamsterState.GreenBeanBuffData(
@@ -384,6 +387,7 @@ public final class HamsterNbtUtil {
             HamsterState.SeekingBehaviorData seekingData = data.seekingBehaviorData();
             hamster.isPrimedToSeekDiamonds = seekingData.isPrimedToSeekDiamonds();
             hamster.foundOreCooldownEndTick = seekingData.foundOreCooldownEndTick();
+            hamster.cropSnackCooldownEndTick = seekingData.cropSnackCooldownEndTick();
             hamster.currentOreTarget = seekingData.currentOreTarget().orElse(null);
 
             // --- 6. Load Wander Mode/Bed Data ---

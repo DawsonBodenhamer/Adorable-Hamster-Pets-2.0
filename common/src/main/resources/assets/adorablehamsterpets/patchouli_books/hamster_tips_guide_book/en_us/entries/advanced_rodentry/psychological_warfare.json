@@ -3,7 +3,7 @@
   "icon": "minecraft:ender_eye",
   "category": "adorablehamsterpets:advanced_rodentry",
   "entry_color": "00AAAA",
-  "sortnum": 3,
+  "sortnum": 7,
   "pages": [
     {
       "type": "adorablehamsterpets:dynamic_page",

@@ -134,7 +134,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
 
     @Override
     public void start() {
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName() + (this.hamster.isTagChaser ? "_Chaser" : "_Instigator"));
+        this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName() + (this.hamster.isTagChaser ? "_Chaser" : "_Instigator"));
         this.gameTimerTicks = Configs.AHP.interHamsterTagMaxDurationSeconds.get() * 20;
         this.pathUpdateTimer = 0;
 
@@ -155,8 +155,8 @@ public class HamsterInterHamsterTagGoal extends Goal {
         this.hamster.tagGameWon = false;
         this.hamster.setTaunting(false);
 
-        if (this.hamster.getActiveCustomGoalDebugName().startsWith(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
+        if (this.hamster.getActiveCustomGoalName().startsWith(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalName("None");
         }
 
         // 2. Check if game ended naturally or via player interruption

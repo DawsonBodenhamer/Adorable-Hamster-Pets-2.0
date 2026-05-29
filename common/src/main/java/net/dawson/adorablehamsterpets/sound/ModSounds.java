@@ -40,6 +40,15 @@ public class ModSounds {
     public static final RegistrySupplier<SoundEvent> HAMSTER_ROLL_FORWARD = registerSoundEvent("hamster_roll_forward");
     public static final RegistrySupplier<SoundEvent> HAMSTER_ROLL_BACK_NO_SLIDE_WHISTLE = registerSoundEvent("hamster_roll_back_no_slide_whistle");
 
+    // --- Swimming Sounds ---
+    public static final RegistrySupplier<SoundEvent> HAMSTER_WATER_SWISH1 = registerSoundEvent("hamster_water_swish1");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_WATER_SWISH2 = registerSoundEvent("hamster_water_swish2");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_WATER_SWISH3 = registerSoundEvent("hamster_water_swish3");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_WATER_SWISH4 = registerSoundEvent("hamster_water_swish4");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_WATER_SWISH5 = registerSoundEvent("hamster_water_swish5");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_WATER_SWISH6 = registerSoundEvent("hamster_water_swish6");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_WATER_SWISH7 = registerSoundEvent("hamster_water_swish7");
+
     // --- Impact & Throw Sounds ---
     public static final RegistrySupplier<SoundEvent> HAMSTER_IMPACT = registerSoundEvent("hamster_impact");
     public static final RegistrySupplier<SoundEvent> HAMSTER_THROW = registerSoundEvent("hamster_throw");
@@ -253,6 +262,10 @@ public class ModSounds {
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_BED_LEAVES_RUSTLE_SOUNDS = List.of(
             HAMSTER_BED_LEAVES_RUSTLE1, HAMSTER_BED_LEAVES_RUSTLE2, HAMSTER_BED_LEAVES_RUSTLE3
     );
+    public static final List<RegistrySupplier<SoundEvent>> HAMSTER_WATER_SWISH_SOUNDS = List.of(
+            HAMSTER_WATER_SWISH1, HAMSTER_WATER_SWISH2, HAMSTER_WATER_SWISH3, HAMSTER_WATER_SWISH4,
+            HAMSTER_WATER_SWISH5, HAMSTER_WATER_SWISH6, HAMSTER_WATER_SWISH7
+    );
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Static Registration
@@ -303,10 +316,10 @@ public class ModSounds {
         );
 
         List<String> squishKeywords = List.of(
-                "cheese", "flesh", "slime", "magma", "honey", "kelp", "moss", "fungus", "wart", "guts",
-                "ink", "moist", "wet", "leaf", "lily", "pad", "vine", "pickle", "cucumber", "beans", "rice",
-                "chorus_fruit", "berries", "cabbage", "tomato", "pumpkin", "corn", "egg", "pork", "poisonous",
-                "beef", "mutton", "chicken", "rabbit", "cod", "salmon", "spore", "dripleaf", "warped", "stem"
+                "cheese", "flesh", "slime", "magma", "honey", "kelp", "moss", "fungus", "wart", "guts", "wheat",
+                "ink", "moist", "wet", "leaf", "lily", "pad", "vine", "pickle", "cucumber", "beans", "rice", "carrot",
+                "chorus_fruit", "berries", "cabbage", "tomato", "pumpkin", "corn", "egg", "pork", "poisonous", "potato",
+                "beef", "mutton", "chicken", "rabbit", "cod", "salmon", "spore", "dripleaf", "warped", "stem", "seed"
         );
 
         // --- Category Checks ---

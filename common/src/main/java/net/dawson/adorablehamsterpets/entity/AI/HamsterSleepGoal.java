@@ -114,7 +114,7 @@ public class HamsterSleepGoal extends Goal {
 
     @Override
     public void start() {
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
+        this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName());
 
         // --- Set Sleep State ---
         this.hamster.getNavigation().stop();
@@ -153,8 +153,8 @@ public class HamsterSleepGoal extends Goal {
         this.delayTimer = 0;
         this.checkTimer = 0;
 
-        if (this.hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
+        if (this.hamster.getActiveCustomGoalName().equals(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalName("None");
         }
     }
 
