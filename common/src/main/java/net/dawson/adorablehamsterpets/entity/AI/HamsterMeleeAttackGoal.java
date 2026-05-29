@@ -109,7 +109,7 @@ public class HamsterMeleeAttackGoal extends MeleeAttackGoal {
                     this.hamster.getNavigation().stop();
 
                     // Alternate looking between target and owner
-                    if ((this.hamster.age / 20) % 2 == 0) { // 20 tick tempo
+                    if ((this.hamster.age / 40) % 2 == 0) { // 40 tick tempo
                         HamsterMovementUtil.faceEntity(this.hamster, target);
                     } else {
                         HamsterMovementUtil.faceEntity(this.hamster, owner);
