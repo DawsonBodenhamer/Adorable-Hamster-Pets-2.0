@@ -66,18 +66,20 @@ public record HamsterState(
     public record SeekingBehaviorData(
             boolean isPrimedToSeekDiamonds,
             long foundOreCooldownEndTick,
+            long cropSnackCooldownEndTick,
             Optional<BlockPos> currentOreTarget
     ) {
         public static final Codec<SeekingBehaviorData> CODEC = RecordCodecBuilder.create(instance ->
                 instance.group(
                         Codec.BOOL.fieldOf("isPrimedToSeekDiamonds").orElse(false).forGetter(SeekingBehaviorData::isPrimedToSeekDiamonds),
                         Codec.LONG.fieldOf("foundOreCooldownEndTick").orElse(0L).forGetter(SeekingBehaviorData::foundOreCooldownEndTick),
+                        Codec.LONG.fieldOf("cropSnackCooldownEndTick").orElse(0L).forGetter(SeekingBehaviorData::cropSnackCooldownEndTick),
                         BlockPos.CODEC.optionalFieldOf("currentOreTarget").forGetter(SeekingBehaviorData::currentOreTarget)
                 ).apply(instance, SeekingBehaviorData::new)
         );
 
         public static SeekingBehaviorData empty() {
-            return new SeekingBehaviorData(false, 0L, Optional.empty());
+            return new SeekingBehaviorData(false, 0L, 0L, Optional.empty());
         }
     }
 

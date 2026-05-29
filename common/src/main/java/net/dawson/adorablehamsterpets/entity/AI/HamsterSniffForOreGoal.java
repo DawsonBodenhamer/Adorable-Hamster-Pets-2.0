@@ -166,7 +166,7 @@ public class HamsterSniffForOreGoal extends Goal {
 
     @Override
     public void start() {
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName() + (this.isSeekingDisappointingOre ? "_Gold" : "_Diamond"));
+        this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName() + (this.isSeekingDisappointingOre ? "_Gold" : "_Diamond"));
         this.pathingTickTimer = 0;
 
         // currentState is already SCANNING from canStart/findNewTargetOreAndSetState
@@ -198,8 +198,8 @@ public class HamsterSniffForOreGoal extends Goal {
             this.hamster.setCelebratingDiamond(false);
         }
 
-        if (this.hamster.getActiveCustomGoalDebugName().startsWith(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
+        if (this.hamster.getActiveCustomGoalName().startsWith(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalName("None");
         }
 
         this.currentState = SeekingState.IDLE;

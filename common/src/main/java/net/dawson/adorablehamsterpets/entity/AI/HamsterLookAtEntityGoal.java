@@ -44,7 +44,7 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
         if (this.hamsterMob instanceof HamsterEntity hamster) {
             if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking()
                     || hamster.isHoldingMouthItem() || hamster.isFrozenMovement() || hamster.isCelebratingDiamond()
-                    || hamster.isCelebratingBaby() || hamster.getActiveCustomGoalDebugName().equals(HamsterWanderAroundFarGoal.class.getSimpleName())) {
+                    || hamster.isCelebratingBaby() || hamster.getActiveCustomGoalName().equals(HamsterWanderAroundFarGoal.class.getSimpleName())) {
                 return false;
             }
         }
@@ -74,7 +74,7 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
 
         if (this.mob instanceof HamsterEntity hamster) {
             hamster.isLookAtEntityGoalActive = true;
-            hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
+            hamster.setActiveCustomGoalName(this.getClass().getSimpleName());
             hamster.getDataTracker().set(HamsterEntity.CURRENT_LOOK_UP_ANIM_ID, hamster.getRandom().nextBetween(1, 3));
             AdorableHamsterPets.LOGGER.trace("[AI Goal Start] Hamster {} started LookAtEntityGoal with duration {} ticks (Base: {} + Random).", hamster.getId(), calculatedDuration, baseDuration);
         }
@@ -98,8 +98,8 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
         if (this.mob instanceof HamsterEntity hamster) {
             hamster.isLookAtEntityGoalActive = false;
             hamster.hasMutualGaze = false;
-            if (hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
-                hamster.setActiveCustomGoalDebugName("None");
+            if (hamster.getActiveCustomGoalName().equals(this.getClass().getSimpleName())) {
+                hamster.setActiveCustomGoalName("None");
             }
         }
     }

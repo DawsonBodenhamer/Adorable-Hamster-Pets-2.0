@@ -91,14 +91,14 @@ public class HamsterFollowParentGoal extends Goal {
     @Override
     public void start() {
         this.delay = 0;
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
+        this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName());
     }
 
     @Override
     public void stop() {
         this.target = null;
-        if (this.hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
+        if (this.hamster.getActiveCustomGoalName().equals(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalName("None");
         }
     }
 

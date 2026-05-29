@@ -75,6 +75,10 @@ public class ConfigDataCache {
     private static final Set<TagKey<Item>> becomeNeutralTags = new HashSet<>();
     private static final Set<Item> becomeMenaceItems = new HashSet<>();
     private static final Set<TagKey<Item>> becomeMenaceTags = new HashSet<>();
+    private static final Set<Item> snackableItemsList = new HashSet<>();
+    private static final Set<TagKey<Item>> snackableItemsTags = new HashSet<>();
+    private static final Set<Item> snackableItemsBlacklistList = new HashSet<>();
+    private static final Set<TagKey<Item>> snackableItemsBlacklistTags = new HashSet<>();
 
     // --- Cached Sets for Entity Performance ---
     private static final Set<EntityType<?>> menaceTargetEntities = new HashSet<>();
@@ -89,6 +93,10 @@ public class ConfigDataCache {
     private static final Set<TagKey<Block>> heistableLeavesTags = new HashSet<>();
     private static final Set<Block> heistableLogsBlocks = new HashSet<>();
     private static final Set<TagKey<Block>> heistableLogsTags = new HashSet<>();
+    private static final Set<Block> snackableCropBlocks = new HashSet<>();
+    private static final Set<TagKey<Block>> snackableCropTags = new HashSet<>();
+    private static final Set<Block> snackableCropBlacklistBlocks = new HashSet<>();
+    private static final Set<TagKey<Block>> snackableCropBlacklistTags = new HashSet<>();
 
     // --- Cached Lists for Environment-Spawning Performance ---
     private static final List<EnvironmentDefinition> ENVIRONMENTS = new ArrayList<>();
@@ -139,6 +147,8 @@ public class ConfigDataCache {
         parseItemList(Configs.AHP.becomePacifistItems, becomePacifistItems, becomePacifistTags, "becomePacifistItems");
         parseItemList(Configs.AHP.becomeNeutralItems, becomeNeutralItems, becomeNeutralTags, "becomeNeutralItems");
         parseItemList(Configs.AHP.becomeMenaceItems, becomeMenaceItems, becomeMenaceTags, "becomeMenaceItems");
+        parseItemList(Configs.AHP.snackableItems, snackableItemsList, snackableItemsTags, "snackableItems");
+        parseItemList(Configs.AHP.snackableItemsBlacklist, snackableItemsBlacklistList, snackableItemsBlacklistTags, "snackableItemsBlacklist");
 
         // --- Parse Entity Lists ---
         parseEntityList(Configs.AHP.menaceTargetEntities, menaceTargetEntities, menaceTargetTags, "menaceTargetEntities");
@@ -148,6 +158,8 @@ public class ConfigDataCache {
         parseBlockList(Configs.AHP.sulkingOres, sulkingOreBlocks, sulkingOreTags, "sulkingOres");
         parseBlockList(Configs.AHP.heistableLeaves, heistableLeavesBlocks, heistableLeavesTags, "heistableLeaves");
         parseBlockList(Configs.AHP.heistableLogs, heistableLogsBlocks, heistableLogsTags, "heistableLogs");
+        parseBlockList(Configs.AHP.snackableCrops, snackableCropBlocks, snackableCropTags, "snackableCrops");
+        parseBlockList(Configs.AHP.snackableCropsBlacklist, snackableCropBlacklistBlocks, snackableCropBlacklistTags, "snackableCropsBlacklist");
 
         // --- Parse Region-Based Color Filters ---
         ENVIRONMENTS.clear();
@@ -223,6 +235,11 @@ public class ConfigDataCache {
     public static boolean isPacifistItem(ItemStack stack) { return matchesItem(stack, becomePacifistItems, becomePacifistTags); }
     public static boolean isStandardAggressionItem(ItemStack stack) { return matchesItem(stack, becomeNeutralItems, becomeNeutralTags); }
     public static boolean isMenaceItem(ItemStack stack) { return matchesItem(stack, becomeMenaceItems, becomeMenaceTags); }
+    public static boolean isSnackableItem(ItemStack stack) {
+        if (matchesItem(stack, snackableItemsBlacklistList, snackableItemsBlacklistTags)) return false;
+        return matchesItem(stack, snackableItemsList, snackableItemsTags);
+    }
+
 
     // --- Public Entity Checker Methods ---
     public static boolean isMenaceTarget(LivingEntity entity) {
@@ -247,6 +264,10 @@ public class ConfigDataCache {
     public static boolean isSulkingOre(BlockState state) { return matchesBlock(state, sulkingOreBlocks, sulkingOreTags); }
     public static boolean isHeistableLeaf(BlockState state) { return matchesBlock(state, heistableLeavesBlocks, heistableLeavesTags); }
     public static boolean isHeistableLog(BlockState state) { return matchesBlock(state, heistableLogsBlocks, heistableLogsTags); }
+    public static boolean isSnackableCrop(BlockState state) {
+        if (matchesBlock(state, snackableCropBlacklistBlocks, snackableCropBlacklistTags)) return false;
+        return matchesBlock(state, snackableCropBlocks, snackableCropTags);
+    }
 
     // --- Public Environment Checker Methods ---
     /**
@@ -490,6 +511,10 @@ public class ConfigDataCache {
         becomeNeutralTags.clear();
         becomeMenaceItems.clear();
         becomeMenaceTags.clear();
+        snackableItemsList.clear();
+        snackableItemsTags.clear();
+        snackableItemsBlacklistList.clear();
+        snackableItemsBlacklistTags.clear();
     }
 
     private static void clearAllEntitySets() {
@@ -506,6 +531,10 @@ public class ConfigDataCache {
         heistableLeavesTags.clear();
         heistableLogsBlocks.clear();
         heistableLogsTags.clear();
+        snackableCropBlocks.clear();
+        snackableCropTags.clear();
+        snackableCropBlacklistBlocks.clear();
+        snackableCropBlacklistTags.clear();
     }
 
     /**

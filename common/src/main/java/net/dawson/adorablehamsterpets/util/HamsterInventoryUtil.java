@@ -68,14 +68,15 @@ public final class HamsterInventoryUtil {
                 ConfigDataCache.isTamingFood(stack) ||
                 ConfigDataCache.isBuffFood(stack) ||
                 ConfigDataCache.isPouchUnlockFood(stack) ||
-                ConfigDataCache.isAutoHealFood(stack)) {
+                ConfigDataCache.isAutoHealFood(stack) ||
+                ConfigDataCache.isSnackableItem(stack)) {
             return true;
         }
 
         // 4. Allow any item that is considered food by vanilla.
         // 1.20.1: Food status is a direct method
         if (stack.isFood()) {
-            return false;
+            return true;
         }
 
         Item item = stack.getItem();
@@ -85,6 +86,46 @@ public final class HamsterInventoryUtil {
 
         // 6. Spawn eggs always disallowed.
         return !(item instanceof SpawnEggItem);
+    }
+
+    /**
+     * Checks if the hamster has at least one cheek pouch slot available that can accept the item.
+     */
+    public static boolean hasRoomInCheeks(HamsterEntity hamster, ItemStack stack) {
+        for (int i = 0; i < CHEEK_POUCH_SIZE; i++) {
+            ItemStack slotStack = hamster.getItems().get(i);
+            if (slotStack.isEmpty() || (ItemStack.areItemsEqual(slotStack, stack) && slotStack.getCount() < slotStack.getMaxCount())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Attempts to forcefully insert an item into the hamster's cheek pouches.
+     * Returns the remaining stack if it couldn't all fit.
+     */
+    public static ItemStack insertIntoCheeks(HamsterEntity hamster, ItemStack stack) {
+        ItemStack remaining = stack.copy();
+
+        for (int i = 0; i < CHEEK_POUCH_SIZE; i++) {
+            if (remaining.isEmpty()) break;
+
+            ItemStack slotStack = hamster.getItems().get(i);
+
+            if (slotStack.isEmpty()) {
+                hamster.setStack(i, remaining.split(remaining.getCount()));
+            } else if (ItemStack.areItemsEqual(slotStack, remaining) && slotStack.getCount() < slotStack.getMaxCount()) {
+                int spaceLeft = slotStack.getMaxCount() - slotStack.getCount();
+                int amountToMove = Math.min(spaceLeft, remaining.getCount());
+
+                slotStack.increment(amountToMove);
+                remaining.decrement(amountToMove);
+                hamster.setStack(i, slotStack); // trigger sync
+            }
+        }
+
+        return remaining;
     }
 
     /**

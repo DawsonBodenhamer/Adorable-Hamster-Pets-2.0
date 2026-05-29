@@ -170,7 +170,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             rootBone.setScaleX(currentBaseScale);
             rootBone.setScaleZ(currentBaseScale);
 
-            // override y scale for dynamic squash and stretch if shoulder pet
+            // Override y scale for dynamic squash and stretch if shoulder pet
             if (entity.isShoulderPet()) {
                 rootBone.setScaleY(currentBaseScale * entity.dynamicScaleY);
             } else {
@@ -185,12 +185,18 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
 
             // --- Dynamic Pitch Rotation ---
             if (entity.isProjectileDummy) {
-                // Projectile Mode: Align with velocity vector (follow flight arc)
+                // --- Projectile Mode ---
+                // Align with velocity vector (follow flight arc)
                 Vec3d velocity = entity.getVelocity();
                 double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
 
                 // Calculate pitch: Positive RotX = Nose Up, Negative RotX = Nose Down
                 pitchOffset = (float) Math.atan2(velocity.y, horizontalSpeed);
+            } else if (entity.isTouchingWater() || entity.isInLava()) {
+                // --- Swim Mode ---
+                // Use pre-smoothed pitch to eliminate buoyancy RNG flickering
+                float partialTick = animationState.getPartialTick();
+                pitchOffset = MathHelper.lerp(partialTick, entity.prevClientSwimPitch, entity.clientSwimPitch);
             } else if (entity.clientFallPitchProgress > 0.0f || entity.prevClientFallPitchProgress > 0.0f) {
                 float partialTick = animationState.getPartialTick();
                 float lerpedProgress = MathHelper.lerp(partialTick, entity.prevClientFallPitchProgress, entity.clientFallPitchProgress);

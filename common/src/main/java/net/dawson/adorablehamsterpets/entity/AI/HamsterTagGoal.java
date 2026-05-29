@@ -60,7 +60,7 @@ public class HamsterTagGoal extends Goal {
 
         // --- 4. Context Check ---
         // Must be currently "sustaining eye contact" with the player
-        if (!HamsterLookAtEntityGoal.class.getSimpleName().equals(this.hamster.getActiveCustomGoalDebugName())) {
+        if (!HamsterLookAtEntityGoal.class.getSimpleName().equals(this.hamster.getActiveCustomGoalName())) {
             return false;
         }
 
@@ -113,7 +113,7 @@ public class HamsterTagGoal extends Goal {
     @Override
     public void start() {
         this.hamster.setPlayingTag(true);
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
+        this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName());
 
         // Feedback
         this.hamster.triggerAnimOnServer("mainController", "attack");
@@ -175,8 +175,8 @@ public class HamsterTagGoal extends Goal {
         this.hamster.setGenericInteractionTimer(0);
         this.targetPlayer = null;
 
-        if (this.hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
+        if (this.hamster.getActiveCustomGoalName().equals(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalName("None");
         }
     }
 

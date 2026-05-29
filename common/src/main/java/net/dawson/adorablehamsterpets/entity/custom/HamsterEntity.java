@@ -28,7 +28,6 @@ import net.minecraft.entity.*;
 import net.minecraft.entity.ai.control.BodyControl;
 import net.minecraft.entity.ai.goal.AttackWithOwnerGoal;
 import net.minecraft.entity.ai.goal.RevengeGoal;
-import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.ai.goal.TrackOwnerAttackerGoal;
 import net.minecraft.entity.ai.pathing.EntityNavigation;
 import net.minecraft.entity.ai.pathing.MobNavigation;
@@ -54,6 +53,7 @@ import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.tag.DamageTypeTags;
+import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
@@ -62,7 +62,6 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.collection.DefaultedList;
@@ -336,7 +335,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation SEEKING_ORE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_seeking_ore");
     private static final RawAnimation WANTS_TO_SEEK_ORE_ABOVE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wants_to_seek_ore_above");
     private static final RawAnimation WANTS_TO_SEEK_ORE_BELOW_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wants_to_seek_ore_below");
-    private static final RawAnimation POUNCE_ON_ITEM_ANIM = RawAnimation.begin().thenPlay("anim_hamster_pounce_on_item");
+    private static final RawAnimation POUNCE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_pounce");
     private static final RawAnimation TAUNTING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_taunt_with_item");
     private static final RawAnimation PRESENTING_ITEM_ANIM = RawAnimation.begin().thenPlay("anim_hamster_presenting_item");
     private static final RawAnimation QUICK_BOUNCE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_quick_bounce");
@@ -351,28 +350,36 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final RawAnimation RECEIVING_PETS_ANIM = RawAnimation.begin().thenPlay("anim_hamster_receiving_pets");
     private static final RawAnimation STUN_ANIM = RawAnimation.begin().thenPlay("anim_hamster_stun");
     private static final RawAnimation SITTING_ROLL_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sitting_roll");
+    private static final RawAnimation SWIMMING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_swimming");
 
     /* ──────────────────────────────────────────────────────────────────────────────
-     *                                  2. Fields
+     *        Instance Fields
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    // --- Unique Instance Fields ---
-    @Unique public transient boolean isProjectileDummy = false;
-    @Unique public long totalAgeTicks = 0L;
-    @Unique private UUID parentUuid = null;
-    @Unique public transient double lastRenderTime = -1.0;
-    @Unique public int clientRollTimer = 0;
-    @Unique public int prevClientRollTimer = 0;
+    // --- Cooldowns & End Ticks ---
     @Unique public int interactionCooldown = 0;
-    @Unique public int wakingUpTicks = 0;
     @Unique private int ejectionCheckCooldown = 20;
+    @Unique private int settleSleepAnimationCooldown = 0;
+    @Unique public long foundOreCooldownEndTick = 0L;
+    @Unique public long stealingCooldownEndTick = 0L;
+    @Unique private int goToBedCooldown = 0;
+    @Unique private int riderJumpCooldown = 0;
+    @Unique public int suffocationGracePeriod = 0;
+    @Unique private int localSpawnImmunityTicks = 60;
+    @Unique public long tagGameCooldownEndTick = 0L;
+    @Unique public long cropSnackCooldownEndTick = 0L;
+    private int tamingCooldown = 0;
+    public long throwCooldownEndTick = 0L;
+    private long greenBeanBuffEndTick = 0L;
+    private int autoEatCooldownTicks = 0;
+    public int ambientSittingCooldown = 0;
+
+    // --- Timers & Ticks ---
+    @Unique public int clientRollTimer = 0;
+    @Unique public int wakingUpTicks = 0;
     @Unique private int preAutoEatDelayTicks = 0;
     @Unique private int quiescentSitDurationTimer = 0;
     @Unique private int driftingOffTimer = 0;
-    @Unique private int settleSleepAnimationCooldown = 0;
-    @Unique public boolean isPrimedToSeekDiamonds = false;
-    @Unique public long foundOreCooldownEndTick = 0L;
-    @Unique public BlockPos currentOreTarget = null;
     @Unique private int celebrationParticleTicks = 0;
     @Unique private int diamondCelebrationSoundTicks = 0;
     @Unique private int sulkOrchestraHitDelayTicks = 0;
@@ -380,81 +387,73 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique private int sulkEntityEffectTicks = 0;
     @Unique private int sulkShockedSoundDelayTicks = 0;
     @Unique private int diamondSparkleSoundDelayTicks = 0;
-    @Unique public transient String particleEffectId = null;
-    @Unique public transient String soundEffectId = null;
-    @Unique public long stealingCooldownEndTick = 0L;
     @Unique private int celebrationRetrievalTicks = 0;
-    @Unique private Entity celebrationTarget = null;
-    @Unique private boolean zoomiesIsClockwise = false;
-    @Unique private double lastZoomiesAngle = 0.0;
-    @Unique private int zoomiesRadiusModifier = 0;
-    @Unique public transient float renderedSnowYOffset = 0.0f;
-    @Unique public transient ShoulderLocation shoulderLocation = ShoulderLocation.RIGHT_SHOULDER;
-    @Unique public int suffocationGracePeriod = 0;
-    @Unique public transient float dynamicScaleY = 1.0f;
-    @Unique private Optional<GlobalPos> linkedBedPos = Optional.empty();
-    @Unique private int goToBedCooldown = 0;
     @Unique private int lureToBedTimer = 0;
     @Unique public int goToBedDelayTicks = 0;
     @Unique private int wakeUpFromBedDelay = 0;
     @Unique public int bedLeafParticleTicks = 0;
-    @Unique private boolean bypassNextSleepDelay = false;
     @Unique private int napInBedDurationTimer = 0;
     @Unique private int thumpSoundDelayTicks = 0;
-    @Unique private float thumpSoundVolume = 0.2f;
-    @Unique public int pathingFailures = 0;
-    @Nullable @Unique public BlockPos lastFailedTarget = null;
-    @Unique private boolean isLoadingNbt = false; // Guard to prevent sounds during load
+    private int refuseTimer = 0;
+    public int customLoveTimer;
+    private int autoEatProgressTicks = 0;
+    public int ambientSittingTimer = 0;
+
+    // --- Flags & Toggles ---
+    @Unique public transient boolean isProjectileDummy = false;
+    @Unique public boolean isPrimedToSeekDiamonds = false;
+    @Unique private boolean zoomiesIsClockwise = false;
+    @Unique private boolean bypassNextSleepDelay = false;
+    @Unique private boolean isLoadingNbt = false; // For preventing SFX during load
     @Unique private boolean isSilentInventoryUpdate = false;
     private boolean armorAbsorbedDamage = false;
     private boolean performDeferredArmorUpdate = false;
-    @Unique public float clientFallPitchProgress = 0.0f;
-    @Unique public float prevClientFallPitchProgress = 0.0f;
-    @Unique private int riderJumpCooldown = 0;
     @Unique private boolean riderJumpHeld = false;
     @Unique private boolean riderJumpQueued = false;
     @Unique private boolean riderSprintHeld = false;
-    @Unique private int localSpawnImmunityTicks = 60;
-    @Unique public long tagGameCooldownEndTick = 0L;
-    @Unique public transient HamsterEntity tagGamePartner = null;
     @Unique public transient boolean isTagChaser = false;
     @Unique public transient boolean isInterHamsterTagActive = false;
     @Unique public transient boolean tagGameSlapped = false;
     @Unique public transient boolean tagGameWon = false;
     @Unique public transient boolean isLookAtEntityGoalActive = false;
+    @Unique public transient boolean hasMutualGaze = false;
+    private boolean isAutoEating = false;
     @Unique private Boolean is3dCenter = null;
+
+    // --- State Values & Metrics ---
+    @Unique public long totalAgeTicks = 0L;
+    @Unique public transient double lastRenderTime = -1.0;
+    @Unique public int prevClientRollTimer = 0;
+    @Unique private double lastZoomiesAngle = 0.0;
+    @Unique private int zoomiesRadiusModifier = 0;
+    @Unique public transient float renderedSnowYOffset = 0.0f;
+    @Unique public transient float dynamicScaleY = 1.0f;
+    @Unique private float thumpSoundVolume = 0.2f;
+    @Unique public int pathingFailures = 0;
+    @Unique public float clientFallPitchProgress = 0.0f;
+    @Unique public float prevClientFallPitchProgress = 0.0f;
+    @Unique public transient float clientSwimPitch = 0.0f;
+    @Unique public transient float prevClientSwimPitch = 0.0f;
     @Unique private double parsed3dScale = 1.0;
     @Unique private int parsed3dY = 0;
-    @Unique public transient boolean hasMutualGaze = false;
-
-    // --- Inventory ---
-    private final DefaultedList<ItemStack> items = ImplementedInventory.create(HamsterInventoryUtil.INVENTORY_SIZE);
-
-    // --- Armor Tracking ---
-    private ItemStack lastArmorStack = ItemStack.EMPTY;
-
-    // --- Animation ---
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private final HamsterAnimationScheduler animScheduler = new HamsterAnimationScheduler();
-
-    // --- State Variables ---
-    private int refuseTimer = 0;
-    private ItemStack lastFoodItem = ItemStack.EMPTY;
-    public int customLoveTimer;
-    private int tamingCooldown = 0;
-    public long throwCooldownEndTick = 0L;
-    private long greenBeanBuffEndTick = 0L;
     public int timesBred = 0;
 
-    // --- Auto-Eating State/Cooldown Fields ---
-    private boolean isAutoEating = false; // Flag for potential animation hook
-    private int autoEatProgressTicks = 0; // Ticks remaining for the current eating action
-    private int autoEatCooldownTicks = 0; // Ticks remaining before it can start eating again
-
-    public int ambientSittingTimer = 0;
-    public int ambientSittingCooldown = 0;
-
-
+    // --- Object References, Positions & Data Structures ---
+    @Unique private UUID parentUuid = null;
+    @Unique public BlockPos currentOreTarget = null;
+    @Unique public transient String particleEffectId = null;
+    @Unique public transient String soundEffectId = null;
+    @Unique private Entity celebrationTarget = null;
+    @Unique public transient ShoulderLocation shoulderLocation = ShoulderLocation.RIGHT_SHOULDER;
+    @Unique private Optional<GlobalPos> linkedBedPos = Optional.empty();
+    @Nullable @Unique public BlockPos lastFailedTarget = null;
+    @Unique public transient HamsterEntity tagGamePartner = null;
+    @Unique private Vec3d smoothedWaterThrust = Vec3d.ZERO;
+    private final DefaultedList<ItemStack> items = ImplementedInventory.create(HamsterInventoryUtil.INVENTORY_SIZE);
+    private ItemStack lastArmorStack = ItemStack.EMPTY;
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final HamsterAnimationScheduler animScheduler = new HamsterAnimationScheduler();
+    private ItemStack lastFoodItem = ItemStack.EMPTY;
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *                             3. Constructor
@@ -470,7 +469,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.setPathfindingPenalty(PathNodeType.DAMAGE_FIRE, -1.0F);
         this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
     }
-
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *                             4. Public Methods
@@ -552,8 +550,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public boolean isConsideringAutoEat() {return getHamsterFlag(CONSIDERING_AUTO_EAT_FLAG);}
     public DozingPhase getDozingPhase() {return DozingPhase.values()[this.dataTracker.get(DOZING_PHASE)];}
     public void setDozingPhase(DozingPhase phase) {this.dataTracker.set(DOZING_PHASE, phase.ordinal());}
-    public void setActiveCustomGoalDebugName(String name) {this.dataTracker.set(ACTIVE_CUSTOM_GOAL_NAME_DEBUG, name);}
-    public String getActiveCustomGoalDebugName() {String goalName = this.dataTracker.get(ACTIVE_CUSTOM_GOAL_NAME_DEBUG);return goalName;}
+    public void setActiveCustomGoalName(String name) {this.dataTracker.set(ACTIVE_CUSTOM_GOAL_NAME_DEBUG, name);}
+    public String getActiveCustomGoalName() {String goalName = this.dataTracker.get(ACTIVE_CUSTOM_GOAL_NAME_DEBUG);return goalName;}
     public boolean isSulking() {return getHamsterFlag(SULKING_FLAG);}
     public boolean isCelebratingDiamond() {return getHamsterFlag(CELEBRATING_DIAMOND_FLAG);}
     public boolean isCelebratingBaby() { return getHamsterFlag(CELEBRATING_BABY_FLAG); }
@@ -888,11 +886,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
         return result;
     }
+
     /**
-     * True any time the hamster is falling, unless sitting or in the startup grace period.
+     * True any time the hamster is falling, unless swimming, sitting or in the startup grace period.
      */
     public boolean shouldRenderFlying() {
-        if (this.isSitting()) return false;
+        if (this.isSitting() || this.isTouchingWater() || this.isInLava()) return false;
+
+        // Prevent flying when bobbing on the water surface
+        if (!this.getWorld().getFluidState(this.getBlockPos().down()).isEmpty()) {
+            return false;
+        }
 
         // Prevent visual glitch where entities loading in apparently have enough downward velocity to trigger flying
         if (this.dataTracker.get(FALL_IMMUNITY_ACTIVE) && this.localSpawnImmunityTicks > 0) return false;
@@ -1601,6 +1605,78 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         super.tick();
 
+        // --- Swimming Physics ---
+        if (this.isTouchingWater() || this.isInLava()) {
+
+            // 1. Bypass vanilla pathfinder's node-by-node navigation which causes orbital loops in water
+            if (this.getNavigation().isFollowingPath() && this.getNavigation().getTargetPos() != null) {
+                BlockPos finalTarget = this.getNavigation().getTargetPos();
+                this.getLookControl().lookAt(finalTarget.getX() + 0.5, finalTarget.getY() + 0.5, finalTarget.getZ() + 0.5, 25.0f, 25.0f);
+                this.setYaw(this.headYaw);
+                this.bodyYaw = this.headYaw;
+                this.getMoveControl().moveTo(finalTarget.getX() + 0.5, finalTarget.getY() + 0.5, finalTarget.getZ() + 0.5, 1.2D);
+            }
+
+            Vec3d velocity = this.getVelocity();
+
+            double newVelX = velocity.x;
+            double newVelY = velocity.y;
+            double newVelZ = velocity.z;
+
+            // 2. Vertical
+            Vec3d lookVec = this.getRotationVec(1.0F);
+
+            if (this.getRandom().nextFloat() < 0.60F) { // 60% chance per tick
+                double fluidHeight = this.getFluidHeight(FluidTags.WATER);
+
+                if (fluidHeight > 0.05D) {
+                    if (lookVec.y < -0.25) {
+                        // Actively dive if looking down
+                        double sinkForce = lookVec.y * 0.05D;
+                        newVelY += sinkForce;
+                    } else {
+                        // Normal buoyancy
+                        double buoyancy = 0.08D * fluidHeight;
+                        if (newVelY < 0.04D) { // Cap upward velocity
+                            newVelY += buoyancy;
+                        }
+                    }
+                } else {
+                    // Damper at surface
+                    newVelY -= 0.002D;
+                }
+            }
+
+            // 3. Horizontal
+            boolean isTryingToMove = Math.abs(this.forwardSpeed) > 0.01F || Math.abs(this.sidewaysSpeed) > 0.01F;
+
+            if (isTryingToMove) {
+                Vec3d targetDir = new Vec3d(lookVec.x, 0.0, lookVec.z).normalize();
+
+                // Smooth thrust direction
+                if (this.smoothedWaterThrust.lengthSquared() == 0.0) {
+                    this.smoothedWaterThrust = targetDir;
+                } else {
+                    // Lerp towards new direction
+                    this.smoothedWaterThrust = this.smoothedWaterThrust.lerp(targetDir, 0.4D);
+                }
+
+                // Apply thrust
+                double thrust = 0.01D;
+                newVelX += this.smoothedWaterThrust.x * thrust;
+                newVelZ += this.smoothedWaterThrust.z * thrust;
+            } else {
+                // Decay smoothed thrust
+                this.smoothedWaterThrust = this.smoothedWaterThrust.multiply(0.8D);
+            }
+
+            this.setVelocity(newVelX, newVelY, newVelZ);
+
+        } else if (this.smoothedWaterThrust.lengthSquared() > 0.0) {
+            // Reset smoothed thrust when out of water
+            this.smoothedWaterThrust = Vec3d.ZERO;
+        }
+
         // --- Check for Armor Changes & Update Attributes ---
         if (!this.getWorld().isClient) {
             ItemStack currentArmor = this.getArmorStack();
@@ -1618,7 +1694,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             HamsterPhysicsUtil.updateArmorModifiers(this, this.getArmorStack());
         }
 
-// --- Apply extra gravity during sulking jump ---
+        // --- Apply extra gravity during sulking jump ---
         // This runs on the server to ensure physics are authoritative.
         if (!this.getWorld().isClient()) {
             // If the hamster is sulking, not on the ground, and is currently falling (negative Y velocity)
@@ -1640,6 +1716,32 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             int ageProgressInterval = Configs.AHP.displayAgeInIrlTime ? 72 : 1;
             if (this.age % ageProgressInterval == 0) {
                 this.totalAgeTicks++;
+            }
+
+            // --- Dynamic Water Pathfinding Penalty & Escape Logic ---
+            if (this.age % 10 == 0) {
+                String activeGoal = this.getActiveCustomGoalName();
+                boolean isLooting = activeGoal.startsWith(HamsterPlayWithItemGoal.class.getSimpleName())
+                        || activeGoal.startsWith(HamsterSnackOnCropGoal.class.getSimpleName())
+                        || activeGoal.startsWith(HamsterSnackOnItemGoal.class.getSimpleName());
+
+                if (this.isTouchingWater() || isLooting) {
+                    if (this.getPathfindingPenalty(PathNodeType.WATER) != 0.0F) {
+                        this.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
+                    }
+
+                    // If in water, not looting, and not currently moving somewhere, actively seek land
+                    if (this.isTouchingWater() && !isLooting && this.getNavigation().isIdle()) {
+                        HamsterMovementUtil.findNearbyLand(world, this.getBlockPos(), 6, this).ifPresent(landPos -> {
+                            this.getNavigation().startMovingTo(landPos.getX() + 0.5, landPos.getY(), landPos.getZ() + 0.5, 1.0D);
+                            this.setActiveCustomGoalName("Escaping Water");
+                        });
+                    }
+                } else {
+                    if (this.getPathfindingPenalty(PathNodeType.WATER) != 16.0F) {
+                        this.setPathfindingPenalty(PathNodeType.WATER, 16.0F);
+                    }
+                }
             }
 
             // --- Sync Throw Cooldown Flag ---
@@ -1968,13 +2070,28 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // Clamp between 0.0 and 1.0
             this.clientFallPitchProgress = MathHelper.clamp(this.clientFallPitchProgress, 0.0f, 1.0f);
+
+            // --- Swim Pitch Interpolation Logic ---
+            this.prevClientSwimPitch = this.clientSwimPitch;
+
+            if (this.isTouchingWater() || this.isInLava()) {
+                Vec3d velocity = this.getVelocity();
+                double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+                float targetPitch = (float) Math.atan2(velocity.y, horizontalSpeed);
+
+                // Move 15% to target pitch every tick to filter out high-frequency RNG jitter
+                this.clientSwimPitch += (targetPitch - this.clientSwimPitch) * 0.15f;
+            } else if (this.clientSwimPitch != 0.0f) {
+                // Return to level quickly if exiting water
+                this.clientSwimPitch += (0.0f - this.clientSwimPitch) * 0.25f;
+            }
         }
 
         // --- 5. Other Non-Movement Tick Logic ---
         // Jukebox Dancing
         if (!world.isClient() && this.age % 20 == 0) {
             boolean dancing = false;
-            boolean isSniffingForOre = this.getActiveCustomGoalDebugName().startsWith(HamsterSniffForOreGoal.class.getSimpleName());
+            boolean isSniffingForOre = this.getActiveCustomGoalName().startsWith(HamsterSniffForOreGoal.class.getSimpleName());
 
             if (!this.isSitting()
                     && !this.isSleeping()
@@ -2118,17 +2235,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (this.isKnockedOut()) {return event.setAndContinue(KNOCKED_OUT_ANIM);}
             // --- Sulking State ---
             if (this.isSulking()) {return event.setAndContinue(SULKING_ANIM);}
+            // --- Swimming State ---
+            if (this.isTouchingWater() && !this.isOnGround()) {return event.setAndContinue(SWIMMING_ANIM);}
             // --- Flying/Falling/Thrown State ---
-            if (this.isProjectileDummy || this.shouldRenderFlying()) {
-                return event.setAndContinue(FLYING_ANIM);
-            }
+            if (this.isProjectileDummy || this.shouldRenderFlying()) {return event.setAndContinue(FLYING_ANIM);}
             // --- Taunting State ---
             if (this.isTaunting()) {return event.setAndContinue(TAUNTING_ANIM);}
             // --- Item Retrieval State ---
             if (this.isPresentingItem()) {return event.setAndContinue(PRESENTING_ITEM_ANIM);}
             // --- Seeking/Wanting to Seek Diamond/Ore State ---
             boolean isSeekingGoalActive = false;
-            String activeGoalName = this.getActiveCustomGoalDebugName();
+            String activeGoalName = this.getActiveCustomGoalName();
             if (activeGoalName.startsWith(HamsterSniffForOreGoal.class.getSimpleName())) {
                 isSeekingGoalActive = true;
             }
@@ -2288,7 +2405,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 .triggerableAnim("anim_hamster_stand_settle_sleep2", STAND_SETTLE_SLEEP2_ANIM)
                 .triggerableAnim("anim_hamster_stand_settle_sleep3", STAND_SETTLE_SLEEP3_ANIM)
                 .triggerableAnim("anim_hamster_sulk", SULK_ANIM)
-                .triggerableAnim("anim_hamster_pounce_on_item", POUNCE_ON_ITEM_ANIM)
+                .triggerableAnim("anim_hamster_pounce", POUNCE_ANIM)
                 .triggerableAnim("anim_hamster_quick_bounce", QUICK_BOUNCE_ANIM)
                 .triggerableAnim("anim_hamster_cheek_unload", CHEEK_UNLOAD_ANIM)
                 .triggerableAnim("anim_hamster_crouch_and_investigate", CROUCH_INVESTIGATE_ANIM)
@@ -2376,23 +2493,24 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     protected void initGoals() {
         // --- Standard Goals ---
-        this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new HamsterSniffForOreGoal(this));
-        this.goalSelector.add(1, new HamsterPlayWithItemGoal(this));
-        this.goalSelector.add(2, new HamsterGoToBedAndSleepGoal(this));
-        this.goalSelector.add(2, new HamsterMeleeAttackGoal(this, 1.5D, true));
-        this.goalSelector.add(3, new HamsterMateGoal(this, 0.75D));
-        this.goalSelector.add(4, new HamsterTagGoal(this));
-        this.goalSelector.add(4, new HamsterInterHamsterTagGoal(this));
-        this.goalSelector.add(5, new HamsterFollowParentGoal(this, 1.0D));
-        this.goalSelector.add(6, new HamsterFollowOwnerGoal(this, 1.0D, 4.0F, 16.0F));
-        this.goalSelector.add(7, new HamsterFleeGoal<>(this, LivingEntity.class, 8.0F, 0.75D, 1.5D));
-        this.goalSelector.add(8, new HamsterTemptGoal(this, 1.0D, false));
-        this.goalSelector.add(9, new HamsterSitGoal(this));
-        this.goalSelector.add(10, new HamsterSleepGoal(this));
-        this.goalSelector.add(11, new HamsterWanderAroundFarGoal(this, 0.75D));
-        this.goalSelector.add(12, new HamsterLookAtEntityGoal(this, PlayerEntity.class, 2.0F, 0.15F));
-        this.goalSelector.add(13, new HamsterLookAroundGoal(this));
+        this.goalSelector.add(0, new HamsterPlayWithItemGoal(this));
+        this.goalSelector.add(1, new HamsterMeleeAttackGoal(this, 1.5D, true));
+        this.goalSelector.add(2, new HamsterSnackOnCropGoal(this));
+        this.goalSelector.add(3, new HamsterSniffForOreGoal(this));
+        this.goalSelector.add(4, new HamsterSnackOnItemGoal(this));
+        this.goalSelector.add(5, new HamsterGoToBedAndSleepGoal(this));
+        this.goalSelector.add(6, new HamsterMateGoal(this, 0.75D));
+        this.goalSelector.add(7, new HamsterTagGoal(this));
+        this.goalSelector.add(8, new HamsterInterHamsterTagGoal(this));
+        this.goalSelector.add(9, new HamsterFollowParentGoal(this, 1.0D));
+        this.goalSelector.add(10, new HamsterFollowOwnerGoal(this, 1.0D, 4.0F, 16.0F));
+        this.goalSelector.add(11, new HamsterFleeGoal<>(this, LivingEntity.class, 8.0F, 0.75D, 1.5D));
+        this.goalSelector.add(12, new HamsterTemptGoal(this, 1.0D, false));
+        this.goalSelector.add(13, new HamsterSitGoal(this));
+        this.goalSelector.add(14, new HamsterSleepGoal(this));
+        this.goalSelector.add(15, new HamsterWanderAroundFarGoal(this, 0.75D));
+        this.goalSelector.add(16, new HamsterLookAtEntityGoal(this, PlayerEntity.class, 2.0F, 0.15F));
+        this.goalSelector.add(17, new HamsterLookAroundGoal(this));
 
         // --- Target Selector Goals ---
         this.targetSelector.add(1, new TrackOwnerAttackerGoal(this));

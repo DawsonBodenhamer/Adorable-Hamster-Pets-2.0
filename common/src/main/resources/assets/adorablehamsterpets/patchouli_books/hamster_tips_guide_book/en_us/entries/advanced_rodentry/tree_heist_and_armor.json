@@ -3,7 +3,7 @@
   "icon": "adorablehamsterpets:acorn_shard",
   "category": "adorablehamsterpets:advanced_rodentry",
   "entry_color": "00AAAA",
-  "sortnum": -1,
+  "sortnum": 1,
   "pages": [
     {
       "type": "adorablehamsterpets:dynamic_page",

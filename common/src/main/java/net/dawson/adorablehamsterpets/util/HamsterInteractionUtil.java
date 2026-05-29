@@ -143,8 +143,8 @@ public final class HamsterInteractionUtil {
                     hamster.getNavigation().stop();
 
                     // Clear debug name
-                    if (hamster.getActiveCustomGoalDebugName().equals(HamsterTagGoal.class.getSimpleName())) {
-                        hamster.setActiveCustomGoalDebugName("None");
+                    if (hamster.getActiveCustomGoalName().equals(HamsterTagGoal.class.getSimpleName())) {
+                        hamster.setActiveCustomGoalName("None");
                     }
 
                     // 2. Set Cooldowns

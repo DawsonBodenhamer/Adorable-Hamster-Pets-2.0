@@ -106,12 +106,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
             return true;
         }
 
-        // --- 3. Automatic Path ---
-        // Bypass cooldown if bed is fresh
-        if (bedEntity.isNewlyPlaced()) {
-            return true;
-        }
-
+        // --- 3. Cooldown Check ---
         if (this.hamster.getGoToBedCooldown() > 0) {
             return false;
         }
@@ -161,7 +156,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
 
     @Override
     public void start() {
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
+        this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName());
         this.hamster.setOnTheWayToBed(true);
 
         // Reset chaotic timer if enabled
@@ -213,8 +208,8 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
         this.pounceStartPos = null;
         this.wasLured = false;
 
-        if (this.hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
+        if (this.hamster.getActiveCustomGoalName().equals(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalName("None");
         }
 
         this.hamster.setOnTheWayToBed(false);

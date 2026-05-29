@@ -40,6 +40,26 @@ public final class HamsterPhysicsUtil {
     private HamsterPhysicsUtil() {}
 
     /**
+     * Calculates the smoothed coordinate for a lunging/pouncing animation using quadratic ease-in.
+     * Keeps the original Y coordinate to prevent the entity from visually floating or sinking mid-lunge.
+     *
+     * @param startPos       The initial position.
+     * @param targetPos      The target position.
+     * @param remainingTicks The ticks remaining in the lunge sequence.
+     * @param totalTicks     The total duration of the lunge sequence.
+     * @return The interpolated Vec3d coordinate.
+     */
+    public static Vec3d calculatePouncePosition(Vec3d startPos, Vec3d targetPos, int remainingTicks, int totalTicks) {
+        double progress = (double) (totalTicks - remainingTicks) / totalTicks;
+        double easedProgress = progress * progress; // Quadratic ease-in
+
+        double newX = startPos.x + easedProgress * (targetPos.x - startPos.x);
+        double newZ = startPos.z + easedProgress * (targetPos.z - startPos.z);
+
+        return new Vec3d(newX, startPos.y, newZ);
+    }
+
+    /**
      * Simulates the hamster's trajectory 1 second (20 ticks) into the future
      * Plays the "Incoming" sound at the target location if an impact is predicted
      */

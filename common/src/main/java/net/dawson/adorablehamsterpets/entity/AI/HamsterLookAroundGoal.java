@@ -31,9 +31,16 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
 
         // Check Hamster State
         if (this.hamsterMob instanceof HamsterEntity hamster) {
-            return !hamster.isSitting() && !hamster.isSleeping() && !hamster.isKnockedOut() && !hamster.isSulking()
-                    && !hamster.isHoldingMouthItem() && !hamster.isFrozenMovement() && !hamster.isCelebratingDiamond()
-                    && !hamster.isCelebratingBaby() && !hamster.getActiveCustomGoalDebugName().equals(HamsterWanderAroundFarGoal.class.getSimpleName());
+            return !hamster.isSitting()
+                    && !hamster.isSleeping()
+                    && !hamster.isKnockedOut()
+                    && !hamster.isSulking()
+                    && !hamster.isHoldingMouthItem()
+                    && !hamster.isFrozenMovement()
+                    && !hamster.isCelebratingDiamond()
+                    && !hamster.isCelebratingBaby()
+                    && !hamster.getActiveCustomGoalName().equals(HamsterWanderAroundFarGoal.class.getSimpleName())
+                    && !hamster.getActiveCustomGoalName().equals("Escaping Water");
         }
         return true;
     }
@@ -42,7 +49,7 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
     public void start() {
         super.start();
         if (this.hamsterMob instanceof HamsterEntity he) {
-            he.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
+            he.setActiveCustomGoalName(this.getClass().getSimpleName());
             AdorableHamsterPets.LOGGER.trace("[AI Goal Start] Hamster {} started LookAroundGoal.", he.getId());
         }
     }
@@ -51,8 +58,15 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
     public boolean shouldContinue() {
         // --- 1. Check Hamster State ---
         if (this.hamsterMob instanceof HamsterEntity hamster) {
-            if (hamster.isSitting() || hamster.isSleeping() || hamster.isKnockedOut() || hamster.isSulking()
-                    || hamster.isHoldingMouthItem() || hamster.isFrozenMovement() || hamster.isCelebratingDiamond() || hamster.isCelebratingBaby()) {
+            if (hamster.isSitting()
+                    || hamster.isSleeping()
+                    || hamster.isKnockedOut()
+                    || hamster.isSulking()
+                    || hamster.isHoldingMouthItem()
+                    || hamster.isFrozenMovement()
+                    || hamster.isCelebratingDiamond()
+                    || hamster.isCelebratingBaby()
+                    || hamster.getActiveCustomGoalName().equals("Escaping Water")) {
                 return false;
             }
         }
@@ -63,8 +77,8 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
     public void stop() {
         super.stop();
         if (this.hamsterMob instanceof HamsterEntity he) {
-            if (he.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
-                he.setActiveCustomGoalDebugName("None");
+            if (he.getActiveCustomGoalName().equals(this.getClass().getSimpleName())) {
+                he.setActiveCustomGoalName("None");
             }
         }
     }

@@ -76,14 +76,14 @@ public class HamsterMateGoal extends Goal {
     @Override
     public void start() {
         this.timer = 0;
-        this.hamster.setActiveCustomGoalDebugName(this.getClass().getSimpleName());
+        this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName());
     }
 
     @Override
     public void stop() {
         // Clear debug HUD
-        if (this.hamster.getActiveCustomGoalDebugName().equals(this.getClass().getSimpleName())) {
-            this.hamster.setActiveCustomGoalDebugName("None");
+        if (this.hamster.getActiveCustomGoalName().equals(this.getClass().getSimpleName())) {
+            this.hamster.setActiveCustomGoalName("None");
         }
         this.targetMate = null;
     }

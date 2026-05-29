@@ -503,6 +503,15 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                         animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                 ));
                 break;
+            case "hamster_water_swish_sound":
+                SoundEvent waterSwishSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_WATER_SWISH_SOUNDS, animatable.getRandom());
+                if (waterSwishSound != null) {
+                    client.getSoundManager().play(new PositionedSoundInstance(
+                            waterSwishSound, SoundCategory.NEUTRAL, 0.25f, 1.0f,
+                            animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
+                    ));
+                }
+                break;
             case "hamster_affection_sound":
                 SoundEvent affectionSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, animatable.getRandom());
                 if (affectionSound != null) {

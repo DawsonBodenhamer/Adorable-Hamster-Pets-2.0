@@ -74,7 +74,7 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
         if (target != null) {
             tooltip.add(fText("  Target: %s", Text.literal(target.getName().getString()).formatted(Formatting.WHITE)));
         }
-        String activeGoalName = hamster.getActiveCustomGoalDebugName();
+        String activeGoalName = hamster.getActiveCustomGoalName();
         tooltip.add(fText("Current Custom Goal: %s", Text.literal(activeGoalName).formatted(activeGoalName.equals("None") ? Formatting.GRAY : Formatting.AQUA)));
 
         // --- Bed Link Status ---
