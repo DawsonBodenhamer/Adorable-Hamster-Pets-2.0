@@ -162,13 +162,28 @@ public final class HamsterMovementUtil {
     /**
      * Determines if the hamster should teleport to the target.
      * Checks if the hamster is not leashed, not a passenger, and is far enough away.
+     * Dynamically adjusts for certain states.
      *
      * @param hamster The hamster to check.
      * @param target  The target entity to follow.
      * @return True if the hamster should teleport.
      */
     public static boolean shouldTeleportTo(HamsterEntity hamster, Entity target) {
-        return !hamster.isLeashed() && !hamster.hasVehicle() && hamster.squaredDistanceTo(target) > 144.0;
+        // Fast Fail
+        if (hamster.isLeashed() || hamster.hasVehicle()) {
+            return false;
+        }
+
+        // Use pre-squared values for performance
+        double maxDistSq = 144.0;
+
+        // +5 blocks for certain states
+        if (hamster.hasGreenBeanBuff() || hamster.getAggressionState() == HamsterEntity.AggressionState.MENACE) {
+            maxDistSq = 289.0;
+        }
+
+        // Final distance check
+        return hamster.squaredDistanceTo(target) > maxDistSq;
     }
 
     /**
