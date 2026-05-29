@@ -61,7 +61,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
         }
 
         // --- Distance Calculation ---
-        // Recalculate minimum follow distance for zoomies
+        // Recalculate minimum follow distance for certain states
         float minDist = ((FollowOwnerGoalAccessor) this).getMinDistance();
         LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
 
@@ -69,7 +69,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
             return false;
         }
 
-        if (this.hamster.hasGreenBeanBuff()) {
+        if (this.hamster.hasGreenBeanBuff() || this.hamster.getAggressionState() == HamsterEntity.AggressionState.MENACE) {
             minDist += 5.0F;
         }
 
@@ -84,7 +84,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
         }
 
         // --- Distance Calculation ---
-        // Recalculate maximum follow distance for zoomies
+        // Recalculate maximum follow distance for certain states
         float maxDist = ((FollowOwnerGoalAccessor) this).getMaxDistance();
         LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
 
@@ -92,7 +92,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
             return false;
         }
 
-        if (this.hamster.hasGreenBeanBuff()) {
+        if (this.hamster.hasGreenBeanBuff() || this.hamster.getAggressionState() == HamsterEntity.AggressionState.MENACE) {
             maxDist += 5.0F;
         }
 

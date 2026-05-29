@@ -4,11 +4,13 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.MeleeAttackGoalAccessor;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.sound.SoundEvent;
+import net.minecraft.util.math.Vec3d;
 
 public class HamsterMeleeAttackGoal extends MeleeAttackGoal {
     private final HamsterEntity hamster;
@@ -94,11 +96,40 @@ public class HamsterMeleeAttackGoal extends MeleeAttackGoal {
     @Override
     public void tick() {
         super.tick(); // Handles pathing updates and cooldown decrementing
-        // We need to call attack() every tick because the superclass doesn't call it automatically
-        // if we override tick() without calling super.tick() *first*.
-        // However, the actual attack logic is now correctly gated by canAttack().
+
         LivingEntity target = this.mob.getTarget();
         if (target != null) {
+            LivingEntity owner = this.hamster.getOwner();
+            if (owner != null) {
+                // Base tether = 12 blocks + 5 blocks for certain states
+                double maxDist = this.hamster.hasGreenBeanBuff() || this.hamster.getAggressionState() == HamsterEntity.AggressionState.MENACE ? 17.0 : 12.0;
+
+                if (this.hamster.squaredDistanceTo(owner) > maxDist * maxDist) {
+                    // Hamster too far from owner while trying to attack
+                    this.hamster.getNavigation().stop();
+
+                    // Alternate looking between target and owner
+                    if ((this.hamster.age / 20) % 2 == 0) { // 20 tick tempo
+                        HamsterMovementUtil.faceEntity(this.hamster, target);
+                    } else {
+                        HamsterMovementUtil.faceEntity(this.hamster, owner);
+                    }
+
+                    // Frantic behavior
+                    if (this.hamster.getRandom().nextInt(5) == 0 && this.hamster.isOnGround()) {
+                        // Small erratic jumps to stay in bounds, pushing slightly towards owner
+                        Vec3d bounceVec = owner.getPos().subtract(this.hamster.getPos()).normalize().multiply(0.5);
+                        this.hamster.setVelocity(this.hamster.getVelocity().add(bounceVec.x, 0.5, bounceVec.z));
+                        this.hamster.velocityDirty = true;
+
+                        // SFX
+                        SoundEvent bounceSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BOUNCE_SOUNDS, this.hamster.getRandom());
+                        if (bounceSound != null) {
+                            this.hamster.playSound(bounceSound, 1.0F, this.hamster.getSoundPitch());
+                        }
+                    }
+                }
+            }
             this.attack(target); // Call attack logic check every tick
         }
     }

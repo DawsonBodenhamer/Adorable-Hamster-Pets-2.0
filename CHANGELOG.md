@@ -35,7 +35,7 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - Hamsters now have three distinct aggression states controlled by their diet.
   - **Pacifist:** Feed them any vanilla flower (e.g., `#minecraft:flowers`). They become total hippies and will refuse to attack anything, even if you are being actively mauled.
   - **Standard:** Feed them Sunflower Seeds to factory-reset them back to their normal, wolf-like defensive behavior.
-  - **Menace:** Feed them a Spider Eye to unleash their inner demon. They will actively hunt down anything on the configurable "Menace Targets" list (which defaults to all monsters and bosses).
+  - **Menace:** Feed them a Spider Eye to unleash their inner demon. They will actively hunt down anything on the configurable "Menace Targets" list (which defaults to all monsters and bosses), and gain an expanded follow radius to give them more room to fight. If a target is outside their follow radius, they will move frantically at the edge of the tether.
   - All trigger items are fully configurable, and changing a hamster's state produces a visual and audio confirmation.
   - **Hamster Tips Guidebook Entry**
     - The *Hamster Tips* guidebook now features a dedicated "Aggression States" page to explain the new mechanics. It utilizes dynamic text injection to accurately display your configured trigger items, ensuring the book is always up-to-date even if a modpack creator changes the required diets.
@@ -108,6 +108,10 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - Added a `Custom Key Behavior Override` config toggle (true by default). When you bind a custom key for dismounting, it automatically overrides the `Double Tap` behavior and makes it a `Single Press`. I assume if you assigned a dedicated key to it, you don't want to have to tap it twice.
 - **Keybind Names**
   - Renamed several of the key binds to make the `Controls > Key Binds` menu more intuitive.
+- **Hamster Attacking AI**
+  - Hamsters can no longer pathfind outside the follow radius when targeting entities. They will instead exhibit erratic behavior near the edge of the boundary.
+  - This prevents repetitive teleportation back to the player when the hamster is aggressively targeting something outside the follow distance.
+  - To compensate, follow distance has been increased by five blocks when the hamster is in MENACE mode.
 - **The Hamster Yeet**
   -  Throwing a hamster is no longer canceled/prevented if the player's crosshair is over non-solid blocks like tall grass, flowers, sugar cane etc.
   - Reduced the default gravity applied to thrown hamsters by 30%, resulting in naturally longer, flatter arcs out-of-the-box. Hamsters will feel less "heavy" now during throws.
