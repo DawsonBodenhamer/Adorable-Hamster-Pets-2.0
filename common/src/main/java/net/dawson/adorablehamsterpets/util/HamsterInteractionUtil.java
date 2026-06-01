@@ -184,7 +184,7 @@ public final class HamsterInteractionUtil {
                     long giftSequenceStart = baseTime + 32;
 
                     hamster.scheduleTask(giftSequenceStart, "start_gift_anim", () -> {
-                        Item giftItem = getRandomTagGameReward(hamster);
+                        Item giftItem = getRandomMiniGameReward(hamster);
                         if (giftItem != net.minecraft.item.Items.AIR) {
                             ItemStack giftStack = new ItemStack(giftItem);
 
@@ -841,11 +841,11 @@ public final class HamsterInteractionUtil {
     /**
      * Selects a random item from the Default or Extra cheek pouch loot lists.
      * Prioritizes lists that actually contain items. If configured,
-     * it pulls exclusively from a custom tag rewards list.
+     * it pulls exclusively from a custom mini game rewards list.
      */
-    private static Item getRandomTagGameReward(HamsterEntity hamster) {
-        if (!Configs.AHP.usePouchLootForTagRewards) {
-            return ConfigDataCache.getRandomCustomTagReward(hamster.getRandom());
+    private static Item getRandomMiniGameReward(HamsterEntity hamster) {
+        if (!Configs.AHP.usePouchLootForMiniGameRewards) {
+            return ConfigDataCache.getRandomCustomMiniGameReward(hamster.getRandom());
         }
 
         List<Integer> validPools = new ArrayList<>();
