@@ -15,6 +15,8 @@ import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particle.BlockStateParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -295,5 +297,17 @@ public final class HamsterPhysicsUtil {
 
         hamster.getWorld().spawnEntity(hamster);
         hamster.triggerAnimOnServer("mainController", "crash");
+
+        // --- 5. Spawn Impact Particles ---
+        if (hitState != null && !hitState.isAir() && !hamster.getWorld().isClient()) {
+            ParticleEffectsUtil.spawnParticles(
+                    hamster.getWorld(),
+                    new Vec3d(hamster.getX(), hamster.getY() + hamster.getHeight() / 2.0, hamster.getZ()),
+                    new BlockStateParticleEffect(ParticleTypes.BLOCK, hitState),
+                    30,
+                    new Vec3d(0.3, 0.3, 0.3),
+                    0.0
+            );
+        }
     }
 }

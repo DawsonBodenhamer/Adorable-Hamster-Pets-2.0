@@ -1,9 +1,11 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
+import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.client.layer.HamsterTrimRenderLayer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.networking.payload.HamsterAnimationSoundPayload;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterMouthItemOffsets;
 import net.dawson.adorablehamsterpets.util.HamsterRidingUtil;
@@ -471,6 +473,15 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                         ModSounds.HAMSTER_THUMP.get(), SoundCategory.NEUTRAL, 0.3f, thumpPitch,
                         animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                 ));
+
+                // Broadcast via server if >16.0 blocks from player to bypass vanilla distance attenuation
+                if (client.player != null) {
+                    if (animatable.squaredDistanceTo(client.player) > 16.0 * 16.0) {
+                        NetworkManager.sendToServer(
+                                new HamsterAnimationSoundPayload(animatable.getId(), "hamster_thump_sound")
+                        );
+                    }
+                }
                 break;
             case "hamster_spit_sound":
                 client.getSoundManager().play(new PositionedSoundInstance(

@@ -9,7 +9,9 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
 import net.dawson.adorablehamsterpets.networking.payload.*;
+import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
+import net.dawson.adorablehamsterpets.util.HamsterPhysicsUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
@@ -46,6 +48,28 @@ public class ModPackets {
     public static void registerC2SPackets() {
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, ThrowHamsterPayload.ID, ThrowHamsterPayload.CODEC,
                 (payload, context) -> context.queue(() -> HamsterEntity.tryThrowFromShoulder((ServerPlayerEntity) context.getPlayer()))
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, HamsterAnimationSoundPayload.ID, HamsterAnimationSoundPayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    Entity entity = context.getPlayer().getWorld().getEntityById(payload.hamsterEntityId());
+                    if (entity instanceof HamsterEntity hamster) {
+                        // Ensure sender is >16 blocks away (squared)
+                        if (hamster.squaredDistanceTo(context.getPlayer()) > 256.0) {
+                            if ("hamster_thump_sound".equals(payload.soundId())) {
+
+                                // Ignore duplicate packets
+                                if (hamster.interactionCooldown <= 0) {
+                                    float thumpPitch = 1.0F + hamster.getRandom().nextFloat() * 0.4F;
+                                    HamsterPhysicsUtil.broadcastImpactSound(hamster, ModSounds.HAMSTER_THUMP.get(), thumpPitch);
+
+                                    // 5-tick cooldown
+                                    hamster.interactionCooldown = 5;
+                                }
+                            }
+                        }
+                    }
+                })
         );
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, UpdateHamsterRenderStatePayload.ID, UpdateHamsterRenderStatePayload.CODEC,

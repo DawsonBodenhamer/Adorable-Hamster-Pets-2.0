@@ -3,8 +3,14 @@ package net.dawson.adorablehamsterpets.util;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.JukeboxBlockEntity;
+import net.minecraft.block.jukebox.JukeboxSong;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.LoreComponent;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.ai.pathing.PathNodeType;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
@@ -12,6 +18,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -117,18 +124,47 @@ public final class HamsterAIUtil {
     }
 
     /**
-     * Scans for a nearby jukebox actively playing the Cheese Music Disc.
+     * Scans for a nearby jukebox actively playing the Cheese Music Disc or any configured
+     * custom discs to which the hamster is intended to dance.
      */
-    public static boolean isCheeseSongPlayingNearby(HamsterEntity hamster) {
+    public static boolean isDancingSongPlayingNearby(HamsterEntity hamster) {
         World world = hamster.getWorld();
 
         for (BlockPos p : BlockPos.iterateOutwards(hamster.getBlockPos(), 8, 4, 8)) {
             if (world.getBlockState(p).isOf(Blocks.JUKEBOX)) {
                 if (world.getBlockEntity(p) instanceof JukeboxBlockEntity jbe) {
                     if (jbe.getManager().isPlaying() && jbe.getManager().getSong() != null) {
-                        // Check if the currently playing song's SoundEvent matches my custom music disc sound
-                        if (jbe.getManager().getSong().soundEvent().value().equals(ModSounds.AHP_THEME_SONG.get())) {
+                        JukeboxSong song = jbe.getManager().getSong();
+
+                        // Check AHP theme song
+                        if (song.soundEvent().value().equals(ModSounds.AHP_THEME_SONG.get())) {
                             return true;
+                        }
+
+                        // Check dynamic config strings
+                        if (!Configs.AHP.dancingMusicDiscStrings.isEmpty()) {
+                            ItemStack discStack = jbe.getStack();
+                            String songDesc = song.description().getString().toLowerCase(Locale.ROOT);
+                            String itemName = discStack.getName().getString().toLowerCase(Locale.ROOT);
+                            String itemKey = discStack.getTranslationKey().toLowerCase(Locale.ROOT);
+
+                            LoreComponent lore = discStack.get(DataComponentTypes.LORE);
+
+                            for (String searchStr : Configs.AHP.dancingMusicDiscStrings) {
+                                String lowerSearch = searchStr.toLowerCase(Locale.ROOT);
+
+                                if (songDesc.contains(lowerSearch) || itemName.contains(lowerSearch) || itemKey.contains(lowerSearch)) {
+                                    return true;
+                                }
+
+                                if (lore != null) {
+                                    for (Text line : lore.lines()) {
+                                        if (line.getString().toLowerCase(Locale.ROOT).contains(lowerSearch)) {
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

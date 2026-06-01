@@ -55,6 +55,19 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .offerTo(exporter, getItemPath(result) + "_smithing");
     }
 
+    // Helper for Template Duplication
+    private void offerHamsterTemplateDuplication(RecipeExporter exporter, Item template, Item material) {
+        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, template, 2)
+                .pattern("STS")
+                .pattern("SMS")
+                .pattern("SSS")
+                .input('T', template)
+                .input('M', material)
+                .input('S', ModItems.ACORN_SHARD.get())
+                .criterion("has_template", conditionsFromItem(template))
+                .offerTo(exporter, Identifier.of(AdorableHamsterPets.MOD_ID, getItemPath(template) + "_duplication"));
+    }
+
     // --- 3. Public Methods ---
     @Override
     public void generate(RecipeExporter recipeExporter) {
@@ -151,5 +164,11 @@ public class ModRecipeProvider extends FabricRecipeProvider {
         offerHamsterArmorUpgrade(recipeExporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_GOLD.get(), Items.GOLD_INGOT, ModItems.HAMSTER_ARMOR_GOLD.get());
         offerHamsterArmorUpgrade(recipeExporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_DIAMOND.get(), Items.DIAMOND, ModItems.HAMSTER_ARMOR_DIAMOND.get());
         offerHamsterArmorUpgrade(recipeExporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_NETHERITE.get(), Items.NETHERITE_INGOT, ModItems.HAMSTER_ARMOR_NETHERITE.get());
+
+        // Template Duplication
+        offerHamsterTemplateDuplication(recipeExporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_IRON.get(), Items.IRON_INGOT);
+        offerHamsterTemplateDuplication(recipeExporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_GOLD.get(), Items.GOLD_INGOT);
+        offerHamsterTemplateDuplication(recipeExporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_DIAMOND.get(), Items.DIAMOND);
+        offerHamsterTemplateDuplication(recipeExporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_NETHERITE.get(), Items.NETHERITE_INGOT);
     }
 }

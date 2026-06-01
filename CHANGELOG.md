@@ -66,6 +66,10 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - A legendary new music disc with The Adorable Hamster Pets theme song, created by yours truly. Can only be obtained by orchestrating a high-velocity, terminal collision between an airborne hamster and a Charged Creeper.
   - If playing in a Jukebox, nearby hamsters will dance to the music.
   - Added the "Moist Tones" advancement.
+- **Dancing to Modded Music**
+  - Added a `Dancing Music Discs` string list to the `Ambient Sitting Behaviors` section of the config.
+  - If a jukebox plays a music disc containing any of your configured strings in its name, description, or lore (case-insensitive), nearby hamsters will happily dance to it. 
+  - Contains a few strings by default: `hamster`, `hampter`, and `hamtaro`.
 - **Inter-Hamster Tag Mini-Game**
   - Hamsters will now spontaneously instigate games of tag with each other.
   - The instigator will sprint up to an unsuspecting victim, deliver a visual (damage-free) slap (using a new cowbell sound effect), and sprint away to begin the chase.
@@ -77,6 +81,9 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
 - **New Ambient Sitting Animation**
   - Added a new "sitting roll" animation where sitting hamsters occasionally roll on their backs. Comes with new sound effects, and it's configurable in the new "Ambient Sitting Behaviors" config group, which also controls cleaning frequency.
   - Includes a "Cartoon Rolling Sound" config toggle. By default, the hamster's rolling SFX will include a cartoon-ish slide whistle. It's subtle, but some people might get distracted easily or prefer more realism.
+- **Hamster Armor Template Duplication**
+  - Hamster Smithing Templates can now be duplicated on a crafting table!
+  - Use 1 Template (top center), 1 corresponding material ingot/gem (center), and 7 Acorn Shards.
 - **Botanical Vandalism (Sapling Trimming)**
     - You can now right-click any sapling with a pair of Shears to instantly turn it into a Dead Bush. This provides a much more accessible way to gather the necessary materials for crafting Hamster Bedding if you don't live near a desert.
     - Added a new page to the *Hamster Tips* guidebook detailing this mechanic.
@@ -128,6 +135,8 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
 - **The Hamster Yeet**
   -  Throwing a hamster is no longer canceled/prevented if the player's crosshair is over non-solid blocks like tall grass, flowers, sugar cane etc.
   - Reduced the default gravity applied to thrown hamsters by 30%, resulting in naturally longer, flatter arcs out-of-the-box. Hamsters will feel less "heavy" now during throws.
+  - Thrown hamsters now generate a shower of block-breaking particles upon impacting a surface.
+  - Resolved an issue where players throwing their hamsters very far away wouldn't hear some of the animation-based impact sounds due to vanilla audio distance attenuation.
 - **Hamster Tips Guidebook**
   - "The Great Escape" has been renamed to "Beds & Wander Mode," and "Acorn Armor" has been renamed to "Tree Heist & Armor" so you guys won't keep coming into my Discord server asking how the beds work and where to find acorns 😂
   - This has another super useful perk: Now whenever you search through the guidebook for a specific topic, you can search for things like "bed," "tree heist," or "armor" and those specific entries will pop up in the results.

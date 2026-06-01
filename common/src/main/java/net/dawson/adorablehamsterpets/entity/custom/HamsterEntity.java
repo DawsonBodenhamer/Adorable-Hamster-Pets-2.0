@@ -2074,7 +2074,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     && !this.isCelebratingBaby()
                     && !this.isCelebratingDiamond()
                     && !isSniffingForOre) {
-                dancing = HamsterAIUtil.isCheeseSongPlayingNearby(this);
+                dancing = HamsterAIUtil.isDancingSongPlayingNearby(this);
             }
 
             if (this.isDancing() != dancing) {
