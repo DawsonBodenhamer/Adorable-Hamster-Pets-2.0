@@ -212,6 +212,8 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - Fixed a bug where players could not toggle their hamster's sitting state if they were holding Hamster Food Mix or other food items.
 - **"Hampter"** Custom Name
   - The "Use 'Hampter' as Default Name" config setting now properly reflects on the Jade HUD overlay and the Hamster Inventory screen.
+- **Cheek Pouch Allowed Items**
+  - Fixed an issue where all vanilla food items were forbidden in the Cheek Pouch on 1.20.1 due to a typo.
 
 ---
 
