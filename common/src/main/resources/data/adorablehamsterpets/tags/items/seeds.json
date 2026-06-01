@@ -1,6 +1,12 @@
 {
   "replace": false,
-  "values":[
+  "values": [
+    "minecraft:wheat_seeds",
+    "minecraft:beetroot_seeds",
+    "minecraft:pumpkin_seeds",
+    "minecraft:melon_seeds",
+    "minecraft:pitcher_pod",
+    "minecraft:torchflower_seeds",
     { "id": "#c:seeds", "required": false },
     { "id": "#forge:seeds", "required": false }
   ]

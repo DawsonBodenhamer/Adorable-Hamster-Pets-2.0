@@ -727,8 +727,7 @@ public class AhpConfig extends Config {
     @Translatable.Name("Allowed Items")
     @Translatable.Desc("A specific list of items and tags that are allowed in the hamster's cheek pouch. You can add things to this list to bypass the default 'no tools or big blocks' rule, since this overrides the 'disallowed' settings.")
     public List<String> pouchAllowedItems = new ArrayList<>(List.of(
-            "minecraft:torch", "minecraft:soul_torch", "minecraft:redstone_torch", "minecraft:repeater", "minecraft:comparator", "minecraft:lever", "#minecraft:buttons",
-            "#minecraft:pressure_plates", "minecraft:beetroot_seeds", "minecraft:pumpkin_seeds", "minecraft:melon_seeds", "minecraft:pitcher_pod", "minecraft:torchflower_seeds", "#c:seeds", "#forge:seeds"
+            "minecraft:torch", "minecraft:soul_torch", "minecraft:redstone_torch", "minecraft:repeater", "minecraft:comparator", "minecraft:lever", "#minecraft:buttons", "#minecraft:pressure_plates", "minecraft:wheat_seeds", "minecraft:beetroot_seeds", "minecraft:pumpkin_seeds", "minecraft:melon_seeds", "minecraft:pitcher_pod", "minecraft:torchflower_seeds", "#c:seeds", "#forge:seeds"
     ));
 
     @Translatable.Name("Pouch Disallowed Items")

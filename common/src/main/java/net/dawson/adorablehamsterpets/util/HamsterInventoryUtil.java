@@ -73,7 +73,8 @@ public final class HamsterInventoryUtil {
                 ConfigDataCache.isTamingFood(stack) ||
                 ConfigDataCache.isBuffFood(stack) ||
                 ConfigDataCache.isPouchUnlockFood(stack) ||
-                ConfigDataCache.isAutoHealFood(stack)) {
+                ConfigDataCache.isAutoHealFood(stack) ||
+                ConfigDataCache.isSnackableItem(stack)) {
             return true;
         }
 
