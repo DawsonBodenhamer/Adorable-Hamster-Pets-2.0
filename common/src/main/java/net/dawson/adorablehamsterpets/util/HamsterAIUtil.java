@@ -2,16 +2,23 @@ package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.dawson.adorablehamsterpets.item.ModItems;
+import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.JukeboxBlockEntity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.ai.pathing.PathNodeType;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.MusicDiscItem;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -117,18 +124,70 @@ public final class HamsterAIUtil {
     }
 
     /**
-     * Scans for a nearby jukebox actively playing the Cheese Music Disc.
+     * Scans for a nearby jukebox actively playing the Cheese Music Disc or any configured
+     * custom discs to which the hamster is intended to dance.
      */
-    public static boolean isCheeseSongPlayingNearby(HamsterEntity hamster) {
+    public static boolean isDancingSongPlayingNearby(HamsterEntity hamster) {
         World world = hamster.getWorld();
 
         for (BlockPos p : BlockPos.iterateOutwards(hamster.getBlockPos(), 8, 4, 8)) {
             if (world.getBlockState(p).isOf(Blocks.JUKEBOX)) {
                 if (world.getBlockEntity(p) instanceof JukeboxBlockEntity jbe) {
-                    // In 1.20.1, check if it's playing and verify the item directly
+
+                    // 1.20.1: Check if jukebox is actively playing and has record
                     if (jbe.isPlayingRecord() && !jbe.getStack().isEmpty()) {
-                        if (jbe.getStack().isOf(ModItems.MUSIC_DISC_CHEESE.get())) {
-                            return true;
+                        ItemStack discStack = jbe.getStack();
+
+                        if (discStack.getItem() instanceof MusicDiscItem discItem) {
+
+                            // Check AHP theme song
+                            if (discItem.getSound().equals(ModSounds.AHP_THEME_SONG.get())) {
+                                return true;
+                            }
+
+                            // Check dynamic config strings
+                            if (!Configs.AHP.dancingMusicDiscStrings.isEmpty()) {
+                                String songDesc = discItem.getDescription().getString().toLowerCase(Locale.ROOT);
+                                String itemName = discStack.getName().getString().toLowerCase(Locale.ROOT);
+                                String itemKey = discStack.getTranslationKey().toLowerCase(Locale.ROOT);
+
+                                // 1.20.1: Parse Lore from NBT instead of Data Components
+                                NbtList loreList = null;
+                                NbtCompound nbt = discStack.getNbt();
+
+                                if (nbt != null && nbt.contains(ItemStack.DISPLAY_KEY, NbtElement.COMPOUND_TYPE)) {
+                                    NbtCompound display = nbt.getCompound(ItemStack.DISPLAY_KEY);
+                                    if (display.contains(ItemStack.LORE_KEY, NbtElement.LIST_TYPE)) {
+                                        loreList = display.getList(ItemStack.LORE_KEY, NbtElement.STRING_TYPE);
+                                    }
+                                }
+
+                                for (String searchStr : Configs.AHP.dancingMusicDiscStrings) {
+                                    String lowerSearch = searchStr.toLowerCase(Locale.ROOT);
+
+                                    if (songDesc.contains(lowerSearch) || itemName.contains(lowerSearch) || itemKey.contains(lowerSearch)) {
+                                        return true;
+                                    }
+
+                                    if (loreList != null) {
+                                        for (int i = 0; i < loreList.size(); i++) {
+                                            String lineJson = loreList.getString(i);
+                                            try {
+                                                // 1.20.1: Lore is stored as JSON text
+                                                Text lineText = Text.Serializer.fromJson(lineJson);
+                                                if (lineText != null && lineText.getString().toLowerCase(Locale.ROOT).contains(lowerSearch)) {
+                                                    return true;
+                                                }
+                                            } catch (Exception e) {
+                                                // Fallback if raw string matches
+                                                if (lineJson.toLowerCase(Locale.ROOT).contains(lowerSearch)) {
+                                                    return true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

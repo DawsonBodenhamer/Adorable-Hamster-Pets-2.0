@@ -64,6 +64,7 @@ public class ModPackets {
     public record StartCrownTrialC2SPacket(int themeOrdinal) {}
     public record AdjustGeneticsConfigC2SPacket(boolean isVariance, boolean increase) {}
     public record CancelPettingC2SPacket() {}
+    public record HamsterAnimationSoundC2SPacket(int hamsterEntityId, String soundId) {}
 
     // S2C (Server-to-Client)
     public record PlayGuidebookEffectsS2CPacket(boolean closeScreen) {}
@@ -84,6 +85,33 @@ public class ModPackets {
                 (packet, buf) -> {},
                 (buf) -> new ThrowHamsterC2SPacket(),
                 (packet, context) -> context.get().queue(() -> HamsterEntity.tryThrowFromShoulder((ServerPlayerEntity) context.get().getPlayer()))
+        );
+
+        CHANNEL.register(HamsterAnimationSoundC2SPacket.class,
+                (packet, buf) -> {
+                    buf.writeInt(packet.hamsterEntityId());
+                    buf.writeString(packet.soundId());
+                },
+                (buf) -> new HamsterAnimationSoundC2SPacket(buf.readInt(), buf.readString()),
+                (packet, context) -> context.get().queue(() -> {
+                    Entity entity = context.get().getPlayer().getWorld().getEntityById(packet.hamsterEntityId());
+                    if (entity instanceof HamsterEntity hamster) {
+                        // Ensure sender is >16 blocks away (squared)
+                        if (hamster.squaredDistanceTo(context.get().getPlayer()) > 256.0) {
+                            if ("hamster_thump_sound".equals(packet.soundId())) {
+
+                                // Ignore duplicate packets
+                                if (hamster.interactionCooldown <= 0) {
+                                    float thumpPitch = 1.0F + hamster.getRandom().nextFloat() * 0.4F;
+                                    net.dawson.adorablehamsterpets.util.HamsterPhysicsUtil.broadcastImpactSound(hamster, net.dawson.adorablehamsterpets.sound.ModSounds.HAMSTER_THUMP.get(), thumpPitch);
+
+                                    // 5-tick cooldown
+                                    hamster.interactionCooldown = 5;
+                                }
+                            }
+                        }
+                    }
+                })
         );
 
         CHANNEL.register(DismountHamsterC2SPacket.class,

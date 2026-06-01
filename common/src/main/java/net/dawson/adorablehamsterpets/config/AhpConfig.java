@@ -713,6 +713,12 @@ public class AhpConfig extends Config {
     @Translatable.Desc("For the advanced user who looks at a perfectly functional system and thinks, 'I can make this weirder.' Edit these lists to change what items your hamsters consider food, bait, treasure, and all other interactions. Use item IDs (e.g., 'minecraft:diamond') or tags (e.g., '#minecraft:fishes'). Mess it up? That's a you problem.")
     public ConfigGroup itemTags = new ConfigGroup("itemTags", true);
 
+    @Translatable.Name("Dancing Music Discs")
+    @Translatable.Desc("A list of strings. If a jukebox plays a music disc containing any of these strings in its name, description, or tooltips (not case-sensitive), nearby hamsters will dance to it.")
+    public List<String> dancingMusicDiscStrings = new ArrayList<>(List.of(
+            "hamtaro", "hamster", "hampter"
+    ));
+
     @Translatable.Name("Cheek Pouch Smuggling List")
     @Translatable.Desc("Fine-tune exactly what your hamster is (and isn't) allowed to carry. The 'Allowed' list acts as a high-priority override to the 'Disallowed' lists and general rules.")
     public ConfigGroup pouchRestrictions = new ConfigGroup("pouchRestrictions", true);
@@ -1205,7 +1211,7 @@ public class AhpConfig extends Config {
     @Translatable.Desc("How likely a wandering hamster is to attempt to steal crops. (1-in-X chance per tick). Default is 300 which equates to every 15 seconds on average. Set lower to increase the likelihood.")
     public ValidatedInt cropSnackingChanceDenominator = new ValidatedInt(300, 10000, 1);
 
-    @Translatable.Name("Cleanliness")
+    @Translatable.Name("Messiness")
     @Translatable.Desc("The probability (0.0 to 1.0) that a hamster will accidentally replant a seed while aggressively harvesting a crop. At 0.0, they will perfectly uproot the crop, not spilling any seeds. At 1.0, they will be extremely messy and replant every time. Defaults to 0.75 (75%).")
     public ValidatedFloat cropReplantChance = new ValidatedFloat(0.75f, 1.0f, 0.0f);
 
