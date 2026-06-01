@@ -1630,12 +1630,12 @@ public class AhpConfig extends Config {
             );
 
     @Translatable.Name("Use Pouch Loot for Rewards")
-    @Translatable.Desc("If true, winning a game of tag rewards you with whatever random pocket lint generates in wild cheek pouches. (That list is configurable: see \"Cheek Pouch Loot\" in the World Gen Config.) If false, it strictly pulls from the custom list below.")
-    public boolean usePouchLootForTagRewards = true;
+    @Translatable.Desc("If true, after a successful mini-game, your hamster will reward you with whatever random pocket lint it is allowed to spawn with in its cheek pouches. (Configurable: see 'Cheek Pouch Loot' in the World Gen Config.) If false, rewards will be pulled directly from the custom list below.")
+    public boolean usePouchLootForMiniGameRewards = true;
 
-    @Translatable.Name("Custom Tag Rewards")
-    @Translatable.Desc("The specific items your hamster will regurgitate as a prize, assuming you disabled the toggle above. Format specific item names like this: 'minecraft:diamond' and you can use tags like this: '#minecraft:flowers'. If you leave this empty while custom rewards are active, your hamster will just stare at you awkwardly after you win.")
-    public List<String> customTagRewards = new ArrayList<>();
+    @Translatable.Name("Custom Rewards")
+    @Translatable.Desc("The specific items your hamster will gift you after a successful game, assuming you disabled the toggle above. Format specific item names like this: 'minecraft:diamond' and you can use tags like this: '#minecraft:flowers'. If you leave this empty while custom rewards are active, your hamster will just stare at you awkwardly and not give you anything. Maybe that's what you want? I'm not your boss.")
+    public List<String> customMiniGameRewards = new ArrayList<>();
 
     @Translatable.Name("Average Time Between Games")
     @Translatable.Desc("The average real-world seconds between hamster-vs-hamster tag games. If you set this lower than the actual duration of a game (15 seconds by default), you will allow multiple games of tag to occur simultaneously within the same group of hamsters.")

@@ -114,7 +114,7 @@ public class ConfigDataCache {
     private static final List<Item> flattenedDefaultCheekLoot = new ArrayList<>();
     private static final List<Item> flattenedExtraCheekLoot = new ArrayList<>();
     private static final List<Item> flattenedCaveCheekLoot = new ArrayList<>();
-    private static final List<Item> flattenedCustomTagRewards = new ArrayList<>();
+    private static final List<Item> flattenedCustomMiniGameRewards = new ArrayList<>();
 
     /**
      * Parses all item and biome tag lists from the config file.
@@ -143,7 +143,7 @@ public class ConfigDataCache {
         parseLootGenerationList(Configs.AHP_WORLDGEN.defaultCheekLootList, flattenedDefaultCheekLoot, "defaultCheekLootList");
         parseLootGenerationList(Configs.AHP_WORLDGEN.extraCheekLootList, flattenedExtraCheekLoot, "extraCheekLootList");
         parseLootGenerationList(Configs.AHP_WORLDGEN.caveCheekLootList, flattenedCaveCheekLoot, "caveCheekLootList");
-        parseLootGenerationList(Configs.AHP.customTagRewards, flattenedCustomTagRewards, "customTagRewards");
+        parseLootGenerationList(Configs.AHP.customMiniGameRewards, flattenedCustomMiniGameRewards, "customMiniGameRewards");
         parseItemList(Configs.AHP.becomePacifistItems, becomePacifistItems, becomePacifistTags, "becomePacifistItems");
         parseItemList(Configs.AHP.becomeNeutralItems, becomeNeutralItems, becomeNeutralTags, "becomeNeutralItems");
         parseItemList(Configs.AHP.becomeMenaceItems, becomeMenaceItems, becomeMenaceTags, "becomeMenaceItems");
@@ -231,7 +231,7 @@ public class ConfigDataCache {
     public static Item getRandomDefaultLootItem(Random random) {if (flattenedDefaultCheekLoot.isEmpty()) return Items.AIR;return flattenedDefaultCheekLoot.get(random.nextInt(flattenedDefaultCheekLoot.size()));}
     public static Item getRandomCustomLootItem(Random random) {if (flattenedExtraCheekLoot.isEmpty()) return Items.AIR;return flattenedExtraCheekLoot.get(random.nextInt(flattenedExtraCheekLoot.size()));}
     public static Item getRandomCaveLootItem(Random random) {if (flattenedCaveCheekLoot.isEmpty()) return Items.AIR;return flattenedCaveCheekLoot.get(random.nextInt(flattenedCaveCheekLoot.size()));}
-    public static Item getRandomCustomTagReward(Random random) {if (flattenedCustomTagRewards.isEmpty()) return Items.AIR;return flattenedCustomTagRewards.get(random.nextInt(flattenedCustomTagRewards.size()));}
+    public static Item getRandomCustomMiniGameReward(Random random) {if (flattenedCustomMiniGameRewards.isEmpty()) return Items.AIR;return flattenedCustomMiniGameRewards.get(random.nextInt(flattenedCustomMiniGameRewards.size()));}
     public static boolean isPacifistItem(ItemStack stack) { return matchesItem(stack, becomePacifistItems, becomePacifistTags); }
     public static boolean isStandardAggressionItem(ItemStack stack) { return matchesItem(stack, becomeNeutralItems, becomeNeutralTags); }
     public static boolean isMenaceItem(ItemStack stack) { return matchesItem(stack, becomeMenaceItems, becomeMenaceTags); }
@@ -496,7 +496,7 @@ public class ConfigDataCache {
         flattenedDefaultCheekLoot.clear();
         flattenedExtraCheekLoot.clear();
         flattenedCaveCheekLoot.clear();
-        flattenedCustomTagRewards.clear();
+        flattenedCustomMiniGameRewards.clear();
         becomePacifistItems.clear();
         becomePacifistTags.clear();
         becomeNeutralItems.clear();
