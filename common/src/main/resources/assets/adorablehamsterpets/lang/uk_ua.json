@@ -49,6 +49,7 @@
   "adorablehamsterpets.main.cheeseNutrition": "Угамування голоду від сиру",
   "adorablehamsterpets.main.cheeseNutrition.desc": "Скільки маленьких позначок голоду відновлює сир. Наприклад, стейк відновлює 8. Ми ж будемо раціональними людьми й не встановимо якесь завелике число, аби не знущатися з хом'ячків, справді? Справді...?",
   "adorablehamsterpets.main.cheeseSaturation": "Насичення від сиру",
+  "adorablehamsterpets.main.cheeseSaturation.desc": "Тривалість насичення. У стейка дорівнює 0,8. Але усьому має бути своя міра... А може й ні.",
   "adorablehamsterpets.main.circadianChaos": "Циркадний ритм? Ні, не чули",
   "adorablehamsterpets.main.cleaningChanceDenominator": "Частота чепуріння",
   "adorablehamsterpets.main.commissionedFeatures": "Функціонал на замовлення",
