@@ -231,6 +231,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     // --- Bitmask Flags for DataTracker ---
+    // TODO: All 31 bits are used up now, so need to split flags into two separate
+    //  DataTracker entries, starting back at 1 << 0 for the second integer
     public static final int SLEEPING_FLAG = 1 << 0;
     public static final int SITTING_FLAG = 1 << 1;
     public static final int BEGGING_FLAG = 1 << 2;

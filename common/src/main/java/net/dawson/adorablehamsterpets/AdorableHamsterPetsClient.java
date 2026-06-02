@@ -9,6 +9,7 @@ import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
+import dev.architectury.registry.ReloadListenerRegistry;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.client.rendering.ColorHandlerRegistry;
@@ -38,6 +39,7 @@ import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterProjectileRe
 import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterTreeSearcherRenderer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
+import net.dawson.adorablehamsterpets.integration.iris.IrisIntegration;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
@@ -60,6 +62,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.particle.SimpleParticleType;
+import net.minecraft.resource.ResourceType;
+import net.minecraft.resource.SynchronousResourceReloader;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
@@ -159,6 +163,9 @@ public class AdorableHamsterPetsClient {
                 ModEntitySpawns.parseConfig();
                 ModWorldGeneration.parseConfig();
 
+                // Clear dynamic texture caches
+                HamsterTextureUtil.clearCaches();
+
                 // Sync supporter crown theme preference to server
                 if (MinecraftClient.getInstance().player != null) {
                     int payloadTheme = Configs.AHP.showMyCrown ? Configs.AHP.crownTheme.get().ordinal() : -1;
@@ -167,6 +174,12 @@ public class AdorableHamsterPetsClient {
 
                 AdorableHamsterPets.LOGGER.info("Reloaded Adorable Hamster Pets config caches on client.");
             }
+        });
+
+        // --- Resource Reload Listener ---
+        ReloadListenerRegistry.register(ResourceType.CLIENT_RESOURCES, (SynchronousResourceReloader) manager -> {
+            HamsterTextureUtil.clearCaches();
+            AdorableHamsterPets.LOGGER.info("Cleared Hamster Texture caches on resource reload.");
         });
 
         // --- Item Colors ---
@@ -244,6 +257,9 @@ public class AdorableHamsterPetsClient {
 
         // --- Perk System ---
         PlayerPerkManager.INSTANCE.refreshManifestOnce();
+
+        // --- Iris Integration ---
+        IrisIntegration.init();
     }
 
     /**

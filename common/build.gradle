@@ -28,4 +28,7 @@ dependencies {
 
     // Patchouli API
     modCompileOnly "vazkii.patchouli:Patchouli:${rootProject.patchouli_version}-FABRIC"
+
+    // Iris API (Optional, Compile-Time)
+    modCompileOnly "maven.modrinth:iris:${rootProject.iris_version}-fabric"
 }

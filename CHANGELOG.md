@@ -31,6 +31,15 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - **Cooldown Recovery**
     - If you're impatient, feeding your hamster will now incrementally reduce its throw cooldown (similar to how feeding accelerates baby growth).
   - A new action bar message will let you know when the hamster has recovered from its concussion and is ready for launch.
+- **Shader LabPBR Material Support**
+  - All items, blocks, particles, and entities in this mod now include their own LabPBR-compliant Specular and Normal textures (with hamsters generating theirs procedurally), giving them detailed, per-layer PBR effects (emission, subsurface scattering, specular reflections, porosity, etc.) out-of-the-box with supported shaders.
+  - Must have your shader's material settings set to "LabPBR" or "Hardcoded + LabPBR"
+  - Metal armors have a "Vanilla-inspired" glossiness by default, but if you prefer hardcore realism and want them super metallic/reflective, I added custom sliders in the config allowing you to manually fine-tune the PBR values for each individual armor type.
+- **Armor Trims**
+  - Hamster Armor can now be customized with vanilla armor trims in the Smithing Table.
+  - The following trims are currently available: Coast, Border, Vex, Eye, Sentry, Wild
+  - They will naturally glow in the dark and automatically have emission with shader mods like Iris.
+  - Added an `Emissive Armor Trims` toggle in the client config so you can disable the glowing effect if you hate fun and prefer a non-luminescent reality.
 - **Configurable Aggression States**
   - Hamsters now have three distinct aggression states controlled by their diet.
   - **Pacifist:** Feed them any vanilla flower (e.g., `#minecraft:flowers`). They become total hippies and will refuse to attack anything, even if you are being actively mauled.
@@ -53,11 +62,6 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - Replaced the erratic vanilla swimming AI with a custom, smoother physics simulation that doesn't launch them out of the water every couple of seconds like dolphins.
   - Added 7 new unique water-swishing sound effects to the hamster's swimming animation.
   - Hamsters will still do their best to avoid water, (except when hunting down items) but now they don't look so broken when they inevitably end up in it.
-- **Armor Trims**
-  - Hamster Armor can now be customized with vanilla armor trims in the Smithing Table.
-  - The following trims are currently available: Coast, Border, Vex, Eye, Sentry, Wild
-  - They will naturally glow in the dark and automatically have emission with shader mods like Iris.
-  - Added an `Emissive Armor Trims` toggle in the client config so you can disable the glowing effect if you hate fun and prefer a non-luminescent reality.
 - **"Hamtaro" Easter Egg**
   - Renaming a hamster "Hamtaro" gives it a special texture. This functions identically to the "Sweet Potato" easter egg. Both base textures provided by [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!
 - **New "Panda" Overlay Pattern**

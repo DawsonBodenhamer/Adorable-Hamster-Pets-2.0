@@ -1030,6 +1030,123 @@ public class AhpConfig extends Config {
     // Helper field to gate the Acorn Hat setting
     private final ValidatedField<Boolean> isArmorVisualsEnabled = new ValidatedBoolean(true).map(b -> b, b -> enableArmorVisuals);
 
+    @Translation(prefix = "adorablehamsterpets.main.armorPbrValues")
+    public static class ArmorPbrValues {
+        @NonSync
+        @Translatable.Name("Emissiveness")
+        @Translatable.Desc("The Alpha channel. How much it glows in the dark. 0 is dark, 254 is a tiny blinding sun. DO NOT set it to 255. LabPBR ignores 255 entirely, so it actually means zero glow.")
+        public ValidatedInt emissive;
+
+        @NonSync
+        @Translatable.Name("Porosity & SSS")
+        @Translatable.Desc("The Blue channel. 0-64 controls Porosity (how much darker it gets when wet). 65-255 controls Subsurface Scattering (light passing through, like skin/wax). 65 is completely solid, 255 is pure translucent rodent gelatin.")
+        public ValidatedInt sss;
+
+        @NonSync
+        @Translatable.Name("Reflectance & Metallic")
+        @Translatable.Desc("The Green channel. 0-229 controls standard reflectance. 230-254 triggers hardcoded metals in your shader (230=Iron, 231=Gold, etc). 255 tells the shader to tint the reflection based on the texture's color.")
+        public ValidatedInt metallic;
+
+        @NonSync
+        @Translatable.Name("Smoothness")
+        @Translatable.Desc("The Red channel. 0 is rough sandpaper. 255 is a perfectly polished mirror.")
+        public ValidatedInt smoothness;
+
+        public ArmorPbrValues(int emissive, int sss, int metallic, int smoothness) {
+            this.emissive = new ValidatedInt(emissive, 255, 0);
+            this.sss = new ValidatedInt(sss, 255, 0);
+            this.metallic = new ValidatedInt(metallic, 255, 0);
+            this.smoothness = new ValidatedInt(smoothness, 255, 0);
+        }
+
+        public ArmorPbrValues() {
+            this(0, 0, 0, 0);
+        }
+    }
+
+    @NonSync
+    @Translatable.Name("Enable Armor PBR")
+    @Translatable.Desc("If true, hamster armor generates and utilizes Specular maps for shiny metals and rough Acorn. Disable if you prefer boring, plastic textures.")
+    public ValidatedCondition<Boolean> enableArmorPbr = new ValidatedBoolean(true)
+            .toCondition(
+                    isArmorVisualsEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
+                    () -> false
+            );
+
+    // Helper field to gate PBR sliders
+    private final ValidatedField<Boolean> isArmorPbrEnabled = enableArmorPbr.map(b -> b, b -> b);
+
+    @Translation(prefix = "adorablehamsterpets.main.armorPbrValues")
+    public static class AcornPbrValues extends ArmorPbrValues { public AcornPbrValues() { super(255, 50, 0, 90); } }
+
+    @Translation(prefix = "adorablehamsterpets.main.armorPbrValues")
+    public static class IronPbrValues extends ArmorPbrValues { public IronPbrValues() { super(0, 0, 130, 220); } }
+
+    @Translation(prefix = "adorablehamsterpets.main.armorPbrValues")
+    public static class GoldPbrValues extends ArmorPbrValues { public GoldPbrValues() { super(0, 0, 50, 220); } }
+
+    @Translation(prefix = "adorablehamsterpets.main.armorPbrValues")
+    public static class DiamondPbrValues extends ArmorPbrValues { public DiamondPbrValues() { super(0, 0, 50, 220); } }
+
+    @Translation(prefix = "adorablehamsterpets.main.armorPbrValues")
+    public static class NetheritePbrValues extends ArmorPbrValues { public NetheritePbrValues() { super(0, 0, 20, 120); } }
+
+    @Translatable.Name("Armor PBR Settings")
+    @Translatable.Desc("Fine-tune the exact LabPBR specular map values for each armor tier. Because you definitely have an opinion on the precise refractive index of an acorn.")
+    public ConfigGroup pbrMaterialSettings = new ConfigGroup("pbrMaterialSettings", true);
+
+    @NonSync
+    @Translatable.Name("Acorn Armor PBR")
+    public ValidatedCondition<ArmorPbrValues> acornPbr =
+            new ValidatedAny<ArmorPbrValues>(new AcornPbrValues())
+                    .toCondition(
+                            isArmorPbrEnabled,
+                            Text.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
+                            AcornPbrValues::new
+                    );
+
+    @NonSync
+    @Translatable.Name("Iron Armor PBR")
+    public ValidatedCondition<ArmorPbrValues> ironPbr =
+            new ValidatedAny<ArmorPbrValues>(new IronPbrValues())
+                    .toCondition(
+                            isArmorPbrEnabled,
+                            Text.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
+                            IronPbrValues::new
+                    );
+
+    @NonSync
+    @Translatable.Name("Gold Armor PBR")
+    public ValidatedCondition<ArmorPbrValues> goldPbr =
+            new ValidatedAny<ArmorPbrValues>(new GoldPbrValues())
+                    .toCondition(
+                            isArmorPbrEnabled,
+                            Text.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
+                            GoldPbrValues::new
+                    );
+
+    @NonSync
+    @Translatable.Name("Diamond Armor PBR")
+    public ValidatedCondition<ArmorPbrValues> diamondPbr =
+            new ValidatedAny<ArmorPbrValues>(new DiamondPbrValues())
+                    .toCondition(
+                            isArmorPbrEnabled,
+                            Text.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
+                            DiamondPbrValues::new
+                    );
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Netherite Armor PBR")
+    public ValidatedCondition<ArmorPbrValues> netheritePbr =
+            new ValidatedAny<ArmorPbrValues>(new NetheritePbrValues())
+                    .toCondition(
+                            isArmorPbrEnabled,
+                            Text.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
+                            NetheritePbrValues::new
+                    );
+
     @NonSync
     @Translatable.Name("Emissive Armor Trims")
     @Translatable.Desc("If true, armor trims will naturally glow in the dark and trigger bloom effects, which will be especially visible if you're using shaders. Turn it off if you prefer your rodents to remain grounded in a dull, non-luminescent reality.")

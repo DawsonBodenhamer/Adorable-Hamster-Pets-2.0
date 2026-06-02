@@ -3,7 +3,6 @@ package net.dawson.adorablehamsterpets.entity.client;
 import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.config.Configs;
-import net.dawson.adorablehamsterpets.entity.client.layer.HamsterTrimRenderLayer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.networking.payload.HamsterAnimationSoundPayload;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
@@ -72,7 +71,6 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
     public HamsterRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new HamsterModel());
         this.shadowRadius = this.adultShadowRadius;
-        this.addRenderLayer(new HamsterTrimRenderLayer(this));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
