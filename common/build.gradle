@@ -9,9 +9,18 @@ dependencies {
     // Architectury API
     modImplementation "dev.architectury:architectury:$rootProject.architectury_api_version"
 
-    // Common Dependencies
+    // GeckoLib API
     modImplementation "software.bernie.geckolib:geckolib-fabric-$rootProject.minecraft_version:$rootProject.geckolib_version"
+
+    // Fzzy Config API
     modImplementation "me.fzzyhmstrs:fzzy_config:${rootProject.fzzy_config_version}"
+
+    // Jade API
     modImplementation "curse.maven:jade-324717:${rootProject.jade_version_fabric}"
-    modImplementation "vazkii.patchouli:Patchouli:1.20.1-84.1-FABRIC"
+
+    // Patchouli API
+    modCompileOnly "vazkii.patchouli:Patchouli:${rootProject.patchouli_version}-FABRIC"
+
+    // Iris API (Optional, Compile-Time)
+    modCompileOnly "maven.modrinth:iris:${rootProject.iris_version}-fabric"
 }
