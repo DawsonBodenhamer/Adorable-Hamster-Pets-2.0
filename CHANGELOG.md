@@ -35,11 +35,13 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - All items, blocks, particles, and entities in this mod now include their own LabPBR-compliant Specular and Normal textures (with hamsters generating theirs procedurally), giving them detailed, per-layer PBR effects (emission, subsurface scattering, specular reflections, porosity, etc.) out-of-the-box with supported shaders.
   - Must have your shader's material settings set to "LabPBR" or "Hardcoded + LabPBR"
   - Metal armors have a "Vanilla-inspired" glossiness by default, but if you prefer hardcore realism and want them super metallic/reflective, I added custom sliders in the config allowing you to manually fine-tune the PBR values for each individual armor type.
+  - Added a `Max POM Depth` slider to allow fine-tuning of the procedural 3D fur displacement (only works if your shader supports POM on entities, which is extremely rare).
 - **Armor Trims**
   - Hamster Armor can now be customized with vanilla armor trims in the Smithing Table.
   - The following trims are currently available: Coast, Border, Vex, Eye, Sentry, Wild
   - They will naturally glow in the dark and automatically have emission with shader mods like Iris.
   - Added an `Emissive Armor Trims` toggle in the client config so you can disable the glowing effect if you hate fun and prefer a non-luminescent reality.
+  - Added a `Trim Emissive Brightness` slider to give you precision control over exactly how blinding the neon lines should be.
 - **Configurable Aggression States**
   - Hamsters now have three distinct aggression states controlled by their diet.
   - **Pacifist:** Feed them any vanilla flower (e.g., `#minecraft:flowers`). They become total hippies and will refuse to attack anything, even if you are being actively mauled.

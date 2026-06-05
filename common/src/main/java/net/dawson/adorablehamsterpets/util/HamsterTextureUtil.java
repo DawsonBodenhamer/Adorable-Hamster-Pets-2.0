@@ -45,11 +45,6 @@ public class HamsterTextureUtil {
     private static final Map<String, Identifier> CACHED_TEXTURES = new ConcurrentHashMap<>();
     private static final Map<String, int[]> TRIM_PALETTE_CACHE = new ConcurrentHashMap<>();
 
-    // --- LabPBR Constants ---
-    private static final int HAMSTER_MEDIUM_SSS = 100; // 65 = 0%, 255 = 100%
-    private static final int HAMSTER_LOW_SSS = 80;
-    public static final float HAMSTER_MAX_POM_DEPTH = 0.08f; // 8% max displacement
-
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Static Utilities
      * ────────────────────────────────────────────────────────────────────────────*/
@@ -196,7 +191,8 @@ public class HamsterTextureUtil {
             // No Reflectance → G:0
             // Low SSS → B:80
             // No Emissiveness → A:255
-            int furSpecular = ColorHelper.Abgr.getAbgr(255, HAMSTER_LOW_SSS, 0, 0);
+            int furSss = Configs.AHP.furSss.get();
+            int furSpecular = ColorHelper.Abgr.getAbgr(255, furSss, 0, 0);
 
             // Fill base PBR values for opaque pixels on base coat,
             // clear transparent pixels to prevent memory garbage
@@ -245,7 +241,8 @@ public class HamsterTextureUtil {
             // No Reflectance → G:0
             // Medium SSS → B:100
             // No Emissiveness → A:255
-            int skinSpecular = ColorHelper.Abgr.getAbgr(255, HAMSTER_MEDIUM_SSS, 0, 120);
+            int skinSss = Configs.AHP.skinSss.get();
+            int skinSpecular = ColorHelper.Abgr.getAbgr(255, skinSss, 0, 120);
             NativeImage skinLayer = readRawImage("textures/entity/hamster/overlays/skin/skin.png");
             if (skinLayer != null) {
                 blendLayer(composite, specularImg, normalImg, skinLayer, skinSpecular);
@@ -281,7 +278,7 @@ public class HamsterTextureUtil {
                 if (!trimPattern.equals("none") && !trimMaterialAsset.equals("none") && Configs.AHP.enableArmorVisuals) {
                     NativeImage trimLayer = createTrimLayerImage(trimPattern, trimMaterialAsset);
                     if (trimLayer != null) {
-                        int emissiveValue = Configs.AHP.emissiveArmorTrims.get() ? 254 : 255;
+                        int emissiveValue = Configs.AHP.emissiveArmorTrims.get() ? Configs.AHP.trimEmissiveBrightness.get() : 255;
 
                         int trimSpecular;
                         if (Configs.AHP.enableArmorPbr.get()) {
@@ -306,9 +303,10 @@ public class HamsterTextureUtil {
             // --- Accessories ---
             // Medium Matte → R:50
             // No Reflectance → G:0
-            // Medium SSS → B:100
+            // Low SSS → B:80
             // No Emissiveness → A:255
-            int accessorySpecular = ColorHelper.Abgr.getAbgr(255, HAMSTER_LOW_SSS, 0, 50);
+            int accessorySss = Configs.AHP.accessorySss.get();
+            int accessorySpecular = ColorHelper.Abgr.getAbgr(255, accessorySss, 0, 50);
 
             // --- 8. Acorn Hat Layer ---
             if (hasAcornHat) {
@@ -397,7 +395,7 @@ public class HamsterTextureUtil {
 
                     // 1.0 (Brightest) -> 0% depth -> 255 alpha
                     // 0.0 (Darkest) -> HAMSTER_MAX_POM_DEPTH -> scaled alpha
-                    float depthFraction = (1.0f - normalized) * (HAMSTER_MAX_POM_DEPTH / 0.25f);
+                    float depthFraction = (1.0f - normalized) * (Configs.AHP.maxPomDepth.get() / 0.25f);
                     int pomAlpha = Math.max(1, 255 - (int)(depthFraction * 254));
 
                     int normColor = normalImg.getColor(x, y);
