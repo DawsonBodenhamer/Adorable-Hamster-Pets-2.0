@@ -1058,18 +1058,18 @@ public class AhpConfig extends Config {
 
     @NonSync
     @Translatable.Name("Fur SSS (Subsurface Scattering)")
-    @Translatable.Desc("The amount of light that passes through the hamster's fur. 65 is solid, 255 is pure translucent gelatin.")
-    public ValidatedInt furSss = new ValidatedInt(80, 255, 65);
+    @Translatable.Desc("Subsurface Scattering, i.e, the amount of light that passes through the hamster's fur. 65 is solid, 255 is pure translucent gelatin.")
+    public ValidatedInt furSss = new ValidatedInt(75, 255, 65);
 
     @NonSync
     @Translatable.Name("Skin SSS")
-    @Translatable.Desc("The amount of light that passes through the hamster's skin (ears, nose, feet). 65 is solid, 255 is pure translucent gelatin.")
+    @Translatable.Desc("Subsurface Scattering, i.e, the amount of light that passes through the hamster's skin (ears, nose, feet). 65 is solid, 255 is pure translucent gelatin.")
     public ValidatedInt skinSss = new ValidatedInt(100, 255, 65);
 
     @NonSync
     @Translatable.Name("Accessory SSS")
-    @Translatable.Desc("The amount of light that passes through accessories like Pink Petals and Acorn Hats. 65 is solid, 255 is pure translucent gelatin.")
-    public ValidatedInt accessorySss = new ValidatedInt(80, 255, 65);
+    @Translatable.Desc("Subsurface Scattering, i.e, the amount of light that passes through accessories like Pink Petals and Acorn Hats. 65 is solid, 255 is pure translucent gelatin.")
+    public ValidatedInt accessorySss = new ValidatedInt(75, 255, 65);
 
     @NonSync
     @Translatable.Name("Max POM Depth")
