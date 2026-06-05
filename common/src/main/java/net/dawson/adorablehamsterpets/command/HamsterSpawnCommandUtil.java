@@ -18,6 +18,10 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 
@@ -204,7 +208,7 @@ public class HamsterSpawnCommandUtil {
     /**
      * Executes the command to spawn a highly specific hamster based on exact genetic traits.
      */
-    public static int executeSpawnSpecific(ServerCommandSource source, String base, String wildPat, String wildPal, String breedPat, String breedPal, String eyes) throws CommandSyntaxException {
+    public static int executeSpawnSpecific(ServerCommandSource source, String base, String wildPat, String wildPal, String breedPat, String breedPal, String eyes, String pose) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrThrow();
         ServerWorld world = player.getServerWorld();
 
@@ -220,10 +224,39 @@ public class HamsterSpawnCommandUtil {
             return 0;
         }
 
+        // Raycast to determine exact spawn position
+        HitResult hitResult = player.raycast(4.5, 0.0f, false);
+        Vec3d spawnPos = player.getPos();
+        if (hitResult.getType() == HitResult.Type.BLOCK) {
+            BlockPos hitBlock = ((BlockHitResult) hitResult).getBlockPos();
+            spawnPos = new Vec3d(hitBlock.getX() + 0.5, hitBlock.getY() + 1.0, hitBlock.getZ() + 0.5);
+        }
+
+        // Calculate yaw to point from spawn position toward player
+        double dx = player.getX() - spawnPos.x;
+        double dz = player.getZ() - spawnPos.z;
+        float yaw = (float) (MathHelper.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0F;
+
         lastSpawnBatchId = UUID.randomUUID().toString();
-        HamsterEntity hamster = spawnFrozenHamster(world, player.getPos(), player.getYaw(), new HamsterGenome(base, wPatInt, wPalStr, bPatInt, bPalStr, eyeInt), true, true);
+
+        // Spawn frozen hamster, turning off randomizeSitting and randomizeSleeping
+        HamsterGenome genome = new HamsterGenome(base, wPatInt, wPalStr, bPatInt, bPalStr, eyeInt);
+        HamsterEntity hamster = spawnFrozenHamster(world, spawnPos, yaw, genome, false, false);
+
         if (hamster != null) {
             hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
+
+            // Apply requested pose
+            int personality = hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+            switch (pose.toLowerCase(Locale.ROOT)) {
+                case "sitting" -> hamster.setSitting(true, true);
+                case "sleeping" -> {
+                    hamster.setSleeping(true);
+                    hamster.setInSittingPose(true);
+                    hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
+                }
+                case "idle", "none" -> {}
+            }
         }
 
         source.sendFeedback(() -> Text.literal("[Hamster Genetics] Spawned requested hamster."), false);
@@ -645,17 +678,15 @@ public class HamsterSpawnCommandUtil {
 
             // Pose assignment
             boolean willSleep = false;
-            boolean willSit = true;
+            boolean willSit = false;
 
             if (randomizeSitting && randomizeSleeping) {
                 willSleep = world.getRandom().nextBoolean();
                 willSit = !willSleep;
             } else if (randomizeSleeping) {
                 willSleep = true;
-                willSit = false;
             } else if (randomizeSitting) {
                 willSit = true;
-                willSleep = false;
             }
 
             if (willSleep) {
