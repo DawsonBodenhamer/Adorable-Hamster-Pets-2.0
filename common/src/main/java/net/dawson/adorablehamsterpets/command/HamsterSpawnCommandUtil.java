@@ -390,7 +390,7 @@ public class HamsterSpawnCommandUtil {
     /**
      * Executes the command to spawn a specific number of random hamsters, or every mathematically possible permutation.
      */
-    public static int executeSpawnRandomGroup(ServerCommandSource source, String countStr, boolean ignoreSafetyLimits, double spacingMultiplier, boolean randomizeSitting, boolean randomizeSleeping, boolean matchPlayerYaw, boolean randomizeYaw) throws CommandSyntaxException {
+    public static int executeSpawnRandomGroup(ServerCommandSource source, String countStr, boolean ignoreSafetyLimits, double spacingMultiplier, boolean randomizeSitting, boolean randomizeSleeping, boolean matchPlayerYaw, boolean randomizeYaw, boolean useWildOverlayRulesForBreeding) throws CommandSyntaxException {
         if (permState.active) {
             source.sendFeedback(() -> Text.literal("[Hamster Genetics] A permutation spawn is already in progress.").formatted(Formatting.RED), false);
             return 0;
@@ -417,7 +417,7 @@ public class HamsterSpawnCommandUtil {
             ServerWorld world = player.getServerWorld();
             Vec3d startPos = player.getPos();
 
-            List<HamsterGenome> genomes = generateRandomPermutations(net.minecraft.util.math.random.Random.create(), parsedCount);
+            List<HamsterGenome> genomes = generateRandomPermutations(Random.create(), parsedCount, useWildOverlayRulesForBreeding);
 
             lastSpawnBatchId = UUID.randomUUID().toString();
             int maxCols = Math.max(1, (int) Math.ceil(Math.sqrt(parsedCount)));
@@ -452,6 +452,7 @@ public class HamsterSpawnCommandUtil {
 
         final boolean isAll = spawnAll;
         final int finalCount = parsedCount;
+        final boolean finalUseWildRules = useWildOverlayRulesForBreeding;
 
         CompletableFuture.supplyAsync(() -> {
             if (isAll) {
@@ -459,7 +460,7 @@ public class HamsterSpawnCommandUtil {
                 Collections.shuffle(permutations);
                 return permutations;
             } else {
-                return generateRandomPermutations(net.minecraft.util.math.random.Random.create(), finalCount);
+                return generateRandomPermutations(net.minecraft.util.math.random.Random.create(), finalCount, finalUseWildRules);
             }
         }).thenAcceptAsync(permutations -> {
             // Apply results back on main server thread
@@ -503,7 +504,7 @@ public class HamsterSpawnCommandUtil {
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static List<HamsterGenome> generateRandomPermutations(net.minecraft.util.math.random.Random random, int count) {
+    private static List<HamsterGenome> generateRandomPermutations(net.minecraft.util.math.random.Random random, int count, boolean useWildOverlayRulesForBreeding) {
         List<HamsterGenome> list = new ArrayList<>(count);
         List<PaletteDefinition> allBases = new ArrayList<>(HamsterPaletteManager.PALETTE_REGISTRY.values());
         List<String> allPaletteIds = new ArrayList<>(HamsterPaletteManager.PALETTE_REGISTRY.keySet());
@@ -537,7 +538,15 @@ public class HamsterSpawnCommandUtil {
 
             // 2. Pick Breeding Overlay
             List<String> validBreedOverlayIds = allPaletteIds.stream()
-                    .filter(id -> HamsterGeneticsUtil.isValidBreedingOverlay(baseDef, HamsterPaletteManager.PALETTE_REGISTRY.get(id)))
+                    .filter(id -> {
+                        PaletteDefinition overlayDef = HamsterPaletteManager.PALETTE_REGISTRY.get(id);
+                        if (!HamsterGeneticsUtil.isValidBreedingOverlay(baseDef, overlayDef)) return false;
+                        if (useWildOverlayRulesForBreeding) {
+                            if (!allowedWildZones.contains(overlayDef.zone())) return false;
+                            return HamsterGeneticsUtil.isValidWildOverlay(baseDef, overlayDef);
+                        }
+                        return true;
+                    })
                     .toList();
 
             int effectiveOverlayPatterns = wildPat > 0 ? overlayPatterns - 1 : overlayPatterns;

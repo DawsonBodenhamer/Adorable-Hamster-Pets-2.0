@@ -178,6 +178,7 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
     - Hamsters are now spawned in a completely randomized order and placement on the grid.
     - If the requested count is 5,000 or less, the hamsters are spawned synchronously and instantly without invoking the asynchronous batch-spawning system.
   - Added five additional optional arguments to the 2D, 3D, and randomized spawn commands: `[spacing_multiplier]`, `[match_player_yaw]`, `[randomize_sitting]`, `[randomize_sleeping]`, and `[randomize_yaw]`. These arguments allow you to expand or shrink the physical distance between the spawned hamsters, force the entire grid of spawned hamsters to face one direction, a random direction, and/or give them static poses to keep things more visually interesting.
+  - Added a new argument to the `/ahp spawn_random_group` command called `use_wild_overlay_rules_for_breeding_overlays`. Allows you to spawn a more realistic/natural looking random group of hamsters.
   - Added personality ID's for command-spawned hamsters. The random sitting/sleeping poses are based on that ID, so they will retain those poses even after being tamed.
   - Updated the `Admin Commands` chapter in the *Hamster Tips* guidebook to include descriptions for these new commands and arguments.
 - **Hamster Bed Placement**
