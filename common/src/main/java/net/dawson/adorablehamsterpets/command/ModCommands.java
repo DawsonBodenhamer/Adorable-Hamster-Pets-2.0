@@ -29,6 +29,9 @@ public class ModCommands {
     private static final SuggestionProvider<ServerCommandSource> COUNT_SUGGESTIONS = (context, builder) ->
             CommandSource.suggestMatching(List.of("1", "10", "100", "1000", "all_THIS_CAN_BREAK_YOUR_WORLD"), builder);
 
+    private static final SuggestionProvider<ServerCommandSource> POSE_SUGGESTIONS = (context, builder) ->
+            CommandSource.suggestMatching(List.of("sitting", "sleeping", "idle", "none"), builder);
+
     private static final SuggestionProvider<ServerCommandSource> PALETTE_SUGGESTIONS = (context, builder) -> {
         List<String> suggestions = new ArrayList<>(HamsterPaletteManager.PALETTE_REGISTRY.keySet());
         suggestions.add("none");
@@ -223,17 +226,19 @@ public class ModCommands {
                                                 .then(CommandManager.argument("breedPattern", StringArgumentType.word()).suggests(PATTERN_SUGGESTIONS)
                                                         .then(CommandManager.argument("breedPalette", StringArgumentType.word()).suggests(PALETTE_SUGGESTIONS)
                                                                 .then(CommandManager.argument("eyes", StringArgumentType.word()).suggests(EYE_SUGGESTIONS)
-                                                                        .executes(context -> HamsterSpawnCommandUtil.executeSpawnSpecific(
-                                                                                context.getSource(),
-                                                                                StringArgumentType.getString(context, "basePalette"),
-                                                                                StringArgumentType.getString(context, "wildPattern"),
-                                                                                StringArgumentType.getString(context, "wildPalette"),
-                                                                                StringArgumentType.getString(context, "breedPattern"),
-                                                                                StringArgumentType.getString(context, "breedPalette"),
-                                                                                StringArgumentType.getString(context, "eyes")
-                                                                        ))
+                                                                        .then(CommandManager.argument("pose", StringArgumentType.word()).suggests(POSE_SUGGESTIONS)
+                                                                                .executes(context -> HamsterSpawnCommandUtil.executeSpawnSpecific(
+                                                                                        context.getSource(),
+                                                                                        StringArgumentType.getString(context, "basePalette"),
+                                                                                        StringArgumentType.getString(context, "wildPattern"),
+                                                                                        StringArgumentType.getString(context, "wildPalette"),
+                                                                                        StringArgumentType.getString(context, "breedPattern"),
+                                                                                        StringArgumentType.getString(context, "breedPalette"),
+                                                                                        StringArgumentType.getString(context, "eyes"),
+                                                                                        StringArgumentType.getString(context, "pose")
+                                                                                ))
+                                                                        )
                                                                 ))))))));
-
         // Register root node to the dispatcher
         dispatcher.register(ahpRoot);
     }
