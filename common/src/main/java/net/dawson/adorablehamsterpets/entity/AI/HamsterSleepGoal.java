@@ -4,6 +4,7 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.dawson.adorablehamsterpets.util.HamsterPoseUtil;
 import net.dawson.adorablehamsterpets.util.HamsterState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.goal.Goal;
@@ -169,25 +170,10 @@ public class HamsterSleepGoal extends Goal {
 
         // --- Animation ---
         if (!this.hamster.getWorld().isClient()) {
-            // Randomly select sleep pose
-            int choice = this.hamster.getRandom().nextInt(3);
-            String settleAnimId;
-            String deepSleepAnimIdForTracker;
-
-            switch (choice) {
-                case 0 -> {
-                    settleAnimId = "anim_hamster_stand_settle_sleep1";
-                    deepSleepAnimIdForTracker = "anim_hamster_sleep_pose1";
-                }
-                case 1 -> {
-                    settleAnimId = "anim_hamster_stand_settle_sleep2";
-                    deepSleepAnimIdForTracker = "anim_hamster_sleep_pose2";
-                }
-                default -> { // case 2
-                    settleAnimId = "anim_hamster_stand_settle_sleep3";
-                    deepSleepAnimIdForTracker = "anim_hamster_sleep_pose3";
-                }
-            }
+            // Select sleep pose based on personality
+            int personalityId = this.hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+            String settleAnimId = HamsterPoseUtil.getSettleSleepAnimId(personalityId, false);
+            String deepSleepAnimIdForTracker = HamsterPoseUtil.getDeepSleepAnimId(personalityId);
 
             // Store deep sleep animation name
             this.hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, deepSleepAnimIdForTracker);

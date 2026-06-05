@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
+import net.dawson.adorablehamsterpets.util.HamsterPoseUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -289,24 +290,11 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
 
                     this.world.playSound(null, this.hamster.getBlockPos(), ModSounds.HAMSTER_SWISH.get(), SoundCategory.NEUTRAL, 0.35f, 1.0f + this.hamster.getRandom().nextFloat() * 0.5f);
 
-                    // Select random sleep pose
-                    int choice = this.hamster.getRandom().nextInt(3);
-                    String settleAnimId;
-                    String deepSleepAnimIdForTracker;
-                    switch (choice) {
-                        case 0 -> {
-                            settleAnimId = "anim_hamster_stand_settle_sleep1";
-                            deepSleepAnimIdForTracker = "anim_hamster_sleep_pose1";
-                        }
-                        case 1 -> {
-                            settleAnimId = "anim_hamster_stand_settle_sleep2";
-                            deepSleepAnimIdForTracker = "anim_hamster_sleep_pose2";
-                        }
-                        default -> {
-                            settleAnimId = "anim_hamster_stand_settle_sleep3";
-                            deepSleepAnimIdForTracker = "anim_hamster_sleep_pose3";
-                        }
-                    }
+                    // --- Select sleep pose based on personality ---
+                    int personalityId = this.hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+                    String settleAnimId = HamsterPoseUtil.getSettleSleepAnimId(personalityId, false);
+                    String deepSleepAnimIdForTracker = HamsterPoseUtil.getDeepSleepAnimId(personalityId);
+
                     this.hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, deepSleepAnimIdForTracker);
                     this.hamster.triggerAnimOnServer("mainController", settleAnimId);
                 }

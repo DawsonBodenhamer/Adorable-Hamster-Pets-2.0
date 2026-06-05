@@ -140,9 +140,7 @@ public final class HamsterBedUtil {
 
         // Select sleep pose based on personality ID
         int personality = newHamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
-        int poseIndex = (personality >= 1 && personality <= 3) ? personality : 1;
-        String sleepAnim = "anim_hamster_sleep_pose" + poseIndex;
-        newHamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, sleepAnim);
+        newHamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
 
         // --- Linkage Update & Charge Consumption ---
         // Created a new entity, so it has a new UUID. Update the bed block entity
@@ -383,8 +381,7 @@ public final class HamsterBedUtil {
 
         // Match personality pose
         int personality = hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
-        int poseIndex = (personality >= 1 && personality <= 3) ? personality : 1;
-        hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, "anim_hamster_sleep_pose" + poseIndex);
+        hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
 
         startNapTimer(hamster);
     }
