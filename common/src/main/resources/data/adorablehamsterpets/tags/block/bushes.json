@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "adorablehamsterpets:wild_cucumber_bush",
+    "adorablehamsterpets:wild_green_bean_bush",
+    "minecraft:sweet_berry_bush",
+    { "id": "#c:bushes", "required": false },
+    { "id": "#forge:bushes", "required": false }
+  ]
+}
