@@ -684,16 +684,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // This is the centralized method for all "wake from sleep" scenarios.
         if (this.getWorld().isClient()) return;
 
-        String currentSleepAnim = this.getDataTracker().get(CURRENT_DEEP_SLEEP_ANIM_ID);
-        String animToTrigger;
-
-        switch (currentSleepAnim) {
-            case "anim_hamster_sleep_pose2" -> animToTrigger = "wakeup2";
-            case "anim_hamster_sleep_pose3" -> animToTrigger = "wakeup3";
-            default -> animToTrigger = "wakeup1";
-        }
-
-        this.triggerAnimOnServer("mainController", animToTrigger);
+        int personalityId = this.getDataTracker().get(ANIMATION_PERSONALITY_ID);
+        this.triggerAnimOnServer("mainController", HamsterPoseUtil.getWakeUpAnimId(personalityId));
 
         // --- Conditional Sound Logic ---
         // Swish sound plays for both manual and natural wake-ups.
@@ -1119,24 +1111,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         boolean wasSitting = this.isSitting();
         if (sitting && !wasSitting) { // Transitioning to sitting
             int personalityId = this.dataTracker.get(ANIMATION_PERSONALITY_ID);
-            String animToTrigger = switch (personalityId) {
-                case 2 -> "sit2";
-                case 3 -> "sit3";
-                default -> "sit1";
-            };
-            this.triggerAnimOnServer("mainController", animToTrigger);
+            this.triggerAnimOnServer("mainController", HamsterPoseUtil.getSitAnimId(personalityId));
             triggerSettleEffects(0.12f, 7, 0.2f); // Swish now, thump in 7 ticks when hamster lands
         } else if (!sitting && wasSitting) { // Transitioning from sitting
             if (!this.getWorld().isClient()) {
                 this.getWorld().playSound(null, this.getBlockPos(), ModSounds.HAMSTER_SWISH.get(), SoundCategory.NEUTRAL, 0.1f, 1.0f + this.random.nextFloat() * 0.5f);
             }
             int personalityId = this.dataTracker.get(ANIMATION_PERSONALITY_ID);
-            String animToTrigger = switch (personalityId) {
-                case 2 -> "standup2";
-                case 3 -> "standup3";
-                default -> "standup1";
-            };
-            this.triggerAnimOnServer("mainController", animToTrigger);
+            this.triggerAnimOnServer("mainController", HamsterPoseUtil.getStandUpAnimId(personalityId));
         }
 
         // --- 2. Reset Sleep Sequence if Standing Up from a Doze/Sleep ---
@@ -1147,7 +1129,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- 3. Update Core Sitting State ---
         setHamsterFlag(SITTING_FLAG, sitting);
 
-// --- 4. Update Vanilla State ---
+        // --- 4. Update Vanilla State ---
         this.setInSittingPose(sitting);
 
         // --- 5. Manage Ambient Timers and Quiescent Sit Timer on State Change ---
@@ -2192,13 +2174,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- AI Disabled ---
             if (this.isAiDisabled() && !this.isProjectileDummy) {
-                // Freeze on the first frame
+                // Freeze on first frame
                 event.getController().setAnimationSpeed(0);
-                return event.setAndContinue(this.isSitting() ? SITTING_POSE2_ANIM : IDLE1_ANIM);
+                event.getController().transitionLength(0);
+            } else {
+                // --- AI Enabled ---
+                event.getController().setAnimationSpeed(1);
+                event.getController().transitionLength(3);
             }
-
-            // --- AI Enabled ---
-            event.getController().setAnimationSpeed(1);
 
             // --- Initial Setup ---
             DozingPhase currentDozingPhase = this.getDozingPhase();

@@ -82,24 +82,10 @@ public final class HamsterSleepUtil {
                     // Drifting off animation completed
                     hamster.setDozingPhase(HamsterEntity.DozingPhase.SETTLING_INTO_SLUMBER);
 
-                    int choice = hamster.getRandom().nextInt(3);
-                    String settleAnimId;
-                    String deepSleepAnimIdForTracker;
-
-                    switch (choice) {
-                        case 0 -> {
-                            settleAnimId = "anim_hamster_sit_settle_sleep1";
-                            deepSleepAnimIdForTracker = "anim_hamster_sleep_pose1";
-                        }
-                        case 1 -> {
-                            settleAnimId = "anim_hamster_sit_settle_sleep2";
-                            deepSleepAnimIdForTracker = "anim_hamster_sleep_pose2";
-                        }
-                        default -> {
-                            settleAnimId = "anim_hamster_sit_settle_sleep3";
-                            deepSleepAnimIdForTracker = "anim_hamster_sleep_pose3";
-                        }
-                    }
+                    // Select sleep pose based on personality
+                    int personalityId = hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+                    String settleAnimId = HamsterPoseUtil.getSettleSleepAnimId(personalityId, true);
+                    String deepSleepAnimIdForTracker = HamsterPoseUtil.getDeepSleepAnimId(personalityId);
 
                     hamster.setCurrentDeepSleepAnimId(deepSleepAnimIdForTracker);
                     hamster.triggerAnimOnServer("mainController", settleAnimId);

@@ -10,6 +10,7 @@ import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.PaletteDefinition;
 import net.dawson.adorablehamsterpets.util.HamsterGeneticsUtil;
+import net.dawson.adorablehamsterpets.util.HamsterPoseUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -38,14 +39,15 @@ public class HamsterSpawnCommandUtil {
 
         List<HamsterGenome> genomesToSpawn;
         int currentIndex = 0;
-
-        int baseIndex = 0;
-        int maxRow = 0;
-        double globalZOffset = 0.0;
-        String currentBaseId = "";
-
         int delayTicks = 0;
         String batchId = "";
+        int maxCols = 0;
+
+        double spacingMultiplier = 1.0;
+        boolean randomizeSitting = true;
+        boolean randomizeSleeping = true;
+        boolean matchPlayerYaw = false;
+        boolean randomizeYaw = false;
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -76,7 +78,7 @@ public class HamsterSpawnCommandUtil {
             }
         }
 
-         // --- Asynchronous Permutation Spawning ---
+        // --- Asynchronous Permutation Spawning ---
         // Prevent locking up main server thread by processing spawns in batches
         if (!permState.active || permState.genomesToSpawn == null) return;
 
@@ -116,32 +118,27 @@ public class HamsterSpawnCommandUtil {
             }
 
             HamsterGenome genome = permState.genomesToSpawn.get(permState.currentIndex);
-            String base = genome.basePaletteId();
 
-            if (!base.equals(permState.currentBaseId)) {
-                // Extra offset for new base color
-                if (!permState.currentBaseId.isEmpty()) {
-                    permState.globalZOffset += (permState.maxRow * 1.0) + 2.0;
-                }
-                permState.currentBaseId = base;
-                permState.maxRow = 0;
-                permState.baseIndex = 0;
+            int row = permState.currentIndex / permState.maxCols;
+            int col = permState.currentIndex % permState.maxCols;
+
+            double zOffset = row * 1.0 * permState.spacingMultiplier;
+            double xOffset = col * 1.0 * permState.spacingMultiplier;
+
+            float yaw = 0;
+            if (permState.randomizeYaw) {
+                yaw = permState.world.random.nextFloat() * 360.0f;
+            } else if (permState.matchPlayerYaw) {
+                yaw = permState.player.getYaw();
             }
 
-            int row = permState.baseIndex / 500;
-            if (row > permState.maxRow) permState.maxRow = row;
-
-            double zOffset = permState.globalZOffset + row * 1.0;
-            double xOffset = (permState.baseIndex % 500) * 1.0;
-
             // Use cached start pos to ensure the grid doesn't drift if player moves
-            HamsterEntity hamster = spawnFrozenHamster(permState.world, permState.startPos.add(xOffset, 0, zOffset), 0, genome);
+            HamsterEntity hamster = spawnFrozenHamster(permState.world, permState.startPos.add(xOffset, 0, zOffset), yaw, genome, permState.randomizeSitting, permState.randomizeSleeping);
             if (hamster != null) {
                 hamster.addCommandTag("ahp_batch_" + permState.batchId);
             }
 
             permState.currentIndex++;
-            permState.baseIndex++;
             spawnedThisTick++;
         }
 
@@ -224,7 +221,7 @@ public class HamsterSpawnCommandUtil {
         }
 
         lastSpawnBatchId = UUID.randomUUID().toString();
-        HamsterEntity hamster = spawnFrozenHamster(world, player.getPos(), player.getYaw(), new HamsterGenome(base, wPatInt, wPalStr, bPatInt, bPalStr, eyeInt));
+        HamsterEntity hamster = spawnFrozenHamster(world, player.getPos(), player.getYaw(), new HamsterGenome(base, wPatInt, wPalStr, bPatInt, bPalStr, eyeInt), true, true);
         if (hamster != null) {
             hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
         }
@@ -236,7 +233,7 @@ public class HamsterSpawnCommandUtil {
     /**
      * Executes the command to spawn all base variants mapped to their 3D color space coordinates.
      */
-    public static int executeSpawnAllBases3D(ServerCommandSource source, boolean withOverlays, boolean withSampleBreeding, String author, double spacingMultiplier) throws CommandSyntaxException {
+    public static int executeSpawnAllBases3D(ServerCommandSource source, boolean withOverlays, boolean withSampleBreeding, String author, double spacingMultiplier, boolean randomizeSitting, boolean randomizeSleeping, boolean matchPlayerYaw, boolean randomizeYaw) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrThrow();
         List<HamsterGenome> genomes = getGenomesToSpawn(player.getServerWorld().getRandom(), withOverlays, withSampleBreeding, author); // Number being spawned
 
@@ -268,9 +265,17 @@ public class HamsterSpawnCommandUtil {
             double dy = (hsbPos.z * scale) + (player.getServerWorld().random.nextDouble() - 0.5) * offsetAmount;
             double dz = (hsbPos.y * scale) + (player.getServerWorld().random.nextDouble() - 0.5) * offsetAmount;
 
-            // Force them to look at the center of the cylinder
-            float yaw = (float) Math.toDegrees(Math.atan2(-dz, -dx)) - 90.0f;
-            HamsterEntity hamster = spawnFrozenHamster(player.getServerWorld(), player.getPos().add(dx, dy, dz), yaw, genome);
+            // Force them to look at center of cylinder or match player yaw
+            float yaw;
+            if (randomizeYaw) {
+                yaw = player.getServerWorld().random.nextFloat() * 360.0f;
+            } else if (matchPlayerYaw) {
+                yaw = player.getYaw();
+            } else {
+                yaw = (float) Math.toDegrees(Math.atan2(-dz, -dx)) - 90.0f;
+            }
+
+            HamsterEntity hamster = spawnFrozenHamster(player.getServerWorld(), player.getPos().add(dx, dy, dz), yaw, genome, randomizeSitting, randomizeSleeping);
 
             if (hamster != null) {
                 hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
@@ -298,7 +303,7 @@ public class HamsterSpawnCommandUtil {
     /**
      * Executes the command to spawn all base variants mapped onto a flat 2D grid.
      */
-    public static int executeSpawnAllBases2D(ServerCommandSource source, boolean withOverlays, boolean withSampleBreeding, String author) throws CommandSyntaxException {
+    public static int executeSpawnAllBases2D(ServerCommandSource source, boolean withOverlays, boolean withSampleBreeding, String author, double spacingMultiplier, boolean randomizeSitting, boolean randomizeSleeping, boolean matchPlayerYaw, boolean randomizeYaw) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrThrow();
         List<HamsterGenome> genomes = getGenomesToSpawn(player.getServerWorld().getRandom(), withOverlays, withSampleBreeding, author);
 
@@ -318,8 +323,8 @@ public class HamsterSpawnCommandUtil {
         List<HamsterColorZone> sortedZones = new ArrayList<>(Arrays.asList(HamsterColorZone.values()));
         sortedZones.sort((z1, z2) -> Integer.compare(groupedGenomes.get(z2).size(), groupedGenomes.get(z1).size()));
 
-        double spacing = 0.7;
-        double groupSpacing = 1.0;
+        double spacing = 0.7 * spacingMultiplier;
+        double groupSpacing = 1.0 * spacingMultiplier;
         double currentX = 0;
         double currentZ = 0;
         double rowMaxZ = 0;
@@ -358,9 +363,16 @@ public class HamsterSpawnCommandUtil {
                 int localX = i % cols;
                 int localZ = i / cols;
 
+                float yaw = 0;
+                if (randomizeYaw) {
+                    yaw = player.getServerWorld().random.nextFloat() * 360.0f;
+                } else if (matchPlayerYaw) {
+                    yaw = player.getYaw();
+                }
+
                 HamsterEntity hamster = spawnFrozenHamster(player.getServerWorld(),
                         player.getPos().add(currentX + (localX * spacing), 0, currentZ + (localZ * spacing)),
-                        0, zoneGenomes.get(i));
+                        yaw, zoneGenomes.get(i), randomizeSitting, randomizeSleeping);
 
                 if (hamster != null) {
                     hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
@@ -376,75 +388,79 @@ public class HamsterSpawnCommandUtil {
     }
 
     /**
-     * Executes the massive command to spawn every single mathematically possible permutation.
+     * Executes the command to spawn a specific number of random hamsters, or every mathematically possible permutation.
      */
-    public static int executeSpawnAllPermutations(ServerCommandSource source, boolean ignoreSafetyLimits) throws CommandSyntaxException {
+    public static int executeSpawnRandomGroup(ServerCommandSource source, String countStr, boolean ignoreSafetyLimits, double spacingMultiplier, boolean randomizeSitting, boolean randomizeSleeping, boolean matchPlayerYaw, boolean randomizeYaw) throws CommandSyntaxException {
         if (permState.active) {
             source.sendFeedback(() -> Text.literal("[Hamster Genetics] A permutation spawn is already in progress.").formatted(Formatting.RED), false);
             return 0;
         }
 
-        source.sendFeedback(() -> Text.literal("[Hamster Genetics] Calculating valid permutations...").formatted(Formatting.YELLOW), true);
+        int parsedCount = 0;
+        boolean spawnAll = false;
 
-        // Separate thread for performance
-        CompletableFuture.supplyAsync(() -> {
-            List<HamsterGenome> permutations = new ArrayList<>();
-            int overlayPatterns = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.size() - 1;
-            List<String> allPaletteIds = new ArrayList<>(HamsterPaletteManager.PALETTE_REGISTRY.keySet());
+        if (countStr.equals("all_THIS_CAN_BREAK_YOUR_WORLD")) {
+            spawnAll = true;
+        } else {
+            try {
+                parsedCount = Integer.parseInt(countStr);
+                if (parsedCount <= 0) throw new NumberFormatException();
+            } catch (NumberFormatException e) {
+                source.sendFeedback(() -> Text.literal("[Hamster Genetics] Invalid count. Must be a positive number or 'all_THIS_CAN_BREAK_YOUR_WORLD'.").formatted(Formatting.RED), false);
+                return 0;
+            }
+        }
 
-            for (PaletteDefinition baseDef : HamsterPaletteManager.PALETTE_REGISTRY.values()) {
-                List<HamsterColorZone> allowedWildZones = new ArrayList<>(ConfigDataCache.getAllowedWildOverlayZones());
-                allowedWildZones.remove(baseDef.zone());
+        // Fast, synchronous path for counts <= 5,000
+        if (!spawnAll && parsedCount <= 5000) {
+            ServerPlayerEntity player = source.getPlayerOrThrow();
+            ServerWorld world = player.getServerWorld();
+            Vec3d startPos = player.getPos();
 
-                if (ConfigDataCache.getRestrictedBaseZones().contains(baseDef.zone())) {
-                    allowedWildZones.removeAll(ConfigDataCache.getClashingOverlayZones());
+            List<HamsterGenome> genomes = generateRandomPermutations(net.minecraft.util.math.random.Random.create(), parsedCount);
+
+            lastSpawnBatchId = UUID.randomUUID().toString();
+            int maxCols = Math.max(1, (int) Math.ceil(Math.sqrt(parsedCount)));
+
+            for (int i = 0; i < parsedCount; i++) {
+                int row = i / maxCols;
+                int col = i % maxCols;
+
+                float yaw = 0;
+                if (randomizeYaw) {
+                    yaw = world.random.nextFloat() * 360.0f;
+                } else if (matchPlayerYaw) {
+                    yaw = player.getYaw();
                 }
 
-                // Default config: must be brighter and less saturated than base coat
-                List<String> validWildOverlayIds = HamsterPaletteManager.PALETTE_REGISTRY.values().stream()
-                        .filter(p -> allowedWildZones.contains(p.zone()))
-                        .filter(p -> HamsterGeneticsUtil.isValidWildOverlay(baseDef, p))
-                        .map(PaletteDefinition::id)
-                        .toList();
+                double colOffset = col * spacingMultiplier;
+                double rowOffset = row * spacingMultiplier;
 
-                // Build valid wild combos for this base
-                List<HamsterGenome> baseWildCombos = new ArrayList<>();
-                baseWildCombos.add(new HamsterGenome(baseDef.id(), 0, null, 0, null, 0));
-
-                for (String wPalId : validWildOverlayIds) {
-                    for (int wPat = 1; wPat <= overlayPatterns; wPat++) {
-                        baseWildCombos.add(new HamsterGenome(baseDef.id(), wPat, wPalId, 0, null, 0));
-                    }
-                }
-
-                // Build breeding overlays
-                List<HamsterGenome> breedingCombos = new ArrayList<>();
-                breedingCombos.add(new HamsterGenome(null, 0, null, 0, null, 0));
-
-                for (String bPalId : allPaletteIds) {
-                    for (int bPat = 1; bPat <= overlayPatterns; bPat++) {
-                        breedingCombos.add(new HamsterGenome(null, 0, null, bPat, bPalId, 0));
-                    }
-                }
-
-                // Cross product
-                for (HamsterGenome wCombo : baseWildCombos) {
-                    for (HamsterGenome bCombo : breedingCombos) {
-                        // Skip invalid breeding overlays
-                        if (bCombo.breedingOverlayPaletteId() != null) {
-                            PaletteDefinition breedingDef = HamsterPaletteManager.PALETTE_REGISTRY.get(bCombo.breedingOverlayPaletteId());
-                            if (breedingDef != null && !HamsterGeneticsUtil.isValidBreedingOverlay(baseDef, breedingDef)) {
-                                continue;
-                            }
-                        }
-
-                        // Carrier looks identical to Black so skip for visual distinction
-                        permutations.add(new HamsterGenome(wCombo.basePaletteId(), wCombo.wildOverlayPattern(), wCombo.wildOverlayPaletteId(), bCombo.breedingOverlayPattern(), bCombo.breedingOverlayPaletteId(), 0));
-                        permutations.add(new HamsterGenome(wCombo.basePaletteId(), wCombo.wildOverlayPattern(), wCombo.wildOverlayPaletteId(), bCombo.breedingOverlayPattern(), bCombo.breedingOverlayPaletteId(), 2));
-                    }
+                HamsterEntity hamster = spawnFrozenHamster(world, startPos.add(colOffset, 0, rowOffset), yaw, genomes.get(i), randomizeSitting, randomizeSleeping);
+                if (hamster != null) {
+                    hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
                 }
             }
-            return permutations;
+
+            final int finalParsedCount = parsedCount;
+            source.sendFeedback(() -> Text.literal("[Hamster Genetics] Instantly spawned " + finalParsedCount + " random permutations.").formatted(Formatting.GREEN), true);
+            return 1;
+        }
+
+        // Async batch path for enormous generation requirements
+        source.sendFeedback(() -> Text.literal("[Hamster Genetics] Calculating permutations...").formatted(Formatting.YELLOW), true);
+
+        final boolean isAll = spawnAll;
+        final int finalCount = parsedCount;
+
+        CompletableFuture.supplyAsync(() -> {
+            if (isAll) {
+                List<HamsterGenome> permutations = generateAllPermutations();
+                Collections.shuffle(permutations);
+                return permutations;
+            } else {
+                return generateRandomPermutations(net.minecraft.util.math.random.Random.create(), finalCount);
+            }
         }).thenAcceptAsync(permutations -> {
             // Apply results back on main server thread
             permState.active = true;
@@ -463,13 +479,16 @@ public class HamsterSpawnCommandUtil {
 
             permState.genomesToSpawn = permutations;
             permState.currentIndex = 0;
-            permState.baseIndex = 0;
-            permState.maxRow = 0;
-            permState.globalZOffset = 0.0;
-            permState.currentBaseId = "";
             permState.delayTicks = 0;
+            permState.maxCols = Math.max(1, (int) Math.ceil(Math.sqrt(permutations.size())));
 
-            source.sendFeedback(() -> Text.literal("[Hamster Genetics] Starting batch-spawn of " + permutations.size() + " permutations in a 500 x 5,370 grid (blocks).").formatted(Formatting.GREEN), true);
+            permState.spacingMultiplier = spacingMultiplier;
+            permState.randomizeSitting = randomizeSitting;
+            permState.randomizeSleeping = randomizeSleeping;
+            permState.matchPlayerYaw = matchPlayerYaw;
+            permState.randomizeYaw = randomizeYaw;
+
+            source.sendFeedback(() -> Text.literal("[Hamster Genetics] Starting batch-spawn of " + permutations.size() + " permutations in a " + permState.maxCols + " x " + permState.maxCols + " grid (blocks).").formatted(Formatting.GREEN), true);
             if (!ignoreSafetyLimits) {
                 source.sendFeedback(() -> Text.literal("Safety limits enabled. Command will abort if server MSPT > 70.0.").formatted(Formatting.YELLOW), false);
             } else {
@@ -484,14 +503,160 @@ public class HamsterSpawnCommandUtil {
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static HamsterEntity spawnFrozenHamster(ServerWorld world, Vec3d pos, float yaw, HamsterGenome genome) {
+    private static List<HamsterGenome> generateRandomPermutations(net.minecraft.util.math.random.Random random, int count) {
+        List<HamsterGenome> list = new ArrayList<>(count);
+        List<PaletteDefinition> allBases = new ArrayList<>(HamsterPaletteManager.PALETTE_REGISTRY.values());
+        List<String> allPaletteIds = new ArrayList<>(HamsterPaletteManager.PALETTE_REGISTRY.keySet());
+        int overlayPatterns = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.size() - 1;
+
+        for (int i = 0; i < count; i++) {
+            PaletteDefinition baseDef = allBases.get(random.nextInt(allBases.size()));
+
+            // 1. Pick Wild Overlay
+            List<HamsterColorZone> allowedWildZones = new ArrayList<>(ConfigDataCache.getAllowedWildOverlayZones());
+            allowedWildZones.remove(baseDef.zone());
+            if (ConfigDataCache.getRestrictedBaseZones().contains(baseDef.zone())) {
+                allowedWildZones.removeAll(ConfigDataCache.getClashingOverlayZones());
+            }
+            List<String> validWildOverlayIds = HamsterPaletteManager.PALETTE_REGISTRY.values().stream()
+                    .filter(p -> allowedWildZones.contains(p.zone()))
+                    .filter(p -> HamsterGeneticsUtil.isValidWildOverlay(baseDef, p))
+                    .map(PaletteDefinition::id)
+                    .toList();
+
+            int totalWildChoices = 1 + (validWildOverlayIds.size() * overlayPatterns);
+            int wildChoice = random.nextInt(totalWildChoices);
+            int wildPat = 0;
+            String wildPal = null;
+
+            if (wildChoice > 0) {
+                wildChoice -= 1;
+                wildPat = (wildChoice % overlayPatterns) + 1;
+                wildPal = validWildOverlayIds.get(wildChoice / overlayPatterns);
+            }
+
+            // 2. Pick Breeding Overlay
+            List<String> validBreedOverlayIds = allPaletteIds.stream()
+                    .filter(id -> HamsterGeneticsUtil.isValidBreedingOverlay(baseDef, HamsterPaletteManager.PALETTE_REGISTRY.get(id)))
+                    .toList();
+
+            int effectiveOverlayPatterns = wildPat > 0 ? overlayPatterns - 1 : overlayPatterns;
+            int totalBreedChoices = 1 + (validBreedOverlayIds.size() * effectiveOverlayPatterns);
+            int breedChoice = random.nextInt(totalBreedChoices);
+            int breedPat = 0;
+            String breedPal = null;
+
+            if (breedChoice > 0) {
+                breedChoice -= 1;
+                int offset = breedChoice % effectiveOverlayPatterns;
+                breedPat = offset + 1;
+                if (wildPat > 0 && breedPat >= wildPat) {
+                    breedPat++;
+                }
+                breedPal = validBreedOverlayIds.get(breedChoice / effectiveOverlayPatterns);
+            }
+
+            // 3. Pick Eye Genetics
+            int eye = random.nextBoolean() ? 2 : 0; // Exclude invisible carrier state (1) for display
+
+            list.add(new HamsterGenome(baseDef.id(), wildPat, wildPal, breedPat, breedPal, eye));
+        }
+        return list;
+    }
+
+    private static List<HamsterGenome> generateAllPermutations() {
+        List<HamsterGenome> permutations = new ArrayList<>();
+        int overlayPatterns = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.size() - 1;
+        List<String> allPaletteIds = new ArrayList<>(HamsterPaletteManager.PALETTE_REGISTRY.keySet());
+
+        for (PaletteDefinition baseDef : HamsterPaletteManager.PALETTE_REGISTRY.values()) {
+            List<HamsterColorZone> allowedWildZones = new ArrayList<>(ConfigDataCache.getAllowedWildOverlayZones());
+            allowedWildZones.remove(baseDef.zone());
+
+            if (ConfigDataCache.getRestrictedBaseZones().contains(baseDef.zone())) {
+                allowedWildZones.removeAll(ConfigDataCache.getClashingOverlayZones());
+            }
+
+            List<String> validWildOverlayIds = HamsterPaletteManager.PALETTE_REGISTRY.values().stream()
+                    .filter(p -> allowedWildZones.contains(p.zone()))
+                    .filter(p -> HamsterGeneticsUtil.isValidWildOverlay(baseDef, p))
+                    .map(PaletteDefinition::id)
+                    .toList();
+
+            List<HamsterGenome> baseWildCombos = new ArrayList<>();
+            baseWildCombos.add(new HamsterGenome(baseDef.id(), 0, null, 0, null, 0));
+
+            for (String wPalId : validWildOverlayIds) {
+                for (int wPat = 1; wPat <= overlayPatterns; wPat++) {
+                    baseWildCombos.add(new HamsterGenome(baseDef.id(), wPat, wPalId, 0, null, 0));
+                }
+            }
+
+            List<HamsterGenome> breedingCombos = new ArrayList<>();
+            breedingCombos.add(new HamsterGenome(null, 0, null, 0, null, 0));
+
+            for (String bPalId : allPaletteIds) {
+                for (int bPat = 1; bPat <= overlayPatterns; bPat++) {
+                    breedingCombos.add(new HamsterGenome(null, 0, null, bPat, bPalId, 0));
+                }
+            }
+
+            for (HamsterGenome wCombo : baseWildCombos) {
+                for (HamsterGenome bCombo : breedingCombos) {
+                    if (bCombo.breedingOverlayPaletteId() != null) {
+                        PaletteDefinition breedingDef = HamsterPaletteManager.PALETTE_REGISTRY.get(bCombo.breedingOverlayPaletteId());
+                        if (breedingDef != null && !HamsterGeneticsUtil.isValidBreedingOverlay(baseDef, breedingDef)) {
+                            continue;
+                        }
+
+                        if (wCombo.wildOverlayPattern() > 0 && wCombo.wildOverlayPattern() == bCombo.breedingOverlayPattern()) {
+                            continue;
+                        }
+                    }
+
+                    permutations.add(new HamsterGenome(wCombo.basePaletteId(), wCombo.wildOverlayPattern(), wCombo.wildOverlayPaletteId(), bCombo.breedingOverlayPattern(), bCombo.breedingOverlayPaletteId(), 0));
+                    permutations.add(new HamsterGenome(wCombo.basePaletteId(), wCombo.wildOverlayPattern(), wCombo.wildOverlayPaletteId(), bCombo.breedingOverlayPattern(), bCombo.breedingOverlayPaletteId(), 2));
+                }
+            }
+        }
+        return permutations;
+    }
+
+    private static HamsterEntity spawnFrozenHamster(ServerWorld world, Vec3d pos, float yaw, HamsterGenome genome, boolean randomizeSitting, boolean randomizeSleeping) {
         HamsterEntity hamster = ModEntities.HAMSTER.get().create(world);
         if (hamster != null) {
             hamster.setGenome(genome);
             hamster.setAiDisabled(true);
             hamster.setNoGravity(true);
-            hamster.setSitting(true, true);
             hamster.setInvulnerable(true);
+
+            // Assign random personality
+            int personality = world.getRandom().nextBetween(1, 3);
+            hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, personality);
+
+            // Pose assignment
+            boolean willSleep = false;
+            boolean willSit = true;
+
+            if (randomizeSitting && randomizeSleeping) {
+                willSleep = world.getRandom().nextBoolean();
+                willSit = !willSleep;
+            } else if (randomizeSleeping) {
+                willSleep = true;
+                willSit = false;
+            } else if (randomizeSitting) {
+                willSit = true;
+                willSleep = false;
+            }
+
+            if (willSleep) {
+                hamster.setSleeping(true);
+                hamster.setInSittingPose(true);
+                hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
+            } else if (willSit) {
+                hamster.setSitting(true, true);
+            }
+
             hamster.refreshPositionAndAngles(pos.x, pos.y, pos.z, yaw, 0);
             hamster.setYaw(yaw);
             hamster.setBodyYaw(yaw);
