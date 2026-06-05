@@ -1029,6 +1029,52 @@ public class AhpConfig extends Config {
     // Helper field to gate the Acorn Hat setting
     private final ValidatedField<Boolean> isArmorVisualsEnabled = new ValidatedBoolean(true).map(b -> b, b -> enableArmorVisuals);
 
+    @NonSync
+    @Translatable.Name("Render Acorn Hat")
+    @Translatable.Desc("Determines whether you are able to see the jaunty little Acorn Hat when hamsters are wearing the base Acorn Armor. Does not affect what other players see, and does not apply to the standalone Acorn Hat accessory.")
+    public ValidatedCondition<Boolean> renderAcornHat = new ValidatedBoolean(true)
+            .toCondition(
+                    isArmorVisualsEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
+                    () -> false
+            );
+
+    @NonSync
+    @ConfigGroup.Pop
+    @Translatable.Name("Render Pink Petals On Armor")
+    @Translatable.Desc("If true, Pink Petal accessories will pop out to render on the outside of equipped armor. If false, they will be hidden under the armor.")
+    public ValidatedCondition<Boolean> renderPinkPetalsWithArmor = new ValidatedBoolean(true)
+            .toCondition(
+                    isArmorVisualsEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
+                    () -> false
+            );
+
+    // --- Shader PBR Settings ---
+    @Translatable.Name("Shader PBR Settings")
+    @Translatable.Desc("Configure LabPBR values for hamsters, accessories, and armor. These settings only affect the game when used alongside a LabPBR-compatible shader.")
+    public ConfigGroup shaderPbrSettings = new ConfigGroup("shaderPbrSettings", true);
+
+    @NonSync
+    @Translatable.Name("Fur SSS (Subsurface Scattering)")
+    @Translatable.Desc("The amount of light that passes through the hamster's fur. 65 is solid, 255 is pure translucent gelatin.")
+    public ValidatedInt furSss = new ValidatedInt(80, 255, 65);
+
+    @NonSync
+    @Translatable.Name("Skin SSS")
+    @Translatable.Desc("The amount of light that passes through the hamster's skin (ears, nose, feet). 65 is solid, 255 is pure translucent gelatin.")
+    public ValidatedInt skinSss = new ValidatedInt(100, 255, 65);
+
+    @NonSync
+    @Translatable.Name("Accessory SSS")
+    @Translatable.Desc("The amount of light that passes through accessories like Pink Petals and Acorn Hats. 65 is solid, 255 is pure translucent gelatin.")
+    public ValidatedInt accessorySss = new ValidatedInt(80, 255, 65);
+
+    @NonSync
+    @Translatable.Name("Max POM Depth")
+    @Translatable.Desc("The maximum displacement depth for Parallax Occlusion Mapping (0.0 to 0.25). NOTE: This will have no effect unless your shader explicitly supports POM on entities, which is extremely rare.")
+    public ValidatedFloat maxPomDepth = new ValidatedFloat(0.08f, 0.25f, 0.0f);
+
     @Translation(prefix = "adorablehamsterpets.main.armorPbrValues")
     public static class ArmorPbrValues {
         @NonSync
@@ -1156,27 +1202,21 @@ public class AhpConfig extends Config {
                     () -> false
             );
 
-    @NonSync
-    @Translatable.Name("Render Acorn Hat")
-    @Translatable.Desc("Determines whether you are able to see the jaunty little Acorn Hat when hamsters are wearing the base Acorn Armor. Does not affect what other players see, and does not apply to the standalone Acorn Hat accessory.")
-    public ValidatedCondition<Boolean> renderAcornHat = new ValidatedBoolean(true)
-            .toCondition(
-                    isArmorVisualsEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
-                    () -> false
-            );
+    // Helper field to gate trim emissive brightness
+    private final ValidatedField<Boolean> isTrimEmissiveEnabled = emissiveArmorTrims.map(b -> b, b -> b);
 
     @NonSync
     @ConfigGroup.Pop
-    @Translatable.Name("Render Pink Petals On Armor")
-    @Translatable.Desc("If true, Pink Petal accessories will pop out to render on the outside of equipped armor. If false, they will be hidden under the armor.")
-    public ValidatedCondition<Boolean> renderPinkPetalsWithArmor = new ValidatedBoolean(true)
+    @Translatable.Name("Trim Emissive Brightness")
+    @Translatable.Desc("How bright the armor trims glow. 0 is barely visible, 254 is maximum brightness. (Note: LabPBR ignores 255 entirely).")
+    public ValidatedCondition<Integer> trimEmissiveBrightness = new ValidatedInt(254, 254, 0)
             .toCondition(
-                    isArmorVisualsEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
-                    () -> false
+                    isTrimEmissiveEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.trim_emissive_enabled"),
+                    () -> 254
             );
 
+    // --- Tree Heist Settings ---
     @Translatable.Name("Tree Heist Settings")
     @Translatable.Desc("Configure the acorn-gathering operations.")
     public ConfigGroup treeHeist = new ConfigGroup("treeHeist", true);
