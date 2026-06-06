@@ -198,6 +198,56 @@ public class ParticleEffectsUtil {
     }
 
     /**
+     * Spawns "Breadcrumb" particles along a navigation path.
+     * Useful for visualizing AI paths or leading players to objectives.
+     *
+     * @param world    The ServerWorld to spawn particles in.
+     * @param path     The navigation path to visualize. If null, nothing happens.
+     * @param particle The particle type to spawn.
+     * @param count    The number of particles per randomized point.
+     * @param spreadX  Horizontal X spread.
+     * @param spreadY  Vertical spread.
+     * @param spreadZ  Horizontal Z spread.
+     * @param speed    Particle speed/velocity.
+     */
+    public static <T extends ParticleEffect> void spawnBreadcrumbs(ServerWorld world, @Nullable Path path, T particle, int count, double spreadX, double spreadY, double spreadZ, double speed) {
+        if (path == null) return;
+
+        int currentNodeIndex = path.getCurrentNodeIndex();
+        int pathLength = path.getLength();
+
+        // Iterate from current node to end of path
+        for (int i = currentNodeIndex; i < pathLength; i++) {
+            PathNode node = path.getNode(i);
+            Vec3d directionVector = Vec3d.ZERO;
+            double distance = 1.0;
+
+            // 1. Determine direction to next node in path
+            if (i + 1 < pathLength) {
+                PathNode nextNode = path.getNode(i + 1);
+                Vec3d diff = new Vec3d(nextNode.x - node.x, nextNode.y - node.y, nextNode.z - node.z);
+                distance = diff.length();
+                if (distance > 0) {
+                    directionVector = diff.normalize();
+                }
+            }
+
+            // Loop to spawn multiple particles with randomized origins
+            // Number of particles scales with distance to ensure consistent density along long path segments
+            int particlesToSpawn = Math.max(3, (int) (3 * distance));
+            for (int p = 0; p < particlesToSpawn; p++) {
+                // 2. Calculate random distance to spread particle along direction vector
+                double distanceAlongPath = world.getRandom().nextDouble() * distance;
+                Vec3d pathOffset = directionVector.multiply(distanceAlongPath);
+                double offsetY = (world.getRandom().nextDouble() - 0.5) * 0.1;
+
+                spawnParticles(world, new Vec3d(node.x + 0.5 + pathOffset.x, (node.y + 0.5) - 0.38 + offsetY, node.z + 0.5 + pathOffset.z),
+                        particle, count, spreadX, spreadY, spreadZ, speed);
+            }
+        }
+    }
+
+    /**
      * Spawns a ring of particles that spins around a center point and bobs up and down.
      * Compatible with both Client and Server worlds.
      *

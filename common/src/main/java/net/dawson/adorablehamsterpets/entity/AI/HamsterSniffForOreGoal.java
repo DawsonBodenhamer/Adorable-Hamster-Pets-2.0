@@ -7,12 +7,14 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
+import net.dawson.adorablehamsterpets.util.MinigameUtil;
 import net.dawson.adorablehamsterpets.util.MiscUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.pathing.Path;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -229,7 +231,16 @@ public class HamsterSniffForOreGoal extends Goal {
             case MOVING_TO_ORE -> {
                 // Spawn particle breadcrumbs
                 if (!this.world.isClient()) {
-                    ParticleEffectsUtil.spawnBreadcrumbs((ServerWorld) this.world, this.path);
+                    ParticleEffectsUtil.spawnBreadcrumbs(
+                            (ServerWorld) this.world,
+                            this.path,
+                            ParticleTypes.MYCELIUM,
+                            1,
+                            0.2,
+                            0.0,
+                            0.2,
+                            3.0
+                    );
                 }
 
                 if (this.hamster.getNavigation().isIdle() || this.hamster.getBlockPos().isWithinDistance(this.targetOrePos, 1.5)) {
@@ -369,18 +380,7 @@ public class HamsterSniffForOreGoal extends Goal {
             ModCriteria.HAMSTER_FOUND_GOLD.get().trigger(owner);
         }
 
-        // Apply small backward and upward startled jump velocity
-        Vec3d awayFromOre = this.hamster.getPos().subtract(Vec3d.ofCenter(this.targetOrePos)).normalize();
-        this.hamster.setVelocity(awayFromOre.x * 0.1, 0.5, awayFromOre.z * 0.1);
-        this.hamster.velocityDirty = true;
-
-        SoundEvent bounceSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BOUNCE_SOUNDS, this.hamster.getRandom());
-        if (bounceSound != null) {
-            this.world.playSound(null, this.hamster.getBlockPos(), bounceSound, SoundCategory.NEUTRAL, 0.6f, this.hamster.getSoundPitch());
-        }
-
-        this.hamster.setSulking(true);
-        this.hamster.triggerAnimOnServer("mainController", "anim_hamster_sulk");
+        MinigameUtil.executeSulkFailure(this.hamster, Vec3d.ofCenter(this.targetOrePos));
     }
 
     private void processDiamondFind() {

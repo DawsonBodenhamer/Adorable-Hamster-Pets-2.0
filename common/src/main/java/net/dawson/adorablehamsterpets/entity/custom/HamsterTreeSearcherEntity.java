@@ -6,17 +6,14 @@ import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
-import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -30,23 +27,18 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class HamsterTreeSearcherEntity extends Entity {
-
-    // --- Static Registry for Active Heists ---
-    // Maps a specific Tree Anchor (Dimension + BlockPos) to the ID of the entity searching it.
-    private static final Map<GlobalPos, Integer> ACTIVE_HEISTS = new ConcurrentHashMap<>();
+public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
 
     // --- Persistence Fields ---
-    private NbtCompound hamsterNbt = new NbtCompound();
     private final List<Long> validLeafPositions = new ArrayList<>();
     private int searchTimer;
     private int maxSearchDuration;
@@ -54,15 +46,8 @@ public class HamsterTreeSearcherEntity extends Entity {
     private int rummageTimer;
     private float dropChanceMultiplier = 1.0f;
     private boolean isExhausted = false;
-    private BlockPos treeAnchor = null;
     private boolean hasAcornHat = false;
     private int dropCooldown = 0;
-    private BlockPos forcedExitPos = null;
-    private Float forcedExitYaw = null;
-
-    // --- Transient State ---
-    // Tracks if this entity has locked its tree in the map
-    private boolean isRegistered = false;
 
     // --- Constants ---
     private static final int VALIDATION_INTERVAL = 20; // Check tree integrity every second
@@ -70,67 +55,8 @@ public class HamsterTreeSearcherEntity extends Entity {
     private static final int BASE_DURATION_MAX = 280;  // 14 sec
     private static final float HAT_DROP_CHANCE_MULTIPLIER = 2.0f;
 
-    // --- Getters/Setters ---
-    public void setForcedExitPos(BlockPos pos) { this.forcedExitPos = pos; }
-    public void setForcedExitYaw(float yaw) { this.forcedExitYaw = yaw; }
-    public boolean isOwnedBy(PlayerEntity player) {
-        if (this.hamsterNbt != null && this.hamsterNbt.containsUuid("Owner")) {
-            return this.hamsterNbt.getUuid("Owner").equals(player.getUuid());
-        }
-        return false;
-    }
-
     public HamsterTreeSearcherEntity(EntityType<?> type, World world) {
         super(type, world);
-        this.noClip = true;
-        this.setNoGravity(true);
-        this.setInvisible(true);
-    }
-
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        // No client-synced data needed for this logic entity
-    }
-
-    /**
-     * Checks if a tree anchor is currently being searched by any hamster.
-     */
-    public static boolean isTreeBlocked(World world, BlockPos anchor) {
-        if (anchor == null || world.isClient()) return false;
-        GlobalPos key = GlobalPos.create(world.getRegistryKey(), anchor);
-        return ACTIVE_HEISTS.containsKey(key);
-    }
-
-    private void registerHeist() {
-        if (this.getWorld().isClient() || this.treeAnchor == null || this.isRegistered) return;
-
-        GlobalPos key = GlobalPos.create(this.getWorld().getRegistryKey(), this.treeAnchor);
-        // Put ID in the map. If it overwrites (collision), last one wins
-        ACTIVE_HEISTS.put(key, this.getId());
-        this.isRegistered = true;
-
-        if (Configs.AHP.debugTreeDetection) {
-            AdorableHamsterPets.LOGGER.info("[TreeHeist-Registry] Registered heist for Tree {} (Entity {}). Active Heists: {}",
-                    this.treeAnchor.toShortString(), this.getId(), ACTIVE_HEISTS.size());
-        }
-    }
-
-    private void unregisterHeist() {
-        if (this.getWorld().isClient() || this.treeAnchor == null || !this.isRegistered) return;
-
-        GlobalPos key = GlobalPos.create(this.getWorld().getRegistryKey(), this.treeAnchor);
-        // Only remove if WE are the one holding the lock
-        if (ACTIVE_HEISTS.remove(key, this.getId())) {
-            this.isRegistered = false;
-            if (Configs.AHP.debugTreeDetection) {
-                AdorableHamsterPets.LOGGER.info("[TreeHeist-Registry] Unregistered heist for Tree {} (Entity {}). Active Heists: {}",
-                        this.treeAnchor.toShortString(), this.getId(), ACTIVE_HEISTS.size());
-            }
-        }
-    }
-
-    public BlockPos getTreeAnchor() {
-        return this.treeAnchor;
     }
 
     public void initializeSearch(BlockPos startPos, TreeHeistUtil.TreeScanResult scanResult, NbtCompound originalHamsterNbt) {
@@ -142,14 +68,14 @@ public class HamsterTreeSearcherEntity extends Entity {
         for (BlockPos pos : scanResult.validCanopyPositions()) {
             this.validLeafPositions.add(pos.asLong());
         }
-        this.treeAnchor = scanResult.treeId();
+        this.anchorPos = scanResult.treeId();
 
         // Lock the tree immediately
-        registerHeist();
+        registerOccupancy();
 
         if (Configs.AHP.debugTreeDetection) {
             AdorableHamsterPets.LOGGER.info("[TreeHeist-Init] Searcher Entity Initialized. Anchor: {}. Canopy: {}.",
-                    this.treeAnchor.toShortString(), this.validLeafPositions.size());
+                    this.anchorPos.toShortString(), this.validLeafPositions.size());
         }
 
         // If no canopy found (rare fallback), abort.
@@ -157,14 +83,14 @@ public class HamsterTreeSearcherEntity extends Entity {
             if (Configs.AHP.debugTreeDetection) {
                 AdorableHamsterPets.LOGGER.warn("[TreeHeist-Init] No valid leaves found. Aborting.");
             }
-            popOut(false);
+            finishHeist(false);
             return;
         }
 
         // --- 2. Debug Visualization ---
         if (Configs.AHP.debugTreeDetection) {
             TreeHeistUtil.spawnDebugParticles(this.getWorld(), scanResult);
-            AdorableHamsterPets.LOGGER.info("[TreeHeist] Identified Tree ID: {} | Canopy Size: {}", this.treeAnchor, this.validLeafPositions.size());
+            AdorableHamsterPets.LOGGER.info("[TreeHeist] Identified Tree ID: {} | Canopy Size: {}", this.anchorPos, this.validLeafPositions.size());
         }
 
         // --- 3. Calculate Profitability & Depletion ---
@@ -174,16 +100,16 @@ public class HamsterTreeSearcherEntity extends Entity {
 
             if (player instanceof PlayerEntityAccessor accessor) {
                 // Get profitability based on the unique Tree ID
-                this.dropChanceMultiplier = accessor.ahp$getHeistProfitability(this.treeAnchor);
+                this.dropChanceMultiplier = accessor.ahp$getHeistProfitability(this.anchorPos);
 
                 // Register this heist history immediately
-                accessor.ahp$registerTreeHeist(this.treeAnchor);
+                accessor.ahp$registerTreeHeist(this.anchorPos);
 
                 if (this.dropChanceMultiplier <= 0.01f) {
                     this.isExhausted = true;
                 }
 
-                // Send start message if not yet exhausted.
+                // Send start message if not yet exhausted
                 if (!this.isExhausted) {
                     TreeHeistUtil.sendHeistStartMessage(player, this.dropChanceMultiplier);
                 }
@@ -218,11 +144,6 @@ public class HamsterTreeSearcherEntity extends Entity {
             }
         }
 
-        // Duration multiplier logic (currently unused)
-        // if (hasAcornHat) {
-        //     baseDuration = (int) (baseDuration * DURATION_MULTIPLIER);
-        // }
-
         // If exhausted, drastically reduce duration (20% of normal, min 60 ticks)
         if (this.isExhausted) {
             baseDuration = Math.max(60, (int)(baseDuration * 0.1f));
@@ -248,7 +169,7 @@ public class HamsterTreeSearcherEntity extends Entity {
                   - Hat Multiplier: {}x
                   - FINAL Drop Chance per Rummage: {}% (Base: {}%)
                 """,
-                    this.treeAnchor.toShortString(),
+                    this.anchorPos.toShortString(),
                     String.format("%.1f", this.dropChanceMultiplier * 100),
                     this.hasAcornHat,
                     this.hasAcornHat ? HAT_DROP_CHANCE_MULTIPLIER : 1.0f,
@@ -263,9 +184,9 @@ public class HamsterTreeSearcherEntity extends Entity {
         super.tick();
         if (this.getWorld().isClient) return;
 
-        // 1. Ensure registration in the global map (in the case of a server restart)
-        if (!this.isRegistered && this.treeAnchor != null) {
-            registerHeist();
+        // 1. Ensure registration in case of server restart
+        if (!this.isRegistered && this.anchorPos != null) {
+            registerOccupancy();
         }
 
         // 2. Safety check: if initialized with no leaves or data lost
@@ -281,15 +202,14 @@ public class HamsterTreeSearcherEntity extends Entity {
 
         // 4. Continuous Debug Visualization
         if (Configs.AHP.debugTreeDetection) {
-            // Call the overload that accepts the raw data fields directly
-            TreeHeistUtil.spawnDebugParticles(this.getWorld(), this.treeAnchor, this.validLeafPositions);
+            TreeHeistUtil.spawnDebugParticles(this.getWorld(), this.anchorPos, this.validLeafPositions);
         }
 
         // 5. Validation (Tree Integrity)
         if (--this.validationTimer <= 0) {
             this.validationTimer = VALIDATION_INTERVAL;
             if (!validateTreeIntegrity()) {
-                popOut(false); // Tree broken -> Abort
+                finishHeist(false); // Tree broken -> Abort
                 return;
             }
         }
@@ -302,16 +222,7 @@ public class HamsterTreeSearcherEntity extends Entity {
 
         // 7. Timer
         if (--this.searchTimer <= 0) {
-            popOut(true);
-        }
-    }
-
-    @Override
-    public void onRemoved() {
-        super.onRemoved();
-        // Always attempt to release the tree lock when the entity is removed
-        if (!this.getWorld().isClient()) {
-            unregisterHeist();
+            finishHeist(true);
         }
     }
 
@@ -422,7 +333,7 @@ public class HamsterTreeSearcherEntity extends Entity {
             double velZ = (this.random.nextDouble() - 0.5) * 0.7;  // Slight sideways toss
             acornEntity.setVelocity(velX, velY, velZ);
 
-            // Play Sounds
+            // Feedback
             SoundEvent acornPopSound = ModSounds.getDynamicItemSound(acornStack);
             float baseVol = ModSounds.getDynamicSoundVolume(acornPopSound);
             this.getWorld().playSound(null, spawnPos.getX() + 0.5, spawnPos.getY() + 0.5, spawnPos.getZ() + 0.5, acornPopSound, SoundCategory.NEUTRAL, baseVol * 0.5f, 1.8f);
@@ -444,80 +355,24 @@ public class HamsterTreeSearcherEntity extends Entity {
         return false;
     }
 
-    private void popOut(boolean success) {
+    private void finishHeist(boolean success) {
         if (this.getWorld().isClient) return;
         ServerWorld serverWorld = (ServerWorld) this.getWorld();
 
-        // 0. --- Release Tree Lock ---
-        unregisterHeist();
+        BlockPos effectPos = (this.forcedExitPos != null && this.validLeafPositions.contains(this.forcedExitPos.asLong())) ? this.forcedExitPos : this.getBlockPos();
 
-        // 1. --- Calculate Exit Point ---
-        BlockPos startPoint = this.getBlockPos();
-        BlockPos exitPos;
-        BlockPos effectPos;
+        HamsterEntity newHamster = this.popOut(success && !this.isExhausted);
 
-        // Apply precision exit block if set and still valid
-        if (this.forcedExitPos != null && this.validLeafPositions.contains(this.forcedExitPos.asLong())) {
-            exitPos = this.forcedExitPos;
-            effectPos = this.forcedExitPos; // Play effects here for precision heists
-        } else {
-            exitPos = TreeHeistUtil.findExitPosition(this.getWorld(), startPoint);
-            effectPos = startPoint; // Play effects here for normal heists
-        }
-
-        // --- 2. Respawn Hamster ---
-        HamsterEntity newHamster = ModEntities.HAMSTER.get().create(serverWorld);
         if (newHamster != null) {
-            // Restore state
-            newHamster.readNbt(this.hamsterNbt); // Read full NBT to restore Owner/Variant/Attributes
-
-            // Disable fall immunity so dynamic pitch/flying kick in immediately upon exit
-            newHamster.setFallFlyImmunityTicks(0);
-
-            // Exit yaw = away from trunk for normal heists
-            float exitYaw;
-            if (this.forcedExitYaw != null) {
-                exitYaw = this.forcedExitYaw;
-            } else if (this.treeAnchor != null && (exitPos.getX() != this.treeAnchor.getX() || exitPos.getZ() != this.treeAnchor.getZ())) {
-                double dx = exitPos.getX() - this.treeAnchor.getX();
-                double dz = exitPos.getZ() - this.treeAnchor.getZ();
-                exitYaw = (float) (MathHelper.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0F;
-            } else {
-                exitYaw = this.random.nextFloat() * 360.0F;
-            }
-
-            // Set Position/Pitch
-            newHamster.refreshPositionAndAngles(
-                    exitPos.getX() + 0.5,
-                    exitPos.getY() + 0.1,
-                    exitPos.getZ() + 0.5,
-                    exitYaw,
-                    0
-            );
-
-            // Set Velocity & Flags
             if (success && !this.isExhausted) {
-                // Apply forward velocity
-                Vec3d forward = Vec3d.fromPolar(0, exitYaw).normalize().multiply(0.4);
-                newHamster.setVelocity(forward.x, 0.3, forward.z);
-            } else {
-                newHamster.setVelocity(Vec3d.ZERO);
-            }
-
-            newHamster.setKnockedOut(false);
-            newHamster.setSitting(false);
-            newHamster.velocityDirty = true;
-
-            // Success logic
-            if (success && !this.isExhausted) {
-                // --- SUCCESS ---
+                // --- Success Logic ---
                 // Give an acorn if the area wasn't exhausted
                 ItemStack prize = new ItemStack(ModItems.ACORN.get());
                 newHamster.setMouthItemStack(prize);
                 newHamster.setHoldingMouthItem(true);
-                // Set the interest timer so the AI doesn't immediately drop the item.
-                newHamster.setGenericInteractionTimer(1200); // 60 seconds
+                // Set interest timer so AI doesn't immediately drop item
                 // HamsterPlayWithItemGoal will automatically detect this and switch to RETURNING
+                newHamster.setGenericInteractionTimer(1200); // 60 sec
 
                 // Only play sparkle if successful
                 SoundEvent sparkleSound = ModSounds.getRandomSoundFrom(ModSounds.DIAMOND_SPARKLE_SOUNDS, this.random);
@@ -528,7 +383,7 @@ public class HamsterTreeSearcherEntity extends Entity {
                 // Schedule Celebration sound
                 newHamster.scheduleTreeHeistCelebration();
             } else {
-                // Failure logic
+                // --- Failure Logic ---
                 newHamster.setSulking(true);
                 newHamster.triggerAnimOnServer("mainController", "anim_hamster_sulk");
 
@@ -560,30 +415,19 @@ public class HamsterTreeSearcherEntity extends Entity {
             }
         }
 
-        // Cleanup
         this.discard();
     }
 
     @Override
     protected void writeCustomDataToNbt(NbtCompound nbt) {
-        nbt.put("HamsterNBT", this.hamsterNbt);
+        super.writeCustomDataToNbt(nbt);
         nbt.putInt("SearchTimer", this.searchTimer);
         nbt.putInt("MaxSearchDuration", this.maxSearchDuration);
         nbt.putInt("RummageTimer", this.rummageTimer);
-        if (this.treeAnchor != null) {
-            nbt.putLong("TreeAnchor", this.treeAnchor.asLong());
-        }
         nbt.putBoolean("IsExhausted", this.isExhausted);
         nbt.putFloat("DropMultiplier", this.dropChanceMultiplier);
         nbt.putBoolean("HasAcornHat", this.hasAcornHat);
         nbt.putInt("DropCooldown", this.dropCooldown);
-
-        if (this.forcedExitPos != null) {
-            nbt.putLong("ForcedExitPos", this.forcedExitPos.asLong());
-        }
-        if (this.forcedExitYaw != null) {
-            nbt.putFloat("ForcedExitYaw", this.forcedExitYaw);
-        }
 
         NbtList posList = new NbtList();
         for (Long pos : this.validLeafPositions) {
@@ -594,24 +438,14 @@ public class HamsterTreeSearcherEntity extends Entity {
 
     @Override
     protected void readCustomDataFromNbt(NbtCompound nbt) {
-        this.hamsterNbt = nbt.getCompound("HamsterNBT");
+        super.readCustomDataFromNbt(nbt);
         this.searchTimer = nbt.getInt("SearchTimer");
         this.maxSearchDuration = nbt.getInt("MaxSearchDuration");
         this.rummageTimer = nbt.getInt("RummageTimer");
-        if (nbt.contains("TreeAnchor")) {
-            this.treeAnchor = BlockPos.fromLong(nbt.getLong("TreeAnchor"));
-        }
         this.isExhausted = nbt.getBoolean("IsExhausted");
         this.dropChanceMultiplier = nbt.getFloat("DropMultiplier");
         this.hasAcornHat = nbt.getBoolean("HasAcornHat");
         this.dropCooldown = nbt.getInt("DropCooldown");
-
-        if (nbt.contains("ForcedExitPos")) {
-            this.forcedExitPos = BlockPos.fromLong(nbt.getLong("ForcedExitPos"));
-        }
-        if (nbt.contains("ForcedExitYaw")) {
-            this.forcedExitYaw = nbt.getFloat("ForcedExitYaw");
-        }
 
         this.validLeafPositions.clear();
         if (nbt.contains("ValidLeafPositions", NbtElement.LIST_TYPE)) {
@@ -622,8 +456,6 @@ public class HamsterTreeSearcherEntity extends Entity {
                 }
             }
         }
-
-        // Reset validation timer on load
         this.validationTimer = VALIDATION_INTERVAL;
     }
 }

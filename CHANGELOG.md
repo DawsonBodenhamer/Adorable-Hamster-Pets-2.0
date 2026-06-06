@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # **The Punchy Patch**
 
-In addition to a few bug fixes and a bunch of new quality-of-life features (including hamster armor trims!), this patch introduces a new batch of super cute, first-person animations to your rodent-handling experience, courtesy of the amazing [**Punchy**](https://modrinth.com/mod/punchy-fpa) mod! I've been working closely with [**@Dev Punchy Man**](https://modrinth.com/mod/punchy-fpa) to overhaul how it feels to pick up, pet, yeet, and dismount your hamsters.
+In addition to a bunch of new mini-games, idle animations and QoL features (including hamster armor trims & toggleable aggression states!), this patch introduces 5 new super cute, first-person animations to your rodent-handling experience, courtesy of the amazing [**Punchy**](https://modrinth.com/mod/punchy-fpa) mod! I've been working closely with [**@Dev Punchy Man**](https://modrinth.com/mod/punchy-fpa) to overhaul how it feels to pick up, pet, yeet, and dismount your hamsters.
 
 ### Added
 - **New First-Person Animations (Requires Punchy v2.6.0+)**
@@ -51,7 +51,7 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - **Hamster Tips Guidebook Entry**
     - The *Hamster Tips* guidebook now features a dedicated "Aggression States" page to explain the new mechanics. It utilizes dynamic text injection to accurately display your configured trigger items, ensuring the book is always up-to-date even if a modpack creator changes the required diets.
   - **Pacifist Break:** Added a `Pacifist Break on Attack` config toggle (false by default). When enabled, a passive hamster will automatically revert to neutral if it sees you attacking something.
-- **Crop Harvesting AI**
+- **Crop Harvesting**
   - Tamed, wandering hamsters now possess an irrepressible desire for the occasional midnight snack.
   - If they find a fully mature crop nearby and they have room in their cheek pouch, they will violently pounce on it, aggressively stuff the harvest into their cheek pouches, and accidentally replant some seeds in the process.
   - Includes dynamic block particles and a leaf-crunching sound effect when pouncing on the crop block.
@@ -61,21 +61,29 @@ In addition to a few bug fixes and a bunch of new quality-of-life features (incl
   - Added two new "Crop Harvesting" pages to the *Hamster Tips* guidebook explaining the feature.
 - **Swimming Mechanics**
   - Added a new swimming animation loop for hamsters that accidentally fall into the water. This seems to happen a lot when they are snacking on crops so I thought it was a good time to add it.
-  - Replaced the erratic vanilla swimming AI with a custom, smoother physics simulation that doesn't launch them out of the water every couple of seconds like dolphins.
-  - Added 7 new unique water-swishing sound effects to the hamster's swimming animation.
-  - Hamsters will still do their best to avoid water, (except when hunting down items) but now they don't look so broken when they inevitably end up in it.
+  - Replaced the Vanilla game's erratic swimming AI with a custom, smoother physics simulation that doesn't launch them out of the water every couple of seconds like a dolphin.
+  - Included 7 new unique water-swishing sound effects as part of the swimming animation.
+  - Hamsters can now dive underwater in persuit of items they want to steal/snack on.
+  - They will still do their best to avoid water the rest of the time, but now they don't look so broken when they inevitably fall into it.
+- **Hide & Seek Mini-Game**
+  - Tamed hamsters now occasionally get the urge to disappear into the woodwork.
+  - If they find a suitable hiding spot (bushes, chests, barrels, etc.), they will leap into it and vanish.
+  - You have a limited time to find them (configurable, ~45-60 seconds by default) before their short attention span gets the better of them. If you try to break or interact with the block they are hiding in during that time, you win! They will pop out and reward you with an item from their cheek pouches.
+  - If the timer runs out before you find them, they will emerge, sulk, and you get nothing.
+  - The block they are hiding in will occasionally jiggle, make noise, and spawn particles to help you locate them.
+  - You will also see a trail of subtle particles from your location directly towards the hiding spot, provided you are within 25 blocks of the hidden hamster.
+  - These effects will be *very* scarce at the start, but dynamically increases in frequency/intensity as the game progresses.
+  - **Configurability:** Everything is customizable in the config. You can adjust the initiation chance, duration, block lists, and whether they are allowed to hide inside storage blocks like chests.
 - **"Hamtaro" Easter Egg**
   - Renaming a hamster "Hamtaro" gives it a special texture. This functions identically to the "Sweet Potato" easter egg. Both base textures provided by [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!
 - **New "Panda" Overlay Pattern**
   - Added a new "Panda" fur overlay pattern to the genetics engine, allowing you to breed panda-like hamsters. To get a "Panda" hamster, you'll need a Black base coat and a white overlay with the new "Panda" pattern. These can't be found in the wild, since black hamsters do not spawn with white overlays in the wild (breaks their camouflage). Thanks to [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) for the Panda inspiration!
-- **Cheese Music Disc**
+- **Cheese Music Disc & Dancing**
   - A legendary new music disc with The Adorable Hamster Pets theme song, created by yours truly. Can only be obtained by orchestrating a high-velocity, terminal collision between an airborne hamster and a Charged Creeper.
   - If playing in a Jukebox, nearby hamsters will dance to the music.
   - Added the "Moist Tones" advancement.
-- **Dancing to Modded Music**
-  - Added a `Dancing Music Discs` string list to the `Ambient Sitting Behaviors` section of the config.
-  - If a jukebox plays a music disc containing any of your configured strings in its name, description, or lore (case-insensitive), nearby hamsters will happily dance to it. 
-  - Contains a few strings by default: `hamster`, `hampter`, and `hamtaro`.
+  - **Modded Music Disc Support**
+    - Included a `Dancing Music Discs` string list that contains a few strings by default: `hamster`, `hampter`, and `hamtaro`. If a jukebox plays a music disc containing any of these configured strings in its name, description, or lore (case-insensitive), nearby hamsters will dance to it.
 - **Inter-Hamster Tag Mini-Game**
   - Hamsters will now spontaneously instigate games of tag with each other.
   - The instigator will sprint up to an unsuspecting victim, deliver a visual (damage-free) slap (using a new cowbell sound effect), and sprint away to begin the chase.

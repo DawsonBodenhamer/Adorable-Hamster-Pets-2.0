@@ -81,13 +81,15 @@ public final class HamsterNbtUtil {
             nbt.putInt("OreTargetY", hamster.currentOreTarget.getY());
             nbt.putInt("OreTargetZ", hamster.currentOreTarget.getZ());
         }
-        nbt.putBoolean("IsSulking", hamster.getHamsterFlag(HamsterEntity.SULKING_FLAG));
         nbt.putBoolean("IsCelebratingDiamond", hamster.getHamsterFlag(HamsterEntity.CELEBRATING_DIAMOND_FLAG));
 
         // --- 6. Interaction & Mini-Game ---
+        nbt.putBoolean("IsSulking", hamster.getHamsterFlag(HamsterEntity.SULKING_FLAG));
+        nbt.putInt("SulkTimer", hamster.sulkTimer);
         nbt.putLong("TagGameCooldownEnd", hamster.tagGameCooldownEndTick);
         nbt.putLong("StealingCooldownEnd", hamster.stealingCooldownEndTick);
         nbt.putLong("CropSnackCooldownEnd", hamster.cropSnackCooldownEndTick);
+        nbt.putLong("HideAndSeekCooldownEnd", hamster.hideAndSeekCooldownEndTick);
         if (hamster.getGenericInteractionTimer() > 0) {
             nbt.putInt("GenericInteractionTimer", hamster.getGenericInteractionTimer());
         }
@@ -128,6 +130,13 @@ public final class HamsterNbtUtil {
         hamster.setHamsterFlag(HamsterEntity.KNOCKED_OUT_FLAG, nbt.getBoolean("KnockedOut"));
         hamster.setHamsterFlag(HamsterEntity.CHEEK_POUCH_UNLOCKED_FLAG, nbt.getBoolean("CheekPouchUnlocked"));
         hamster.setHamsterFlag(HamsterEntity.SULKING_FLAG, nbt.getBoolean("IsSulking"));
+        if (nbt.contains("SulkTimer", NbtElement.INT_TYPE)) {
+            hamster.sulkTimer = nbt.getInt("SulkTimer");
+        } else if (hamster.isSulking()) {
+            // Backwards compat: if older save has them sulking, assign timer
+            hamster.sulkTimer = 160 + hamster.getRandom().nextInt(80);
+        }
+
         hamster.setHamsterFlag(HamsterEntity.CELEBRATING_DIAMOND_FLAG, nbt.getBoolean("IsCelebratingDiamond"));
         boolean loadedSleeping = nbt.getBoolean("IsSleeping");
         if (!hamster.isTamed()) {
@@ -206,6 +215,7 @@ public final class HamsterNbtUtil {
         hamster.tagGameCooldownEndTick = nbt.getLong("TagGameCooldownEnd");
         hamster.stealingCooldownEndTick = nbt.getLong("StealingCooldownEnd");
         hamster.cropSnackCooldownEndTick = nbt.getLong("CropSnackCooldownEnd");
+        hamster.hideAndSeekCooldownEndTick = nbt.getLong("HideAndSeekCooldownEnd");
         hamster.setGenericInteractionTimer(nbt.getInt("GenericInteractionTimer"));
 
         boolean holding = nbt.getBoolean("IsHoldingMouthItem");
@@ -279,10 +289,11 @@ public final class HamsterNbtUtil {
         Optional<String> nameOptional = Optional.ofNullable(hamster.getCustomName()).map(Text::getString);
 
         // --- 4. Create Inner Data Record Instances ---
-        HamsterState.SeekingBehaviorData seekingData = new HamsterState.SeekingBehaviorData(
+        HamsterState.MiniGameBehaviorData seekingData = new HamsterState.MiniGameBehaviorData(
                 hamster.isPrimedToSeekDiamonds,
                 hamster.foundOreCooldownEndTick,
                 hamster.cropSnackCooldownEndTick,
+                hamster.hideAndSeekCooldownEndTick,
                 Optional.ofNullable(hamster.currentOreTarget)
         );
         HamsterState.GreenBeanBuffData buffData = new HamsterState.GreenBeanBuffData(
@@ -384,10 +395,11 @@ public final class HamsterNbtUtil {
             }
 
             // --- 5. Load Diamond Seeking Data ---
-            HamsterState.SeekingBehaviorData seekingData = data.seekingBehaviorData();
+            HamsterState.MiniGameBehaviorData seekingData = data.seekingBehaviorData();
             hamster.isPrimedToSeekDiamonds = seekingData.isPrimedToSeekDiamonds();
             hamster.foundOreCooldownEndTick = seekingData.foundOreCooldownEndTick();
             hamster.cropSnackCooldownEndTick = seekingData.cropSnackCooldownEndTick();
+            hamster.hideAndSeekCooldownEndTick = seekingData.hideAndSeekCooldownEndTick();
             hamster.currentOreTarget = seekingData.currentOreTarget().orElse(null);
 
             // --- 6. Load Wander Mode/Bed Data ---

@@ -8,10 +8,11 @@ import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticle;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
-import net.dawson.adorablehamsterpets.client.render.LeafJiggleRenderer;
+import net.dawson.adorablehamsterpets.client.render.BlockJiggleRenderer;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.client.feature.HamsterShoulderFeatureRenderer;
+import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterBlockHiderRenderer;
 import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterProjectileRenderer;
 import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterTreeSearcherRenderer;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
@@ -53,7 +54,7 @@ public final class AdorableHamsterPetsNeoForgeClient {
         // Retrieve the buffer source from the client's buffer builders
         VertexConsumerProvider consumers = client.getBufferBuilders().getEntityVertexConsumers();
 
-        LeafJiggleRenderer.render(
+        BlockJiggleRenderer.render(
                 client,
                 event.getPoseStack(),
                 consumers,
@@ -111,6 +112,7 @@ public final class AdorableHamsterPetsNeoForgeClient {
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.HAMSTER.get(), HamsterRenderer::new);
         event.registerEntityRenderer(ModEntities.HAMSTER_TREE_SEARCHER.get(), HamsterTreeSearcherRenderer::new);
+        event.registerEntityRenderer(ModEntities.HAMSTER_BLOCK_HIDER.get(), HamsterBlockHiderRenderer::new);
         event.registerEntityRenderer(ModEntities.HAMSTER_PROJECTILE.get(), HamsterProjectileRenderer::new);
     }
 

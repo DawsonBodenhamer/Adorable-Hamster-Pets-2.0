@@ -264,6 +264,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int AGGRESSION_STATE_BIT_1 = 1 << 28;
     public static final int AGGRESSION_STATE_BIT_2 = 1 << 29;
     public static final int IS_DANCING_FLAG = 1 << 30;
+    public static final int IS_HIDING_FLAG = 1 << 31;
 
     // --- Data Trackers ---
     public static final TrackedData<Integer> HAMSTER_FLAGS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -366,12 +367,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique public long cropSnackCooldownEndTick = 0L;
     private int tamingCooldown = 0;
     public long throwCooldownEndTick = 0L;
+    public long hideAndSeekCooldownEndTick = 0L;
     private long greenBeanBuffEndTick = 0L;
     private int autoEatCooldownTicks = 0;
     public int ambientSittingCooldown = 0;
 
     // --- Timers & Ticks ---
     @Unique public int clientRollTimer = 0;
+    @Unique public int sulkTimer = 0;
     @Unique public int wakingUpTicks = 0;
     @Unique private int preAutoEatDelayTicks = 0;
     @Unique private int quiescentSitDurationTimer = 0;
@@ -383,7 +386,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique private int sulkEntityEffectTicks = 0;
     @Unique private int sulkShockedSoundDelayTicks = 0;
     @Unique private int diamondSparkleSoundDelayTicks = 0;
-    @Unique private int celebrationRetrievalTicks = 0;
+    @Unique private int celebrationTicks = 0;
     @Unique private int lureToBedTimer = 0;
     @Unique public int goToBedDelayTicks = 0;
     @Unique private int wakeUpFromBedDelay = 0;
@@ -496,7 +499,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public UUID getParentUuid() { return this.parentUuid; }
     public void setParentUuid(UUID uuid) { this.parentUuid = uuid; }
     public void setCelebrationTarget(Entity target) { this.celebrationTarget = target; }
-    public void setCelebrationRetrievalTicks(int ticks) { this.celebrationRetrievalTicks = ticks; }
+    public void setCelebrationTicks(int ticks) { this.celebrationTicks = ticks; }
     public void setSilentInventoryUpdate(boolean silent) { this.isSilentInventoryUpdate = silent; }
     public int getQuiescentSitTimer() { return this.quiescentSitDurationTimer; }
     public void setQuiescentSitTimer(int ticks) { this.quiescentSitDurationTimer = ticks; }
@@ -560,6 +563,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void setBeingPet(boolean beingPet) { setHamsterFlag(IS_BEING_PET_FLAG, beingPet); }
     public boolean isDancing() { return getHamsterFlag(IS_DANCING_FLAG); }
     public void setDancing(boolean dancing) { setHamsterFlag(IS_DANCING_FLAG, dancing); }
+    public boolean isHiding() { return getHamsterFlag(IS_HIDING_FLAG); }
+    public void setHiding(boolean hiding) { setHamsterFlag(IS_HIDING_FLAG, hiding); }
     // --- Riding State Accessors ---
     public int getRiderJumpCooldown() { return this.riderJumpCooldown; }
     public void setRiderJumpCooldown(int ticks) { this.riderJumpCooldown = ticks; }
@@ -602,12 +607,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 this.sulkShockedSoundDelayTicks = 44; // 2.2 seconds * 20 ticks/second = 44 ticks
                 this.sulkFailParticleTicks = 600;     // Duration for fail particles
                 this.sulkEntityEffectTicks = 600;     // Duration for entity effect particles
+                this.sulkTimer = 160 + this.getRandom().nextInt(80); // 8-12 seconds
             }
         } else {
             // If stopping sulking, ensure all associated timers are also stopped/reset
             this.sulkOrchestraHitDelayTicks = 0;
             this.sulkFailParticleTicks = 0;
             this.sulkEntityEffectTicks = 0;
+            this.sulkTimer = 0;
         }
     }
     public boolean isHoldingMouthItem() {return getHamsterFlag(HOLDING_MOUTH_ITEM_FLAG);}
@@ -1484,6 +1491,15 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         if (this.napInBedDurationTimer > 0) this.napInBedDurationTimer--;
         if (this.localSpawnImmunityTicks > 0) this.localSpawnImmunityTicks--;
 
+        // --- Sulking Timer ---
+        if (this.sulkTimer > 0) {
+            this.sulkTimer--;
+            if (this.sulkTimer == 0 && this.isSulking() && !this.getWorld().isClient()) {
+                this.setSulking(false);
+                this.setSitting(false, true);
+            }
+        }
+
         // --- Settle "Thump" Sound Effect ---
         if (this.thumpSoundDelayTicks > 0) {
             this.thumpSoundDelayTicks--;
@@ -1503,8 +1519,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- Celebration Logic (Tag Game; New Baby) ---
         if (this.isFrozenMovement() || this.isCelebratingBaby()) {
             if (this.isFrozenMovement()) {
-                if (this.celebrationRetrievalTicks > 0) {
-                    this.celebrationRetrievalTicks--;
+                if (this.celebrationTicks > 0) {
+                    this.celebrationTicks--;
                 } else {
                     this.setFrozenMovement(false);
                     // Only clear target if baby celebration isn't active
@@ -2459,6 +2475,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.goalSelector.add(5, new HamsterGoToBedAndSleepGoal(this));
         this.goalSelector.add(6, new HamsterMateGoal(this, 0.75D));
         this.goalSelector.add(7, new HamsterTagGoal(this));
+        this.goalSelector.add(8, new HamsterHideAndSeekGoal(this));
         this.goalSelector.add(8, new HamsterInterHamsterTagGoal(this));
         this.goalSelector.add(9, new HamsterFollowParentGoal(this, 1.0D));
         this.goalSelector.add(10, new HamsterFollowOwnerGoal(this, 1.0D, 4.0F, 16.0F));

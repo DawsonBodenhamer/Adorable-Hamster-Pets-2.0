@@ -437,7 +437,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
         // Lock AI and rotation
         hamster1.setFrozenMovement(true);
         hamster1.setCelebrationTarget(hamster2);
-        hamster1.setCelebrationRetrievalTicks(100);
+        hamster1.setCelebrationTicks(100);
         hamster1.getNavigation().stop();
 
         // Stagger animation start times slightly

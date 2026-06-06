@@ -3,16 +3,25 @@ package net.dawson.adorablehamsterpets.util;
 import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
+import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
+import net.dawson.adorablehamsterpets.particles.ModParticles;
+import net.dawson.adorablehamsterpets.tag.ModBlockTags;
 import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
+import net.minecraft.block.BlockState;
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
+import net.minecraft.particle.BlockStateParticleEffect;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +33,24 @@ import java.util.stream.IntStream;
  * A centralized utility for miscellaneous things that don't fit in other utilities.
  */
 public final class MiscUtil {
+
+    /**
+     * Utility for determining if a block state represents a bush and selecting particles accordingly.
+     */
+    public static final class BlockStateUtil {
+
+        public static boolean isBushBlock(BlockState state) {
+            return state.isIn(ModBlockTags.BUSHES) || Registries.BLOCK.getId(state.getBlock()).getPath().toLowerCase(Locale.ROOT).contains("bush");
+        }
+
+        public static ParticleEffect getHidingSpotParticle(BlockState state) {
+            if (isBushBlock(state)) {
+                return ModParticles.getForVariant(WoodVariant.BAMBOO); // Green leaves for bushes
+            } else {
+                return new BlockStateParticleEffect(ParticleTypes.BLOCK, state);
+            }
+        }
+    }
 
     /**
      * Utility for handling player-specific physics interactions and forced client synchronization.
@@ -66,50 +93,59 @@ public final class MiscUtil {
 
         /**
          * Selects and sends a randomized sequential message to the player, ensuring it doesn't repeat the
-         * last message shown. Also handles "first-time" experience logic via a specific advancement.
+         * last message shown. Optionally handles "first-time" experience logic via a specific advancement.
          *
          * @param player           The player receiving the message.
-         * @param advancementId    The ID of the "first time" advancement.
+         * @param advancementId    The ID of the "first time" advancement. If null, first-time logic is skipped.
          * @param messageBaseKey   The translation base key (e.g., "message.mymod.some_event"). Will append ".1", ".2", etc.
          * @param messageCount     The total number of available localized messages in the pool.
          * @param memoryContextKey The NBT dictionary key used to remember the last message shown for this specific event.
          */
-        public static void sendRandomizedSequentialMessage(ServerPlayerEntity player, Identifier advancementId, String messageBaseKey, int messageCount, String memoryContextKey) {
+        public static void sendRandomizedSequentialMessage(ServerPlayerEntity player, @Nullable Identifier advancementId, String messageBaseKey, int messageCount, String memoryContextKey) {
             PlayerAdvancementTracker tracker = player.getAdvancementTracker();
-            AdvancementEntry advancement = player.server.getAdvancementLoader().get(advancementId);
-
-            if (advancement == null) {
-                AdorableHamsterPets.LOGGER.error("[MessagingUtil] CRITICAL: Could not find advancement '{}'. Message will not be sent.", advancementId);
-                return;
-            }
-
-            AdvancementProgress progress = tracker.getProgress(advancement);
             int messageIndex;
 
-            if (!progress.isDone()) {
-                // First time ever for this player
-                messageIndex = 0;
-                // Grant the advancement so this block doesn't run again
-                for (String criterion : advancement.value().criteria().keySet()) {
-                    tracker.grantCriterion(advancement, criterion);
+            if (advancementId != null) {
+                AdvancementEntry advancement = player.server.getAdvancementLoader().get(advancementId);
+
+                if (advancement == null) {
+                    AdorableHamsterPets.LOGGER.error("[MessagingUtil] CRITICAL: Could not find advancement '{}'. Message will not be sent.", advancementId);
+                    return;
+                }
+
+                AdvancementProgress progress = tracker.getProgress(advancement);
+
+                if (!progress.isDone()) {
+                    // First time ever for this player
+                    messageIndex = 0;
+                    // Grant advancement so this block doesn't run again
+                    for (String criterion : advancement.value().criteria().keySet()) {
+                        tracker.grantCriterion(advancement, criterion);
+                    }
+                } else {
+                    messageIndex = getNextRandomMessageIndex(player, messageCount, memoryContextKey);
                 }
             } else {
-                // Subsequent times
-                PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
-                int lastIndex = accessor.ahp$getLastRandomMessageIndex(memoryContextKey);
-
-                List<Integer> possibleIndices = IntStream.range(0, messageCount).boxed().collect(Collectors.toList());
-                if (lastIndex >= 0 && lastIndex < messageCount) {
-                    possibleIndices.remove(Integer.valueOf(lastIndex));
-                }
-
-                messageIndex = possibleIndices.get(player.getWorld().random.nextInt(possibleIndices.size()));
+                // No first-time logic required, grab random message
+                messageIndex = getNextRandomMessageIndex(player, messageCount, memoryContextKey);
             }
 
-            // Save the new index and send the message
+            // Save new index and send message
             ((PlayerEntityAccessor) player).ahp$setLastRandomMessageIndex(memoryContextKey, messageIndex);
             String messageKey = messageBaseKey + "." + (messageIndex + 1);
-            player.sendMessage(Text.translatable(messageKey).formatted(Formatting.GOLD), true);
+            player.sendMessage(Text.translatable(messageKey).formatted(Formatting.WHITE), true);
+        }
+
+        private static int getNextRandomMessageIndex(ServerPlayerEntity player, int messageCount, String memoryContextKey) {
+            PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
+            int lastIndex = accessor.ahp$getLastRandomMessageIndex(memoryContextKey);
+
+            List<Integer> possibleIndices = IntStream.range(0, messageCount).boxed().collect(Collectors.toList());
+            if (lastIndex >= 0 && lastIndex < messageCount) {
+                possibleIndices.remove(Integer.valueOf(lastIndex));
+            }
+
+            return possibleIndices.get(player.getWorld().random.nextInt(possibleIndices.size()));
         }
     }
 

@@ -12,6 +12,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.math.BlockPos;
@@ -264,9 +265,18 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
             case MOVING_TO_BED:
                 this.hamster.getLookControl().lookAt(Vec3d.ofCenter(bedPos));
 
-                // Particle breadcrumbs for debugging/visuals
+                // Particle breadcrumbs
                 if (this.wasLured && !this.world.isClient() && !this.hamster.getNavigation().isIdle()) {
-                    ParticleEffectsUtil.spawnBreadcrumbs((ServerWorld) this.world, this.hamster.getNavigation().getCurrentPath());
+                    ParticleEffectsUtil.spawnBreadcrumbs(
+                            (ServerWorld) this.world,
+                            this.hamster.getNavigation().getCurrentPath(),
+                            ParticleTypes.MYCELIUM,
+                            1,
+                            0.2,
+                            0.0,
+                            0.2,
+                            3.0
+                    );
                 }
 
                 if (this.hamster.getNavigation().isIdle()) {
