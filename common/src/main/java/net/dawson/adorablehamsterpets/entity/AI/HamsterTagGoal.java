@@ -115,6 +115,9 @@ public class HamsterTagGoal extends Goal {
         this.hamster.setPlayingTag(true);
         this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName());
 
+        // Prevent accidental instant-catch
+        this.hamster.interactionCooldown = 20;
+
         // Feedback
         this.hamster.triggerAnimOnServer("mainController", "attack");
         this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), ModSounds.HAMSTER_SLAP.get(), SoundCategory.NEUTRAL, 0.5f, 1.0f);
