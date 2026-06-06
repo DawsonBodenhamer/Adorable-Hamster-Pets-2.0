@@ -6,6 +6,7 @@
     "server.RavagerEntityMixin",
     "server.SpiderEntityMixin",
     "server.PlayerEntityMixin",
+    "server.SweetBerryBushBlockMixin",
     "accessor.SlotAccessor",
     "accessor.MeleeAttackGoalAccessor",
     "accessor.LookAtEntityGoalAccessor",
