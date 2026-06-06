@@ -9,7 +9,6 @@ import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.ReloadListenerRegistry;
-import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.client.rendering.ColorHandlerRegistry;
 import dev.architectury.registry.client.rendering.RenderTypeRegistry;
@@ -29,14 +28,14 @@ import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
 import net.dawson.adorablehamsterpets.client.perk.PlayerPerkManager;
-import net.dawson.adorablehamsterpets.client.render.LeafJiggleManager;
+import net.dawson.adorablehamsterpets.client.render.BlockJiggleManager;
 import net.dawson.adorablehamsterpets.client.sound.HamsterTreeLoopSoundInstance;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
-import net.dawson.adorablehamsterpets.config.*;
-import net.dawson.adorablehamsterpets.entity.ModEntities;
-import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
-import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterProjectileRenderer;
-import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterTreeSearcherRenderer;
+import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.ConfigDataCache;
+import net.dawson.adorablehamsterpets.config.Configs;
+import net.dawson.adorablehamsterpets.config.DismountButtonPressBehavior;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterBlockHiderEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.integration.iris.IrisIntegration;
@@ -213,20 +212,24 @@ public class AdorableHamsterPetsClient {
 
         // --- Register Tree Heist Sound & Jiggle Logic ---
         EntityEvent.ADD.register((entity, world) -> {
-            if (world.isClient() && entity instanceof HamsterTreeSearcherEntity searcher) {
-                MinecraftClient client = MinecraftClient.getInstance();
+            if (world.isClient()) {
+                if (entity instanceof HamsterTreeSearcherEntity hider) {
+                    MinecraftClient client = MinecraftClient.getInstance();
 
-                // 1. Sound Logic
-                HamsterTreeLoopSoundInstance existingSound = activeTreeSounds.get(searcher.getId());
+                    // Audio feedback
+                    HamsterTreeLoopSoundInstance existingSound = activeTreeSounds.get(hider.getId());
 
-                if (existingSound == null || existingSound.isDone()) {
-                    HamsterTreeLoopSoundInstance newSound = new HamsterTreeLoopSoundInstance(searcher);
-                    client.getSoundManager().play(newSound);
-                    activeTreeSounds.put(searcher.getId(), newSound);
+                    if (existingSound == null || existingSound.isDone()) {
+                        HamsterTreeLoopSoundInstance newSound = new HamsterTreeLoopSoundInstance(hider);
+                        client.getSoundManager().play(newSound);
+                        activeTreeSounds.put(hider.getId(), newSound);
+                    }
+
+                    // Visual feedback
+                    BlockJiggleManager.INSTANCE.onHiddenEntityAdded(hider);
+                } else if (entity instanceof HamsterBlockHiderEntity hider) {
+                    BlockJiggleManager.INSTANCE.onHiddenEntityAdded(hider);
                 }
-
-                // 2. Leaf Jiggle Tracking
-                LeafJiggleManager.INSTANCE.onSearcherAdded(searcher);
             }
             return EventResult.pass();
         });
@@ -280,15 +283,6 @@ public class AdorableHamsterPetsClient {
         MenuRegistry.registerScreenFactory(ModScreenHandlers.HAMSTER_INVENTORY_SCREEN_HANDLER.get(), HamsterInventoryScreen::new);
     }
 
-    /**
-     * Registers entity renderers. Called from a dedicated event handler.
-     */
-    public static void initEntityRenderers() {
-        EntityRendererRegistry.register(ModEntities.HAMSTER, HamsterRenderer::new);
-        EntityRendererRegistry.register(ModEntities.HAMSTER_TREE_SEARCHER, HamsterTreeSearcherRenderer::new);
-        EntityRendererRegistry.register(ModEntities.HAMSTER_PROJECTILE, HamsterProjectileRenderer::new);
-    }
-
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       2. Event Listeners (Tick & Render)
      * ────────────────────────────────────────────────────────────────────────────*/
@@ -301,8 +295,8 @@ public class AdorableHamsterPetsClient {
      * @param client The Minecraft client instance.
      */
     private static void onEndClientTick(MinecraftClient client) {
-        // --- 1. Leaf Jiggle Manager ---
-        LeafJiggleManager.INSTANCE.clientTick(client);
+        // --- 1. Block Jiggle Manager ---
+        BlockJiggleManager.INSTANCE.clientTick(client);
 
         // --- 2. Announcement System Logic ---
         boolean isGuiOpen = client.currentScreen != null;

@@ -149,7 +149,7 @@ public final class HamsterInteractionUtil {
 
                     // 2. Set Cooldowns
                     // Hamster cooldown
-                    hamster.tagGameCooldownEndTick = hamster.getWorld().getTime() + Configs.AHP.tagGameCooldown.get();
+                    hamster.tagGameCooldownEndTick = hamster.getWorld().getTime() + Configs.AHP.hamsterVersusPlayerTagCooldown.get();
                     // Player daily limit increment
                     if (player instanceof PlayerEntityAccessor accessor) {
                         accessor.ahp$incrementTagGameCount();
@@ -162,7 +162,7 @@ public final class HamsterInteractionUtil {
 
                     // Lock rotation to target (Owner or Stranger) for the duration of both animations
                     hamster.setFrozenMovement(true);
-                    hamster.setCelebrationRetrievalTicks(80);
+                    hamster.setCelebrationTicks(80);
                     hamster.interactionCooldown = 80;
 
                     // Visuals & Audio
@@ -181,41 +181,11 @@ public final class HamsterInteractionUtil {
 
                     // 4. Schedule Gifting Sequence
                     long baseTime = hamster.getWorld().getTime();
-                    long giftSequenceStart = baseTime + 32;
 
-                    hamster.scheduleTask(giftSequenceStart, "start_gift_anim", () -> {
-                        Item giftItem = getRandomMiniGameReward(hamster);
-                        if (giftItem != net.minecraft.item.Items.AIR) {
-                            ItemStack giftStack = new ItemStack(giftItem);
-
-                            // Trigger Unload Animation
-                            hamster.triggerAnimOnServer("mainController", "anim_hamster_cheek_unload");
-
-                            // T+10 (relative to start of gift sequence): Hamster "moves item" from cheek to mouth
-                            hamster.scheduleTask(giftSequenceStart + 10, "gift_appear", () -> {
-                                hamster.setMouthItemStack(giftStack);
-                                hamster.setHoldingMouthItem(true);
-                                hamster.setGenericInteractionTimer(0);
-                            });
-
-                            // T+33 (relative to start of gift sequence): Hamster spits out the item
-                            hamster.scheduleTask(giftSequenceStart + 33, "gift_spit", () -> {
-                                if (hamster.isHoldingMouthItem() && !hamster.getMouthItemStack().isEmpty()) {
-                                    Vec3d look = hamster.getRotationVec(1.0f);
-                                    ItemEntity itemEntity = new ItemEntity(hamster.getWorld(),
-                                            hamster.getX() + look.x * 0.5,
-                                            hamster.getY() + 0.3,
-                                            hamster.getZ() + look.z * 0.5,
-                                            hamster.getMouthItemStack().copy()
-                                    );
-                                    // Forward velocity to item
-                                    itemEntity.setVelocity(look.x * 0.2, 0.2, look.z * 0.2);
-                                    hamster.getWorld().spawnEntity(itemEntity);
-                                }
-                                // Cleanup
-                                hamster.setMouthItemStack(ItemStack.EMPTY);
-                                hamster.setHoldingMouthItem(false);
-                            });
+                    hamster.scheduleTask(baseTime + 32, "start_gift_sequence", () -> {
+                        Item giftItem = MinigameUtil.getRandomMiniGameReward(hamster);
+                        if (giftItem != Items.AIR) {
+                            MinigameUtil.executeGiftDeliverySequence(hamster, new ItemStack(giftItem), player);
                         }
                     });
                 }
@@ -488,7 +458,7 @@ public final class HamsterInteractionUtil {
 
                 hamster.setFrozenMovement(true);
                 hamster.setCelebrationTarget(player);
-                hamster.setCelebrationRetrievalTicks(30);
+                hamster.setCelebrationTicks(30);
                 hamster.triggerAnimOnServer("mainController", "anim_hamster_quick_bounce");
 
                 hamster.getWorld().playSound(null, hamster.getBlockPos(), ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, hamster.getRandom()), SoundCategory.NEUTRAL, 1.0f, hamster.getSoundPitch());

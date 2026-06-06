@@ -603,6 +603,10 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Allow hamsters to start a game of tag with each other.")
     public boolean enableInterHamsterTag = true;
 
+    @Translatable.Name("Enable Hide & Seek")
+    @Translatable.Desc("Allow hamsters to spontaneously hide in bushes or containers.")
+    public boolean enableHideAndSeek = true;
+
     @NonSync
     @Translatable.Name("Enable Creeper Sniffing")
     @Translatable.Desc("May save your inventory. Or your ears. Allows hamsters to sniff for any aggressive creepers that have begun hunting you.")
@@ -628,7 +632,7 @@ public class AhpConfig extends Config {
     @Translatable.Desc("If true, wild hamsters take their cheek-treasures to the grave. Prevents players from creating 'ethical' hamster recycling farms for seeds and nuggets.")
     public boolean disableWildLootDrops = false;
 
-    @Translatable.Name("Require Food Mix to Unlock Cheeks")
+    @Translatable.Name("Inventory Access Starts Locked")
     @Translatable.Desc("Gate cheek-pouch storage behind gourmet cuisine, because drama.")
     public boolean requireFoodMixToUnlockCheeks = true;
 
@@ -639,10 +643,6 @@ public class AhpConfig extends Config {
     @Translatable.Name("Enable Petting")
     @Translatable.Desc("If true, looking affectionately at your hamster might result in spontaneous petting. Also enables the Pet Hamster keybind.")
     public boolean enablePetting = true;
-
-    @Translatable.Name("Auto-Petting Chance")
-    @Translatable.Desc("The 1-in-X chance per tick (20 ticks per second) to initiate petting when sneaking and looking directly at your hamster. The hamster must be either standing or sitting, and not involved in any other activity. The default is 500. This means on average, it will require about ~15 seconds of uninterrupted staring to trigger, so it's somewhat rare. If you're impatient, it also comes with a keybind to trigger it manually. You don't need to be sneaking to use the keybind.")
-    public ValidatedInt pettingChanceDenominator = new ValidatedInt(500, 3000, 20);
 
     @Translatable.Name("Enable GUI Renaming")
     @Translatable.Desc("Lets you rename hamsters directly from their inventory screen. Much more civilized than slapping them with a name tag.")
@@ -699,9 +699,21 @@ public class AhpConfig extends Config {
     @Translatable.Desc("Mandatory time-out after a successful heist to prevent serial kleptomania. (20 ticks = 1 second). WARNING: Increasing this cooldown can dramatically change the item stealing mechanic, since that AI goal sometimes re-runs multiple times in a row when the hamster has trouble pathfinding to the item that it wants to steal. So instead of increasing this, you should probably just stop dropping your diamonds on the ground everywhere, butter fingers.")
     public ValidatedInt stealCooldownTicks = new ValidatedInt(100, 6000, 20);
 
-    @Translatable.Name("Tag Game Cooldown")
-    @Translatable.Desc("How long a specific hamster needs to recover after being chased. Remember, they have tiny lungs. (20 ticks = 1 second; default = 10 minutes)")
-    public ValidatedInt tagGameCooldown = new ValidatedInt(12000, 36000, 160);
+    @Translatable.Name("Hamster-vs-Player Tag")
+    @Translatable.Desc("How long (in ticks) a specific hamster needs to recover after being chased by you. Remember, they have tiny lungs. (20 ticks = 1 second; default = 10 minutes)")
+    public ValidatedInt hamsterVersusPlayerTagCooldown = new ValidatedInt(12000, 36000, 160);
+
+    @Translatable.Name("Hamster-vs-Hamster Tag")
+    @Translatable.Desc("The average time (in seconds) between hamster-vs-hamster tag games. If you set this lower than the actual duration of a game (15 seconds by default), you will allow multiple games of tag to occur simultaneously within the same group of hamsters.")
+    public ValidatedInt interHamsterTagAverageSeconds = new ValidatedInt(60, 3600, 5);
+
+    @Translatable.Name("Hide & Seek Cooldown")
+    @Translatable.Desc("How long (in seconds) a hamster waits before trying to hide again. Default = 10 minutes.")
+    public ValidatedInt hideAndSeekCooldownSeconds = new ValidatedInt(600, 3600, 1);
+
+    @Translatable.Name("Auto-Petting Rarity")
+    @Translatable.Desc("The 1-in-X chance per tick (20 ticks per second) to initiate petting when sneaking and looking directly at your hamster. The hamster must be either standing or sitting, and not involved in any other activity. The default is 500. This means on average, it will require about ~15 seconds of uninterrupted staring to trigger, so it's somewhat rare. If you're impatient, it also comes with a keybind to trigger it manually. You don't need to be sneaking to use the keybind.")
+    public ValidatedInt pettingChanceDenominator = new ValidatedInt(500, 3000, 20);
 
     @ConfigGroup.Pop
     @Translatable.Name("Breeding Cooldown (Seconds)")
@@ -1735,20 +1747,28 @@ public class AhpConfig extends Config {
     public ConfigGroup miniGames = new ConfigGroup("miniGames", true);
 
     @Translatable.Name("Minimum Flee Distance")
-    @Translatable.Desc("The personal space bubble (in blocks) hamsters maintain while running away.")
+    @Translatable.Desc("The personal space bubble (in blocks) hamsters maintain if the mini-game involves running away.")
     public ValidatedInt minMiniGameFleeDistance = new ValidatedInt(7, 20, 1);
 
     @Translatable.Name("Maximum Flee Distance")
-    @Translatable.Desc("The maximum distance (in blocks) before hamsters stop running from you and start taunting. If they get further than this, they will wait for you to catch up.")
+    @Translatable.Desc("The maximum distance (in blocks) before hamsters stop running. If they get further than this, they will stop and begin taunting (if taunting is part of the mini-game).")
     public ValidatedInt maxMiniGameFleeDistance = new ValidatedInt(10, 30, 5);
 
     @Translatable.Name("Minimum Game Duration")
-    @Translatable.Desc("The shortest amount of time (in seconds) a chase lasts before hamsters get bored. Randomly chosen between Min and Max.")
+    @Translatable.Desc("The shortest amount of time (in seconds) a mini-game lasts before hamsters get bored. Randomly chosen between Min and Max.")
     public ValidatedInt minMiniGameFleeDurationSeconds = new ValidatedInt(5, 240, 1);
 
     @Translatable.Name("Maximum Game Duration")
-    @Translatable.Desc("The longest amount of time (in seconds) a chase lasts. Randomly chosen between Min and Max.")
+    @Translatable.Desc("The longest amount of time (in seconds) a mini-game lasts. Randomly chosen between Min and Max.")
     public ValidatedInt maxMiniGameFleeDurationSeconds = new ValidatedInt(15, 300, 5);
+
+    @Translatable.Name("Use Pouch Loot for Rewards")
+    @Translatable.Desc("If true, after a successful mini-game, your hamster will reward you with whatever random pocket lint it is allowed to spawn with in its cheek pouches. (Configurable: see 'Cheek Pouch Loot' in the World Gen Config.) If false, rewards will be pulled directly from the custom list below.")
+    public boolean usePouchLootForMiniGameRewards = true;
+
+    @Translatable.Name("Custom Rewards")
+    @Translatable.Desc("The specific items your hamster will gift you after a successful game, assuming you disabled the toggle above. Format specific item names like this: 'minecraft:diamond' and you can use tags like this: '#minecraft:flowers'. If you leave this empty while custom rewards are active, your hamster will just stare at you awkwardly and not give you anything. Maybe that's what you want? I'm not your boss.")
+    public List<String> customMiniGameRewards = new ArrayList<>();
 
     @Translatable.Name("Item Stealing")
     @Translatable.Desc("For when your hamster develops a taste for the finer things in life. Can be configured so they steal or fetch any item— even from other mods. They steal diamonds and fetch acorns by default.")
@@ -1786,23 +1806,41 @@ public class AhpConfig extends Config {
                     () -> 3
             );
 
-    @Translatable.Name("Use Pouch Loot for Rewards")
-    @Translatable.Desc("If true, after a successful mini-game, your hamster will reward you with whatever random pocket lint it is allowed to spawn with in its cheek pouches. (Configurable: see 'Cheek Pouch Loot' in the World Gen Config.) If false, rewards will be pulled directly from the custom list below.")
-    public boolean usePouchLootForMiniGameRewards = true;
-
-    @Translatable.Name("Custom Rewards")
-    @Translatable.Desc("The specific items your hamster will gift you after a successful game, assuming you disabled the toggle above. Format specific item names like this: 'minecraft:diamond' and you can use tags like this: '#minecraft:flowers'. If you leave this empty while custom rewards are active, your hamster will just stare at you awkwardly and not give you anything. Maybe that's what you want? I'm not your boss.")
-    public List<String> customMiniGameRewards = new ArrayList<>();
-
-    @Translatable.Name("Average Time Between Games")
-    @Translatable.Desc("The average time (in seconds) between hamster-vs-hamster tag games. If you set this lower than the actual duration of a game (15 seconds by default), you will allow multiple games of tag to occur simultaneously within the same group of hamsters.")
-    public ValidatedInt interHamsterTagAverageSeconds = new ValidatedInt(60, 600, 5);
-
-    @ConfigGroup.Pop
     @ConfigGroup.Pop
     @Translatable.Name("Inter-Hamster Tag Duration")
     @Translatable.Desc("How long (in seconds) the chase lasts before the hamsters get bored and the game ends. This only applies if the Chaser fails to catch the Instigator.")
     public ValidatedInt interHamsterTagMaxDurationSeconds = new ValidatedInt(10, 60, 3);
+
+    @Translatable.Name("Hide & Seek")
+    @Translatable.Desc("Settings for when your hamster decides it's time to disappear into the woodwork.")
+    public ConfigGroup hideAndSeek = new ConfigGroup("hideAndSeek", true);
+
+    @Translatable.Name("Initiation Chance")
+    @Translatable.Desc("1-in-X chance per tick to initiate a game of hide and seek. Default 3600 (20 ticks per second, so default averages once every ~3 minutes).")
+    public ValidatedInt hideAndSeekChanceDenominator = new ValidatedInt(3600, 72000, 20);
+
+    @Translatable.Name("Min Duration")
+    @Translatable.Desc("Minimum time (in seconds) the hamster will stay hidden.")
+    public ValidatedInt hideAndSeekMinDurationSeconds = new ValidatedInt(45, 600, 1);
+
+    @Translatable.Name("Max Duration")
+    @Translatable.Desc("Maximum time (in seconds) before the hamster gets board, gives up and sulks.")
+    public ValidatedInt hideAndSeekMaxDurationSeconds = new ValidatedInt(60, 600, 5);
+
+    @Translatable.Name("Allow Storage Blocks")
+    @Translatable.Desc("If true, hamsters can hide inside chests, barrels, and other valid blocks that have inventories. This checks whether the block implements an inventory interface, so it will work regardless of the content in the 'Valid Hiding Blocks' list.")
+    public boolean allowInventoryHiding = true;
+
+    @Translatable.Name("Valid Hiding Blocks")
+    @Translatable.Desc("A list of blocks or tags where the hamster is allowed to hide.")
+    public List<String> validHidingBlocks = new ArrayList<>(List.of("#adorablehamsterpets:bushes"));
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Hiding Blacklist")
+    @Translatable.Desc("Blocks with inventories that the hamster should never hide inside. This overrides everything else.")
+    public List<String> inventoryHidingBlacklist = new ArrayList<>(List.of("minecraft:furnace", "minecraft:blast_furnace", "minecraft:smoker", "minecraft:dispenser", "minecraft:dropper", "minecraft:hopper", "minecraft:campfire", "minecraft:soul_campfire"));
 
     @Translatable.Name("Commissioned Features")
     @Translatable.Desc("Specialized, unofficial mechanics that don't necessarily fit the theme of the mod, but were funded by various individuals in the community. Purposefully tucked away in the config to ensure most people don't notice them.")

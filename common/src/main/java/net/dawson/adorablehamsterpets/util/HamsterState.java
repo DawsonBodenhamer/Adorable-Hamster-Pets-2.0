@@ -29,7 +29,7 @@ public record HamsterState(
         Optional<String> customName,
         int pinkPetalType,
         int animationPersonalityId,
-        SeekingBehaviorData seekingBehaviorData,
+        MiniGameBehaviorData miniGameBehaviorData,
         WanderModeData wanderModeData,
         int hamsterFlags,
         long totalAgeTicks,
@@ -62,24 +62,27 @@ public record HamsterState(
             (nbt) -> new Dynamic<>(NbtOps.INSTANCE, nbt)
     );
 
-    // --- Inner Record for Seeking/Sulking Data ---
-    public record SeekingBehaviorData(
+    // --- Inner Record for Mini-Game Behavior Data ---
+    public record MiniGameBehaviorData(
             boolean isPrimedToSeekDiamonds,
             long foundOreCooldownEndTick,
             long cropSnackCooldownEndTick,
+            long hideAndSeekCooldownEndTick,
             Optional<BlockPos> currentOreTarget
     ) {
-        public static final Codec<SeekingBehaviorData> CODEC = RecordCodecBuilder.create(instance ->
+        public static final Codec<MiniGameBehaviorData> CODEC = RecordCodecBuilder.create(instance ->
                 instance.group(
-                        Codec.BOOL.fieldOf("isPrimedToSeekDiamonds").orElse(false).forGetter(SeekingBehaviorData::isPrimedToSeekDiamonds),
-                        Codec.LONG.fieldOf("foundOreCooldownEndTick").orElse(0L).forGetter(SeekingBehaviorData::foundOreCooldownEndTick),
-                        Codec.LONG.fieldOf("cropSnackCooldownEndTick").orElse(0L).forGetter(SeekingBehaviorData::cropSnackCooldownEndTick),
-                        BlockPos.CODEC.optionalFieldOf("currentOreTarget").forGetter(SeekingBehaviorData::currentOreTarget)
-                ).apply(instance, SeekingBehaviorData::new)
+                        Codec.BOOL.fieldOf("isPrimedToSeekDiamonds").orElse(false).forGetter(MiniGameBehaviorData::isPrimedToSeekDiamonds),
+                        Codec.LONG.fieldOf("foundOreCooldownEndTick").orElse(0L).forGetter(MiniGameBehaviorData::foundOreCooldownEndTick),
+                        Codec.LONG.fieldOf("cropSnackCooldownEndTick").orElse(0L).forGetter(MiniGameBehaviorData::cropSnackCooldownEndTick),
+                        Codec.LONG.fieldOf("hideAndSeekCooldownEndTick").orElse(0L).forGetter(MiniGameBehaviorData::hideAndSeekCooldownEndTick),
+
+                        BlockPos.CODEC.optionalFieldOf("currentOreTarget").forGetter(MiniGameBehaviorData::currentOreTarget)
+                ).apply(instance, MiniGameBehaviorData::new)
         );
 
-        public static SeekingBehaviorData empty() {
-            return new SeekingBehaviorData(false, 0L, 0L, Optional.empty());
+        public static MiniGameBehaviorData empty() {
+            return new MiniGameBehaviorData(false, 0L, 0L, 0L, Optional.empty());
         }
     }
 
@@ -133,23 +136,23 @@ public record HamsterState(
         if (CODEC == null) {
             CODEC = RecordCodecBuilder.create(instance ->
                     instance.group(
-                            Uuids.CODEC.fieldOf("entityUuid").forGetter(HamsterState::entityUuid),
-                            NBT_COMPOUND_CODEC.fieldOf("genomeNbt").forGetter(HamsterState::genomeNbt),
-                            Codec.FLOAT.fieldOf("health").forGetter(HamsterState::health),
-                            NBT_COMPOUND_CODEC.fieldOf("inventoryNbt").forGetter(HamsterState::inventoryNbt),
-                            Codec.INT.fieldOf("breedingAge").forGetter(HamsterState::breedingAge),
-                            Codec.LONG.fieldOf("throwCooldownEndTick").forGetter(HamsterState::throwCooldownEndTick),
-                            GreenBeanBuffData.CODEC.fieldOf("greenBeanBuffData").orElse(GreenBeanBuffData.empty()).forGetter(HamsterState::greenBeanBuffData),
-                            Codec.INT.fieldOf("autoEatCooldownTicks").forGetter(HamsterState::autoEatCooldownTicks),
-                            Codec.STRING.optionalFieldOf("customName").forGetter(HamsterState::customName),
-                            Codec.INT.fieldOf("pinkPetalType").orElse(0).forGetter(HamsterState::pinkPetalType),
-                            Codec.INT.fieldOf("animationPersonalityId").orElse(1).forGetter(HamsterState::animationPersonalityId),
-                            SeekingBehaviorData.CODEC.fieldOf("seekingBehaviorData").orElse(SeekingBehaviorData.empty()).forGetter(HamsterState::seekingBehaviorData),
-                            WanderModeData.CODEC.fieldOf("wanderModeData").orElse(WanderModeData.empty()).forGetter(HamsterState::wanderModeData),
-                            Codec.INT.fieldOf("hamsterFlags").orElse(0).forGetter(HamsterState::hamsterFlags),
-                            Codec.LONG.fieldOf("totalAgeTicks").orElse(0L).forGetter(HamsterState::totalAgeTicks),
-                            Codec.INT.fieldOf("timesBred").orElse(0).forGetter(HamsterState::timesBred)
-                    ).apply(instance, HamsterState::new)
+                    Uuids.CODEC.fieldOf("entityUuid").forGetter(HamsterState::entityUuid),
+                    NBT_COMPOUND_CODEC.fieldOf("genomeNbt").forGetter(HamsterState::genomeNbt),
+                    Codec.FLOAT.fieldOf("health").forGetter(HamsterState::health),
+                    NBT_COMPOUND_CODEC.fieldOf("inventoryNbt").forGetter(HamsterState::inventoryNbt),
+                    Codec.INT.fieldOf("breedingAge").forGetter(HamsterState::breedingAge),
+                    Codec.LONG.fieldOf("throwCooldownEndTick").forGetter(HamsterState::throwCooldownEndTick),
+                    GreenBeanBuffData.CODEC.fieldOf("greenBeanBuffData").orElse(GreenBeanBuffData.empty()).forGetter(HamsterState::greenBeanBuffData),
+                    Codec.INT.fieldOf("autoEatCooldownTicks").forGetter(HamsterState::autoEatCooldownTicks),
+                    Codec.STRING.optionalFieldOf("customName").forGetter(HamsterState::customName),
+                    Codec.INT.fieldOf("pinkPetalType").orElse(0).forGetter(HamsterState::pinkPetalType),
+                    Codec.INT.fieldOf("animationPersonalityId").orElse(1).forGetter(HamsterState::animationPersonalityId),
+                    MiniGameBehaviorData.CODEC.fieldOf("miniGameBehaviorData").orElse(MiniGameBehaviorData.empty()).forGetter(HamsterState::miniGameBehaviorData),
+                    WanderModeData.CODEC.fieldOf("wanderModeData").orElse(WanderModeData.empty()).forGetter(HamsterState::wanderModeData),
+                    Codec.INT.fieldOf("hamsterFlags").orElse(0).forGetter(HamsterState::hamsterFlags),
+                    Codec.LONG.fieldOf("totalAgeTicks").orElse(0L).forGetter(HamsterState::totalAgeTicks),
+                    Codec.INT.fieldOf("timesBred").orElse(0).forGetter(HamsterState::timesBred)
+            ).apply(instance, HamsterState::new)
             );
         }
         return CODEC;
@@ -188,7 +191,7 @@ public record HamsterState(
                 this.entityUuid, this.genomeNbt, this.health, this.inventoryNbt,
                 this.breedingAge, this.throwCooldownEndTick, this.greenBeanBuffData,
                 this.autoEatCooldownTicks, this.customName, this.pinkPetalType,
-                this.animationPersonalityId, this.seekingBehaviorData,
+                this.animationPersonalityId, this.miniGameBehaviorData,
                 this.wanderModeData, newFlags, this.totalAgeTicks, this.timesBred
         );
     }
@@ -218,7 +221,7 @@ public record HamsterState(
                 Optional.empty(),
                 0,
                 1,
-                SeekingBehaviorData.empty(),
+                MiniGameBehaviorData.empty(),
                 WanderModeData.empty(),
                 0,
                 0L,
@@ -243,7 +246,7 @@ public record HamsterState(
                 ", customName=" + customName.orElse("None") +
                 ", pinkPetalType=" + pinkPetalType +
                 ", animationPersonalityId=" + animationPersonalityId +
-                ", seekingBehaviorData=" + seekingBehaviorData +
+                ", miniGameBehaviorData=" + miniGameBehaviorData +
                 ", wanderModeData=" + wanderModeData +
                 ", hamsterFlags=" + hamsterFlags +
                 ", totalAgeTicks=" + totalAgeTicks +

@@ -97,6 +97,10 @@ public class ConfigDataCache {
     private static final Set<TagKey<Block>> snackableCropTags = new HashSet<>();
     private static final Set<Block> snackableCropBlacklistBlocks = new HashSet<>();
     private static final Set<TagKey<Block>> snackableCropBlacklistTags = new HashSet<>();
+    private static final Set<Block> hideAndSeekBlocks = new HashSet<>();
+    private static final Set<TagKey<Block>> hideAndSeekTags = new HashSet<>();
+    private static final Set<Block> hideAndSeekBlacklistBlocks = new HashSet<>();
+    private static final Set<TagKey<Block>> hideAndSeekBlacklistTags = new HashSet<>();
 
     // --- Cached Lists for Environment-Spawning Performance ---
     private static final List<EnvironmentDefinition> ENVIRONMENTS = new ArrayList<>();
@@ -160,6 +164,8 @@ public class ConfigDataCache {
         parseBlockList(Configs.AHP.heistableLogs, heistableLogsBlocks, heistableLogsTags, "heistableLogs");
         parseBlockList(Configs.AHP.snackableCrops, snackableCropBlocks, snackableCropTags, "snackableCrops");
         parseBlockList(Configs.AHP.snackableCropsBlacklist, snackableCropBlacklistBlocks, snackableCropBlacklistTags, "snackableCropsBlacklist");
+        parseBlockList(Configs.AHP.validHidingBlocks, hideAndSeekBlocks, hideAndSeekTags, "validHidingBlocks");
+        parseBlockList(Configs.AHP.inventoryHidingBlacklist, hideAndSeekBlacklistBlocks, hideAndSeekBlacklistTags, "inventoryHidingBlacklist");
 
         // --- Parse Region-Based Color Filters ---
         ENVIRONMENTS.clear();
@@ -268,6 +274,8 @@ public class ConfigDataCache {
         if (matchesBlock(state, snackableCropBlacklistBlocks, snackableCropBlacklistTags)) return false;
         return matchesBlock(state, snackableCropBlocks, snackableCropTags);
     }
+    public static boolean isHideAndSeekBlock(BlockState state) {return matchesBlock(state, hideAndSeekBlocks, hideAndSeekTags);}
+    public static boolean isHideAndSeekBlacklisted(BlockState state) {return matchesBlock(state, hideAndSeekBlacklistBlocks, hideAndSeekBlacklistTags);}
 
     // --- Public Environment Checker Methods ---
     /**
@@ -535,6 +543,10 @@ public class ConfigDataCache {
         snackableCropTags.clear();
         snackableCropBlacklistBlocks.clear();
         snackableCropBlacklistTags.clear();
+        hideAndSeekBlocks.clear();
+        hideAndSeekTags.clear();
+        hideAndSeekBlacklistBlocks.clear();
+        hideAndSeekBlacklistTags.clear();
     }
 
     /**

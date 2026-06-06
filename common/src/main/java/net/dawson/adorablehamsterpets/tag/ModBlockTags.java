@@ -13,6 +13,7 @@ import net.minecraft.util.Identifier;
 public class ModBlockTags {
 
     public static final TagKey<Block> CROPS = of("crops");
+    public static final TagKey<Block> BUSHES = of("bushes");
 
     private static TagKey<Block> of(String path) {
         return TagKey.of(RegistryKeys.BLOCK, Identifier.of(AdorableHamsterPets.MOD_ID, path));

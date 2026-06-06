@@ -1011,7 +1011,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
                 TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, hitPos);
 
-                if (HamsterTreeSearcherEntity.isTreeBlocked(world, scanResult.treeId())) {
+                if (HamsterTreeSearcherEntity.isBlockOccupied(world, scanResult.treeId())) {
                     self.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
                 } else {
                     // Start Heist
@@ -1239,7 +1239,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
                 TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, hitPos);
 
-                if (HamsterTreeSearcherEntity.isTreeBlocked(world, scanResult.treeId())) {
+                if (HamsterTreeSearcherEntity.isBlockOccupied(world, scanResult.treeId())) {
                     self.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
                     return; // Abort
                 } else {

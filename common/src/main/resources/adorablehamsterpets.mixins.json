@@ -34,6 +34,7 @@
     "client.GuiBookIndexMixin",
     "client.accessor.GuiBookAccessor",
     "client.accessor.GuiButtonEntryAccessor",
+    "client.BlockEntityRenderDispatcherMixin",
     "accessor.ScreenWidgetAdder",
     "accessor.BookContentsBuilderAccessor",
     "client.accessor.GuiButtonEntryAccessor",

@@ -10,6 +10,8 @@ import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.command.HamsterSpawnCommandUtil;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterAbstractHiddenEntity;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterBlockHiderEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
@@ -27,6 +29,7 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LecternBlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.Ownable;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.passive.AbstractHorseEntity;
 import net.minecraft.entity.passive.TameableEntity;
@@ -48,6 +51,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -64,13 +68,28 @@ import java.util.UUID;
  */
 public class AHPCommonEvents {
 
-    /**
-     * Initializes and registers all common event listeners.
-     */
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Static Registration
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     public static void init() {
         PlayerEvent.OPEN_MENU.register(AHPCommonEvents::onOpenMenu);
         EntityEvent.LIVING_HURT.register(AHPCommonEvents::onLivingHurt);
         InteractionEvent.RIGHT_CLICK_BLOCK.register(AHPCommonEvents::onRightClickBlock);
+        InteractionEvent.LEFT_CLICK_BLOCK.register(AHPCommonEvents::onLeftClickBlock);
+
+        // Catch block breaks
+        BlockEvent.BREAK.register((world, pos, state, player, xp) -> {
+            if (!world.isClient()) {
+                HamsterAbstractHiddenEntity occupant = HamsterAbstractHiddenEntity.getOccupant(world, pos);
+                if (occupant instanceof HamsterBlockHiderEntity hider && hider.isOwnedBy(player)) {
+                    hider.finishHiding(true, player);
+                    return EventResult.interruptFalse(); // Cancel the break, "find" hamster
+                }
+            }
+            return EventResult.pass();
+        });
+
         InteractionEvent.RIGHT_CLICK_ITEM.register(AHPCommonEvents::onRightClickItem);
         TickEvent.SERVER_POST.register(HamsterSpawnCommandUtil::onServerTick);
 
@@ -79,10 +98,10 @@ public class AHPCommonEvents {
             HamsterPaletteManager.triggerInitialReport();
         });
 
-        // --- Config Reload Listener ---
+        // Config reload listener
         ConfigApiJava.event().onUpdateServer((id, config, player) -> {
             if (id.getNamespace().equals(AdorableHamsterPets.MOD_ID)) {
-                // Re-parse cached tags and rules if any configs change
+                // Reparse cached tags and rules if any configs change
                 ConfigDataCache.parseConfig();
                 ModEntitySpawns.parseConfig();
                 ModWorldGeneration.parseConfig();
@@ -91,24 +110,34 @@ public class AHPCommonEvents {
         });
     }
 
-    /**
-     * Intercepts block right-clicks to handle specific mod interactions that vanilla logic
-     * might otherwise skip or mishandle.
-     */
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Event Handlers / Callbacks
+     * ────────────────────────────────────────────────────────────────────────────*/
+
     private static EventResult onRightClickBlock(PlayerEntity player, Hand hand, BlockPos pos, Direction face) {
         World world = player.getWorld();
         BlockState state = world.getBlockState(pos);
 
-        // --- 1. Lectern Intercept ---
+        // --- Hide & Seek Intercept ---
+        if (!world.isClient()) {
+            HamsterAbstractHiddenEntity occupant = HamsterAbstractHiddenEntity.getOccupant(world, pos);
+            if (occupant instanceof HamsterBlockHiderEntity hider && hider.isOwnedBy(player)) {
+                hider.finishHiding(true, player);
+                player.swingHand(hand, true);
+                return EventResult.interruptTrue();
+            }
+            // Allow non-owners normal interaction
+        }
+
+        // --- Lectern Intercept ---
         // Intercept the read action and route it through the Patchouli API
         if (state.isOf(Blocks.LECTERN) && state.get(LecternBlock.HAS_BOOK)) {
-            // Let sneaking players take the book out normally via vanilla logic
+            // Let sneaking players take book out normally
             if (!player.isSneaking()) {
                 BlockEntity be = world.getBlockEntity(pos);
                 if (be instanceof LecternBlockEntity lectern) {
                     ItemStack bookStack = lectern.getBook();
 
-                    // Check if the lectern is holding my guide book
                     if (bookStack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
                         if (!world.isClient() && player instanceof ServerPlayerEntity serverPlayer) {
                             PatchouliAPI.get().openBookGUI(serverPlayer, Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
@@ -120,10 +149,10 @@ public class AHPCommonEvents {
             }
         }
 
-        // --- 2. Hamster Bed Unlink ---
+        // --- Hamster Bed Unlink ---
         ItemStack stack = player.getStackInHand(hand);
 
-        // Only care about specific "Unlink" combination: Sneaking + Holding Repellent
+        // Only care about specific unlink combination: sneaking + holding repellent
         if (player.isSneaking() && ConfigDataCache.isBedAvoidanceFood(stack)) {
             if (state.getBlock() instanceof HamsterBedBlock) {
                 if (!world.isClient()) {
@@ -132,12 +161,12 @@ public class AHPCommonEvents {
                         bedEntity.unlinkHamster(player);
                     }
                 }
-                // Return interruptTrue to indicate success and stop vanilla processing (eating)
+                // Stop vanilla eating
                 return EventResult.interruptTrue();
             }
         }
 
-        // --- 3. Precision Tree Heist ---
+        // --- Precision Tree Heist ---
         if (ConfigDataCache.isLureItem(stack) && TreeHeistUtil.isValidHeistStartBlock(state)) {
             if (!world.isClient() && player instanceof PlayerEntityAccessor accessor) {
                 if (accessor.hasAnyShoulderHamster()) {
@@ -145,12 +174,12 @@ public class AHPCommonEvents {
                     return EventResult.interruptTrue();
                 }
             } else if (world.isClient() && ((PlayerEntityAccessor) player).hasAnyShoulderHamster()) {
-                // Return success on client to swing hand and prevent placing/using item
+                // Prevent placing item
                 return EventResult.interruptTrue();
             }
         }
 
-        // --- 4. Sapling to Dead Bush Conversion ---
+        // --- Sapling to Dead Bush Conversion ---
         if (stack.isOf(Items.SHEARS) && state.isIn(BlockTags.SAPLINGS)) {
             if (!world.isClient()) {
                 world.setBlockState(pos, Blocks.DEAD_BUSH.getDefaultState(), Block.NOTIFY_ALL);
@@ -170,21 +199,34 @@ public class AHPCommonEvents {
                         0.05
                 );
             }
-
-            // Return interruptTrue to swing the hand and stop further interaction
+            // Stop further interaction
             return EventResult.interruptTrue();
         }
 
         return EventResult.pass();
     }
 
-    /**
-     * Intercepts item right-clicks (like clicking in the air) to set the dynamic exit direction
-     * for a currently active precision tree heist.
-     */
+    private static EventResult onLeftClickBlock(PlayerEntity player, Hand hand, BlockPos pos, Direction face) {
+        World world = player.getWorld();
+
+        // --- Hide & Seek Intercept ---
+        if (!world.isClient()) {
+            HamsterAbstractHiddenEntity occupant = HamsterAbstractHiddenEntity.getOccupant(world, pos);
+            if (occupant instanceof HamsterBlockHiderEntity hider && hider.isOwnedBy(player)) {
+                hider.finishHiding(true, player);
+                player.swingHand(hand, true);
+                return EventResult.interruptTrue();
+            }
+            // Allow non-owners to break block normally
+        }
+
+        return EventResult.pass();
+    }
+
     private static CompoundEventResult<ItemStack> onRightClickItem(PlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
 
+        // --- Precision Tree Heist Dynamic Exit ---
         if (ConfigDataCache.isLureItem(stack)) {
             World world = player.getWorld();
             boolean updated = false;
@@ -199,7 +241,7 @@ public class AHPCommonEvents {
                 if (updated) {
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.precision_tree_heist_exit_direction_set").formatted(Formatting.AQUA), true);                }
             } else {
-                // Client-side prediction check
+                // Client side prediction check
                 for (Entity entity : world.getEntitiesByClass(HamsterTreeSearcherEntity.class, player.getBoundingBox().expand(64.0), e -> true)) {
                     if (((HamsterTreeSearcherEntity) entity).isOwnedBy(player)) {
                         updated = true;
@@ -228,7 +270,7 @@ public class AHPCommonEvents {
             return;
         }
 
-        // Use a Set to avoid scanning the same inventory multiple times
+        // Use a set to avoid scanning the same inventory multiple times
         Set<Inventory> inventories = new HashSet<>();
         for (Slot slot : menu.slots) {
             // Use the Mixin Accessor to get the inventory object.
@@ -239,7 +281,7 @@ public class AHPCommonEvents {
             }
         }
 
-        // Run the upgrade logic on each unique inventory found.
+        // Run the upgrade logic on each unique inventory found
         for (Inventory inv : inventories) {
             AdorableHamsterPets.replaceOldBooksInInventory(inv);
         }
@@ -258,25 +300,13 @@ public class AHPCommonEvents {
      * {@link EventResult#pass()} to allow it.
      */
     private static EventResult onLivingHurt(LivingEntity victim, DamageSource source, float amount) {
-        // --- 1. Server-side guard ---
         if (victim.getWorld().isClient()) {
             return EventResult.pass();
         }
 
-        // --- 2. Gather the direct and indirect sources of the damage ---
-        Entity direct = source.getSource();     // Immediate cause (e.g., projectile / hamster body)
-        Entity attacker = source.getAttacker();   // Credited attacker (e.g., the mob that dealt it)
+        Entity direct = source.getSource();
+        Entity attacker = source.getAttacker();
 
-        // --- 3. Debug logging to verify what entities are involved ---
-        AdorableHamsterPets.LOGGER.trace("onLivingHurt: victim={} srcType={} attacker={}({}) direct={}({}) amount={}",
-                victim.getType().toString(),
-                source.getName(),
-                attacker, attacker == null ? "null" : attacker.getClass().getSimpleName(),
-                direct, direct == null ? "null" : direct.getClass().getSimpleName(),
-                amount
-        );
-
-        // --- 4. If a tamed hamster is involved as attacker (direct or indirect) ---
         HamsterEntity hamster = null;
         if (direct instanceof HamsterEntity h && h.isTamed()) {
             hamster = h;
@@ -284,42 +314,22 @@ public class AHPCommonEvents {
             hamster = h;
         }
 
-        // --- 5. Hamster → pet protection ---
+        // --- Hamster To Pet Protection ---
         if (hamster != null) {
-            boolean victimIsTameable = victim instanceof TameableEntity;
-            AdorableHamsterPets.LOGGER.trace("hamster→pet branch entered: hamsterTamed={} victim instanceof TameableEntity={}",
-                    hamster.isTamed(), victimIsTameable);
-
-            // Owner of the hamster (always LivingEntity or null)
             LivingEntity hamsterOwner = hamster.getOwner();
-
-            // Owner of the victim (generic, supports wolves/cats/parrots/horses/mods)
             LivingEntity victimOwner = getPetOwner(victim);
-
-            AdorableHamsterPets.LOGGER.trace(
-                    "hamster→pet owners: hamsterOwnerUuid={} victimOwnerUuid={}",
-                    hamsterOwner == null ? "null" : hamsterOwner.getUuid(),
-                    victimOwner == null ? "null" : victimOwner.getUuid()
-            );
 
             if (hamsterOwner != null && victimOwner != null) {
                 if (sameOwner(hamsterOwner, victimOwner)) {
-                    AdorableHamsterPets.LOGGER.trace("hamster→pet: SAME OWNER detected, cancelling damage.");
                     return EventResult.interruptFalse();
                 }
             }
         }
 
-        // --- 6. Symmetric protection: pet (any) → hamster ---
+        // --- Pet To Hamster Protection ---
         if (victim instanceof HamsterEntity victimHamster && victimHamster.isTamed()) {
             LivingEntity victimOwner = victimHamster.getOwner();
             LivingEntity attackerOwner = (attacker instanceof LivingEntity leAttacker) ? getPetOwner(leAttacker) : null;
-
-            AdorableHamsterPets.LOGGER.trace(
-                    "onLivingHurt: symm hamsterOwnerUuid={} attackerOwnerUuid={}",
-                    victimOwner == null ? "null" : victimOwner.getUuid(),
-                    attackerOwner == null ? "null" : attackerOwner.getUuid()
-            );
 
             if (victimOwner != null && attackerOwner != null) {
                 if (sameOwner(victimOwner, attackerOwner)) {
@@ -328,8 +338,24 @@ public class AHPCommonEvents {
             }
         }
 
-        // --- 7. For all other cases, allow normal damage processing ---
         return EventResult.pass();
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Private Helpers
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private static void popOutHiddenHamster(ServerWorld world, BlockPos pos, PlayerEntity player) {
+        for (Entity entity : world.iterateEntities()) {
+            if (entity instanceof HamsterBlockHiderEntity hider) {
+                if (hider.getAnchorPos() != null && hider.getAnchorPos().equals(pos)) {
+                    if (hider.isOwnedBy(player)) {
+                        hider.finishHiding(true, player);
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     @Nullable
@@ -340,7 +366,7 @@ public class AHPCommonEvents {
             return tame.getOwner();
         }
 
-        // AbstractHorseEntity stores only the owner's UUID; resolve it into an entity.
+        // AbstractHorseEntity stores only owner's UUID; resolve into an entity
         if (entity instanceof AbstractHorseEntity horse) {
             UUID ownerId = horse.getOwnerUuid();
             if (ownerId != null) {
@@ -348,16 +374,13 @@ public class AHPCommonEvents {
             }
         }
 
-        // Some entities (esp. projectiles/custom) may implement the "Ownable" marker that returns an Entity.
-        // Only accept it if it is actually a LivingEntity.
-        // NOTE: Wolves do NOT implement this interface; this branch is just a safe bonus path.
-        if (entity instanceof net.minecraft.entity.Ownable ownable) {
+        // Some entities (esp. projectiles/custom) may implement Ownable marker that returns an Entity
+        if (entity instanceof Ownable ownable) {
             Entity e = ownable.getOwner();
-            return (e instanceof LivingEntity le) ? le : null;   // <-- fixes the “Entity → LivingEntity” type mismatch
+            return (e instanceof LivingEntity le) ? le : null;
         }
 
-        // --- B. Reflection fallback for common mod patterns ---
-        // Try a no-arg getOwner() that returns LivingEntity or Entity.
+        // Reflection fallback for common mod patterns
         try {
             Method m = entity.getClass().getMethod("getOwner");
             Object ret = m.invoke(entity);
@@ -366,7 +389,6 @@ public class AHPCommonEvents {
         } catch (Throwable ignored) {
         }
 
-        // Try getOwnerUuid() / getOwnerUUID() and resolve.
         UUID id = tryGetUuid(entity, "getOwnerUuid");
         if (id == null) id = tryGetUuid(entity, "getOwnerUUID");
         if (id != null) {
@@ -376,7 +398,6 @@ public class AHPCommonEvents {
         return null;
     }
 
-    // Resolve a UUID-returning method by name, if present.
     @Nullable
     private static UUID tryGetUuid(Object target, String methodName) {
         try {
@@ -388,19 +409,15 @@ public class AHPCommonEvents {
         }
     }
 
-    // Lookup a LivingEntity by UUID in the current world (players first, then any entity).
     @Nullable
     private static LivingEntity lookupLivingByUuid(World world, UUID id) {
         if (!(world instanceof ServerWorld server)) return null;
-        // Players
         Entity player = server.getPlayerByUuid(id);
         if (player instanceof LivingEntity le) return le;
-        // Any other entity with that UUID
         Entity any = server.getEntity(id);
         return (any instanceof LivingEntity le) ? le : null;
     }
 
-    // Strict "same owner" check by identity OR UUID match to be resilient to different instances.
     private static boolean sameOwner(LivingEntity a, LivingEntity b) {
         return a == b || a.getUuid().equals(b.getUuid());
     }

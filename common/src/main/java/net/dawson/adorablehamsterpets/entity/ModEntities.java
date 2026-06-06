@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.entity;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterBlockHiderEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterProjectileEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
@@ -26,6 +27,11 @@ public class ModEntities {
             EntityType.Builder.<HamsterTreeSearcherEntity>create(HamsterTreeSearcherEntity::new, SpawnGroup.MISC)
                     .setDimensions(0.01F, 0.01F) // Tiny, invisible
                     .build("hamster_tree_searcher"));
+
+    public static final RegistrySupplier<EntityType<HamsterBlockHiderEntity>> HAMSTER_BLOCK_HIDER = ENTITY_TYPES.register("hamster_block_hider", () ->
+            EntityType.Builder.<HamsterBlockHiderEntity>create(HamsterBlockHiderEntity::new, SpawnGroup.MISC)
+                    .setDimensions(0.01F, 0.01F) // Tiny, invisible
+                    .build("hamster_block_hider"));
 
     public static final RegistrySupplier<EntityType<HamsterProjectileEntity>> HAMSTER_PROJECTILE = ENTITY_TYPES.register("hamster_projectile", () ->
             EntityType.Builder.<HamsterProjectileEntity>create(HamsterProjectileEntity::new, SpawnGroup.MISC)

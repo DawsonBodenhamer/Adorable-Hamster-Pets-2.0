@@ -294,7 +294,7 @@ public class HamsterProjectileEntity extends ThrownEntity {
                     TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(this.getWorld(), hitPos);
 
                     // 2. Check occupancy
-                    if (HamsterTreeSearcherEntity.isTreeBlocked(this.getWorld(), scanResult.treeId())) {
+                    if (HamsterTreeSearcherEntity.isBlockOccupied(this.getWorld(), scanResult.treeId())) {
                         // Tree is busy
                         if (ownerPlayer != null) {
                             ownerPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
