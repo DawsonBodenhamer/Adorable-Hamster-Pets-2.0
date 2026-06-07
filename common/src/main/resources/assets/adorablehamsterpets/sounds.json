@@ -427,6 +427,10 @@
     "subtitle": "subtitles.adorablehamsterpets.ding",
     "sounds": [ "adorablehamsterpets:ding" ]
   },
+  "hamster_pop": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_pop",
+    "sounds": [ "adorablehamsterpets:hamster_pop" ]
+  },
   "magic_shimmer": {
     "subtitle": "subtitles.adorablehamsterpets.magic_shimmer",
     "sounds": [ "adorablehamsterpets:magic_shimmer" ]
