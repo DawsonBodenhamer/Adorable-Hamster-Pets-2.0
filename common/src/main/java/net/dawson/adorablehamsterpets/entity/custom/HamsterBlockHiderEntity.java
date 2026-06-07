@@ -1,8 +1,10 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
+import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
 import net.dawson.adorablehamsterpets.client.render.BlockJiggleManager;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
+import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.MinigameUtil;
 import net.dawson.adorablehamsterpets.util.MiscUtil;
@@ -16,8 +18,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.particle.BlockStateParticleEffect;
-import net.minecraft.particle.EntityEffectParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -39,7 +39,7 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
     // --- Feedback Hint Tuning (ticks) ---
     private static final float AMBIENT_START_INTERVAL = 20.0f;      // Starting interval. Higher = less frequent at start
     private static final float AMBIENT_END_INTERVAL = 2.0f;         // Ending interval. Lower = more frequent nearing end
-    private static final float BREADCRUMB_START_INTERVAL = 20.0f;   // Starting interval. Higher = wider gaps at start
+    private static final float BREADCRUMB_START_INTERVAL = 12.0f;   // Starting interval. Higher = wider gaps at start
     private static final float BREADCRUMB_END_INTERVAL = 2.0f;      // Ending interval. Lower = more dense nearing end
     private static final float JIGGLE_START_INTERVAL = 200.0f;      // Starting base jiggle interval (10 sec)
     private static final float JIGGLE_END_INTERVAL = 40.0f;         // Ending base jiggle interval (2 sec)
@@ -187,16 +187,14 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
         // --- Ambient Feedback ---
         if (--this.ambientHintTimer <= 0) {
             this.ambientHintTimer = (int) MathHelper.lerp(progress, AMBIENT_START_INTERVAL, AMBIENT_END_INTERVAL);
-
-            EntityEffectParticleEffect hintEffect = EntityEffectParticleEffect.create(ParticleTypes.ENTITY_EFFECT, 0.6f, 0.6f, 0.6f);
             MinigameUtil.executeOngoingBlockLocationHint(
                     this,
-                    hintEffect,
-                    1,
-                    0.5,
-                    0.5,
+                    ModParticles.PIXIE_DUST.get(PixieDustParticleTheme.GOLD).get(),
+                    2,
+                    0.7,
+                    0.7,
                     0.0,
-                    0.0
+                    0.7
             );
         }
 
@@ -206,15 +204,13 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
 
             if (this.hamsterNbt != null && this.hamsterNbt.containsUuid("Owner")) {
                 PlayerEntity owner = this.getWorld().getPlayerByUuid(this.hamsterNbt.getUuid("Owner"));
-                EntityEffectParticleEffect effect = EntityEffectParticleEffect.create(ParticleTypes.ENTITY_EFFECT, 0.8f, 0.8f, 0.8f);
-
                 MinigameUtil.executeBreadcrumbHint(
                         this,
                         owner,
                         625.0,
                         0.35,
                         0.65,
-                        effect,
+                        ModParticles.PIXIE_DUST.get(PixieDustParticleTheme.GOLD).get(),
                         1,
                         new Vec3d(0.05, 0.05, 0.05),
                         0.0
