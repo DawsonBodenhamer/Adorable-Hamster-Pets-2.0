@@ -97,10 +97,16 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
                 MinigameUtil.executeSulkFailure(newHamster, Vec3d.ofCenter(this.anchorPos));
             }
 
-            // Visuals
+            // Visuals & Audio
             BlockState state = serverWorld.getBlockState(this.anchorPos);
-            SoundEvent sound = ModSounds.getDynamicBlockSound(state);
-            serverWorld.playSound(null, this.anchorPos, sound, SoundCategory.NEUTRAL, 1.0F, 0.8F);
+            SoundEvent dynamicSound = ModSounds.getDynamicBlockSound(state);
+            serverWorld.playSound(null, this.anchorPos, dynamicSound, SoundCategory.NEUTRAL, 1.8F, 1.2F);
+            BlockPos popPos = this.anchorPos;
+            newHamster.scheduleTask(serverWorld.getTime() + 4, "hide_and_seek_pop", () -> { // 4 tick delay for pop sound
+                if (newHamster.isAlive()) {
+                    serverWorld.playSound(null, popPos, ModSounds.HAMSTER_POP.get(), SoundCategory.NEUTRAL, 0.25F, 1.0F);
+                }
+            });
 
             ParticleEffectsUtil.spawnParticles(
                     serverWorld,
