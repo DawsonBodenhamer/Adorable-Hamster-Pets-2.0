@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.config;
 
 import me.fzzyhmstrs.fzzy_config.annotations.NonSync;
 import me.fzzyhmstrs.fzzy_config.annotations.Translation;
+import me.fzzyhmstrs.fzzy_config.api.SaveType;
 import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.config.ConfigAction;
 import me.fzzyhmstrs.fzzy_config.config.ConfigGroup;
@@ -20,6 +21,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +73,12 @@ public class AhpUiConfig extends Config {
         // Attach the listener to both individual toggles.
         enableHudIcon.listenToEntry(e -> childListener.accept(null));
         enableWidgetIcon.listenToEntry(e -> childListener.accept(null));
+    }
+
+    @Override
+    @NotNull
+    public SaveType saveType() {
+        return SaveType.SEPARATE;
     }
 
     // --- UI & Quality of Life ---

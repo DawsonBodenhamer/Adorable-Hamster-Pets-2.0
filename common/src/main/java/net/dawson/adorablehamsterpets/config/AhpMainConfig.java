@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.config;
 import dev.architectury.networking.NetworkManager;
 import me.fzzyhmstrs.fzzy_config.annotations.NonSync;
 import me.fzzyhmstrs.fzzy_config.annotations.Translation;
+import me.fzzyhmstrs.fzzy_config.api.SaveType;
 import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.config.ConfigAction;
 import me.fzzyhmstrs.fzzy_config.config.ConfigGroup;
@@ -21,6 +22,7 @@ import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,12 @@ public class AhpMainConfig extends Config {
 
     public AhpMainConfig() {
         super(Identifier.of(AdorableHamsterPets.MOD_ID, "main"));
+    }
+
+    @Override
+    @NotNull
+    public SaveType saveType() {
+        return SaveType.SEPARATE;
     }
 
     // --- Core Feature Toggles ---

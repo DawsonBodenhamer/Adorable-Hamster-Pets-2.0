@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.config;
 
 import me.fzzyhmstrs.fzzy_config.annotations.NonSync;
+import me.fzzyhmstrs.fzzy_config.api.SaveType;
 import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.config.ConfigGroup;
 import me.fzzyhmstrs.fzzy_config.util.Translatable;
@@ -11,6 +12,7 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.NotNull;
 
 @Translatable.Name("Supporter Perks")
 @Translatable.Desc("For the generous souls who keep the hamster wheels spinning. Here are your exclusive settings for tweaking cosmetics.")
@@ -18,6 +20,12 @@ public class AhpSupporterConfig extends Config {
 
     public AhpSupporterConfig() {
         super(Identifier.of(AdorableHamsterPets.MOD_ID, "supporter_perks"));
+    }
+
+    @Override
+    @NotNull
+    public SaveType saveType() {
+        return SaveType.SEPARATE;
     }
 
     // --- The Pixie Dust Crown ---

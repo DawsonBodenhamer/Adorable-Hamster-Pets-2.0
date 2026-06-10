@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.config;
 
 import me.fzzyhmstrs.fzzy_config.annotations.NonSync;
 import me.fzzyhmstrs.fzzy_config.annotations.RootConfig;
+import me.fzzyhmstrs.fzzy_config.api.SaveType;
 import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.config.ConfigAction;
 import me.fzzyhmstrs.fzzy_config.config.ConfigGroup;
@@ -12,6 +13,7 @@ import net.dawson.adorablehamsterpets.networking.ModPackets;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Root-level configuration used purely as the entry point for this mod's
@@ -24,9 +26,13 @@ import net.minecraft.util.Identifier;
 @RootConfig
 public class AhpRootConfig extends Config {
     public AhpRootConfig() {
-        // Identifier path “root” gives the file name (root.toml) and the
-        // translation key config.adorablehamsterpets.root
         super(Identifier.of(AdorableHamsterPets.MOD_ID, "root"));
+    }
+
+    @Override
+    @NotNull
+    public SaveType saveType() {
+        return SaveType.SEPARATE;
     }
 
     // --- Help & Other Distractions ---
