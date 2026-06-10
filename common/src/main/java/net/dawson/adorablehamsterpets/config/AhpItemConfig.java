@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.config;
 
+import me.fzzyhmstrs.fzzy_config.api.SaveType;
 import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.config.ConfigGroup;
 import me.fzzyhmstrs.fzzy_config.util.Translatable;
@@ -7,6 +8,7 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedFloat;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +19,12 @@ public class AhpItemConfig extends Config {
 
     public AhpItemConfig() {
         super(Identifier.of(AdorableHamsterPets.MOD_ID, "items"));
+    }
+
+    @Override
+    @NotNull
+    public SaveType saveType() {
+        return SaveType.SEPARATE;
     }
 
     // --- Core Item Tag Overrides ---
