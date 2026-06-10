@@ -5,7 +5,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.AhpMainConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.AI.*;
@@ -139,9 +139,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      */
     public static DefaultAttributeContainer.Builder createHamsterAttributes() {
         return MobEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, Configs.AHP.wildMaxHealth.get())
+                .add(EntityAttributes.GENERIC_MAX_HEALTH, Configs.AHP_MAIN.wildMaxHealth.get())
                 .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.25D)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, Configs.AHP.meleeDamage.get())
+                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, Configs.AHP_MAIN.meleeDamage.get())
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 40.0D)
                 .add(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE, 0.0D);
     }
@@ -171,7 +171,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         hamster.suffocationGracePeriod = 200; // 10 seconds
 
         // Prime for Diamond Seeking (if applicable)
-        if (wasDiamondAlertActive && Configs.AHP.enableIndependentDiamondSeeking) {
+        if (wasDiamondAlertActive && Configs.AHP_MAIN.enableIndependentDiamondSeeking) {
             hamster.isPrimedToSeekDiamonds = true;
             AdorableHamsterPets.LOGGER.debug("[HamsterEntity {}] Primed for diamond seeking upon dismount.", hamster.getId());
         }
@@ -220,7 +220,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static void tryThrowFromShoulder(ServerPlayerEntity player) {
         // --- 1. Initial Setup & Config Check ---
         PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
-        final AhpConfig config = AdorableHamsterPets.CONFIG;
+        final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
 
         if (!config.enableHamsterThrowing) {
             player.sendMessage(Text.translatable("message.adorablehamsterpets.throwing_disabled"), true);
@@ -644,7 +644,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public int getZoomiesRadiusModifier() { return this.zoomiesRadiusModifier; }
     public boolean isShoulderPet() { return getHamsterFlag(IS_SHOULDER_PET_FLAG); }
     public void setShoulderPet(boolean isShoulderPet) { setHamsterFlag(IS_SHOULDER_PET_FLAG, isShoulderPet); }
-    public boolean isWanderModeActive() { return getHamsterFlag(IS_WANDER_MODE_ACTIVE_FLAG) && Configs.AHP.enableWanderMode.get(); }
+    public boolean isWanderModeActive() { return getHamsterFlag(IS_WANDER_MODE_ACTIVE_FLAG) && Configs.AHP_MAIN.enableWanderMode.get(); }
     public void setWanderModeActive(boolean active) { setHamsterFlag(IS_WANDER_MODE_ACTIVE_FLAG, active); }
     public Optional<GlobalPos> getLinkedBedPos() { return this.linkedBedPos; }
     public void setLinkedBedPos(Optional<GlobalPos> pos) { this.linkedBedPos = pos; }
@@ -712,7 +712,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // existing hamsters without requiring a world reload.
         if (this.getWorld().isClient()) return;
 
-        boolean useCustomNav = Configs.AHP.avoidUnlinkedBeds;
+        boolean useCustomNav = Configs.AHP_MAIN.avoidUnlinkedBeds;
         boolean isCurrentlyCustom = this.navigation instanceof HamsterNavigation;
 
         // Only swap if the current navigation type is incorrect
@@ -732,7 +732,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- 2. Friendly Fire Prevention ---
-        if (Configs.AHP.preventOwnerFriendlyFire && this.isTamed()) {
+        if (Configs.AHP_MAIN.preventOwnerFriendlyFire && this.isTamed()) {
             Entity attacker = source.getAttacker();
             if (attacker instanceof LivingEntity livingAttacker && this.isOwner(livingAttacker)) {
                 return false;
@@ -1016,7 +1016,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // If no custom name, check the config for the default name.
-        if (Configs.AHP.useHampterName) {
+        if (Configs.AHP_MAIN.useHampterName) {
             return Text.translatable("entity.adorablehamsterpets.hampter");
         }
 
@@ -1039,7 +1039,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // If no custom name, check config for default
-        if (Configs.AHP.useHampterName) {
+        if (Configs.AHP_MAIN.useHampterName) {
             return Text.translatable("entity.adorablehamsterpets.hampter");
         }
 
@@ -1072,7 +1072,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // Apply configured breeding cooldown when reaching adulthood naturally
         // Only apply to babies on 1.20.1
         if (!this.getWorld().isClient() && !this.isBaby()) {
-            this.setBreedingAge(Configs.AHP.breedingCooldownSeconds.get() * 20);
+            this.setBreedingAge(Configs.AHP_MAIN.breedingCooldownSeconds.get() * 20);
         }
     }
 
@@ -1352,12 +1352,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         super.setTamed(tamed); // Call the parent method
         if (updateAttributes) {
             if (tamed) {
-                this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(Configs.AHP.tamedMaxHealth.get());
+                this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(Configs.AHP_MAIN.tamedMaxHealth.get());
                 this.setHealth(this.getMaxHealth());
-                this.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE).setBaseValue(Configs.AHP.meleeDamage.get());
+                this.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE).setBaseValue(Configs.AHP_MAIN.meleeDamage.get());
             } else {
-                this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(Configs.AHP.wildMaxHealth.get());
-                this.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE).setBaseValue(Configs.AHP.meleeDamage.get());
+                this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(Configs.AHP_MAIN.wildMaxHealth.get());
+                this.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE).setBaseValue(Configs.AHP_MAIN.meleeDamage.get());
             }
         }
     }
@@ -1414,7 +1414,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         baby.setGenome(babyGenome);
 
         // Retain owner copying logic based on config
-        if (!Configs.AHP.babiesSpawnWild) {
+        if (!Configs.AHP_MAIN.babiesSpawnWild) {
             UUID ownerUUID = this.getOwnerUuid();
             if (ownerUUID != null) {
                 baby.setOwnerUuid(ownerUUID);
@@ -1468,7 +1468,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- Cylinder Visuals for 3D Spawning Command ---
             if (this.is3dCenter && !this.getWorld().isClient()) {
-                if (Configs.AHP.continuousGeneticsCylinder || this.age <= 20) {
+                if (Configs.AHP_MAIN.continuousGeneticsCylinder || this.age <= 20) {
                     BlockPos cylinderBase = new BlockPos(this.getBlockPos().getX(), this.parsed3dY, this.getBlockPos().getZ());
                     double bobbingAmplitude = this.parsed3dScale / 2.0;
                     double yOffset = bobbingAmplitude - 0.5;
@@ -1573,7 +1573,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- Auto-Petting Logic ---
-        if (!this.getWorld().isClient() && Configs.AHP.enablePetting && Platform.isModLoaded("punchy")) {
+        if (!this.getWorld().isClient() && Configs.AHP_MAIN.enablePetting && Platform.isModLoaded("punchy")) {
             // Check twice per second
             if (this.age % 10 == 0) {
                 if (this.isTamed() && this.getOwner() instanceof ServerPlayerEntity serverPlayer) {
@@ -1592,7 +1592,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                             // Verify player is looking at hamster
                             if (EntityTargetingUtil.isLookingAt(serverPlayer, this, 5.0, 0)) {
                                 // Divide chance denominator by 10 so rarity is still the same
-                                int chance = Math.max(1, Configs.AHP.pettingChanceDenominator.get() / 10);
+                                int chance = Math.max(1, Configs.AHP_MAIN.pettingChanceDenominator.get() / 10);
                                 if (this.getRandom().nextInt(chance) == 0) {
                                     ((PlayerEntityAccessor) serverPlayer).ahp$startPettingHamster(this.getId());
                                 }
@@ -1713,7 +1713,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // --- Tick Age ---
             //   1 real day = 86,400s * 20 MC ticks/s = 1,728,000 MC ticks
             //   1,728,000 / 24,000 = 72 MC ticks per age tick
-            int ageProgressInterval = Configs.AHP.displayAgeInIrlTime ? 72 : 1;
+            int ageProgressInterval = Configs.AHP_UI.displayAgeInIrlTime ? 72 : 1;
             if (this.age % ageProgressInterval == 0) {
                 this.totalAgeTicks++;
             }
@@ -1758,7 +1758,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
 
             // --- Circadian Chaos Wake-Up Logic ---
-            if (Configs.AHP.circadianChaos.get() &&
+            if (Configs.AHP_MAIN.circadianChaos.get() &&
                     HamsterBedUtil.isSleepingInBed(this) &&
                     this.napInBedDurationTimer == 0) {
                 // Don't wake up if this is a rescue sleep waiting for player interaction
@@ -1771,10 +1771,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.dataTracker.set(EXACT_AGE, this.getBreedingAge());
 
             // --- Day/Night Cycle Wake-Up Logic ---
-            if (!Configs.AHP.circadianChaos.get() && HamsterBedUtil.isSleepingInBed(this)) {
+            if (!Configs.AHP_MAIN.circadianChaos.get() && HamsterBedUtil.isSleepingInBed(this)) {
                 // If rescued, bypass time check entirely. Hamster stays asleep
                 if (!this.isRescueSleeping()) {
-                    boolean isSleepTime = Configs.AHP.sleepDuringDay.get() ? world.isDay() : world.isNight();
+                    boolean isSleepTime = Configs.AHP_MAIN.sleepDuringDay.get() ? world.isDay() : world.isNight();
                     if (!isSleepTime) {
                         // If it's wake-up time, and delay timer has not yet been started
                         if (this.wakeUpFromBedDelay == 0 && this.goToBedCooldown == 0) {
@@ -1868,7 +1868,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- Stage 3: Apply Healing After Eating Progress Finishes ---
             if (this.isAutoEating() && this.autoEatProgressTicks == 0) {
-                this.heal(Configs.AHP.hamsterFoodMixHealing.get());
+                this.heal(Configs.AHP_ITEMS.hamsterFoodMixHealing.get());
                 this.autoEatCooldownTicks = 60; // Set main cooldown (3 seconds)
                 this.isAutoEating = false; // Reset eating animation flag
 
@@ -1979,7 +1979,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
 
             // --- Pacifist Break on Owner Attack ---
-            if (Configs.AHP.pacifistBreakOnOwnerAttack && this.getAggressionState() == AggressionState.PACIFIST && this.isTamed()) {
+            if (Configs.AHP_MAIN.pacifistBreakOnOwnerAttack && this.getAggressionState() == AggressionState.PACIFIST && this.isTamed()) {
                 if (this.getOwner() instanceof PlayerEntity owner && owner.getAttacking() != null) {
                     // Check if the attack was recent to prevent stale targets
                     if (owner.age - owner.getLastAttackTime() < 100) {
@@ -2122,7 +2122,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     public void onDeath(DamageSource source) {
         // --- Respawn in Bed Logic ---
-        if (!this.getWorld().isClient() && Configs.AHP.enableRespawnInBed.get()) {
+        if (!this.getWorld().isClient() && Configs.AHP_MAIN.enableRespawnInBed.get()) {
             boolean respawnSuccessful = HamsterBedUtil.tryRespawnInBed(this);
 
             // If respawn worked, return immediately
@@ -2136,7 +2136,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         World world = this.getWorld();
         if (!world.isClient()) {
             // Check if wild loot drops are disabled
-            if (!this.isTamed() && Configs.AHP.disableWildLootDrops) {
+            if (!this.isTamed() && Configs.AHP_MAIN.disableWildLootDrops) {
                 // If disabled and untamed, clear the inventory so nothing drops
                 this.items.clear();
             }
@@ -2524,7 +2524,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     // --- Prevent walking over un-linked Hamster Beds ---
     @Override
     protected EntityNavigation createNavigation(World world) {
-        if (Configs.AHP.avoidUnlinkedBeds) {
+        if (Configs.AHP_MAIN.avoidUnlinkedBeds) {
             return new HamsterNavigation(this, world);
         } else {
             return new MobNavigation(this, world);
@@ -2718,7 +2718,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         // --- Configured Health & Age ---
         if (!this.isTamed()) {
-            this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(Configs.AHP.wildMaxHealth.get());
+            this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(Configs.AHP_MAIN.wildMaxHealth.get());
             this.setHealth(this.getMaxHealth());
         }
 

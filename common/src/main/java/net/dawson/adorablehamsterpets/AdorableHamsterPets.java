@@ -57,8 +57,11 @@ public class AdorableHamsterPets {
 	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(MOD_ID);
 
 	public static AhpRootConfig ROOT_CONFIG;
-	public static AhpConfig CONFIG;
+	public static AhpSupporterConfig SUPPORTER_CONFIG;
+	public static AhpMainConfig MAIN_CONFIG;
 	public static AhpWorldGenConfig WORLD_GEN_CONFIG;
+	public static AhpUiConfig UI_CONFIG;
+	public static AhpItemConfig ITEM_CONFIG;
 
 	/**
 	 * Initializes all DeferredRegister instances.
@@ -66,8 +69,11 @@ public class AdorableHamsterPets {
 	 */
 	public static void initRegistries() {
 		ROOT_CONFIG = Configs.AHP_ROOT;
-		CONFIG = Configs.AHP;
+		SUPPORTER_CONFIG = Configs.AHP_SUPPORTER;
+		MAIN_CONFIG = Configs.AHP_MAIN;
 		WORLD_GEN_CONFIG = Configs.AHP_WORLDGEN;
+		UI_CONFIG = Configs.AHP_UI;
+		ITEM_CONFIG = Configs.AHP_ITEMS;
 		ModEntities.register();
 		ModSounds.register();
 		ModBlocks.register();
@@ -148,7 +154,7 @@ public class AdorableHamsterPets {
 	 * @param player The ServerPlayerEntity who has just joined the world.
 	 */
 	private static void onPlayerJoin(ServerPlayerEntity player) {
-		if (Configs.AHP.enableAutoGuidebookDelivery) {
+		if (Configs.AHP_UI.enableAutoGuidebookDelivery) {
 			PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
 			Identifier flagAdvId = Identifier.of(MOD_ID, "technical/has_received_initial_guidebook");
 			Advancement flagAdvancement = player.server.getAdvancementLoader().get(flagAdvId);
@@ -213,7 +219,7 @@ public class AdorableHamsterPets {
 		newPlayerAccessor.ahp$setSupporterCrownTheme(oldPlayerAccessor.ahp$getSupporterCrownTheme());
 
 		// --- 2. Handle "Keep on Shoulder" Scenario ---
-		if (Configs.AHP.keepHamstersOnShoulderOnDeath) {
+		if (Configs.AHP_MAIN.keepHamstersOnShoulderOnDeath) {
 			newPlayerAccessor.adorablehamsterpets$getMountOrderQueue().addAll(oldPlayerAccessor.adorablehamsterpets$getMountOrderQueue());
 			for (ShoulderLocation location : ShoulderLocation.values()) {
 				NbtCompound shoulderNbt = oldPlayerAccessor.getShoulderHamster(location);

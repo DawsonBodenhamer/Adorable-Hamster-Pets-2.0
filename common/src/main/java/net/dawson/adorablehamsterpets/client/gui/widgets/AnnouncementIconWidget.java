@@ -73,12 +73,12 @@ public class AnnouncementIconWidget extends ButtonWidget {
             // offsets for creative and survival mode to accommodate their unique shapes.
             if (containerScreen instanceof net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen) {
                 // Creative Inventory (above the top right corner, to avoid conflicting with inventory mods like JEI, EMI, and REI)
-                targetX = guiLeft + guiWidth - 22 + + neoForgeCreativeModeOffset + Configs.AHP.creativeWidgetIconSettings.get().offsetX.get();
-                targetY = guiTop - 47 + Configs.AHP.creativeWidgetIconSettings.get().offsetY.get();
+                targetX = guiLeft + guiWidth - 22 + + neoForgeCreativeModeOffset + Configs.AHP_UI.creativeWidgetIconSettings.get().offsetX.get();
+                targetY = guiTop - 47 + Configs.AHP_UI.creativeWidgetIconSettings.get().offsetY.get();
             } else {
                 // Survival Inventory (overlapping top right corner)
-                targetX = guiLeft + guiWidth - this.width + 4 + Configs.AHP.survivalWidgetIconSettings.get().offsetX.get();
-                targetY = guiTop - 4 + Configs.AHP.survivalWidgetIconSettings.get().offsetY.get();
+                targetX = guiLeft + guiWidth - this.width + 4 + Configs.AHP_UI.survivalWidgetIconSettings.get().offsetX.get();
+                targetY = guiTop - 4 + Configs.AHP_UI.survivalWidgetIconSettings.get().offsetY.get();
             }
 
             // If the target position has changed (e.g., recipe book opened), start a new transition.
@@ -96,7 +96,7 @@ public class AnnouncementIconWidget extends ButtonWidget {
         animator.setHovered(this.isHovered());
 
         float animScale = animator.getRenderScale(delta);
-        float configScale = Configs.AHP.hudIconScale.get(); // Use HUD scale for title screen too
+        float configScale = Configs.AHP_UI.hudIconScale.get(); // Use HUD scale for title screen too
         float finalScale = animScale * configScale;
         float angle = animator.getRenderAngle(delta);
         double renderX = animator.getRenderX(delta);

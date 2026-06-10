@@ -19,7 +19,7 @@ public final class DynamicFoodUtil {
      * Appends standard tooltips and <s>dynamic nutrition stats</s> (only dynamic on 1.21.1+).
      */
     public static void appendTooltip(List<Text> tooltip, String tooltipBaseKey, int nutrition, float saturation, int defaultNutrition, float defaultSaturation) {
-        if (Configs.AHP.enableItemTooltips) {
+        if (Configs.AHP_UI.enableItemTooltips) {
             tooltip.add(Text.translatable(tooltipBaseKey + ".hint1").formatted(Formatting.GOLD));
             tooltip.add(Text.translatable(tooltipBaseKey + ".hint2").formatted(Formatting.GRAY));
 

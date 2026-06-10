@@ -4,6 +4,7 @@ import dev.architectury.event.CompoundEventResult;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.*;
 import me.fzzyhmstrs.fzzy_config.api.ConfigApiJava;
+import me.fzzyhmstrs.fzzy_config.event.api.v2.OnUpdateServerListener;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
@@ -51,7 +52,6 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -99,7 +99,7 @@ public class AHPCommonEvents {
         });
 
         // Config reload listener
-        ConfigApiJava.event().onUpdateServer((id, config, player) -> {
+        ConfigApiJava.event().onUpdateServer((OnUpdateServerListener) (id, config, player) -> {
             if (id.getNamespace().equals(AdorableHamsterPets.MOD_ID)) {
                 // Reparse cached tags and rules if any configs change
                 ConfigDataCache.parseConfig();

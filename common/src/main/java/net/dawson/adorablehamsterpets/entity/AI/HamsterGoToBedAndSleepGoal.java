@@ -74,7 +74,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
     public boolean canStart() {
         // --- 1. Pre-Checks ---
         // Basic mode & config checks
-        if (!this.hamster.isWanderModeActive() || this.hamster.isSitting() || !Configs.AHP.allowSleepInBed.get()) {
+        if (!this.hamster.isWanderModeActive() || this.hamster.isSitting() || !Configs.AHP_MAIN.allowSleepInBed.get()) {
             return false;
         }
 
@@ -114,7 +114,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
         }
 
         // --- 4. Timing Logic ---
-        if (Configs.AHP.circadianChaos.get()) {
+        if (Configs.AHP_MAIN.circadianChaos.get()) {
             // Chaotic random sleep logic
             if (this.awakeTimer > 0) {
                 this.awakeTimer--;
@@ -123,7 +123,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
             return true;
         } else {
             // Standard day/night cycle check
-            boolean isSleepTime = Configs.AHP.sleepDuringDay.get() ? this.world.isDay() : this.world.isNight();
+            boolean isSleepTime = Configs.AHP_MAIN.sleepDuringDay.get() ? this.world.isDay() : this.world.isNight();
             return isSleepTime;
         }
     }
@@ -162,9 +162,9 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
         this.hamster.setOnTheWayToBed(true);
 
         // Reset chaotic timer if enabled
-        if (Configs.AHP.circadianChaos.get()) {
-            int min = Configs.AHP.minNapInBedIntervalSeconds.get() * 20;
-            int max = Configs.AHP.maxNapInBedIntervalSeconds.get() * 20;
+        if (Configs.AHP_MAIN.circadianChaos.get()) {
+            int min = Configs.AHP_MAIN.minNapInBedIntervalSeconds.get() * 20;
+            int max = Configs.AHP_MAIN.maxNapInBedIntervalSeconds.get() * 20;
             this.awakeTimer = this.hamster.getRandom().nextBetween(min, max);
         }
 
@@ -187,7 +187,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
 
         // --- Determine Delay ---
         // If lured, new bed, bypassed, or chaotic, skip the realistic hesitation
-        if (isLured || isNewBed || shouldBypass || Configs.AHP.circadianChaos.get()) {
+        if (isLured || isNewBed || shouldBypass || Configs.AHP_MAIN.circadianChaos.get()) {
             this.startDelay = 0;
             if (isLured) {
                 this.hamster.setLureToBedTimer(0);

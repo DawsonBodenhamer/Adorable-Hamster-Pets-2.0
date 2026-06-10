@@ -1,7 +1,6 @@
 package net.dawson.adorablehamsterpets.world.gen.feature;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.minecraft.registry.Registerable;
 import net.minecraft.registry.RegistryKey;

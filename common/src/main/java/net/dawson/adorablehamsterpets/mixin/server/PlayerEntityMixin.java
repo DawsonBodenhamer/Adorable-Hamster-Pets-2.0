@@ -411,7 +411,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
             // If dimension changed OR moved > 20 blocks in a single tick (400 sq dist)
             if (dimensionChanged || distSq > 400.0) {
-                if (Configs.AHP.enableTeleportRescue) {
+                if (Configs.AHP_MAIN.enableTeleportRescue) {
                     this.ahp$pocketFollowingHamsters(this.ahp$lastTickPos, this.ahp$lastTickDimension);
                 }
             }
@@ -425,13 +425,13 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Inject(method = "onDeath", at = @At("HEAD"))
     private void adorablehamsterpets$onDeath(DamageSource damageSource, CallbackInfo ci) {
         PlayerEntity self = (PlayerEntity) (Object) this;
-        if (!self.getWorld().isClient() && Configs.AHP.enableTeleportRescue) {
+        if (!self.getWorld().isClient() && Configs.AHP_MAIN.enableTeleportRescue) {
             this.ahp$pocketFollowingHamsters(self.getPos(), self.getWorld().getRegistryKey());
         }
 
         // Rescue petted hamster if player dies mid-pet
         if (!this.ahp$pettingHamster.isEmpty()) {
-            if (Configs.AHP.enableTeleportRescue) {
+            if (Configs.AHP_MAIN.enableTeleportRescue) {
                 // Hand off to transit system to drop near the player's respawn point
                 this.ahp$inTransitHamsters.add(this.ahp$pettingHamster);
             } else {
@@ -594,7 +594,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
 
         Random random = world.getRandom();
-        final AhpConfig config = AdorableHamsterPets.CONFIG;
+        final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
 
         // --- 3. Process Tasks & Cooldowns ---
         long currentTime = world.getTime();
@@ -670,7 +670,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             Entity parent2 = ((ServerWorld) world).getEntity(this.ahp$geneticParent2Uuid);
 
             if (parent1 != null && parent2 != null && parent1.isAlive() && parent2.isAlive()) {
-                int countPerTick = Configs.AHP.simulatedOffspringPerTick.get();
+                int countPerTick = Configs.AHP_MAIN.simulatedOffspringPerTick.get();
                 ParticleEffectsUtil.spawnGeneticProbabilityCloud(world, parent1.getPos(), parent2.getPos(), countPerTick);
             }
         }
@@ -914,21 +914,21 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public boolean ahp$canBreedHamsters() {
-        if (!Configs.AHP.playerBreedingLimit.get()) {
+        if (!Configs.AHP_MAIN.playerBreedingLimit.get()) {
             return true;
         }
 
         PlayerEntity self = (PlayerEntity) (Object) this;
 
         // Whitelist check
-        if (Configs.AHP.allowedBreeders.contains(self.getGameProfile().getName())) {
+        if (Configs.AHP_MAIN.allowedBreeders.contains(self.getGameProfile().getName())) {
             return true;
         }
 
-        LitterLimitType type = Configs.AHP.playerBreedingLimitType.get();
+        LitterLimitType type = Configs.AHP_MAIN.playerBreedingLimitType.get();
         if (type == LitterLimitType.DAILY) {
             long currentTime = this.getWorld().getTime();
-            long dayDuration = Configs.AHP.useIrlTimeForBreedingLimit.get() ? 1728000L : 24000L;
+            long dayDuration = Configs.AHP_MAIN.useIrlTimeForBreedingLimit.get() ? 1728000L : 24000L;
             long currentDay = currentTime / dayDuration;
             long lastDay = this.ahp$lastBreedingTime / dayDuration;
 
@@ -939,7 +939,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
 
         // Limit is in litters, so we multiply by 2 to get the number of individual hamsters they can feed
-        int maxHamsters = Configs.AHP.maxLittersPerPlayer.get() * 2;
+        int maxHamsters = Configs.AHP_MAIN.maxLittersPerPlayer.get() * 2;
         return this.ahp$hamstersFedForBreeding < maxHamsters;
     }
 
@@ -975,7 +975,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         if (this.adorablehamsterpets$mountOrderQueue.isEmpty()) return;
 
-        final AhpConfig config = AdorableHamsterPets.CONFIG;
+        final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
 
         // Peek next hamster
         ShoulderLocation locationToProcess = config.dismountOrder.get() == DismountOrder.LIFO
@@ -1045,7 +1045,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Override
     public boolean ahp$canPlayTagGame() {
         // --- 1. Check Config Toggle ---
-        if (!Configs.AHP.enableTagGamePlayerLimit.get()) {
+        if (!Configs.AHP_MAIN.enableTagGamePlayerLimit.get()) {
             return true;
         }
 
@@ -1063,7 +1063,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             this.ahp$lastTagGameDayTime = currentTime;
         }
 
-        return this.ahp$tagGamesPlayedToday < Configs.AHP.maxDailyTagGamesPerPlayer.get();
+        return this.ahp$tagGamesPlayedToday < Configs.AHP_MAIN.maxDailyTagGamesPerPlayer.get();
     }
 
     @Unique
@@ -1201,7 +1201,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         if (this.adorablehamsterpets$mountOrderQueue.isEmpty()) return;
 
-        final AhpConfig config = AdorableHamsterPets.CONFIG;
+        final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
+        final AhpUiConfig uiConfig = AdorableHamsterPets.UI_CONFIG;
         Random random = world.getRandom();
 
         // Peek next hamster
@@ -1333,7 +1334,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         this.adorablehamsterpets$isDiamondAlertConditionMet = false;
 
         world.playSound(null, self.getBlockPos(), ModSounds.HAMSTER_DISMOUNT.get(), SoundCategory.PLAYERS, 0.7f, 1.0f + random.nextFloat() * 0.2f);
-        if (config.enableShoulderDismountMessages && !DISMOUNT_MESSAGE_KEYS.isEmpty()) {
+        if (uiConfig.enableShoulderDismountMessages && !DISMOUNT_MESSAGE_KEYS.isEmpty()) {
             String chosenKey;
             if (DISMOUNT_MESSAGE_KEYS.size() == 1) {
                 chosenKey = DISMOUNT_MESSAGE_KEYS.get(0);
@@ -1419,7 +1420,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         else if (matchCount == 2) multiplier = 0.3f;
         else multiplier = 0.0f;
 
-        if (Configs.AHP.debugTreeDetection) {
+        if (Configs.AHP_MAIN.debugTreeDetection) {
             AdorableHamsterPets.LOGGER.info("""
                 [TreeHeist-Profitability] Calculating for Tree Anchor: {}
                   - Current World Time: {}
@@ -1680,7 +1681,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 }
             } else {
                 // Consider the guidebook officially lost
-                if (Configs.AHP.enableAutoGuidebookDeliveryFallback) {
+                if (Configs.AHP_UI.enableAutoGuidebookDeliveryFallback) {
                     if (ahp$tryFallbackDelivery(player)) {
                         this.ahp$cachedHasGuideBook = true;
                         this.ahp$guideBookCheckGracePeriodTimer = 0;

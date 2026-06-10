@@ -4,11 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import me.fzzyhmstrs.fzzy_config.api.ConfigApiJava;
-import me.fzzyhmstrs.fzzy_config.util.Translatable;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
-import net.dawson.adorablehamsterpets.config.AhpRootConfig;
-import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
+import net.dawson.adorablehamsterpets.config.*;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
 import net.minecraft.registry.RegistryWrapper;
@@ -75,25 +72,7 @@ public class EnUsGenerator extends FabricLanguageProvider {
             }
         };
 
-        // --- Helper to manually scrape class annotations ---
-        // TODO: REVERT THIS WORKAROUND IN FZZY CONFIG 0.7.4+
-        // In v0.7.3, ConfigApiJava.buildTranslations() ignores class-level descriptions.
-        // This is a bug, scheduled to be fixed in v0.7.4. Once updated, DELETE this 'ManualScraper' interface and lambda entirely.
-        // Also remove the @Translation annotations from AhpConfig, AhpRootConfig, and AhpWorldGenConfig.
-        ManualScraper scraper = (clazz, idStr) -> {
-            // Note: The keys here must match the prefix defined in the @Translation annotation on the config class.
-            String baseKey = "adorablehamsterpets." + idStr;
-
-            if (clazz.isAnnotationPresent(Translatable.Name.class)) {
-                safeSingleWriter.accept(baseKey, clazz.getAnnotation(Translatable.Name.class).value());
-            }
-            if (clazz.isAnnotationPresent(Translatable.Desc.class)) {
-                safeSingleWriter.accept(baseKey + ".desc", clazz.getAnnotation(Translatable.Desc.class).value());
-            }
-        };
-
         // 1. Generate for Root Config
-        scraper.scrape(AhpRootConfig.class, "root");
         ConfigApiJava.buildTranslations(
                 AhpRootConfig.class,
                 Identifier.of(AdorableHamsterPets.MOD_ID, "root"),
@@ -102,18 +81,43 @@ public class EnUsGenerator extends FabricLanguageProvider {
                 safeSingleWriter
         );
 
-        // 2. Generate for Main Config
-        scraper.scrape(AhpConfig.class, "main");
+        // 2. Generate for Supporter Perks Config
         ConfigApiJava.buildTranslations(
-                AhpConfig.class,
+                AhpSupporterConfig.class,
+                Identifier.of(AdorableHamsterPets.MOD_ID, "supporter_perks"),
+                "en_us",
+                false,
+                safeSingleWriter
+        );
+
+        // 3. Generate for Main Config
+        ConfigApiJava.buildTranslations(
+                AhpMainConfig.class,
                 Identifier.of(AdorableHamsterPets.MOD_ID, "main"),
                 "en_us",
                 false,
                 safeSingleWriter
         );
 
-        // 3. Generate for WorldGen Config
-        scraper.scrape(AhpWorldGenConfig.class, "worldgen");
+        // 4. Generate for Items Config
+        ConfigApiJava.buildTranslations(
+                AhpItemConfig.class,
+                Identifier.of(AdorableHamsterPets.MOD_ID, "items"),
+                "en_us",
+                false,
+                safeSingleWriter
+        );
+
+        // 5. Generate for UI Config
+        ConfigApiJava.buildTranslations(
+                AhpUiConfig.class,
+                Identifier.of(AdorableHamsterPets.MOD_ID, "ui"),
+                "en_us",
+                false,
+                safeSingleWriter
+        );
+
+        // 6. Generate for WorldGen Config
         ConfigApiJava.buildTranslations(
                 AhpWorldGenConfig.class,
                 Identifier.of(AdorableHamsterPets.MOD_ID, "worldgen"),
@@ -121,10 +125,5 @@ public class EnUsGenerator extends FabricLanguageProvider {
                 false,
                 safeSingleWriter
         );
-    }
-
-    @FunctionalInterface
-    private interface ManualScraper {
-        void scrape(Class<?> clazz, String idStr);
     }
 }

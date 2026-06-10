@@ -29,7 +29,7 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
 
     @Override
     public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
-        if (!Configs.AHP.enableJadeHamsterDebugInfo) {
+        if (!Configs.AHP_UI.enableJadeHamsterDebugInfo) {
             return;
         }
 
@@ -120,9 +120,9 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
             tooltip.add(fText("  Current Ore Target: %s", Text.literal("None").formatted(Formatting.GRAY)));
         }
         long foundOreCooldown = hamster.foundOreCooldownEndTick - hamster.getWorld().getTime();
-        if (Configs.AHP.enableIndependentDiamondSeekCooldown && foundOreCooldown > 0) {
+        if (Configs.AHP_MAIN.enableIndependentDiamondSeekCooldown && foundOreCooldown > 0) {
             tooltip.add(fText("  Found Ore Cooldown: %s sec", Text.literal(String.format("%.1f", foundOreCooldown / 20.0)).formatted(Formatting.YELLOW)));
-        } else if (Configs.AHP.enableIndependentDiamondSeekCooldown) {
+        } else if (Configs.AHP_MAIN.enableIndependentDiamondSeekCooldown) {
             tooltip.add(fText("  Found Ore Cooldown: %s", Text.literal("Ready").formatted(Formatting.GREEN)));
         } else {
             tooltip.add(fText("  Found Ore Cooldown: %s", Text.literal("Disabled").formatted(Formatting.GRAY)));

@@ -106,7 +106,7 @@ public final class HamsterAIUtil {
         Random random = hamster.getRandom();
 
         // Behavior A: Looping Cleaning Animation
-        int cleaningChance = Configs.AHP.cleaningChanceDenominator.get();
+        int cleaningChance = Configs.AHP_MAIN.cleaningChanceDenominator.get();
         if (cleaningChance > 0 && random.nextInt(cleaningChance) == 0) {
             hamster.ambientSittingTimer = random.nextBetween(30, 60);
             hamster.setHamsterFlag(HamsterEntity.CLEANING_FLAG, true);
@@ -114,7 +114,7 @@ public final class HamsterAIUtil {
         }
 
         // Behavior B: Triggerable Rolling Animation
-        int rollingChance = Configs.AHP.rollingChanceDenominator.get();
+        int rollingChance = Configs.AHP_MAIN.rollingChanceDenominator.get();
         if (rollingChance > 0 && random.nextInt(rollingChance) == 0) {
             // Assign a timer lock so it isn't interrupted by other ambient systems
             hamster.ambientSittingTimer = 60; // Anim length
@@ -146,7 +146,7 @@ public final class HamsterAIUtil {
                             }
 
                             // Check dynamic config strings
-                            if (!Configs.AHP.dancingMusicDiscStrings.isEmpty()) {
+                            if (!Configs.AHP_ITEMS.dancingMusicDiscStrings.isEmpty()) {
                                 String songDesc = discItem.getDescription().getString().toLowerCase(Locale.ROOT);
                                 String itemName = discStack.getName().getString().toLowerCase(Locale.ROOT);
                                 String itemKey = discStack.getTranslationKey().toLowerCase(Locale.ROOT);
@@ -162,7 +162,7 @@ public final class HamsterAIUtil {
                                     }
                                 }
 
-                                for (String searchStr : Configs.AHP.dancingMusicDiscStrings) {
+                                for (String searchStr : Configs.AHP_ITEMS.dancingMusicDiscStrings) {
                                     String lowerSearch = searchStr.toLowerCase(Locale.ROOT);
 
                                     if (songDesc.contains(lowerSearch) || itemName.contains(lowerSearch) || itemKey.contains(lowerSearch)) {

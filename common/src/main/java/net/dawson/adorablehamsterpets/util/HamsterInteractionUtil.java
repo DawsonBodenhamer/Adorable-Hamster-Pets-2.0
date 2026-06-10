@@ -60,7 +60,7 @@ public final class HamsterInteractionUtil {
     public static ActionResult handleDebugToggle(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
         if (player.isSneaking() && stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
             if (hamster.getWorld().isClient()) {
-                AhpConfig currentConfig = AdorableHamsterPets.CONFIG;
+                AhpUiConfig currentConfig = AdorableHamsterPets.UI_CONFIG;
                 boolean newSetting = !currentConfig.enableJadeHamsterDebugInfo;
 
                 currentConfig.enableJadeHamsterDebugInfo = newSetting;
@@ -135,7 +135,7 @@ public final class HamsterInteractionUtil {
             }
 
             // Standard Player-vs-Hamster Tag
-            if (hamster.isOwner(player) || AdorableHamsterPets.CONFIG.allowStrangerTag) {
+            if (hamster.isOwner(player) || AdorableHamsterPets.MAIN_CONFIG.allowStrangerTag) {
                 if (!hamster.getWorld().isClient()) {
                     // 1. Stop Goal & Clear State
                     hamster.setPlayingTag(false);
@@ -149,7 +149,7 @@ public final class HamsterInteractionUtil {
 
                     // 2. Set Cooldowns
                     // Hamster cooldown
-                    hamster.tagGameCooldownEndTick = hamster.getWorld().getTime() + Configs.AHP.hamsterVersusPlayerTagCooldown.get();
+                    hamster.tagGameCooldownEndTick = hamster.getWorld().getTime() + Configs.AHP_MAIN.hamsterVersusPlayerTagCooldown.get();
                     // Player daily limit increment
                     if (player instanceof PlayerEntityAccessor accessor) {
                         accessor.ahp$incrementTagGameCount();
@@ -204,7 +204,7 @@ public final class HamsterInteractionUtil {
             // --- 1. Normal Taming Path ---
             if (isSneaking && isTamingFood) {
                 // Block taming if it is an ai-disabled statue and config forbids it
-                if (hamster.isAiDisabled() && !AdorableHamsterPets.CONFIG.allowTamingAiDisabled) {
+                if (hamster.isAiDisabled() && !AdorableHamsterPets.MAIN_CONFIG.allowTamingAiDisabled) {
                     if (!hamster.getWorld().isClient()) {
                         player.sendMessage(Text.translatable("message.adorablehamsterpets.taming_statue_refusal").formatted(Formatting.RED), true);
                     }
@@ -217,7 +217,7 @@ public final class HamsterInteractionUtil {
                     }
 
                     // Use config value for taming chance
-                    final AhpConfig config = AdorableHamsterPets.CONFIG;
+                    final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
                     int denominator = Math.max(1, config.tamingChanceDenominator.get()); // Ensure denominator is at least 1
                     if (hamster.getRandom().nextInt(denominator) == 0) {
                         hamster.setOwnerUuid(player.getUuid());
@@ -245,8 +245,8 @@ public final class HamsterInteractionUtil {
                         }
 
                         // Baby link warning
-                        if (Configs.AHP.enableTamedBabyWarningMessage && hamster.isBaby() && hamster.getParentUuid() != null) {
-                            Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
+                        if (Configs.AHP_UI.enableTamedBabyWarningMessage && hamster.isBaby() && hamster.getParentUuid() != null) {
+                            Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
                             player.sendMessage(Text.translatable("message.adorablehamsterpets.tamed_baby_still_linked_warning", lureName).formatted(Formatting.WHITE), true);
                         }
                     } else {
@@ -354,7 +354,7 @@ public final class HamsterInteractionUtil {
 
                     nbt.putUuid(ModNbtKeys.LINKED_HAMSTER_UUID, hamster.getUuid());
                     nbt.putString(ModNbtKeys.LINKED_HAMSTER_NAME, nameJson);
-                    nbt.putString(ModNbtKeys.WANDER_DISTANCE, AdorableHamsterPets.CONFIG.defaultWanderDistance.get().name());
+                    nbt.putString(ModNbtKeys.WANDER_DISTANCE, AdorableHamsterPets.MAIN_CONFIG.defaultWanderDistance.get().name());
 
                     player.setStackInHand(hand, newStack);
 
@@ -368,7 +368,7 @@ public final class HamsterInteractionUtil {
                     }
                 } else {
                     // Re-configuring distance of already linked bed
-                    WanderDistance currentDistance = AdorableHamsterPets.CONFIG.defaultWanderDistance.get();
+                    WanderDistance currentDistance = AdorableHamsterPets.MAIN_CONFIG.defaultWanderDistance.get();
                     NbtCompound stackNbt = stack.getOrCreateNbt();
 
                     if (stackNbt.contains(ModNbtKeys.WANDER_DISTANCE)) {
@@ -572,7 +572,7 @@ public final class HamsterInteractionUtil {
                 hamster.getWorld().playSound(null, hamster.getBlockPos(), SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.5f, 1.2f);
                 ParticleEffectsUtil.spawnParticlesOnEntity(hamster, ParticleTypes.HEART, 3, 0.5, 0.5, 0.0, 0.5);
 
-                if (!player.getAbilities().creativeMode && Configs.AHP.consumeLureItem) {
+                if (!player.getAbilities().creativeMode && Configs.AHP_MAIN.consumeLureItem) {
                     stack.decrement(1);
                 }
             }
@@ -596,7 +596,7 @@ public final class HamsterInteractionUtil {
     public static ActionResult handleInventoryOpen(HamsterEntity hamster, PlayerEntity player, Hand hand) {
         if (player.isSneaking()) {
             if (!hamster.getWorld().isClient()) {
-                if (hamster.isCheekPouchUnlocked() || !AdorableHamsterPets.CONFIG.requireFoodMixToUnlockCheeks) {
+                if (hamster.isCheekPouchUnlocked() || !AdorableHamsterPets.MAIN_CONFIG.requireFoodMixToUnlockCheeks) {
                     MenuRegistry.openExtendedMenu((ServerPlayerEntity) player, new HamsterScreenHandlerFactory(hamster));
                 } else {
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.cheek_pouch_locked").formatted(Formatting.WHITE), true);
@@ -653,10 +653,10 @@ public final class HamsterInteractionUtil {
     @Nullable
     public static ShoulderLocation getNextAvailableSlot(PlayerEntity player) {
         PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
-        MountPriority priority = Configs.AHP.mountPriority.get();
+        MountPriority priority = Configs.AHP_MAIN.mountPriority.get();
 
         // --- Capacity Check ---
-        if (playerAccessor.adorablehamsterpets$getMountOrderQueue().size() >= Configs.AHP.maxShoulderHamsters.get()) {
+        if (playerAccessor.adorablehamsterpets$getMountOrderQueue().size() >= Configs.AHP_MAIN.maxShoulderHamsters.get()) {
             return null;
         }
 
@@ -702,7 +702,7 @@ public final class HamsterInteractionUtil {
             return null;
         }
 
-        DismountOrder order = Configs.AHP.dismountOrder.get();
+        DismountOrder order = Configs.AHP_MAIN.dismountOrder.get();
         return order == DismountOrder.LIFO ? queue.peekLast() : queue.peekFirst();
     }
 
@@ -799,7 +799,7 @@ public final class HamsterInteractionUtil {
                         0.05
                 );
 
-                if (!player.getAbilities().creativeMode && Configs.AHP.consumeLureItem) {
+                if (!player.getAbilities().creativeMode && Configs.AHP_MAIN.consumeLureItem) {
                     stack.decrement(1);
                 }
             }
@@ -814,7 +814,7 @@ public final class HamsterInteractionUtil {
      * it pulls exclusively from a custom mini game rewards list.
      */
     private static Item getRandomMiniGameReward(HamsterEntity hamster) {
-        if (!Configs.AHP.usePouchLootForMiniGameRewards) {
+        if (!Configs.AHP_MAIN.usePouchLootForMiniGameRewards) {
             return ConfigDataCache.getRandomCustomMiniGameReward(hamster.getRandom());
         }
 

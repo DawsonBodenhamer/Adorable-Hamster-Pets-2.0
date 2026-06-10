@@ -41,7 +41,7 @@ public class ModItems {
             () -> new AliasedBlockItem(ModBlocks.GREEN_BEANS_CROP.get(), new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.green_bean_seeds.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.green_bean_seeds.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -55,7 +55,7 @@ public class ModItems {
             () -> new AliasedBlockItem(ModBlocks.CUCUMBER_CROP.get(), new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cucumber_seeds.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.cucumber_seeds.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -75,7 +75,7 @@ public class ModItems {
 
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sunflower_seeds.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sunflower_seeds.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -87,27 +87,27 @@ public class ModItems {
 
     public static final RegistrySupplier<Item> CUCUMBER = registerItem("cucumber",
             () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.CUCUMBER),
-                    Configs.AHP.cucumberNutrition, Configs.AHP.cucumberSaturation,
+                    Configs.AHP_ITEMS.cucumberNutrition, Configs.AHP_ITEMS.cucumberSaturation,
                     2, 0.3F, "tooltip.adorablehamsterpets.cucumber"));
 
     public static final RegistrySupplier<Item> SLICED_CUCUMBER = registerItem("sliced_cucumber",
             () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.SLICED_CUCUMBER),
-                    Configs.AHP.slicedCucumberNutrition, Configs.AHP.slicedCucumberSaturation,
+                    Configs.AHP_ITEMS.slicedCucumberNutrition, Configs.AHP_ITEMS.slicedCucumberSaturation,
                     1, 0.3F, "tooltip.adorablehamsterpets.sliced_cucumber"));
 
     public static final RegistrySupplier<Item> GREEN_BEANS = registerItem("green_beans",
             () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.GREEN_BEANS),
-                    Configs.AHP.greenBeansNutrition, Configs.AHP.greenBeansSaturation,
+                    Configs.AHP_ITEMS.greenBeansNutrition, Configs.AHP_ITEMS.greenBeansSaturation,
                     2, 0.3F, "tooltip.adorablehamsterpets.green_beans"));
 
     public static final RegistrySupplier<Item> STEAMED_GREEN_BEANS = registerItem("steamed_green_beans",
             () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.STEAMED_GREEN_BEANS),
-                    Configs.AHP.steamedGreenBeansNutrition, Configs.AHP.steamedGreenBeansSaturation,
+                    Configs.AHP_ITEMS.steamedGreenBeansNutrition, Configs.AHP_ITEMS.steamedGreenBeansSaturation,
                     3, 0.6F, "tooltip.adorablehamsterpets.steamed_green_beans"));
 
     public static final RegistrySupplier<Item> HAMSTER_FOOD_MIX = registerItem("hamster_food_mix",
             () -> new ConfigurableFoodItem(new Item.Settings().food(ModFoodComponents.HAMSTER_FOOD_MIX).maxCount(16),
-                    Configs.AHP.hamsterFoodMixNutrition, Configs.AHP.hamsterFoodMixSaturation,
+                    Configs.AHP_ITEMS.hamsterFoodMixNutrition, Configs.AHP_ITEMS.hamsterFoodMixSaturation,
                     4, 0.4F, "tooltip.adorablehamsterpets.hamster_food_mix"));
 
     public static final RegistrySupplier<Item> CHEESE = registerItem("cheese",
@@ -118,7 +118,7 @@ public class ModItems {
             () -> new MusicDiscItem(15, ModSounds.AHP_THEME_SONG.get(), new Item.Settings().maxCount(1).rarity(Rarity.RARE), 159) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.music_disc_cheese.hint").formatted(Formatting.GOLD));
                     } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
@@ -132,7 +132,7 @@ public class ModItems {
             () -> new AliasedBlockItem(Blocks.OAK_SAPLING, new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.acorn.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.acorn.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -145,7 +145,7 @@ public class ModItems {
             () -> new Item(new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.acorn_hat.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.acorn_hat.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -159,7 +159,7 @@ public class ModItems {
             () -> new Item(new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.acorn_shard.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.acorn_shard.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -174,7 +174,7 @@ public class ModItems {
             () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.ACORN, new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_armor_acorn.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_armor_acorn.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -188,7 +188,7 @@ public class ModItems {
             () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.IRON, new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_armor_iron.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_armor_iron.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -202,7 +202,7 @@ public class ModItems {
             () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.GOLD, new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_armor_gold.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_armor_gold.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -216,7 +216,7 @@ public class ModItems {
             () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.DIAMOND, new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_armor_diamond.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_armor_diamond.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -230,7 +230,7 @@ public class ModItems {
             () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.NETHERITE, new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_armor_netherite.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_armor_netherite.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -258,7 +258,7 @@ public class ModItems {
             () -> new BlockItem(ModBlocks.WILD_GREEN_BEAN_BUSH.get(), new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("block.adorablehamsterpets.wild_green_bean_bush.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("block.adorablehamsterpets.wild_green_bean_bush.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -272,7 +272,7 @@ public class ModItems {
             () -> new BlockItem(ModBlocks.WILD_CUCUMBER_BUSH.get(), new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("block.adorablehamsterpets.wild_cucumber_bush.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("block.adorablehamsterpets.wild_cucumber_bush.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -286,7 +286,7 @@ public class ModItems {
             () -> new BlockItem(ModBlocks.SUNFLOWER_BLOCK.get(), new Item.Settings()) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-                    if (Configs.AHP.enableItemTooltips) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("block.adorablehamsterpets.sunflower_block.hint1").formatted(Formatting.GOLD));
                         tooltip.add(Text.translatable("block.adorablehamsterpets.sunflower_block.hint2").formatted(Formatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
@@ -349,7 +349,7 @@ public class ModItems {
                 // Vanilla SmithingTemplateItem adds its own tooltip info first.
                 super.appendTooltip(stack, world, tooltip, context);
 
-                if (Configs.AHP.enableItemTooltips) {
+                if (Configs.AHP_UI.enableItemTooltips) {
                     tooltip.add(Text.empty()); // Spacer
                     // Use dynamic keys based on the material name (iron, gold, diamond, netherite)
                     tooltip.add(Text.translatable("tooltip.adorablehamsterpets.smithing_template." + materialName + ".hint1").formatted(Formatting.GOLD));

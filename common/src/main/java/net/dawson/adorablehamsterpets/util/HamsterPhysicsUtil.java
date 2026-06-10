@@ -71,7 +71,7 @@ public final class HamsterPhysicsUtil {
 
         for (int i = 1; i <= 20; i++) {
             if (!projectileDummy.hasNoGravity()) {
-                simVel = simVel.add(0.0, -Configs.AHP.hamsterThrowGravity.get(), 0.0);
+                simVel = simVel.add(0.0, -Configs.AHP_MAIN.hamsterThrowGravity.get(), 0.0);
             }
 
             Vec3d nextPos = simPos.add(simVel);
@@ -177,7 +177,7 @@ public final class HamsterPhysicsUtil {
         EntityAttributeInstance speedAttribute = hamster.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
         EntityAttributeInstance knockbackAttribute = hamster.getAttributeInstance(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE);
 
-        boolean perksEnabled = Configs.AHP.enableArmorPerks.get();
+        boolean perksEnabled = Configs.AHP_MAIN.enableArmorPerks.get();
         boolean shouldHaveSpeed = false;
         boolean shouldHaveKnockback = false;
 
@@ -223,11 +223,11 @@ public final class HamsterPhysicsUtil {
      * Calculates total throw damage based on configuration and current armor
      */
     public static float calculateThrowDamage(HamsterEntity hamster, ItemStack armorStack) {
-        float damageAmount = Configs.AHP.hamsterThrowDamage.get().floatValue();
+        float damageAmount = Configs.AHP_MAIN.hamsterThrowDamage.get().floatValue();
 
-        if (Configs.AHP.enableArmorPerks.get() && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
+        if (Configs.AHP_MAIN.enableArmorPerks.get() && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
             if (armorItem.getMaterial() == HamsterArmorItem.HamsterArmorMaterial.NETHERITE) {
-                damageAmount += Configs.AHP.netheriteArmorThrowDamageBonus.get().floatValue();
+                damageAmount += Configs.AHP_MAIN.netheriteArmorThrowDamageBonus.get().floatValue();
             }
         }
 

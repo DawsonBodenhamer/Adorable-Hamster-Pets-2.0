@@ -55,7 +55,7 @@ public final class HamsterHarvestUtil {
     public static List<ItemEntity> harvestAndReplant(ServerWorld world, BlockPos pos, BlockState state) {
         List<ItemEntity> spawnedItems = new ArrayList<>();
 
-        boolean shouldReplant = world.random.nextFloat() < AdorableHamsterPets.CONFIG.cropReplantChance.get();
+        boolean shouldReplant = world.random.nextFloat() < AdorableHamsterPets.MAIN_CONFIG.cropReplantChance.get();
 
         // --- 1. Calculate standard loot drops ---
         LootContextParameterSet.Builder builder = new LootContextParameterSet.Builder(world)

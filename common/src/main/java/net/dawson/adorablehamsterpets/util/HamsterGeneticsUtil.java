@@ -148,7 +148,7 @@ public final class HamsterGeneticsUtil {
         }
 
         // Force overlay if configured
-        if (AdorableHamsterPets.CONFIG.forceBreedingOverlay) {
+        if (AdorableHamsterPets.MAIN_CONFIG.forceBreedingOverlay) {
             breedChance = 1.0f;
         }
 

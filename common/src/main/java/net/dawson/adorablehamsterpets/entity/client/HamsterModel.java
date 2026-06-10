@@ -1,6 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
@@ -56,7 +57,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         var processor = this.getAnimationProcessor();
 
         // --- Performance Mode ---
-        if (Configs.AHP.performanceMode) {
+        if (AdorableHamsterPetsClient.isPerformanceModeEnabled) {
             // Hide everything except absolute essentials
             for (CoreGeoBone bone : processor.getRegisteredBones()) {
                 String name = bone.getName();
@@ -102,11 +103,11 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
 
         // --- Equipment State ---
         ItemStack armorStack = entity.getArmorStack();
-        boolean isArmorVisible = Configs.AHP.enableArmorVisuals && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem;
+        boolean isArmorVisible = Configs.AHP_MAIN.enableArmorVisuals && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem;
 
         // --- Pink Petal Logic ---
         int petalType = entity.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE);
-        boolean useArmorPetals = isArmorVisible && Configs.AHP.renderPinkPetalsWithArmor.get();
+        boolean useArmorPetals = isArmorVisible && Configs.AHP_MAIN.renderPinkPetalsWithArmor.get();
 
         if (petalHeadNoArmorBone != null) petalHeadNoArmorBone.setHidden(petalType != 1 || useArmorPetals);
         if (petalSideNoArmorBone != null) petalSideNoArmorBone.setHidden(petalType != 2 || useArmorPetals);
@@ -141,7 +142,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             }
 
             // Check armor slot 7 and config if not already showing hat
-            if (!shouldShowHat && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP.renderAcornHat.get()) {
+            if (!shouldShowHat && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP_MAIN.renderAcornHat.get()) {
                 shouldHideEar = true;
                 shouldShowHat = true;
             }

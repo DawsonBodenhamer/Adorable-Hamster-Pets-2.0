@@ -28,7 +28,7 @@ public class DynamicRideKeyBinding extends KeyBinding {
      */
     @Override
     public String getTranslationKey() {
-        if (Configs.AHP.enableMountableHamsters.get()) {
+        if (Configs.AHP_MAIN.enableMountableHamsters.get()) {
             return this.enabledTranslationKey;
         } else {
             return this.enabledTranslationKey + ".disabled";

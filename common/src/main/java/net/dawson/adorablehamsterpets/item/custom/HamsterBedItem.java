@@ -127,7 +127,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                 stackVariant = WoodVariant.valueOf(stack.getNbt().getString(ModNbtKeys.WOOD_VARIANT));
             } catch (IllegalArgumentException ignored) {}
         }
-        if (Configs.AHP.enableItemTooltips) {
+        if (Configs.AHP_UI.enableItemTooltips) {
             if (Screen.hasShiftDown()) {
                 // --- Expanded Tooltip (Sneaking) ---
                 // --- 1. Main Hints ---
@@ -137,15 +137,15 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls2").formatted(Formatting.GRAY));
 
                 // --- 2. Dynamic Interaction Hints ---
-                Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
-                Text repellentName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.bedAvoidanceFoods).copy().formatted(Formatting.RED, Formatting.BOLD);
+                Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
+                Text repellentName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.bedAvoidanceFoods).copy().formatted(Formatting.RED, Formatting.BOLD);
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.lure_hint", lureName).formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.repellent_hint", repellentName).formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.unlink_hint", repellentName).formatted(Formatting.GRAY));
 
                 // --- 3. Respawn Status & Hint ---
-                boolean configEnabled = Configs.AHP.enableRespawnInBed.get();
-                boolean freeRespawns = Configs.AHP.freeBedRespawns.get();
+                boolean configEnabled = Configs.AHP_MAIN.enableRespawnInBed.get();
+                boolean freeRespawns = Configs.AHP_MAIN.freeBedRespawns.get();
 
                 Text statusText;
                 Text hintText;
@@ -159,7 +159,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                 } else {
                     // Items in inventory are always "Inactive" regarding respawn state
                     statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.inactive");
-                    Text tributeName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.resurrectionTributes);
+                    Text tributeName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.resurrectionTributes);
                     hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.inactive", tributeName.copy().formatted(Formatting.GOLD, Formatting.BOLD));
                 }
 
@@ -182,9 +182,9 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                             try {
                                 WanderDistance wanderDistance = WanderDistance.valueOf(nbt.getString(ModNbtKeys.WANDER_DISTANCE));
                                 int radius = switch (wanderDistance) {
-                                    case NEAR -> Configs.AHP.wanderDistanceNear.get();
-                                    case FAR -> Configs.AHP.wanderDistanceFar.get();
-                                    default -> Configs.AHP.wanderDistanceMedium.get();
+                                    case NEAR -> Configs.AHP_MAIN.wanderDistanceNear.get();
+                                    case FAR -> Configs.AHP_MAIN.wanderDistanceFar.get();
+                                    default -> Configs.AHP_MAIN.wanderDistanceMedium.get();
                                 };
                                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.wander_distance", Text.translatable(wanderDistance.translationKey()), radius).formatted(Formatting.AQUA));
                             } catch (IllegalArgumentException ignored) {}

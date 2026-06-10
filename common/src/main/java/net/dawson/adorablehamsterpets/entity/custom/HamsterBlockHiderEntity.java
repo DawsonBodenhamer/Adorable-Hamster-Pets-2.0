@@ -90,7 +90,7 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
         HamsterEntity newHamster = super.popOut(success);
 
         if (newHamster != null) {
-            newHamster.hideAndSeekCooldownEndTick = serverWorld.getTime() + (Configs.AHP.hideAndSeekCooldownSeconds.get() * 20L);
+            newHamster.hideAndSeekCooldownEndTick = serverWorld.getTime() + (Configs.AHP_MAIN.hideAndSeekCooldownSeconds.get() * 20L);
 
             if (!success) {
                 // Failure: Timer expired or block broken
@@ -291,7 +291,7 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
 
         if (ConfigDataCache.isHideAndSeekBlacklisted(state)) return false;
         if (ConfigDataCache.isHideAndSeekBlock(state)) return true;
-        if (Configs.AHP.allowInventoryHiding && this.getWorld().getBlockEntity(this.anchorPos) instanceof Inventory) return true;
+        if (Configs.AHP_MAIN.allowInventoryHiding && this.getWorld().getBlockEntity(this.anchorPos) instanceof Inventory) return true;
 
         return false;
     }

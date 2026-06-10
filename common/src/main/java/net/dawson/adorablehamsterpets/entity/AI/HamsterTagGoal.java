@@ -42,7 +42,7 @@ public class HamsterTagGoal extends Goal {
     @Override
     public boolean canStart() {
         // --- 1. Config Check ---
-        if (!Configs.AHP.enableTagGame) return false;
+        if (!Configs.AHP_MAIN.enableTagGame) return false;
 
         // --- 2. Cooldown Check ---
         if (this.hamster.getWorld().getTime() < this.hamster.tagGameCooldownEndTick) return false;
@@ -86,7 +86,7 @@ public class HamsterTagGoal extends Goal {
 
         // --- 6. Permission Check ---
         boolean isOwner = this.hamster.isOwner(player);
-        if (!isOwner && !Configs.AHP.allowStrangerTag) return false;
+        if (!isOwner && !Configs.AHP_MAIN.allowStrangerTag) return false;
 
         // --- 7. Player Limit Check ---
         if (player instanceof PlayerEntityAccessor accessor) {
@@ -107,7 +107,7 @@ public class HamsterTagGoal extends Goal {
         }
 
         // RNG Check
-        return this.hamster.getRandom().nextInt(Configs.AHP.tagChanceDenominator.get()) == 0;
+        return this.hamster.getRandom().nextInt(Configs.AHP_MAIN.tagChanceDenominator.get()) == 0;
     }
 
     @Override
@@ -153,8 +153,8 @@ public class HamsterTagGoal extends Goal {
         }
 
         // Init timeout from config
-        int minDuration = Configs.AHP.minMiniGameFleeDurationSeconds.get() * 20;
-        int maxDuration = Configs.AHP.maxMiniGameFleeDurationSeconds.get() * 20;
+        int minDuration = Configs.AHP_MAIN.minMiniGameFleeDurationSeconds.get() * 20;
+        int maxDuration = Configs.AHP_MAIN.maxMiniGameFleeDurationSeconds.get() * 20;
         int gameDuration = this.hamster.getRandom().nextBetween(minDuration, maxDuration);
 
         this.hamster.setGenericInteractionTimer(gameDuration);
@@ -192,8 +192,8 @@ public class HamsterTagGoal extends Goal {
         HamsterMovementUtil.faceEntity(this.hamster, this.targetPlayer);
 
         // Config Values
-        double minFleeDist = Configs.AHP.minMiniGameFleeDistance.get();
-        double maxFleeDist = Configs.AHP.maxMiniGameFleeDistance.get();
+        double minFleeDist = Configs.AHP_MAIN.minMiniGameFleeDistance.get();
+        double maxFleeDist = Configs.AHP_MAIN.maxMiniGameFleeDistance.get();
 
         switch (this.currentState) {
             case FLEEING -> {

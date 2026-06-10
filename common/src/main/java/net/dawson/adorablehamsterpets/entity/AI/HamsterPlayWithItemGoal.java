@@ -79,7 +79,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
             return true;
         }
 
-        if (isStealable && this.hamster.getRandom().nextFloat() <= Configs.AHP.itemThieveryChance.get()) {
+        if (isStealable && this.hamster.getRandom().nextFloat() <= Configs.AHP_MAIN.itemThieveryChance.get()) {
             return true;
         }
 
@@ -102,7 +102,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
             if (this.isFriendlyDelivery) {
                 this.currentSubState = SubState.RETURNING;
             } else {
-                if (HamsterMovementUtil.shouldFlee(this.hamster, this.owner, Configs.AHP.minMiniGameFleeDistance.get())) {
+                if (HamsterMovementUtil.shouldFlee(this.hamster, this.owner, Configs.AHP_MAIN.minMiniGameFleeDistance.get())) {
                     this.currentSubState = SubState.FLEEING;
                 } else {
                     this.currentSubState = SubState.PLAYING;
@@ -112,8 +112,8 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
             // Standard start from scratch
             super.start();
             this.itemInterestTimer = this.hamster.getRandom().nextBetween(
-                    Configs.AHP.minMiniGameFleeDurationSeconds.get() * 20,
-                    Configs.AHP.maxMiniGameFleeDurationSeconds.get() * 20
+                    Configs.AHP_MAIN.minMiniGameFleeDurationSeconds.get() * 20,
+                    Configs.AHP_MAIN.maxMiniGameFleeDurationSeconds.get() * 20
             );
             this.hamster.setGenericInteractionTimer(this.itemInterestTimer);
             this.currentSubState = SubState.NONE;
@@ -131,7 +131,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
 
     @Override
     protected boolean canStartBaseChecks() {
-        if (!Configs.AHP.enableItemStealing) {
+        if (!Configs.AHP_MAIN.enableItemStealing) {
             return false;
         }
 
@@ -227,8 +227,8 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
             case FLEEING -> {
                 this.hamster.setTaunting(false);
 
-                double minFleeDist = Configs.AHP.minMiniGameFleeDistance.get();
-                double maxFleeDist = Configs.AHP.maxMiniGameFleeDistance.get();
+                double minFleeDist = Configs.AHP_MAIN.minMiniGameFleeDistance.get();
+                double maxFleeDist = Configs.AHP_MAIN.maxMiniGameFleeDistance.get();
 
                 if (HamsterMovementUtil.shouldStopFleeing(this.hamster, this.owner, maxFleeDist)) {
                     this.currentSubState = SubState.PLAYING;
@@ -280,7 +280,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
                     }
                 } else {
                     // Taunting
-                    if (HamsterMovementUtil.shouldFlee(this.hamster, this.owner, Configs.AHP.minMiniGameFleeDistance.get())) {
+                    if (HamsterMovementUtil.shouldFlee(this.hamster, this.owner, Configs.AHP_MAIN.minMiniGameFleeDistance.get())) {
                         this.currentSubState = SubState.FLEEING;
                         this.hamster.setTaunting(false);
                         this.playAnimSettleTicks = 0;
@@ -292,7 +292,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
 
     @Override
     protected void onGoalStopped() {
-        this.hamster.stealingCooldownEndTick = this.world.getTime() + Configs.AHP.stealCooldownTicks.get();
+        this.hamster.stealingCooldownEndTick = this.world.getTime() + Configs.AHP_MAIN.stealCooldownTicks.get();
 
         // Safely drop item if still held when goal ends unexpectedly
         if (this.hamster.isHoldingMouthItem()) {

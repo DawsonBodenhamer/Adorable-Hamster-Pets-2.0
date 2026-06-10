@@ -53,7 +53,7 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
         }
 
         // Check explicit seed refusal config
-        if (Configs.AHP.ignoreSeeds && (stack.isIn(ItemTags.VILLAGER_PLANTABLE_SEEDS) || stack.getTranslationKey().contains("seed"))) {
+        if (Configs.AHP_MAIN.ignoreSeeds && (stack.isIn(ItemTags.VILLAGER_PLANTABLE_SEEDS) || stack.getTranslationKey().contains("seed"))) {
             return false;
         }
 
@@ -72,7 +72,7 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
         }
 
         // Check config
-        if (Configs.AHP.restrictItemSnackingToWanderMode && !this.hamster.isWanderModeActive()) {
+        if (Configs.AHP_MAIN.restrictItemSnackingToWanderMode && !this.hamster.isWanderModeActive()) {
             return false;
         }
 
@@ -154,6 +154,6 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
     protected void onGoalStopped() {
         this.isFinished = false;
         this.postPounceTimer = 0;
-        this.hamster.cropSnackCooldownEndTick = this.world.getTime() + Configs.AHP.cropSnackCooldownTicks.get();
+        this.hamster.cropSnackCooldownEndTick = this.world.getTime() + Configs.AHP_MAIN.cropSnackCooldownTicks.get();
     }
 }

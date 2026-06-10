@@ -101,7 +101,7 @@ public class HamsterSniffForOreGoal extends Goal {
 
     @Override
     public boolean canStart() {
-        if (this.world.isClient || !Configs.AHP.enableIndependentDiamondSeeking) {
+        if (this.world.isClient || !Configs.AHP_MAIN.enableIndependentDiamondSeeking) {
             return false;
         }
 
@@ -118,7 +118,7 @@ public class HamsterSniffForOreGoal extends Goal {
             return false;
         }
 
-        if (Configs.AHP.enableIndependentDiamondSeekCooldown && this.hamster.foundOreCooldownEndTick > this.world.getTime()) {
+        if (Configs.AHP_MAIN.enableIndependentDiamondSeekCooldown && this.hamster.foundOreCooldownEndTick > this.world.getTime()) {
             return false;
         }
 
@@ -278,7 +278,7 @@ public class HamsterSniffForOreGoal extends Goal {
         List<BlockPos> exposedCelebrationOres = new ArrayList<>();
         List<BlockPos> buriedCelebrationOres = new ArrayList<>();
         List<BlockPos> buriedSulkingOres = new ArrayList<>();
-        int radius = Configs.AHP.diamondSeekRadius.get();
+        int radius = Configs.AHP_MAIN.diamondSeekRadius.get();
 
         for (BlockPos pos : BlockPos.iterateOutwards(this.hamster.getBlockPos(), radius, radius, radius)) {
             BlockState state = this.world.getBlockState(pos);
@@ -297,7 +297,7 @@ public class HamsterSniffForOreGoal extends Goal {
         }
 
         // Make mistake if applicable
-        boolean targetIsSulkingOre = !buriedSulkingOres.isEmpty() && this.world.random.nextFloat() < Configs.AHP.goldMistakeChance.get();
+        boolean targetIsSulkingOre = !buriedSulkingOres.isEmpty() && this.world.random.nextFloat() < Configs.AHP_MAIN.goldMistakeChance.get();
 
         if (targetIsSulkingOre) {
             buriedSulkingOres.sort(Comparator.comparingDouble(pos -> pos.getSquaredDistance(this.hamster.getPos())));
@@ -350,8 +350,8 @@ public class HamsterSniffForOreGoal extends Goal {
         this.hamster.getNavigation().stop();
         this.hamster.isPrimedToSeekDiamonds = false;
 
-        if (Configs.AHP.enableIndependentDiamondSeekCooldown) {
-            this.hamster.foundOreCooldownEndTick = this.world.getTime() + Configs.AHP.independentOreSeekCooldownTicks.get();
+        if (Configs.AHP_MAIN.enableIndependentDiamondSeekCooldown) {
+            this.hamster.foundOreCooldownEndTick = this.world.getTime() + Configs.AHP_MAIN.independentOreSeekCooldownTicks.get();
         }
 
         if (this.isSeekingDisappointingOre) {

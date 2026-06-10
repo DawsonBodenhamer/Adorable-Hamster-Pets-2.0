@@ -1,6 +1,6 @@
 package net.dawson.adorablehamsterpets.client.gui.widgets;
 
-import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.AhpUiConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.IconPositionPreset;
 import net.minecraft.util.math.MathHelper;
@@ -182,7 +182,7 @@ public class AnnouncementIconAnimator {
      * @param screenHeight The current height of the screen.
      */
     public void updateTargetPosition(int screenWidth, int screenHeight) {
-        final AhpConfig config = Configs.AHP;
+        final AhpUiConfig config = Configs.AHP_UI;
         IconPositionPreset preset = config.hudIconPositionPreset.get();
         double scale = config.hudIconScale.get();
         int iconWidth = 16;

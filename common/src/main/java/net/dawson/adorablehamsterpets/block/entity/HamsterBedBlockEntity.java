@@ -230,7 +230,7 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
             // Clear data on the block entity
             this.linkedHamsterUuid = Optional.empty();
             this.linkedHamsterName = Optional.empty();
-            this.wanderDistance = Configs.AHP.defaultWanderDistance.get(); // Reset to default
+            this.wanderDistance = Configs.AHP_MAIN.defaultWanderDistance.get(); // Reset to default
             markDirty();
 
             // Update the hamster entity
@@ -276,9 +276,9 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
 
         String distanceStr = nbt.getString("WanderDistance").toUpperCase(Locale.ROOT);
         try {
-            this.wanderDistance = distanceStr.isEmpty() ? Configs.AHP.defaultWanderDistance.get() : WanderDistance.valueOf(distanceStr);
+            this.wanderDistance = distanceStr.isEmpty() ? Configs.AHP_MAIN.defaultWanderDistance.get() : WanderDistance.valueOf(distanceStr);
         } catch (IllegalArgumentException e) {
-            this.wanderDistance = Configs.AHP.defaultWanderDistance.get();
+            this.wanderDistance = Configs.AHP_MAIN.defaultWanderDistance.get();
         }
 
         this.isNewlyPlaced = nbt.contains("IsNewlyPlaced") ? nbt.getBoolean("IsNewlyPlaced") : false;

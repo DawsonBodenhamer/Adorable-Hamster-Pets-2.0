@@ -31,10 +31,7 @@ import net.dawson.adorablehamsterpets.client.perk.PlayerPerkManager;
 import net.dawson.adorablehamsterpets.client.render.BlockJiggleManager;
 import net.dawson.adorablehamsterpets.client.sound.HamsterTreeLoopSoundInstance;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
-import net.dawson.adorablehamsterpets.config.ConfigDataCache;
-import net.dawson.adorablehamsterpets.config.Configs;
-import net.dawson.adorablehamsterpets.config.DismountButtonPressBehavior;
+import net.dawson.adorablehamsterpets.config.*;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterBlockHiderEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
@@ -117,6 +114,9 @@ public class AdorableHamsterPetsClient {
     public static boolean isQueuingThrow = false;
     public static int throwQueueTicks = 0;
 
+    // --- Performance Mode State ---
+    public static boolean isPerformanceModeEnabled = false;
+
     // --- Announcement System ---
     private static final AnnouncementHudRenderer announcementHudRenderer = new AnnouncementHudRenderer();
     private static List<AnnouncementManager.PendingNotification> pendingNotifications = Collections.emptyList();
@@ -167,8 +167,8 @@ public class AdorableHamsterPetsClient {
 
                 // Sync supporter crown theme preference to server
                 if (MinecraftClient.getInstance().player != null) {
-                    int payloadTheme = Configs.AHP.showMyCrown ? Configs.AHP.crownTheme.get().ordinal() : -1;
-                    ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(payloadTheme)); // Typed packet for 1.20.1
+                    int payloadTheme = Configs.AHP_SUPPORTER.showMyCrown ? Configs.AHP_SUPPORTER.crownTheme.get().ordinal() : -1;
+                    ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(payloadTheme));
                 }
 
                 AdorableHamsterPets.LOGGER.info("Reloaded Adorable Hamster Pets config caches on client.");
@@ -206,8 +206,8 @@ public class AdorableHamsterPetsClient {
             pendingGuidebookEffects = false;
 
             // Sync initial supporter crown theme preference to server
-            int payloadTheme = Configs.AHP.showMyCrown ? Configs.AHP.crownTheme.get().ordinal() : -1;
-            ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(payloadTheme)); // Typed packet for 1.20.1
+            int payloadTheme = Configs.AHP_SUPPORTER.showMyCrown ? Configs.AHP_SUPPORTER.crownTheme.get().ordinal() : -1;
+            ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(payloadTheme));
         });
 
         // --- Register Tree Heist Sound & Jiggle Logic ---
@@ -240,8 +240,7 @@ public class AdorableHamsterPetsClient {
             if (player.getWorld().isClient && hand == net.minecraft.util.Hand.MAIN_HAND && entity instanceof HamsterEntity hamster) {
 
                 // 1. Force Shoulder Mount
-                if (Configs.AHP.enableShoulderMountKeybind && ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY.isPressed()) {
-                    // Only if it's tamed hamster and owned by player
+                if (Configs.AHP_MAIN.enableShoulderMountKeybind && ModKeyBindings.FORCE_MOUNT_HAMSTER_KEY.isPressed()) {
                     if (hamster.isTamed() && hamster.isOwner(player)) {
                         // Send a typed packet for 1.20.1
                         ModPackets.CHANNEL.sendToServer(new ModPackets.RequestHamsterMountC2SPacket(hamster.getId()));
@@ -250,7 +249,7 @@ public class AdorableHamsterPetsClient {
                 }
 
                 // 2. Hamster Riding
-                if (Configs.AHP.enableMountableHamsters.get() && ModKeyBindings.RIDE_HAMSTER_KEY.isPressed()) {
+                if (Configs.AHP_MAIN.enableMountableHamsters.get() && ModKeyBindings.RIDE_HAMSTER_KEY.isPressed()) {
                     // Prevent mounting if already riding
                     if (!hamster.hasPassenger(player)) {
                         // Send a typed packet for 1.20.1
@@ -334,7 +333,7 @@ public class AdorableHamsterPetsClient {
         boolean ridingHamster = client.player != null && client.player.getVehicle() instanceof HamsterEntity;
 
         // Only process if enabled and riding
-        if (ridingHamster && Configs.AHP.enableMountableHamsters.get()) {
+        if (ridingHamster && Configs.AHP_MAIN.enableMountableHamsters.get()) {
             boolean jumpDown = client.options.jumpKey.isPressed();
             boolean sprintDown = client.options.sprintKey.isPressed();
 
@@ -378,7 +377,7 @@ public class AdorableHamsterPetsClient {
 
         // Handle Throw Hamster Keybind
         if (ModKeyBindings.THROW_HAMSTER_KEY.isPressed()) {
-            final AhpConfig currentConfig = AdorableHamsterPets.CONFIG;
+            final AhpMainConfig currentConfig = AdorableHamsterPets.MAIN_CONFIG;
             if (!currentConfig.enableHamsterThrowing) {
                 if (!isQueuingThrow) {
                     client.player.sendMessage(Text.translatable("message.adorablehamsterpets.throwing_disabled"), true);
@@ -435,10 +434,9 @@ public class AdorableHamsterPetsClient {
         } else {
             // Key was released
             if (isQueuingThrow) {
-                if (throwQueueTicks >= THROW_QUEUE_REQUIRED_TICKS && AdorableHamsterPets.CONFIG.enableHamsterThrowing) {
-                    // Typed packet for 1.20.1
+                if (throwQueueTicks >= THROW_QUEUE_REQUIRED_TICKS && AdorableHamsterPets.MAIN_CONFIG.enableHamsterThrowing) {
                     ModPackets.CHANNEL.sendToServer(new ModPackets.ThrowHamsterC2SPacket());
-                } else if (throwQueueTicks > 0 && AdorableHamsterPets.CONFIG.enableHamsterThrowing && Configs.AHP.enableThrowCancellationWarning) {
+                } else if (throwQueueTicks > 0 && AdorableHamsterPets.MAIN_CONFIG.enableHamsterThrowing && Configs.AHP_UI.enableThrowCancellationWarning) {
                     // --- Trigger Premature Release Warning ---
                     if (client.player != null) {
                         client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), 1.2f, 0.5f);
@@ -480,12 +478,11 @@ public class AdorableHamsterPetsClient {
 
         // Handle Toggle Performance Mode Keybind
         while (ModKeyBindings.TOGGLE_PERFORMANCE_MODE_KEY.wasPressed()) {
-            Configs.AHP.performanceMode = !Configs.AHP.performanceMode;
-            Configs.AHP.save();
+            isPerformanceModeEnabled = !isPerformanceModeEnabled;
 
             Text message = Text.translatable(
-                    Configs.AHP.performanceMode ? "message.adorablehamsterpets.performance_mode_enabled" : "message.adorablehamsterpets.performance_mode_disabled"
-            ).formatted(Configs.AHP.performanceMode ? Formatting.GREEN : Formatting.RED);
+                    isPerformanceModeEnabled ? "message.adorablehamsterpets.performance_mode_enabled" : "message.adorablehamsterpets.performance_mode_disabled"
+            ).formatted(isPerformanceModeEnabled ? Formatting.GREEN : Formatting.RED);
 
             client.player.sendMessage(message, false);
         }
@@ -511,7 +508,7 @@ public class AdorableHamsterPetsClient {
         } else if (petKeyPresses > 0) {
             if (!Platform.isModLoaded("punchy")) {
                 client.player.sendMessage(Text.translatable("message.adorablehamsterpets.punchy_missing").formatted(Formatting.RED), true);
-            } else if (Configs.AHP.enablePetting) {
+            } else if (Configs.AHP_MAIN.enablePetting) {
                 // Find nearby tamed hamsters that fit criteria
                 Box searchBox = client.player.getBoundingBox().expand(5.0);
                 List<HamsterEntity> nearbyHamsters = client.world.getEntitiesByClass(
@@ -560,18 +557,18 @@ public class AdorableHamsterPetsClient {
 
                 if (hasPerk || trialTicks > 0) {
                     PixieDustParticleTheme[] themes = PixieDustParticleTheme.values();
-                    int nextOrdinal = (Configs.AHP.crownTheme.get().ordinal() + 1) % themes.length;
+                    int nextOrdinal = (Configs.AHP_SUPPORTER.crownTheme.get().ordinal() + 1) % themes.length;
                     PixieDustParticleTheme nextTheme = themes[nextOrdinal];
 
                     // Update config using the accessor
                     @SuppressWarnings("unchecked")
-                    ValidatedFieldAccessor<PixieDustParticleTheme> accessor = (ValidatedFieldAccessor<PixieDustParticleTheme>) (Object) Configs.AHP.crownTheme;
+                    ValidatedFieldAccessor<PixieDustParticleTheme> accessor = (ValidatedFieldAccessor<PixieDustParticleTheme>) (Object) Configs.AHP_SUPPORTER.crownTheme;
                     accessor.adorablehamsterpets$set(nextTheme);
-                    Configs.AHP.save();
+                    Configs.AHP_MAIN.save();
 
                     // Broadcast to server if currently visible or in trial
-                    if (Configs.AHP.showMyCrown || trialTicks > 0) {
-                        ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(nextOrdinal)); // Typed packet for 1.20.1
+                    if (Configs.AHP_SUPPORTER.showMyCrown || trialTicks > 0) {
+                        ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(nextOrdinal));
                     }
 
                     client.player.sendMessage(Text.translatable("message.adorablehamsterpets.supporter_crown_color_changed", Text.translatable(nextTheme.translationKey())).formatted(Formatting.WHITE), true);
@@ -603,13 +600,13 @@ public class AdorableHamsterPetsClient {
                 boolean hasUsedTrial = playerAccessor.ahp$hasUsedSupporterCrownTrial();
 
                 if (hasPerk) {
-                    Configs.AHP.showMyCrown = !Configs.AHP.showMyCrown;
-                    Configs.AHP.save();
+                    Configs.AHP_SUPPORTER.showMyCrown = !Configs.AHP_SUPPORTER.showMyCrown;
+                    Configs.AHP_MAIN.save();
 
-                    int payloadTheme = Configs.AHP.showMyCrown ? Configs.AHP.crownTheme.get().ordinal() : -1;
-                    ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(payloadTheme)); // Typed packet for 1.20.1
+                    int payloadTheme = Configs.AHP_SUPPORTER.showMyCrown ? Configs.AHP_SUPPORTER.crownTheme.get().ordinal() : -1;
+                    ModPackets.CHANNEL.sendToServer(new ModPackets.UpdateCrownThemeC2SPacket(payloadTheme));
 
-                    client.player.sendMessage(Text.translatable(Configs.AHP.showMyCrown ? "message.adorablehamsterpets.supporter_crown_enabled" : "message.adorablehamsterpets.supporter_crown_disabled").formatted(Formatting.GOLD), true);
+                    client.player.sendMessage(Text.translatable(Configs.AHP_SUPPORTER.showMyCrown ? "message.adorablehamsterpets.supporter_crown_enabled" : "message.adorablehamsterpets.supporter_crown_disabled").formatted(Formatting.GOLD), true);
                 } else {
                     if (trialTicks > 0) {
                         // Allow user to hide supporter crown manually during trial period
@@ -619,9 +616,9 @@ public class AdorableHamsterPetsClient {
                         client.player.sendMessage(Text.translatable("message.adorablehamsterpets.crown_trial_used").formatted(Formatting.RED), true);
                     } else {
                         // Start trial
-                        Configs.AHP.showMyCrown = true;
-                        Configs.AHP.save();
-                        ModPackets.CHANNEL.sendToServer(new ModPackets.StartCrownTrialC2SPacket(Configs.AHP.crownTheme.get().ordinal())); // Typed packet for 1.20.1
+                        Configs.AHP_SUPPORTER.showMyCrown = true;
+                        Configs.AHP_MAIN.save();
+                        ModPackets.CHANNEL.sendToServer(new ModPackets.StartCrownTrialC2SPacket(Configs.AHP_SUPPORTER.crownTheme.get().ordinal()));
                         client.player.sendMessage(Text.translatable("message.adorablehamsterpets.crown_trial_started").formatted(Formatting.WHITE), true);
                     }
                 }
@@ -690,14 +687,14 @@ public class AdorableHamsterPetsClient {
         }
 
         // --- 9. Supporter Crown Rendering ---
-        if (client.world != null && !client.isPaused() && Configs.AHP.enableSupporterCrown) {
+        if (client.world != null && !client.isPaused() && Configs.AHP_SUPPORTER.enableSupporterCrown) {
             boolean isFirstPerson = client.options.getPerspective().isFirstPerson();
 
             for (AbstractClientPlayerEntity player : client.world.getPlayers()) {
                 if (!player.isAlive() || player.isSpectator()) continue;
 
                 // Hide from local player if in first person and config is off
-                if (player == client.player && !Configs.AHP.showCrownInFirstPerson && isFirstPerson) continue;
+                if (player == client.player && !Configs.AHP_SUPPORTER.showCrownInFirstPerson && isFirstPerson) continue;
 
                 // Get theme from synced DataTracker
                 int themeOrdinal = ((PlayerEntityAccessor) player).ahp$getSupporterCrownTheme();
@@ -717,8 +714,8 @@ public class AdorableHamsterPetsClient {
                     if (audioTimer > 0) {
                         accessor.ahp$setSupporterCrownAudioTimer(audioTimer - 1);
                     } else {
-                        if (Configs.AHP.enableCrownAudio) {
-                            float volume = Configs.AHP.crownAudioVolume.get();
+                        if (Configs.AHP_SUPPORTER.enableCrownAudio) {
+                            float volume = Configs.AHP_SUPPORTER.crownAudioVolume.get();
                             SoundEvent sound = ModSounds.getRandomSoundFrom(ModSounds.CROWN_SPARKLE_SOUNDS, client.world.random);
                             if (sound != null) {
                                 client.world.playSound(player.getX(), player.getY(), player.getZ(), sound, SoundCategory.PLAYERS, volume, 1.0f + client.world.random.nextFloat() * 0.2f, false);
@@ -745,24 +742,24 @@ public class AdorableHamsterPetsClient {
                     DefaultParticleType particleType = ModParticles.PIXIE_DUST.get(theme).get();
 
                     // Add distance between the eyes and the neck to config offset
-                    double adjustedYOffset = Configs.AHP.crownYOffset.get() + (player.getStandingEyeHeight() - pivotOffset);
+                    double adjustedYOffset = Configs.AHP_SUPPORTER.crownYOffset.get() + (player.getStandingEyeHeight() - pivotOffset);
 
                     // --- Helmet Multiplier ---
                     ItemStack helmet = player.getInventory().getArmorStack(3);
                     double helmetMultiplier = !helmet.isEmpty() ? 1.15 : 1.0;
 
                     // --- 3D Skin Layers Compat ---
-                    double adjustedRadius = (Configs.AHP.crownRadius.get() + (IS_SKIN_LAYERS_3D_LOADED ? 0.1 : 0.0)) * helmetMultiplier;
+                    double adjustedRadius = (Configs.AHP_SUPPORTER.crownRadius.get() + (IS_SKIN_LAYERS_3D_LOADED ? 0.1 : 0.0)) * helmetMultiplier;
 
                     ParticleEffectsUtil.spawnOrientedSpinningRing(
                             client.world,
                             pivotPos,
                             headRotation,
                             particleType,
-                            Configs.AHP.crownParticleCount.get(),
+                            Configs.AHP_SUPPORTER.crownParticleCount.get(),
                             adjustedRadius,
-                            Configs.AHP.crownHorizontalThickness.get(),
-                            Configs.AHP.crownVerticalThickness.get(),
+                            Configs.AHP_SUPPORTER.crownHorizontalThickness.get(),
+                            Configs.AHP_SUPPORTER.crownVerticalThickness.get(),
                             0.3,
                             0.03,
                             0.007,
@@ -799,7 +796,7 @@ public class AdorableHamsterPetsClient {
     private static void handleGuidebookWarning(MinecraftClient client) {
         if (client.player == null) return;
 
-        final AhpConfig config = AdorableHamsterPets.CONFIG;
+        final AhpUiConfig config = AdorableHamsterPets.UI_CONFIG;
         String username = client.player.getGameProfile().getName();
 
         // Fast exit if globally disabled via secret key ("john_wayne"), or if already seen by this player
@@ -871,7 +868,7 @@ public class AdorableHamsterPetsClient {
 
         // 3. Context
         // Calculate minutes. Round up to 1 if less than a minute
-        int ticks = AdorableHamsterPets.CONFIG.guidebookWarningTimer.get();
+        int ticks = AdorableHamsterPets.UI_CONFIG.guidebookWarningTimer.get();
         int minutes = Math.max(1, ticks / 1200);
 
         String key = (minutes == 1)
@@ -1005,7 +1002,7 @@ public class AdorableHamsterPetsClient {
         }
 
         // --- 7. Apply Logic Based on Config ---
-        final AhpConfig config = AdorableHamsterPets.CONFIG;
+        final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
         DismountButtonPressBehavior activePressType = config.dismountButtonPressBehavior.get();
 
         // Apply override if custom key bound and override toggle enabled

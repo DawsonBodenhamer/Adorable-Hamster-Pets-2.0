@@ -32,7 +32,7 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
         PlayerEntity player = accessor.getPlayer();
 
         // --- Sneak Check ---
-        if (Configs.AHP.requireSneakForCustomJadeInfo && !player.isSneaking()) {
+        if (Configs.AHP_UI.requireSneakForCustomJadeInfo && !player.isSneaking()) {
             tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sneak_for_info").formatted(Formatting.GRAY));
             return;
         }
@@ -40,33 +40,33 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
         HamsterGenome genome = HamsterGenome.readFromNbt(serverData.getCompound("HamsterGenome"));
 
         // --- Formatted Age ---
-        if (Configs.AHP.showJadeAge) {
+        if (Configs.AHP_UI.showJadeAge) {
             long ageTicks = serverData.getLong("TotalAgeTicks");
             Text ageText = MiscUtil.TimeConversionUtil.formatAge(ageTicks);
             tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.age", ageText));
         }
 
         // --- Base Coat ---
-        if (Configs.AHP.showJadeBaseCoat) {
+        if (Configs.AHP_UI.showJadeBaseCoat) {
             tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.base", getPaletteText(genome.basePaletteId())));
         }
 
         // --- Wild Overlay ---
-        if (Configs.AHP.showJadeWildOverlay && genome.wildOverlayPattern() > 0 && genome.wildOverlayPaletteId() != null) {
+        if (Configs.AHP_UI.showJadeWildOverlay && genome.wildOverlayPattern() > 0 && genome.wildOverlayPaletteId() != null) {
             tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.wild",
                     getPatternText(genome.wildOverlayPattern()),
                     getPaletteText(genome.wildOverlayPaletteId())));
         }
 
         // --- Breeding Overlay ---
-        if (Configs.AHP.showJadeBreedingOverlay && genome.breedingOverlayPattern() > 0 && genome.breedingOverlayPaletteId() != null) {
+        if (Configs.AHP_UI.showJadeBreedingOverlay && genome.breedingOverlayPattern() > 0 && genome.breedingOverlayPaletteId() != null) {
             tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.breeding",
                     getPatternText(genome.breedingOverlayPattern()),
                     getPaletteText(genome.breedingOverlayPaletteId())));
         }
 
         // --- Eye Genetics ---
-        if (Configs.AHP.showJadeEyeColor) {
+        if (Configs.AHP_UI.showJadeEyeColor) {
             String eyeKey = switch (genome.eyeGenotype()) {
                 case 1 -> "tooltip.adorablehamsterpets.jade.genetics.eyes.carrier";
                 case 2 -> "tooltip.adorablehamsterpets.jade.genetics.eyes.red";

@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * A static cache for data parsed from the mod's configuration files.
  * <p>
- * This class loads user-defined lists of items and biomes from AhpConfig.java
+ * This class loads user-defined lists of items and biomes from AhpMainConfig.java
  * into high-performance {@code Set} collections on startup. It provides static
  * checker methods (e.g., {@code isStandardFood()}, {@code isBlueBiome()}) for fast,
  * O(1) lookups during gameplay, avoiding repeated config parsing.
@@ -130,42 +130,42 @@ public class ConfigDataCache {
         clearAllBlockSets();
 
         // --- Parse Item Lists ---
-        parseItemList(Configs.AHP.tamingFoods, tamingItems, tamingTags, "tamingFoods");
-        parseItemList(Configs.AHP.standardDiet, standardFoodItems, standardFoodTags, "standardDiet");
-        parseItemList(Configs.AHP.stealableItems, stealableItems, stealableTags, "stealableItems");
-        parseItemList(Configs.AHP.retrievableItems, retrievableItems, retrievableItemTags, "retrievableItems");
-        parseItemList(Configs.AHP.buffFoods, buffFoodItems, buffFoodTags, "buffFoods");
-        parseItemList(Configs.AHP.lureItems, lureItems, lureItemTags, "lureItems");
-        parseItemList(Configs.AHP.bedAvoidanceFoods, bedAvoidanceFoodItems, bedAvoidanceFoodTags, "bedAvoidanceFoods");
-        parseItemList(Configs.AHP.pouchUnlockFoods, pouchUnlockItems, pouchUnlockTags, "pouchUnlockFoods");
-        parseItemList(Configs.AHP.repeatableFoods, repeatableFoodItems, repeatableFoodTags, "repeatableFoods");
-        parseItemList(Configs.AHP.pouchAllowedItems, pouchAllowedItems, pouchAllowedTags, "pouchAllowedItems");
-        parseItemList(Configs.AHP.pouchDisallowedItems, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedItems");
-        parseItemList(Configs.AHP.pouchDisallowedTags, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedTags");
-        parseItemList(Configs.AHP.autoHealFoods, autoHealFoodItems, autoHealFoodTags, "autoHealFoods");
-        parseItemList(Configs.AHP.resurrectionTributes, resurrectionTributeItems, resurrectionTributeTags, "resurrectionTributes");
+        parseItemList(Configs.AHP_ITEMS.tamingFoods, tamingItems, tamingTags, "tamingFoods");
+        parseItemList(Configs.AHP_ITEMS.standardDiet, standardFoodItems, standardFoodTags, "standardDiet");
+        parseItemList(Configs.AHP_ITEMS.stealableItems, stealableItems, stealableTags, "stealableItems");
+        parseItemList(Configs.AHP_ITEMS.retrievableItems, retrievableItems, retrievableItemTags, "retrievableItems");
+        parseItemList(Configs.AHP_ITEMS.buffFoods, buffFoodItems, buffFoodTags, "buffFoods");
+        parseItemList(Configs.AHP_ITEMS.lureItems, lureItems, lureItemTags, "lureItems");
+        parseItemList(Configs.AHP_ITEMS.bedAvoidanceFoods, bedAvoidanceFoodItems, bedAvoidanceFoodTags, "bedAvoidanceFoods");
+        parseItemList(Configs.AHP_ITEMS.pouchUnlockFoods, pouchUnlockItems, pouchUnlockTags, "pouchUnlockFoods");
+        parseItemList(Configs.AHP_ITEMS.repeatableFoods, repeatableFoodItems, repeatableFoodTags, "repeatableFoods");
+        parseItemList(Configs.AHP_ITEMS.pouchAllowedItems, pouchAllowedItems, pouchAllowedTags, "pouchAllowedItems");
+        parseItemList(Configs.AHP_ITEMS.pouchDisallowedItems, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedItems");
+        parseItemList(Configs.AHP_ITEMS.pouchDisallowedTags, pouchDisallowedItems, pouchDisallowedTags, "pouchDisallowedTags");
+        parseItemList(Configs.AHP_ITEMS.autoHealFoods, autoHealFoodItems, autoHealFoodTags, "autoHealFoods");
+        parseItemList(Configs.AHP_MAIN.resurrectionTributes, resurrectionTributeItems, resurrectionTributeTags, "resurrectionTributes");
         parseLootGenerationList(Configs.AHP_WORLDGEN.defaultCheekLootList, flattenedDefaultCheekLoot, "defaultCheekLootList");
         parseLootGenerationList(Configs.AHP_WORLDGEN.extraCheekLootList, flattenedExtraCheekLoot, "extraCheekLootList");
         parseLootGenerationList(Configs.AHP_WORLDGEN.caveCheekLootList, flattenedCaveCheekLoot, "caveCheekLootList");
-        parseLootGenerationList(Configs.AHP.customMiniGameRewards, flattenedCustomMiniGameRewards, "customMiniGameRewards");
-        parseItemList(Configs.AHP.becomePacifistItems, becomePacifistItems, becomePacifistTags, "becomePacifistItems");
-        parseItemList(Configs.AHP.becomeNeutralItems, becomeNeutralItems, becomeNeutralTags, "becomeNeutralItems");
-        parseItemList(Configs.AHP.becomeMenaceItems, becomeMenaceItems, becomeMenaceTags, "becomeMenaceItems");
-        parseItemList(Configs.AHP.snackableItems, snackableItemsList, snackableItemsTags, "snackableItems");
-        parseItemList(Configs.AHP.snackableItemsBlacklist, snackableItemsBlacklistList, snackableItemsBlacklistTags, "snackableItemsBlacklist");
+        parseLootGenerationList(Configs.AHP_MAIN.customMiniGameRewards, flattenedCustomMiniGameRewards, "customMiniGameRewards");
+        parseItemList(Configs.AHP_MAIN.becomePacifistItems, becomePacifistItems, becomePacifistTags, "becomePacifistItems");
+        parseItemList(Configs.AHP_MAIN.becomeNeutralItems, becomeNeutralItems, becomeNeutralTags, "becomeNeutralItems");
+        parseItemList(Configs.AHP_MAIN.becomeMenaceItems, becomeMenaceItems, becomeMenaceTags, "becomeMenaceItems");
+        parseItemList(Configs.AHP_ITEMS.snackableItems, snackableItemsList, snackableItemsTags, "snackableItems");
+        parseItemList(Configs.AHP_ITEMS.snackableItemsBlacklist, snackableItemsBlacklistList, snackableItemsBlacklistTags, "snackableItemsBlacklist");
 
         // --- Parse Entity Lists ---
-        parseEntityList(Configs.AHP.menaceTargetEntities, menaceTargetEntities, menaceTargetTags, "menaceTargetEntities");
+        parseEntityList(Configs.AHP_MAIN.menaceTargetEntities, menaceTargetEntities, menaceTargetTags, "menaceTargetEntities");
 
         // --- Parse Block Lists ---
-        parseBlockList(Configs.AHP.celebrationOres, celebrationOreBlocks, celebrationOreTags, "celebrationOres");
-        parseBlockList(Configs.AHP.sulkingOres, sulkingOreBlocks, sulkingOreTags, "sulkingOres");
-        parseBlockList(Configs.AHP.heistableLeaves, heistableLeavesBlocks, heistableLeavesTags, "heistableLeaves");
-        parseBlockList(Configs.AHP.heistableLogs, heistableLogsBlocks, heistableLogsTags, "heistableLogs");
-        parseBlockList(Configs.AHP.snackableCrops, snackableCropBlocks, snackableCropTags, "snackableCrops");
-        parseBlockList(Configs.AHP.snackableCropsBlacklist, snackableCropBlacklistBlocks, snackableCropBlacklistTags, "snackableCropsBlacklist");
-        parseBlockList(Configs.AHP.validHidingBlocks, hideAndSeekBlocks, hideAndSeekTags, "validHidingBlocks");
-        parseBlockList(Configs.AHP.inventoryHidingBlacklist, hideAndSeekBlacklistBlocks, hideAndSeekBlacklistTags, "inventoryHidingBlacklist");
+        parseBlockList(Configs.AHP_MAIN.celebrationOres, celebrationOreBlocks, celebrationOreTags, "celebrationOres");
+        parseBlockList(Configs.AHP_MAIN.sulkingOres, sulkingOreBlocks, sulkingOreTags, "sulkingOres");
+        parseBlockList(Configs.AHP_MAIN.heistableLeaves, heistableLeavesBlocks, heistableLeavesTags, "heistableLeaves");
+        parseBlockList(Configs.AHP_MAIN.heistableLogs, heistableLogsBlocks, heistableLogsTags, "heistableLogs");
+        parseBlockList(Configs.AHP_ITEMS.snackableCrops, snackableCropBlocks, snackableCropTags, "snackableCrops");
+        parseBlockList(Configs.AHP_ITEMS.snackableCropsBlacklist, snackableCropBlacklistBlocks, snackableCropBlacklistTags, "snackableCropsBlacklist");
+        parseBlockList(Configs.AHP_MAIN.validHidingBlocks, hideAndSeekBlocks, hideAndSeekTags, "validHidingBlocks");
+        parseBlockList(Configs.AHP_MAIN.inventoryHidingBlacklist, hideAndSeekBlacklistBlocks, hideAndSeekBlacklistTags, "inventoryHidingBlacklist");
 
         // --- Parse Region-Based Color Filters ---
         ENVIRONMENTS.clear();
@@ -259,7 +259,7 @@ public class ConfigDataCache {
 
         // Smart fallback: If user included custom AHP monster tag,
         // fall back to the Monster interface to ensure all hostiles are caught
-        if (Configs.AHP.menaceTargetEntities.contains("#adorablehamsterpets:monsters")) {
+        if (Configs.AHP_MAIN.menaceTargetEntities.contains("#adorablehamsterpets:monsters")) {
             if (entity instanceof Monster) return true;
         }
         return false;

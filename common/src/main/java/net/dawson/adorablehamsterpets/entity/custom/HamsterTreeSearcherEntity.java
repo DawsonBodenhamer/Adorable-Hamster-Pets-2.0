@@ -73,14 +73,14 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
         // Lock the tree immediately
         registerOccupancy();
 
-        if (Configs.AHP.debugTreeDetection) {
+        if (Configs.AHP_MAIN.debugTreeDetection) {
             AdorableHamsterPets.LOGGER.info("[TreeHeist-Init] Searcher Entity Initialized. Anchor: {}. Canopy: {}.",
                     this.anchorPos.toShortString(), this.validLeafPositions.size());
         }
 
         // If no canopy found (rare fallback), abort.
         if (this.validLeafPositions.isEmpty()) {
-            if (Configs.AHP.debugTreeDetection) {
+            if (Configs.AHP_MAIN.debugTreeDetection) {
                 AdorableHamsterPets.LOGGER.warn("[TreeHeist-Init] No valid leaves found. Aborting.");
             }
             finishHeist(false);
@@ -88,7 +88,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
         }
 
         // --- 2. Debug Visualization ---
-        if (Configs.AHP.debugTreeDetection) {
+        if (Configs.AHP_MAIN.debugTreeDetection) {
             TreeHeistUtil.spawnDebugParticles(this.getWorld(), scanResult);
             AdorableHamsterPets.LOGGER.info("[TreeHeist] Identified Tree ID: {} | Canopy Size: {}", this.anchorPos, this.validLeafPositions.size());
         }
@@ -155,8 +155,8 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
         this.validationTimer = VALIDATION_INTERVAL;
 
         // --- 5. Enhanced Debug Logging ---
-        if (Configs.AHP.debugTreeDetection) {
-            float baseChance = Configs.AHP.acornDropChance.get();
+        if (Configs.AHP_MAIN.debugTreeDetection) {
+            float baseChance = Configs.AHP_MAIN.acornDropChance.get();
             float estimatedFinalChance = baseChance * this.dropChanceMultiplier;
             if (this.hasAcornHat) {
                 estimatedFinalChance *= HAT_DROP_CHANCE_MULTIPLIER;
@@ -202,7 +202,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
         }
 
         // 4. Continuous Debug Visualization
-        if (Configs.AHP.debugTreeDetection) {
+        if (Configs.AHP_MAIN.debugTreeDetection) {
             TreeHeistUtil.spawnDebugParticles(this.getWorld(), this.anchorPos, this.validLeafPositions);
         }
 
@@ -314,7 +314,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
         );
 
         // --- Acorn Tossing ---
-        float dropChance = Configs.AHP.acornDropChance.get() * this.dropChanceMultiplier;
+        float dropChance = Configs.AHP_MAIN.acornDropChance.get() * this.dropChanceMultiplier;
 
         // Apply Acorn Hat Buff Multiplier if equipped
         if (this.hasAcornHat) {
