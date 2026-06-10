@@ -74,7 +74,7 @@ public class HamsterSnackOnCropGoal extends Goal {
 
     @Override
     public boolean canStart() {
-        if (this.world.isClient() || !Configs.AHP.enableCropSnacking) return false;
+        if (this.world.isClient() || !Configs.AHP_MAIN.enableCropSnacking) return false;
 
         // Ensure hamster is tamed, wandering, and has completed its cooldown
         if (!this.hamster.isTamed() || !this.hamster.isWanderModeActive()) return false;
@@ -102,7 +102,7 @@ public class HamsterSnackOnCropGoal extends Goal {
         this.checkTimer = this.getTickCount(20);
 
         // Add RNG element to prevent immediate harvesting (scale denominator to match check frequency)
-        int denominator = Math.max(1, Configs.AHP.cropSnackingChanceDenominator.get() / 20);
+        int denominator = Math.max(1, Configs.AHP_MAIN.cropSnackingChanceDenominator.get() / 20);
         if (this.hamster.getRandom().nextInt(denominator) != 0) {
             return false;
         }
@@ -177,7 +177,7 @@ public class HamsterSnackOnCropGoal extends Goal {
         }
 
         // Guarantee a cooldown whether harvest succeeded or failed/interrupted
-        this.hamster.cropSnackCooldownEndTick = this.world.getTime() + Configs.AHP.cropSnackCooldownTicks.get();
+        this.hamster.cropSnackCooldownEndTick = this.world.getTime() + Configs.AHP_MAIN.cropSnackCooldownTicks.get();
     }
 
     @Override

@@ -43,7 +43,7 @@ public final class HamsterGeneticsAdvancementUtil {
         }
 
         // Check for Recessive Red Eyes (only trigger if the config allows them to be seen)
-        if (baby.getGenome().eyeGenotype() == 2 && Configs.AHP.enableRedEyes) {
+        if (baby.getGenome().eyeGenotype() == 2 && Configs.AHP_MAIN.enableRedEyes) {
             grantAdvancement(player, "husbandry/seeing_red");
         }
     }

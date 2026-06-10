@@ -38,7 +38,7 @@ public final class DynamicFoodUtil {
      * Appends standard tooltips and dynamic nutrition stats (if AppleSkin is absent).
      */
     public static void appendTooltip(List<Text> tooltip, String tooltipBaseKey, int nutrition, float saturation) {
-        if (Configs.AHP.enableItemTooltips) {
+        if (Configs.AHP_UI.enableItemTooltips) {
             tooltip.add(Text.translatable(tooltipBaseKey + ".hint1").formatted(Formatting.GOLD));
             tooltip.add(Text.translatable(tooltipBaseKey + ".hint2").formatted(Formatting.GRAY));
 

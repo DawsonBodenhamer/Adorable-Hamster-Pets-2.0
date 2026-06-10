@@ -46,7 +46,7 @@ public abstract class TitleScreenMixin extends Screen {
             boolean shouldShowIcon = notifications.stream()
                     .anyMatch(n -> n.reason().equals(AnnouncementManager.PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT));
 
-            if (shouldShowIcon && Configs.AHP.enableHudIcon.get() && !Configs.AHP.serverDisableAnnouncements) {
+            if (shouldShowIcon && Configs.AHP_UI.enableHudIcon.get() && !Configs.AHP_UI.serverDisableAnnouncements) {
                 // Add widget if title screen active
                 if (MinecraftClient.getInstance().currentScreen == (TitleScreen) (Object) this) {
                     // Use accessor to add widget for cross-loader compatibility

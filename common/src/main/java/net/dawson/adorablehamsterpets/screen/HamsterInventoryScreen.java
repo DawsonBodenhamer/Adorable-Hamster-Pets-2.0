@@ -91,14 +91,14 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (Configs.AHP.enableGuiRenaming) {
+        if (Configs.AHP_MAIN.enableGuiRenaming) {
             int boxX = this.x + 7;
             int boxY = this.y + 6;
 
             // Check if click occurred inside 162x10 header bounding box
             if (mouseX >= boxX && mouseX <= boxX + 162 && mouseY >= boxY && mouseY <= boxY + 10) {
                 if (!this.isRenaming) {
-                    if (!Configs.AHP.consumeNameTagForGuiRename || hasNameTag()) {
+                    if (!Configs.AHP_UI.consumeNameTagForGuiRename || hasNameTag()) {
                         this.isRenaming = true;
                     } else {
                         // Play failure sound if they lack required name tag
@@ -201,7 +201,7 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         }
 
         // --- Render Dynamic Rename Box ---
-        if (Configs.AHP.enableGuiRenaming) {
+        if (Configs.AHP_MAIN.enableGuiRenaming) {
             renderRenameBox(context, mouseX, mouseY);
         }
 
@@ -211,7 +211,7 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
     @Override
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
         // Only draw standard static title if custom dynamic renaming is disabled
-        if (!Configs.AHP.enableGuiRenaming) {
+        if (!Configs.AHP_MAIN.enableGuiRenaming) {
             context.drawText(this.textRenderer, this.title, this.titleX, this.titleY, 4210752, false);
         }
 
@@ -240,7 +240,7 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         boolean hovered = mouseX >= boxX && mouseX <= boxX + boxWidth && mouseY >= boxY && mouseY <= boxY + boxHeight;
 
         // Base text is either custom name, or configured default if no name has been set
-        String defaultName = Text.translatable(Configs.AHP.useHampterName ? "entity.adorablehamsterpets.hampter" : "entity.adorablehamsterpets.hamster").getString();
+        String defaultName = Text.translatable(Configs.AHP_MAIN.useHampterName ? "entity.adorablehamsterpets.hampter" : "entity.adorablehamsterpets.hamster").getString();
         String baseText = this.currentName.isEmpty() && !this.isRenaming ? defaultName : this.currentName;
 
         // Append a blinking underscore if currently actively typing
@@ -260,7 +260,7 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         context.getMatrices().translate(startX, boxY, 0);
         context.getMatrices().scale(scale, scale, 1.0f);
 
-        RenameIconPlacement placement = Configs.AHP.renameIconPlacement.get();
+        RenameIconPlacement placement = Configs.AHP_UI.renameIconPlacement.get();
         int iconX, textX;
 
         if (placement == RenameIconPlacement.LEFT) {
@@ -289,11 +289,11 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         // Render dynamic tooltips if hovered and not actively typing
         if (hovered && !this.isRenaming) {
             List<Text> tooltip = new ArrayList<>();
-            if (Configs.AHP.consumeNameTagForGuiRename && !hasNameTag()) {
+            if (Configs.AHP_UI.consumeNameTagForGuiRename && !hasNameTag()) {
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.rename.missing_tag").formatted(Formatting.RED));
             } else {
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.rename").formatted(Formatting.GOLD));
-                if (Configs.AHP.consumeNameTagForGuiRename) {
+                if (Configs.AHP_UI.consumeNameTagForGuiRename) {
                     tooltip.add(Text.translatable("tooltip.adorablehamsterpets.rename.consume").formatted(Formatting.GRAY));
                 }
             }

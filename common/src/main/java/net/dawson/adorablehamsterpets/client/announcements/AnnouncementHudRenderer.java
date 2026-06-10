@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconAnimator;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.AhpUiConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -27,7 +27,7 @@ public class AnnouncementHudRenderer {
 
     public void render(DrawContext context, float tickDelta) {
         MinecraftClient client = MinecraftClient.getInstance();
-        final AhpConfig config = Configs.AHP;
+        final AhpUiConfig config = Configs.AHP_UI;
 
         // --- 1. Pre-render Checks ---
         // Do not render if the config disables it, a GUI is open, or there are no notifications
@@ -55,7 +55,7 @@ public class AnnouncementHudRenderer {
 
         // --- 4. Get Animation State from Central Animator ---
         float animScale = animator.getRenderScale(tickDelta);
-        float configScale = Configs.AHP.hudIconScale.get();
+        float configScale = Configs.AHP_UI.hudIconScale.get();
         float finalScale = animScale * configScale;
         float angle = animator.getRenderAngle(tickDelta);
         double renderX = animator.getRenderX(tickDelta);

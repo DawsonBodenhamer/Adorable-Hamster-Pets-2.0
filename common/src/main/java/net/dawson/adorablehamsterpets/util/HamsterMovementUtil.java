@@ -228,7 +228,7 @@ public final class HamsterMovementUtil {
 
         // --- Sledgehammer Server/Client Sync ---
         // Force Pocket Rescue Protocol for teleports more than 32 blocks
-        if (Configs.AHP.enableTeleportRescue && hamster.squaredDistanceTo(target) > 1024.0) {
+        if (Configs.AHP_MAIN.enableTeleportRescue && hamster.squaredDistanceTo(target) > 1024.0) {
             PlayerEntity ownerPlayer = null;
 
             if (target instanceof PlayerEntity playerTarget) {

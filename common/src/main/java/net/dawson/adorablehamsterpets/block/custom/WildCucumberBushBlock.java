@@ -2,7 +2,6 @@ package net.dawson.adorablehamsterpets.block.custom;
 
 import com.mojang.serialization.MapCodec;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
 import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.minecraft.block.*;

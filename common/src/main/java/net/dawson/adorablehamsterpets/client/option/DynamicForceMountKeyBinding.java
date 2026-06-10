@@ -28,7 +28,7 @@ public class DynamicForceMountKeyBinding extends KeyBinding {
      */
     @Override
     public String getTranslationKey() {
-        if (Configs.AHP.enableShoulderMountKeybind) {
+        if (Configs.AHP_MAIN.enableShoulderMountKeybind) {
             return this.enabledTranslationKey;
         } else {
             return this.enabledTranslationKey + ".disabled";

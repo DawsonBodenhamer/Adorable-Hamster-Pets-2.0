@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.AI;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.AhpMainConfig;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterGeneticsAdvancementUtil;
@@ -120,7 +120,7 @@ public class HamsterMateGoal extends Goal {
         if (!this.hamster.isInCustomLove() || !this.targetMate.isInCustomLove()) return; // Prevent love triangles
 
         // --- 2. Cooldown Application ---
-        final AhpConfig config = AdorableHamsterPets.CONFIG;
+        final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
         int cooldown = config.breedingCooldownSeconds.get() * 20;
         this.hamster.setBreedingAge(cooldown);
         this.targetMate.setBreedingAge(cooldown);

@@ -76,7 +76,7 @@ public class TreeHeistUtil {
 
         if (!isLeaf && !isLog) {
             // Fallback for invalid start
-            if (Configs.AHP.debugTreeDetection) {
+            if (Configs.AHP_MAIN.debugTreeDetection) {
                 AdorableHamsterPets.LOGGER.warn("[TreeHeist-Scan] Aborted: Start pos {} is not a valid Heistable Leaf or Log block (Found: {}).", startPos.toShortString(), startState.getBlock());
             }
             return new TreeScanResult(startPos, Collections.singleton(startPos));
@@ -86,7 +86,7 @@ public class TreeHeistUtil {
         // Dynamic Trees breaks vanilla BFS logic
         // Bypass smart log-finding and just map localized leaf cluster around impact point
         if (Platform.isModLoaded("dynamictrees")) {
-            if (Configs.AHP.debugTreeDetection) {
+            if (Configs.AHP_MAIN.debugTreeDetection) {
                 AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Dynamic Trees detected. Bypassing smart algorithm for localized canopy scan.");
             }
             return mapLocalizedCanopy(world, startPos);
@@ -97,12 +97,12 @@ public class TreeHeistUtil {
         if (isLog) {
             // Hit log directly
             foundLog = startPos;
-            if (Configs.AHP.debugTreeDetection) {
+            if (Configs.AHP_MAIN.debugTreeDetection) {
                 AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Started heist directly on a log at {}.", startPos.toShortString());
             }
         } else {
             // Hit leaf, find connected log
-            if (Configs.AHP.debugTreeDetection) {
+            if (Configs.AHP_MAIN.debugTreeDetection) {
                 AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Starting scan at HitPos: {}. Searching for connected logs...", startPos.toShortString());
             }
             foundLog = findConnectedLog(world, startPos);
@@ -110,13 +110,13 @@ public class TreeHeistUtil {
 
         if (foundLog != null) {
             // --- Step B: Trunk Found -> Map Full Tree ---
-            if (Configs.AHP.debugTreeDetection) {
+            if (Configs.AHP_MAIN.debugTreeDetection) {
                 AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] LOG FOUND at {}. Switching to Tree Map Mode.", foundLog.toShortString());
             }
             return mapTreeFromLog(world, foundLog);
         } else {
             // --- Step C: No Trunk -> Map as Floating Bush ---
-            if (Configs.AHP.debugTreeDetection) {
+            if (Configs.AHP_MAIN.debugTreeDetection) {
                 AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] NO LOG FOUND within range. Switching to Floating Bush Mode.");
             }
             return mapFloatingBush(world, startPos);
@@ -209,7 +209,7 @@ public class TreeHeistUtil {
      * Sends the appropriate start message to the player based on the calculated profitability of the area.
      */
     public static void sendHeistStartMessage(PlayerEntity player, float profitability) {
-        if (!Configs.AHP.enableTreeHeistStartMessage) return;
+        if (!Configs.AHP_UI.enableTreeHeistStartMessage) return;
 
         String key = "message.adorablehamsterpets.tree_heist_start_high";
         Formatting color = Formatting.WHITE;
@@ -220,7 +220,7 @@ public class TreeHeistUtil {
             key = "message.adorablehamsterpets.tree_heist_start_medium";
         }
 
-        if (Configs.AHP.debugTreeDetection) {
+        if (Configs.AHP_MAIN.debugTreeDetection) {
             AdorableHamsterPets.LOGGER.info("[TreeHeist] Starting heist for player {}. Profitability: {} ({}%). Selected Message Key: {}",
                     player.getName().getString(),
                     String.format("%.2f", profitability),
@@ -358,7 +358,7 @@ public class TreeHeistUtil {
             }
         }
 
-        if (Configs.AHP.debugTreeDetection) {
+        if (Configs.AHP_MAIN.debugTreeDetection) {
             AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Tree Skeleton Mapped. Total Logs: {}. Anchor Established: {}", treeLogs.size(), bottomMostLog.toShortString());
             if (treeLogs.size() >= MAX_LOG_COUNT) AdorableHamsterPets.LOGGER.warn("[TreeHeist-Scan] Log scan hit MAX limit ({})! Tree might be truncated.", MAX_LOG_COUNT);
         }
@@ -415,7 +415,7 @@ public class TreeHeistUtil {
             }
         }
 
-        if (Configs.AHP.debugTreeDetection) {
+        if (Configs.AHP_MAIN.debugTreeDetection) {
             AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Canopy Mapped. Valid Oak Leaves: {}", validCanopy.size());
             if (validCanopy.size() >= MAX_CANOPY_COUNT) AdorableHamsterPets.LOGGER.warn("[TreeHeist-Scan] Canopy scan hit MAX limit ({})!", MAX_CANOPY_COUNT);
         }
@@ -460,7 +460,7 @@ public class TreeHeistUtil {
                 }
             }
         }
-        if (Configs.AHP.debugTreeDetection) {
+        if (Configs.AHP_MAIN.debugTreeDetection) {
             AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Bush Mapped. Size: {}. Anchor: {}", validLeaves.size(), lowestLeaf.toShortString());
         }
         return new TreeScanResult(lowestLeaf, validLeaves);
@@ -514,7 +514,7 @@ public class TreeHeistUtil {
             }
         }
 
-        if (Configs.AHP.debugTreeDetection) {
+        if (Configs.AHP_MAIN.debugTreeDetection) {
             AdorableHamsterPets.LOGGER.info("[TreeHeist-Scan] Localized Canopy Mapped. Size: {}. Anchor: {}", validLeaves.size(), startPos.toShortString());
         }
 

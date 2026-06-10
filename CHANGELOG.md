@@ -135,6 +135,8 @@ In addition to a bunch of new mini-games, idle animations and QoL features (incl
   - Acorns can now be planted directly on dirt/grass to grow vanilla Oak Trees. Once placed they will become Oak Saplings.
 
 ### Changed
+- **Config GUI Major Overhaul**
+  - During development on v3.6.1, the mod's configuration file exceeded Minecraft's hard-coded networking limits due to a Fzzy Config NeoForge bug which I've already reported. As a work-around, the main config has been split into multiple smaller, organized configs. It needed to be done anyway, so I simultaneously re-organized everything, making it more intuitive to navigate.
 - **Dismount Keybinding Simplification**
   - Removed the confusing config toggle that forced players to enable a custom keybind in the config before they could rebind the "Dismount Hamster" key in the `Controls > Key Binds` menu. The keybind is now permanently exposed.
   - The "Dismount Hamster" keybind now utilizes an unbound fallback system. By default, the keybind is set to `Unbound`, and the game will naturally listen to your vanilla `Sneak` key to dismount hamsters. However, if you manually assign a key to it in the controls menu, it will override the sneak behavior and listen exclusively to your custom key.

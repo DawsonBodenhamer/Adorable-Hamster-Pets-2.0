@@ -65,7 +65,7 @@ public class HamsterLookAtEntityGoal extends LookAtEntityGoal {
     public void start() {
         super.start();
 
-        int baseDuration = Configs.AHP.lookAtDuration.get();
+        int baseDuration = Configs.AHP_MAIN.lookAtDuration.get();
         // Logic: Base + (0 to 4 seconds) with a constant variance of 80 ticks
         int calculatedDuration = baseDuration + this.mob.getRandom().nextInt(80);
 

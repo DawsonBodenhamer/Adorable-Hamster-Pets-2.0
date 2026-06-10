@@ -3,7 +3,8 @@ package net.dawson.adorablehamsterpets.util;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.AhpMainConfig;
+import net.dawson.adorablehamsterpets.config.AhpItemConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
@@ -44,7 +45,7 @@ public final class HamsterDietUtil {
         if (ConfigDataCache.isRepeatableFood(stack)) return false;
 
         // Bypass for babies if config enabled
-        if (hamster.isBaby() && AdorableHamsterPets.CONFIG.disableBabyFoodRefusal) return false;
+        if (hamster.isBaby() && AdorableHamsterPets.ITEM_CONFIG.disableBabyFoodRefusal) return false;
 
         ItemStack lastFood = hamster.getLastFoodItem();
         if (lastFood != null && !lastFood.isEmpty() && ItemStack.areItemsEqual(lastFood, stack)) {
@@ -69,7 +70,8 @@ public final class HamsterDietUtil {
      */
     public static int tryFeeding(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         World world = hamster.getWorld();
-        AhpConfig config = AdorableHamsterPets.CONFIG;
+        AhpMainConfig baseConfig = AdorableHamsterPets.MAIN_CONFIG;
+        AhpItemConfig itemConfig = AdorableHamsterPets.ITEM_CONFIG;
 
         // --- 1. Process Pouch Unlock ---
         if (ConfigDataCache.isPouchUnlockFood(stack) && !hamster.isCheekPouchUnlocked()) {
@@ -109,11 +111,11 @@ public final class HamsterDietUtil {
 
             if (!world.isClient()) {
                 // Apply config buffs
-                int duration = config.greenBeanBuffDuration.get();
-                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, duration, config.greenBeanBuffAmplifierSpeed.get()));
-                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, duration, config.greenBeanBuffAmplifierStrength.get()));
-                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, duration, config.greenBeanBuffAmplifierAbsorption.get()));
-                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, duration, config.greenBeanBuffAmplifierRegen.get()));
+                int duration = itemConfig.greenBeanBuffDuration.get();
+                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, duration, itemConfig.greenBeanBuffAmplifierSpeed.get()));
+                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, duration, itemConfig.greenBeanBuffAmplifierStrength.get()));
+                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, duration, itemConfig.greenBeanBuffAmplifierAbsorption.get()));
+                hamster.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, duration, itemConfig.greenBeanBuffAmplifierRegen.get()));
 
                 // Init zoomies behavior
                 hamster.enableZoomies(player);
@@ -123,7 +125,7 @@ public final class HamsterDietUtil {
 
                 // Update state trackers
                 hamster.getDataTracker().set(HamsterEntity.GREEN_BEAN_BUFF_DURATION, currentTime + duration);
-                hamster.setGreenBeanBuffEndTick(currentTime + config.steamedGreenBeansBuffCooldown.get());
+                hamster.setGreenBeanBuffEndTick(currentTime + baseConfig.steamedGreenBeansBuffCooldown.get());
 
                 // Trigger Advancement
                 if (player instanceof ServerPlayerEntity serverPlayer) {
@@ -152,7 +154,7 @@ public final class HamsterDietUtil {
             // Heal if injured
             if (hamster.getHealth() < hamster.getMaxHealth()) {
                 if (!world.isClient()) {
-                    hamster.heal(config.standardFoodHealing.get());
+                    hamster.heal(itemConfig.standardFoodHealing.get());
                 }
                 consumed = true;
             }
@@ -175,7 +177,7 @@ public final class HamsterDietUtil {
 
                     // If just reached adulthood, apply configured cooldown
                     if (wasBaby && !hamster.isBaby()) {
-                        hamster.setBreedingAge(config.breedingCooldownSeconds.get() * 20);
+                        hamster.setBreedingAge(baseConfig.breedingCooldownSeconds.get() * 20);
                     }
                 }
                 consumed = true;
@@ -192,12 +194,12 @@ public final class HamsterDietUtil {
             // Enter love mode if healthy, adult, and ready
             if (hamster.getBreedingAge() == 0 && !hamster.isInCustomLove()) {
                 // Evaluate breeding permissions
-                boolean isBreedingAllowed = config.enableBreeding;
-                if (!isBreedingAllowed && config.allowedBreeders.contains(player.getGameProfile().getName())) {
+                boolean isBreedingAllowed = baseConfig.enableBreeding;
+                if (!isBreedingAllowed && baseConfig.allowedBreeders.contains(player.getGameProfile().getName())) {
                     isBreedingAllowed = true;
                 }
 
-                if (isBreedingAllowed && hamster.timesBred < config.maxLittersPerHamster.get()) {
+                if (isBreedingAllowed && hamster.timesBred < baseConfig.maxLittersPerHamster.get()) {
 
                     if (!world.isClient()) {
                         // --- Player Litter Limit Check ---
@@ -234,7 +236,7 @@ public final class HamsterDietUtil {
             if (hamster.getHamsterFlag(HamsterEntity.THROW_COOLDOWN_FLAG)) {
                 if (!world.isClient()) {
                     long currentTime = world.getTime();
-                    long reduction = Math.max(100L, (long) (config.hamsterThrowCooldown.get() * 0.15F));
+                    long reduction = Math.max(100L, (long) (baseConfig.hamsterThrowCooldown.get() * 0.15F));
                     hamster.throwCooldownEndTick -= reduction;
 
                     if (hamster.throwCooldownEndTick <= currentTime) {

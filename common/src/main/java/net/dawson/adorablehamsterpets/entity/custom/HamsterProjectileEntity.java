@@ -183,7 +183,7 @@ public class HamsterProjectileEntity extends ThrownEntity {
 
     @Override
     protected double getGravity() {
-        return AdorableHamsterPets.CONFIG.hamsterThrowGravity.get();
+        return AdorableHamsterPets.MAIN_CONFIG.hamsterThrowGravity.get();
     }
 
     @Override
@@ -198,7 +198,7 @@ public class HamsterProjectileEntity extends ThrownEntity {
 
         Entity owner = this.getOwner();
         if (owner != null) {
-            if (!Configs.AHP.yeetFriendlyFire) {
+            if (!Configs.AHP_MAIN.yeetFriendlyFire) {
                 return false;
             }
         }

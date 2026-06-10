@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.util;
 
 import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.client.render.HamsterPBRTexture;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
@@ -102,12 +103,12 @@ public class HamsterTextureUtil {
      * Supports both programmatic color replacement and static image alpha masking.
      */
     public static Identifier getHamsterTexture(HamsterEntity hamster) {
-        if (Configs.AHP.performanceMode) {
+        if (AdorableHamsterPetsClient.isPerformanceModeEnabled) {
             return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/performance_mode.png");
         }
 
         HamsterGenome genome = hamster.getGenome();
-        boolean redEyes = genome.eyeGenotype() == 2 && Configs.AHP.enableRedEyes;
+        boolean redEyes = genome.eyeGenotype() == 2 && Configs.AHP_MAIN.enableRedEyes;
         boolean isSweetPotato = hamster.isSweetPotato();
         boolean isHamtaro = hamster.isHamtaro();
 
@@ -116,7 +117,7 @@ public class HamsterTextureUtil {
         String armorMaterial = "none";
         Identifier armorTextureId = null;
 
-        if (Configs.AHP.enableArmorVisuals && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
+        if (Configs.AHP_MAIN.enableArmorVisuals && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
             armorMaterial = armorItem.getMaterial().getName();
             armorTextureId = armorItem.getEntityTexture();
         }
@@ -130,7 +131,7 @@ public class HamsterTextureUtil {
 
         if (accessoryStack.isOf(ModItems.ACORN_HAT.get())) {
             hasAcornHat = true;
-        } else if (!armorStack.isEmpty() && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP.renderAcornHat.get()) {
+        } else if (!armorStack.isEmpty() && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP_MAIN.renderAcornHat.get()) {
             hasAcornHat = true;
         }
 
@@ -151,8 +152,8 @@ public class HamsterTextureUtil {
                 hasPinkPetals,
                 isSweetPotato,
                 isHamtaro,
-                Configs.AHP.enableArmorPbr.get(),
-                Configs.AHP.emissiveArmorTrims.get());
+                Configs.AHP_MAIN.enableArmorPbr.get(),
+                Configs.AHP_MAIN.emissiveArmorTrims.get());
 
         Identifier cachedId = CACHED_TEXTURES.get(cacheKey);
         if (cachedId != null) {
@@ -191,7 +192,7 @@ public class HamsterTextureUtil {
             // No Reflectance → G:0
             // Low SSS → B:80
             // No Emissiveness → A:255
-            int furSss = Configs.AHP.furSss.get();
+            int furSss = Configs.AHP_MAIN.furSss.get();
             int furSpecular = ColorHelper.Abgr.getAbgr(255, furSss, 0, 0);
 
             // Fill base PBR values for opaque pixels on base coat,
@@ -241,7 +242,7 @@ public class HamsterTextureUtil {
             // No Reflectance → G:0
             // Medium SSS → B:100
             // No Emissiveness → A:255
-            int skinSss = Configs.AHP.skinSss.get();
+            int skinSss = Configs.AHP_MAIN.skinSss.get();
             int skinSpecular = ColorHelper.Abgr.getAbgr(255, skinSss, 0, 120);
             NativeImage skinLayer = readRawImage("textures/entity/hamster/overlays/skin/skin.png");
             if (skinLayer != null) {
@@ -264,24 +265,24 @@ public class HamsterTextureUtil {
 
             // --- 6. Armor Layer ---
             if (armorTextureId != null) {
-                int armorSpecular = Configs.AHP.enableArmorPbr.get() ? getArmorSpecular(armorMaterial) : ColorHelper.Abgr.getAbgr(255, 0, 0, 0);
+                int armorSpecular = Configs.AHP_MAIN.enableArmorPbr.get() ? getArmorSpecular(armorMaterial) : ColorHelper.Abgr.getAbgr(255, 0, 0, 0);
                 NativeImage armorLayer = readRawImage(armorTextureId.getPath());
                 if (armorLayer != null) {
                     blendLayer(composite, specularImg, normalImg, armorLayer, armorSpecular);
-                    if (Configs.AHP.enableArmorPbr.get()) {
+                    if (Configs.AHP_MAIN.enableArmorPbr.get()) {
                         applyProceduralPom(armorLayer, normalImg);
                     }
                     armorLayer.close();
                 }
 
                 // --- 7. Armor Trim Layer ---
-                if (!trimPattern.equals("none") && !trimMaterialAsset.equals("none") && Configs.AHP.enableArmorVisuals) {
+                if (!trimPattern.equals("none") && !trimMaterialAsset.equals("none") && Configs.AHP_MAIN.enableArmorVisuals) {
                     NativeImage trimLayer = createTrimLayerImage(trimPattern, trimMaterialAsset);
                     if (trimLayer != null) {
-                        int emissiveValue = Configs.AHP.emissiveArmorTrims.get() ? Configs.AHP.trimEmissiveBrightness.get() : 255;
+                        int emissiveValue = Configs.AHP_MAIN.emissiveArmorTrims.get() ? Configs.AHP_MAIN.trimEmissiveBrightness.get() : 255;
 
                         int trimSpecular;
-                        if (Configs.AHP.enableArmorPbr.get()) {
+                        if (Configs.AHP_MAIN.enableArmorPbr.get()) {
                             // High Glossy → R:220
                             // Medium Reflectance → G:50
                             // No SSS → B:0
@@ -292,7 +293,7 @@ public class HamsterTextureUtil {
                         }
 
                         blendLayer(composite, specularImg, normalImg, trimLayer, trimSpecular);
-                        if (Configs.AHP.enableArmorPbr.get()) {
+                        if (Configs.AHP_MAIN.enableArmorPbr.get()) {
                             applyProceduralPom(trimLayer, normalImg);
                         }
                         trimLayer.close();
@@ -305,7 +306,7 @@ public class HamsterTextureUtil {
             // No Reflectance → G:0
             // Low SSS → B:80
             // No Emissiveness → A:255
-            int accessorySss = Configs.AHP.accessorySss.get();
+            int accessorySss = Configs.AHP_MAIN.accessorySss.get();
             int accessorySpecular = ColorHelper.Abgr.getAbgr(255, accessorySss, 0, 50);
 
             // --- 8. Acorn Hat Layer ---
@@ -395,7 +396,7 @@ public class HamsterTextureUtil {
 
                     // 1.0 (Brightest) -> 0% depth -> 255 alpha
                     // 0.0 (Darkest) -> HAMSTER_MAX_POM_DEPTH -> scaled alpha
-                    float depthFraction = (1.0f - normalized) * (Configs.AHP.maxPomDepth.get() / 0.25f);
+                    float depthFraction = (1.0f - normalized) * (Configs.AHP_MAIN.maxPomDepth.get() / 0.25f);
                     int pomAlpha = Math.max(1, 255 - (int)(depthFraction * 254));
 
                     int normColor = normalImg.getColor(x, y);
@@ -412,11 +413,11 @@ public class HamsterTextureUtil {
      */
     private static int getArmorSpecular(String material) {
         var pbr = switch (material) {
-            case "acorn" -> Configs.AHP.acornPbr.get();
-            case "iron" -> Configs.AHP.ironPbr.get();
-            case "gold" -> Configs.AHP.goldPbr.get();
-            case "diamond" -> Configs.AHP.diamondPbr.get();
-            case "netherite" -> Configs.AHP.netheritePbr.get();
+            case "acorn" -> Configs.AHP_MAIN.acornPbr.get();
+            case "iron" -> Configs.AHP_MAIN.ironPbr.get();
+            case "gold" -> Configs.AHP_MAIN.goldPbr.get();
+            case "diamond" -> Configs.AHP_MAIN.diamondPbr.get();
+            case "netherite" -> Configs.AHP_MAIN.netheritePbr.get();
             default -> null;
         };
 

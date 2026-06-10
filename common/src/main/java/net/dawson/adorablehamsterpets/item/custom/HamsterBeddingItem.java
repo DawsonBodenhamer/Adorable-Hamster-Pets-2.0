@@ -78,7 +78,7 @@ public class HamsterBeddingItem extends Item {
 
     @Override
     public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
-        if (Configs.AHP.enableItemTooltips) {
+        if (Configs.AHP_UI.enableItemTooltips) {
             if (Screen.hasShiftDown()) {
                 // --- Expanded Tooltip (Shift) ---
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint1").formatted(Formatting.GOLD));

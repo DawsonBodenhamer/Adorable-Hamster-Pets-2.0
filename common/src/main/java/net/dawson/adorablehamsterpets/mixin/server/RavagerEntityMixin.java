@@ -25,7 +25,7 @@ public abstract class RavagerEntityMixin extends RaiderEntity {
     @Inject(method = "initGoals", at = @At("TAIL"))
     private void adorablehamsterpets$addFleeHamsterGoal(CallbackInfo ci) {
         // This predicate will read the live config value.
-        Predicate<LivingEntity> fleeCondition = (livingEntity) -> AdorableHamsterPets.CONFIG.enableRavagerFlee;
+        Predicate<LivingEntity> fleeCondition = (livingEntity) -> AdorableHamsterPets.MAIN_CONFIG.enableRavagerFlee;
 
         this.goalSelector.add(3, new FleeEntityGoal<>(
                 this,

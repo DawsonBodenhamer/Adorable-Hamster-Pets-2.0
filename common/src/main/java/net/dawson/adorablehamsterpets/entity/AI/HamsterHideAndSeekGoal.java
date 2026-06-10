@@ -75,7 +75,7 @@ public class HamsterHideAndSeekGoal extends Goal {
 
     @Override
     public boolean canStart() {
-        if (this.world.isClient() || !Configs.AHP.enableHideAndSeek) return false;
+        if (this.world.isClient() || !Configs.AHP_MAIN.enableHideAndSeek) return false;
 
         // Basic cooldown and state restrictions
         if (this.hamster.getWorld().getTime() < this.hamster.hideAndSeekCooldownEndTick) return false;
@@ -102,7 +102,7 @@ public class HamsterHideAndSeekGoal extends Goal {
         this.checkTimer = this.getTickCount(20);
 
         // Scale denominator to match check frequency
-        int denominator = Math.max(1, Configs.AHP.hideAndSeekChanceDenominator.get() / 20);
+        int denominator = Math.max(1, Configs.AHP_MAIN.hideAndSeekChanceDenominator.get() / 20);
         if (this.hamster.getRandom().nextInt(denominator) != 0) {
             return false;
         }
@@ -125,7 +125,7 @@ public class HamsterHideAndSeekGoal extends Goal {
         // Check block validity continuously
         BlockState state = this.world.getBlockState(this.targetBlock);
         boolean isValid = ConfigDataCache.isHideAndSeekBlock(state) ||
-                (Configs.AHP.allowInventoryHiding && this.world.getBlockEntity(this.targetBlock) instanceof Inventory);
+                (Configs.AHP_MAIN.allowInventoryHiding && this.world.getBlockEntity(this.targetBlock) instanceof Inventory);
 
         return isValid;
     }
@@ -160,12 +160,12 @@ public class HamsterHideAndSeekGoal extends Goal {
         if (this.targetBlock != null) {
             BlockState state = this.world.getBlockState(this.targetBlock);
             blockIsValid = ConfigDataCache.isHideAndSeekBlock(state) ||
-                    (Configs.AHP.allowInventoryHiding && this.world.getBlockEntity(this.targetBlock) instanceof Inventory);
+                    (Configs.AHP_MAIN.allowInventoryHiding && this.world.getBlockEntity(this.targetBlock) instanceof Inventory);
         }
 
         // Only apply cooldown if block was valid
         if (blockIsValid) {
-            this.hamster.hideAndSeekCooldownEndTick = this.world.getTime() + (Configs.AHP.hideAndSeekCooldownSeconds.get() * 20L);
+            this.hamster.hideAndSeekCooldownEndTick = this.world.getTime() + (Configs.AHP_MAIN.hideAndSeekCooldownSeconds.get() * 20L);
         }
 
         if (this.targetBlock != null) {
@@ -230,8 +230,8 @@ public class HamsterHideAndSeekGoal extends Goal {
                             this.hamster.writeNbt(fullNbt);
 
                             int duration = this.hamster.getRandom().nextBetween(
-                                    Configs.AHP.hideAndSeekMinDurationSeconds.get() * 20,
-                                    Configs.AHP.hideAndSeekMaxDurationSeconds.get() * 20
+                                    Configs.AHP_MAIN.hideAndSeekMinDurationSeconds.get() * 20,
+                                    Configs.AHP_MAIN.hideAndSeekMaxDurationSeconds.get() * 20
                             );
 
                             hider.initializeHiding(this.targetBlock, duration, fullNbt);
@@ -311,7 +311,7 @@ public class HamsterHideAndSeekGoal extends Goal {
 
             boolean isValid = ConfigDataCache.isHideAndSeekBlock(state);
 
-            if (!isValid && Configs.AHP.allowInventoryHiding) {
+            if (!isValid && Configs.AHP_MAIN.allowInventoryHiding) {
                 if (this.world.getBlockEntity(pos) instanceof Inventory) {
                     isValid = true;
                 }

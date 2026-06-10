@@ -39,7 +39,7 @@
     "fabric-api": "*",
     "architectury": ">=13.0.8",
     "geckolib": ">=4.8.3",
-    "fzzy_config": ">=0.7.3",
+    "fzzy_config": ">=0.7.6",
     "patchouli": ">=1.21.1-93-FABRIC"
   },
   "suggests": {

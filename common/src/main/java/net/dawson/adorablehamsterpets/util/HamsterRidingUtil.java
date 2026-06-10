@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.dawson.adorablehamsterpets.config.AhpConfig;
+import net.dawson.adorablehamsterpets.config.AhpMainConfig;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -140,7 +140,7 @@ public final class HamsterRidingUtil {
         hamster.setSprinting(isSprinting);
 
         // Calculate Speed Multipliers
-        final AhpConfig config = AdorableHamsterPets.CONFIG;
+        final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
         double speedMultiplier = isSprinting
                 ? config.ridingSprintSpeedMultiplier.get()
                 : config.ridingBaseSpeedMultiplier.get();

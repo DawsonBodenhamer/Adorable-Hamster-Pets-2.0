@@ -99,9 +99,9 @@ public class ModPackets {
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, AcknowledgeGuidebookWarningPayload.ID, AcknowledgeGuidebookWarningPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
                     String username = context.getPlayer().getGameProfile().getName();
-                    if (!Configs.AHP.playersWhoHaveSeenGuidebookWarning.contains(username)) {
-                        Configs.AHP.playersWhoHaveSeenGuidebookWarning.add(username);
-                        Configs.AHP.save();
+                    if (!Configs.AHP_UI.playersWhoHaveSeenGuidebookWarning.contains(username)) {
+                        Configs.AHP_UI.playersWhoHaveSeenGuidebookWarning.add(username);
+                        Configs.AHP_MAIN.save();
                     }
                 })
         );
@@ -129,7 +129,7 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, RequestHamsterRidePayload.ID, RequestHamsterRidePayload.CODEC,
                 (payload, context) -> context.queue(() -> {
-                    if (!Configs.AHP.enableMountableHamsters.get()) {
+                    if (!Configs.AHP_MAIN.enableMountableHamsters.get()) {
                         return;
                     }
 
@@ -154,7 +154,7 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, HamsterInputPayload.ID, HamsterInputPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
-                    if (!Configs.AHP.enableMountableHamsters.get()) return;
+                    if (!Configs.AHP_MAIN.enableMountableHamsters.get()) return;
 
                     if (context.getPlayer().getVehicle() instanceof HamsterEntity hamster) {
                         if (hamster.getControllingPassenger() == context.getPlayer()) {
@@ -166,7 +166,7 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, RenameHamsterPayload.ID, RenameHamsterPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
-                    if (!Configs.AHP.enableGuiRenaming) return;
+                    if (!Configs.AHP_MAIN.enableGuiRenaming) return;
 
                     if (context.getPlayer() instanceof ServerPlayerEntity player) {
                         Entity entity = player.getWorld().getEntityById(payload.entityId());
@@ -176,7 +176,7 @@ public class ModPackets {
                             boolean canRename = true;
 
                             // Process name tag sacrifice if configured
-                            if (Configs.AHP.consumeNameTagForGuiRename) {
+                            if (Configs.AHP_UI.consumeNameTagForGuiRename) {
                                 canRename = HamsterInteractionUtil.consumeNameTag(player, hamster);
                             }
 
@@ -235,21 +235,21 @@ public class ModPackets {
                     if (context.getPlayer() instanceof ServerPlayerEntity player) {
                         if (player.hasPermissionLevel(2)) { // OP required to modify server config
                             if (payload.isVariance()) {
-                                double current = Configs.AHP.geneticVariance.get();
+                                double current = Configs.AHP_MAIN.geneticVariance.get();
                                 double next = MathHelper.clamp(current + (payload.increase() ? 0.05 : -0.05), 0.0, 1.0);
                                 @SuppressWarnings("unchecked")
-                                ValidatedFieldAccessor<Double> accessor = (ValidatedFieldAccessor<Double>) (Object) Configs.AHP.geneticVariance;
+                                ValidatedFieldAccessor<Double> accessor = (ValidatedFieldAccessor<Double>) (Object) Configs.AHP_MAIN.geneticVariance;
                                 accessor.adorablehamsterpets$set(next);
                                 player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.genetic_variance_updated", String.format("%.2f", next)).formatted(Formatting.WHITE), true);
                             } else {
-                                double current = Configs.AHP.geneticMutationRate.get();
+                                double current = Configs.AHP_MAIN.geneticMutationRate.get();
                                 double next = MathHelper.clamp(current + (payload.increase() ? 0.1 : -0.1), 0.0, 2.0);
                                 @SuppressWarnings("unchecked")
-                                ValidatedFieldAccessor<Double> accessor = (ValidatedFieldAccessor<Double>) (Object) Configs.AHP.geneticMutationRate;
+                                ValidatedFieldAccessor<Double> accessor = (ValidatedFieldAccessor<Double>) (Object) Configs.AHP_MAIN.geneticMutationRate;
                                 accessor.adorablehamsterpets$set(next);
                                 player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.genetics_mutation_rate_updated", String.format("%.1f", next)).formatted(Formatting.WHITE), true);
                             }
-                            Configs.AHP.save();
+                            Configs.AHP_MAIN.save();
                         } else {
                             player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.no_permission").formatted(Formatting.RED), true);
                         }

@@ -40,8 +40,8 @@ public class ModClientCommands {
         dispatcher.register(ClientCommandRegistrationEvent.literal("ahp_disable_throw_warning")
                 .executes(context -> {
                     // Update and save config setting
-                    Configs.AHP.enableThrowCancellationWarning = false;
-                    Configs.AHP.save();
+                    Configs.AHP_UI.enableThrowCancellationWarning = false;
+                    Configs.AHP_MAIN.save();
 
                     MinecraftClient.getInstance().getSoundManager().play(
                             PositionedSoundInstance.master(SoundEvents.BLOCK_NOTE_BLOCK_BASS, 1.5F)

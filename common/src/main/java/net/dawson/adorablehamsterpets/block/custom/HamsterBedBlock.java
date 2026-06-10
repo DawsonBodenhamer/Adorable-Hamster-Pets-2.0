@@ -284,7 +284,7 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                     );
                 }
 
-                if (!player.getAbilities().creativeMode && Configs.AHP.consumeLureItem) {
+                if (!player.getAbilities().creativeMode && Configs.AHP_MAIN.consumeLureItem) {
                     heldStack.decrement(1);
                 }
                 return ActionResult.SUCCESS;
@@ -293,13 +293,13 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
             // --- 6. Resurrection Tribute Logic ---
             if (ConfigDataCache.isResurrectionTribute(heldStack)) {
                 // A. Check Global Config
-                if (!Configs.AHP.enableRespawnInBed.get()) {
+                if (!Configs.AHP_MAIN.enableRespawnInBed.get()) {
                     bedEntity.triggerFailSound();
                     player.sendMessage(Text.translatable("message.adorablehamsterpets.respawn.disabled_by_config").formatted(Formatting.RED), true);
                     return ActionResult.SUCCESS;
                 }
 
-                if (Configs.AHP.freeBedRespawns.get()) {
+                if (Configs.AHP_MAIN.freeBedRespawns.get()) {
                     return ActionResult.PASS;
                 }
 
@@ -407,7 +407,7 @@ public class HamsterBedBlock extends BlockWithEntity implements BlockEntityProvi
                                 HamsterBedUtil.wakeUpFromBed(hamster, true); // Manual wakeup
                             }
                             if (hamster.getOwner() instanceof PlayerEntity owner) {
-                                if (Configs.AHP.enableBedBreakMessage) {
+                                if (Configs.AHP_UI.enableBedBreakMessage) {
                                     owner.sendMessage(Text.translatable("message.adorablehamsterpets.bed_broken").formatted(Formatting.RED), true);
                                 }
                             }

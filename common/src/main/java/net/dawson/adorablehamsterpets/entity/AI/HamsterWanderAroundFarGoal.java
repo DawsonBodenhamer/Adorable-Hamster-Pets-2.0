@@ -77,7 +77,7 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
             return true; // A valid target was found.
         } else {
             // --- Normal Wandering ---
-            int interval = Configs.AHP.wanderChanceInterval.get();
+            int interval = Configs.AHP_MAIN.wanderChanceInterval.get();
 
             // If configured to 0, disable wandering entirely.
             if (interval <= 0) {
@@ -175,9 +175,9 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
                     if (be instanceof HamsterBedBlockEntity bedEntity) {
                         WanderDistance distance = bedEntity.getWanderDistance();
                         int radius = switch (distance) {
-                            case NEAR -> Configs.AHP.wanderDistanceNear.get();
-                            case FAR -> Configs.AHP.wanderDistanceFar.get();
-                            default -> Configs.AHP.wanderDistanceMedium.get();
+                            case NEAR -> Configs.AHP_MAIN.wanderDistanceNear.get();
+                            case FAR -> Configs.AHP_MAIN.wanderDistanceFar.get();
+                            default -> Configs.AHP_MAIN.wanderDistanceMedium.get();
                         };
 
                         // If hamster is outside its radius, path back towards the bed

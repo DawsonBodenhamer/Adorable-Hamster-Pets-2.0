@@ -239,13 +239,13 @@ public class AnnouncementScreen extends Screen {
 
         // 2. "Disable These" button (primary row)
         primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.disable_icons"), button -> {
-            ((ValidatedFieldAccessor<Boolean>) Configs.AHP.enableNotificationIcons).adorablehamsterpets$set(false);
-            Configs.AHP.save();
+            ((ValidatedFieldAccessor<Boolean>) Configs.AHP_UI.enableNotificationIcons).adorablehamsterpets$set(false);
+            Configs.AHP_MAIN.save();
             this.close();
         }).tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.disable_icons.tooltip"))));
 
         // 3. "Snooze (Days)" button (primary row)
-        MutableText remindLaterTooltip = Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_days.tooltip", Configs.AHP.snoozeUpdateReminderDays.get());
+        MutableText remindLaterTooltip = Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_days.tooltip", Configs.AHP_UI.snoozeUpdateReminderDays.get());
         ClientAnnouncementState state = AnnouncementManager.INSTANCE.getClientState();
         Instant snoozeUntil = state.snoozed_ids().get(announcement.id());
         if (snoozeUntil != null && snoozeUntil.isAfter(Instant.now())) {
@@ -253,7 +253,7 @@ public class AnnouncementScreen extends Screen {
             remindLaterTooltip.append("\n\n").append(formatDuration(remaining));
         }
         primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_days"), button -> {
-            AnnouncementManager.INSTANCE.setSnooze(announcement.id(), Configs.AHP.snoozeUpdateReminderDays.get());
+            AnnouncementManager.INSTANCE.setSnooze(announcement.id(), Configs.AHP_UI.snoozeUpdateReminderDays.get());
             if (this.parentScreen instanceof TitleScreen) {
                 AnnouncementManager.INSTANCE.queueDeferredReadMark(this.virtualEntry.getId());
             } else {

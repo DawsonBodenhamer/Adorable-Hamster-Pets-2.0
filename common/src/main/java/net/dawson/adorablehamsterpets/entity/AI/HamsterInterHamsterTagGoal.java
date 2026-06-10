@@ -64,7 +64,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
         }
 
         // --- 2. Master Config Check ---
-        if (!Configs.AHP.enableInterHamsterTag) return false;
+        if (!Configs.AHP_MAIN.enableInterHamsterTag) return false;
 
         // --- 3. Restrict Roll Frequency ---
         // Only roll dice once per second for performance
@@ -87,7 +87,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
         // Calculate chance: 1 game per X seconds for the entire room
         // Rolls happen every 20 ticks (1 roll per second per hamster)
         // Chance = 1 / (seconds * populationSize)
-        int averageSeconds = Configs.AHP.interHamsterTagAverageSeconds.get();
+        int averageSeconds = Configs.AHP_MAIN.interHamsterTagAverageSeconds.get();
         int chanceDenominator = averageSeconds * populationSize;
 
         // Roll dice
@@ -135,7 +135,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
     @Override
     public void start() {
         this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName() + (this.hamster.isTagChaser ? "_Chaser" : "_Instigator"));
-        this.gameTimerTicks = Configs.AHP.interHamsterTagMaxDurationSeconds.get() * 20;
+        this.gameTimerTicks = Configs.AHP_MAIN.interHamsterTagMaxDurationSeconds.get() * 20;
         this.pathUpdateTimer = 0;
 
         if (this.hamster.isTagChaser) {
@@ -223,8 +223,8 @@ public class HamsterInterHamsterTagGoal extends Goal {
             case FLEEING -> {
                 this.hamster.setTaunting(false);
                 LivingEntity owner = this.hamster.getOwner();
-                double minFleeDist = Configs.AHP.minMiniGameFleeDistance.get();
-                double maxFleeDist = Configs.AHP.maxMiniGameFleeDistance.get();
+                double minFleeDist = Configs.AHP_MAIN.minMiniGameFleeDistance.get();
+                double maxFleeDist = Configs.AHP_MAIN.maxMiniGameFleeDistance.get();
 
                 if (owner != null) {
                     // Instigator: run away but stay tethered to owner if tamed
@@ -274,7 +274,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
             }
             case TAUNTING -> {
                 LivingEntity owner = this.hamster.getOwner();
-                double minFleeDist = Configs.AHP.minMiniGameFleeDistance.get();
+                double minFleeDist = Configs.AHP_MAIN.minMiniGameFleeDistance.get();
 
                 if (owner != null && this.hamster.squaredDistanceTo(owner) > (TETHER_DISTANCE * TETHER_DISTANCE)) {
                     // Prioritize returning to owner if tether broken

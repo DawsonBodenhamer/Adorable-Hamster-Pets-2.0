@@ -15,7 +15,7 @@ import net.minecraft.world.World;
 public class CheeseItem extends ConfigurableFoodItem {
 
     public CheeseItem(Settings settings) {
-        super(settings, Configs.AHP.cheeseNutrition, Configs.AHP.cheeseSaturation, "tooltip.adorablehamsterpets.cheese");
+        super(settings, Configs.AHP_ITEMS.cheeseNutrition, Configs.AHP_ITEMS.cheeseSaturation, "tooltip.adorablehamsterpets.cheese");
     }
 
     /**
@@ -45,8 +45,8 @@ public class CheeseItem extends ConfigurableFoodItem {
     public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {
         if (user instanceof PlayerEntity player) {
             // Manually apply hunger and saturation from config
-            int nutrition = Configs.AHP.cheeseNutrition.get();
-            float saturation = Configs.AHP.cheeseSaturation.get();
+            int nutrition = Configs.AHP_ITEMS.cheeseNutrition.get();
+            float saturation = Configs.AHP_ITEMS.cheeseSaturation.get();
             player.getHungerManager().add(nutrition, saturation);
             player.incrementStat(Stats.USED.getOrCreateStat(this));
             SoundEvent randomEatSound = ModSounds.getRandomSoundFrom(ModSounds.CHEESE_EAT_SOUNDS, world.random);

@@ -147,13 +147,13 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
         if (useFloatyPhysics) {
             // --- Universal Drift When Outdoors ---
             float universalDriftAngle;
-            if (Configs.AHP.enableDynamicDriftAngle.get()) {
+            if (Configs.AHP_UI.enableDynamicDriftAngle.get()) {
                 // Dynamic, time-based rotation
                 float timeWithPartial = worldTime + MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(true);
                 universalDriftAngle = (timeWithPartial / DRIFT_PERIOD_TICKS) * MathHelper.TAU;
             } else {
                 // Static angle from config
-                universalDriftAngle = (float) Math.toRadians(Configs.AHP.staticDriftAngle.get());
+                universalDriftAngle = (float) Math.toRadians(Configs.AHP_UI.staticDriftAngle.get());
             }
 
             float driftDirX = MathHelper.cos(universalDriftAngle);
@@ -193,7 +193,7 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
                     if (gust.key != lastAppliedGustKey) {
                         // Play sound once per unique gust event per tick, up to MAX_CONCURRENT_SOUNDS simultaneously
                         if (soundStartTimes.size() < MAX_CONCURRENT_SOUNDS && playedGustSoundsThisTick.add(gust.key)) {
-                            float vol = Configs.AHP.leafGustVolume.get();
+                            float vol = Configs.AHP_UI.leafGustVolume.get();
                             if (vol > 0) {
                                 this.world.playSound(this.x, this.y, this.z, ModSounds.GENTLE_BREEZE.get(), SoundCategory.AMBIENT, vol, 1.0f, false);
                                 soundStartTimes.addLast(worldTime);

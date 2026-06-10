@@ -50,9 +50,9 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
 
             WanderDistance distance = WanderDistance.valueOf(serverData.getString("WanderDistance").toUpperCase());
             int radius = switch (distance) {
-                case NEAR -> Configs.AHP.wanderDistanceNear.get();
-                case FAR -> Configs.AHP.wanderDistanceFar.get();
-                default -> Configs.AHP.wanderDistanceMedium.get();
+                case NEAR -> Configs.AHP_MAIN.wanderDistanceNear.get();
+                case FAR -> Configs.AHP_MAIN.wanderDistanceFar.get();
+                default -> Configs.AHP_MAIN.wanderDistanceMedium.get();
             };
 
             tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_status", wanderStatus, Text.translatable(distance.translationKey()), radius));
@@ -90,7 +90,7 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
                     // State 4: Globally enabled, but inactive (Tribute Required)
                     statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.inactive");
                     // Dynamic Item Name Lookup
-                    Text tributeName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.resurrectionTributes);
+                    Text tributeName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.resurrectionTributes);
                     hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.inactive", tributeName.copy().formatted(Formatting.GOLD, Formatting.BOLD));
                 }
 
@@ -102,8 +102,8 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls2").formatted(Formatting.GRAY));
 
                 // --- 4. Dynamic Interaction Tips ---
-                Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
-                Text repellentName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.bedAvoidanceFoods).copy().formatted(Formatting.RED, Formatting.BOLD);
+                Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
+                Text repellentName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.bedAvoidanceFoods).copy().formatted(Formatting.RED, Formatting.BOLD);
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.lure_hint", lureName).formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.repellent_hint", repellentName).formatted(Formatting.GRAY));
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.unlink_hint", repellentName).formatted(Formatting.GRAY));
@@ -151,8 +151,8 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
             data.putString("WanderDistance", bedEntity.getWanderDistance().asString());
             data.putBoolean("AllowSleepInBed", bedEntity.isSleepingAllowed());
             data.putBoolean("RespawnEnabled", bedEntity.isRespawnEnabled());
-            data.putBoolean("ConfigRespawnEnabled", Configs.AHP.enableRespawnInBed.get());
-            data.putBoolean("FreeBedRespawns", Configs.AHP.freeBedRespawns.get());
+            data.putBoolean("ConfigRespawnEnabled", Configs.AHP_MAIN.enableRespawnInBed.get());
+            data.putBoolean("FreeBedRespawns", Configs.AHP_MAIN.freeBedRespawns.get());
         }
     }
 

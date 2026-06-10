@@ -21,7 +21,7 @@ public final class AHPClientScreenEvents {
 
     private static void onScreenInitPost(Screen screen, ScreenAccess access) {
         // --- 1. Pre-condition Checks ---
-        if (!Configs.AHP.enableWidgetIcon.get() || Configs.AHP.serverDisableAnnouncements) {
+        if (!Configs.AHP_UI.enableWidgetIcon.get() || Configs.AHP_UI.serverDisableAnnouncements) {
             return;
         }
         if (AdorableHamsterPetsClient.getPendingNotifications().isEmpty()) {

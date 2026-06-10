@@ -25,7 +25,7 @@ public abstract class SpiderEntityMixin extends HostileEntity {
     @Inject(method = "initGoals", at = @At("TAIL"))
     private void adorablehamsterpets$addFleeHamsterGoal(CallbackInfo ci) {
         // This predicate will read the live config value.
-        Predicate<LivingEntity> fleeCondition = (livingEntity) -> AdorableHamsterPets.CONFIG.enableSpiderFlee;
+        Predicate<LivingEntity> fleeCondition = (livingEntity) -> AdorableHamsterPets.MAIN_CONFIG.enableSpiderFlee;
 
         this.goalSelector.add(3, new FleeEntityGoal<>(
                 this,

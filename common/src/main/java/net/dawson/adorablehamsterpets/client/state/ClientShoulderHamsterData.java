@@ -222,7 +222,7 @@ public class ClientShoulderHamsterData {
                     if (physics.soundDelayTicks == 0) {
                         // Check Config Before Playing Sound
                         MinecraftClient client = MinecraftClient.getInstance();
-                        boolean shouldPlaySound = !(Configs.AHP.silencePhysicsSoundsInFirstPerson && client.options.getPerspective().isFirstPerson());
+                        boolean shouldPlaySound = !(Configs.AHP_MAIN.silencePhysicsSoundsInFirstPerson && client.options.getPerspective().isFirstPerson());
 
                         if (shouldPlaySound) {
                             SoundEvent impactSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SHOULDER_IMPACT_SOUNDS, player.getRandom());

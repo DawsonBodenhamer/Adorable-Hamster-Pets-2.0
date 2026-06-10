@@ -31,21 +31,21 @@ public final class AHPJadePlugin implements IWailaPlugin {
             if (accessor instanceof snownee.jade.api.EntityAccessor entityAccessor && entityAccessor.getEntity() instanceof HamsterEntity) {
                 ITooltip tooltip = tooltipBox.getTooltip();
                 boolean playerSneaking = entityAccessor.getPlayer().isSneaking();
-                boolean hideDueToSneak = Configs.AHP.requireSneakForDefaultJadeInfo && !playerSneaking;
+                boolean hideDueToSneak = Configs.AHP_UI.requireSneakForDefaultJadeInfo && !playerSneaking;
 
-                if (!Configs.AHP.showJadeEntityName || hideDueToSneak) {
+                if (!Configs.AHP_UI.showJadeEntityName || hideDueToSneak) {
                     tooltip.remove(Identifier.of("jade", "object_name"));
                 }
-                if (!Configs.AHP.showJadeEntityHealth || hideDueToSneak) {
+                if (!Configs.AHP_UI.showJadeEntityHealth || hideDueToSneak) {
                     tooltip.remove(Identifier.of("minecraft", "entity_health"));
                 }
-                if (!Configs.AHP.showJadeGrowthTime || hideDueToSneak) {
+                if (!Configs.AHP_UI.showJadeGrowthTime || hideDueToSneak) {
                     tooltip.remove(Identifier.of("minecraft", "mob_growth"));
                 }
-                if (!Configs.AHP.showJadeOwner || hideDueToSneak) {
+                if (!Configs.AHP_UI.showJadeOwner || hideDueToSneak) {
                     tooltip.remove(Identifier.of("minecraft", "animal_owner"));
                 }
-                if (!Configs.AHP.showJadeInventory || hideDueToSneak) {
+                if (!Configs.AHP_UI.showJadeInventory || hideDueToSneak) {
                     tooltip.remove(Identifier.of("minecraft", "item_storage"));
                 }
             }

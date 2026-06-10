@@ -42,8 +42,8 @@ public final class HamsterSleepUtil {
                     if (hamster.getQuiescentSitTimer() == 0) {
                         hamster.setDozingPhase(HamsterEntity.DozingPhase.QUIESCENT_SITTING);
 
-                        int minSeconds = Configs.AHP.tamedQuiescentSitMinSeconds.get();
-                        int maxSeconds = Configs.AHP.tamedQuiescentSitMaxSeconds.get();
+                        int minSeconds = Configs.AHP_MAIN.tamedQuiescentSitMinSeconds.get();
+                        int maxSeconds = Configs.AHP_MAIN.tamedQuiescentSitMaxSeconds.get();
 
                         // Safety rail flip
                         if (minSeconds > maxSeconds) {
@@ -128,12 +128,12 @@ public final class HamsterSleepUtil {
         if (!hamster.isSitting()) return false;
 
         World world = hamster.getWorld();
-        if (Configs.AHP.requireDaytimeForTamedSleep && !world.isDay()) {
+        if (Configs.AHP_MAIN.requireDaytimeForTamedSleep && !world.isDay()) {
             return false;
         }
         if (hamster.isInLove()) return false;
 
-        double threatRadius = Configs.AHP.tamedSleepThreatDetectionRadiusBlocks.get();
+        double threatRadius = Configs.AHP_MAIN.tamedSleepThreatDetectionRadiusBlocks.get();
         List<LivingEntity> nearbyHostiles = world.getEntitiesByClass(
                 LivingEntity.class,
                 hamster.getBoundingBox().expand(threatRadius),

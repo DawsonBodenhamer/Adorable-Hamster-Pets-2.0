@@ -77,7 +77,7 @@ public final class HamsterBedUtil {
             return false;
         }
 
-        if (!Configs.AHP.freeBedRespawns.get() && !bedEntity.isRespawnEnabled()) {
+        if (!Configs.AHP_MAIN.freeBedRespawns.get() && !bedEntity.isRespawnEnabled()) {
             // Bed exists, but respawn is not paid for/enabled
             // Silent fail
             return false;
@@ -149,7 +149,7 @@ public final class HamsterBedUtil {
             finalBedEntity.setLinkedHamster(newHamster.getUuid(), name, finalBedEntity.getWanderDistance());
 
             // Don't consume charge if respawns are free or infinite after tribute
-            if (!Configs.AHP.freeBedRespawns.get() && !Configs.AHP.infiniteRespawnsAfterTribute.get()) {
+            if (!Configs.AHP_MAIN.freeBedRespawns.get() && !Configs.AHP_MAIN.infiniteRespawnsAfterTribute.get()) {
                 finalBedEntity.setRespawnEnabled(false);
             }
         }
@@ -191,7 +191,7 @@ public final class HamsterBedUtil {
 
         // Apply a configurable cooldown if woken up by player interaction
         if (isManualWakeUp) {
-            hamster.setGoToBedCooldown(Configs.AHP.bedWakeUpCooldown.get());
+            hamster.setGoToBedCooldown(Configs.AHP_MAIN.bedWakeUpCooldown.get());
             hamster.setBypassNextSleepDelay(true);
         }
 
@@ -483,9 +483,9 @@ public final class HamsterBedUtil {
      * Called by the AI goal when the hamster successfully enters its bed.
      */
     public static void startNapTimer(HamsterEntity hamster) {
-        if (Configs.AHP.circadianChaos.get()) {
-            int min = Configs.AHP.minNapInBedIntervalSeconds.get() * 20;
-            int max = Configs.AHP.maxNapInBedIntervalSeconds.get() * 20;
+        if (Configs.AHP_MAIN.circadianChaos.get()) {
+            int min = Configs.AHP_MAIN.minNapInBedIntervalSeconds.get() * 20;
+            int max = Configs.AHP_MAIN.maxNapInBedIntervalSeconds.get() * 20;
             hamster.setNapInBedDurationTimer(hamster.getRandom().nextBetween(min, max));
         }
     }

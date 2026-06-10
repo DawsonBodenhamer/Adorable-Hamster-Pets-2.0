@@ -70,27 +70,27 @@ public class DynamicStringProcessor implements IComponentProcessor {
 
             // --- Interaction Token Injections ---
             if (rawText.contains("{LURE_ITEM}")) {
-                Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.lureItems);
+                Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.lureItems);
                 rawText = rawText.replace("{LURE_ITEM}", lureName.getString());
             }
 
             if (rawText.contains("{PACIFIST_ITEM}")) {
-                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.becomePacifistItems);
+                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.becomePacifistItems);
                 rawText = rawText.replace("{PACIFIST_ITEM}", itemName.getString());
             }
 
             if (rawText.contains("{NEUTRAL_ITEM}")) {
-                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.becomeNeutralItems);
+                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.becomeNeutralItems);
                 rawText = rawText.replace("{NEUTRAL_ITEM}", itemName.getString());
             }
 
             if (rawText.contains("{MENACE_ITEM}")) {
-                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.becomeMenaceItems);
+                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.becomeMenaceItems);
                 rawText = rawText.replace("{MENACE_ITEM}", itemName.getString());
             }
 
             if (rawText.contains("{RESURRECTION_TRIBUTE}")) {
-                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP.resurrectionTributes);
+                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.resurrectionTributes);
                 rawText = rawText.replace("{RESURRECTION_TRIBUTE}", itemName.getString());
             }
 

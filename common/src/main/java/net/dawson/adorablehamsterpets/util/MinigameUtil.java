@@ -196,7 +196,7 @@ public final class MinigameUtil {
      * it pulls exclusively from a custom mini-game rewards list.
      */
     public static Item getRandomMiniGameReward(HamsterEntity hamster) {
-        if (!Configs.AHP.usePouchLootForMiniGameRewards) {
+        if (!Configs.AHP_MAIN.usePouchLootForMiniGameRewards) {
             return ConfigDataCache.getRandomCustomMiniGameReward(hamster.getRandom());
         }
 

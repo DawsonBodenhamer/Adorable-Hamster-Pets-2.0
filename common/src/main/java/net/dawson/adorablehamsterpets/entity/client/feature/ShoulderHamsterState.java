@@ -36,8 +36,8 @@ public class ShoulderHamsterState {
      */
     public void tick(boolean isPlayerSprinting, boolean isPlayerWalking) {
         // --- 1. Movement Logic (Highest Priority) ---
-        boolean shouldForceLayDown = (Configs.AHP.forceLayDownOnSprint && isPlayerSprinting) ||
-                (Configs.AHP.forceLayDownOnWalk && isPlayerWalking);
+        boolean shouldForceLayDown = (Configs.AHP_MAIN.forceLayDownOnSprint && isPlayerSprinting) ||
+                (Configs.AHP_MAIN.forceLayDownOnWalk && isPlayerWalking);
 
         if (shouldForceLayDown) {
             // If not already laying down or preparing to, start the transition.
@@ -69,7 +69,7 @@ public class ShoulderHamsterState {
 
             // If the timer has expired, determine the next state.
             if (this.timer <= 0) {
-                if (Configs.AHP.enableDynamicShoulderAnimations.get()) {
+                if (Configs.AHP_MAIN.enableDynamicShoulderAnimations.get()) {
                     // DYNAMIC: Pick a new random state.
                     ShoulderAnimationState nextState;
                     do {
@@ -80,9 +80,9 @@ public class ShoulderHamsterState {
                 } else {
                     // NOT DYNAMIC: Snap to the forced state from config based on location
                     ForcedShoulderState forcedState = switch (this.location) {
-                        case RIGHT_SHOULDER -> Configs.AHP.forcedRightShoulderState.get();
-                        case LEFT_SHOULDER -> Configs.AHP.forcedLeftShoulderState.get();
-                        case HEAD -> Configs.AHP.forcedHeadState.get();
+                        case RIGHT_SHOULDER -> Configs.AHP_MAIN.forcedRightShoulderState.get();
+                        case LEFT_SHOULDER -> Configs.AHP_MAIN.forcedLeftShoulderState.get();
+                        case HEAD -> Configs.AHP_MAIN.forcedHeadState.get();
                     };
 
                     this.currentState = switch (forcedState) {
@@ -96,7 +96,7 @@ public class ShoulderHamsterState {
 
         // --- 3. Idle Sound Logic ---
         // Check the config setting first.
-        if (!Configs.AHP.silenceShoulderIdleSounds) {
+        if (!Configs.AHP_MAIN.silenceShoulderIdleSounds) {
             // Use a random chance to play the sound periodically.
             if (this.idleSoundCooldown > 0) {
                 this.idleSoundCooldown--;
@@ -145,8 +145,8 @@ public class ShoulderHamsterState {
     }
 
     private int getNewRandomDuration() {
-        int min = Configs.AHP.shoulderMinStateSeconds.get() * 20;
-        int max = Configs.AHP.shoulderMaxStateSeconds.get() * 20;
+        int min = Configs.AHP_MAIN.shoulderMinStateSeconds.get() * 20;
+        int max = Configs.AHP_MAIN.shoulderMaxStateSeconds.get() * 20;
         if (min >= max) return min;
         return this.random.nextBetween(min, max);
     }

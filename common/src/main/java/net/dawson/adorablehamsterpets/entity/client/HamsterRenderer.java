@@ -423,7 +423,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                 }
                 break;
             case "hamster_roll_back_sound":
-                SoundEvent rollBackSound = Configs.AHP.enableRollingSlideWhistle
+                SoundEvent rollBackSound = Configs.AHP_MAIN.enableRollingSlideWhistle
                         ? ModSounds.HAMSTER_ROLL_BACK.get()
                         : ModSounds.HAMSTER_ROLL_BACK_NO_SLIDE_WHISTLE.get();
 
