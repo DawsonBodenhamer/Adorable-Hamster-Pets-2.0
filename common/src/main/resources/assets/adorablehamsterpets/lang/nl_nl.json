@@ -2,11 +2,8 @@
   "adorablehamsterpets.main": "Hoofdinstellingen",
   "adorablehamsterpets.main.acornDropChance": "Dropkansen Van Eikels",
   "adorablehamsterpets.main.acornDropChance.desc": "\nDe kans (0,0 tot 1,0) dat er een eikel valt elke keer dat je hamster rondzoekt.\nStandaard staat dit laag: 0,03 (3%), omdat je hamster ongeveer 5 keer per seconde rondzoekt.\nZet het hoger als je de locale eekhoorn economy wil laten instorten \n(Er kan maximaal 1 eikel per seconde vallen, ook als je het helemaal omhoog zet.)",
-  "adorablehamsterpets.main.actionBarDuration": "Duur van de actiebalk",
-  "adorablehamsterpets.main.actionBarDuration.desc": "De duur (in ticks) dat actiebalkberichten op het scherm blijven staan.\nHeeft alleen effect op jouw eigen computer.\nDe standaardwaarde is 60 (3 seconden), wat eigenlijk net te kort is om goed te beseffen wat je leest.\nVerhoog deze waarde als je de tekst rustig wilt kunnen lezen.\n(20 ticks = 1 seconde)",
   "adorablehamsterpets.main.allowSleepInBed": "Slapen in bed toestaan",
   "adorablehamsterpets.main.allowSleepInBed.desc": "De globale instelling die bepaalt of hamsters in hun bed kunnen slapen.\nAls dit is ingeschakeld, zoeken alle hamsters in zwerfmodus op vaste tijden hun bed op om te slapen, ongeacht hun individuele bedinstellingen.\nAls dit is uitgeschakeld, vallen ze gewoon in slaap wanneer ze zitten — net als je oude oom op familiefeestjes.",
-  "adorablehamsterpets.main.announcements": "Aankondigingen en Update-informatie",
   "adorablehamsterpets.main.armorPerks.desc": "Stel de buffs in die worden gegeven door specifieke pantsermaterialen.\nVoor het instellen van de perk van diamanten pantser kun je items verwijderen uit of toevoegen aan de lijst ‘Terugvorderbare items’ in ‘Basis-itemtag-aanpassingen’.",
   "adorablehamsterpets.main.avoidUnlinkedBeds": "Vermijd niet-gekoppelde bedden",
   "adorablehamsterpets.main.bedWakeUpCooldown": "Handmatige wakkermaakduur"
