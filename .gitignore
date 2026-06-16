@@ -56,6 +56,10 @@ logs/
 # =================================================
 # Ignore the tech spec backups
 Adorable_Hamster_Pets_Tech_Spec_*_Backup.md
+tools/.env
+tools/context_payload.json
+tools/prompts/debug_last_prompt.md
+tools/prompts/debug_last_response.md
 
 # Ignore compiled Python files
 __pycache__/
