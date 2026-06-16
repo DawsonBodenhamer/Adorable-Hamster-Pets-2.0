@@ -101,7 +101,7 @@ public class ModPackets {
                     String username = context.getPlayer().getGameProfile().getName();
                     if (!Configs.AHP_UI.playersWhoHaveSeenGuidebookWarning.contains(username)) {
                         Configs.AHP_UI.playersWhoHaveSeenGuidebookWarning.add(username);
-                        Configs.AHP_MAIN.save();
+                        Configs.AHP_UI.save();
                     }
                 })
         );

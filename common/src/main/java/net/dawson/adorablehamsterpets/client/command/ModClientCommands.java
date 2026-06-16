@@ -41,7 +41,7 @@ public class ModClientCommands {
                 .executes(context -> {
                     // Update and save config setting
                     Configs.AHP_UI.enableThrowCancellationWarning = false;
-                    Configs.AHP_MAIN.save();
+                    Configs.AHP_UI.save();
 
                     MinecraftClient.getInstance().getSoundManager().play(
                             PositionedSoundInstance.master(SoundEvents.BLOCK_NOTE_BLOCK_BASS, 1.5F)

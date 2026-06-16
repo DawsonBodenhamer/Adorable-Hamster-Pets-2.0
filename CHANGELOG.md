@@ -12,25 +12,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 In addition to a bunch of new mini-games, idle animations and QoL features (including hamster armor trims & toggleable aggression states!), this patch introduces 5 new super cute, first-person animations to your rodent-handling experience, courtesy of the amazing [**Punchy**](https://modrinth.com/mod/punchy-fpa) mod! I've been working closely with [**@Dev Punchy Man**](https://modrinth.com/mod/punchy-fpa) to overhaul how it feels to pick up, pet, yeet, and dismount your hamsters.
 
 ### Added
-- **New First-Person Animations (Requires Punchy v2.6.0+)**
-  - **Petting/Tickling**
+- **New First-Person Animations** _(Optional: Requires Punchy v2.6.0+)_
+  - Note: The Punchy mod is **not a required dependency** for Adorable Hamster Pets. It is only required if you want to experience these specific new first-person animations listed below:
+  - **Petting/Tickling Animation** _(Requires Punchy v2.6.0+)_
     - You can finally pet your hamster! If you stare affectionately at your hamster for a **while sneaking** (about 15 seconds on average), you might just reach down, pick it up and give it some tickles. Comes with a new animation where the hamster flips over on your hand and asks for a belly rub! Also added a dedicated "Pet Hamster" keybind (unbound by default) for when you don't feel like waiting for the random chance to kick in.
     - For those with the patience of a fruit bat, pressing your "Pet Hamster" key or clicking your mouse will cancel the petting animation. You don't need to be sneaking to use the keybind.
     - If the hamster was sitting before you picked it up to pet it, it will remain seated when you place it back down, making this a great way to manually re-position tamed hamsters around your base.
-  - **Shoulder Mounting (Dynamic)**
+  - **Shoulder Mounting Animations** _(Requires Punchy v2.6.0+)_
     - Luring a hamster to your shoulder is no longer a boring teleport. You will now physically lift them up, complete with the hamster adorably bouncing on your hands or running up your arm. Three new unique animations; dynamically changing depending on their destination (left shoulder, right shoulder, head).
-  - **The Yeet Queuing System (Dynamic)**
-    - Throwing a hamster is no longer instant. Holding down the throw key (`G`) grabs a specific hamster off your shoulder and holds it in front of your face.
-      - While queued up, the hamster also plays its own new animation (only available with Punchy v2.6.0+) where it eagerly wiggles its butt and kicks its back feet in anticipation of being hurled through the air.
-      - Releasing the throw key (`G`) executes the throw, which is immediately followed by a new Punchy animation where you wave goodbye to your furry projectile.
-      - If you release the key before the short charging period (`15 ticks`) is over, you safely abort the throw. Your character will politely place the hamster back onto the exact shoulder it came from. This charging period of `15 ticks` is not configurable, due to its duration needing to match the animation. But it's quite short— only `0.75 seconds`— so hopefully it won't impact gameplay too much.
+  - **Hamster Yeet Animations** _(Requires Punchy v2.6.0+)_
+    - Holding down the throw key (`G`) grabs a specific hamster off your shoulder and holds it in front of your face. _(For more info, see "Hamster Yeet Mechanics" below)._
+    - While queued up, the hamster also plays its own new animation _(Requires Punchy v2.6.0+)_ where it eagerly wiggles its butt and kicks its back feet in anticipation of being hurled through the air.
+    - Releasing the throw key (`G`) executes the throw, which is immediately followed by a new Punchy animation where you wave goodbye to your furry projectile.
+    - If you release the key before the short charging period (`15 ticks`) is over, you safely abort the throw. Your character will politely place the hamster back onto the exact shoulder it came from.
 - **Hamster Yeet Mechanics**
-  - Added a `Downward Force (Gravity)` slider to the config, allowing you to fine-tune how far hamsters fly without needing to increase their initial thrust. (Useful for the Flashback mod, which gets buggy when entities are moving quickly).
+  - **The Yeet Queuing System**
+    - Throwing a hamster is no longer instant. You must hold down the throw key (`G` by default) to "queue" a hamster for throwing. Includes new animations if the Punchy mod is installed. _(for more info, see "New First-Person Animations" above)_.
+    - Releasing the throw key (`G`) executes the throw.
+    - If you release the key before the short charging period (`15 ticks`) is over, you safely abort the throw. This charging period of `15 ticks` is not configurable, due to its duration needing to match the Punchy mod's animation. But it's quite short— only `0.75 seconds`— so hopefully it won't impact gameplay.
+  - **Hamsters Weigh Less**
+    - Added a `Downward Force (Gravity)` slider to the config, allowing you to fine-tune how far hamsters fly without needing to increase their initial thrust.
+    - Reduced the default gravitational force by ~30%, so hamsters will fly a little bit further now. (Useful for recording hamster flights with the Flashback mod, which gets buggy when entities are moving very quickly through the air).
   - **FOV Zoom**
-    - Added a smooth FOV zoom effect while queueing the Hamster Yeet, identical to drawing a vanilla bow. This FOV zoom will help indicate the new charging period for anyone who doesn't have Punchy installed, since the new animations cannot work without it.
+    - Added a smooth FOV zoom effect while queueing the Hamster Yeet, identical to drawing a vanilla bow. This FOV zoom will help indicate the new charging period for anyone who doesn't have Punchy installed, since the new animations are part of Punchy.
   - **Cooldown Recovery**
     - If you're impatient, feeding your hamster will now incrementally reduce its throw cooldown (similar to how feeding accelerates baby growth).
-  - A new action bar message will let you know when the hamster has recovered from its concussion and is ready for launch.
+  - **More Feedback**
+    - A new action bar message will let you know when the hamster has recovered from its concussion and is ready for launch.
 - **Shader LabPBR Material Support**
   - All items, blocks, particles, and entities in this mod now include their own LabPBR-compliant Specular and Normal textures (with hamsters generating theirs procedurally), giving them detailed, per-layer PBR effects (emission, subsurface scattering, specular reflections, porosity, etc.) out-of-the-box with supported shaders.
   - Must have your shader's material settings set to "LabPBR" or "Hardcoded + LabPBR"

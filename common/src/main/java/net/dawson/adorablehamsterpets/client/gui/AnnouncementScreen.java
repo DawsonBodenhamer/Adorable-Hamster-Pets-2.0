@@ -240,7 +240,7 @@ public class AnnouncementScreen extends Screen {
         // 2. "Disable These" button (primary row)
         primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.disable_icons"), button -> {
             ((ValidatedFieldAccessor<Boolean>) Configs.AHP_UI.enableNotificationIcons).adorablehamsterpets$set(false);
-            Configs.AHP_MAIN.save();
+            Configs.AHP_UI.save();
             this.close();
         }).tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.disable_icons.tooltip"))));
 

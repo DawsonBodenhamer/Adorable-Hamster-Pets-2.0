@@ -558,7 +558,7 @@ public class AdorableHamsterPetsClient {
                     @SuppressWarnings("unchecked")
                     ValidatedFieldAccessor<PixieDustParticleTheme> accessor = (ValidatedFieldAccessor<PixieDustParticleTheme>) (Object) Configs.AHP_SUPPORTER.crownTheme;
                     accessor.adorablehamsterpets$set(nextTheme);
-                    Configs.AHP_MAIN.save();
+                    Configs.AHP_SUPPORTER.save();
 
                     // Broadcast to server if currently visible or in trial
                     if (Configs.AHP_SUPPORTER.showMyCrown || trialTicks > 0) {
@@ -595,7 +595,7 @@ public class AdorableHamsterPetsClient {
 
                 if (hasPerk) {
                     Configs.AHP_SUPPORTER.showMyCrown = !Configs.AHP_SUPPORTER.showMyCrown;
-                    Configs.AHP_MAIN.save();
+                    Configs.AHP_SUPPORTER.save();
 
                     int payloadTheme = Configs.AHP_SUPPORTER.showMyCrown ? Configs.AHP_SUPPORTER.crownTheme.get().ordinal() : -1;
                     NetworkManager.sendToServer(new UpdateCrownThemePayload(payloadTheme));
@@ -611,7 +611,7 @@ public class AdorableHamsterPetsClient {
                     } else {
                         // Start trial
                         Configs.AHP_SUPPORTER.showMyCrown = true;
-                        Configs.AHP_MAIN.save();
+                        Configs.AHP_SUPPORTER.save();
                         NetworkManager.sendToServer(new StartCrownTrialPayload(Configs.AHP_SUPPORTER.crownTheme.get().ordinal()));
                         client.player.sendMessage(Text.translatable("message.adorablehamsterpets.crown_trial_started").formatted(Formatting.WHITE), true);
                     }
