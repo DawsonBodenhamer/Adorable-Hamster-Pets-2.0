@@ -59,6 +59,7 @@ tools/.env
 tools/context_payload.json
 tools/prompts/debug_last_prompt.md
 /tools/prompts/debug_last_response.md
+tools/more_context.md
 
 # Ignore compiled Python files
 __pycache__/
