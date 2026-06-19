@@ -188,7 +188,9 @@ public class ModSounds {
     public static final RegistrySupplier<SoundEvent> HAMSTER_ACORN_SEARCH_LOOP = registerSoundEvent("hamster_acorn_search_in_leaves");
 
     // --- Generic Misc Sounds ---
-    public static final RegistrySupplier<SoundEvent> AHP_THEME_SONG = registerSoundEvent("ahp_theme_song");
+    public static final RegistrySupplier<SoundEvent> AHP_THEME_SONG_8_BIT = registerSoundEvent("ahp_theme_song_8_bit");
+    public static final RegistrySupplier<SoundEvent> AHP_THEME_SONG_LOW_FI = registerSoundEvent("ahp_theme_song_low_fi");
+    public static final RegistrySupplier<SoundEvent> AHP_THEME_SONG_ORCHESTRAL = registerSoundEvent("ahp_theme_song_orchestral");
     public static final RegistrySupplier<SoundEvent> HAMSTER_DING = registerSoundEvent("ding");
     public static final RegistrySupplier<SoundEvent> HAMSTER_POP = registerSoundEvent("hamster_pop");
     public static final RegistrySupplier<SoundEvent> MAGIC_SHIMMER = registerSoundEvent("magic_shimmer");

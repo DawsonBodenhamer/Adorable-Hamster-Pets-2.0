@@ -1,0 +1,8 @@
+{
+  "comparator_output": 14,
+  "description": {
+    "translate": "item.adorablehamsterpets.music_disc_blue_cheese.desc"
+  },
+  "length_in_seconds": 325,
+  "sound_event": "adorablehamsterpets:ahp_theme_song_low_fi"
+}

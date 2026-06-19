@@ -116,14 +116,42 @@ public class ModItems {
             () -> new CheeseItem(new Item.Settings().food(ModFoodComponents.CHEESE)));
 
     // --- Music Discs ---
-    public static final RegistryKey<JukeboxSong> CHEESE_SONG_KEY = RegistryKey.of(RegistryKeys.JUKEBOX_SONG, Identifier.of(AdorableHamsterPets.MOD_ID, "ahp_theme_song"));
+    public static final RegistryKey<JukeboxSong> CHEESE_SONG_8_BIT_KEY = RegistryKey.of(RegistryKeys.JUKEBOX_SONG, Identifier.of(AdorableHamsterPets.MOD_ID, "ahp_theme_song_8_bit"));
+    public static final RegistryKey<JukeboxSong> BLUE_CHEESE_SONG_LOW_FI_KEY = RegistryKey.of(RegistryKeys.JUKEBOX_SONG, Identifier.of(AdorableHamsterPets.MOD_ID, "ahp_theme_song_low_fi"));
+    public static final RegistryKey<JukeboxSong> PARMESAN_SONG_ORCHESTRAL_KEY = RegistryKey.of(RegistryKeys.JUKEBOX_SONG, Identifier.of(AdorableHamsterPets.MOD_ID, "ahp_theme_song_orchestral"));
 
     public static final RegistrySupplier<Item> MUSIC_DISC_CHEESE = registerItem("music_disc_cheese",
-            () -> new Item(new Item.Settings().maxCount(1).rarity(Rarity.RARE).jukeboxPlayable(CHEESE_SONG_KEY)) {
+            () -> new Item(new Item.Settings().maxCount(1).rarity(Rarity.RARE).jukeboxPlayable(CHEESE_SONG_8_BIT_KEY)) {
                 @Override
                 public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.music_disc_cheese.hint").formatted(Formatting.GOLD));
+                    } else if (!Platform.isModLoaded("emi")) {
+                        tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
+                    }
+                    super.appendTooltip(stack, context, tooltip, type);
+                }
+            });
+
+    public static final RegistrySupplier<Item> MUSIC_DISC_BLUE_CHEESE = registerItem("music_disc_blue_cheese",
+            () -> new Item(new Item.Settings().maxCount(1).rarity(Rarity.RARE).jukeboxPlayable(BLUE_CHEESE_SONG_LOW_FI_KEY)) {
+                @Override
+                public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
+                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.music_disc_blue_cheese.hint").formatted(Formatting.GOLD));
+                    } else if (!Platform.isModLoaded("emi")) {
+                        tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
+                    }
+                    super.appendTooltip(stack, context, tooltip, type);
+                }
+            });
+
+    public static final RegistrySupplier<Item> MUSIC_DISC_PARMESAN = registerItem("music_disc_parmesan",
+            () -> new Item(new Item.Settings().maxCount(1).rarity(Rarity.RARE).jukeboxPlayable(PARMESAN_SONG_ORCHESTRAL_KEY)) {
+                @Override
+                public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
+                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.music_disc_parmesan.hint").formatted(Formatting.GOLD));
                     } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }

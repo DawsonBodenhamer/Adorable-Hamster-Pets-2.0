@@ -86,12 +86,18 @@ In addition to a bunch of new mini-games, idle animations and QoL features (incl
   - Renaming a hamster "Hamtaro" gives it a special texture. This functions identically to the "Sweet Potato" easter egg. Both base textures provided by [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!
 - **New "Panda" Overlay Pattern**
   - Added a new "Panda" fur overlay pattern to the genetics engine, allowing you to breed panda-like hamsters. To get a "Panda" hamster, you'll need a Black base coat and a white overlay with the new "Panda" pattern. These can't be found in the wild, since black hamsters do not spawn with white overlays in the wild (breaks their camouflage). Thanks to [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) for the Panda inspiration!
-- **Cheese Music Disc & Dancing**
-  - A legendary new music disc with The Adorable Hamster Pets theme song, created by yours truly. Can only be obtained by orchestrating a high-velocity, terminal collision between an airborne hamster and a Charged Creeper.
+- **3 New Music Discs & Hamster Dancing**
+  - A legendary new **Cheese Music Disc** featuring the Adorable Hamster Pets theme song, created by yours truly. Can only be obtained by orchestrating a high-velocity, terminal collision between an airborne hamster and a Charged Creeper.
+  - **Alternate Versions**
+    - The **Parmesan Music Disc:** Features an Orchestral remix of the Adorable Hamster Pets theme song. Piglins are apparently lactose aficionados. Trade a regular Cheese Music Disc with a Piglin to receive this highly adventurous, grated alternative.
+    - The **Blue Cheese Music Disc:** Features a Low-Fi remix of the Adorable Hamster Pets theme song. Obtainable by tossing a regular Cheese Music Disc into the End exit portal after defeating the dragon. The void will age the cheese and violently spit it back out at you.
+  - ⚠️ **Content Creators ↓**
+    - All three songs are **fully licensed** and safe for YouTube & Twitch monetization. Feel free to feature them in your videos!
   - If playing in a Jukebox, nearby hamsters will dance to the music.
-  - Added the "Moist Tones" advancement.
+  - Tried one of the remixes but not a fan? Surround the Blue Cheese or Parmesan discs with regular Cheese in a crafting table to restore them to their original 8-Bit glory.
+  - Added new advancements and guidebook pages hinting about how to obtain them.
   - **Modded Music Disc Support**
-    - Included a `Dancing Music Discs` string list that contains a few strings by default: `hamster`, `hampter`, and `hamtaro`. If a jukebox plays a music disc containing any of these configured strings in its name, description, or lore (case-insensitive), nearby hamsters will dance to it.
+    - Added a `Dancing Music Discs` string list in the config that contains a few strings by default: `hamster`, `hampter`, and `hamtaro`. If a jukebox plays a music disc containing any of these configured strings in its name, description, or lore (case-insensitive), nearby hamsters will dance to it.
 - **Inter-Hamster Tag Mini-Game**
   - Hamsters will now spontaneously instigate games of tag with each other.
   - The instigator will sprint up to an unsuspecting victim, deliver a visual (damage-free) slap (using a new cowbell sound effect), and sprint away to begin the chase.

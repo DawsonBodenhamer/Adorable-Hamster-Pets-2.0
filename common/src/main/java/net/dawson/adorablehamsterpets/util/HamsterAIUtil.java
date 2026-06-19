@@ -1,6 +1,8 @@
 package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.config.Configs;
+import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
+import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.JukeboxBlockEntity;
 import net.minecraft.block.jukebox.JukeboxSong;
@@ -9,13 +11,11 @@ import net.minecraft.component.type.LoreComponent;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.ai.pathing.PathNodeType;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
-import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.dawson.adorablehamsterpets.sound.ModSounds;
 
 import java.util.List;
 import java.util.Locale;
@@ -137,7 +137,10 @@ public final class HamsterAIUtil {
                         JukeboxSong song = jbe.getManager().getSong();
 
                         // Check AHP theme song
-                        if (song.soundEvent().value().equals(ModSounds.AHP_THEME_SONG.get())) {
+                        SoundEvent currentSong = song.soundEvent().value();
+                        if (currentSong.equals(ModSounds.AHP_THEME_SONG_8_BIT.get()) ||
+                                currentSong.equals(ModSounds.AHP_THEME_SONG_LOW_FI.get()) ||
+                                currentSong.equals(ModSounds.AHP_THEME_SONG_ORCHESTRAL.get())) {
                             return true;
                         }
 

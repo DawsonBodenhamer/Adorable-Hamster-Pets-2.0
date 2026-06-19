@@ -1,0 +1,8 @@
+{
+  "comparator_output": 13,
+  "description": {
+    "translate": "item.adorablehamsterpets.music_disc_parmesan.desc"
+  },
+  "length_in_seconds": 178,
+  "sound_event": "adorablehamsterpets:ahp_theme_song_orchestral"
+}

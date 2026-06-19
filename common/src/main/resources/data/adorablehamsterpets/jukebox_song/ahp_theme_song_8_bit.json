@@ -3,6 +3,6 @@
   "description": {
     "translate": "item.adorablehamsterpets.music_disc_cheese.desc"
   },
-  "length_in_seconds": 159,
-  "sound_event": "adorablehamsterpets:ahp_theme_song"
+  "length_in_seconds": 299,
+  "sound_event": "adorablehamsterpets:ahp_theme_song_8_bit"
 }
