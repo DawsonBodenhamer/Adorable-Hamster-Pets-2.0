@@ -54,6 +54,10 @@ public class AhpMainConfig extends Config {
     @Translatable.Desc("If true, hamsters that are actively following you (not sitting or wandering) will instantly teleport with you, across dimensions and even if their current chunk becomes unloaded. WARNING: do not turn this off unless you want to risk your hamsters being left behind on long teleports.")
     public boolean enableTeleportRescue = true;
 
+    @Translatable.Name("Prevent End Portal Travel")
+    @Translatable.Desc("If true, hamsters that wander into the exit End Portal will bounce right back out instead of teleporting to the Overworld and getting lost. (Make sure 'Enable Teleport Rescue' is on so they can come with you when you go through).")
+    public boolean preventHamsterEndPortalTravel = true;
+
     @Translatable.Name("Enable Hamster Throwing")
     @Translatable.Desc("Do we yeet the hamster? ('G' by default).")
     public boolean enableHamsterThrowing = true;
