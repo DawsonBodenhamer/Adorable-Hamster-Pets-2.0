@@ -213,6 +213,10 @@ In addition to a bunch of new mini-games, idle animations and QoL features (incl
   - Placing down a new hamster bed no longer forces the hamster to sleep in it immediately unless the conditions are correct (i.e., time of day, config settings).
 
 ### Fixed
+- **Hamsters Falling Into End Portals**
+  - Hamsters that wander into the exit End Portal will now bounce right back out, complete with particle and sound effects.
+  - Prevents them from teleporting to the Overworld spawn coordinates and getting lost.
+  - Added a toggle to the config to revert to standard vanilla behavior if desired.
 - **Hamster Yeet & Evilcraft Bug**
   - Resolved an bug that prevented hamsters from being thrown on Forge and NeoForge dedicated servers, caused by environment annotations running on the server thread. Super niche little insect that slipped by because it doesn't exist on Fabric. You should be able to throw your hamsters in multiplayer again!
   - This also resolves a server startup crash when playing with EvilCraft, which attempts to instantiate the projectile to check its blood levels. Lol.
