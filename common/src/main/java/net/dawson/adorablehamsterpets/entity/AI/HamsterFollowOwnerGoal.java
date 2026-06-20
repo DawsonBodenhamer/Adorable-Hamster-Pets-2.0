@@ -142,15 +142,21 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
             if (shouldTeleport) {
                 HamsterMovementUtil.tryTeleportTo(this.hamster, owner);
             } else {
+                // Calculate base speed and apply a 50% reduction if they are currently busting a move
+                double activeSpeed = this.hamster.hasGreenBeanBuff() ? BUFFED_FOLLOW_SPEED : accessor.getSpeed();
+                if (this.hamster.isDancing()) {
+                    activeSpeed *= 0.5;
+                }
+
                 if (this.hamster.hasGreenBeanBuff()) {
                     // Zoomies erratic pathfinding
                     Vec3d targetPos = FuzzyTargeting.findTo(this.hamster, 8, 5, Vec3d.ofCenter(owner.getBlockPos()));
                     if (targetPos != null) {
-                        this.hamster.getNavigation().startMovingTo(targetPos.x, targetPos.y, targetPos.z, BUFFED_FOLLOW_SPEED);
+                        this.hamster.getNavigation().startMovingTo(targetPos.x, targetPos.y, targetPos.z, activeSpeed);
                     }
                 } else {
                     // Standard pathfinding
-                    this.hamster.getNavigation().startMovingTo(owner, accessor.getSpeed());
+                    this.hamster.getNavigation().startMovingTo(owner, activeSpeed);
                 }
             }
         }
