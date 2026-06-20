@@ -21,6 +21,8 @@ public class ModItemGroups {
                     .entries((featureSet, output) -> {
                         output.add(ModItems.HAMSTER_GUIDE_BOOK.get());
                         output.add(ModItems.MUSIC_DISC_CHEESE.get());
+                        output.add(ModItems.MUSIC_DISC_BLUE_CHEESE.get());
+                        output.add(ModItems.MUSIC_DISC_PARMESAN.get());
                         output.add(ModItems.CHEESE.get());
                         output.add(ModItems.HAMSTER_FOOD_MIX.get());
                         output.add(ModItems.CUCUMBER.get());

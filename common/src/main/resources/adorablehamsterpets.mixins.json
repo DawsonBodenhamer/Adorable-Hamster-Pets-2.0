@@ -8,6 +8,8 @@
     "server.SpiderEntityMixin",
     "server.PlayerEntityMixin",
     "server.SweetBerryBushBlockMixin",
+    "server.PiglinBrainMixin",
+    "server.EndPortalBlockMixin",
     "accessor.SlotAccessor",
     "accessor.MeleeAttackGoalAccessor",
     "accessor.LookAtEntityGoalAccessor",

@@ -126,6 +126,26 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .criterion("has_podzol", conditionsFromItem(Items.PODZOL))
                 .offerTo(exporter);
 
+        // Restore Blue Cheese Disc to Regular
+        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.MUSIC_DISC_CHEESE.get(), 1)
+                .pattern("CCC")
+                .pattern("CDC")
+                .pattern("CCC")
+                .input('C', ModItems.CHEESE.get())
+                .input('D', ModItems.MUSIC_DISC_BLUE_CHEESE.get())
+                .criterion("has_blue_cheese_disc", conditionsFromItem(ModItems.MUSIC_DISC_BLUE_CHEESE.get()))
+                .offerTo(exporter, Identifier.of(AdorableHamsterPets.MOD_ID, "music_disc_cheese_from_blue_cheese"));
+
+        // Restore Parmesan Disc to Regular
+        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.MUSIC_DISC_CHEESE.get(), 1)
+                .pattern("CCC")
+                .pattern("CDC")
+                .pattern("CCC")
+                .input('C', ModItems.CHEESE.get())
+                .input('D', ModItems.MUSIC_DISC_PARMESAN.get())
+                .criterion("has_parmesan_disc", conditionsFromItem(ModItems.MUSIC_DISC_PARMESAN.get()))
+                .offerTo(exporter, Identifier.of(AdorableHamsterPets.MOD_ID, "music_disc_cheese_from_parmesan"));
+
         // --- Shapeless Crafting Recipes ---
         // Sliced Cucumber
         ShapelessRecipeJsonBuilder.create(RecipeCategory.FOOD, ModItems.SLICED_CUCUMBER.get(), 3)

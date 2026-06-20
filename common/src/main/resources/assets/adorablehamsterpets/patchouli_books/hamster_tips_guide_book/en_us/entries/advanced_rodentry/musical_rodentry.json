@@ -1,0 +1,37 @@
+{
+  "name": "book.adorablehamsterpets.entry.musical_rodentry",
+  "icon": "adorablehamsterpets:music_disc_cheese",
+  "category": "adorablehamsterpets:advanced_rodentry",
+  "entry_color": "00AAAA",
+  "sortnum": 8,
+  "pages": [
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.musical_rodentry",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.musical_rodentry.page1.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.musical_rodentry.page2.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.musical_rodentry.page2.body",
+      "text_color": "000000"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "adorablehamsterpets:music_disc_cheese_from_blue_cheese",
+      "recipe2": "adorablehamsterpets:music_disc_cheese_from_parmesan",
+      "title": "book.adorablehamsterpets.entry.musical_rodentry.page3.header",
+      "text": "book.adorablehamsterpets.entry.musical_rodentry.page3.body"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.musical_rodentry.page4.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.musical_rodentry.page4.body",
+      "text_color": "000000"
+    }
+  ]
+}

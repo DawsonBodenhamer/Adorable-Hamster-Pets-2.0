@@ -12,6 +12,7 @@ import net.minecraft.item.MusicDiscItem;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
@@ -141,7 +142,11 @@ public final class HamsterAIUtil {
                         if (discStack.getItem() instanceof MusicDiscItem discItem) {
 
                             // Check AHP theme song
-                            if (discItem.getSound().equals(ModSounds.AHP_THEME_SONG.get())) {
+                            SoundEvent currentSound = discItem.getSound();
+
+                            if (currentSound.equals(ModSounds.AHP_THEME_SONG_8_BIT.get()) ||
+                                    currentSound.equals(ModSounds.AHP_THEME_SONG_LOW_FI.get()) ||
+                                    currentSound.equals(ModSounds.AHP_THEME_SONG_ORCHESTRAL.get())) {
                                 return true;
                             }
 

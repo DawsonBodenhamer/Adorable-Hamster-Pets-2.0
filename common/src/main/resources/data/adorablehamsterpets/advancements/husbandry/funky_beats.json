@@ -1,0 +1,30 @@
+{
+  "parent": "adorablehamsterpets:husbandry/moist_tones",
+  "display": {
+    "icon": {
+      "item": "adorablehamsterpets:music_disc_blue_cheese"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.funky_beats.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.funky_beats.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "obtained_disc": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": ["adorablehamsterpets:music_disc_blue_cheese"]
+          }
+        ]
+      }
+    }
+  }
+}

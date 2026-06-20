@@ -115,11 +115,37 @@ public class ModItems {
 
     // --- Music Discs ---
     public static final RegistrySupplier<Item> MUSIC_DISC_CHEESE = registerItem("music_disc_cheese",
-            () -> new MusicDiscItem(15, ModSounds.AHP_THEME_SONG.get(), new Item.Settings().maxCount(1).rarity(Rarity.RARE), 159) {
+            () -> new MusicDiscItem(15, ModSounds.AHP_THEME_SONG_8_BIT.get(), new Item.Settings().maxCount(1).rarity(Rarity.RARE), 299) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
                     if (Configs.AHP_UI.enableItemTooltips) {
                         tooltip.add(Text.translatable("tooltip.adorablehamsterpets.music_disc_cheese.hint").formatted(Formatting.GOLD));
+                    } else if (!Platform.isModLoaded("emi")) {
+                        tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
+                    }
+                    super.appendTooltip(stack, world, tooltip, context);
+                }
+            });
+
+    public static final RegistrySupplier<Item> MUSIC_DISC_BLUE_CHEESE = registerItem("music_disc_blue_cheese",
+            () -> new MusicDiscItem(14, ModSounds.AHP_THEME_SONG_LOW_FI.get(), new Item.Settings().maxCount(1).rarity(Rarity.RARE), 325) {
+                @Override
+                public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
+                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.music_disc_blue_cheese.hint").formatted(Formatting.GOLD));
+                    } else if (!Platform.isModLoaded("emi")) {
+                        tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
+                    }
+                    super.appendTooltip(stack, world, tooltip, context);
+                }
+            });
+
+    public static final RegistrySupplier<Item> MUSIC_DISC_PARMESAN = registerItem("music_disc_parmesan",
+            () -> new MusicDiscItem(13, ModSounds.AHP_THEME_SONG_ORCHESTRAL.get(), new Item.Settings().maxCount(1).rarity(Rarity.RARE), 178) {
+                @Override
+                public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
+                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.music_disc_parmesan.hint").formatted(Formatting.GOLD));
                     } else if (!Platform.isModLoaded("emi")) {
                         tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
                     }

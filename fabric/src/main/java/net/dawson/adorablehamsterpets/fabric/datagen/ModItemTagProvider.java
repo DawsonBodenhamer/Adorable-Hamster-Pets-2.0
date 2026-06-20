@@ -84,6 +84,8 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
 
         // 8. Music Discs (only neccessary on 1.20.1)
         getOrCreateTagBuilder(ItemTags.MUSIC_DISCS)
-                .add(ModItems.MUSIC_DISC_CHEESE.get());
+                .add(ModItems.MUSIC_DISC_CHEESE.get())
+                .add(ModItems.MUSIC_DISC_BLUE_CHEESE.get())
+                .add(ModItems.MUSIC_DISC_PARMESAN.get());
     }
 }
