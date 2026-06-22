@@ -142,6 +142,12 @@ In addition to a bunch of new mini-games, idle animations and QoL features (incl
   - Added a new `Tribute One-Time Use` config setting. When enabled, a bed only requires the tribute item (Totem of Undying by default) once, permanently unlocking infinite respawns for that specific bed and hamster.
 - **Taming Feedback**
   - The mod will now provide snarky chat feedback if you try to tame a hamster incorrectly (such as not sneaking or offering them the wrong food) and will point you to the guidebook for help.
+- **Hamster Bed Placement Safeguard**
+  - Unlinked hamster beds can no longer be placed in the world accidentally.
+  - Attempting to do so for the first time triggers an audible warning and chat message explaining that they must be linked to a hamster first.
+  - After receiving the warning, a 2-second cooldown begins. Once it expires, players are allowed to place the unlinked bed freely. The game remembers that you've been warned and won't bother you again.
+  - Added config settings under 'Hamster Beds & Wander Mode' to disable the warning entirely, or to clear your history so you can experience it all over again.
+  - The tooltips and guidebook entries have been updated to make the linking process ("right-click a hamster with bed in hand") much clearer.
 - **Global Notification Toggle**
   - Added a `Server Disable Announcements` config setting. Server owners can now globally disable the notification bell icon for all connected players.
 - **Smoker Support**

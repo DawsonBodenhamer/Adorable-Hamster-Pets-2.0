@@ -733,7 +733,6 @@ public class AhpMainConfig extends Config {
                     () -> true
             );
 
-    @ConfigGroup.Pop
     @Translatable.Name("Manual Wake-Up Duration")
     @Translatable.Desc("The mandatory grumpiness period if you rudely awaken a hamster from its bed before it was ready. It won't go back to sleep until this timer runs out. (20 ticks = 1 second)")
     public ValidatedCondition<Integer> bedWakeUpCooldown = new ValidatedInt(300, 1200, 20)
@@ -742,6 +741,15 @@ public class AhpMainConfig extends Config {
                     Text.translatable("config.adorablehamsterpets.condition.sleep_in_bed_allowed"),
                     () -> 300
             );
+
+    @Translatable.Name("Warn on Unlinked Placement")
+    @Translatable.Desc("Warns you if you try to place a Hamster Bed before linking it to a hamster.")
+    public boolean warnOnUnlinkedBedPlacement = true;
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Seen Unlinked Bed Warning")
+    @Translatable.Desc("A list of players who have already received the 'unlinked bed' warning. Delete your name to experience it all over again.")
+    public List<String> playersWhoHaveSeenUnlinkedBedWarning = new ArrayList<>();
 
     // --- Ambient Sitting Behaviors ---
     @Translatable.Name("Ambient Sitting Behaviors")
