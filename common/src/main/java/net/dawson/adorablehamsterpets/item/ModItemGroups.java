@@ -50,6 +50,10 @@ public class ModItemGroups {
                         output.add(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_DIAMOND.get());
                         output.add(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_NETHERITE.get());
                         ModItems.HAMSTER_BED_ITEMS.values().forEach(supplier -> output.add(supplier.get()));
+                        output.add(ModItems.ACORN_CRATE.get());
+                        output.add(ModItems.CUCUMBER_CRATE.get());
+                        output.add(ModItems.GREEN_BEANS_CRATE.get());
+                        output.add(ModItems.HAMSTER_FOOD_MIX_CRATE.get());
                     }))
     );
 

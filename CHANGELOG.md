@@ -82,6 +82,9 @@ In addition to a bunch of new mini-games, idle animations and QoL features (incl
   - You will also see a trail of subtle particles from your location directly towards the hiding spot, provided you are within 25 blocks of the hidden hamster.
   - These effects will be *very* scarce at the start, but dynamically increases in frequency/intensity as the game progresses.
   - **Configurability:** Everything is customizable in the config. You can adjust the initiation chance, duration, block lists, and whether they are allowed to hide inside storage blocks like chests.
+- **Storage Crates**
+  - Thanks to [**@The Retro Stitcher**](https://theretrostitcher.com/) for helping to design new compacting storage crates for Acorns, Cucumbers, Green Beans, and Hamster Food Mix.
+  - Fully compatible with LabPBR shader materials out-of-the-box.
 - **"Hamtaro" Easter Egg**
   - Renaming a hamster "Hamtaro" gives it a special texture. This functions identically to the "Sweet Potato" easter egg. Both base textures provided by [**@jimcerberus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)!
 - **New "Panda" Overlay Pattern**

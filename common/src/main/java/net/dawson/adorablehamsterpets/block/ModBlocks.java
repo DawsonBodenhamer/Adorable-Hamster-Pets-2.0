@@ -48,6 +48,19 @@ public class ModBlocks {
     public static final RegistrySupplier<Block> HAMSTER_BED = registerBlock("hamster_bed",
             () -> new HamsterBedBlock(AbstractBlock.Settings.create().mapColor(MapColor.OAK_TAN).instrument(NoteBlockInstrument.BASS).strength(0.5F).sounds(BlockSoundGroup.WOOD).nonOpaque()));
 
+    // --- Crates ---
+    public static final RegistrySupplier<Block> ACORN_CRATE = registerBlock("acorn_crate",
+            () -> new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).sounds(BlockSoundGroup.WOOD).strength(2.0F, 3.0F)));
+
+    public static final RegistrySupplier<Block> CUCUMBER_CRATE = registerBlock("cucumber_crate",
+            () -> new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).sounds(BlockSoundGroup.WOOD).strength(2.0F, 3.0F)));
+
+    public static final RegistrySupplier<Block> GREEN_BEANS_CRATE = registerBlock("green_beans_crate",
+            () -> new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).sounds(BlockSoundGroup.WOOD).strength(2.0F, 3.0F)));
+
+    public static final RegistrySupplier<Block> HAMSTER_FOOD_MIX_CRATE = registerBlock("hamster_food_mix_crate",
+            () -> new Block(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).sounds(BlockSoundGroup.WOOD).strength(2.0F, 3.0F)));
+
     // --- 3. Private Helper Method for Block Registration ---
     private static RegistrySupplier<Block> registerBlock(String name, Supplier<Block> blockSupplier) {
         return BLOCKS.register(name, blockSupplier);

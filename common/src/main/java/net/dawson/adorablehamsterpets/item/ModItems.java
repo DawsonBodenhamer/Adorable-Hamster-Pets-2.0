@@ -342,6 +342,18 @@ public class ModItems {
         }
     }
 
+    public static final RegistrySupplier<Item> ACORN_CRATE = registerBlockItem("acorn_crate",
+            () -> new BlockItem(ModBlocks.ACORN_CRATE.get(), new Item.Settings()));
+
+    public static final RegistrySupplier<Item> CUCUMBER_CRATE = registerBlockItem("cucumber_crate",
+            () -> new BlockItem(ModBlocks.CUCUMBER_CRATE.get(), new Item.Settings()));
+
+    public static final RegistrySupplier<Item> GREEN_BEANS_CRATE = registerBlockItem("green_beans_crate",
+            () -> new BlockItem(ModBlocks.GREEN_BEANS_CRATE.get(), new Item.Settings()));
+
+    public static final RegistrySupplier<Item> HAMSTER_FOOD_MIX_CRATE = registerBlockItem("hamster_food_mix_crate",
+            () -> new BlockItem(ModBlocks.HAMSTER_FOOD_MIX_CRATE.get(), new Item.Settings()));
+
     public static final RegistrySupplier<Item> UPSIDE_DOWN_HAMSTER_BED_ICON = registerItem("upside_down_hamster_bed_icon",
             () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), WoodVariant.OAK, new Item.Settings()));
 
