@@ -39,6 +39,7 @@ public class ModPackets {
         NetworkManager.registerS2CPayloadType(SyncPettingStatePayload.ID, SyncPettingStatePayload.CODEC);
         NetworkManager.registerS2CPayloadType(PlayDistantSoundPayload.ID, PlayDistantSoundPayload.CODEC);
         NetworkManager.registerS2CPayloadType(PlayShoulderMountSoundPayload.ID, PlayShoulderMountSoundPayload.CODEC);
+        NetworkManager.registerS2CPayloadType(PlayerKnockbackPayload.ID, PlayerKnockbackPayload.CODEC);
     }
 
     /**
@@ -313,6 +314,15 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, PlayShoulderMountSoundPayload.ID, PlayShoulderMountSoundPayload.CODEC,
                 (payload, context) -> context.queue(() -> AdorableHamsterPetsClient.handlePlayMountSound(payload.soundId(), payload.pitch(), payload.delay()))
+        );
+
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, PlayerKnockbackPayload.ID, PlayerKnockbackPayload.CODEC,
+                (payload, context) -> context.queue(() -> {
+                    MinecraftClient client = MinecraftClient.getInstance();
+                    if (client.player != null) {
+                        client.player.setVelocity(payload.velocityX(), payload.velocityY(), payload.velocityZ());
+                    }
+                })
         );
     }
 

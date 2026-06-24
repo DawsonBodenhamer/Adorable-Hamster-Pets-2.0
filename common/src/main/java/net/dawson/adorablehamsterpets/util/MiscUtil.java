@@ -1,16 +1,17 @@
 package net.dawson.adorablehamsterpets.util;
 
+import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
+import net.dawson.adorablehamsterpets.networking.payload.PlayerKnockbackPayload;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.tag.ModBlockTags;
 import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.block.BlockState;
-import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
 import net.minecraft.particle.BlockStateParticleEffect;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
@@ -73,14 +74,18 @@ public final class MiscUtil {
             // 1. Calculate direction away from source
             Vec3d knockbackDir = player.getPos().subtract(sourcePos).normalize();
 
-            // 2. Apply velocity
-            player.setVelocity(knockbackDir.x * KNOCKBACK_HORIZONTAL, KNOCKBACK_VERTICAL, knockbackDir.z * KNOCKBACK_HORIZONTAL);
+            double velX = knockbackDir.x * KNOCKBACK_HORIZONTAL;
+            double velY = KNOCKBACK_VERTICAL;
+            double velZ = knockbackDir.z * KNOCKBACK_HORIZONTAL;
+
+            // 2. Apply velocity on server
+            player.setVelocity(velX, velY, velZ);
 
             // 3. Mark velocity as dirty
             player.velocityDirty = true;
 
-            // 4. Force sync with client using vanilla velocity packet
-            player.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(player));
+            // 4. Force sync with client using packet
+            NetworkManager.sendToPlayer(player, new PlayerKnockbackPayload(velX, velY, velZ));
         }
     }
 
