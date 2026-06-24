@@ -75,6 +75,10 @@
   "block.adorablehamsterpets.sunflower_block.hint1": "Sometimes yields seeds... key recipe ingredients?",
   "block.adorablehamsterpets.sunflower_block.hint2": "Requires time to replenish its seedy bounty.",
   "block.adorablehamsterpets.hamster_bed": "Hamster Bed",
+  "block.adorablehamsterpets.acorn_crate": "Acorn Crate",
+  "block.adorablehamsterpets.cucumber_crate": "Cucumber Crate",
+  "block.adorablehamsterpets.green_beans_crate": "Green Bean Crate",
+  "block.adorablehamsterpets.hamster_food_mix_crate": "Hamster Food Mix Crate",
 
   "gui.adorablehamsterpets.announcement.button.mark_as_read": "Mark As Read",
   "gui.adorablehamsterpets.announcement.button.mark_as_read.tooltip": "Clicking here banishes this specific message to the digital ether and marks it 'read' in your §f§lHamster Tips§r guide book. (Can be undone from the config when you get FOMO).",

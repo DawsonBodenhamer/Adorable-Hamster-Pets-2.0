@@ -192,5 +192,11 @@ public class ModRecipeProvider extends FabricRecipeProvider {
         offerHamsterTemplateDuplication(exporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_GOLD.get(), Items.GOLD_INGOT);
         offerHamsterTemplateDuplication(exporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_DIAMOND.get(), Items.DIAMOND);
         offerHamsterTemplateDuplication(exporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_NETHERITE.get(), Items.NETHERITE_INGOT);
+
+        // --- Compacting Recipes (Crates) ---
+        offerReversibleCompactingRecipes(exporter, RecipeCategory.MISC, ModItems.ACORN.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.ACORN_CRATE.get());
+        offerReversibleCompactingRecipes(exporter, RecipeCategory.FOOD, ModItems.CUCUMBER.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.CUCUMBER_CRATE.get());
+        offerReversibleCompactingRecipes(exporter, RecipeCategory.FOOD, ModItems.GREEN_BEANS.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.GREEN_BEANS_CRATE.get());
+        offerReversibleCompactingRecipes(exporter, RecipeCategory.FOOD, ModItems.HAMSTER_FOOD_MIX.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.HAMSTER_FOOD_MIX_CRATE.get());
     }
 }
