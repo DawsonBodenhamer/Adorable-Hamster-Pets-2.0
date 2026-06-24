@@ -83,7 +83,7 @@ public class AhpUiConfig extends Config {
 
     // --- UI & Quality of Life ---
     @Translatable.Name("UI & Quality of Life")
-    @Translatable.Desc("Because Sanity is Overrated")
+    @Translatable.Desc("Here's where you can tweak the knobs and dials for anything that pops up on your screen.")
     public ConfigGroup uiPreferences = new ConfigGroup("uiPreferences", true);
 
     @Translatable.Name("Guidebook Settings")
