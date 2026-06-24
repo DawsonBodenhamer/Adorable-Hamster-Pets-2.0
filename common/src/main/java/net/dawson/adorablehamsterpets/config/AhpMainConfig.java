@@ -415,9 +415,9 @@ public class AhpMainConfig extends Config {
 
     @NonSync
     @ConfigGroup.Pop
-    @Translatable.Name("Render Pink Petals On Armor")
-    @Translatable.Desc("If true, Pink Petal accessories will pop out to render on the outside of equipped armor. If false, they will be hidden under the armor.")
-    public ValidatedCondition<Boolean> renderPinkPetalsWithArmor = new ValidatedBoolean(true)
+    @Translatable.Name("Render Flowers On Armor")
+    @Translatable.Desc("If true, flower accessories will pop out to render on the outside of equipped armor. If false, they will be hidden under the armor.")
+    public ValidatedCondition<Boolean> renderFlowersWithArmor = new ValidatedBoolean(true)
             .toCondition(
                     isArmorVisualsEnabled,
                     Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),

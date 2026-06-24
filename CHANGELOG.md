@@ -39,6 +39,12 @@ In addition to a bunch of new mini-games, idle animations and QoL features (incl
     - If you're impatient, feeding your hamster will now incrementally reduce its throw cooldown (similar to how feeding accelerates baby growth).
   - **More Feedback**
     - A new action bar message will let you know when the hamster has recovered from its concussion and is ready for launch.
+- **More Flower Accessories**
+  - Expanded the old "Pink Petal" accessory. You can now equip **any flower in the `#flowers` tag** onto your hamster instead of just Pink Petals.
+  - There are 12 unique textures. The texture assignment logic automatically scans the registry names of flowers. It uses an extensive list of color keywords and botanical families to ensure almost any flower you apply (even modded flowers) will have the correct color palette.
+  - The color assignment logic is completely data-driven. You can easily force a modded flower to use a specific color palette using standard Minecraft Item Tags (e.g., adding an item to `#adorablehamsterpets:flower_accessories/overlay_wither_rose`).
+  - For a tutorial, pop over to [**The Cheek Pouch**](https://discord.gg/w54mk5bqdf) Discord server, visit the **FAQ channel**, and search for _Custom Flower Accessories._
+  - Added new pages to the *Hamster Tips* guidebook explaining how the dynamic color assignment and tag overrides work.
 - **Shader LabPBR Material Support**
   - All items, blocks, particles, and entities in this mod now include their own LabPBR-compliant Specular and Normal textures (with hamsters generating theirs procedurally), giving them detailed, per-layer PBR effects (emission, subsurface scattering, specular reflections, porosity, etc.) out-of-the-box with supported shaders.
   - Must have your shader's material settings set to "LabPBR" or "Hardcoded + LabPBR"
@@ -52,9 +58,9 @@ In addition to a bunch of new mini-games, idle animations and QoL features (incl
   - Added a `Trim Emissive Brightness` slider to give you precision control over exactly how blinding the neon lines should be.
 - **Configurable Aggression States**
   - Hamsters now have three distinct aggression states controlled by their diet.
-  - **Pacifist:** Feed them any vanilla flower (e.g., `#minecraft:flowers`). They become total hippies and will refuse to attack anything, even if you are being actively mauled.
-  - **Standard:** Feed them Sunflower Seeds to factory-reset them back to their normal, wolf-like defensive behavior.
-  - **Menace:** Feed them a Spider Eye to unleash their inner demon. They will actively hunt down anything on the configurable "Menace Targets" list (which defaults to all monsters and bosses), and gain an expanded follow radius to give them more room to fight. If a target is outside their follow radius, they will move frantically at the edge of the tether.
+  - **Pacifist:** Sneak + right-click them any vanilla flower (e.g., `#minecraft:flowers`). They become total hippies and will refuse to attack anything, even if you are being actively mauled.
+  - **Standard:** Sneak + right-click them Sunflower Seeds to factory-reset them back to their normal, wolf-like defensive behavior.
+  - **Menace:** Sneak + right-click them a Spider Eye to unleash their inner demon. They will actively hunt down anything on the configurable "Menace Targets" list (which defaults to all monsters and bosses), and gain an expanded follow radius to give them more room to fight. If a target is outside their follow radius, they will move frantically at the edge of the tether.
   - All trigger items are fully configurable, and changing a hamster's state produces a visual and audio confirmation.
   - **Hamster Tips Guidebook Entry**
     - The *Hamster Tips* guidebook now features a dedicated "Aggression States" page to explain the new mechanics. It utilizes dynamic text injection to accurately display your configured trigger items, ensuring the book is always up-to-date even if a modpack creator changes the required diets.

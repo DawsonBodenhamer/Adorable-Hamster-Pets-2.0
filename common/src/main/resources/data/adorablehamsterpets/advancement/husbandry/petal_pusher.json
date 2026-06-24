@@ -2,7 +2,7 @@
   "parent": "adorablehamsterpets:husbandry/tame_hamster",
   "display": {
     "icon": {
-      "id": "minecraft:pink_petals"
+      "id": "minecraft:azure_bluet"
     },
     "title": {
       "translate": "advancements.adorablehamsterpets.husbandry.petal_pusher.title"
@@ -17,7 +17,7 @@
   },
   "criteria": {
     "applied_petal": {
-      "trigger": "adorablehamsterpets:applied_pink_petal",
+      "trigger": "adorablehamsterpets:applied_flower",
       "conditions": {
         "hamster": [
           {

@@ -26,6 +26,7 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
@@ -467,10 +468,11 @@ public final class HamsterInteractionUtil {
             if (!hamster.getWorld().isClient()) {
                 ItemStack currentAccessory = hamster.getItems().get(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX);
 
-                if (stack.isOf(Items.PINK_PETALS) && currentAccessory.isOf(Items.PINK_PETALS)) {
-                    int currentPetalType = hamster.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE);
-                    int nextPetalType = (currentPetalType % 3) + 1;
-                    hamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, nextPetalType);
+                // If holding flower and hamster already has same flower, cycle position
+                if (stack.isIn(ItemTags.FLOWERS) && currentAccessory.isIn(ItemTags.FLOWERS) && ItemStack.areItemsEqual(stack, currentAccessory)) {
+                    int currentPos = hamster.getDataTracker().get(HamsterEntity.FLOWER_POS);
+                    int nextPos = (currentPos % 3) + 1;
+                    hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, nextPos);
 
                     hamster.getWorld().playSound(null, hamster.getBlockPos(), SoundEvents.BLOCK_PINK_PETALS_PLACE, SoundCategory.PLAYERS, 0.7f, 1.0f + hamster.getRandom().nextFloat() * 0.2f);
                     ParticleEffectsUtil.spawnParticles(hamster.getWorld(), new Vec3d(hamster.getX(), hamster.getY() + hamster.getHeight() * 0.75, hamster.getZ()), ParticleTypes.FALLING_SPORE_BLOSSOM, 7, new Vec3d(hamster.getWidth() / 2.0, hamster.getHeight() / 2.0, hamster.getWidth() / 2.0), 0.0);
@@ -487,8 +489,8 @@ public final class HamsterInteractionUtil {
                     hamster.getWorld().playSound(null, hamster.getBlockPos(), SoundEvents.ITEM_ARMOR_EQUIP_GENERIC.value(), SoundCategory.PLAYERS, 1.0f, 1.0f);
                     ParticleEffectsUtil.spawnParticles(hamster.getWorld(), new Vec3d(hamster.getX(), hamster.getY() + hamster.getHeight() * 0.75, hamster.getZ()), new ItemStackParticleEffect(ParticleTypes.ITEM, toEquip), 7, new Vec3d(hamster.getWidth() / 2.0, hamster.getHeight() / 2.0, hamster.getWidth() / 2.0), 0.0);
 
-                    if (toEquip.isOf(Items.PINK_PETALS) && player instanceof ServerPlayerEntity serverPlayer) {
-                        ModCriteria.APPLIED_PINK_PETAL.get().trigger(serverPlayer, hamster);
+                    if (toEquip.isIn(ItemTags.FLOWERS) && player instanceof ServerPlayerEntity serverPlayer) {
+                        ModCriteria.APPLIED_FLOWER.get().trigger(serverPlayer, hamster);
                     }
                 }
             }
@@ -575,6 +577,31 @@ public final class HamsterInteractionUtil {
                 executeShoulderMount(hamster, player, stack);
             }
             return ActionResult.SUCCESS;
+        }
+        return ActionResult.PASS;
+    }
+
+    // --- Aggression Toggle ---
+    public static ActionResult handleAggressionToggle(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
+        if (player.isSneaking()) {
+            boolean isAggressionItem = ConfigDataCache.isPacifistItem(stack)
+                    || ConfigDataCache.isStandardAggressionItem(stack)
+                    || ConfigDataCache.isMenaceItem(stack);
+
+            if (isAggressionItem) {
+                int toggleResult = HamsterDietUtil.tryAggressionToggle(hamster, player, stack);
+
+                if (toggleResult == 1) {
+                    if (!hamster.getWorld().isClient()) {
+                        if (!player.getAbilities().creativeMode) {
+                            stack.decrement(1);
+                        }
+                    }
+                    return ActionResult.SUCCESS;
+                }
+
+                // If toggleResult == 0, hamster already in that state so fall through to opening inventory
+            }
         }
         return ActionResult.PASS;
     }

@@ -89,12 +89,12 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         var rightCheekInfBone = processor.getBone("right_cheek_inflated");
         var rightEarBone = processor.getBone("right_ear");
         var acornHatBone = processor.getBone("acorn_hat");
-        var petalHeadNoArmorBone = processor.getBone("pink_petal_head_no_armor");
-        var petalSideNoArmorBone = processor.getBone("pink_petal_side_no_armor");
-        var petalBackNoArmorBone = processor.getBone("pink_petal_lower_back_no_armor");
-        var petalHeadWithArmorBone = processor.getBone("pink_petal_head_with_armor");
-        var petalSideWithArmorBone = processor.getBone("pink_petal_side_with_armor");
-        var petalBackWithArmorBone = processor.getBone("pink_petal_lower_back_with_armor");
+        var flowerHeadNoArmorBone = processor.getBone("flower_head_no_armor");
+        var flowerSideNoArmorBone = processor.getBone("flower_side_no_armor");
+        var flowerBackNoArmorBone = processor.getBone("flower_lower_back_no_armor");
+        var flowerHeadWithArmorBone = processor.getBone("flower_head_with_armor");
+        var flowerSideWithArmorBone = processor.getBone("flower_side_with_armor");
+        var flowerBackWithArmorBone = processor.getBone("flower_lower_back_with_armor");
 
         // --- Statue / AI Disabled Logic ---
         var closedEyesBone = processor.getBone("closed_eyes");
@@ -110,16 +110,16 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         boolean isArmorVisible = Configs.AHP_MAIN.enableArmorVisuals && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem;
 
         // --- Pink Petal Logic ---
-        int petalType = entity.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE);
-        boolean useArmorPetals = isArmorVisible && Configs.AHP_MAIN.renderPinkPetalsWithArmor.get();
+        int flowerType = entity.getDataTracker().get(HamsterEntity.FLOWER_POS);
+        boolean useArmorFlowers = isArmorVisible && Configs.AHP_MAIN.renderFlowersWithArmor.get();
 
-        if (petalHeadNoArmorBone != null) petalHeadNoArmorBone.setHidden(petalType != 1 || useArmorPetals);
-        if (petalSideNoArmorBone != null) petalSideNoArmorBone.setHidden(petalType != 2 || useArmorPetals);
-        if (petalBackNoArmorBone != null) petalBackNoArmorBone.setHidden(petalType != 3 || useArmorPetals);
+        if (flowerHeadNoArmorBone != null) flowerHeadNoArmorBone.setHidden(flowerType != 1 || useArmorFlowers);
+        if (flowerSideNoArmorBone != null) flowerSideNoArmorBone.setHidden(flowerType != 2 || useArmorFlowers);
+        if (flowerBackNoArmorBone != null) flowerBackNoArmorBone.setHidden(flowerType != 3 || useArmorFlowers);
 
-        if (petalHeadWithArmorBone != null) petalHeadWithArmorBone.setHidden(petalType != 1 || !useArmorPetals);
-        if (petalSideWithArmorBone != null) petalSideWithArmorBone.setHidden(petalType != 2 || !useArmorPetals);
-        if (petalBackWithArmorBone != null) petalBackWithArmorBone.setHidden(petalType != 3 || !useArmorPetals);
+        if (flowerHeadWithArmorBone != null) flowerHeadWithArmorBone.setHidden(flowerType != 1 || !useArmorFlowers);
+        if (flowerSideWithArmorBone != null) flowerSideWithArmorBone.setHidden(flowerType != 2 || !useArmorFlowers);
+        if (flowerBackWithArmorBone != null) flowerBackWithArmorBone.setHidden(flowerType != 3 || !useArmorFlowers);
 
         // --- Cheek Pouch Logic ---
         if (leftCheekDefBone != null && leftCheekInfBone != null) {

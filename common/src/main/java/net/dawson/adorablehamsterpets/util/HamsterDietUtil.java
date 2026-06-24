@@ -135,19 +135,7 @@ public final class HamsterDietUtil {
             return 1;
         }
 
-        // --- 3. Process Aggression State Changes ---
-        if (ConfigDataCache.isPacifistItem(stack)) {
-            int result = trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.PACIFIST);
-            if (result > 0) return result;
-        } else if (ConfigDataCache.isStandardAggressionItem(stack)) {
-            int result = trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.STANDARD);
-            if (result > 0) return result;
-        } else if (ConfigDataCache.isMenaceItem(stack)) {
-            int result = trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.MENACE);
-            if (result > 0) return result;
-        }
-
-        // --- 4. Process Standard Food ---
+        // --- 3. Process Standard Food ---
         if (ConfigDataCache.isStandardFood(stack) || ConfigDataCache.isTamingFood(stack)) {
             boolean consumed = false;
 
@@ -262,6 +250,22 @@ public final class HamsterDietUtil {
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
+
+    /**
+     * Attempts to toggle the hamster's aggression state based on the provided item.
+     *
+     * @return 1 if the state was successfully changed, 0 if the hamster is already in that state or the item is invalid.
+     */
+    public static int tryAggressionToggle(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
+        if (ConfigDataCache.isPacifistItem(stack)) {
+            return trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.PACIFIST);
+        } else if (ConfigDataCache.isStandardAggressionItem(stack)) {
+            return trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.STANDARD);
+        } else if (ConfigDataCache.isMenaceItem(stack)) {
+            return trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.MENACE);
+        }
+        return 0;
+    }
 
     private static int trySetAggressionState(HamsterEntity hamster, PlayerEntity player, ItemStack stack, HamsterEntity.AggressionState targetState) {
         if (hamster.getAggressionState() == targetState) {

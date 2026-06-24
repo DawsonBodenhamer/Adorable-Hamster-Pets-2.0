@@ -19,7 +19,7 @@ public class ModCriteria {
     public static final RegistrySupplier<HamsterThrownCriterion> HAMSTER_THROWN = CRITERIA.register("hamster_thrown", HamsterThrownCriterion::new);
     public static final RegistrySupplier<FedHamsterSteamedBeansCriterion> FED_HAMSTER_STEAMED_BEANS = CRITERIA.register("fed_hamster_steamed_beans", FedHamsterSteamedBeansCriterion::new);
     public static final RegistrySupplier<CheekPouchUnlockedCriterion> CHEEK_POUCH_UNLOCKED = CRITERIA.register("cheek_pouch_unlocked", CheekPouchUnlockedCriterion::new);
-    public static final RegistrySupplier<AppliedPinkPetalCriterion> APPLIED_PINK_PETAL = CRITERIA.register("applied_pink_petal", AppliedPinkPetalCriterion::new);
+    public static final RegistrySupplier<AppliedFlowerCriterion> APPLIED_FLOWER = CRITERIA.register("applied_flower", AppliedFlowerCriterion::new);
     public static final RegistrySupplier<HamsterAutoFedCriterion> HAMSTER_AUTO_FED = CRITERIA.register("hamster_auto_fed", HamsterAutoFedCriterion::new);
     public static final RegistrySupplier<HamsterDiamondAlertCriterion> HAMSTER_DIAMOND_ALERT_TRIGGERED = CRITERIA.register("hamster_diamond_alert_triggered", HamsterDiamondAlertCriterion::new);
     public static final RegistrySupplier<HamsterCreeperAlertCriterion> HAMSTER_CREEPER_ALERT_TRIGGERED = CRITERIA.register("hamster_creeper_alert_triggered", HamsterCreeperAlertCriterion::new);
