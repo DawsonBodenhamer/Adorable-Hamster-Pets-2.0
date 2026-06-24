@@ -73,6 +73,7 @@ public class ModPackets {
     public record PlayDistantSoundS2CPacket(Identifier soundId, float volume, float pitch) {}
     public record SyncPettingStateS2CPacket(boolean isPetting) {}
     public record PlayMountSoundS2CPacket(Identifier soundId, float pitch, int delay) {}
+    public record PlayerKnockbackS2CPacket(double velocityX, double velocityY, double velocityZ) {} // Add this
 
     /**
      * Registers all packet definitions and their handlers.
@@ -452,6 +453,27 @@ public class ModPackets {
                 (buf) -> new PlayMountSoundS2CPacket(buf.readIdentifier(), buf.readFloat(), buf.readInt()),
                 (packet, context) -> context.get().queue(() ->
                         EnvExecutor.runInEnv(Env.CLIENT, () -> () -> AdorableHamsterPetsClient.handlePlayMountSound(packet.soundId(), packet.pitch(), packet.delay()))
+                )
+        );
+
+        CHANNEL.register(PlayerKnockbackS2CPacket.class,
+                (packet, buf) -> {
+                    buf.writeDouble(packet.velocityX());
+                    buf.writeDouble(packet.velocityY());
+                    buf.writeDouble(packet.velocityZ());
+                },
+                (buf) -> new PlayerKnockbackS2CPacket(
+                        buf.readDouble(),
+                        buf.readDouble(),
+                        buf.readDouble()
+                ),
+                (packet, context) -> context.get().queue(() ->
+                        EnvExecutor.runInEnv(Env.CLIENT, () -> () -> {
+                            MinecraftClient client = MinecraftClient.getInstance();
+                            if (client.player != null) {
+                                client.player.setVelocity(packet.velocityX(), packet.velocityY(), packet.velocityZ());
+                            }
+                        })
                 )
         );
     }
