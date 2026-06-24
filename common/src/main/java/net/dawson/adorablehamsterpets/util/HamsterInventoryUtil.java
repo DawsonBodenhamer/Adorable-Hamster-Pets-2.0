@@ -10,6 +10,7 @@ import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.tag.ModBiomeTags;
 import net.minecraft.item.*;
 import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ItemScatterer;
@@ -42,7 +43,7 @@ public final class HamsterInventoryUtil {
         }
         // --- 2. Accessory Slot (Slot 6) ---
         if (slot == ACCESSORY_SLOT_INDEX) {
-            return stack.isOf(ModItems.ACORN_HAT.get()) || stack.isOf(Items.PINK_PETALS);
+            return stack.isOf(ModItems.ACORN_HAT.get()) || stack.isIn(ItemTags.FLOWERS);
         }
         // --- 3. Armor Slot (Slot 7) ---
         if (slot == ARMOR_SLOT_INDEX) {

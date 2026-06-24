@@ -52,7 +52,7 @@ public final class HamsterNbtUtil {
         nbt.putLong("GreenBeanBuffDuration", hamster.getDataTracker().get(HamsterEntity.GREEN_BEAN_BUFF_DURATION));
         nbt.putInt("AutoEatCooldown", hamster.getAutoEatCooldownTicks());
         nbt.putInt("EjectionCheckCooldown", hamster.getEjectionCheckCooldown());
-        nbt.putInt("PinkPetalType", hamster.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE));
+        nbt.putInt("FlowerPosition", hamster.getDataTracker().get(HamsterEntity.FLOWER_POS));
         nbt.putInt("AnimationPersonalityId", hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID));
         nbt.putBoolean("isGeneticsVisualizerMember", hamster.isGeneticsVisualizerMember());
         nbt.putInt("AggressionState", hamster.getAggressionState().ordinal());
@@ -152,7 +152,12 @@ public final class HamsterNbtUtil {
         hamster.getDataTracker().set(HamsterEntity.GREEN_BEAN_BUFF_DURATION, nbt.getLong("GreenBeanBuffDuration"));
         hamster.setAutoEatCooldownTicks(nbt.getInt("AutoEatCooldown"));
         hamster.setEjectionCheckCooldown(nbt.contains("EjectionCheckCooldown", NbtElement.INT_TYPE) ? nbt.getInt("EjectionCheckCooldown") : 20);
-        hamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, nbt.getInt("PinkPetalType"));
+        // Backwards compat for old Pink Petals
+        if (nbt.contains("FlowerPosition", NbtElement.INT_TYPE)) {
+            hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, nbt.getInt("FlowerPosition"));
+        } else if (nbt.contains("PinkPetalType", NbtElement.INT_TYPE)) {
+            hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, nbt.getInt("PinkPetalType"));
+        }
         // Backwards compat: personality ID verification
         if (!nbt.contains("AnimationPersonalityId", NbtElement.INT_TYPE)) {
             int personalityId = hamster.getRandom().nextBetween(1, 3);
@@ -314,7 +319,7 @@ public final class HamsterNbtUtil {
                 buffData,
                 hamster.getAutoEatCooldownTicks(),
                 nameOptional,
-                hamster.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE),
+                hamster.getDataTracker().get(HamsterEntity.FLOWER_POS),
                 hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID),
                 seekingData,
                 wanderData,
@@ -350,7 +355,7 @@ public final class HamsterNbtUtil {
             hamster.setBreedingAge(data.breedingAge());
             hamster.throwCooldownEndTick = data.throwCooldownEndTick();
             hamster.setAutoEatCooldownTicks(data.autoEatCooldownTicks());
-            hamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, data.pinkPetalType());
+            hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, data.flowerPosition());
             hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
             hamster.getDataTracker().set(HamsterEntity.HAMSTER_FLAGS, data.hamsterFlags());
             hamster.totalAgeTicks = data.totalAgeTicks();

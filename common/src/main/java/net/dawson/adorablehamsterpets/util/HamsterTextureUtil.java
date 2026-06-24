@@ -17,11 +17,14 @@ import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.texture.TextureManager;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.trim.ArmorTrim;
-import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.tag.ItemTags;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -29,11 +32,10 @@ import net.minecraft.util.math.ColorHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -47,6 +49,26 @@ public class HamsterTextureUtil {
 
     private static final Map<String, Identifier> CACHED_TEXTURES = new ConcurrentHashMap<>();
     private static final Map<String, int[]> TRIM_PALETTE_CACHE = new ConcurrentHashMap<>();
+    private static final String[] FLOWER_TEXTURE_NAMES = {
+            "overlay_allium_peony",
+            "overlay_blue_orchid_cornflower",
+            "overlay_eyeblossom",
+            "overlay_golden_dandelion",
+            "overlay_lily_of_the_valley",
+            "overlay_orange_tulip",
+            "overlay_oxeye_daisy_dandelion_sunflower_azure_bluet",
+            "overlay_pink_petal_pink_tulip",
+            "overlay_pitcher_plant",
+            "overlay_poppy_rose_bush_red_tulip",
+            "overlay_torchflower",
+            "overlay_wither_rose"
+    };
+    private static final Map<String, TagKey<Item>> FLOWER_TAGS = new ConcurrentHashMap<>();
+    static {
+        for (String name : FLOWER_TEXTURE_NAMES) {
+            FLOWER_TAGS.put(name, TagKey.of(RegistryKeys.ITEM, Identifier.of(AdorableHamsterPets.MOD_ID, "flower_accessories/" + name)));
+        }
+    }
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Static Utilities
@@ -142,10 +164,12 @@ public class HamsterTextureUtil {
             hasAcornHat = true;
         }
 
-        boolean hasPinkPetals = hamster.getDataTracker().get(HamsterEntity.PINK_PETAL_TYPE) > 0;
+        // True if they have any flower equipped AND its position tracker is > 0
+        boolean hasFlower = hamster.getDataTracker().get(HamsterEntity.FLOWER_POS) > 0 && accessoryStack.isIn(ItemTags.FLOWERS);
+        String flowerTexturePath = hasFlower ? getFlowerTexture(accessoryStack) : "";
 
         // --- Generate Cache Key ---
-        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_tp%s_tm%s_h%b_p%b_sp%b_hm%b_pbr%b_em%b",
+        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_tp%s_tm%s_h%b_f%b%s_sp%b_hm%b_pbr%b_em%b",
                 genome.basePaletteId(),
                 genome.wildOverlayPattern(),
                 genome.wildOverlayPaletteId() != null ? genome.wildOverlayPaletteId() : "",
@@ -156,7 +180,8 @@ public class HamsterTextureUtil {
                 trimPattern,
                 trimMaterialAsset,
                 hasAcornHat,
-                hasPinkPetals,
+                hasFlower,
+                flowerTexturePath,
                 isSweetPotato,
                 isHamtaro,
                 Configs.AHP_MAIN.enableArmorPbr.get(),
@@ -326,13 +351,13 @@ public class HamsterTextureUtil {
                 }
             }
 
-            // --- 9. Pink Petals Layer ---
-            if (hasPinkPetals) {
-                NativeImage petalLayer = readRawImage("textures/entity/hamster/overlays/accessories/overlay_pink_petal.png");
-                if (petalLayer != null) {
-                    blendLayer(composite, specularImg, normalImg, petalLayer, accessorySpecular);
-                    applyProceduralPom(petalLayer, normalImg);
-                    petalLayer.close();
+            // --- 9. Flower Accessory Layer ---
+            if (hasFlower && Configs.AHP_MAIN.renderFlowersWithArmor.get()) {
+                NativeImage flowerLayer = readRawImage("textures/entity/hamster/overlays/accessories/" + flowerTexturePath + ".png");
+                if (flowerLayer != null) {
+                    blendLayer(composite, specularImg, normalImg, flowerLayer, accessorySpecular);
+                    applyProceduralPom(flowerLayer, normalImg);
+                    flowerLayer.close();
                 }
             }
 
@@ -632,6 +657,71 @@ public class HamsterTextureUtil {
             }
             return null; // Return null if failed to load to prevent caching an empty array
         });
+    }
+
+    /**
+     * Maps an item to its corresponding flower texture file.
+     * Checks data-driven Item Tags first to allow modpack creators to explicitly sort flowers.
+     * Falls back to scanning the internal registry path for broad color keywords if no tag matches.
+     */
+    private static String getFlowerTexture(ItemStack stack) {
+        // --- Data-Driven Tag Check (Highest Priority) ---
+        for (Map.Entry<String, TagKey<Item>> entry : FLOWER_TAGS.entrySet()) {
+            if (stack.isIn(entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+
+        // --- Auto-Scanner Fallback (Lowest Priority) ---
+        String path = Registries.ITEM.getId(stack.getItem()).getPath().toLowerCase(Locale.ROOT);
+
+        // 1. Dark / Moody (Wither Rose)
+        if (path.contains("wither") || path.contains("black") || path.contains("dark") || path.contains("death") || path.contains("decay")) {
+            return "overlay_wither_rose";
+        }
+        // 2. Surreal / Teal (Pitcher Plant)
+        else if (path.contains("pitcher") || path.contains("teal") || path.contains("aqua") || path.contains("mystic") || path.contains("magic") || path.contains("chorus")) {
+            return "overlay_pitcher_plant";
+        }
+        // 3. High Contrast Yellow/Orange (Golden Dandelion)
+        else if (path.contains("golden") || path.contains("amber")) {
+            return "overlay_golden_dandelion";
+        }
+        // 4. Hot Pink / Mustard (Torchflower)
+        else if (path.contains("torch") || path.contains("fire") || path.contains("flame") || path.contains("neon")) {
+            return "overlay_torchflower";
+        }
+        // 5. Pastel Purple (Allium / Peony)
+        else if (path.contains("allium") || path.contains("peony") || path.contains("lilac") || path.contains("purple") || path.contains("violet") || path.contains("lavender") || path.contains("magenta") || path.contains("amethyst")) {
+            return "overlay_allium_peony";
+        }
+        // 6. Pastel Blue (Blue Orchid / Cornflower)
+        else if (path.contains("blue") || path.contains("orchid") || path.contains("cornflower") || path.contains("cyan")) {
+            return "overlay_blue_orchid_cornflower";
+        }
+        // 7. Grayscale (Eyeblossom)
+        else if (path.contains("eyeblossom") || path.contains("gray") || path.contains("grey") || path.contains("silver") || path.contains("ash")) {
+            return "overlay_eyeblossom";
+        }
+        // 8. White / Pastel Green (Lily of the Valley)
+        else if (path.contains("lily") || path.contains("white_tulip") || path.contains("snow") || path.contains("green") || path.contains("azalea")) {
+            return "overlay_lily_of_the_valley";
+        }
+        // 9. Pastel Orange (Orange Tulip)
+        else if (path.contains("orange_tulip") || path.contains("orange") || path.contains("tangerine")) {
+            return "overlay_orange_tulip";
+        }
+        // 10. Pastel Pink (Pink Petals / Pink Tulip)
+        else if (path.contains("pink") || path.contains("cherry") || path.contains("blossom") || path.contains("spore") || path.contains("cactus")) {
+            return "overlay_pink_petal_pink_tulip";
+        }
+        // 11. Red (Poppy / Rose Bush / Red Tulip)
+        else if (path.contains("poppy") || path.contains("rose") || path.contains("red") || path.contains("crimson") || path.contains("tulip") || path.contains("amaranth")) {
+            return "overlay_poppy_rose_bush_red_tulip";
+        }
+
+        // 12. Fallback: White / Yellow Center (Daisy, Sunflower, Dandelion, Azure Bluet, and unknown modded flowers)
+        return "overlay_oxeye_daisy_dandelion_sunflower_azure_bluet";
     }
 
     /**

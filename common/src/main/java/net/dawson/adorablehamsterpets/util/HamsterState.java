@@ -27,7 +27,7 @@ public record HamsterState(
         GreenBeanBuffData greenBeanBuffData,
         int autoEatCooldownTicks,
         Optional<String> customName,
-        int pinkPetalType,
+        int flowerPosition,
         int animationPersonalityId,
         MiniGameBehaviorData miniGameBehaviorData,
         WanderModeData wanderModeData,
@@ -145,7 +145,7 @@ public record HamsterState(
                     GreenBeanBuffData.CODEC.fieldOf("greenBeanBuffData").orElse(GreenBeanBuffData.empty()).forGetter(HamsterState::greenBeanBuffData),
                     Codec.INT.fieldOf("autoEatCooldownTicks").forGetter(HamsterState::autoEatCooldownTicks),
                     Codec.STRING.optionalFieldOf("customName").forGetter(HamsterState::customName),
-                    Codec.INT.fieldOf("pinkPetalType").orElse(0).forGetter(HamsterState::pinkPetalType),
+                    Codec.INT.fieldOf("flowerPosition").orElse(0).forGetter(HamsterState::flowerPosition),
                     Codec.INT.fieldOf("animationPersonalityId").orElse(1).forGetter(HamsterState::animationPersonalityId),
                     MiniGameBehaviorData.CODEC.fieldOf("miniGameBehaviorData").orElse(MiniGameBehaviorData.empty()).forGetter(HamsterState::miniGameBehaviorData),
                     WanderModeData.CODEC.fieldOf("wanderModeData").orElse(WanderModeData.empty()).forGetter(HamsterState::wanderModeData),
@@ -190,7 +190,7 @@ public record HamsterState(
         return new HamsterState(
                 this.entityUuid, this.genomeNbt, this.health, this.inventoryNbt,
                 this.breedingAge, this.throwCooldownEndTick, this.greenBeanBuffData,
-                this.autoEatCooldownTicks, this.customName, this.pinkPetalType,
+                this.autoEatCooldownTicks, this.customName, this.flowerPosition,
                 this.animationPersonalityId, this.miniGameBehaviorData,
                 this.wanderModeData, newFlags, this.totalAgeTicks, this.timesBred
         );
@@ -244,7 +244,7 @@ public record HamsterState(
                 ", buffData=" + greenBeanBuffData +
                 ", autoEatCooldown=" + autoEatCooldownTicks +
                 ", customName=" + customName.orElse("None") +
-                ", pinkPetalType=" + pinkPetalType +
+                ", flowerPosition=" + flowerPosition +
                 ", animationPersonalityId=" + animationPersonalityId +
                 ", miniGameBehaviorData=" + miniGameBehaviorData +
                 ", wanderModeData=" + wanderModeData +

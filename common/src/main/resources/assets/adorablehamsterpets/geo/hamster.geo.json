@@ -29,7 +29,7 @@
 					]
 				},
 				{
-					"name": "pink_petal_lower_back_no_armor",
+					"name": "flower_lower_back_no_armor",
 					"parent": "body_child",
 					"pivot": [1.3, 4.7, 2.3],
 					"rotation": [0, -7.5, 0],
@@ -42,7 +42,7 @@
 					]
 				},
 				{
-					"name": "pink_petal_lower_back_with_armor",
+					"name": "flower_lower_back_with_armor",
 					"parent": "body_child",
 					"pivot": [1.3, 5, 2.3],
 					"rotation": [0, -7.5, 0],
@@ -55,7 +55,7 @@
 					]
 				},
 				{
-					"name": "pink_petal_side_no_armor",
+					"name": "flower_side_no_armor",
 					"parent": "body_child",
 					"pivot": [-3.2, 2.7, 0.6],
 					"rotation": [0, 7, -90],
@@ -68,7 +68,7 @@
 					]
 				},
 				{
-					"name": "pink_petal_side_with_armor",
+					"name": "flower_side_with_armor",
 					"parent": "body_child",
 					"pivot": [-3.5, 2.7, 0.6],
 					"rotation": [0, 7, -90],
@@ -115,7 +115,7 @@
 					]
 				},
 				{
-					"name": "pink_petal_head_no_armor",
+					"name": "flower_head_no_armor",
 					"parent": "head_skull",
 					"pivot": [0.6, 6.1, -2.4],
 					"rotation": [0, 10, 0],
@@ -128,7 +128,7 @@
 					]
 				},
 				{
-					"name": "pink_petal_head_with_armor",
+					"name": "flower_head_with_armor",
 					"parent": "head_skull",
 					"pivot": [0.6, 6.4, -2.4],
 					"rotation": [0, 10, 0],

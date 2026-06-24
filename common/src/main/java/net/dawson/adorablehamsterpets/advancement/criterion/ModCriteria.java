@@ -12,7 +12,7 @@ public class ModCriteria {
     public static final HamsterThrownCriterion HAMSTER_THROWN = new HamsterThrownCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_thrown"));
     public static final FedHamsterSteamedBeansCriterion FED_HAMSTER_STEAMED_BEANS = new FedHamsterSteamedBeansCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "fed_hamster_steamed_beans"));
     public static final CheekPouchUnlockedCriterion CHEEK_POUCH_UNLOCKED = new CheekPouchUnlockedCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "cheek_pouch_unlocked"));
-    public static final AppliedPinkPetalCriterion APPLIED_PINK_PETAL = new AppliedPinkPetalCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "applied_pink_petal"));
+    public static final AppliedFlowerCriterion APPLIED_FLOWER = new AppliedFlowerCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "applied_flower"));
     public static final HamsterAutoFedCriterion HAMSTER_AUTO_FED = new HamsterAutoFedCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_auto_fed"));
     public static final HamsterDiamondAlertCriterion HAMSTER_DIAMOND_ALERT_TRIGGERED = new HamsterDiamondAlertCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_diamond_alert_triggered"));
     public static final HamsterCreeperAlertCriterion HAMSTER_CREEPER_ALERT_TRIGGERED = new HamsterCreeperAlertCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_creeper_alert_triggered"));
@@ -46,7 +46,7 @@ public class ModCriteria {
         register(HAMSTER_THROWN);
         register(FED_HAMSTER_STEAMED_BEANS);
         register(CHEEK_POUCH_UNLOCKED);
-        register(APPLIED_PINK_PETAL);
+        register(APPLIED_FLOWER);
         register(HAMSTER_AUTO_FED);
         register(HAMSTER_DIAMOND_ALERT_TRIGGERED);
         register(HAMSTER_CREEPER_ALERT_TRIGGERED);

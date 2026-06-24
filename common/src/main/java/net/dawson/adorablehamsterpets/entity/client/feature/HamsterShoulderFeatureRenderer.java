@@ -116,7 +116,7 @@ public class HamsterShoulderFeatureRenderer
         dummyHamster.setGenome(HamsterGenome.readFromNbt(data.genomeNbt()));
         dummyHamster.setLeftCheekFull((data.hamsterFlags() & HamsterEntity.LEFT_CHEEK_FULL_FLAG) != 0);
         dummyHamster.setRightCheekFull((data.hamsterFlags() & HamsterEntity.RIGHT_CHEEK_FULL_FLAG) != 0);
-        dummyHamster.getDataTracker().set(HamsterEntity.PINK_PETAL_TYPE, data.pinkPetalType());
+        dummyHamster.getDataTracker().set(HamsterEntity.FLOWER_POS, data.flowerPosition());
         dummyHamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
         dummyHamster.setBreedingAge(data.breedingAge());
         dummyHamster.getDataTracker().set(HamsterEntity.EXACT_AGE, data.breedingAge());

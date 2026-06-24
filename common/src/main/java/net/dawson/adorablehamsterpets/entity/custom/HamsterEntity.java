@@ -46,7 +46,6 @@ import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleEffect;
@@ -54,6 +53,7 @@ import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.registry.tag.FluidTags;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
@@ -277,7 +277,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final TrackedData<Integer> EXACT_AGE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
     public static final TrackedData<NbtCompound> GENOME = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.NBT_COMPOUND);
     public static final TrackedData<Integer> ANIMATION_PERSONALITY_ID = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    public static final TrackedData<Integer> PINK_PETAL_TYPE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    public static final TrackedData<Integer> FLOWER_POS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
     public static final TrackedData<Integer> DOZING_PHASE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
     public static final TrackedData<String> CURRENT_DEEP_SLEEP_ANIM_ID = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.STRING);
     public static final TrackedData<Integer> GENERIC_INTERACTION_TIMER = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -1300,6 +1300,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (result != ActionResult.PASS) return result;
 
             result = HamsterInteractionUtil.handleShoulderMount(this, player, stack, hand);
+            if (result != ActionResult.PASS) return result;
+
+            result = HamsterInteractionUtil.handleAggressionToggle(this, player, stack, hand);
             if (result != ActionResult.PASS) return result;
 
             result = HamsterInteractionUtil.handleInventoryOpen(this, player, hand);
@@ -2475,7 +2478,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.dataTracker.startTracking(HAMSTER_FLAGS, 0);
         this.dataTracker.startTracking(EXACT_AGE, 0);
         this.dataTracker.startTracking(GENOME, HamsterGenome.createDefault().saveToNbt());
-        this.dataTracker.startTracking(PINK_PETAL_TYPE, 0);
+        this.dataTracker.startTracking(FLOWER_POS, 0);
         this.dataTracker.startTracking(DOZING_PHASE, DozingPhase.NONE.ordinal());
         this.dataTracker.startTracking(CURRENT_DEEP_SLEEP_ANIM_ID, "");
         this.dataTracker.startTracking(ACTIVE_CUSTOM_GOAL_NAME_DEBUG, "None");
@@ -2860,16 +2863,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void updateAccessoryState() {
         ItemStack accessory = this.items.get(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX);
 
-        // Handle Pink Petal Tracker
-        if (accessory.isOf(Items.PINK_PETALS)) {
-            // If we have petals but tracker is 0 (just equipped), set to default 1
-            if (this.dataTracker.get(PINK_PETAL_TYPE) == 0) {
-                this.dataTracker.set(PINK_PETAL_TYPE, 1);
+        // Handle Flower Tracker
+        if (accessory.isIn(ItemTags.FLOWERS)) {
+            // If we have a flower but tracker is 0 (just equipped), set to default 1
+            if (this.dataTracker.get(FLOWER_POS) == 0) {
+                this.dataTracker.set(FLOWER_POS, 1);
             }
         } else {
-            // If slot is empty or has a different item (e.g. Hat), reset petal tracker
-            if (this.dataTracker.get(PINK_PETAL_TYPE) != 0) {
-                this.dataTracker.set(PINK_PETAL_TYPE, 0);
+            // If slot is empty or has a different item (e.g. Hat), reset flower tracker
+            if (this.dataTracker.get(FLOWER_POS) != 0) {
+                this.dataTracker.set(FLOWER_POS, 0);
             }
         }
     }
