@@ -60,8 +60,8 @@ tools/.env
 tools/context_payload.json
 tools/prompts/debug_last_prompt.md
 /tools/prompts/debug_last_response.md
-tools/more_context.md
-tools/context_manager_last_run_stats_*.json
+/tools/more_context.md
+/tools/context_manager_last_run_stats_*.json
 
 # Ignore compiled Python files
 __pycache__/
@@ -69,4 +69,3 @@ __pycache__/
 /common/bin/.gitignore
 /fabric/bin/.gitignore
 /neoforge/bin/.gitignore
-/tools/context_manager_last_run_stats_*.json
