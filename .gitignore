@@ -68,3 +68,4 @@ __pycache__/
 /common/bin/.gitignore
 /fabric/bin/.gitignore
 /neoforge/bin/.gitignore
+/tools/context_manager_last_run_stats_*.json
