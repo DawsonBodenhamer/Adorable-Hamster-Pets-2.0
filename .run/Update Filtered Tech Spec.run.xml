@@ -2,7 +2,7 @@
   <configuration default="false" name="Update Filtered Tech Spec" type="ShConfigurationType">
     <option name="SCRIPT_TEXT" value="" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="false" />
-    <option name="SCRIPT_PATH" value="$PROJECT_DIR$/tools/run_update_filtered_ahp_techspec.bat" />
+    <option name="SCRIPT_PATH" value="$PROJECT_DIR$/tools/run_update_filtered_techspec.bat" />
     <option name="SCRIPT_OPTIONS" value="" />
     <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="false" />
     <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$/tools" />
