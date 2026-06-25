@@ -52,9 +52,8 @@ logs/
 .DS_Store
 
 # =================================================
-# AHP Tech Spec Tools
+# Temp Toolchain Stuff
 # =================================================
-# Ignore the tech spec backups
 Adorable_Hamster_Pets_Tech_Spec_*_Backup.md
 /tools/.env
 /tools/context_payload.json
