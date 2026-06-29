@@ -196,16 +196,17 @@ public final class HamsterNbtUtil {
         hamster.setSettleSleepCooldown(nbt.getInt("SettleSleepCooldown"));
 
         // --- 4. Inventory ---
-        hamster.getItems().clear();
         RegistryWrapper.WrapperLookup registries = hamster.getWorld().getRegistryManager();
         if (nbt.contains("Inventory", NbtElement.COMPOUND_TYPE)) {
+            hamster.getItems().clear();
             Inventories.readNbt(nbt.getCompound("Inventory"), hamster.getItems(), registries);
-        }
-        if (!hasInventoryData(nbt) && !hamster.isTamed()) {
+            HamsterInventoryUtil.updateCheekStates(hamster);
+            HamsterInventoryUtil.syncEquipmentTrackers(hamster);
+        } else if (!hamster.getWorld().isClient() && !hamster.isTamed()) {
             HamsterInventoryUtil.generateWildLoot(hamster, hamster.getRandom());
+            HamsterInventoryUtil.updateCheekStates(hamster);
+            HamsterInventoryUtil.syncEquipmentTrackers(hamster);
         }
-        HamsterInventoryUtil.updateCheekStates(hamster);
-        HamsterInventoryUtil.syncEquipmentTrackers(hamster);
 
         // --- 5. Ore Seeking ---
         hamster.isPrimedToSeekDiamonds = nbt.getBoolean("IsPrimedToSeekDiamonds");
