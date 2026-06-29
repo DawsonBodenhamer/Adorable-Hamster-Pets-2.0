@@ -32,7 +32,8 @@ public class ModClientCommands {
                             PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F)
                     );
 
-                    ConfigApiJava.INSTANCE.openScreen("adorablehamsterpets.main");
+                    // Root config screen
+                    ConfigApiJava.INSTANCE.openScreen("adorablehamsterpets");
                     return 1;
                 })
         );
