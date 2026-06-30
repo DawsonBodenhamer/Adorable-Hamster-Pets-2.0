@@ -62,6 +62,7 @@ In addition to a bunch of new mini-games, idle animations and QoL features (incl
   - **Standard:** Sneak + right-click them Sunflower Seeds to factory-reset them back to their normal, wolf-like defensive behavior.
   - **Menace:** Sneak + right-click them a Spider Eye to unleash their inner demon. They will actively hunt down anything on the configurable "Menace Targets" list (which defaults to all monsters and bosses), and gain an expanded follow radius to give them more room to fight. If a target is outside their follow radius, they will move frantically at the edge of the tether.
   - All trigger items are fully configurable, and changing a hamster's state produces a visual and audio confirmation.
+  - If you have jade installed, its overlay will display the hamster's current Aggression State when it is set to something other than the default, and can be toggled in the config alongside the other genetic displays.
   - **Hamster Tips Guidebook Entry**
     - The *Hamster Tips* guidebook now features a dedicated "Aggression States" page to explain the new mechanics. It utilizes dynamic text injection to accurately display your configured trigger items, ensuring the book is always up-to-date even if a modpack creator changes the required diets.
   - **Pacifist Break:** Added a `Pacifist Break on Attack` config toggle (false by default). When enabled, a passive hamster will automatically revert to neutral if it sees you attacking something.
