@@ -10,7 +10,7 @@
     "description": {
       "translate": "advancements.adorablehamsterpets.husbandry.throw_hamster.description"
     },
-    "frame": "challenge",
+    "frame": "goal",
     "show_toast": true,
     "announce_to_chat": true,
     "hidden": false
