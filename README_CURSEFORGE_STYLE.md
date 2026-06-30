@@ -126,6 +126,32 @@ For when words fail and you need a furry, surprisingly aerodynamic solution— p
 </p>
 
 <p style="text-align: left;">
+    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_commercial_break.png" alt="Commercial break" width="100%">
+</p>
+
+## <span style="color: #e67e23;"><strong>So, you want a server? I gotchu.</strong></span>
+
+I've researched many different server hosts and also tried a few myself. Until recently, I thought Apex Hosting was the best... until I tried _**Indifferent Broccoli**_. They deserve at least 7 out of 5 stars in my book. They are superior in every way:
+
+- **Top-Tier Hardware** <span style="color: #7f8c8d;">*(they live up to their slogan of eating lag for breakfast)*</span>
+- **Full Modded Support** <span style="color: #7f8c8d;">*(even on their cheapest servers. Apex doesn't offer that)*</span>
+- **Incredible Customer Service** <span style="color: #7f8c8d;">*(you can literally just ping them on Discord and they fix it)*</span>
+- **Affordable** <span style="color: #7f8c8d;">*(somehow cheaper than Apex Hosting while also being better :O)*</span>
+- **Approachable** <span style="color: #7f8c8d;">*(just feels like a group of friends who love gaming)*</span>
+- **Uninterrupted Uptime** <span style="color: #7f8c8d;">*(my server generated chunks 24/7 for 3 days lol)*</span>
+- If you use my button below you can get **25% off your first month, and then 10% off FOR LIFE. YES YOU HEARD ME RIGHT. FOR LIFE.**
+
+<p style="text-align: center;">
+  <a href="https://indifferentbroccoli.com/minecraft-server-hosting?fpr=adorablehamsterpets">
+    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_indifferent_broccoli_hosting_banner_2490x265.png" alt="Indifferent Broccoli Affiliate Banner" width="100%">
+  </a>
+</p>
+
+I also recently discovered their **Split the Cost** feature. Your server comes with a payment link— toss it in the group chat, and your friends can directly contribute to the server's monthly bill in two seconds. Ridiculously easy. I thought it was so cool I gave it a separate paragraph LOL.
+
+Sign up by clicking the banner above. You'll get yourself a great server AND help fund my hamster shenanigans for future updates!
+
+<p style="text-align: left;">
     <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_tree_heist.png" alt="The Tree Heist" width="100%">
 </p>
 
@@ -241,27 +267,6 @@ For reasons known only to Notch himself, **Ravagers** and **Spiders** are utterl
 <p style="text-align: center;">
   <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/spiders_fleeing_from_hamsters.gif" alt="Spiders fleeing from hamsters" width="48%">
   <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ravager_fleeing_from_hamsters.gif" alt="Ravager fleeing from hamsters" width="48%">
-</p>
-
-<p style="text-align: left;">
-    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_commercial_break.png" alt="Commercial break" width="100%">
-</p>
-
-## <span style="color: #16a085;">So, you want a server. Here's 25% off your first one.</strong></span>
-
-I recommend **Apex Hosting** for the job— they consistently came out on top when compared to other similar services based on my priorities:
-
-- Modded Support
-- Customer Support
-- Hardware Power Per Dollar
-- Uninterrupted Uptime
-
-And if you sign up by clicking the banner below, it helps fund future updates for Adorable Hamster Pets!
-
-<p style="text-align: center;">
-  <a href="https://apexhost.gg/TheScarletFox">
-    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_apex_hosting_banner_1235x118.png" alt="Apex Hosting Affiliate Banner" width="100%">
-  </a>
 </p>
 
 <p style="text-align: left;">

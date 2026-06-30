@@ -116,6 +116,31 @@ For when words fail and you need a furry, surprisingly aerodynamic solution— p
  <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/the_hamster_yeet2.gif" alt="The Hamster Yeet part 2" width="48%">
 </p>
 
+<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_commercial_break.png" alt="Commercial break" width="100%"></p>
+
+## <font color="orange">So, you want a server? I gotchu.</font>
+
+I've researched many different server hosts and also tried a few myself. Until recently, I thought Apex Hosting was the best... until I tried _**Indifferent Broccoli**_. They deserve at least 7 out of 5 stars in my book. They are superior in every way:
+
+- **Top-Tier Hardware** <font color="gray">_(they live up to their slogan of eating lag for breakfast)_</font>
+- **Full Modded Support** <font color="gray">_(even on their cheapest servers. Apex doesn't offer that)_</font>
+- **Incredible Customer Service** <font color="gray">_(you can literally just ping them on Discord and they fix it)_</font>
+- **Affordable** <font color="gray">_(somehow cheaper than Apex Hosting while also being better :O)_</font>
+- **Approachable** <font color="gray">_(just feels like a group of friends who love gaming)_</font>
+- **Uninterrupted Uptime** <font color="gray">_(my server generated chunks 24/7 for 3 days lol)_</font>
+  <img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_indifferent_broccoli_split_the_cost.png" alt="Indifferent Broccoli Split The Cost Feature" width="55%">
+- If you use my button below you can get **25% off your first month, and then 10% off FOR LIFE. YES YOU HEARD ME RIGHT. FOR LIFE.**
+
+And then I just recently discovered their **Split the Cost** feature. Your server comes with this payment link— toss it in the group chat, and your friends can directly contribute to the server's monthly bill in two seconds. Ridiculously easy. I thought it was so cool I took a screenshot to show you LOL.
+
+Sign up by clicking the banner below. You'll get yourself a great server AND help fund my hamster shenanigans for future updates!
+
+<p align="center">
+  <a href="https://indifferentbroccoli.com/minecraft-server-hosting?fpr=adorablehamsterpets">
+    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_indifferent_broccoli_hosting_banner_2490x265.png" alt="Indifferent Broccoli Affiliate Banner" width="100%">
+  </a>
+</p>
+
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_tree_heist.png" alt="The Tree Heist" width="100%"></p>
 
 Throw a hamster at an **Oak Tree**. It will vanish into the canopy, physically rustling the leaves and raining down **Acorns**. You can use the acorns to craft **Acorn Armor** and the stylish **Acorn Hat** accessory.
@@ -217,33 +242,6 @@ For reasons known only to Notch himself, **Ravagers** and **Spiders** are utterl
 <p align="center">
   <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/spiders_fleeing_from_hamsters.gif" alt="Spiders fleeing from hamsters" width="48%">
   <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ravager_fleeing_from_hamsters.gif" alt="Ravager fleeing from hamsters" width="48%">
-</p>
-
-<p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_commercial_break.png" alt="Commercial break" width="100%"></p>
-
-## <font color="orange">So, you want a server? I gotchu.</font>
-
-If I could give **Indifferent Broccoli** 7 out of 5 stars, I would.
-
-I've researched many different server hosts, and I had previously tried Apex Hosting. I thought they were the best, until I tried Indifferent Broccoli. They were superior in the following ways:
-
-- **Top-Tier Hardware** <font color="gray">_(they live up to their slogan of eating lag for breakfast)_</font>
-- **Full Modded Support** _(even on their cheapest servers)_
-- **Incredible Customer Service** _(you can literally just yell at them on Discord and they fix it)
-- **Approchable** (feels like a group of friends who love gaming)_
-  <img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_indifferent_broccoli_split_the_cost.png" alt="Indifferent Broccoli Split The Cost Feature" width="55%">
-- **Uninterrupted Uptime** _(my server generated chunks 24/7 for 3 days lol)_
-- **Affordable** _(somehow cheaper than Apex Hosting even though they offer better service all around)_
-- If you use my button below you can get **25% off your first month, and then 10% off FOR LIFE. YES YOU HEARD ME RIGHT. FOR LIFE.**
-
-And I just recently discovered their **Split the Cost** feature. Your server comes with this payment link— toss it into your group chat, and players can directly contribute to the server's monthly bill in two seconds. Ridiculously easy. I thought it was so cool I took a screenshot to show you lol.
-
-Sign up by clicking the banner below. Not only will you get yourself a great server, and help fund my hamster shenanigans for future updates!
-
-<p align="center">
-  <a href="https://indifferentbroccoli.com/?fpr=adorablehamsterpets">
-    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_indifferent_broccoli_hosting_banner_2490x265.png" alt="Indifferent Broccoli Affiliate Banner" width="100%">
-  </a>
 </p>
 
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_hamster_tips_guide_book.png" alt="The Hamster Tips Guide Book" width="100%"></p>
