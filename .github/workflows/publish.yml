@@ -110,6 +110,7 @@ jobs:
             modmenu(optional)
             patchouli(required)
             jade(optional)
+            punchy-fpa(optional)
 
           # Fabric/Quilt dependency IDs For CurseForge (no comments allowed inside the block)
           curseforge-dependencies: |
@@ -121,6 +122,7 @@ jobs:
             308702(optional)
             393236(required)
             324717(optional)
+            1374153(optional)
 
           # Attach the changelog snippet that was extracted above
           changelog-file: release_changelog.md
@@ -158,6 +160,7 @@ jobs:
             kotlin-for-forge(required)
             patchouli(required)
             jade(optional)
+            punchy-fpa(optional)
 
           # Forge dependency IDs for CurseForge (no comments allowed inside the block)
           curseforge-dependencies: |
@@ -167,6 +170,7 @@ jobs:
             351264(required)
             306770(required)
             324717(optional)
+            1374153(optional)
 
           # Attach the changelog snippet that was extracted above
           changelog-file: release_changelog.md
