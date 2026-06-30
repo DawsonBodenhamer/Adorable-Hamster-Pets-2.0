@@ -24,6 +24,7 @@ import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
 import net.dawson.adorablehamsterpets.client.command.ModClientCommands;
 import net.dawson.adorablehamsterpets.client.event.AHPClientScreenEvents;
 import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconAnimator;
+import net.dawson.adorablehamsterpets.client.link.RemoteLinkManager;
 import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
@@ -261,8 +262,9 @@ public class AdorableHamsterPetsClient {
             return EventResult.pass();
         });
 
-        // --- Perk System ---
+        // --- Perk & Remote Link Systems ---
         PlayerPerkManager.INSTANCE.refreshManifestOnce();
+        RemoteLinkManager.INSTANCE.refreshLinksOnce();
 
         // --- Iris Integration ---
         IrisIntegration.init();
@@ -451,7 +453,7 @@ public class AdorableHamsterPetsClient {
                                             .withColor(Formatting.GOLD)
                                             .withBold(true)
                                             .withUnderline(true)
-                                            .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/DawsonBodenhamer/AdorableHamsterPets-Source/blob/develop/CHANGELOG.md#the-punchy-patch"))
+                                            .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, RemoteLinkManager.INSTANCE.getLink("punchy_showcase", "https://www.youtube.com/watch?v=YGRdjOTCMHo"))) // Fallback URL
                                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.translatable("message.adorablehamsterpets.throw_warning.punchy_hover")))
                                     ));
                         }
