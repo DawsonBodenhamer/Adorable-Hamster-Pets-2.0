@@ -53,6 +53,9 @@ These generous souls contributed to the project to keep the lights on and the ha
 | [**@Slicktopia**](https://ko-fi.com/slicktopia)                                                                | Single-handedly influencing the global virtual cheese economy.                               |
 | [**@Saint_Victus**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com) | Frequently rides hamsters into battle after shrinking themselves down to the size of an ant. |
 | [**@OmuriceSuki**](https://www.twitch.tv/omuricesuki)                                                          | Digitally reincarnated her hammies, Fuwa & Fuyu. They are now blocky, eternal, and hungry.   |
+| [**@munchie**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)      | Holds the unofficial server record for the most sunflower seeds hoarded in a single chest.   |
+| [**@TheBecksiest**](https://linktr.ee/TheBecksiest)                                                            | A streamer whose chat demands mandatory, on-stream hamster-petting breaks every hour.        |
+| [**@Shyvor**](https://this_person_did_not_want_to_include_a_link_but_I_wanted_their_name_to_be_blue.com)       | Refuses to use conventional transport, opting instead to travel exclusively via strider.     |
 
 ### <font color="teal">Dependencies</font>
 
