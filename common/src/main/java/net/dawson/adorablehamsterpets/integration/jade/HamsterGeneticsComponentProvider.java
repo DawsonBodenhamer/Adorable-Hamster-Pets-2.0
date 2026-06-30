@@ -74,6 +74,21 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
             };
             tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.eyes", Text.translatable(eyeKey)));
         }
+
+        // --- Aggression State ---
+        if (Configs.AHP_UI.showJadeAggressionState && serverData.contains("AggressionState", NbtElement.INT_TYPE)) {
+            int stateOrdinal = serverData.getInt("AggressionState");
+
+            // Only show if not "Standard"
+            if (stateOrdinal != 0) {
+                String stateKey = switch (stateOrdinal) {
+                    case 1 -> "tooltip.adorablehamsterpets.jade.genetics.aggression.pacifist";
+                    case 2 -> "tooltip.adorablehamsterpets.jade.genetics.aggression.menace";
+                    default -> "tooltip.adorablehamsterpets.jade.genetics.aggression.standard";
+                };
+                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.aggression", Text.translatable(stateKey)));
+            }
+        }
     }
 
     @Override
@@ -81,6 +96,7 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
         if (accessor.getEntity() instanceof HamsterEntity hamster) {
             data.put("HamsterGenome", hamster.getGenome().saveToNbt());
             data.putLong("TotalAgeTicks", hamster.totalAgeTicks);
+            data.putInt("AggressionState", hamster.getAggressionState().ordinal());
         }
     }
 

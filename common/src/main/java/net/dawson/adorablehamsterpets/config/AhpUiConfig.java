@@ -168,6 +168,11 @@ public class AhpUiConfig extends Config {
     public boolean showJadeEyeColor = true;
 
     @NonSync
+    @Translatable.Name("Show Aggression State")
+    @Translatable.Desc("Display whether the hamster is currently in Pacifist, Menace, or just Standard aggression mode.")
+    public boolean showJadeAggressionState = true;
+
+    @NonSync
     @ConfigGroup.Pop
     @Translatable.Name("Show Inventory")
     @Translatable.Desc("Display the default Jade inventory contents so you can see what your hamster is hoarding.")
