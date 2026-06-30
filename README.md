@@ -221,20 +221,28 @@ For reasons known only to Notch himself, **Ravagers** and **Spiders** are utterl
 
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_commercial_break.png" alt="Commercial break" width="100%"></p>
 
-## <font color="teal">So, you want a server. Here's 25% off your first one.</font>
+## <font color="orange">So, you want a server? I gotchu.</font>
 
-I recommend **Apex Hosting** for the job— they consistently came out on top when compared to other similar services based on my priorities:
+If I could give **Indifferent Broccoli** 7 out of 5 stars, I would.
 
-- Modded Support
-- Customer Support
-- Hardware Power Per Dollar
-- Uninterrupted Uptime
+I've researched many different server hosts, and I had previously tried Apex Hosting. I thought they were the best, until I tried Indifferent Broccoli. They were superior in the following ways:
 
-And if you sign up by clicking the banner below, it helps fund future updates for Adorable Hamster Pets!
+- **Top-Tier Hardware** <font color="gray">_(they live up to their slogan of eating lag for breakfast)_</font>
+- **Full Modded Support** _(even on their cheapest servers)_
+- **Incredible Customer Service** _(you can literally just yell at them on Discord and they fix it)
+- **Approchable** (feels like a group of friends who love gaming)_
+  <img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_indifferent_broccoli_split_the_cost.png" alt="Indifferent Broccoli Split The Cost Feature" width="55%">
+- **Uninterrupted Uptime** _(my server generated chunks 24/7 for 3 days lol)_
+- **Affordable** _(somehow cheaper than Apex Hosting even though they offer better service all around)_
+- If you use my button below you can get **25% off your first month, and then 10% off FOR LIFE. YES YOU HEARD ME RIGHT. FOR LIFE.**
+
+And I just recently discovered their **Split the Cost** feature. Your server comes with this payment link— toss it into your group chat, and players can directly contribute to the server's monthly bill in two seconds. Ridiculously easy. I thought it was so cool I took a screenshot to show you lol.
+
+Sign up by clicking the banner below. Not only will you get yourself a great server, and help fund my hamster shenanigans for future updates!
 
 <p align="center">
-  <a href="https://apexhost.gg/TheScarletFox">
-    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_apex_hosting_banner_1235x118.png" alt="Apex Hosting Affiliate Banner" width="100%">
+  <a href="https://indifferentbroccoli.com/?fpr=adorablehamsterpets">
+    <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_indifferent_broccoli_hosting_banner_2490x265.png" alt="Indifferent Broccoli Affiliate Banner" width="100%">
   </a>
 </p>
 
