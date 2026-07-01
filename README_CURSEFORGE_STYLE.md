@@ -139,15 +139,14 @@ I've researched many different server hosts and also tried a few myself. Until r
 - **Affordable** <span style="color: #7f8c8d;">*(somehow cheaper than Apex Hosting while also being better :O)*</span>
 - **Approachable** <span style="color: #7f8c8d;">*(just feels like a group of friends who love gaming)*</span>
 - **Uninterrupted Uptime** <span style="color: #7f8c8d;">*(my server generated chunks 24/7 for 3 days lol)*</span>
-- If you use my button below you can get **25% off your first month, and then 10% off FOR LIFE. YES YOU HEARD ME RIGHT. FOR LIFE.**
+
+And I just recently discovered their **Split the Cost** feature. Your server comes with a payment link— toss it in the group chat, and your friends can directly contribute to the server's monthly bill in two seconds. Ridiculously easy. I thought it was so cool I give it its own paragraph LOL.
 
 <p style="text-align: center;">
   <a href="https://indifferentbroccoli.com/minecraft-server-hosting?fpr=adorablehamsterpets">
     <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_indifferent_broccoli_hosting_banner_2490x265.png" alt="Indifferent Broccoli Affiliate Banner" width="100%">
   </a>
 </p>
-
-I also recently discovered their **Split the Cost** feature. Your server comes with a payment link— toss it in the group chat, and your friends can directly contribute to the server's monthly bill in two seconds. Ridiculously easy. I thought it was so cool I gave it a separate paragraph LOL.
 
 Sign up by clicking the banner above. You'll get yourself a great server AND help fund my hamster shenanigans for future updates!
 

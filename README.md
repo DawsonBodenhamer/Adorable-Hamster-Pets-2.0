@@ -128,18 +128,16 @@ I've researched many different server hosts and also tried a few myself. Until r
 - **Affordable** <font color="gray">_(somehow cheaper than Apex Hosting while also being better :O)_</font>
 - **Approachable** <font color="gray">_(just feels like a group of friends who love gaming)_</font>
 - **Uninterrupted Uptime** <font color="gray">_(my server generated chunks 24/7 for 3 days lol)_</font>
-  <img align="right" src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_indifferent_broccoli_split_the_cost.png" alt="Indifferent Broccoli Split The Cost Feature" width="55%">
-- If you use my button below you can get **25% off your first month, and then 10% off FOR LIFE. YES YOU HEARD ME RIGHT. FOR LIFE.**
 
-And then I just recently discovered their **Split the Cost** feature. Your server comes with this payment link— toss it in the group chat, and your friends can directly contribute to the server's monthly bill in two seconds. Ridiculously easy. I thought it was so cool I took a screenshot to show you LOL.
-
-Sign up by clicking the banner below. You'll get yourself a great server AND help fund my hamster shenanigans for future updates!
+And I just recently discovered their **Split the Cost** feature. Your server comes with a payment link— toss it in the group chat, and your friends can directly contribute to the server's monthly bill in two seconds. Ridiculously easy. I thought it was so cool I give it its own paragraph LOL.
 
 <p align="center">
   <a href="https://indifferentbroccoli.com/minecraft-server-hosting?fpr=adorablehamsterpets">
     <img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/AHP_indifferent_broccoli_hosting_banner_2490x265.png" alt="Indifferent Broccoli Affiliate Banner" width="100%">
   </a>
 </p>
+
+Sign up by clicking the banner above. You'll get yourself a great server AND help fund my hamster shenanigans for future updates!
 
 <p align="left"><img src="https://raw.githubusercontent.com/DawsonBodenhamer/AdorableHamsterPets-Source/develop/media/ahp_readme_divider_the_tree_heist.png" alt="The Tree Heist" width="100%"></p>
 
