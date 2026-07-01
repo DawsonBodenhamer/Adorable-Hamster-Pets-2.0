@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 In addition to a bunch of new mini-games, idle animations and QoL features (including hamster armor trims & toggleable aggression states!), this patch introduces 5 new super cute, first-person animations to your rodent-handling experience, courtesy of the amazing **Punchy mod!** I've been working closely with [**@Dev Punchy Man**](https://modrinth.com/mod/punchy-fpa) to overhaul how it feels to pick up, pet, yeet, and dismount your hamsters.
 
-### [👉🏼 **Showcase video** 👈🏼](https://www.youtube.com/watch?v=YGRdjOTCMHo)
+### 👉🏼 [**Showcase video**](https://www.youtube.com/watch?v=YGRdjOTCMHo) 👈🏼
 
 ### Added
 - **New First-Person Animations** _(Optional: Requires Punchy v2.6.0+)_
