@@ -1,6 +1,24 @@
 {
-  "latest_version": "3.6.0",
+  "latest_version": "3.6.1",
   "messages": [
+    {
+      "id": "update-3.6.1",
+      "title": "New Update: v3.6.0!",
+      "kind": "update_available",
+      "semver": "3.6.1",
+      "markdown": "messages/v3.6.1-update.md",
+      "published": "2026-07-01T01:45:00Z",
+      "mandatory": true
+    },
+    {
+      "id": "whats-new-3.6.1",
+      "title": "What's New in v3.6.1?",
+      "kind": "patch_notes",
+      "semver": "3.6.1",
+      "markdown": "messages/v3.6.1-whats-new.md",
+      "published": "2026-07-01T01:45:00Z",
+      "mandatory": true
+    },
     {
       "id": "update-3.6.0",
       "title": "New Update: v3.6.0!",
