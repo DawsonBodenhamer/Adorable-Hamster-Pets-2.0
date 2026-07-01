@@ -656,8 +656,6 @@
   "book.adorablehamsterpets.entry.missing_book.page1.body": "弄丢了这本无价的啮齿智慧宝典，或者只是想再要一本？$(br2)多惊讶啊。$(br2)$(c:/function adorablehamsterpets:player/give_book_to_self)<b>点击这里</>获取，或者也可以用原版的<b>书</>与模组的 $(l:crops_food/cucumber#item)<dark_green><b>切片黄瓜</>在工作台中合成得到。",
   "book.adorablehamsterpets.entry.missing_book.page2.body": "不要问为什么是黄瓜片。$(br2)这就要谈起一个可悲的仓鼠和不幸的水池事故了。",
   "book.adorablehamsterpets.entry.missing_book.recipe_title": "指南书",
-  "book.adorablehamsterpets.entry.pink_petals": "粉色花瓣",
-  "book.adorablehamsterpets.entry.pink_petals.page1.body": "踩到了<pink><b>粉色花瓣</>？试着拿它们<b>右键点击</>你的仓鼠吧。这才叫潮流——看看吧。$(br2)再次点击可以改变位置；用剪刀或者通过$(l:advanced_rodentry/cheek_pouches#equipment_slots)<dark_green><b>饰品</>栏去掉它们。",
   "book.adorablehamsterpets.entry.psychological_warfare": "心理战术",
   "book.adorablehamsterpets.entry.psychological_warfare.page1.body": "你的仓鼠散发出一种独特的气息，只能被<b>蜘蛛</>和暴怒的<b>灾厄村民</>感知到。$(br2)利用这个特点——看着灾厄村民们",
   "book.adorablehamsterpets.entry.psychological_warfare.page2.body": "$(br)被这个小不点追着。$(br2)等等...这可能就是灾厄村民那么怕它的原因？$(br2)这需要深入研究。",

@@ -544,8 +544,6 @@
   "book.adorablehamsterpets.entry.missing_book.page1.body": "Вы потеряли этот бесценный том мудрости грызунов или вам нужен ещё один?$(br2)Просто шок.$(br2)$(c:/function adorablehamsterpets:player/give_book_to_self)<b>Нажми Сюда</>, создай другую из ванильной <b>Книги</> и добавив $(l:crops_food/cucumber#item)<dark_green><b>Нарезаного Огурца</>.",
   "book.adorablehamsterpets.entry.missing_book.page2.body": "Не спрашивайте почему именно Нарезанный Огурец.$(br2)Это долгая история об очень необычном хомяке и неприятном инциденте на пикнике.",
   "book.adorablehamsterpets.entry.missing_book.recipe_title": "Путеводитель",
-  "book.adorablehamsterpets.entry.pink_petals": "Розовые Лепестки",
-  "book.adorablehamsterpets.entry.pink_petals.page1.body": "Наткнулись на <pink><b>Розовые Лепестки</>? Попробуйте <b>ПКМ</> по хомяку c ними. Это зовётся МОДНЯВОСТЬ— можете даже в словарь заглянуть!$(br2)Нажмите снова, чтобы изменить расположение; ножницы или слот $(l:advanced_rodentry/cheek_pouches#equipment_slots)<dark_green><b>Шика</>, чтобы убрать.",
   "book.adorablehamsterpets.entry.psychological_warfare": "Пси-война",
   "book.adorablehamsterpets.entry.psychological_warfare.page1.body": "Ваш хомяк излучает ауру чистой и неподдельной угрозы, которая, по-видимому, ощутима лишь гигантскими <b>Пауками</> и разъярёнными рогатыми <b>Разорителями</>.$(br2)Обратите это знание себе во благо— наблюдайте, как",
   "book.adorablehamsterpets.entry.psychological_warfare.page2.body": "$(br)Разоритель отчаянно пытается удрать от чего-то столь маленького, что оно может запросто забиться в его ноздре.$(br2)Постой... возможно именно этого и боятся Разорители?$(br2)Здесь потребуются дальнейшие исследования.",

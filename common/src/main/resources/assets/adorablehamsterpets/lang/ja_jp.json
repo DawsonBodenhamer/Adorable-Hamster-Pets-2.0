@@ -588,8 +588,6 @@
   "book.adorablehamsterpets.entry.missing_book.page1.body": "この貴重なげっ歯類の知恵の書を置き忘れた、あるいはもう一冊必要ですか？$(br2)衝撃的ですね。$(br2)$(c:/function adorablehamsterpets:player/give_book_to_self)<b>ここをクリック</>するか、バニラの<b>本</>と$(l:crops_food/cucumber#item)<dark_green><b>スライスしたキュウリ</>でクラフトしてください。",
   "book.adorablehamsterpets.entry.missing_book.page2.body": "なぜスライスしたキュウリなのかは聞かないでください。$(br2)とある特定のハムスターと、不運な水球事件にまつわる長い話があるのです。",
   "book.adorablehamsterpets.entry.missing_book.recipe_title": "ガイドブック",
-  "book.adorablehamsterpets.entry.pink_petals": "桃色の花びら",
-  "book.adorablehamsterpets.entry.pink_petals.page1.body": "<pink><b>桃色の花びら</>を見つけましたか？ ハムスターに<b>右クリック</>してみてください。ファッションってやつです。調べてみてください。$(br2)もう一度クリックすると位置が変わります。外すにはハサミを使うか、$(l:advanced_rodentry/cheek_pouches#equipment_slots)<dark_green><b>おしゃれ（Bling）</>スロットを確認してください。",
   "book.adorablehamsterpets.entry.psychological_warfare": "心理戦",
   "book.adorablehamsterpets.entry.psychological_warfare.page1.body": "あなたのハムスターは、巨大な<b>クモ</>や怒れる角の生えた<b>ラヴェジャー</>にしか感知できない、純粋で混じりけのない脅威のオーラを放っています。$(br2)この知識を利用してください――ラヴェジャーが、",
   "book.adorablehamsterpets.entry.psychological_warfare.page2.body": "$(br)誤って鼻の穴に吸い込んでしまいそうなほど小さな何かから、必死に逃げるのを見てください。$(br2)待てよ……もしかしてラヴェジャーはそれを恐れているのか？$(br2)これにはさらなる調査が必要です。",

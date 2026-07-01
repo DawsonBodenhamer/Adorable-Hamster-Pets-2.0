@@ -545,8 +545,6 @@
   "book.adorablehamsterpets.entry.missing_book.page1.body": "Zgubiłeś ten nieoceniony tom gryzoniowej mądrości albo potrzebujesz kolejnego?$(br2)Szokujące.$(br2)$(c:/function adorablehamsterpets:player/give_book_to_self)<b>Kliknij tutaj</>, lub wytwórz nowy za pomocą zwykłej <b>Książki</> i kilku $(l:crops_food/cucumber#item)<dark_green><b>Plasterków ogórka</>.",
   "book.adorablehamsterpets.entry.missing_book.page2.body": "Nie pytaj, dlaczego akurat Plasterki ogórka.$(br2)To długa historia, w którą zamieszany jest bardzo wybredny chomik i niefortunny incydent z piłką wodną.",
   "book.adorablehamsterpets.entry.missing_book.recipe_title": "Przewodnik",
-  "book.adorablehamsterpets.entry.pink_petals": "Różowe kwiatki",
-  "book.adorablehamsterpets.entry.pink_petals.page1.body": "Natknąłeś się na <pink><b>Różowe kwiatki</>? Spróbuj <b>kliknąć PPM</> na swojego chomika, trzymając je w dłoni. To się nazywa moda — doucz się.$(br2)Kliknij ponownie, aby zmienić ich pozycję; użyj nożyc lub slotu na $(l:advanced_rodentry/cheek_pouches#equipment_slots)<dark_green><b>Błyskotki</>, aby je zdjąć.",
   "book.adorablehamsterpets.entry.psychological_warfare": "Wojna psychologiczna",
   "book.adorablehamsterpets.entry.psychological_warfare.page1.body": "Twój chomik roztacza aurę czystego terroru, która najwyraźniej jest wyczuwalna tylko dla gigantycznych <b>Pająków</> i gniewnych, rogatych <b>Bestii</>.$(br2)Wykorzystaj tę wiedzę na swoją korzyść — patrz, jak Bestia desperacko ucieka przed czymś, co jest",
   "book.adorablehamsterpets.entry.psychological_warfare.page2.body": "$(br)na tyle małe, że mogłoby przypadkiem zostać wciągnięte nosem.$(br2)Chwila... może to właśnie tego Bestia tak bardzo się boi?$(br2)To wymaga dalszych badań.",
