@@ -1205,18 +1205,15 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         final AhpUiConfig uiConfig = AdorableHamsterPets.UI_CONFIG;
         Random random = world.getRandom();
 
-        // Peek next hamster
-        ShoulderLocation locationToProcess = config.dismountOrder.get() == DismountOrder.LIFO
-                ? this.adorablehamsterpets$mountOrderQueue.peekLast()
-                : this.adorablehamsterpets$mountOrderQueue.peekFirst();
+        // Skip cooling-down hamsters only when throwing
+        ShoulderLocation locationToProcess = HamsterInteractionUtil.getNextSlotToDismount(self, isThrow);
 
         if (locationToProcess == null) return;
 
         NbtCompound shoulderNbt = this.getShoulderHamster(locationToProcess);
         if (shoulderNbt.isEmpty()) {
             AdorableHamsterPets.LOGGER.warn("Dismount queue pointed to an empty slot ({}). Desync probable.", locationToProcess);
-            if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
-            else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+            HamsterInteractionUtil.removeSlotFromDismountQueue(self, locationToProcess);
             return;
         }
 
@@ -1224,8 +1221,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         HamsterEntity hamster = HamsterNbtUtil.createFromNbt((ServerWorld) world, self, shoulderNbt);
         if (hamster == null) {
             this.setShoulderHamster(locationToProcess, new NbtCompound());
-            if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
-            else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+            HamsterInteractionUtil.removeSlotFromDismountQueue(self, locationToProcess);
             return;
         }
 
@@ -1255,8 +1251,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                         world.spawnEntity(searcher);
 
                         // Clear Data
-                        if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
-                        else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+                        HamsterInteractionUtil.removeSlotFromDismountQueue(self, locationToProcess);
                         this.setShoulderHamster(locationToProcess, new NbtCompound());
 
                         return; // Bypass standard spawn
@@ -1305,8 +1300,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             projectile.setVelocity(throwVec.multiply(throwSpeed));
 
             // Clean up original NBT slot
-            if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
-            else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+            HamsterInteractionUtil.removeSlotFromDismountQueue(self, locationToProcess);
             this.setShoulderHamster(locationToProcess, new NbtCompound());
 
             world.spawnEntity(projectile);
@@ -1325,8 +1319,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
 
         // --- 4. Finalize Dismount ---
-        if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
-        else this.adorablehamsterpets$mountOrderQueue.pollFirst();
+        HamsterInteractionUtil.removeSlotFromDismountQueue(self, locationToProcess);
 
         this.setShoulderHamster(locationToProcess, new NbtCompound());
 

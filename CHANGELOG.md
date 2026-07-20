@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.2] - Unreleased
+
+# **The Finders Keepers Patch**
+
+Hide & Seek is now easier to understand and less determined to dominate your hamster's schedule. This patch also keeps
+small rodents above lowered blocks and lets a ready shoulder hamster take the launch slot when another is still
+recovering.
+
+### Added
+- **Hide and Squeak Advancement**
+  - Successfully find your hamster during Hide & Seek to earn a dedicated advancement.
+- **Hide & Seek Guidebook Entry**
+  - Added a *Hamster Tips* entry explaining the start message, hiding-place clues, time limit, and reward.
+
+### Changed
+- **Less Frequent Hide & Seek Games**
+  - Doubled the default initiation interval from roughly 3 minutes to roughly 6 minutes. *Existing worlds retain their
+    saved value; open the setting in the config screen, right-click it, and select **Restore Defaults** to apply the new
+    default.*
+- **Shoulder Hamster Throw Selection**
+  - Throwing now skips hamsters whose cooldown is still active and selects the next ready hamster in the configured
+    FIFO/LIFO order. If every mounted hamster is recovering, the normal cooldown message still appears.
+
+### Fixed
+- **Mud and Snow Rendering**
+  - Hamsters now render on top of mud and snow layers instead of sinking into lowered surfaces, where they would be partially or even sometimes completely hidden.
+- **Guidebook Taming Typo**
+  - Corrected an extra word in the sliced-cucumber instructions.
+
+---
+
 ## [3.6.1] - 2025-04-27
 
 # **The Punchy Patch**

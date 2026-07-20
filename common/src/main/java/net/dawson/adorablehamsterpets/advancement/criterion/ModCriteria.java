@@ -26,6 +26,7 @@ public class ModCriteria {
     public static final DispensedHamsterBeddingCriterion DISPENSED_HAMSTER_BEDDING = new DispensedHamsterBeddingCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "dispensed_hamster_bedding"));
     public static final TreeHeistDepletionCriterion TREE_HEIST_DEPLETION = new TreeHeistDepletionCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "tree_heist_depletion"));
     public static final TreeHeistStartedCriterion TREE_HEIST_STARTED = new TreeHeistStartedCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "tree_heist_started"));
+    public static final HideAndSeekFoundCriterion HIDE_AND_SEEK_FOUND = new HideAndSeekFoundCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "hide_and_seek_found"));
     public static final WitnessGlowingSunflowerCriterion WITNESS_GLOWING_SUNFLOWER = new WitnessGlowingSunflowerCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "witness_glowing_sunflower"));
     public static final MaxShoulderHamstersCriterion MAX_SHOULDER_HAMSTERS = new MaxShoulderHamstersCriterion(Identifier.of(AdorableHamsterPets.MOD_ID, "max_shoulder_hamsters"));
 
@@ -60,6 +61,7 @@ public class ModCriteria {
         register(DISPENSED_HAMSTER_BEDDING);
         register(TREE_HEIST_DEPLETION);
         register(TREE_HEIST_STARTED);
+        register(HIDE_AND_SEEK_FOUND);
         register(WITNESS_GLOWING_SUNFLOWER);
         register(MAX_SHOULDER_HAMSTERS);
 
