@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
+import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
 import net.dawson.adorablehamsterpets.client.render.BlockJiggleManager;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
@@ -19,6 +20,7 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
@@ -130,6 +132,10 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
 
             if (success) {
                 // Success: Player found hamster
+                if (finder instanceof ServerPlayerEntity serverPlayer) {
+                    ModCriteria.HIDE_AND_SEEK_FOUND.get().trigger(serverPlayer);
+                }
+
                 Item giftItem = MinigameUtil.getRandomMiniGameReward(newHamster);
                 if (giftItem != Items.AIR) {
                     newHamster.setFrozenMovement(true);

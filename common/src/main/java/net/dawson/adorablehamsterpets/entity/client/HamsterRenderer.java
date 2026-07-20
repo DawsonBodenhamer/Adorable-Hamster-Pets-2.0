@@ -7,6 +7,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.networking.payload.HamsterAnimationSoundPayload;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterMouthItemOffsets;
+import net.dawson.adorablehamsterpets.util.HamsterRenderUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRidingUtil;
 import net.dawson.adorablehamsterpets.util.HamsterTextureUtil;
 import net.minecraft.block.BlockState;
@@ -115,20 +116,15 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         // Add ID to set to determine entities no longer rendered
         AdorableHamsterPetsClient.onHamsterRendered(entity.getId());
 
-        // --- 3. Smooth Snow Layer Height Adjustment ---
+        // --- 3. Smooth Ground Surface Height Adjustment ---
         poseStack.push();
-        float targetYOffset = 0.0f;
-        BlockPos pos = entity.getBlockPos();
-        BlockState blockState = entity.getWorld().getBlockState(pos);
-
-        // Fixed offset equal to one layer height if on snow
-        if (blockState.isOf(Blocks.SNOW)) {
-            targetYOffset = 1.0f / 8.0f;
+        if (IS_RENDERING_IN_GUI.get() || entity.isShoulderPet() || entity.isProjectileDummy) {
+            entity.renderedGroundYOffset = 0.0F;
+        } else {
+            float targetYOffset = HamsterRenderUtil.getGroundSurfaceOffset(entity);
+            entity.renderedGroundYOffset += (targetYOffset - entity.renderedGroundYOffset) * 0.15F;
+            poseStack.translate(0.0, entity.renderedGroundYOffset, 0.0);
         }
-
-        // Smooth interpolation for target offset
-        entity.renderedSnowYOffset += (targetYOffset - entity.renderedSnowYOffset) * 0.15f;
-        poseStack.translate(0.0, entity.renderedSnowYOffset, 0.0);
 
         // --- 4. Iris/Shader Compatibility Hack ---
         // Force GeckoLib to rebuild bone poses for this entity. Prevents animations

@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -699,6 +700,15 @@ public final class HamsterInteractionUtil {
      */
     @Nullable
     public static ShoulderLocation getNextSlotToDismount(PlayerEntity player) {
+        return getNextSlotToDismount(player, false);
+    }
+
+    /**
+     * Identifies which shoulder slot will be processed next, optionally bypassing hamsters whose throw cooldown
+     * is still active. If every hamster is cooling down, returns the normal first slot so existing feedback remains.
+     */
+    @Nullable
+    public static ShoulderLocation getNextSlotToDismount(PlayerEntity player, boolean skipThrowCooldown) {
         PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
 
         ArrayDeque<ShoulderLocation> queue = playerAccessor.adorablehamsterpets$getMountOrderQueue();
@@ -717,7 +727,32 @@ public final class HamsterInteractionUtil {
         }
 
         DismountOrder order = Configs.AHP_MAIN.dismountOrder.get();
-        return order == DismountOrder.LIFO ? queue.peekLast() : queue.peekFirst();
+        ShoulderLocation firstSlot = order == DismountOrder.LIFO ? queue.peekLast() : queue.peekFirst();
+        if (!skipThrowCooldown) {
+            return firstSlot;
+        }
+
+        Iterator<ShoulderLocation> iterator = order == DismountOrder.LIFO
+                ? queue.descendingIterator()
+                : queue.iterator();
+        long currentTime = player.getWorld().getTime();
+
+        while (iterator.hasNext()) {
+            ShoulderLocation location = iterator.next();
+            NbtCompound hamsterData = playerAccessor.getShoulderHamster(location);
+            if (!hamsterData.isEmpty()
+                    && (!hamsterData.contains("throwCooldownEndTick")
+                    || hamsterData.getLong("throwCooldownEndTick") <= currentTime)) {
+                return location;
+            }
+        }
+
+        return firstSlot;
+    }
+
+    /** Removes a processed shoulder slot without disturbing skipped hamsters elsewhere in the queue. */
+    public static void removeSlotFromDismountQueue(PlayerEntity player, ShoulderLocation location) {
+        ((PlayerEntityAccessor) player).adorablehamsterpets$getMountOrderQueue().remove(location);
     }
 
     /**
@@ -730,7 +765,7 @@ public final class HamsterInteractionUtil {
      */
     @Nullable
     public static NbtCompound getNextHamsterToDismountData(PlayerEntity player) {
-        ShoulderLocation nextSlot = getNextSlotToDismount(player);
+        ShoulderLocation nextSlot = getNextSlotToDismount(player, true);
         if (nextSlot != null) {
             return ((PlayerEntityAccessor) player).getShoulderHamster(nextSlot);
         }

@@ -1,0 +1,23 @@
+{
+  "parent": "adorablehamsterpets:husbandry/tame_hamster",
+  "display": {
+    "icon": {
+      "id": "minecraft:rabbit_hide"
+    },
+    "title": {
+      "translate": "advancements.adorablehamsterpets.husbandry.hide_and_squeak.title"
+    },
+    "description": {
+      "translate": "advancements.adorablehamsterpets.husbandry.hide_and_squeak.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "hamster_found": {
+      "trigger": "adorablehamsterpets:hide_and_seek_found"
+    }
+  }
+}

@@ -425,7 +425,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique public int prevClientRollTimer = 0;
     @Unique private double lastZoomiesAngle = 0.0;
     @Unique private int zoomiesRadiusModifier = 0;
-    @Unique public transient float renderedSnowYOffset = 0.0f;
+    @Unique public transient float renderedGroundYOffset = 0.0f;
     @Unique public transient float dynamicScaleY = 1.0f;
     @Unique private float thumpSoundVolume = 0.2f;
     @Unique public int pathingFailures = 0;

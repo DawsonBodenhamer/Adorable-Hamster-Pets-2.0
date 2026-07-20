@@ -1096,8 +1096,9 @@ public class AhpMainConfig extends Config {
     public ConfigGroup hideAndSeek = new ConfigGroup("hideAndSeek", true);
 
     @Translatable.Name("Initiation Chance")
-    @Translatable.Desc("1-in-X chance per tick to initiate a game of hide and seek. Default 3600 (20 ticks per second, so default averages once every ~3 minutes).")
-    public ValidatedInt hideAndSeekChanceDenominator = new ValidatedInt(3600, 72000, 20);
+    @Translatable.Desc("1-in-X chance per tick to initiate a game of hide and seek. Default 7200 "
+            + "(20 ticks per second, so default averages once every ~6 minutes).")
+    public ValidatedInt hideAndSeekChanceDenominator = new ValidatedInt(7200, 72000, 20);
 
     @Translatable.Name("Min Duration")
     @Translatable.Desc("Minimum time (in seconds) the hamster will stay hidden.")
