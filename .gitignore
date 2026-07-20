@@ -67,3 +67,8 @@ __pycache__/
 /common/bin/.gitignore
 /fabric/bin/.gitignore
 /neoforge/bin/.gitignore
+
+# Local code-intelligence indexes
+.codegraph/
+graphify-out/
+graph.json
