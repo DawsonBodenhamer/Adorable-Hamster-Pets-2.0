@@ -803,8 +803,7 @@ public class AdorableHamsterPetsClient {
         // If they spawn with the book (or get it from auto-delivery), mark as seen silently.
         if (clientSessionTimer == 20) {
             if (hasGuideBook(client.player)) {
-                config.playersWhoHaveSeenGuidebookWarning.add(username);
-                NetworkManager.sendToServer(new AcknowledgeGuidebookWarningPayload());
+                markGuidebookWarningSeen(config, username);
             }
         }
 
@@ -814,8 +813,7 @@ public class AdorableHamsterPetsClient {
                 sendWarningPart1(client.player);
             } else {
                 // If they have the book now, mark as seen and don't proceed to Part 2
-                config.playersWhoHaveSeenGuidebookWarning.add(username);
-                NetworkManager.sendToServer(new AcknowledgeGuidebookWarningPayload());
+                markGuidebookWarningSeen(config, username);
             }
         }
 
@@ -825,8 +823,14 @@ public class AdorableHamsterPetsClient {
                 sendWarningPart2(client.player);
             }
             // Mark as seen regardless to prevent spamming next session
+            markGuidebookWarningSeen(config, username);
+        }
+    }
+
+    private static void markGuidebookWarningSeen(AhpUiConfig config, String username) {
+        if (!config.playersWhoHaveSeenGuidebookWarning.contains(username)) {
             config.playersWhoHaveSeenGuidebookWarning.add(username);
-            NetworkManager.sendToServer(new AcknowledgeGuidebookWarningPayload());
+            config.save();
         }
     }
 

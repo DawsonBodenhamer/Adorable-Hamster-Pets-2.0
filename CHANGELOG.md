@@ -29,8 +29,15 @@ recovering.
     FIFO/LIFO order. If every mounted hamster is recovering, the normal cooldown message still appears.
 
 ### Fixed
+- **Missing Guidebook Warning**
+  - The warning now remembers each player's acknowledgement between restarts and mod updates instead of periodically
+    forgetting and filing the same complaint again.
+- **AI-Disabled Hamster Taming**
+  - Incorrect taming attempts no longer permanently lock command-spawned, AI-disabled hamsters or disturb their frozen
+    pose. A later valid sneak-taming attempt still reawakens them normally.
 - **Mud and Snow Rendering**
-  - Hamsters now render on top of mud and snow layers instead of sinking into lowered surfaces, where they would be partially or even sometimes completely hidden.
+  - Hamsters now render on top of mud and snow layers instead of sinking into lowered surfaces, where they would be
+    partially or even sometimes completely hidden.
 - **Guidebook Taming Typo**
   - Corrected an extra word in the sliced-cucumber instructions.
 

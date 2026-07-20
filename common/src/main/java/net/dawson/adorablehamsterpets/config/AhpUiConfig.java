@@ -100,6 +100,7 @@ public class AhpUiConfig extends Config {
 
     @Translatable.Name("Seen Warning Players")
     @Translatable.Desc("A list of usernames for players who have already seen the missing guidebook warning. Ensures that everyone sees this, but only once unless you delete your name from this list.")
+    @NonSync
     public List<String> playersWhoHaveSeenGuidebookWarning = new ArrayList<>();
 
     @NonSync

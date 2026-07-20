@@ -97,16 +97,6 @@ public class ModPackets {
                 })
         );
 
-        NetworkManager.registerReceiver(NetworkManager.Side.C2S, AcknowledgeGuidebookWarningPayload.ID, AcknowledgeGuidebookWarningPayload.CODEC,
-                (payload, context) -> context.queue(() -> {
-                    String username = context.getPlayer().getGameProfile().getName();
-                    if (!Configs.AHP_UI.playersWhoHaveSeenGuidebookWarning.contains(username)) {
-                        Configs.AHP_UI.playersWhoHaveSeenGuidebookWarning.add(username);
-                        Configs.AHP_UI.save();
-                    }
-                })
-        );
-
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, RequestHamsterMountPayload.ID, RequestHamsterMountPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
                     PlayerEntity player = context.getPlayer();
