@@ -1450,6 +1450,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     // --- Tick Logic ---
     @Override
     public void tick() {
+        if (this.interactionCooldown > 0) this.interactionCooldown--;
+
         // Fast-path for AI-disabled statues
         if (this.isAiDisabled()) {
             this.baseTick();
@@ -1499,7 +1501,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- Decrement Simple Timers ---
-        if (this.interactionCooldown > 0) this.interactionCooldown--;
         if (this.suffocationGracePeriod > 0) this.suffocationGracePeriod--;
         if (this.wakingUpTicks > 0) this.wakingUpTicks--;
         if (this.autoEatCooldownTicks > 0) this.autoEatCooldownTicks--;
@@ -2909,7 +2910,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * Intelligent selection between sitting, standing, or moving headshakes.
      */
     public void playRefusalAnimation() {
-        if (!this.getWorld().isClient()) {
+        if (!this.getWorld().isClient() && !this.isAiDisabled()) {
             if (this.isSitting()) {
                 // If sitting, play the sitting headshake
                 this.triggerAnimOnServer("mainController", "sitting_headshake");
