@@ -5,25 +5,21 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
-import net.dawson.adorablehamsterpets.config.AhpMainConfig;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.AI.*;
 import net.dawson.adorablehamsterpets.entity.AI.navigation.HamsterNavigation;
 import net.dawson.adorablehamsterpets.entity.ImplementedInventory;
-import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.client.feature.ShoulderAnimationState;
 import net.dawson.adorablehamsterpets.entity.control.HamsterBodyControl;
+import net.dawson.adorablehamsterpets.entity.custom.animation.HamsterAnimationController;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
-import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.*;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.control.BodyControl;
 import net.minecraft.entity.ai.goal.AttackWithOwnerGoal;
@@ -39,8 +35,6 @@ import net.minecraft.entity.damage.DamageTypes;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.entity.mob.CreeperEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.TameableEntity;
@@ -53,19 +47,15 @@ import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.registry.tag.FluidTags;
-import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.world.*;
 import org.jetbrains.annotations.Nullable;
@@ -73,8 +63,6 @@ import org.spongepowered.asm.mixin.Unique;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.*;
@@ -90,10 +78,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * ────────────────────────────────────────────────────────────────────────────*/
 
     // --- Constants ---
-    private static final double WALK_TO_RUN_THRESHOLD_SQUARED = 0.002;
-    private static final double RUN_TO_SPRINT_THRESHOLD_SQUARED = 0.008;
     private static final int CUSTOM_LOVE_TICKS = 600;                 // 30 seconds
-    private static final double HAMSTER_ATTACK_BOX_EXPANSION = 0.70D;  // Expand by 0.7 blocks horizontally (vanilla is 0.83 blocks, so really this is shrinking it)
     private static final int NORMAL_FALL_PITCH_DURATION = 15;
     private static final int PITCH_RESET_DURATION = 3;
 
@@ -123,9 +108,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     public static final int CELEBRATION_PARTICLE_DURATION_TICKS = 600;
-    private static final float DEFAULT_FOOTSTEP_VOLUME = 0.10F;
-    private static final float GRAVEL_VOLUME_MODIFIER = 0.60F;
-
     // --- Vanilla Shadow Animation Tuning ---
     private static final float SHADOW_HOLD_START_TICKS = 15.0f;
     private static final float SHADOW_ROLL_BACK_TICKS = 8.0f;
@@ -157,56 +139,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * @param forceStand True if the hamster should be forced to stand up upon spawning.
      */
     public static void spawnFromNbt(ServerWorld world, PlayerEntity player, NbtCompound nbt, boolean wasDiamondAlertActive, boolean forceStand) {
-        // Create from NBT
-        HamsterEntity hamster = HamsterNbtUtil.createFromNbt(world, player, nbt);
-        if (hamster == null) {
-            return;
-        }
-
-        if (forceStand) {
-            hamster.setSitting(false, true);
-        }
-
-        // Set suffocation grace period
-        hamster.suffocationGracePeriod = 200; // 10 seconds
-
-        // Prime for Diamond Seeking (if applicable)
-        if (wasDiamondAlertActive && Configs.AHP_MAIN.enableIndependentDiamondSeeking) {
-            hamster.isPrimedToSeekDiamonds = true;
-            AdorableHamsterPets.LOGGER.debug("[HamsterEntity {}] Primed for diamond seeking upon dismount.", hamster.getId());
-        }
-
-        // Find safe landing spot
-        BlockPos initialSearchPos;
-        BlockPos ultimateFallbackPos = player.getBlockPos(); // Player's feet = last resort
-
-        // Raycast to find where player is looking
-        HitResult hitResult = player.raycast(4.5, 0.0f, false);
-        if (hitResult.getType() == HitResult.Type.BLOCK) {
-            initialSearchPos = ((net.minecraft.util.hit.BlockHitResult) hitResult).getBlockPos();
-        } else {
-            initialSearchPos = ultimateFallbackPos; // Default to player's position if not looking at a block
-        }
-
-        // Determine pos with safe spawning algorithm
-        Optional<BlockPos> safePosOpt = HamsterPlacementUtil.findSafeSpawnPosition(initialSearchPos, world, 5, hamster);
-
-        // --- Set Position and Spawn ---
-        safePosOpt.ifPresentOrElse(
-                safePos -> {
-                    // Spawn at the center of the safe block
-                    hamster.refreshPositionAndAngles(safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5, player.getYaw(), player.getPitch());
-                    AdorableHamsterPets.LOGGER.debug("[HamsterDismount] Found safe spawn at {} for player {}.", safePos, player.getName().getString());
-                },
-                () -> {
-                    // Fallback if no safe spot is found
-                    AdorableHamsterPets.LOGGER.warn("[HamsterDismount] Could not find a safe spawn position for player {}. Spawning at player's feet as a fallback.", player.getName().getString());
-                    hamster.refreshPositionAndAngles(ultimateFallbackPos.getX() + 0.5, ultimateFallbackPos.getY(), ultimateFallbackPos.getZ() + 0.5, player.getYaw(), player.getPitch());
-                }
-        );
-
-        world.spawnEntityAndPassengers(hamster);
-        AdorableHamsterPets.LOGGER.debug("[HamsterEntity] Spawned Hamster ID {} from NBT data near Player {}.", hamster.getId(), player.getName().getString());
+        HamsterShoulderUtil.spawnFromNbt(world, player, nbt, wasDiamondAlertActive, forceStand);
     }
 
     /**
@@ -218,22 +151,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * @param player The player attempting the throw.
      */
     public static void tryThrowFromShoulder(ServerPlayerEntity player) {
-        // --- 1. Initial Setup & Config Check ---
-        PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
-        final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
-
-        if (!config.enableHamsterThrowing) {
-            player.sendMessage(Text.translatable("message.adorablehamsterpets.throwing_disabled"), true);
-            return;
-        }
-
-        if (!playerAccessor.hasAnyShoulderHamster()) {
-            AdorableHamsterPets.LOGGER.warn("[HamsterThrow] Player {} tried to throw, but has no shoulder hamster.", player.getName().getString());
-            return;
-        }
-
-        // --- 2. Delegate Dismount/Throw Logic ---
-        playerAccessor.adorablehamsterpets$dismountShoulderHamster(true);
+        HamsterShoulderUtil.tryThrowFromShoulder(player);
     }
 
     // --- Bitmask Flags for DataTracker ---
@@ -290,157 +208,53 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private static final TrackedData<Boolean> FALL_IMMUNITY_ACTIVE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<String> ACTIVE_CUSTOM_GOAL_NAME_DEBUG = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.STRING);
 
-    // --- Animation Constants ---
-    private static final RawAnimation CRASH_ANIM = RawAnimation.begin().thenPlay("anim_hamster_crash");
-    private static final RawAnimation KNOCKED_OUT_ANIM = RawAnimation.begin().thenPlay("anim_hamster_ko");
-    private static final RawAnimation WAKE_UP_FROM_KO_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wakeup_from_ko");
-    private static final RawAnimation FLYING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_flying");
-    private static final RawAnimation STANDING_HEADSHAKE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_standing_headshake");
-    private static final RawAnimation SITTING_HEADSHAKE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sitting_headshake");
-    private static final RawAnimation MOVING_HEADSHAKE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_moving_headshake");
-    private static final RawAnimation SLEEP_POSE1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sleep_pose1");
-    private static final RawAnimation SLEEP_POSE2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sleep_pose2");
-    private static final RawAnimation SLEEP_POSE3_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sleep_pose3");
-    private static final RawAnimation SIT_SETTLE_SLEEP1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sit_settle_sleep1");
-    private static final RawAnimation SIT_SETTLE_SLEEP2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sit_settle_sleep2");
-    private static final RawAnimation SIT_SETTLE_SLEEP3_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sit_settle_sleep3");
-    private static final RawAnimation STAND_SETTLE_SLEEP1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_stand_settle_sleep1");
-    private static final RawAnimation STAND_SETTLE_SLEEP2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_stand_settle_sleep2");
-    private static final RawAnimation STAND_SETTLE_SLEEP3_ANIM = RawAnimation.begin().thenPlay("anim_hamster_stand_settle_sleep3");
-    private static final RawAnimation SIT1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sit1");
-    private static final RawAnimation SIT2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sit2");
-    private static final RawAnimation SIT3_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sit3");
-    private static final RawAnimation STANDUP1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_standup1");
-    private static final RawAnimation STANDUP2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_standup2");
-    private static final RawAnimation STANDUP3_ANIM = RawAnimation.begin().thenPlay("anim_hamster_standup3");
-    private static final RawAnimation WAKE_UP_1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wakeup1");
-    private static final RawAnimation WAKE_UP_2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wakeup2");
-    private static final RawAnimation WAKE_UP_3_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wakeup3");
-    private static final RawAnimation SITTING_POSE1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sitting_pose1");
-    private static final RawAnimation SITTING_POSE2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sitting_pose2");
-    private static final RawAnimation SITTING_POSE3_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sitting_pose3");
-    private static final RawAnimation DRIFTING_OFF_POSE1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_drifting_off_pose1");
-    private static final RawAnimation DRIFTING_OFF_POSE2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_drifting_off_pose2");
-    private static final RawAnimation DRIFTING_OFF_POSE3_ANIM = RawAnimation.begin().thenPlay("anim_hamster_drifting_off_pose3");
-    private static final RawAnimation CLEANING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_cleaning");
-    private static final RawAnimation RUNNING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_running");
-    private static final RawAnimation WALKING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_walking");
-    private static final RawAnimation SPRINTING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sprinting");
-    private static final RawAnimation BOUNCING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_bouncing");
-    private static final RawAnimation IDLE1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_idle1");
-    private static final RawAnimation IDLE2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_idle2");
-    private static final RawAnimation IDLE_LOOKING_UP1_ANIM = RawAnimation.begin().thenPlay("anim_hamster_idle_looking_up1");
-    private static final RawAnimation IDLE_LOOKING_UP2_ANIM = RawAnimation.begin().thenPlay("anim_hamster_idle_looking_up2");
-    private static final RawAnimation IDLE_LOOKING_UP3_ANIM = RawAnimation.begin().thenPlay("anim_hamster_idle_looking_up3");
-    private static final RawAnimation ATTACK_ANIM = RawAnimation.begin().thenPlay("anim_hamster_attack");
-    private static final RawAnimation SULK_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sulk");
-    private static final RawAnimation SULKING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sulking");
-    private static final RawAnimation SEEKING_ORE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_seeking_ore");
-    private static final RawAnimation WANTS_TO_SEEK_ORE_ABOVE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wants_to_seek_ore_above");
-    private static final RawAnimation WANTS_TO_SEEK_ORE_BELOW_ANIM = RawAnimation.begin().thenPlay("anim_hamster_wants_to_seek_ore_below");
-    private static final RawAnimation POUNCE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_pounce");
-    private static final RawAnimation TAUNTING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_taunt_with_item");
-    private static final RawAnimation PRESENTING_ITEM_ANIM = RawAnimation.begin().thenPlay("anim_hamster_presenting_item");
-    private static final RawAnimation QUICK_BOUNCE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_quick_bounce");
-    private static final RawAnimation CHEEK_UNLOAD_ANIM = RawAnimation.begin().thenPlay("anim_hamster_cheek_unload");
-    private static final RawAnimation CROUCH_INVESTIGATE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_crouch_and_investigate");
-    private static final RawAnimation LAYING_DOWN_HEAD_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_head");
-    private static final RawAnimation LAYING_DOWN_RIGHT_SHOULDER_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_right_shoulder");
-    private static final RawAnimation LAYING_DOWN_LEFT_SHOULDER_ANIM = RawAnimation.begin().thenPlay("anim_hamster_shoulder_laying_down_left_shoulder");
-    private static final RawAnimation QUICK_BOUNCE_LOOKING_UP = RawAnimation.begin().thenPlay("anim_hamster_quick_bounce_looking_up");
-    private static final RawAnimation ASSUME_THROW_POSE_ANIM = RawAnimation.begin().thenPlay("anim_hamster_assume_throw_pose");
-    private static final RawAnimation WAITING_FOR_THROW_ANIM = RawAnimation.begin().thenPlay("anim_hamster_waiting_for_throw");
-    private static final RawAnimation RECEIVING_PETS_ANIM = RawAnimation.begin().thenPlay("anim_hamster_receiving_pets");
-    private static final RawAnimation STUN_ANIM = RawAnimation.begin().thenPlay("anim_hamster_stun");
-    private static final RawAnimation SITTING_ROLL_ANIM = RawAnimation.begin().thenPlay("anim_hamster_sitting_roll");
-    private static final RawAnimation SWIMMING_ANIM = RawAnimation.begin().thenPlay("anim_hamster_swimming");
-
     /* ──────────────────────────────────────────────────────────────────────────────
-     *        Instance Fields
+     *                           2. Instance Fields
      * ────────────────────────────────────────────────────────────────────────────*/
 
     // --- Cooldowns & End Ticks ---
     @Unique public int interactionCooldown = 0;
-    @Unique private int ejectionCheckCooldown = 20;
-    @Unique private int settleSleepAnimationCooldown = 0;
     @Unique public long foundOreCooldownEndTick = 0L;
     @Unique public long stealingCooldownEndTick = 0L;
-    @Unique private int goToBedCooldown = 0;
-    @Unique private int riderJumpCooldown = 0;
     @Unique public int suffocationGracePeriod = 0;
     @Unique private int localSpawnImmunityTicks = 60;
     @Unique public long tagGameCooldownEndTick = 0L;
     @Unique public long cropSnackCooldownEndTick = 0L;
-    private int tamingCooldown = 0;
     public long throwCooldownEndTick = 0L;
     public long hideAndSeekCooldownEndTick = 0L;
     private long greenBeanBuffEndTick = 0L;
-    private int autoEatCooldownTicks = 0;
     public int ambientSittingCooldown = 0;
 
     // --- Timers & Ticks ---
     @Unique public int clientRollTimer = 0;
     @Unique public int sulkTimer = 0;
     @Unique public int wakingUpTicks = 0;
-    @Unique private int preAutoEatDelayTicks = 0;
-    @Unique private int quiescentSitDurationTimer = 0;
-    @Unique private int driftingOffTimer = 0;
-    @Unique private int celebrationParticleTicks = 0;
-    @Unique private int diamondCelebrationSoundTicks = 0;
-    @Unique private int sulkOrchestraHitDelayTicks = 0;
-    @Unique private int sulkFailParticleTicks = 0;
-    @Unique private int sulkEntityEffectTicks = 0;
-    @Unique private int sulkShockedSoundDelayTicks = 0;
-    @Unique private int diamondSparkleSoundDelayTicks = 0;
-    @Unique private int celebrationTicks = 0;
-    @Unique private int lureToBedTimer = 0;
     @Unique public int goToBedDelayTicks = 0;
-    @Unique private int wakeUpFromBedDelay = 0;
     @Unique public int bedLeafParticleTicks = 0;
-    @Unique private int napInBedDurationTimer = 0;
-    @Unique private int thumpSoundDelayTicks = 0;
-    private int refuseTimer = 0;
     public int customLoveTimer;
-    private int autoEatProgressTicks = 0;
     public int ambientSittingTimer = 0;
 
     // --- Flags & Toggles ---
     @Unique public transient boolean isProjectileDummy = false;
     @Unique public boolean isPrimedToSeekDiamonds = false;
-    @Unique private boolean zoomiesIsClockwise = false;
-    @Unique private boolean bypassNextSleepDelay = false;
-    @Unique private boolean isLoadingNbt = false; // For preventing SFX during load
-    @Unique private boolean isSilentInventoryUpdate = false;
-    private boolean armorAbsorbedDamage = false;
-    private boolean performDeferredArmorUpdate = false;
-    @Unique private boolean riderJumpHeld = false;
-    @Unique private boolean riderJumpQueued = false;
-    @Unique private boolean riderSprintHeld = false;
     @Unique public transient boolean isTagChaser = false;
     @Unique public transient boolean isInterHamsterTagActive = false;
     @Unique public transient boolean tagGameSlapped = false;
     @Unique public transient boolean tagGameWon = false;
     @Unique public transient boolean isLookAtEntityGoalActive = false;
     @Unique public transient boolean hasMutualGaze = false;
-    private boolean isAutoEating = false;
-    @Unique private Boolean is3dCenter = null;
 
     // --- State Values & Metrics ---
     @Unique public long totalAgeTicks = 0L;
     @Unique public transient double lastRenderTime = -1.0;
     @Unique public int prevClientRollTimer = 0;
-    @Unique private double lastZoomiesAngle = 0.0;
-    @Unique private int zoomiesRadiusModifier = 0;
     @Unique public transient float renderedGroundYOffset = 0.0f;
     @Unique public transient float dynamicScaleY = 1.0f;
-    @Unique private float thumpSoundVolume = 0.2f;
     @Unique public int pathingFailures = 0;
     @Unique public float clientFallPitchProgress = 0.0f;
     @Unique public float prevClientFallPitchProgress = 0.0f;
     @Unique public transient float clientSwimPitch = 0.0f;
     @Unique public transient float prevClientSwimPitch = 0.0f;
-    @Unique private double parsed3dScale = 1.0;
-    @Unique private int parsed3dY = 0;
     public int timesBred = 0;
 
     // --- Object References, Positions & Data Structures ---
@@ -448,17 +262,23 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Unique public BlockPos currentOreTarget = null;
     @Unique public transient String particleEffectId = null;
     @Unique public transient String soundEffectId = null;
-    @Unique private Entity celebrationTarget = null;
     @Unique public transient ShoulderLocation shoulderLocation = ShoulderLocation.RIGHT_SHOULDER;
-    @Unique private Optional<GlobalPos> linkedBedPos = Optional.empty();
     @Nullable @Unique public BlockPos lastFailedTarget = null;
     @Unique public transient HamsterEntity tagGamePartner = null;
     @Unique private Vec3d smoothedWaterThrust = Vec3d.ZERO;
     private final DefaultedList<ItemStack> items = ImplementedInventory.create(HamsterInventoryUtil.INVENTORY_SIZE);
-    private ItemStack lastArmorStack = ItemStack.EMPTY;
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final HamsterAnimationScheduler animScheduler = new HamsterAnimationScheduler();
-    private ItemStack lastFoodItem = ItemStack.EMPTY;
+    private final ArmorRuntimeState armorRuntimeState = new ArmorRuntimeState();
+    private final AutoEatState autoEatState = new AutoEatState();
+    private final CelebrationRuntimeState celebrationRuntimeState = new CelebrationRuntimeState();
+    private final FeedingInteractionState feedingInteractionState = new FeedingInteractionState();
+    private final InventoryRuntimeState inventoryRuntimeState = new InventoryRuntimeState();
+    private final RiderInputState riderInputState = new RiderInputState();
+    private final SleepRuntimeState sleepRuntimeState = new SleepRuntimeState();
+    private final ThreeDimensionalLayoutState threeDimensionalLayoutState = new ThreeDimensionalLayoutState();
+    private final ThumpSoundState thumpSoundState = new ThumpSoundState();
+    private final ZoomiesState zoomiesState = new ZoomiesState();
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *                             3. Constructor
@@ -495,41 +315,41 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.animScheduler.scheduleTask(executionTick, debugName, action);
     }
     public void enableZoomies(PlayerEntity player) {
-        this.zoomiesIsClockwise = this.random.nextBoolean();
-        this.zoomiesRadiusModifier = this.random.nextBetween(-2, 4);
+        this.zoomiesState.clockwise = this.random.nextBoolean();
+        this.zoomiesState.radiusModifier = this.random.nextBetween(-2, 4);
         // Calculate and set initial angle based on where the player is.
         double dx = this.getX() - player.getX();
         double dz = this.getZ() - player.getZ();
-        this.lastZoomiesAngle = Math.atan2(dz, dx);
+        this.zoomiesState.lastAngle = Math.atan2(dz, dx);
     }
     public UUID getParentUuid() { return this.parentUuid; }
     public void setParentUuid(UUID uuid) { this.parentUuid = uuid; }
-    public void setCelebrationTarget(Entity target) { this.celebrationTarget = target; }
-    public void setCelebrationTicks(int ticks) { this.celebrationTicks = ticks; }
-    public void setSilentInventoryUpdate(boolean silent) { this.isSilentInventoryUpdate = silent; }
-    public int getQuiescentSitTimer() { return this.quiescentSitDurationTimer; }
-    public void setQuiescentSitTimer(int ticks) { this.quiescentSitDurationTimer = ticks; }
-    public int getDriftingOffTimer() { return this.driftingOffTimer; }
-    public void setDriftingOffTimer(int ticks) { this.driftingOffTimer = ticks; }
-    public int getSettleSleepCooldown() { return this.settleSleepAnimationCooldown; }
-    public void setSettleSleepCooldown(int ticks) { this.settleSleepAnimationCooldown = ticks; }
+    public void setCelebrationTarget(Entity target) { this.celebrationRuntimeState.target = target; }
+    public void setCelebrationTicks(int ticks) { this.celebrationRuntimeState.ticks = ticks; }
+    public void setSilentInventoryUpdate(boolean silent) { this.inventoryRuntimeState.silentUpdate = silent; }
+    public int getQuiescentSitTimer() { return this.sleepRuntimeState.quiescentSitDurationTimer; }
+    public void setQuiescentSitTimer(int ticks) { this.sleepRuntimeState.quiescentSitDurationTimer = ticks; }
+    public int getDriftingOffTimer() { return this.sleepRuntimeState.driftingOffTimer; }
+    public void setDriftingOffTimer(int ticks) { this.sleepRuntimeState.driftingOffTimer = ticks; }
+    public int getSettleSleepCooldown() { return this.sleepRuntimeState.settleSleepAnimationCooldown; }
+    public void setSettleSleepCooldown(int ticks) { this.sleepRuntimeState.settleSleepAnimationCooldown = ticks; }
     public void setCurrentDeepSleepAnimId(String animId) { this.dataTracker.set(CURRENT_DEEP_SLEEP_ANIM_ID, animId); }
-    public ItemStack getLastFoodItem() { return this.lastFoodItem; }
-    public void setLastFoodItem(ItemStack stack) { this.lastFoodItem = stack; }
+    public ItemStack getLastFoodItem() { return this.autoEatState.lastFoodItem; }
+    public void setLastFoodItem(ItemStack stack) { this.autoEatState.lastFoodItem = stack; }
     public long getGreenBeanBuffEndTick() { return this.greenBeanBuffEndTick; }
     public void setGreenBeanBuffEndTick(long tick) { this.greenBeanBuffEndTick = tick; }
-    public void setRefuseTimer(int ticks) { this.refuseTimer = ticks; }
+    public void setRefuseTimer(int ticks) { this.feedingInteractionState.refuseTimer = ticks; }
     public boolean isCheekPouchUnlocked() { return getHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG); }
     public void setCheekPouchUnlocked(boolean unlocked) { setHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG, unlocked); }
     public HamsterGenome getGenome() { return HamsterGenome.readFromNbt(this.dataTracker.get(GENOME)); }
     public void setGenome(HamsterGenome genome) { this.dataTracker.set(GENOME, genome.saveToNbt()); }
     public boolean isSleeping() { return getHamsterFlag(SLEEPING_FLAG); }
     public void setSleeping(boolean sleeping) { setHamsterFlag(SLEEPING_FLAG, sleeping); }
-    public int getAutoEatCooldownTicks() { return this.autoEatCooldownTicks; }
-    public void setAutoEatCooldownTicks(int ticks) { this.autoEatCooldownTicks = ticks; }
-    public int getEjectionCheckCooldown() { return this.ejectionCheckCooldown; }
-    public void setEjectionCheckCooldown(int ticks) { this.ejectionCheckCooldown = ticks; }
-    public void setLoadingNbt(boolean loading) { this.isLoadingNbt = loading; }
+    public int getAutoEatCooldownTicks() { return this.autoEatState.cooldownTicks; }
+    public void setAutoEatCooldownTicks(int ticks) { this.autoEatState.cooldownTicks = ticks; }
+    public int getEjectionCheckCooldown() { return this.inventoryRuntimeState.ejectionCheckCooldown; }
+    public void setEjectionCheckCooldown(int ticks) { this.inventoryRuntimeState.ejectionCheckCooldown = ticks; }
+    public void setLoadingNbt(boolean loading) { this.inventoryRuntimeState.loadingNbt = loading; }
     @Override
     public boolean isSitting() {
         return getHamsterFlag(SITTING_FLAG)
@@ -551,7 +371,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public boolean isKnockedOut() { return getHamsterFlag(KNOCKED_OUT_FLAG); }
     public void setKnockedOut(boolean knocked_out) { setHamsterFlag(KNOCKED_OUT_FLAG, knocked_out); }
     public String getCurrentDeepSleepAnimationIdFromTracker() {return this.dataTracker.get(CURRENT_DEEP_SLEEP_ANIM_ID);}
-    public boolean isAutoEating() {return this.isAutoEating;}
+    public boolean isAutoEating() {return this.autoEatState.eating;}
     public boolean isConsideringAutoEat() {return getHamsterFlag(CONSIDERING_AUTO_EAT_FLAG);}
     public DozingPhase getDozingPhase() {return DozingPhase.values()[this.dataTracker.get(DOZING_PHASE)];}
     public void setDozingPhase(DozingPhase phase) {this.dataTracker.set(DOZING_PHASE, phase.ordinal());}
@@ -572,14 +392,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public boolean isHiding() { return getHamsterFlag(IS_HIDING_FLAG); }
     public void setHiding(boolean hiding) { setHamsterFlag(IS_HIDING_FLAG, hiding); }
     // --- Riding State Accessors ---
-    public int getRiderJumpCooldown() { return this.riderJumpCooldown; }
-    public void setRiderJumpCooldown(int ticks) { this.riderJumpCooldown = ticks; }
-    public boolean isRiderJumpHeld() { return this.riderJumpHeld; }
-    public void setRiderJumpHeld(boolean held) { this.riderJumpHeld = held; }
-    public boolean isRiderJumpQueued() { return this.riderJumpQueued; }
-    public void setRiderJumpQueued(boolean queued) { this.riderJumpQueued = queued; }
-    public boolean isRiderSprintHeld() { return this.riderSprintHeld; }
-    public void setRiderSprintHeld(boolean held) { this.riderSprintHeld = held; }
+    public int getRiderJumpCooldown() { return this.riderInputState.jumpCooldown; }
+    public void setRiderJumpCooldown(int ticks) { this.riderInputState.jumpCooldown = ticks; }
+    public boolean isRiderJumpHeld() { return this.riderInputState.jumpHeld; }
+    public void setRiderJumpHeld(boolean held) { this.riderInputState.jumpHeld = held; }
+    public boolean isRiderJumpQueued() { return this.riderInputState.jumpQueued; }
+    public void setRiderJumpQueued(boolean queued) { this.riderInputState.jumpQueued = queued; }
+    public boolean isRiderSprintHeld() { return this.riderInputState.sprintHeld; }
+    public void setRiderSprintHeld(boolean held) { this.riderInputState.sprintHeld = held; }
     // --- Riding Protected Wrappers ---
     public void delegateTravel(Vec3d movementInput) {
         super.travel(movementInput);
@@ -595,31 +415,31 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         if (celebrating) {
             this.setBegging(false); // Ensure not also in normal begging state
             if (!this.getWorld().isClient()) { // Only initialize timer on server
-                this.celebrationParticleTicks = HamsterEntity.CELEBRATION_PARTICLE_DURATION_TICKS;
-                this.diamondSparkleSoundDelayTicks = 10; // 10-tick delay for sparkle sound
+                this.celebrationRuntimeState.particleTicks = HamsterEntity.CELEBRATION_PARTICLE_DURATION_TICKS;
+                this.celebrationRuntimeState.diamondSparkleSoundDelayTicks = 10; // 10-tick delay for sparkle sound
             }
         } else {
             // If stopping celebration, ensure all associated timers are also stopped/reset
-            this.celebrationParticleTicks = 0;
-            this.diamondSparkleSoundDelayTicks = 0;
-            this.diamondCelebrationSoundTicks = 0;
+            this.celebrationRuntimeState.particleTicks = 0;
+            this.celebrationRuntimeState.diamondSparkleSoundDelayTicks = 0;
+            this.celebrationRuntimeState.diamondSoundTicks = 0;
         }
     }
     public void setSulking(boolean sulking) {
         setHamsterFlag(SULKING_FLAG, sulking);
         if (sulking) {
             if (!this.getWorld().isClient()) {
-                this.sulkOrchestraHitDelayTicks = 10; // 10-tick delay for orchestra hit
-                this.sulkShockedSoundDelayTicks = 44; // 2.2 seconds * 20 ticks/second = 44 ticks
-                this.sulkFailParticleTicks = 600;     // Duration for fail particles
-                this.sulkEntityEffectTicks = 600;     // Duration for entity effect particles
+                this.celebrationRuntimeState.sulkOrchestraHitDelayTicks = 10; // 10-tick delay for orchestra hit
+                this.celebrationRuntimeState.sulkShockedSoundDelayTicks = 44; // 2.2 seconds * 20 ticks/second = 44 ticks
+                this.celebrationRuntimeState.sulkFailParticleTicks = 600;     // Duration for fail particles
+                this.celebrationRuntimeState.sulkEntityEffectTicks = 600;     // Duration for entity effect particles
                 this.sulkTimer = 160 + this.getRandom().nextInt(80); // 8-12 seconds
             }
         } else {
             // If stopping sulking, ensure all associated timers are also stopped/reset
-            this.sulkOrchestraHitDelayTicks = 0;
-            this.sulkFailParticleTicks = 0;
-            this.sulkEntityEffectTicks = 0;
+            this.celebrationRuntimeState.sulkOrchestraHitDelayTicks = 0;
+            this.celebrationRuntimeState.sulkFailParticleTicks = 0;
+            this.celebrationRuntimeState.sulkEntityEffectTicks = 0;
             this.sulkTimer = 0;
         }
     }
@@ -638,18 +458,18 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public boolean isFrozenMovement() { return getHamsterFlag(FREEZING_MOVEMENT_FLAG); }
     public void setFrozenMovement(boolean freezingMovement) { setHamsterFlag(FREEZING_MOVEMENT_FLAG, freezingMovement); }
     public boolean hasGreenBeanBuff() {return this.getDataTracker().get(GREEN_BEAN_BUFF_DURATION) > this.getWorld().getTime();}
-    public boolean getZoomiesIsClockwise() { return this.zoomiesIsClockwise; }
-    public double getLastZoomiesAngle() { return this.lastZoomiesAngle; }
-    public void setLastZoomiesAngle(double angle) { this.lastZoomiesAngle = angle; }
-    public int getZoomiesRadiusModifier() { return this.zoomiesRadiusModifier; }
+    public boolean getZoomiesIsClockwise() { return this.zoomiesState.clockwise; }
+    public double getLastZoomiesAngle() { return this.zoomiesState.lastAngle; }
+    public void setLastZoomiesAngle(double angle) { this.zoomiesState.lastAngle = angle; }
+    public int getZoomiesRadiusModifier() { return this.zoomiesState.radiusModifier; }
     public boolean isShoulderPet() { return getHamsterFlag(IS_SHOULDER_PET_FLAG); }
     public void setShoulderPet(boolean isShoulderPet) { setHamsterFlag(IS_SHOULDER_PET_FLAG, isShoulderPet); }
     public boolean isWanderModeActive() { return getHamsterFlag(IS_WANDER_MODE_ACTIVE_FLAG) && Configs.AHP_MAIN.enableWanderMode.get(); }
     public void setWanderModeActive(boolean active) { setHamsterFlag(IS_WANDER_MODE_ACTIVE_FLAG, active); }
-    public Optional<GlobalPos> getLinkedBedPos() { return this.linkedBedPos; }
-    public void setLinkedBedPos(Optional<GlobalPos> pos) { this.linkedBedPos = pos; }
-    public int getGoToBedCooldown() { return this.goToBedCooldown; }
-    public void setGoToBedCooldown(int ticks) { this.goToBedCooldown = ticks; }
+    public Optional<GlobalPos> getLinkedBedPos() { return this.sleepRuntimeState.linkedBedPos; }
+    public void setLinkedBedPos(Optional<GlobalPos> pos) { this.sleepRuntimeState.linkedBedPos = pos; }
+    public int getGoToBedCooldown() { return this.sleepRuntimeState.goToBedCooldown; }
+    public void setGoToBedCooldown(int ticks) { this.sleepRuntimeState.goToBedCooldown = ticks; }
     public boolean isStuckSearchingForBed() { return getHamsterFlag(STUCK_SEARCHING_FOR_BED_FLAG); }
     public void setStuckSearchingForBed(boolean stuck) { setHamsterFlag(STUCK_SEARCHING_FOR_BED_FLAG, stuck); }
     public boolean isRescueSleeping() { return getHamsterFlag(RESCUE_SLEEPING_FLAG); }
@@ -670,21 +490,21 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
     public int getGoToBedDelayTicks() { return this.goToBedDelayTicks; }
     public void setGoToBedDelayTicks(int ticks) { this.goToBedDelayTicks = ticks; }
-    public int getLureToBedTimer() { return this.lureToBedTimer; }
-    public void setLureToBedTimer(int ticks) { this.lureToBedTimer = ticks; }
-    public void lureToBed() { this.lureToBedTimer = 20; }
+    public int getLureToBedTimer() { return this.sleepRuntimeState.lureToBedTimer; }
+    public void setLureToBedTimer(int ticks) { this.sleepRuntimeState.lureToBedTimer = ticks; }
+    public void lureToBed() { this.sleepRuntimeState.lureToBedTimer = 20; }
     public boolean isOnTheWayToBed() { return getHamsterFlag(ON_THE_WAY_TO_BED_FLAG); }
     public void setOnTheWayToBed(boolean onTheWay) { setHamsterFlag(ON_THE_WAY_TO_BED_FLAG, onTheWay); }
-    public boolean shouldBypassNextSleepDelay() { return this.bypassNextSleepDelay; }
-    public void setBypassNextSleepDelay(boolean bypass) { this.bypassNextSleepDelay = bypass; }
-    public void setNapInBedDurationTimer(int ticks) { this.napInBedDurationTimer = ticks; }
+    public boolean shouldBypassNextSleepDelay() { return this.sleepRuntimeState.bypassNextSleepDelay; }
+    public void setBypassNextSleepDelay(boolean bypass) { this.sleepRuntimeState.bypassNextSleepDelay = bypass; }
+    public void setNapInBedDurationTimer(int ticks) { this.sleepRuntimeState.napInBedDurationTimer = ticks; }
     public void triggerSettleEffects(float swishVolume, int thumpDelay, float thumpVolume) {
         // Triggers a two-part settle sound effect ("swish" then "thump") with dynamic volumes.
         if (!this.getWorld().isClient()) {
             this.getWorld().playSound(null, this.getBlockPos(), ModSounds.HAMSTER_SWISH.get(), SoundCategory.NEUTRAL, swishVolume, 1.0f + this.random.nextFloat() * 0.5f);
         }
-        this.thumpSoundDelayTicks = thumpDelay;
-        this.thumpSoundVolume = thumpVolume;
+        this.thumpSoundState.delayTicks = thumpDelay;
+        this.thumpSoundState.volume = thumpVolume;
     }
     public void triggerWakeUpFromSleepAnimation(boolean isManualWakeUp) {
         // Triggers the appropriate wake-up animation and sound based on the last used sleep pose.
@@ -740,83 +560,28 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- 3. Reset Armor Flag ---
-        this.armorAbsorbedDamage = false;
+        this.armorRuntimeState.absorbedDamage = false;
 
         // --- 4. Delegate to Vanilla Logic ---
         boolean result = super.damage(source, amount);
 
         // --- 5. Armor Absorption Override ---
         // If armor absorbed damage, tell engine entity was hit so it applies knockback/SFX
-        if (this.armorAbsorbedDamage) {
+        if (this.armorRuntimeState.absorbedDamage) {
             return true;
         }
         return result;
     }
     @Override
     protected void applyDamage(DamageSource source, float amount) {
-        // --- Armor Protection Logic ---
-        // Intercepts damage after the game has decided the entity was hit (so still shows visual feedback)
-        // 1.20.1: Use BYPASSES_ARMOR instead of BYPASSES_WOLF_ARMOR
-        if (!this.getWorld().isClient && !source.isIn(DamageTypeTags.BYPASSES_ARMOR)) {
-            // Modify the actual item stack that lives in the server's inventory
-            ItemStack realArmorStack = this.items.get(HamsterInventoryUtil.ARMOR_SLOT_INDEX);
-
-            // Check if armor exists and if it should absorb this specific damage source
-            if (!realArmorStack.isEmpty()
-                    && realArmorStack.getItem() instanceof HamsterArmorItem
-                    && shouldArmorAbsorb(source, realArmorStack)) {
-
-                // Flag handling this damage
-                this.armorAbsorbedDamage = true;
-
-                // 1. Snapshot the stack before it's removed for particles.
-                ItemStack particleStack = realArmorStack.copy();
-
-                // 2. Determine damage to armor
-                int armorDamage = (int) Math.ceil(amount);
-
-                // 3. Damage the item in the inventory
-                // 1.20.1: Use Consumer callback instead of EquipmentSlot
-                realArmorStack.damage(armorDamage, this, e -> e.sendEquipmentBreakStatus(EquipmentSlot.CHEST));
-
-                // 4. Check for Breakage
-                if (realArmorStack.isEmpty()) {
-                    // Feedback
-                    // 1.20.1: Use Shield Break sound
-                    this.playSound(SoundEvents.ITEM_SHIELD_BREAK, 0.5f, 1.2f);
-                    ParticleEffectsUtil.spawnParticles(
-                            this.getWorld(),
-                            new Vec3d(this.getX(), this.getBodyY(0.5), this.getZ()),
-                            new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack),
-                            15,
-                            new Vec3d(0.2, 0.2, 0.2),
-                            0.1
-                    );
-
-                    // Flag slot to be cleared in the next tick.
-                    this.performDeferredArmorUpdate = true;
-
-                } else {
-                    // Play armor repair/damage sound if not broken
-                    // 1.20.1 Fix: Use Shield Block sound
-                    this.playSound(SoundEvents.ITEM_SHIELD_BLOCK, 0.5f, 1.2f);
-
-                    ParticleEffectsUtil.spawnParticles(
-                            this.getWorld(),
-                            new Vec3d(this.getX(), this.getBodyY(0.5), this.getZ()),
-                            new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack),
-                            5,
-                            new Vec3d(0.2, 0.2, 0.2),
-                            0.05
-                    );
-                }
-
-                // Completely negate the health damage by not calling super.applyDamage
-                return;
+        ItemStack armorStack = this.items.get(HamsterInventoryUtil.ARMOR_SLOT_INDEX);
+        if (HamsterArmorUtil.shouldAbsorbDamage(this, source, armorStack)) {
+            this.armorRuntimeState.absorbedDamage = true;
+            if (HamsterArmorUtil.absorbDamage(this, armorStack, amount)) {
+                this.armorRuntimeState.deferredUpdate = true;
             }
+            return;
         }
-
-        // If checks fail, apply health damage normally
         super.applyDamage(source, amount);
     }
 
@@ -859,7 +624,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        if (!this.getWorld().isClient && !this.isLoadingNbt && !this.isSilentInventoryUpdate) {
+        if (!this.getWorld().isClient && !this.inventoryRuntimeState.loadingNbt && !this.inventoryRuntimeState.silentUpdate) {
             HamsterInventoryUtil.handleSlotUpdateSounds(this, slot, oldStack, stack);
         }
 
@@ -871,7 +636,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         ItemStack result = ImplementedInventory.super.removeStack(slot);
         ItemStack newStack = this.getStack(slot);
 
-        if (!this.getWorld().isClient && !this.isLoadingNbt && !this.isSilentInventoryUpdate) {
+        if (!this.getWorld().isClient && !this.inventoryRuntimeState.loadingNbt && !this.inventoryRuntimeState.silentUpdate) {
             HamsterInventoryUtil.handleSlotUpdateSounds(this, slot, oldStack, newStack);
         }
         return result;
@@ -882,7 +647,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         ItemStack result = ImplementedInventory.super.removeStack(slot, amount);
         ItemStack newStack = this.getStack(slot);
 
-        if (!this.getWorld().isClient && !this.isLoadingNbt && !this.isSilentInventoryUpdate) {
+        if (!this.getWorld().isClient && !this.inventoryRuntimeState.loadingNbt && !this.inventoryRuntimeState.silentUpdate) {
             HamsterInventoryUtil.handleSlotUpdateSounds(this, slot, oldStack, newStack);
         }
         return result;
@@ -991,8 +756,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     public void markDirty() {
         if (!this.getWorld().isClient()) {
-            HamsterInventoryUtil.updateCheekStates(this);
-            this.updateAccessoryState();
+            HamsterInventoryUtil.synchronizeVisualState(this);
         }
     }
     public ItemStack getArmorStack() { return this.dataTracker.get(TRACKED_ARMOR_STACK); }
@@ -1069,11 +833,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     protected void onGrowUp() {
         super.onGrowUp();
-        // Apply configured breeding cooldown when reaching adulthood naturally
-        // Only apply to babies on 1.20.1
-        if (!this.getWorld().isClient() && !this.isBaby()) {
-            this.setBreedingAge(Configs.AHP_MAIN.breedingCooldownSeconds.get() * 20);
-        }
+        HamsterLifecycleUtil.onGrowUp(this);
     }
 
     @Override
@@ -1146,7 +906,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // quiescentSitDurationTimer will be set by the tick method when DozingPhase becomes QUIESCENT_SITTING.
         } else {
             // If standing up, reset the quiescent sit timer to prevent immediate re-entry into sleep sequence.
-            this.quiescentSitDurationTimer = 0;
+            this.sleepRuntimeState.quiescentSitDurationTimer = 0;
             // Also ensure ambient actions stop if they were active.
             this.ambientSittingTimer = 0;
             // Explicitly set continuous ambient flags to false.
@@ -1165,14 +925,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      */
     @Override
     public boolean isInAttackRange(LivingEntity entity) {
-        // --- Calculate and check intersection with a smaller attack box ---
-        // Get the hamster's current bounding box
-        Box hamsterBox = this.getBoundingBox();
-        // Expand it horizontally by the custom smaller amount
-        Box attackBox = hamsterBox.expand(HAMSTER_ATTACK_BOX_EXPANSION, 0.0D, HAMSTER_ATTACK_BOX_EXPANSION);
-        // Check if this smaller attack box intersects the target's hitbox
-        boolean intersects = attackBox.intersects(entity.getBoundingBox());
-        return intersects;
+        return HamsterCombatUtil.isInAttackRange(this, entity);
     }
 
     // --- Target Exclusion Overrides ---
@@ -1185,64 +938,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
     @Override
     public boolean canAttackWithOwner(LivingEntity target, LivingEntity owner) {
-        // 1. Check for pacifist mode
-        if (this.getAggressionState() == AggressionState.PACIFIST) {
-            return false;
-        }
-
-        // 2. Stale target prevention for new tames
-        if (target == owner.getAttacking() && owner.age - owner.getLastAttackTime() > 100) {
-            return false;
-        }
-        if (target == owner.getAttacker() && owner.age - owner.getLastAttackedTime() > 100) {
-            return false;
-        }
-
-        UUID ownerUuid = owner.getUuid();
-        AdorableHamsterPets.LOGGER.trace("[canAttackWithOwner] Hamster: {}, Target: {}, Owner: {}", this.getName().getString(), target.getName().getString(), owner.getName().getString());
-
-        // 3. Basic exclusions (self, owner)
-        if (target == this || target == owner) {
-            return false;
-        }
-        if (target instanceof PlayerEntity && target.getUuid().equals(ownerUuid)) {
-            return false;
-        }
-
-        // 4. Exclude Creepers and Armor Stands
-        if (target instanceof CreeperEntity || target instanceof ArmorStandEntity) {
-            return false;
-        }
-
-        // 5. Explicitly check for TameableEntity
-        if (target instanceof TameableEntity tameablePet) {
-            UUID petOwnerUuid = tameablePet.getOwnerUuid();
-            if (petOwnerUuid != null && petOwnerUuid.equals(ownerUuid)) {
-                AdorableHamsterPets.LOGGER.trace("[canAttackWithOwner] Target is a TameableEntity owned by the same player. Preventing attack.");
-                return false;
-            }
-        }
-
-        // 6. Explicitly check for AbstractHorseEntity
-        else if (target instanceof net.minecraft.entity.passive.AbstractHorseEntity horsePet) {
-            Entity horseOwnerEntity = horsePet.getOwner();
-            if (horseOwnerEntity != null && horseOwnerEntity.getUuid().equals(ownerUuid)) {
-                AdorableHamsterPets.LOGGER.trace("[canAttackWithOwner] Target is an AbstractHorseEntity owned by the same player. Preventing attack.");
-                return false;
-            }
-        }
-
-        // 7. General Ownable check (fallback)
-        else if (target instanceof Ownable ownableFallback) {
-            Entity fallbackOwnerEntity = ownableFallback.getOwner();
-            if (fallbackOwnerEntity != null && fallbackOwnerEntity.getUuid().equals(ownerUuid)) {
-                AdorableHamsterPets.LOGGER.trace("[canAttackWithOwner] Target is an Ownable (fallback) owned by the same player. Preventing attack.");
-                return false;
-            }
-        }
-
-        // 8. Default: allow attack
-        return true;
+        return HamsterCombatUtil.canAttackWithOwner(this, target, owner);
     }
 
     @Override
@@ -1409,29 +1105,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Nullable
     @Override
     public PassiveEntity createChild(ServerWorld world, PassiveEntity mate) {
-        HamsterEntity baby = ModEntities.HAMSTER.get().create(world);
-        if (baby == null) return null;
-
-        // Calculate genetics
-        HamsterGenome babyGenome = HamsterGeneticsUtil.calculateBabyGenome(this, mate, this.random);
-        baby.setGenome(babyGenome);
-
-        // Retain owner copying logic based on config
-        if (!Configs.AHP_MAIN.babiesSpawnWild) {
-            UUID ownerUUID = this.getOwnerUuid();
-            if (ownerUUID != null) {
-                baby.setOwnerUuid(ownerUUID);
-                baby.setTamed(true, true);
-            }
-        }
-
-        baby.setBaby(true);
-
-        // Assign a parent UUID so baby knows who to follow
-        UUID chosenParent = this.random.nextBoolean() ? this.getUuid() : mate.getUuid();
-        baby.setParentUuid(chosenParent);
-
-        return baby;
+        return HamsterLifecycleUtil.createChild(this, world, mate);
     }
 
     /**
@@ -1456,26 +1130,94 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         if (this.isAiDisabled()) {
             this.baseTick();
 
+            // --- Cylinder Visuals for 3D Spawning Command ---
+            this.tickAiDisabledCommandVisuals();
+            return;
+        }
+
+        // --- Triggerable Animation Cancellation Scheduler ---
+        // --- Decrement Simple Timers ---
+        // --- Sulking Timer ---
+        // --- Settle "Thump" Sound Effect ---
+        this.tickSchedulersAndTimers();
+
+        // --- Bed Leaf Particle Effect ---
+        // --- Ambient Sitting Behaviors ---
+        // --- Celebration Logic (Tag Game; New Baby) ---
+        // --- Tamed Hamster "Path to Slumber" State Machine ---
+        // --- Auto-Petting Logic ---
+        this.tickPreSuperBehaviors();
+
+        super.tick();
+
+        // --- Swimming Physics ---
+        // --- Check for Armor Changes & Update Attributes ---
+        // --- Dynamic Navigation Swapping & Periodic Config Sync ---
+        // --- Apply extra gravity during sulking jump ---
+        this.tickPostSuperPhysics();
+
+        // --- 2. Server-Side Logic ---
+        // --- Tick Age ---
+        // --- Dynamic Water Pathfinding Penalty & Escape Logic ---
+        // --- Sync Throw Cooldown Flag ---
+        // --- Process Deferred Armor Breakage ---
+        // --- Circadian Chaos Wake-Up Logic ---
+        // --- Sync Exact Age for Smooth Visual Growth ---
+        // --- Day/Night Cycle Wake-Up Logic ---
+        // --- Bed State Self-Healing ---
+        // --- Suffocation Self-Rescue Logic ---
+        // --- Ejection Logic ---
+        // --- Auto Eating Logic ---
+        // --- Stage 1: Check Eligibility and Start "Considering" ---
+        // --- Stage 2: Process "Considering" Delay & Start Actual Eating ---
+        // --- Stage 3: Apply Healing After Eating Progress Finishes ---
+        // --- Handle Continuous Diamond Celebration Effects ---
+        // --- Handle Continuous Sulking Effects ---
+        // --- Pacifist Break on Owner Attack ---
+        this.tickServerLifecycle();
+
+        // --- 4. Client-Side Logic ---
+        // --- Rolling Animation State ---
+        // --- Buff Particle Logic (Zoomies) ---
+        // --- Taunting Particle Logic ---
+        // --- Fall Pitch Interpolation Logic ---
+        // --- Swim Pitch Interpolation Logic ---
+        this.tickClientPresentation();
+
+        // --- 5. Other Non-Movement Tick Logic ---
+        this.tickJukeboxAndInteractionState();
+    }
+
+    private void tickAiDisabledCommandVisuals() {
+
             // Cache command tags for performance
-            if (this.is3dCenter == null) {
-                this.is3dCenter = this.getCommandTags().contains("3d_layout_center");
-                if (this.is3dCenter) {
-                    this.parsed3dY = this.getBlockPos().getY();
+            if (this.threeDimensionalLayoutState.isCenter == null) {
+                this.threeDimensionalLayoutState.isCenter = this.getCommandTags().contains("3d_layout_center");
+                if (this.threeDimensionalLayoutState.isCenter) {
+                    this.threeDimensionalLayoutState.parsedY = this.getBlockPos().getY();
                     for (String tag : this.getCommandTags()) {
                         if (tag.startsWith("3d_scale_")) {
-                            try { this.parsed3dScale = Double.parseDouble(tag.substring(9)); } catch (Exception ignored) {}
+                            try {
+                                this.threeDimensionalLayoutState.parsedScale = Double.parseDouble(tag.substring(9));
+                            } catch (Exception ignored) {}
                         } else if (tag.startsWith("3d_base_y_")) {
-                            try { this.parsed3dY = Integer.parseInt(tag.substring(10)); } catch (Exception ignored) {}
+                            try {
+                                this.threeDimensionalLayoutState.parsedY = Integer.parseInt(tag.substring(10));
+                            } catch (Exception ignored) {}
                         }
                     }
                 }
             }
 
             // --- Cylinder Visuals for 3D Spawning Command ---
-            if (this.is3dCenter && !this.getWorld().isClient()) {
+            if (this.threeDimensionalLayoutState.isCenter && !this.getWorld().isClient()) {
                 if (Configs.AHP_MAIN.continuousGeneticsCylinder || this.age <= 20) {
-                    BlockPos cylinderBase = new BlockPos(this.getBlockPos().getX(), this.parsed3dY, this.getBlockPos().getZ());
-                    double bobbingAmplitude = this.parsed3dScale / 2.0;
+                    BlockPos cylinderBase = new BlockPos(
+                            this.getBlockPos().getX(),
+                            this.threeDimensionalLayoutState.parsedY,
+                            this.getBlockPos().getZ()
+                    );
+                    double bobbingAmplitude = this.threeDimensionalLayoutState.parsedScale / 2.0;
                     double yOffset = bobbingAmplitude - 0.5;
 
                     ParticleEffectsUtil.spawnSpinningRing(
@@ -1483,7 +1225,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                             cylinderBase,
                             ParticleTypes.END_ROD,
                             250,
-                            this.parsed3dScale,
+                            this.threeDimensionalLayoutState.parsedScale,
                             0.0,
                             0.08,
                             bobbingAmplitude,
@@ -1492,9 +1234,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     );
                 }
             }
-            return;
-        }
+    }
 
+    private void tickSchedulersAndTimers() {
         // --- Triggerable Animation Cancellation Scheduler ---
         if (!this.getWorld().isClient()) {
             this.animScheduler.tick(this.getWorld().getTime());
@@ -1503,22 +1245,22 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- Decrement Simple Timers ---
         if (this.suffocationGracePeriod > 0) this.suffocationGracePeriod--;
         if (this.wakingUpTicks > 0) this.wakingUpTicks--;
-        if (this.autoEatCooldownTicks > 0) this.autoEatCooldownTicks--;
-        if (this.autoEatProgressTicks > 0) this.autoEatProgressTicks--;
-        if (this.ejectionCheckCooldown > 0) this.ejectionCheckCooldown--;
-        if (this.preAutoEatDelayTicks > 0) this.preAutoEatDelayTicks--;
-        if (this.celebrationParticleTicks > 0) this.celebrationParticleTicks--;
-        if (this.celebrationParticleTicks > 0) this.celebrationParticleTicks--;
-        if (this.diamondCelebrationSoundTicks > 0) this.diamondCelebrationSoundTicks--;
-        if (this.sulkOrchestraHitDelayTicks > 0) this.sulkOrchestraHitDelayTicks--;
-        if (this.sulkFailParticleTicks > 0) this.sulkFailParticleTicks--;
-        if (this.sulkEntityEffectTicks > 0) this.sulkEntityEffectTicks--;
-        if (this.sulkShockedSoundDelayTicks > 0) this.sulkShockedSoundDelayTicks--;
-        if (this.diamondSparkleSoundDelayTicks > 0) this.diamondSparkleSoundDelayTicks--;
-        if (this.goToBedCooldown > 0) this.goToBedCooldown--;
-        if (this.lureToBedTimer > 0) this.lureToBedTimer--;
-        if (this.wakeUpFromBedDelay > 0) this.wakeUpFromBedDelay--;
-        if (this.napInBedDurationTimer > 0) this.napInBedDurationTimer--;
+        if (this.autoEatState.cooldownTicks > 0) this.autoEatState.cooldownTicks--;
+        if (this.autoEatState.progressTicks > 0) this.autoEatState.progressTicks--;
+        if (this.inventoryRuntimeState.ejectionCheckCooldown > 0) this.inventoryRuntimeState.ejectionCheckCooldown--;
+        if (this.autoEatState.preEatDelayTicks > 0) this.autoEatState.preEatDelayTicks--;
+        if (this.celebrationRuntimeState.particleTicks > 0) this.celebrationRuntimeState.particleTicks--;
+        if (this.celebrationRuntimeState.particleTicks > 0) this.celebrationRuntimeState.particleTicks--;
+        if (this.celebrationRuntimeState.diamondSoundTicks > 0) this.celebrationRuntimeState.diamondSoundTicks--;
+        if (this.celebrationRuntimeState.sulkOrchestraHitDelayTicks > 0) this.celebrationRuntimeState.sulkOrchestraHitDelayTicks--;
+        if (this.celebrationRuntimeState.sulkFailParticleTicks > 0) this.celebrationRuntimeState.sulkFailParticleTicks--;
+        if (this.celebrationRuntimeState.sulkEntityEffectTicks > 0) this.celebrationRuntimeState.sulkEntityEffectTicks--;
+        if (this.celebrationRuntimeState.sulkShockedSoundDelayTicks > 0) this.celebrationRuntimeState.sulkShockedSoundDelayTicks--;
+        if (this.celebrationRuntimeState.diamondSparkleSoundDelayTicks > 0) this.celebrationRuntimeState.diamondSparkleSoundDelayTicks--;
+        if (this.sleepRuntimeState.goToBedCooldown > 0) this.sleepRuntimeState.goToBedCooldown--;
+        if (this.sleepRuntimeState.lureToBedTimer > 0) this.sleepRuntimeState.lureToBedTimer--;
+        if (this.sleepRuntimeState.wakeUpFromBedDelay > 0) this.sleepRuntimeState.wakeUpFromBedDelay--;
+        if (this.sleepRuntimeState.napInBedDurationTimer > 0) this.sleepRuntimeState.napInBedDurationTimer--;
         if (this.localSpawnImmunityTicks > 0) this.localSpawnImmunityTicks--;
 
         // --- Sulking Timer ---
@@ -1531,13 +1273,22 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // --- Settle "Thump" Sound Effect ---
-        if (this.thumpSoundDelayTicks > 0) {
-            this.thumpSoundDelayTicks--;
-            if (this.thumpSoundDelayTicks == 0 && !this.getWorld().isClient()) {
-                this.getWorld().playSound(null, this.getBlockPos(), ModSounds.HAMSTER_THUMP.get(), SoundCategory.NEUTRAL, this.thumpSoundVolume, 1.5f);
+        if (this.thumpSoundState.delayTicks > 0) {
+            this.thumpSoundState.delayTicks--;
+            if (this.thumpSoundState.delayTicks == 0 && !this.getWorld().isClient()) {
+                this.getWorld().playSound(
+                        null,
+                        this.getBlockPos(),
+                        ModSounds.HAMSTER_THUMP.get(),
+                        SoundCategory.NEUTRAL,
+                        this.thumpSoundState.volume,
+                        1.5f
+                );
             }
         }
+    }
 
+    private void tickPreSuperBehaviors() {
         // --- Bed Leaf Particle Effect ---
         HamsterBedUtil.tickBedLeafParticles(this);
 
@@ -1549,18 +1300,18 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- Celebration Logic (Tag Game; New Baby) ---
         if (this.isFrozenMovement() || this.isCelebratingBaby()) {
             if (this.isFrozenMovement()) {
-                if (this.celebrationTicks > 0) {
-                    this.celebrationTicks--;
+                if (this.celebrationRuntimeState.ticks > 0) {
+                    this.celebrationRuntimeState.ticks--;
                 } else {
                     this.setFrozenMovement(false);
                     // Only clear target if baby celebration isn't active
                     if (!this.isCelebratingBaby()) {
-                        this.celebrationTarget = null;
+                        this.celebrationRuntimeState.target = null;
                     }
                 }
             }
 
-            Entity target = this.celebrationTarget;
+            Entity target = this.celebrationRuntimeState.target;
             if (target == null && this.isFrozenMovement()) {
                 target = this.getOwner();
             }
@@ -1607,8 +1358,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        super.tick();
+    }
 
+    private void tickPostSuperPhysics() {
         // --- Swimming Physics ---
         if (this.isTouchingWater() || this.isInLava()) {
 
@@ -1684,9 +1436,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- Check for Armor Changes & Update Attributes ---
         if (!this.getWorld().isClient) {
             ItemStack currentArmor = this.getArmorStack();
-            if (!ItemStack.areEqual(currentArmor, this.lastArmorStack)) {
+            if (!ItemStack.areEqual(currentArmor, this.armorRuntimeState.lastStack)) {
                 HamsterPhysicsUtil.updateArmorModifiers(this, currentArmor);
-                this.lastArmorStack = currentArmor.copy();
+                this.armorRuntimeState.lastStack = currentArmor.copy();
             }
         }
 
@@ -1709,7 +1461,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 this.velocityDirty = true; // Ensure client sees the change
             }
         }
+    }
 
+    private void tickServerLifecycle() {
         // --- 2. Server-Side Logic ---
         World world = this.getWorld();
         if (!world.isClient()) {
@@ -1756,15 +1510,15 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- Process Deferred Armor Breakage ---
             // Prevents "Equipment Update" packet from colliding with the "Hurt" packet
-            if (this.performDeferredArmorUpdate) {
+            if (this.armorRuntimeState.deferredUpdate) {
                 this.setArmorStack(ItemStack.EMPTY);
-                this.performDeferredArmorUpdate = false;
+                this.armorRuntimeState.deferredUpdate = false;
             }
 
             // --- Circadian Chaos Wake-Up Logic ---
             if (Configs.AHP_MAIN.circadianChaos.get() &&
                     HamsterBedUtil.isSleepingInBed(this) &&
-                    this.napInBedDurationTimer == 0) {
+                    this.sleepRuntimeState.napInBedDurationTimer == 0) {
                 // Don't wake up if this is a rescue sleep waiting for player interaction
                 if (!this.isRescueSleeping()) {
                     HamsterBedUtil.wakeUpFromBed(this, false); // Natural wake-up
@@ -1781,17 +1535,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     boolean isSleepTime = Configs.AHP_MAIN.sleepDuringDay.get() ? world.isDay() : world.isNight();
                     if (!isSleepTime) {
                         // If it's wake-up time, and delay timer has not yet been started
-                        if (this.wakeUpFromBedDelay == 0 && this.goToBedCooldown == 0) {
-                            this.wakeUpFromBedDelay = this.random.nextBetween(5, 60); // Set random 0.25s to 3s delay
+                        if (this.sleepRuntimeState.wakeUpFromBedDelay == 0 && this.sleepRuntimeState.goToBedCooldown == 0) {
+                            this.sleepRuntimeState.wakeUpFromBedDelay = this.random.nextBetween(5, 60); // Set random 0.25s to 3s delay
                         }
                     } else {
                         // If time flips back to sleep time while the timer is counting down, cancel the wake-up.
-                        this.wakeUpFromBedDelay = 0;
+                        this.sleepRuntimeState.wakeUpFromBedDelay = 0;
                     }
                 }
             }
             // Check if the wake-up timer has just expired
-            if (this.wakeUpFromBedDelay == 1) {
+            if (this.sleepRuntimeState.wakeUpFromBedDelay == 1) {
                 HamsterBedUtil.wakeUpFromBed(this, false); // Natural wake-up
             }
 
@@ -1802,8 +1556,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             HamsterPlacementUtil.trySuffocationRescue(this);
 
             // --- Ejection Logic ---
-            if (this.ejectionCheckCooldown <= 0) {
-                this.ejectionCheckCooldown = 100; // Reset cooldown (check every 5 seconds)
+            if (this.inventoryRuntimeState.ejectionCheckCooldown <= 0) {
+                this.inventoryRuntimeState.ejectionCheckCooldown = 100; // Reset cooldown (check every 5 seconds)
                 if (HamsterInventoryUtil.enforceInventoryRules(this)) {
                     this.markDirty();
                 }
@@ -1816,7 +1570,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     && this.getHealth() < this.getMaxHealth()
                     && !this.isAutoEating()
                     && !this.isConsideringAutoEat()
-                    && this.autoEatCooldownTicks == 0
+                    && this.autoEatState.cooldownTicks == 0
                     && !this.isKnockedOut()) {
                 // Check inventory for eligible food
                 for (int i = 0; i < this.items.size(); ++i) {
@@ -1824,14 +1578,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     if (!stack.isEmpty() && ConfigDataCache.isAutoHealFood(stack)) {
                         // Found food, start "considering" phase
                         setHamsterFlag(CONSIDERING_AUTO_EAT_FLAG, true);
-                        this.preAutoEatDelayTicks = 40; // 2-second delay
+                        this.autoEatState.preEatDelayTicks = 40; // 2-second delay
                         break; // Stop searching for food once consideration starts
                     }
                 }
             }
 
             // --- Stage 2: Process "Considering" Delay & Start Actual Eating ---
-            if (this.isConsideringAutoEat() && this.preAutoEatDelayTicks == 0) {
+            if (this.isConsideringAutoEat() && this.autoEatState.preEatDelayTicks == 0) {
                 setHamsterFlag(CONSIDERING_AUTO_EAT_FLAG, false); // No longer just considering
 
                 // Re-check for food in case it was removed during the delay
@@ -1850,8 +1604,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
 
                 if (foodStillAvailable) {
-                    this.isAutoEating = true; // Use boolean flag for eating animation state
-                    this.autoEatProgressTicks = 60; // 3 seconds eating time
+                    this.autoEatState.eating = true; // Use boolean flag for eating animation state
+                    this.autoEatState.progressTicks = 60; // 3 seconds eating time
 
                     // Feedback
                     this.playSound(SoundEvents.ENTITY_GENERIC_EAT, 0.7F, 1.3F);
@@ -1871,10 +1625,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
 
             // --- Stage 3: Apply Healing After Eating Progress Finishes ---
-            if (this.isAutoEating() && this.autoEatProgressTicks == 0) {
+            if (this.isAutoEating() && this.autoEatState.progressTicks == 0) {
                 this.heal(Configs.AHP_ITEMS.hamsterFoodMixHealing.get());
-                this.autoEatCooldownTicks = 60; // Set main cooldown (3 seconds)
-                this.isAutoEating = false; // Reset eating animation flag
+                this.autoEatState.cooldownTicks = 60; // Set main cooldown (3 seconds)
+                this.autoEatState.eating = false; // Reset eating animation flag
 
                 if (this.getOwner() instanceof ServerPlayerEntity serverPlayerOwner) {
                     ModCriteria.HAMSTER_AUTO_FED.trigger(serverPlayerOwner, this);
@@ -1885,7 +1639,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (!this.getWorld().isClient()) {
                 if (this.isCelebratingDiamond()) {
                     // Delayed Diamond Sparkle Sound
-                    if (this.diamondSparkleSoundDelayTicks == 1) { // Play when delay reaches 1
+                    if (this.celebrationRuntimeState.diamondSparkleSoundDelayTicks == 1) { // Play when delay reaches 1
                         SoundEvent sparkleSound = ModSounds.getRandomSoundFrom(ModSounds.DIAMOND_SPARKLE_SOUNDS, this.random);
                         if (sparkleSound != null) {
                             // Play sound at the ORE'S location
@@ -1898,7 +1652,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     }
 
                     // Particle Spawning
-                    if (this.celebrationParticleTicks > 0) {
+                    if (this.celebrationRuntimeState.particleTicks > 0) {
                         // 1. Ominous Particles on Hamster
                         // Use COMPOSTER and absolute offset method on 1.20.1
                         ParticleEffectsUtil.spawnParticlesWithOffset(
@@ -1927,12 +1681,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     }
 
                     //  Begging Sounds
-                    if (this.diamondCelebrationSoundTicks <= 0) {
+                    if (this.celebrationRuntimeState.diamondSoundTicks <= 0) {
                         SoundEvent celebrationSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BEG_SOUNDS, this.random);
                         if (celebrationSound != null) {
                             this.getWorld().playSound(null, this.getBlockPos(), celebrationSound, SoundCategory.NEUTRAL, 0.8F, this.getSoundPitch());
                         }
-                        this.diamondCelebrationSoundTicks = 30;
+                        this.celebrationRuntimeState.diamondSoundTicks = 30;
                     }
                 }
             }
@@ -1940,17 +1694,17 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             // --- Handle Continuous Sulking Effects ---
             if (this.isSulking()) {
                 // Delayed Orchestra Hit
-                if (this.sulkOrchestraHitDelayTicks == 1) { // Play when delay reaches 1 (was 10, now 1 after 9 ticks)
+                if (this.celebrationRuntimeState.sulkOrchestraHitDelayTicks == 1) { // Play when delay reaches 1 (was 10, now 1 after 9 ticks)
                     this.getWorld().playSound(null, this.getBlockPos(), ModSounds.ALARM_ORCHESTRA_HIT.get(), SoundCategory.NEUTRAL, 1.0F, 1.0F);
                 }
 
                 // Delayed Single Shocked Sound
-                if (this.sulkShockedSoundDelayTicks == 1) { // Play when this timer reaches 1
+                if (this.celebrationRuntimeState.sulkShockedSoundDelayTicks == 1) { // Play when this timer reaches 1
                     this.getWorld().playSound(null, this.getBlockPos(), ModSounds.HAMSTER_SHOCKED.get(), SoundCategory.NEUTRAL, 1.0F, 1.0F);
                 }
 
                 // Angry Smoke Particles above Gold Ore
-                if (this.sulkFailParticleTicks > 0 && this.currentOreTarget != null) {
+                if (this.celebrationRuntimeState.sulkFailParticleTicks > 0 && this.currentOreTarget != null) {
                     if (this.random.nextInt(3) == 0) {
                         BlockPos particlePos = this.currentOreTarget.up();
                         ParticleEffectsUtil.spawnParticles(
@@ -1965,7 +1719,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
 
                 // Black Entity Effect Particles on Hamster
-                if (this.sulkEntityEffectTicks > 0) {
+                if (this.celebrationRuntimeState.sulkEntityEffectTicks > 0) {
                     if (this.random.nextInt(5) == 0) {
                         ParticleEffect darkGrayEffect = ParticleEffectsUtil.createColoredEffect(0.3f, 0.3f, 0.3f);
 
@@ -2001,6 +1755,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
         }
+    }
+
+    private void tickClientPresentation() {
+        World world = this.getWorld();
 
         // --- 4. Client-Side Logic ---
         if (world.isClient()) {
@@ -2090,6 +1848,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 this.clientSwimPitch += (0.0f - this.clientSwimPitch) * 0.25f;
             }
         }
+    }
+
+    private void tickJukeboxAndInteractionState() {
+        World world = this.getWorld();
 
         // --- 5. Other Non-Movement Tick Logic ---
         // Jukebox Dancing
@@ -2115,48 +1877,19 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
 
         // Miscellaneous
-        if (this.isRefusingFood() && refuseTimer > 0) {
-            if (--refuseTimer <= 0) this.setRefusingFood(false);
+        if (this.isRefusingFood() && this.feedingInteractionState.refuseTimer > 0) {
+            if (--this.feedingInteractionState.refuseTimer <= 0) this.setRefusingFood(false);
         }
-        if (tamingCooldown > 0) tamingCooldown--;
+        if (this.feedingInteractionState.tamingCooldown > 0) {
+            this.feedingInteractionState.tamingCooldown--;
+        }
         if (customLoveTimer > 0) customLoveTimer--;
         if (customLoveTimer <= 0 && this.isInLove()) this.setInLove(false);
     }
 
     @Override
     public void onDeath(DamageSource source) {
-        // --- Respawn in Bed Logic ---
-        if (!this.getWorld().isClient() && Configs.AHP_MAIN.enableRespawnInBed.get()) {
-            boolean respawnSuccessful = HamsterBedUtil.tryRespawnInBed(this);
-
-            // If respawn worked, return immediately
-            if (respawnSuccessful) {
-                this.discard();
-                return;
-            }
-        }
-
-        // --- Standard Death Logic (Drops & XP) ---
-        World world = this.getWorld();
-        if (!world.isClient()) {
-            // Check if wild loot drops are disabled
-            if (!this.isTamed() && Configs.AHP_MAIN.disableWildLootDrops) {
-                // If disabled and untamed, clear the inventory so nothing drops
-                this.items.clear();
-            }
-
-            // Iterate through the items list and drop each non-empty stack
-            for (ItemStack stack : this.items) {
-                if (!stack.isEmpty()) {
-                    // Use ItemScatterer to drop the stack at the hamster's position
-                    ItemScatterer.spawn(world, this.getX(), this.getY(), this.getZ(), stack);
-                }
-            }
-            this.items.clear();
-            HamsterInventoryUtil.updateCheekStates(this);
-        }
-
-        // Call the superclass method after dropping items
+        if (HamsterLifecycleUtil.handleDeath(this)) return;
         super.onDeath(source);
     }
 
@@ -2190,256 +1923,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      */
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "mainController", 3, event -> {
-
-            // --- AI Disabled ---
-            if (this.isAiDisabled() && !this.isProjectileDummy) {
-                // Freeze on first frame
-                event.getController().setAnimationSpeed(0);
-                event.getController().transitionLength(0);
-            } else {
-                // --- AI Enabled ---
-                event.getController().setAnimationSpeed(1);
-                event.getController().transitionLength(3);
-            }
-
-            // --- Initial Setup ---
-            DozingPhase currentDozingPhase = this.getDozingPhase();
-            int personality = this.dataTracker.get(ANIMATION_PERSONALITY_ID);
-
-            // --- Animation Logic for Shoulder-Mounted Hamsters ---
-            if (this.isShoulderPet()) {
-                ShoulderAnimationState shoulderState = ShoulderAnimationState.values()[this.dataTracker.get(SHOULDER_ANIMATION_STATE)];
-                return switch (shoulderState) {
-                    case SITTING -> {
-                        if (getHamsterFlag(CLEANING_FLAG)) {
-                            yield event.setAndContinue(CLEANING_ANIM);
-                        }
-                        yield event.setAndContinue(switch (personality) {
-                            case 2 -> SITTING_POSE2_ANIM;
-                            case 3 -> SITTING_POSE3_ANIM;
-                            default -> SITTING_POSE1_ANIM;
-                        });
-                    }
-                    case LAYING_DOWN -> // Location-Specific Logic
-                            switch (this.shoulderLocation) {
-                                case LEFT_SHOULDER -> event.setAndContinue(LAYING_DOWN_LEFT_SHOULDER_ANIM);
-                                case HEAD -> event.setAndContinue(LAYING_DOWN_HEAD_ANIM);
-                                default -> event.setAndContinue(LAYING_DOWN_RIGHT_SHOULDER_ANIM);
-                            };
-
-                    // Use deterministic selection based on personality instead of random to prevent a
-                    // "splitting" glitch on Oculus/Embedium with rapid flickering between IDLE1 and IDLE2.
-                    default -> // STANDING
-                            event.setAndContinue((personality % 2 == 0) ? IDLE2_ANIM : IDLE1_ANIM);
-                };
-            }
-
-            // --- Animation Logic for In-World Hamsters ---
-            // --- Knocked Out State ---
-            if (this.isKnockedOut()) {return event.setAndContinue(KNOCKED_OUT_ANIM);}
-            // --- Sulking State ---
-            if (this.isSulking()) {return event.setAndContinue(SULKING_ANIM);}
-            // --- Swimming State ---
-            if (this.isTouchingWater() && !this.isOnGround()) {return event.setAndContinue(SWIMMING_ANIM);}
-            // --- Flying/Falling/Thrown State ---
-            if (this.isProjectileDummy || this.shouldRenderFlying()) {return event.setAndContinue(FLYING_ANIM);}
-            // --- Taunting State ---
-            if (this.isTaunting()) {return event.setAndContinue(TAUNTING_ANIM);}
-            // --- Item Retrieval State ---
-            if (this.isPresentingItem()) {return event.setAndContinue(PRESENTING_ITEM_ANIM);}
-            // --- Seeking/Wanting to Seek Diamond/Ore State ---
-            boolean isSeekingGoalActive = false;
-            String activeGoalName = this.getActiveCustomGoalName();
-            if (activeGoalName.startsWith(HamsterSniffForOreGoal.class.getSimpleName())) {
-                isSeekingGoalActive = true;
-            }
-            if (isSeekingGoalActive) {
-                double horizontalSpeedSquared = this.getVelocity().horizontalLengthSquared();
-                if (horizontalSpeedSquared > 1.0E-6) { // Use a very small threshold to detect any movement
-                    return event.setAndContinue(SEEKING_ORE_ANIM); // Hamster is moving
-                } else {
-                    // Check if the target is above or below hamster
-                    if (this.isOreTargetAbove()) {
-                        return event.setAndContinue(WANTS_TO_SEEK_ORE_ABOVE_ANIM);
-                    } else {
-                        return event.setAndContinue(WANTS_TO_SEEK_ORE_BELOW_ANIM);
-                    }
-                }
-            }
-
-            // --- Found Diamond Celebration ---
-            if (this.isCelebratingDiamond()) {
-                return event.setAndContinue(BOUNCING_ANIM);
-            }
-
-            // --- Jukebox Dancing ---
-            if (this.isDancing()) {
-                return event.setAndContinue(BOUNCING_ANIM);
-            }
-
-            // --- Sleeping States ---
-            // 1. Tamed Sleep Sequence
-            if (this.isTamed()) {
-                switch (currentDozingPhase) {
-                    case DRIFTING_OFF:
-                        return event.setAndContinue(switch (personality) {
-                            case 2 -> DRIFTING_OFF_POSE2_ANIM;
-                            case 3 -> DRIFTING_OFF_POSE3_ANIM;
-                            default -> DRIFTING_OFF_POSE1_ANIM;
-                        });
-
-                    case SETTLING_INTO_SLUMBER:
-                        String targetDeepSleepId = this.dataTracker.get(CURRENT_DEEP_SLEEP_ANIM_ID);
-                        if (!targetDeepSleepId.isEmpty()) {
-                            RawAnimation targetDeepSleepAnim = switch (targetDeepSleepId) {
-                                case "anim_hamster_sleep_pose1" -> SLEEP_POSE1_ANIM;
-                                case "anim_hamster_sleep_pose2" -> SLEEP_POSE2_ANIM;
-                                case "anim_hamster_sleep_pose3" -> SLEEP_POSE3_ANIM;
-                                default -> SITTING_POSE1_ANIM; // Fallback
-                            };
-                            return event.setAndContinue(targetDeepSleepAnim);
-                        } else if (this.isSitting()) {
-                            // If interrupted, return to the correct personality-based sitting pose
-                            return event.setAndContinue(switch (personality) {
-                                case 2 -> SITTING_POSE2_ANIM;
-                                case 3 -> SITTING_POSE3_ANIM;
-                                default -> SITTING_POSE1_ANIM;
-                            });
-                        }
-                        break;
-
-                    case DEEP_SLEEP:
-                        String deepSleepId = this.dataTracker.get(CURRENT_DEEP_SLEEP_ANIM_ID);
-                        RawAnimation deepSleepAnimToPlay = switch (deepSleepId) {
-                            case "anim_hamster_sleep_pose1" -> SLEEP_POSE1_ANIM;
-                            case "anim_hamster_sleep_pose2" -> SLEEP_POSE2_ANIM;
-                            case "anim_hamster_sleep_pose3" -> SLEEP_POSE3_ANIM;
-                            // If interrupted, return to the correct personality-based sitting pose
-                            default -> switch (personality) {
-                                case 2 -> SITTING_POSE2_ANIM;
-                                case 3 -> SITTING_POSE3_ANIM;
-                                default -> SITTING_POSE1_ANIM;
-                            };
-                        };
-                        return event.setAndContinue(deepSleepAnimToPlay);
-                }
-            }
-
-            // 2. Wild Hamster Sleeping
-            if (!this.isTamed() && this.isSleeping()) {
-                // Read the target deep sleep animation from the DataTracker
-                String deepSleepId = this.dataTracker.get(CURRENT_DEEP_SLEEP_ANIM_ID);
-                RawAnimation deepSleepAnimToPlay = switch (deepSleepId) {
-                    case "anim_hamster_sleep_pose2" -> SLEEP_POSE2_ANIM;
-                    case "anim_hamster_sleep_pose3" -> SLEEP_POSE3_ANIM;
-                    default -> SLEEP_POSE1_ANIM; // Fallback to pose 1
-                };
-                return event.setAndContinue(deepSleepAnimToPlay);
-            }
-
-            // --- Player-Commanded Sitting / Tamed Quiescent Sitting ---
-            if (this.isSitting() && !this.isKnockedOut()) {
-                if (getHamsterFlag(CLEANING_FLAG)) {
-                    return event.setAndContinue(CLEANING_ANIM);
-                } else {
-                    // The logic to start cleaning lives in the tick() method.
-                    // The animation controller only reacts to the state.
-                    return event.setAndContinue(switch (personality) {
-                        case 2 -> SITTING_POSE2_ANIM;
-                        case 3 -> SITTING_POSE3_ANIM;
-                        default -> SITTING_POSE1_ANIM;
-                    });
-                }
-            }
-
-            // --- Movement State ---
-            double horizontalSpeedSquared = this.getVelocity().horizontalLengthSquared();
-            if (horizontalSpeedSquared > 1.0E-6) { // Check if moving at all
-                if (horizontalSpeedSquared > RUN_TO_SPRINT_THRESHOLD_SQUARED) {
-                    return event.setAndContinue(SPRINTING_ANIM);
-                } else if (horizontalSpeedSquared > WALK_TO_RUN_THRESHOLD_SQUARED) {
-                    return event.setAndContinue(RUNNING_ANIM);
-                } else {
-                    return event.setAndContinue(WALKING_ANIM);
-                }
-            }
-
-             // --- Begging State ---
-            if (this.isBegging()) {
-                 return event.setAndContinue(BOUNCING_ANIM);
-            }
-
-            // --- Idle Looking Up State ---
-             if (activeGoalName.equals(HamsterLookAtEntityGoal.class.getSimpleName())) {
-                 return switch (this.dataTracker.get(CURRENT_LOOK_UP_ANIM_ID)) {
-            case 2 -> event.setAndContinue(IDLE_LOOKING_UP2_ANIM);
-            case 3 -> event.setAndContinue(IDLE_LOOKING_UP3_ANIM);
-            default -> event.setAndContinue(IDLE_LOOKING_UP1_ANIM);
-                 };
-             }
-
-            // --- Default Idle State ---
-            // "Sticky" logic: If already playing an idle anim, keep it. Otherwise, pick a new one.
-            RawAnimation current = event.getController().getCurrentRawAnimation();
-            if (current != null && (current.equals(IDLE1_ANIM) || current.equals(IDLE2_ANIM))) {
-                return event.setAndContinue(current);
-            }
-            return event.setAndContinue(this.random.nextBoolean() ? IDLE1_ANIM : IDLE2_ANIM);
-            })
-                .triggerableAnim("crash", CRASH_ANIM)
-                .triggerableAnim("wakeup_from_ko", WAKE_UP_FROM_KO_ANIM)
-                .triggerableAnim("standing_headshake", STANDING_HEADSHAKE_ANIM)
-                .triggerableAnim("sitting_headshake", SITTING_HEADSHAKE_ANIM)
-                .triggerableAnim("moving_headshake", MOVING_HEADSHAKE_ANIM)
-                .triggerableAnim("attack", ATTACK_ANIM)
-                .triggerableAnim("quick_bounce_on_back_legs", QUICK_BOUNCE_LOOKING_UP)
-                .triggerableAnim("sit1", SIT1_ANIM)
-                .triggerableAnim("sit2", SIT2_ANIM)
-                .triggerableAnim("sit3", SIT3_ANIM)
-                .triggerableAnim("standup1", STANDUP1_ANIM)
-                .triggerableAnim("standup2", STANDUP2_ANIM)
-                .triggerableAnim("standup3", STANDUP3_ANIM)
-                .triggerableAnim("wakeup1", WAKE_UP_1_ANIM)
-                .triggerableAnim("wakeup2", WAKE_UP_2_ANIM)
-                .triggerableAnim("wakeup3", WAKE_UP_3_ANIM)
-                .triggerableAnim("anim_hamster_sit_settle_sleep1", SIT_SETTLE_SLEEP1_ANIM)
-                .triggerableAnim("anim_hamster_sit_settle_sleep2", SIT_SETTLE_SLEEP2_ANIM)
-                .triggerableAnim("anim_hamster_sit_settle_sleep3", SIT_SETTLE_SLEEP3_ANIM)
-                .triggerableAnim("anim_hamster_stand_settle_sleep1", STAND_SETTLE_SLEEP1_ANIM)
-                .triggerableAnim("anim_hamster_stand_settle_sleep2", STAND_SETTLE_SLEEP2_ANIM)
-                .triggerableAnim("anim_hamster_stand_settle_sleep3", STAND_SETTLE_SLEEP3_ANIM)
-                .triggerableAnim("anim_hamster_sulk", SULK_ANIM)
-                .triggerableAnim("anim_hamster_pounce", POUNCE_ANIM)
-                .triggerableAnim("anim_hamster_quick_bounce", QUICK_BOUNCE_ANIM)
-                .triggerableAnim("anim_hamster_cheek_unload", CHEEK_UNLOAD_ANIM)
-                .triggerableAnim("anim_hamster_crouch_and_investigate", CROUCH_INVESTIGATE_ANIM)
-                .triggerableAnim("anim_hamster_assume_throw_pose", ASSUME_THROW_POSE_ANIM)
-                .triggerableAnim("anim_hamster_receiving_pets", RECEIVING_PETS_ANIM)
-                .triggerableAnim("stun", STUN_ANIM)
-                .triggerableAnim("sitting_roll", SITTING_ROLL_ANIM)
-
-            // --- Handle Keyframe Particles ---
-            .setParticleKeyframeHandler(event -> {
-                // Sets a transient flag on the entity with the particle effect's ID.
-                // The renderer polls this flag each frame to spawn particles on the client.
-                this.particleEffectId = event.getKeyframeData().getEffect();
-            })
-
-            // --- Handle Keyframe Sounds ---
-            .setSoundKeyframeHandler(event -> {
-                // This just sets a flag. The renderer will handle it on the client.
-                this.soundEffectId = event.getKeyframeData().getSound();
-            })
-
-            // --- Handle Keyframe Instructions ---
-            .setCustomInstructionKeyframeHandler(event -> {
-                // Dynamically trigger quick bounce animation
-                if (event.getKeyframeData().getInstructions().contains("trigger_jump_anim")) {
-                    this.triggerAnim("mainController", "quick_bounce_on_back_legs");
-                }
-            })
-        );
+        HamsterAnimationController.register(this, controllers);
     }
 
     @Override
@@ -2465,6 +1949,50 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
             // --- 2. Schedule cancellation task via Utility ---
             this.animScheduler.scheduleAnimationStop(this.getWorld().getTime(), controllerName, animName, this);
+        }
+    }
+
+    /**
+     * Triggers the appropriate headshake animation based on the hamster's current physical state.
+     * Intelligent selection between sitting, standing, or moving headshakes.
+     */
+    public void playRefusalAnimation() {
+        if (!this.getWorld().isClient() && !this.isAiDisabled()) {
+            if (this.isSitting()) {
+                // If sitting, play the sitting headshake
+                this.triggerAnimOnServer("mainController", "sitting_headshake");
+            } else {
+                // If standing/moving, check velocity
+                boolean isMoving = this.getVelocity().horizontalLengthSquared() > 1.0E-6;
+                if (isMoving) {
+                    this.triggerAnimOnServer("mainController", "moving_headshake");
+                } else {
+                    this.triggerAnimOnServer("mainController", "standing_headshake");
+                }
+            }
+        }
+    }
+
+    /**
+     * Called when this entity is removed from the world.
+     * This override ensures that any server-side tracking or client-side sounds/fields
+     * associated with this specific hamster instance are properly cleaned up to prevent memory leaks.
+     */
+    @Override
+    public void onRemoved() {
+        super.onRemoved();
+
+        // Clean up trackers
+        if (!this.getWorld().isClient()) {
+            HamsterRenderTracker.onEntityUnload(this.getId());
+        }
+
+        // Clean up transient Tag Game references
+        if (this.isInterHamsterTagActive && this.tagGamePartner != null) {
+            this.tagGamePartner.setPlayingTag(false);
+            this.tagGamePartner.isInterHamsterTagActive = false;
+            this.tagGamePartner.tagGamePartner = null;
+            this.tagGamePartner.tagGameSlapped = false;
         }
     }
 
@@ -2599,19 +2127,11 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     protected void updatePassengerPosition(Entity passenger, Entity.PositionUpdater positionUpdater) {
         if (this.hasPassenger(passenger)) {
-            // Use the dynamic polyfill helper created specifically for 1.20.1
-            float currentScale = this.getScale();
-
-            // Vehicle (hamster) height is already scaled at runtime
-            double baseY = this.getHeight() * 0.85;
-
-        // Passenger-size compensation (applying scaleFactor again causes scale^2 offsets).
-        double riderAdjustY = passenger instanceof LivingEntity living
-                ? HamsterRidingUtil.HamsterSeatOffsets.physicsSeatAdjustY(living, this.getScale())
-                : 0.0;
-
-            // Apply position via the updater on 1.20.1
-            positionUpdater.accept(passenger, this.getX(), this.getY() + baseY + riderAdjustY, this.getZ());
+            Vec3d attachmentPos = HamsterRidingUtil.getPassengerAttachmentPos(this, passenger);
+            positionUpdater.accept(passenger,
+                    this.getX() + attachmentPos.x,
+                    this.getY() + attachmentPos.y,
+                    this.getZ() + attachmentPos.z);
         }
     }
 
@@ -2627,46 +2147,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     // --- Sounds / Effects ---
     @Override
     protected SoundEvent getAmbientSound() {
-        // --- 1. AI Disabled or Knocked Out ---
-        if (this.isAiDisabled() || this.isKnockedOut()) {
-            return null; // Statues and knocked out make no sounds
-        }
-
-        // --- 2. Begging/Taunting ---
-        if (this.isBegging() || this.isTaunting()) {
-            return getRandomSoundFrom(ModSounds.HAMSTER_BEG_SOUNDS, this.random);
-        }
-
-        // --- 3. Sleep ---
-        boolean playSleepSounds = false;
-
-        if (this.isTamed()) {
-            DozingPhase phase = this.getDozingPhase();
-
-            // Play sleep sounds if drifting, settling, or in deep sleep
-            if (phase == DozingPhase.DRIFTING_OFF || phase == DozingPhase.SETTLING_INTO_SLUMBER || phase == DozingPhase.DEEP_SLEEP) {
-                playSleepSounds = true;
-            }
-
-        } else { // Wild hamster
-            if (this.isSleeping()) { // Checks the IS_SLEEPING DataTracker for wild hamsters
-                playSleepSounds = true;
-            }
-        }
-
-        if (playSleepSounds) {
-            return getRandomSoundFrom(ModSounds.HAMSTER_SLEEP_SOUNDS, this.random);
-        }
-
-        // --- 4. Idle ---
-        return getRandomSoundFrom(ModSounds.HAMSTER_IDLE_SOUNDS, this.random);
+        return HamsterSoundUtil.selectAmbientSound(this);
     }
 
     @Override
     public void playAmbientSound() {
         SoundEvent soundEvent = this.getAmbientSound();
         // Check if the selected sound is a begging sound
-        if (soundEvent != null && Arrays.asList(ModSounds.HAMSTER_BEG_SOUNDS).contains(soundEvent)) {
+        if (soundEvent != null && HamsterSoundUtil.isBeggingSound(soundEvent)) {
             // If it's a begging sound, play it with lower volume
             this.playSound(soundEvent, 0.8F, this.getSoundPitch());
         } else {
@@ -2675,68 +2163,20 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
     }
 
-    @Override protected SoundEvent getHurtSound(DamageSource source) { return getRandomSoundFrom(ModSounds.HAMSTER_HURT_SOUNDS, this.random); }
+    @Override protected SoundEvent getHurtSound(DamageSource source) { return HamsterSoundUtil.selectHurtSound(this); }
 
-    @Override protected SoundEvent getDeathSound() { return getRandomSoundFrom(ModSounds.HAMSTER_DEATH_SOUNDS, this.random); }
+    @Override protected SoundEvent getDeathSound() { return HamsterSoundUtil.selectDeathSound(this); }
 
     @Override
     protected void playStepSound(BlockPos pos, BlockState state) {
-        if (this.getWorld().isClient()) {
-            return; // Server-side only
-        }
-        // Query the tracker to see if any player is rendering this hamster
-        if (!HamsterRenderTracker.isBeingRendered(this.getId())) {
-            try {
-                BlockSoundGroup group = state.getSoundGroup();
-                float volume = state.isOf(Blocks.GRAVEL)
-                        ? (DEFAULT_FOOTSTEP_VOLUME * GRAVEL_VOLUME_MODIFIER)
-                        : DEFAULT_FOOTSTEP_VOLUME;
-                this.playSound(group.getStepSound(), volume, group.getPitch() * 1.5F);
-            } catch (Exception ex) {
-                AdorableHamsterPets.LOGGER.warn("Error playing fallback step sound", ex);
-            }
-        }
+        HamsterSoundUtil.playFallbackStepSound(this, state);
     }
 
     @Nullable
     @Override
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound nbt) {
-        AdorableHamsterPets.LOGGER.debug("[AHP Spawn Debug] HamsterEntity.initialize called. SpawnReason: {}", spawnReason);
-
-        // --- Personality ---
-        if (!world.isClient()) {
-            int personalityId = this.random.nextBetween(1, 3);
-            this.dataTracker.set(ANIMATION_PERSONALITY_ID, personalityId);
-        }
-
-        // --- Genetics ---
-        // Apply procedural genetics for natural spawns, spawn eggs, and chunk generation
-        if (spawnReason == SpawnReason.NATURAL || spawnReason == SpawnReason.SPAWN_EGG || spawnReason == SpawnReason.CHUNK_GENERATION) {
-            HamsterGenome wildGenome = HamsterGeneticsUtil.generateWildGenome(world, this.getBlockPos(), this.random);
-            this.setGenome(wildGenome);
-        } else {
-            // Fallback
-            HamsterGenome randomGenome = HamsterGeneticsUtil.generateWildGenome(world, this.getBlockPos(), this.random);
-            this.setGenome(randomGenome);
-        }
-
-        // --- Configured Health & Age ---
-        if (!this.isTamed()) {
-            this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(Configs.AHP_MAIN.wildMaxHealth.get());
-            this.setHealth(this.getMaxHealth());
-        }
-
-        if (spawnReason == SpawnReason.NATURAL || spawnReason == SpawnReason.CHUNK_GENERATION) {
-            // Wild hamsters spawn with random age between 1 and 30 days
-            this.totalAgeTicks = (1L + this.random.nextInt(30)) * 24000L;
-        } else {
-            // Command-spawned or egg-spawned hamsters start at 1 day old
-            this.totalAgeTicks = 24000L;
-        }
-
-        // --- Cheek Pouch Loot ---
-        HamsterInventoryUtil.generateWildLoot(this, this.random);
-        return super.initialize(world, difficulty, spawnReason, entityData, nbt); // Extra nbt parameter for 1.20.1
+        HamsterLifecycleUtil.initializeSpawn(this, world, spawnReason);
+        return super.initialize(world, difficulty, spawnReason, entityData, nbt);
     }
 
     @Override
@@ -2747,22 +2187,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     /* ──────────────────────────────────────────────────────────────────────────────
      *                       6. Private Helper Methods
      * ────────────────────────────────────────────────────────────────────────────*/
-
-    /**
-     * Determines if the hamster armor should completely absorb the incoming damage.
-     * <p>
-     * <ul>
-     *     <li><b>Fire Damage:</b> Only absorbed if the armor has the <b>Fire Protection</b> enchantment.
-     *     Otherwise, the damage passes through to the hamster (though standard armor reduction still applies).</li>
-     *     <li><b>Other Damage:</b> Always absorbed.</li>
-     * </ul>
-     */
-    private boolean shouldArmorAbsorb(DamageSource source, ItemStack armorStack) {
-        if (source.isIn(DamageTypeTags.IS_FIRE)) {
-            return getFireProtectionLevel(armorStack) > 0;
-        }
-        return true;
-    }
 
     /**
      * Calculates the backward Z-offset for the Vanilla circle shadow during the sitting_roll animation.
@@ -2789,13 +2213,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             float progress = (timer - SHADOW_HOLD_START_TICKS - SHADOW_ROLL_BACK_TICKS - SHADOW_HOLD_APEX_TICKS) / SHADOW_ROLL_FORWARD_TICKS;
             return SHADOW_MAX_OFFSET * 0.5 * (1.0 + Math.cos(Math.PI * progress));
         }
-    }
-
-    /**
-     * Gets the level of Fire Protection on the stack.
-     */
-    private int getFireProtectionLevel(ItemStack stack) {
-        return EnchantmentHelper.getLevel(Enchantments.FIRE_PROTECTION, stack);
     }
 
     @Override
@@ -2862,20 +2279,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      * Synchronizes the visual state (DataTrackers) with the Accessory Slot inventory.
      */
     public void updateAccessoryState() {
-        ItemStack accessory = this.items.get(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX);
-
-        // Handle Flower Tracker
-        if (accessory.isIn(ItemTags.FLOWERS)) {
-            // If we have a flower but tracker is 0 (just equipped), set to default 1
-            if (this.dataTracker.get(FLOWER_POS) == 0) {
-                this.dataTracker.set(FLOWER_POS, 1);
-            }
-        } else {
-            // If slot is empty or has a different item (e.g. Hat), reset flower tracker
-            if (this.dataTracker.get(FLOWER_POS) != 0) {
-                this.dataTracker.set(FLOWER_POS, 0);
-            }
-        }
+        HamsterInventoryUtil.updateAccessoryState(this);
     }
 
     /**
@@ -2905,47 +2309,77 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         return this.getWorld().getRegistryManager();
     }
 
-    /**
-     * Triggers the appropriate headshake animation based on the hamster's current physical state.
-     * Intelligent selection between sitting, standing, or moving headshakes.
-     */
-    public void playRefusalAnimation() {
-        if (!this.getWorld().isClient() && !this.isAiDisabled()) {
-            if (this.isSitting()) {
-                // If sitting, play the sitting headshake
-                this.triggerAnimOnServer("mainController", "sitting_headshake");
-            } else {
-                // If standing/moving, check velocity
-                boolean isMoving = this.getVelocity().horizontalLengthSquared() > 1.0E-6;
-                if (isMoving) {
-                    this.triggerAnimOnServer("mainController", "moving_headshake");
-                } else {
-                    this.triggerAnimOnServer("mainController", "standing_headshake");
-                }
-            }
-        }
+    private static final class ArmorRuntimeState {
+        private boolean absorbedDamage;
+        private boolean deferredUpdate;
+        private ItemStack lastStack = ItemStack.EMPTY;
     }
 
-    /**
-     * Called when this entity is removed from the world.
-     * This override ensures that any server-side tracking or client-side sounds/fields
-     * associated with this specific hamster instance are properly cleaned up to prevent memory leaks.
-     */
-    @Override
-    public void onRemoved() {
-        super.onRemoved();
-
-        // Clean up trackers
-        if (!this.getWorld().isClient()) {
-            HamsterRenderTracker.onEntityUnload(this.getId());
-        }
-
-        // Clean up transient Tag Game references
-        if (this.isInterHamsterTagActive && this.tagGamePartner != null) {
-            this.tagGamePartner.setPlayingTag(false);
-            this.tagGamePartner.isInterHamsterTagActive = false;
-            this.tagGamePartner.tagGamePartner = null;
-            this.tagGamePartner.tagGameSlapped = false;
-        }
+    private static final class AutoEatState {
+        private int cooldownTicks;
+        private int preEatDelayTicks;
+        private int progressTicks;
+        private boolean eating;
+        private ItemStack lastFoodItem = ItemStack.EMPTY;
     }
+
+    private static final class CelebrationRuntimeState {
+        private int particleTicks;
+        private int diamondSoundTicks;
+        private int sulkOrchestraHitDelayTicks;
+        private int sulkFailParticleTicks;
+        private int sulkEntityEffectTicks;
+        private int sulkShockedSoundDelayTicks;
+        private int diamondSparkleSoundDelayTicks;
+        private int ticks;
+        private Entity target;
+    }
+
+    private static final class FeedingInteractionState {
+        private int refuseTimer;
+        private int tamingCooldown;
+    }
+
+    private static final class InventoryRuntimeState {
+        private int ejectionCheckCooldown = 20;
+        private boolean loadingNbt;
+        private boolean silentUpdate;
+    }
+
+    private static final class RiderInputState {
+        private int jumpCooldown;
+        private boolean jumpHeld;
+        private boolean jumpQueued;
+        private boolean sprintHeld;
+    }
+
+    private static final class SleepRuntimeState {
+        private int settleSleepAnimationCooldown;
+        private int goToBedCooldown;
+        private int quiescentSitDurationTimer;
+        private int driftingOffTimer;
+        private int lureToBedTimer;
+        private int wakeUpFromBedDelay;
+        private int napInBedDurationTimer;
+        private boolean bypassNextSleepDelay;
+        private Optional<GlobalPos> linkedBedPos = Optional.empty();
+    }
+
+    private static final class ThreeDimensionalLayoutState {
+        private Boolean isCenter;
+        private double parsedScale = 1.0;
+        private int parsedY;
+    }
+
+    private static final class ThumpSoundState {
+        private int delayTicks;
+        private float volume = 0.2f;
+    }
+
+    private static final class ZoomiesState {
+        private boolean clockwise;
+        private double lastAngle;
+        private int radiusModifier;
+    }
+
 }
