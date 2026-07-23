@@ -169,6 +169,30 @@ public final class HamsterInventoryUtil {
     }
 
     /**
+     * Synchronizes inventory-derived visual state after an inventory mutation.
+     */
+    public static void synchronizeVisualState(HamsterEntity hamster) {
+        updateCheekStates(hamster);
+        updateAccessoryState(hamster);
+    }
+
+    /**
+     * Synchronizes the flower position tracker with the accessory slot.
+     */
+    public static void updateAccessoryState(HamsterEntity hamster) {
+        ItemStack accessory = hamster.getItems().get(ACCESSORY_SLOT_INDEX);
+        int flowerPosition = hamster.getDataTracker().get(HamsterEntity.FLOWER_POS);
+
+        if (accessory.isIn(ItemTags.FLOWERS)) {
+            if (flowerPosition == 0) {
+                hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, 1);
+            }
+        } else if (flowerPosition != 0) {
+            hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, 0);
+        }
+    }
+
+    /**
      * Syncs equipment visually onto the client DataTrackers.
      */
     public static void syncEquipmentTrackers(HamsterEntity hamster) {

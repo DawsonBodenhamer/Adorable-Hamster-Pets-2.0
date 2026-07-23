@@ -96,6 +96,21 @@ public final class HamsterRidingUtil {
         }
     }
 
+    /**
+     * Calculates the scale-aware position where a passenger attaches to the hamster.
+     */
+    public static Vec3d getPassengerAttachmentPos(HamsterEntity hamster, Entity passenger) {
+        // Vehicle (hamster) height is already scaled at runtime.
+        double baseY = hamster.getHeight() * 0.85;
+
+        // Passenger-size compensation (applying the attachment scale again causes scale^2 offsets).
+        double riderAdjustY = passenger instanceof LivingEntity living
+                ? HamsterSeatOffsets.physicsSeatAdjustY(living, hamster.getScale())
+                : 0.0;
+
+        return new Vec3d(0.0, baseY + riderAdjustY, 0.0);
+    }
+
     /* ──────────────────────────────────────────────────────────────────────────────
      *                            Physics & Movement
      * ────────────────────────────────────────────────────────────────────────────*/
