@@ -12,6 +12,7 @@ import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.math.Vec3d;
+
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,13 +27,12 @@ public final class HamsterRidingUtil {
     private static final int RIDER_JUMP_COOLDOWN_TICKS = 8;
     private static final double RIDER_JUMP_VELOCITY = 0.6D; // ~2 blocks
 
-    private HamsterRidingUtil() {}
-
     /* ──────────────────────────────────────────────────────────────────────────────
-     *                           Mounting & State
+     *                            Static Riding Utilities
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    // --- 1. Mount Execution ---
+    // --- Mounting and State ---
+
     /**
      * Forces stand up and disables wander mode for full control
      */
@@ -47,7 +47,6 @@ public final class HamsterRidingUtil {
         }
     }
 
-    // --- 2. Controller Validation ---
     /**
      * Only allows steering if tamed and the passenger is the owner
      */
@@ -62,31 +61,31 @@ public final class HamsterRidingUtil {
         return null;
     }
 
-    // --- 3. Input State Mapping ---
     /**
      * Updates the input state from the rider.
      * Called by both the Server (via packet) and Client (via prediction).
      */
     public static void setRiderInput(HamsterEntity hamster, boolean jump, boolean sprint) {
-        // Rising edge logic for jump
+        // Queue only the rising edge so held input cannot retrigger every tick.
         if (jump && !hamster.isRiderJumpHeld()) {
             hamster.setRiderJumpQueued(true);
 
-            // Only log on server to avoid console spam
+            // Keep diagnostics server-side to avoid duplicate client prediction logs.
             if (!hamster.getWorld().isClient()) {
-                AdorableHamsterPets.LOGGER.info("[AHP JUMP][SERVER] hamsterId={} queuedJump=true", hamster.getId());
+                AdorableHamsterPets.LOGGER.info(
+                        "[AHP JUMP][SERVER] hamsterId={} queuedJump=true", hamster.getId());
             }
         }
         hamster.setRiderJumpHeld(jump);
         hamster.setRiderSprintHeld(sprint);
     }
 
-    // --- 4. State Reset ---
     /**
      * Clears all driving states when the pilot dismounts to prevent
      * "sticky" inputs or visual glitches after dismounting.
      */
-    public static void onPassengerRemoved(HamsterEntity hamster, Entity passenger, Entity controller) {
+    public static void onPassengerRemoved(
+            HamsterEntity hamster, Entity passenger, Entity controller) {
         if (passenger == controller) {
             hamster.setRiderJumpCooldown(0);
             hamster.setRiderJumpHeld(false);
@@ -96,6 +95,8 @@ public final class HamsterRidingUtil {
         }
     }
 
+    // --- Passenger Attachment ---
+
     /**
      * Calculates the scale-aware position where a passenger attaches to the hamster.
      */
@@ -104,18 +105,16 @@ public final class HamsterRidingUtil {
         double baseY = hamster.getHeight() * 0.85;
 
         // Passenger-size compensation (applying the attachment scale again causes scale^2 offsets).
-        double riderAdjustY = passenger instanceof LivingEntity living
-                ? HamsterSeatOffsets.physicsSeatAdjustY(living, hamster.getScale())
-                : 0.0;
+        double riderAdjustY =
+                passenger instanceof LivingEntity living
+                        ? HamsterSeatOffsets.physicsSeatAdjustY(living, hamster.getScale())
+                        : 0.0;
 
         return new Vec3d(0.0, baseY + riderAdjustY, 0.0);
     }
 
-    /* ──────────────────────────────────────────────────────────────────────────────
-     *                            Physics & Movement
-     * ────────────────────────────────────────────────────────────────────────────*/
+    // --- Physics and Movement ---
 
-    // --- 5. Main Movement Execution ---
     /**
      * Manages movement physics and rider inputs.
      * <p>
@@ -130,7 +129,7 @@ public final class HamsterRidingUtil {
             return false;
         }
 
-        // Sync Mount Rotation to Rider
+        // --- Synchronize Rider Orientation ---
         hamster.setYaw(player.getYaw());
         hamster.prevYaw = hamster.getYaw();
         hamster.setPitch(player.getPitch() * 0.5F);
@@ -138,38 +137,36 @@ public final class HamsterRidingUtil {
         hamster.bodyYaw = hamster.getYaw();
         hamster.headYaw = hamster.bodyYaw;
 
-        // Read Rider Movement Input
+        // --- Resolve Movement Input and Speed ---
         float forwardSpeed = player.forwardSpeed;
         float sidewaysSpeed = player.sidewaysSpeed;
 
-        // Backward movement penalty
         if (forwardSpeed <= 0.0F) {
             forwardSpeed *= 0.25F;
         }
 
-        // Calculate Sprint State (Requires physical movement)
         boolean hasMovement = Math.abs(forwardSpeed) > 1.0e-5 || Math.abs(sidewaysSpeed) > 1.0e-5;
         boolean isSprinting = hamster.isRiderSprintHeld() && hasMovement;
 
-        // Sync the visual sprinting state (particles/FOV)
         hamster.setSprinting(isSprinting);
 
-        // Calculate Speed Multipliers
         final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
-        double speedMultiplier = isSprinting
-                ? config.ridingSprintSpeedMultiplier.get()
-                : config.ridingBaseSpeedMultiplier.get();
+        double speedMultiplier =
+                isSprinting
+                        ? config.ridingSprintSpeedMultiplier.get()
+                        : config.ridingBaseSpeedMultiplier.get();
 
-        float attributeSpeed = (float) hamster.getAttributeValue(EntityAttributes.GENERIC_MOVEMENT_SPEED);
+        float attributeSpeed =
+                (float) hamster.getAttributeValue(EntityAttributes.GENERIC_MOVEMENT_SPEED);
         float finalSpeed = (float) (attributeSpeed * speedMultiplier);
 
-        // Apply Potion Effects (Additive on top of multiplier)
+        // Speed effects remain additive after the configured riding multiplier.
         if (hamster.hasStatusEffect(StatusEffects.SPEED)) {
             finalSpeed += 0.1f;
         }
         hamster.setMovementSpeed(finalSpeed);
 
-        // Process Jump Logic (Before travel for smooth integration)
+        // --- Consume Jump Input ---
         if (hamster.getRiderJumpCooldown() > 0) {
             hamster.setRiderJumpCooldown(hamster.getRiderJumpCooldown() - 1);
         } else if (hamster.isRiderJumpQueued()) {
@@ -177,7 +174,7 @@ public final class HamsterRidingUtil {
             tryRiderJump(hamster);
         }
 
-        // Execute Movement Logic based on side
+        // --- Apply Predicted or Authoritative Travel ---
         if (hamster.isLogicalSideForUpdatingMovement()) {
             hamster.delegateTravel(new Vec3d(sidewaysSpeed, 0.0, forwardSpeed));
         } else if (player instanceof ClientPlayerEntity) {
@@ -187,7 +184,6 @@ public final class HamsterRidingUtil {
         return true;
     }
 
-    // --- 6. Jump Physics Execution ---
     /**
      * Executes the jump logic for a ridden hamster.
      * <p>
@@ -199,29 +195,41 @@ public final class HamsterRidingUtil {
             return;
         }
 
-        // Triggers the protected LivingEntity.jump() via wrapper
+        // Trigger the protected LivingEntity.jump() through the entity wrapper.
         hamster.executeJump();
 
-        // Enforce exact jump height
+        // Override the vanilla vertical component with the configured riding impulse.
         Vec3d v = hamster.getVelocity();
         hamster.setVelocity(v.x, RIDER_JUMP_VELOCITY, v.z);
         hamster.velocityDirty = true;
         hamster.fallDistance = 0.0F;
 
-        // Play Bounce Sound
-        PlayerEntity rider = (hamster.getControllingPassenger() instanceof PlayerEntity p) ? p : null;
+        // Attribute the bounce sound to the rider when one is still controlling the hamster.
+        PlayerEntity rider =
+                (hamster.getControllingPassenger() instanceof PlayerEntity p) ? p : null;
         float randomPitch = 1.2f + (hamster.getRandom().nextFloat() * 0.4f - 0.2f);
-        hamster.getWorld().playSound(
-                rider, hamster.getX(), hamster.getY(), hamster.getZ(),
-                ModSounds.HAMSTER_BOUNCE.get(), SoundCategory.PLAYERS,
-                0.6f, randomPitch
-        );
+        hamster.getWorld()
+                .playSound(
+                        rider,
+                        hamster.getX(),
+                        hamster.getY(),
+                        hamster.getZ(),
+                        ModSounds.HAMSTER_BOUNCE.get(),
+                        SoundCategory.PLAYERS,
+                        0.6f,
+                        randomPitch);
 
         hamster.setRiderJumpCooldown(RIDER_JUMP_COOLDOWN_TICKS);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
-     *                               Seat Offsets
+     *                                Constructor
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private HamsterRidingUtil() {}
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                               Nested Types
      * ────────────────────────────────────────────────────────────────────────────*/
 
     /**
@@ -229,7 +237,6 @@ public final class HamsterRidingUtil {
      * for server-side attachment/camera math.
      */
     public final class HamsterSeatOffsets {
-        private HamsterSeatOffsets() {}
 
         // --- Slope and Intercepts ---
         private static final double SEAT_Y_INTERCEPT = 0.12;
@@ -241,6 +248,8 @@ public final class HamsterRidingUtil {
         // --- Global Fine-Tuning ---
         private static final double SEAT_Y_NUDGE = -0.02; // More negative = down
         private static final double SEAT_Z_NUDGE = 0.02; // More positive = backwards
+
+        private HamsterSeatOffsets() {}
 
         /**
          * Vertical seat correction for server-side attachment/camera.

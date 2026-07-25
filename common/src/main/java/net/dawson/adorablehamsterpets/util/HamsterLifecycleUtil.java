@@ -12,6 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.world.ServerWorldAccess;
+
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -21,7 +22,11 @@ import java.util.UUID;
  */
 public final class HamsterLifecycleUtil {
 
-    private HamsterLifecycleUtil() {}
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                           Static Lifecycle Utilities
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    // --- Growth and Breeding ---
 
     public static void onGrowUp(HamsterEntity hamster) {
         if (!hamster.getWorld().isClient() && !hamster.isBaby()) {
@@ -30,11 +35,13 @@ public final class HamsterLifecycleUtil {
     }
 
     @Nullable
-    public static PassiveEntity createChild(HamsterEntity parent, ServerWorld world, PassiveEntity mate) {
+    public static PassiveEntity createChild(
+            HamsterEntity parent, ServerWorld world, PassiveEntity mate) {
         HamsterEntity baby = ModEntities.HAMSTER.get().create(world);
         if (baby == null) return null;
 
-        HamsterGenome babyGenome = HamsterGeneticsUtil.calculateBabyGenome(parent, mate, parent.getRandom());
+        HamsterGenome babyGenome =
+                HamsterGeneticsUtil.calculateBabyGenome(parent, mate, parent.getRandom());
         baby.setGenome(babyGenome);
 
         if (!Configs.AHP_MAIN.babiesSpawnWild) {
@@ -51,6 +58,8 @@ public final class HamsterLifecycleUtil {
         return baby;
     }
 
+    // --- Death and Inventory Cleanup ---
+
     public static boolean handleDeath(HamsterEntity hamster) {
         if (!hamster.getWorld().isClient() && Configs.AHP_MAIN.enableRespawnInBed.get()) {
             if (HamsterBedUtil.tryRespawnInBed(hamster)) {
@@ -66,7 +75,12 @@ public final class HamsterLifecycleUtil {
 
             for (ItemStack stack : hamster.getItems()) {
                 if (!stack.isEmpty()) {
-                    ItemScatterer.spawn(hamster.getWorld(), hamster.getX(), hamster.getY(), hamster.getZ(), stack);
+                    ItemScatterer.spawn(
+                            hamster.getWorld(),
+                            hamster.getX(),
+                            hamster.getY(),
+                            hamster.getZ(),
+                            stack);
                 }
             }
             hamster.getItems().clear();
@@ -75,15 +89,21 @@ public final class HamsterLifecycleUtil {
         return false;
     }
 
-    public static void initializeSpawn(HamsterEntity hamster, ServerWorldAccess world, SpawnReason spawnReason) {
-        AdorableHamsterPets.LOGGER.debug("[AHP Spawn Debug] HamsterEntity.initialize called. SpawnReason: {}", spawnReason);
+    // --- Spawn Initialization ---
+
+    public static void initializeSpawn(
+            HamsterEntity hamster, ServerWorldAccess world, SpawnReason spawnReason) {
+        AdorableHamsterPets.LOGGER.debug(
+                "[AHP Spawn Debug] HamsterEntity.initialize called. SpawnReason: {}", spawnReason);
 
         if (!world.isClient()) {
             int personalityId = hamster.getRandom().nextBetween(1, 3);
             hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, personalityId);
         }
 
-        HamsterGenome wildGenome = HamsterGeneticsUtil.generateWildGenome(world, hamster.getBlockPos(), hamster.getRandom());
+        HamsterGenome wildGenome =
+                HamsterGeneticsUtil.generateWildGenome(
+                        world, hamster.getBlockPos(), hamster.getRandom());
         hamster.setGenome(wildGenome);
 
         if (!hamster.isTamed()) {
@@ -100,4 +120,10 @@ public final class HamsterLifecycleUtil {
 
         HamsterInventoryUtil.generateWildLoot(hamster, hamster.getRandom());
     }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                                Constructor
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private HamsterLifecycleUtil() {}
 }
