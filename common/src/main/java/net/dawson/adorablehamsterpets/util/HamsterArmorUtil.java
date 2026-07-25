@@ -22,16 +22,20 @@ import net.minecraft.util.math.Vec3d;
  */
 public final class HamsterArmorUtil {
 
-    private HamsterArmorUtil() {}
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Static Utilities
+     * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static boolean shouldAbsorbDamage(HamsterEntity hamster, DamageSource source, ItemStack armorStack) {
+    public static boolean shouldAbsorbDamage(
+            HamsterEntity hamster, DamageSource source, ItemStack armorStack) {
         if (hamster.getWorld().isClient || source.isIn(DamageTypeTags.BYPASSES_WOLF_ARMOR)) {
             return false;
         }
         if (armorStack.isEmpty() || !(armorStack.getItem() instanceof HamsterArmorItem)) {
             return false;
         }
-        return !source.isIn(DamageTypeTags.IS_FIRE) || getFireProtectionLevel(hamster, armorStack) > 0;
+        return !source.isIn(DamageTypeTags.IS_FIRE)
+                || getFireProtectionLevel(hamster, armorStack) > 0;
     }
 
     /**
@@ -55,20 +59,28 @@ public final class HamsterArmorUtil {
         return armorBroke;
     }
 
-    private static void spawnArmorParticles(HamsterEntity hamster, ItemStack particleStack, int count, double speed) {
+    private static void spawnArmorParticles(
+            HamsterEntity hamster, ItemStack particleStack, int count, double speed) {
         ParticleEffectsUtil.spawnParticles(
                 hamster.getWorld(),
                 new Vec3d(hamster.getX(), hamster.getBodyY(0.5), hamster.getZ()),
                 new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack),
                 count,
                 new Vec3d(0.2, 0.2, 0.2),
-                speed
-        );
+                speed);
     }
 
     private static int getFireProtectionLevel(HamsterEntity hamster, ItemStack stack) {
-        RegistryWrapper.Impl<Enchantment> registry = hamster.getRegistryManager().getWrapperOrThrow(RegistryKeys.ENCHANTMENT);
-        RegistryEntry<Enchantment> fireProtection = registry.getOrThrow(Enchantments.FIRE_PROTECTION);
+        RegistryWrapper.Impl<Enchantment> registry =
+                hamster.getRegistryManager().getWrapperOrThrow(RegistryKeys.ENCHANTMENT);
+        RegistryEntry<Enchantment> fireProtection =
+                registry.getOrThrow(Enchantments.FIRE_PROTECTION);
         return EnchantmentHelper.getLevel(fireProtection, stack);
     }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructors
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private HamsterArmorUtil() {}
 }
