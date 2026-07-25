@@ -20,10 +20,19 @@ import java.util.Optional;
  */
 public final class HamsterShoulderUtil {
 
-    private HamsterShoulderUtil() {}
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                           Static Shoulder Utilities
+     * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static void spawnFromNbt(ServerWorld world, PlayerEntity player, NbtCompound nbt,
-                                    boolean wasDiamondAlertActive, boolean forceStand) {
+    // --- Shoulder Restoration and Placement ---
+
+    public static void spawnFromNbt(
+            ServerWorld world,
+            PlayerEntity player,
+            NbtCompound nbt,
+            boolean wasDiamondAlertActive,
+            boolean forceStand) {
+        // --- Restore Hamster State ---
         HamsterEntity hamster = HamsterNbtUtil.createFromNbt(world, player, nbt);
         if (hamster == null) {
             return;
@@ -37,45 +46,80 @@ public final class HamsterShoulderUtil {
 
         if (wasDiamondAlertActive && Configs.AHP_MAIN.enableIndependentDiamondSeeking) {
             hamster.isPrimedToSeekDiamonds = true;
-            AdorableHamsterPets.LOGGER.debug("[HamsterEntity {}] Primed for diamond seeking upon dismount.", hamster.getId());
+            AdorableHamsterPets.LOGGER.debug(
+                    "[HamsterEntity {}] Primed for diamond seeking upon dismount.",
+                    hamster.getId());
         }
 
+        // --- Find a Safe Placement ---
         BlockPos fallbackPos = player.getBlockPos();
         HitResult hitResult = player.raycast(4.5, 0.0f, false);
-        BlockPos initialSearchPos = hitResult.getType() == HitResult.Type.BLOCK
-                ? ((net.minecraft.util.hit.BlockHitResult) hitResult).getBlockPos()
-                : fallbackPos;
-        Optional<BlockPos> safePos = HamsterPlacementUtil.findSafeSpawnPosition(initialSearchPos, world, 5, hamster);
+        BlockPos initialSearchPos =
+                hitResult.getType() == HitResult.Type.BLOCK
+                        ? ((net.minecraft.util.hit.BlockHitResult) hitResult).getBlockPos()
+                        : fallbackPos;
+        Optional<BlockPos> safePos =
+                HamsterPlacementUtil.findSafeSpawnPosition(initialSearchPos, world, 5, hamster);
 
         safePos.ifPresentOrElse(
                 pos -> {
-                    hamster.refreshPositionAndAngles(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, player.getYaw(), player.getPitch());
-                    AdorableHamsterPets.LOGGER.debug("[HamsterDismount] Found safe spawn at {} for player {}.", pos, player.getName().getString());
+                    hamster.refreshPositionAndAngles(
+                            pos.getX() + 0.5,
+                            pos.getY(),
+                            pos.getZ() + 0.5,
+                            player.getYaw(),
+                            player.getPitch());
+                    AdorableHamsterPets.LOGGER.debug(
+                            "[HamsterDismount] Found safe spawn at {} for player {}.",
+                            pos,
+                            player.getName().getString());
                 },
                 () -> {
-                    AdorableHamsterPets.LOGGER.warn("[HamsterDismount] Could not find a safe spawn position for player {}. Spawning at player's feet as a fallback.", player.getName().getString());
-                    hamster.refreshPositionAndAngles(fallbackPos.getX() + 0.5, fallbackPos.getY(), fallbackPos.getZ() + 0.5, player.getYaw(), player.getPitch());
-                }
-        );
+                    AdorableHamsterPets.LOGGER.warn(
+                            "[HamsterDismount] Could not find a safe spawn position for player {}."
+                                    + " Spawning at player's feet as a fallback.",
+                            player.getName().getString());
+                    hamster.refreshPositionAndAngles(
+                            fallbackPos.getX() + 0.5,
+                            fallbackPos.getY(),
+                            fallbackPos.getZ() + 0.5,
+                            player.getYaw(),
+                            player.getPitch());
+                });
 
+        // --- Complete World Restoration ---
         world.spawnEntityAndPassengers(hamster);
-        AdorableHamsterPets.LOGGER.debug("[HamsterEntity] Spawned Hamster ID {} from NBT data near Player {}.", hamster.getId(), player.getName().getString());
+        AdorableHamsterPets.LOGGER.debug(
+                "[HamsterEntity] Spawned Hamster ID {} from NBT data near Player {}.",
+                hamster.getId(),
+                player.getName().getString());
     }
+
+    // --- Player-Initiated Throwing ---
 
     public static void tryThrowFromShoulder(ServerPlayerEntity player) {
         PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
         AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
 
         if (!config.enableHamsterThrowing) {
-            player.sendMessage(Text.translatable("message.adorablehamsterpets.throwing_disabled"), true);
+            player.sendMessage(
+                    Text.translatable("message.adorablehamsterpets.throwing_disabled"), true);
             return;
         }
 
         if (!playerAccessor.hasAnyShoulderHamster()) {
-            AdorableHamsterPets.LOGGER.warn("[HamsterThrow] Player {} tried to throw, but has no shoulder hamster.", player.getName().getString());
+            AdorableHamsterPets.LOGGER.warn(
+                    "[HamsterThrow] Player {} tried to throw, but has no shoulder hamster.",
+                    player.getName().getString());
             return;
         }
 
         playerAccessor.adorablehamsterpets$dismountShoulderHamster(true);
     }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *                                Constructor
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private HamsterShoulderUtil() {}
 }
