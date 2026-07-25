@@ -297,41 +297,46 @@ public final class HamsterInventoryUtil {
             isCaveHamster = HamsterGeneticsUtil.isCaveEnvironment(world, hamster.getBlockPos());
         }
 
+        boolean caveLootSelected = false;
         if (isCaveHamster) {
             float caveChance = Configs.AHP_WORLDGEN.caveCheekLootChance.get();
             if (random.nextFloat() < caveChance) {
+                caveLootSelected = true;
                 if (fillBothCheeks) {
                     fillCheek.accept(0, 2);
                     fillCheek.accept(3, 2);
                 } else {
                     fillCheek.accept(random.nextBoolean() ? 0 : 3, 2);
                 }
-                return;
             }
         }
 
-        // --- 4. Default Loot ---
-        float defaultChance = Configs.AHP_WORLDGEN.defaultCheekLootChance.get();
-        if (random.nextFloat() < defaultChance) {
-            if (fillBothCheeks) {
-                fillCheek.accept(0, 0);
-                fillCheek.accept(3, 0);
-            } else {
-                fillCheek.accept(random.nextBoolean() ? 0 : 3, 0);
+        if (!caveLootSelected) {
+            // --- 4. Default Loot ---
+            float defaultChance = Configs.AHP_WORLDGEN.defaultCheekLootChance.get();
+            if (random.nextFloat() < defaultChance) {
+                if (fillBothCheeks) {
+                    fillCheek.accept(0, 0);
+                    fillCheek.accept(3, 0);
+                } else {
+                    fillCheek.accept(random.nextBoolean() ? 0 : 3, 0);
+                }
+            }
+
+            // --- 5. Custom Loot ---
+            float customChance = Configs.AHP_WORLDGEN.extraCheekLootChance.get();
+            if (!Configs.AHP_WORLDGEN.extraCheekLootList.isEmpty()
+                    && random.nextFloat() < customChance) {
+                if (fillBothCheeks) {
+                    fillCheek.accept(0, 1);
+                    fillCheek.accept(3, 1);
+                } else {
+                    fillCheek.accept(random.nextBoolean() ? 0 : 3, 1);
+                }
             }
         }
 
-        // --- 5. Custom Loot ---
-        float customChance = Configs.AHP_WORLDGEN.extraCheekLootChance.get();
-        if (!Configs.AHP_WORLDGEN.extraCheekLootList.isEmpty()
-                && random.nextFloat() < customChance) {
-            if (fillBothCheeks) {
-                fillCheek.accept(0, 1);
-                fillCheek.accept(3, 1);
-            } else {
-                fillCheek.accept(random.nextBoolean() ? 0 : 3, 1);
-            }
-        }
+        updateCheekStates(hamster);
     }
 
     // --- Inventory Rule Enforcement ---

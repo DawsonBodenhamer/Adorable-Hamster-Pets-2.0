@@ -29,6 +29,9 @@ recovering.
     FIFO/LIFO order. If every mounted hamster is recovering, the normal cooldown message still appears.
 
 ### Fixed
+- **Spawned Hamster Cheeks**
+  - Wild hamsters spawned with loot now inflate the matching cheek immediately instead of concealing their inventory
+    behind a suspiciously innocent face.
 - **Missing Guidebook Warning**
   - The warning now remembers each player's acknowledgement between restarts and mod updates instead of periodically
     forgetting and filing the same complaint again.
