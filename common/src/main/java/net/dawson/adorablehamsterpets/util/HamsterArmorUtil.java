@@ -18,9 +18,12 @@ import net.minecraft.util.math.Vec3d;
  */
 public final class HamsterArmorUtil {
 
-    private HamsterArmorUtil() {}
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Static Utilities
+     * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static boolean shouldAbsorbDamage(HamsterEntity hamster, DamageSource source, ItemStack armorStack) {
+    public static boolean shouldAbsorbDamage(
+            HamsterEntity hamster, DamageSource source, ItemStack armorStack) {
         if (hamster.getWorld().isClient || source.isIn(DamageTypeTags.BYPASSES_ARMOR)) {
             return false;
         }
@@ -38,7 +41,10 @@ public final class HamsterArmorUtil {
     public static boolean absorbDamage(HamsterEntity hamster, ItemStack armorStack, float amount) {
         ItemStack particleStack = armorStack.copy();
         int armorDamage = (int) Math.ceil(amount);
-        armorStack.damage(armorDamage, hamster, entity -> entity.sendEquipmentBreakStatus(EquipmentSlot.CHEST));
+        armorStack.damage(
+                armorDamage,
+                hamster,
+                entity -> entity.sendEquipmentBreakStatus(EquipmentSlot.CHEST));
 
         boolean armorBroke = armorStack.isEmpty();
         if (armorBroke) {
@@ -51,18 +57,24 @@ public final class HamsterArmorUtil {
         return armorBroke;
     }
 
-    private static void spawnArmorParticles(HamsterEntity hamster, ItemStack particleStack, int count, double speed) {
+    private static void spawnArmorParticles(
+            HamsterEntity hamster, ItemStack particleStack, int count, double speed) {
         ParticleEffectsUtil.spawnParticles(
                 hamster.getWorld(),
                 new Vec3d(hamster.getX(), hamster.getBodyY(0.5), hamster.getZ()),
                 new ItemStackParticleEffect(ParticleTypes.ITEM, particleStack),
                 count,
                 new Vec3d(0.2, 0.2, 0.2),
-                speed
-        );
+                speed);
     }
 
     private static int getFireProtectionLevel(ItemStack stack) {
         return EnchantmentHelper.getLevel(Enchantments.FIRE_PROTECTION, stack);
     }
+
+    /* ──────────────────────────────────────────────────────────────────────────────
+     *        Constructors
+     * ────────────────────────────────────────────────────────────────────────────*/
+
+    private HamsterArmorUtil() {}
 }
