@@ -73,3 +73,10 @@ __pycache__/
 .codegraph/
 graphify-out/
 graph.json
+
+# Local generated agent instructions
+/AGENTS.md
+/CLAUDE.md
+/GEMINI.md
+/QWEN.md
+/.github/copilot-instructions.md
