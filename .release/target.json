@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "target_id": "mc-1.20.1",
+  "minecraft": "1.20.1",
+  "java": 17,
+  "adapter": "architectury-gradle-v1",
+  "build_profile": "standard",
+  "destination": "ahp-production",
+  "artifacts": [
+    {
+      "id": "fabric",
+      "path": "fabric/build/libs/adorablehamsterpets-*-1.20.1+fabric.jar",
+      "loaders": ["fabric", "quilt"],
+      "platforms": ["modrinth", "curseforge"]
+    },
+    {
+      "id": "forge",
+      "path": "forge/build/libs/adorablehamsterpets-*-1.20.1+forge.jar",
+      "loaders": ["forge"],
+      "platforms": ["modrinth", "curseforge"]
+    }
+  ],
+  "smoke_tests": {
+    "client": "fabric",
+    "servers": ["fabric", "forge"]
+  }
+}
