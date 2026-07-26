@@ -1,0 +1,4 @@
+/.github/CODEOWNERS @DawsonBodenhamer
+/.github/release_policy/ @DawsonBodenhamer
+/.github/workflows/ @DawsonBodenhamer
+/announcements/ @DawsonBodenhamer
