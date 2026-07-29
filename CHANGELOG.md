@@ -32,6 +32,9 @@ take the launch slot when another is still recovering.
     FIFO/LIFO order. If every mounted hamster is recovering, the normal cooldown message still appears.
 
 ### Fixed
+- **Water Rescue**
+  - Following hamsters now escape waterlogged navigation traps, and drowning hamsters teleport to nearby safe dry
+    ground when one is available. Failed rescues no longer provide free drowning immunity.
 - **Spawned Hamster Cheeks**
   - Wild hamsters spawned with loot now inflate the matching cheek immediately instead of concealing their inventory
     behind a suspiciously innocent face.

@@ -17,12 +17,20 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private static final double BUFFED_FOLLOW_SPEED = 1.5D;
+    private static final double MINIMUM_WATER_PROGRESS = 0.5D;
+    private static final int WATER_PROGRESS_SAMPLE_TICKS = 10;
+    private static final int WATER_STUCK_THRESHOLD_TICKS = 40;
+    private static final int WATER_RESCUE_RETRY_TICKS = 20;
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Instance Fields
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private final HamsterEntity hamster;
+    private double lastHorizontalDistance = Double.NaN;
+    private int waterProgressSampleTicks;
+    private int waterRescueRetryTicks;
+    private int waterStuckTicks;
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constructors
@@ -79,12 +87,14 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
     @Override
     public boolean shouldContinue() {
         // --- State Exclusions ---
-        if (HamsterMovementUtil.shouldNotFollow(this.hamster)) {
+        if (this.isFollowRescueBlocked()) {
+            this.resetWaterWatchdog();
             return false;
         }
 
         // --- Distance Calculation ---
-        // Recalculate maximum follow distance for certain states
+        // Recalculate follow distances for certain states
+        float minDist = ((FollowOwnerGoalAccessor) this).getMinDistance();
         float maxDist = ((FollowOwnerGoalAccessor) this).getMaxDistance();
         LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
 
@@ -93,21 +103,37 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
         }
 
         if (this.hamster.hasGreenBeanBuff() || this.hamster.getAggressionState() == HamsterEntity.AggressionState.MENACE) {
+            minDist += 5.0F;
             maxDist += 5.0F;
         }
 
-        return !this.hamster.getNavigation().isIdle() && this.hamster.squaredDistanceTo(owner) > (double) (maxDist * maxDist);
+        double ownerDistanceSquared = this.hamster.squaredDistanceTo(owner);
+        boolean ordinaryFollowContinues =
+                !this.hamster.getNavigation().isIdle()
+                        && ownerDistanceSquared > (double) (maxDist * maxDist);
+        boolean waterFollowContinues =
+                this.hamster.isTouchingWater()
+                        && ownerDistanceSquared > (double) (minDist * minDist);
+        return ordinaryFollowContinues || waterFollowContinues;
     }
 
     @Override
     public void start() {
         super.start();
-        this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName() + (this.hamster.hasGreenBeanBuff() ? " (Zoomies)" : ""));
+        this.resetWaterWatchdog();
+        LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
+        if (owner != null && this.hamster.isTouchingWater()) {
+            this.lastHorizontalDistance = this.getHorizontalDistance(owner);
+        }
+        this.hamster.setActiveCustomGoalName(
+                this.getClass().getSimpleName()
+                        + (this.hamster.hasGreenBeanBuff() ? " (Zoomies)" : ""));
     }
 
     @Override
     public void stop() {
         super.stop();
+        this.resetWaterWatchdog();
         if (this.hamster.getActiveCustomGoalName().startsWith(this.getClass().getSimpleName())) {
             this.hamster.setActiveCustomGoalName("None");
         }
@@ -120,13 +146,15 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
         LivingEntity owner = accessor.getOwner();
 
         if (owner == null) {
+            this.resetWaterWatchdog();
             return;
         }
 
         boolean shouldTeleport = HamsterMovementUtil.shouldTeleportTo(this.hamster, owner);
+        boolean waterRescueReady = this.tickWaterWatchdog(owner);
 
         // --- Facing Logic ---
-        if (!shouldTeleport) {
+        if (!shouldTeleport && !waterRescueReady) {
             HamsterMovementUtil.faceEntity(this.hamster, owner);
         }
 
@@ -138,8 +166,10 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
             accessor.setUpdateCountdownTicks(this.getTickCount(10));
 
             // --- Movement Execution ---
-            if (shouldTeleport) {
-                HamsterMovementUtil.tryTeleportTo(this.hamster, owner);
+            if (shouldTeleport || waterRescueReady) {
+                HamsterMovementUtil.TeleportResult result =
+                        HamsterMovementUtil.tryTeleportTo(this.hamster, owner, shouldTeleport);
+                this.handleTeleportResult(result);
             } else {
                 // Calculate base speed and apply a 50% reduction if they are currently busting a move
                 double activeSpeed = this.hamster.hasGreenBeanBuff() ? BUFFED_FOLLOW_SPEED : accessor.getSpeed();
@@ -159,5 +189,67 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
                 }
             }
         }
+    }
+
+    private boolean isFollowRescueBlocked() {
+        return HamsterMovementUtil.shouldNotFollow(this.hamster)
+                || this.hamster.isLeashed()
+                || this.hamster.hasVehicle()
+                || this.hamster.isShoulderPet()
+                || this.hamster.cannotFollowOwner();
+    }
+
+    private boolean tickWaterWatchdog(LivingEntity owner) {
+        if (!this.hamster.isTouchingWater() || this.isFollowRescueBlocked()) {
+            this.resetWaterWatchdog();
+            return false;
+        }
+
+        if (Double.isNaN(this.lastHorizontalDistance)) {
+            this.lastHorizontalDistance = this.getHorizontalDistance(owner);
+        }
+        if (this.waterRescueRetryTicks > 0) {
+            this.waterRescueRetryTicks--;
+        }
+        if (++this.waterProgressSampleTicks < WATER_PROGRESS_SAMPLE_TICKS) {
+            return this.waterStuckTicks >= WATER_STUCK_THRESHOLD_TICKS
+                    && this.waterRescueRetryTicks == 0;
+        }
+
+        this.waterProgressSampleTicks = 0;
+        double horizontalDistance = this.getHorizontalDistance(owner);
+        if (this.lastHorizontalDistance - horizontalDistance >= MINIMUM_WATER_PROGRESS) {
+            this.waterStuckTicks = 0;
+        } else {
+            this.waterStuckTicks =
+                    Math.min(
+                            WATER_STUCK_THRESHOLD_TICKS,
+                            this.waterStuckTicks + WATER_PROGRESS_SAMPLE_TICKS);
+        }
+        this.lastHorizontalDistance = horizontalDistance;
+
+        return this.waterStuckTicks >= WATER_STUCK_THRESHOLD_TICKS
+                && this.waterRescueRetryTicks == 0;
+    }
+
+    private double getHorizontalDistance(LivingEntity owner) {
+        double deltaX = this.hamster.getX() - owner.getX();
+        double deltaZ = this.hamster.getZ() - owner.getZ();
+        return Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
+    }
+
+    private void handleTeleportResult(HamsterMovementUtil.TeleportResult result) {
+        if (result == HamsterMovementUtil.TeleportResult.TELEPORTED) {
+            this.resetWaterWatchdog();
+        } else if (result == HamsterMovementUtil.TeleportResult.FAILED) {
+            this.waterRescueRetryTicks = WATER_RESCUE_RETRY_TICKS;
+        }
+    }
+
+    private void resetWaterWatchdog() {
+        this.lastHorizontalDistance = Double.NaN;
+        this.waterProgressSampleTicks = 0;
+        this.waterRescueRetryTicks = 0;
+        this.waterStuckTicks = 0;
     }
 }

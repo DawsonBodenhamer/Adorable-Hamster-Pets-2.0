@@ -217,18 +217,37 @@ public final class HamsterMovementUtil {
 
     /**
      * Attempts to safely teleport the hamster to the target entity using a safe placement algorithm.
-     * Intercepts long-distance AI teleports to prevent vanilla chunk tracking race conditions causing Server/Client desync.
+     * Intercepts long-distance AI teleports to prevent vanilla chunk tracking race conditions causing
+     * server/client desync.
      *
      * @param hamster The hamster to teleport.
-     * @param target  The target entity to teleport to.
+     * @param target The target entity to teleport to.
+     * @return Result of the teleport attempt.
      */
-    public static void tryTeleportTo(HamsterEntity hamster, Entity target) {
+    public static TeleportResult tryTeleportTo(HamsterEntity hamster, Entity target) {
+        return tryTeleportTo(hamster, target, true);
+    }
+
+    /**
+     * Attempts to safely teleport the hamster to the target entity.
+     *
+     * @param hamster The hamster to teleport.
+     * @param target The target entity to teleport to.
+     * @param allowPocketRescue Whether long-distance pocket rescue may replace direct teleportation.
+     * @return Result of the teleport attempt.
+     */
+    public static TeleportResult tryTeleportTo(
+            HamsterEntity hamster, Entity target, boolean allowPocketRescue) {
         World world = hamster.getWorld();
-        if (world.isClient()) return;
+        if (world.isClient()) {
+            return TeleportResult.FAILED;
+        }
 
         // --- Sledgehammer Server/Client Sync ---
         // Force Pocket Rescue Protocol for teleports more than 32 blocks
-        if (Configs.AHP_MAIN.enableTeleportRescue && hamster.squaredDistanceTo(target) > 1024.0) {
+        if (allowPocketRescue
+                && Configs.AHP_MAIN.enableTeleportRescue
+                && hamster.squaredDistanceTo(target) > 1024.0) {
             PlayerEntity ownerPlayer = null;
 
             if (target instanceof PlayerEntity playerTarget) {
@@ -247,8 +266,12 @@ public final class HamsterMovementUtil {
                 accessor.ahp$getInTransitHamsters().add(nbt);
                 accessor.ahp$setTransitTimer(15); // Wait 15 ticks for client to load
                 hamster.discard();
-                AdorableHamsterPets.LOGGER.debug("[Teleport Rescue Protocol] Hamster {} intercepted. (Without this, any babies currently following {} would now be invisible).", hamster.getId(), hamster.getId());
-                return; // Abort vanilla teleport
+                AdorableHamsterPets.LOGGER.debug(
+                        "[Teleport Rescue Protocol] Hamster {} intercepted. (Without this, any babies currently "
+                                + "following {} would now be invisible).",
+                        hamster.getId(),
+                        hamster.getId());
+                return TeleportResult.QUEUED_POCKET_RESCUE;
             }
         }
 
@@ -258,11 +281,26 @@ public final class HamsterMovementUtil {
         int offsetZ = hamster.getRandom().nextBetween(-2, 2);
         BlockPos searchStart = target.getBlockPos().add(offsetX, 0, offsetZ);
 
-        Optional<BlockPos> safePosOpt = HamsterPlacementUtil.findSafeSpawnPosition(searchStart, world, 3, hamster);
+        Optional<BlockPos> safePos =
+                HamsterPlacementUtil.findSafeSpawnPosition(searchStart, world, 3, hamster);
+        if (safePos.isEmpty()) {
+            return TeleportResult.FAILED;
+        }
 
-        safePosOpt.ifPresent(safePos -> {
-            hamster.refreshPositionAndAngles(safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5, hamster.getYaw(), hamster.getPitch());
-            hamster.getNavigation().stop();
-        });
+        BlockPos destination = safePos.get();
+        hamster.refreshPositionAndAngles(
+                destination.getX() + 0.5,
+                destination.getY(),
+                destination.getZ() + 0.5,
+                hamster.getYaw(),
+                hamster.getPitch());
+        hamster.getNavigation().stop();
+        return TeleportResult.TELEPORTED;
+    }
+
+    public enum TeleportResult {
+        TELEPORTED,
+        QUEUED_POCKET_RESCUE,
+        FAILED
     }
 }

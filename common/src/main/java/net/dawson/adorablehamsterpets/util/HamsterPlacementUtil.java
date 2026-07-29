@@ -22,6 +22,10 @@ import java.util.Set;
  */
 public class HamsterPlacementUtil {
 
+    private static final int DROWNING_COLUMN_RADIUS = 1;
+    private static final int DROWNING_RING_RADIUS = 4;
+    private static final int DROWNING_VERTICAL_RANGE = 16;
+
     /**
      * Checks if the hamster needs to be rescued from suffocation and performs the rescue if possible.
      *
@@ -59,6 +63,47 @@ public class HamsterPlacementUtil {
                 });
             });
         }
+    }
+
+    /**
+     * Attempts to move a drowning hamster directly to a nearby dry and collision-safe position.
+     *
+     * @param hamster The drowning hamster.
+     * @return True only when direct teleportation reaches the verified destination.
+     */
+    public static boolean tryDrowningRescue(HamsterEntity hamster) {
+        if (hamster.getWorld().isClient()) {
+            return false;
+        }
+
+        World world = hamster.getWorld();
+        BlockPos origin = hamster.getBlockPos();
+        Optional<BlockPos> safePos = findDrowningRescuePosition(origin, world, hamster);
+        if (safePos.isEmpty()) {
+            return false;
+        }
+
+        BlockPos destination = safePos.get();
+        hamster.requestTeleport(
+                destination.getX() + 0.5,
+                destination.getY(),
+                destination.getZ() + 0.5);
+        if (!hamster.getBlockPos().equals(destination)
+                || !isSafeDryRescueLocation(destination, world, hamster)) {
+            return false;
+        }
+
+        hamster.setVelocity(0.0, 0.0, 0.0);
+        hamster.velocityDirty = true;
+        hamster.getNavigation().stop();
+        hamster.setSwimming(false);
+        hamster.setAir(hamster.getMaxAir());
+        AdorableHamsterPets.LOGGER.debug(
+                "[HamsterDrowningRescue] Hamster {} rescued from {} to dry location {}.",
+                hamster.getId(),
+                origin,
+                destination);
+        return true;
     }
 
     /**
@@ -164,5 +209,74 @@ public class HamsterPlacementUtil {
         }
 
         return true;
+    }
+
+    private static Optional<BlockPos> findDrowningRescuePosition(
+            BlockPos origin, World world, HamsterEntity hamster) {
+        int maximumY =
+                Math.min(
+                        world.getBottomY() + world.getHeight() - 2,
+                        origin.getY() + DROWNING_VERTICAL_RANGE);
+
+        Optional<BlockPos> nearbyColumnResult =
+                searchDrowningColumns(
+                        origin,
+                        world,
+                        hamster,
+                        maximumY,
+                        0,
+                        DROWNING_COLUMN_RADIUS);
+        if (nearbyColumnResult.isPresent()) {
+            return nearbyColumnResult;
+        }
+
+        return searchDrowningColumns(
+                origin,
+                world,
+                hamster,
+                maximumY,
+                DROWNING_COLUMN_RADIUS + 1,
+                DROWNING_RING_RADIUS);
+    }
+
+    private static Optional<BlockPos> searchDrowningColumns(
+            BlockPos origin,
+            World world,
+            HamsterEntity hamster,
+            int maximumY,
+            int minimumRadius,
+            int maximumRadius) {
+        for (int radius = minimumRadius; radius <= maximumRadius; radius++) {
+            for (int offsetX = -radius; offsetX <= radius; offsetX++) {
+                for (int offsetZ = -radius; offsetZ <= radius; offsetZ++) {
+                    if (radius > 0
+                            && Math.abs(offsetX) != radius
+                            && Math.abs(offsetZ) != radius) {
+                        continue;
+                    }
+
+                    for (int y = origin.getY(); y <= maximumY; y++) {
+                        BlockPos candidate =
+                                new BlockPos(
+                                        origin.getX() + offsetX,
+                                        y,
+                                        origin.getZ() + offsetZ);
+                        if (isSafeDryRescueLocation(candidate, world, hamster)) {
+                            return Optional.of(candidate);
+                        }
+                    }
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static boolean isSafeDryRescueLocation(
+            BlockPos pos, World world, HamsterEntity hamster) {
+        return world.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4)
+                && world.getWorldBorder().contains(pos)
+                && world.getFluidState(pos).isEmpty()
+                && world.getFluidState(pos.up()).isEmpty()
+                && isSafeSpawnLocation(pos, world, hamster);
     }
 }
