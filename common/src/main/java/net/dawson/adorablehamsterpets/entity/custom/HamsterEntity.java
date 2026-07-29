@@ -24,9 +24,6 @@ import net.dawson.adorablehamsterpets.util.*;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.control.BodyControl;
-import net.minecraft.entity.ai.goal.AttackWithOwnerGoal;
-import net.minecraft.entity.ai.goal.RevengeGoal;
-import net.minecraft.entity.ai.goal.TrackOwnerAttackerGoal;
 import net.minecraft.entity.ai.pathing.EntityNavigation;
 import net.minecraft.entity.ai.pathing.MobNavigation;
 import net.minecraft.entity.ai.pathing.PathNodeType;
@@ -277,6 +274,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             ImplementedInventory.create(HamsterInventoryUtil.INVENTORY_SIZE);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final HamsterAnimationScheduler animScheduler = new HamsterAnimationScheduler();
+    private final HamsterCombatUtil.StandardCombatState standardCombatState =
+            HamsterCombatUtil.createStandardCombatState();
     private final ArmorRuntimeState armorRuntimeState = new ArmorRuntimeState();
     private final AutoEatState autoEatState = new AutoEatState();
     private final CelebrationRuntimeState celebrationRuntimeState = new CelebrationRuntimeState();
@@ -356,9 +355,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.goalSelector.add(17, new HamsterLookAroundGoal(this));
 
         // --- Target Selector Goals ---
-        this.targetSelector.add(1, new TrackOwnerAttackerGoal(this));
-        this.targetSelector.add(2, new AttackWithOwnerGoal(this));
-        this.targetSelector.add(3, new RevengeGoal(this).setGroupRevenge());
+        this.targetSelector.add(1, new HamsterTrackOwnerAttackerGoal(this));
+        this.targetSelector.add(2, new HamsterAttackWithOwnerGoal(this));
+        this.targetSelector.add(3, new HamsterRevengeGoal(this).setGroupRevenge());
         this.targetSelector.add(4, new HamsterMenaceTargetGoal(this));
     }
 
@@ -415,6 +414,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- 2. Timers and Pre-Super Behavior ---
         this.tickSchedulersAndTimers();
         this.tickPreSuperBehaviors();
+        HamsterCombatUtil.tickStandardCombat(this);
 
         // --- 3. Vanilla Tick ---
         super.tick();
@@ -471,9 +471,15 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     public void setAggressionState(AggressionState state) {
+        AggressionState previousState = this.getAggressionState();
         int val = state.ordinal();
         setHamsterFlag(AGGRESSION_STATE_BIT_1, (val & 1) != 0);
         setHamsterFlag(AGGRESSION_STATE_BIT_2, (val & 2) != 0);
+        HamsterCombatUtil.handleAggressionStateChange(this, previousState, state);
+    }
+
+    public HamsterCombatUtil.StandardCombatState getStandardCombatState() {
+        return this.standardCombatState;
     }
 
     public void scheduleTask(long executionTick, String debugName, Runnable action) {
@@ -1801,10 +1807,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
     @Override
     public boolean canTarget(LivingEntity target) {
-        if (this.getAggressionState() == AggressionState.PACIFIST) {
-            return false;
-        }
-        return super.canTarget(target);
+        return HamsterCombatUtil.canAcquireTarget(this, target) && super.canTarget(target);
     }
 
     @Override
@@ -1813,62 +1816,20 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     /**
-     * This method is overridden to prevent the hamster from targeting (e.g., retaliating against)
-     * other pets owned by its own owner.
+     * Applies aggression-mode, protected-target, and Standard combat-window rules whenever a goal
+     * changes the hamster's target.
      */
     @Override
     public void setTarget(@Nullable LivingEntity target) {
-        // --- 1. Pacifist Mode ---
-        if (this.getAggressionState() == AggressionState.PACIFIST && target != null) {
+        LivingEntity previousTarget = this.getTarget();
+        if (target != null && !HamsterCombatUtil.canAcquireTarget(this, target)) {
             super.setTarget(null);
+            HamsterCombatUtil.acceptTarget(this, previousTarget, null);
             return;
         }
 
-        // --- 2. Check if Tamed and Has Owner ---
-        if (this.isTamed() && this.getOwner() != null) {
-            LivingEntity owner = this.getOwner();
-            UUID ownerUuid = owner.getUuid();
-
-            boolean preventTargeting = false;
-
-            // Check TameableEntity
-            if (target instanceof TameableEntity tameablePet) {
-                UUID petOwnerUuid = tameablePet.getOwnerUuid();
-                if (petOwnerUuid != null && petOwnerUuid.equals(ownerUuid) && tameablePet != this) {
-                    // AdorableHamsterPets.LOGGER.debug("[setTarget] Proposed target is a
-                    // TameableEntity owned by the same player. Preventing targeting.");
-                    preventTargeting = true;
-                }
-            }
-            // Check AbstractHorseEntity
-            else if (target instanceof net.minecraft.entity.passive.AbstractHorseEntity horsePet) {
-                Entity horseOwnerEntity = horsePet.getOwner();
-                if (horseOwnerEntity != null && horseOwnerEntity.getUuid().equals(ownerUuid)) {
-                    // AdorableHamsterPets.LOGGER.debug("[setTarget] Proposed target is an
-                    // AbstractHorseEntity owned by the same player. Preventing targeting.");
-                    preventTargeting = true;
-                }
-            }
-            // General Ownable Check (fallback)
-            else if (target instanceof Ownable ownableFallback) {
-                Entity fallbackOwnerEntity = ownableFallback.getOwner();
-                if (fallbackOwnerEntity != null
-                        && fallbackOwnerEntity.getUuid().equals(ownerUuid)
-                        && ownableFallback != this) {
-                    // AdorableHamsterPets.LOGGER.debug("[setTarget] Proposed target is an Ownable
-                    // (fallback) owned by the same player. Preventing targeting.");
-                    preventTargeting = true;
-                }
-            }
-
-            if (preventTargeting) {
-                super.setTarget(null);
-                return;
-            }
-        }
-
-        // --- 3. Default Behavior ---
         super.setTarget(target);
+        HamsterCombatUtil.acceptTarget(this, previousTarget, target);
     }
 
     // --- Taming and Breeding ---

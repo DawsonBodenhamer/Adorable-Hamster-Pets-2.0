@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # **The Finders Keepers Patch**
 
-Hide & Seek is now easier to understand and less determined to dominate your hamster's schedule. This patch also keeps
-small rodents above lowered blocks and lets a ready shoulder hamster take the launch slot when another is still
-recovering.
+Hide & Seek is now easier to understand and less determined to dominate your hamster's schedule. Standard-mode
+hamsters also stand down from stale fights, small rodents stay above lowered blocks, and a ready shoulder hamster can
+take the launch slot when another is still recovering.
 
 ### Added
 - **Hide and Squeak Advancement**
@@ -20,6 +20,9 @@ recovering.
   - Added a *Hamster Tips* entry explaining the start message, hiding-place clues, time limit, and reward.
 
 ### Changed
+- **Standard Hamsters Stand Down**
+  - Standard-mode hamsters now abandon a fight after 30 seconds without relevant combat from their owner. Menace mode
+    remains professionally unreasonable.
 - **Less Frequent Hide & Seek Games**
   - Doubled the default initiation interval from roughly 3 minutes to roughly 6 minutes. *Existing worlds retain their
     saved value; open the setting in the config screen, right-click it, and select **Restore Defaults** to apply the new
