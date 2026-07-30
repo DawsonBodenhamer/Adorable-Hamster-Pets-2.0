@@ -20,6 +20,7 @@ import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 
 import java.util.function.BiConsumer;
+import java.util.function.IntPredicate;
 
 /**
  * Manages inventory validation, equipment synchronization, cheek pouch state, and wild loot
@@ -149,22 +150,16 @@ public final class HamsterInventoryUtil {
      * Updates visual and logic states for cheek fullness based on inventory content.
      */
     public static void updateCheekStates(HamsterEntity hamster) {
-        // --- Cheek Occupancy ---
-        boolean leftFull = false;
-        for (int i = 0; i < 3; i++) {
-            if (!hamster.getItems().get(i).isEmpty()) {
-                leftFull = true;
-                break;
-            }
-        }
+        // Cheek inventory is server-authoritative and is not mirrored to the client. Client-side
+        // derivation would therefore erase correctly tracked cheek flags whenever this helper is
+        // reached by presentation or compatibility code.
+        if (hamster.getWorld().isClient()) return;
 
-        boolean rightFull = false;
-        for (int i = 3; i < CHEEK_POUCH_SIZE; i++) {
-            if (!hamster.getItems().get(i).isEmpty()) {
-                rightFull = true;
-                break;
-            }
-        }
+        // --- Cheek Occupancy ---
+        CheekOccupancy occupancy =
+                resolveCheekOccupancy(slot -> !hamster.getItems().get(slot).isEmpty());
+        boolean leftFull = occupancy.leftFull();
+        boolean rightFull = occupancy.rightFull();
 
         if (hamster.isLeftCheekFull() != leftFull) hamster.setLeftCheekFull(leftFull);
         if (hamster.isRightCheekFull() != rightFull) hamster.setRightCheekFull(rightFull);
@@ -184,6 +179,27 @@ public final class HamsterInventoryUtil {
             }
         }
     }
+
+    static CheekOccupancy resolveCheekOccupancy(IntPredicate slotOccupied) {
+        boolean leftFull = false;
+        for (int i = 0; i < 3; i++) {
+            if (slotOccupied.test(i)) {
+                leftFull = true;
+                break;
+            }
+        }
+
+        boolean rightFull = false;
+        for (int i = 3; i < CHEEK_POUCH_SIZE; i++) {
+            if (slotOccupied.test(i)) {
+                rightFull = true;
+                break;
+            }
+        }
+        return new CheekOccupancy(leftFull, rightFull);
+    }
+
+    record CheekOccupancy(boolean leftFull, boolean rightFull) {}
 
     /**
      * Synchronizes inventory-derived visual state after an inventory mutation.
