@@ -35,9 +35,9 @@ take the launch slot when another is still recovering.
 - **Water Rescue**
   - Following hamsters now escape waterlogged navigation traps, and drowning hamsters teleport to nearby safe dry
     ground when one is available. Failed rescues no longer provide free drowning immunity.
-- **Spawned Hamster Cheeks**
-  - Wild hamsters spawned with loot now inflate the matching cheek immediately instead of concealing their inventory
-    behind a suspiciously innocent face.
+- **Reliable Hamster Cheeks**
+  - Wild hamsters spawned with loot now inflate the matching cheek immediately, and inspecting them with Jade no
+    longer visually deflates cheeks that still contain items.
 - **Missing Guidebook Warning**
   - The warning now remembers each player's acknowledgement between restarts and mod updates instead of periodically
     forgetting and filing the same complaint again.

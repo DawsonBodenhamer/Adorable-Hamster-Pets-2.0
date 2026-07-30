@@ -31,4 +31,10 @@ dependencies {
 
     // Iris API (Optional, Compile-Time)
     modCompileOnly "maven.modrinth:iris:${rootProject.iris_version}-fabric"
+
+    testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
+}
+
+tasks.named("test") {
+    useJUnitPlatform()
 }
