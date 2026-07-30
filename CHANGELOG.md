@@ -37,7 +37,8 @@ take the launch slot when another is still recovering.
     ground when one is available. Failed rescues no longer provide free drowning immunity.
 - **Reliable Hamster Cheeks**
   - Wild hamsters spawned with loot now inflate the matching cheek immediately, and inspecting them with Jade no
-    longer visually deflates cheeks that still contain items.
+    longer visually deflates cheeks that still contain items, fixing a synchronization flaw present since at least
+    v1.1.0.
 - **Missing Guidebook Warning**
   - The warning now remembers each player's acknowledgement between restarts and mod updates instead of periodically
     forgetting and filing the same complaint again.
@@ -56,7 +57,9 @@ take the launch slot when another is still recovering.
 
 # **The Punchy Patch**
 
-In addition to a bunch of new mini-games, idle animations and QoL features (including hamster armor trims & toggleable aggression states!), this patch introduces 5 new super cute, first-person animations to your rodent-handling experience, courtesy of the amazing [**Punchy**](https://modrinth.com/mod/punchy-fpa) mod! I've been working closely with [**@Dev Punchy Man**](https://modrinth.com/mod/punchy-fpa) to overhaul how it feels to pick up, pet, yeet, and dismount your hamsters.
+In addition to a bunch of new mini-games, idle animations and QoL features (including hamster armor trims & toggleable aggression states!), this patch introduces 5 new super cute, first-person animations to your rodent-handling experience, courtesy of the amazing **Punchy mod!** I've been working closely with [**@Dev Punchy Man**](https://modrinth.com/mod/punchy-fpa) to overhaul how it feels to pick up, pet, yeet, and dismount your hamsters.
+
+### 👉🏼 [**Showcase video**](https://www.youtube.com/watch?v=YGRdjOTCMHo) 👈🏼
 
 ### Added
 - **New First-Person Animations** _(Optional: Requires Punchy v2.6.0+)_
