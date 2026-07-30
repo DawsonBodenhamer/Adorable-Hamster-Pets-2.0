@@ -1499,14 +1499,21 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     // --- Combat Callbacks ---
     @Override
     public boolean damage(DamageSource source, float amount) {
-        // --- 1. Suffocation Rescue Trigger ---
+        // --- 1. Drowning Rescue ---
+        if (source.isOf(DamageTypes.DROWN)
+                && !this.getWorld().isClient()
+                && HamsterPlacementUtil.tryDrowningRescue(this)) {
+            return false;
+        }
+
+        // --- 2. Suffocation Rescue Trigger ---
         // If hamster starts suffocating, trigger self-rescue teleport logic in tick()
         if (source.isOf(DamageTypes.IN_WALL)) {
             this.suffocationGracePeriod = 40; // 2 seconds to find safe spot
             return false;
         }
 
-        // --- 2. Friendly Fire Prevention ---
+        // --- 3. Friendly Fire Prevention ---
         if (Configs.AHP_MAIN.preventOwnerFriendlyFire && this.isTamed()) {
             Entity attacker = source.getAttacker();
             if (attacker instanceof LivingEntity livingAttacker && this.isOwner(livingAttacker)) {
@@ -1514,13 +1521,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- 3. Reset Armor Flag ---
+        // --- 4. Reset Armor Flag ---
         this.armorRuntimeState.absorbedDamage = false;
 
-        // --- 4. Delegate to Vanilla Logic ---
+        // --- 5. Delegate to Vanilla Logic ---
         boolean result = super.damage(source, amount);
 
-        // --- 5. Armor Absorption Override ---
+        // --- 6. Armor Absorption Override ---
         // If armor absorbed damage, tell engine entity was hit so it applies knockback/SFX
         if (this.armorRuntimeState.absorbedDamage) {
             return true;
