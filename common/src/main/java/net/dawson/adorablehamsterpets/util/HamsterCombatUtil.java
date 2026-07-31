@@ -42,6 +42,61 @@ public final class HamsterCombatUtil {
         return new StandardCombatState();
     }
 
+    public static boolean isStandardCombatEngaged(HamsterEntity hamster) {
+        if (!usesStandardCombatWindow(hamster)) {
+            return false;
+        }
+
+        LivingEntity target = hamster.getTarget();
+        StandardCombatState state = hamster.getStandardCombatState();
+        return isConflictEngaged(
+                target == null ? null : target.getUuid(),
+                state.targetUuid,
+                hamster.getWorld().getTime(),
+                state.deadline);
+    }
+
+    public static boolean deescalateStandardCombat(HamsterEntity hamster) {
+        if (hamster.getWorld().isClient() || !isStandardCombatEngaged(hamster)) {
+            return false;
+        }
+
+        LivingEntity target = hamster.getTarget();
+        StandardCombatState state = hamster.getStandardCombatState();
+        if (target != null) {
+            refreshFromOwnerCombat(hamster, target);
+        }
+
+        UUID conflictUuid = target == null ? state.targetUuid : target.getUuid();
+        LivingEntity owner = hamster.getOwner();
+        int ownerAttackTime = owner == state.observedOwner
+                ? state.consumedOwnerAttackTime
+                : owner == null ? Integer.MIN_VALUE : owner.getLastAttackTime();
+        int ownerAttackedTime = owner == state.observedOwner
+                ? state.consumedOwnerAttackedTime
+                : owner == null ? Integer.MIN_VALUE : owner.getLastAttackedTime();
+        LivingEntity attacker = hamster.getAttacker();
+        boolean conflictMatchesRetaliation =
+                attacker != null && attacker.getUuid().equals(conflictUuid);
+        int hamsterAttackedTime = conflictMatchesRetaliation
+                ? hamster.getLastAttackedTime()
+                : state.consumedHamsterAttackedTime;
+
+        hamster.setTarget(null);
+        hamster.getNavigation().stop();
+        if (conflictMatchesRetaliation) {
+            hamster.setAttacker(null);
+        }
+
+        clearActiveCombatWindow(state);
+        state.expiredTargetUuid = conflictUuid;
+        state.expiredOwner = owner;
+        state.expiredOwnerAttackTime = ownerAttackTime;
+        state.expiredOwnerAttackedTime = ownerAttackedTime;
+        state.expiredHamsterAttackedTime = hamsterAttackedTime;
+        return true;
+    }
+
     public static boolean canAttackWithOwner(
             HamsterEntity hamster, LivingEntity target, LivingEntity owner) {
         if (!isTargetLegal(hamster, target) || !isFreshOwnerConflict(owner, target)) {
@@ -76,9 +131,7 @@ public final class HamsterCombatUtil {
             return;
         }
         if (acceptedTarget == null) {
-            if (usesStandardCombatWindow(hamster)) {
-                clearActiveCombatWindow(hamster.getStandardCombatState());
-            } else {
+            if (!usesStandardCombatWindow(hamster)) {
                 clearStandardCombatState(hamster);
             }
             return;
@@ -111,15 +164,19 @@ public final class HamsterCombatUtil {
             return;
         }
 
-        LivingEntity target = hamster.getTarget();
         if (!usesStandardCombatWindow(hamster)) {
             if (hamster.getAggressionState() != HamsterEntity.AggressionState.STANDARD) {
                 clearStandardCombatState(hamster);
             }
             return;
         }
+
+        LivingEntity target = hamster.getTarget();
         if (target == null) {
-            clearActiveCombatWindow(hamster.getStandardCombatState());
+            StandardCombatState state = hamster.getStandardCombatState();
+            if (state.targetUuid != null && hamster.getWorld().getTime() >= state.deadline) {
+                terminateStandardCombat(hamster, true);
+            }
             return;
         }
         if (!isTargetLegal(hamster, target)) {
@@ -290,21 +347,40 @@ public final class HamsterCombatUtil {
                 && hamster.getAggressionState() == HamsterEntity.AggressionState.STANDARD;
     }
 
+    static boolean isConflictEngaged(
+            @Nullable UUID currentTargetUuid,
+            @Nullable UUID windowTargetUuid,
+            long currentTick,
+            long deadline) {
+        return currentTargetUuid != null
+                || windowTargetUuid != null && currentTick < deadline;
+    }
+
     private static void terminateStandardCombat(HamsterEntity hamster, boolean suppressConflict) {
         LivingEntity target = hamster.getTarget();
         StandardCombatState state = hamster.getStandardCombatState();
-        UUID expiredTargetUuid = suppressConflict && target != null ? target.getUuid() : null;
-        LivingEntity expiredOwner = suppressConflict ? hamster.getOwner() : null;
-        int expiredOwnerAttackTime =
-                expiredOwner == null ? Integer.MIN_VALUE : expiredOwner.getLastAttackTime();
-        int expiredOwnerAttackedTime =
-                expiredOwner == null ? Integer.MIN_VALUE : expiredOwner.getLastAttackedTime();
+        UUID expiredTargetUuid = suppressConflict
+                ? target == null ? state.targetUuid : target.getUuid()
+                : null;
+        LivingEntity expiredOwner = suppressConflict
+                ? state.observedOwner == null ? hamster.getOwner() : state.observedOwner
+                : null;
+        int expiredOwnerAttackTime = expiredOwner == null
+                ? Integer.MIN_VALUE
+                : expiredOwner == state.observedOwner
+                        ? state.consumedOwnerAttackTime
+                        : expiredOwner.getLastAttackTime();
+        int expiredOwnerAttackedTime = expiredOwner == null
+                ? Integer.MIN_VALUE
+                : expiredOwner == state.observedOwner
+                        ? state.consumedOwnerAttackedTime
+                        : expiredOwner.getLastAttackedTime();
         int expiredHamsterAttackedTime = hamster.getLastAttackedTime();
 
         hamster.setTarget(null);
         hamster.getNavigation().stop();
         clearActiveCombatWindow(state);
-        if (suppressConflict && target != null) {
+        if (suppressConflict && expiredTargetUuid != null) {
             state.expiredTargetUuid = expiredTargetUuid;
             state.expiredOwner = expiredOwner;
             state.expiredOwnerAttackTime = expiredOwnerAttackTime;

@@ -10,19 +10,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 # **The Finders Keepers Patch**
 
 Hide & Seek is now easier to understand and less determined to dominate your hamster's schedule. Standard-mode
-hamsters also stand down from stale fights, small rodents stay above lowered blocks, and a ready shoulder hamster can
-take the launch slot when another is still recovering.
+hamsters also stand down from stale fights or one firmly administered flower, small rodents stay above lowered blocks,
+and a ready shoulder hamster can take the launch slot when another is still recovering.
 
 ### Added
 - **Hide and Squeak Advancement**
   - Successfully find your hamster during Hide & Seek to earn a dedicated advancement.
 - **Hide & Seek Guidebook Entry**
   - Added a *Hamster Tips* entry explaining the start message, hiding-place clues, time limit, and reward.
+- **Hamster Combat Timer**
+  - Standard-mode hamsters now abandon a fight after 30 seconds without relevant combat from their owner. Menace mode remains professionally unreasonable.
 
 ### Changed
-- **Standard Hamsters Stand Down**
-  - Standard-mode hamsters now abandon a fight after 30 seconds without relevant combat from their owner. Menace mode
-    remains professionally unreasonable.
+- **Cycle Aggression States Without Sneaking**
+  - Configured Pacifist, Standard, and Menace items now change aggression through ordinary feeding.
+  - If the hamster is already in Standard aggression mode, configured sunflower seeds remain ordinary food.
+  - Flowers now equip as accessories with sneak + right-click, keeping normal right-click available for feeding.
+- **Instantly End Hamster Fights**
+  - Feeding your hamster a flower during a fight will instantly wipe its memory of the current target without enabling Pacifist mode.
+  - Trying to enable **Pacifist mode**? Just feed it a second flower while it is calm.
 - **Less Frequent Hide & Seek Games**
   - Doubled the default initiation interval from roughly 3 minutes to roughly 6 minutes. *Existing worlds retain their
     saved value; open the setting in the config screen, right-click it, and select **Restore Defaults** to apply the new

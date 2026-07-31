@@ -464,19 +464,45 @@ public final class HamsterInteractionUtil {
     }
 
     // --- Accessory Application ---
-    public static ActionResult handleAccessoryInteraction(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
-        if (hamster.isValid(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX, stack) && !player.isSneaking()) {
+    public static ActionResult handleAccessoryInteraction(
+            HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
+        boolean isFlower = stack.isIn(ItemTags.FLOWERS);
+        if (hamster.isValid(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX, stack)
+                && HamsterInteractionGestureUtil.isAccessoryEquipGesture(
+                        player.isSneaking(), isFlower)) {
             if (!hamster.getWorld().isClient()) {
-                ItemStack currentAccessory = hamster.getItems().get(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX);
+                ItemStack currentAccessory =
+                        hamster.getItems().get(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX);
 
                 // If holding flower and hamster already has same flower, cycle position
-                if (stack.isIn(ItemTags.FLOWERS) && currentAccessory.isIn(ItemTags.FLOWERS) && ItemStack.areItemsEqual(stack, currentAccessory)) {
+                if (isFlower
+                        && currentAccessory.isIn(ItemTags.FLOWERS)
+                        && ItemStack.areItemsEqual(stack, currentAccessory)) {
                     int currentPos = hamster.getDataTracker().get(HamsterEntity.FLOWER_POS);
                     int nextPos = (currentPos % 3) + 1;
                     hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, nextPos);
 
-                    hamster.getWorld().playSound(null, hamster.getBlockPos(), SoundEvents.BLOCK_PINK_PETALS_PLACE, SoundCategory.PLAYERS, 0.7f, 1.0f + hamster.getRandom().nextFloat() * 0.2f);
-                    ParticleEffectsUtil.spawnParticles(hamster.getWorld(), new Vec3d(hamster.getX(), hamster.getY() + hamster.getHeight() * 0.75, hamster.getZ()), ParticleTypes.FALLING_SPORE_BLOSSOM, 7, new Vec3d(hamster.getWidth() / 2.0, hamster.getHeight() / 2.0, hamster.getWidth() / 2.0), 0.0);
+                    hamster.getWorld()
+                            .playSound(
+                                    null,
+                                    hamster.getBlockPos(),
+                                    SoundEvents.BLOCK_PINK_PETALS_PLACE,
+                                    SoundCategory.PLAYERS,
+                                    0.7F,
+                                    1.0F + hamster.getRandom().nextFloat() * 0.2F);
+                    ParticleEffectsUtil.spawnParticles(
+                            hamster.getWorld(),
+                            new Vec3d(
+                                    hamster.getX(),
+                                    hamster.getY() + hamster.getHeight() * 0.75,
+                                    hamster.getZ()),
+                            ParticleTypes.FALLING_SPORE_BLOSSOM,
+                            7,
+                            new Vec3d(
+                                    hamster.getWidth() / 2.0,
+                                    hamster.getHeight() / 2.0,
+                                    hamster.getWidth() / 2.0),
+                            0.0);
                 } else {
                     ItemStack toEquip = stack.split(1);
                     ItemStack toReturn = currentAccessory.copy();
@@ -487,10 +513,30 @@ public final class HamsterInteractionUtil {
                         hamster.dropStack(toReturn);
                     }
 
-                    hamster.getWorld().playSound(null, hamster.getBlockPos(), SoundEvents.ITEM_ARMOR_EQUIP_GENERIC.value(), SoundCategory.PLAYERS, 1.0f, 1.0f);
-                    ParticleEffectsUtil.spawnParticles(hamster.getWorld(), new Vec3d(hamster.getX(), hamster.getY() + hamster.getHeight() * 0.75, hamster.getZ()), new ItemStackParticleEffect(ParticleTypes.ITEM, toEquip), 7, new Vec3d(hamster.getWidth() / 2.0, hamster.getHeight() / 2.0, hamster.getWidth() / 2.0), 0.0);
+                    hamster.getWorld()
+                            .playSound(
+                                    null,
+                                    hamster.getBlockPos(),
+                                    SoundEvents.ITEM_ARMOR_EQUIP_GENERIC.value(),
+                                    SoundCategory.PLAYERS,
+                                    1.0F,
+                                    1.0F);
+                    ParticleEffectsUtil.spawnParticles(
+                            hamster.getWorld(),
+                            new Vec3d(
+                                    hamster.getX(),
+                                    hamster.getY() + hamster.getHeight() * 0.75,
+                                    hamster.getZ()),
+                            new ItemStackParticleEffect(ParticleTypes.ITEM, toEquip),
+                            7,
+                            new Vec3d(
+                                    hamster.getWidth() / 2.0,
+                                    hamster.getHeight() / 2.0,
+                                    hamster.getWidth() / 2.0),
+                            0.0);
 
-                    if (toEquip.isIn(ItemTags.FLOWERS) && player instanceof ServerPlayerEntity serverPlayer) {
+                    if (toEquip.isIn(ItemTags.FLOWERS)
+                            && player instanceof ServerPlayerEntity serverPlayer) {
                         ModCriteria.APPLIED_FLOWER.get().trigger(serverPlayer, hamster);
                     }
                 }
@@ -583,26 +629,25 @@ public final class HamsterInteractionUtil {
     }
 
     // --- Aggression Toggle ---
-    public static ActionResult handleAggressionToggle(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
-        if (player.isSneaking()) {
-            boolean isAggressionItem = ConfigDataCache.isPacifistItem(stack)
-                    || ConfigDataCache.isStandardAggressionItem(stack)
-                    || ConfigDataCache.isMenaceItem(stack);
+    public static ActionResult handleAggressionToggle(
+            HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
+        boolean isPacifistItem = ConfigDataCache.isPacifistItem(stack);
+        boolean isStandardItem = ConfigDataCache.isStandardAggressionItem(stack);
+        boolean isMenaceItem = ConfigDataCache.isMenaceItem(stack);
+        if (!HamsterInteractionGestureUtil.isAggressionToggleGesture(
+                player.isSneaking(), isPacifistItem, isStandardItem, isMenaceItem)) {
+            return ActionResult.PASS;
+        }
 
-            if (isAggressionItem) {
-                int toggleResult = HamsterDietUtil.tryAggressionToggle(hamster, player, stack);
-
-                if (toggleResult == 1) {
-                    if (!hamster.getWorld().isClient()) {
-                        if (!player.getAbilities().creativeMode) {
-                            stack.decrement(1);
-                        }
-                    }
-                    return ActionResult.SUCCESS;
-                }
-
-                // If toggleResult == 0, hamster already in that state so fall through to opening inventory
+        HamsterDietUtil.AggressionToggleResult toggleResult =
+                HamsterDietUtil.tryAggressionToggle(hamster, player, stack);
+        if (toggleResult.isAccepted()) {
+            if (!hamster.getWorld().isClient()
+                    && toggleResult.consumesItem()
+                    && !player.getAbilities().creativeMode) {
+                stack.decrement(1);
             }
+            return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
     }

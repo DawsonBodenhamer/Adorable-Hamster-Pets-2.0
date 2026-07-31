@@ -253,64 +253,146 @@ public final class HamsterDietUtil {
 
     /**
      * Attempts to toggle the hamster's aggression state based on the provided item.
-     *
-     * @return 1 if the state was successfully changed, 0 if the hamster is already in that state or the item is invalid.
      */
-    public static int tryAggressionToggle(HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
+    public static AggressionToggleResult tryAggressionToggle(
+        HamsterEntity hamster, PlayerEntity player, ItemStack stack) {
         if (ConfigDataCache.isPacifistItem(stack)) {
-            return trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.PACIFIST);
+            HamsterEntity.AggressionState currentState = hamster.getAggressionState();
+            if (currentState == HamsterEntity.AggressionState.STANDARD) {
+                if (hamster.getWorld().isClient()) {
+                    return AggressionToggleResult.ACCEPTED_WITH_CONSUMPTION;
+                }
+                if (HamsterCombatUtil.deescalateStandardCombat(hamster)) {
+                    applyDeescalationFeedback(hamster);
+                    return AggressionToggleResult.ACCEPTED_WITH_CONSUMPTION;
+                }
+            }
+            HamsterInteractionGestureUtil.PacifistItemAction action =
+                    HamsterInteractionGestureUtil.resolvePacifistItemAction(
+                            currentState == HamsterEntity.AggressionState.PACIFIST,
+                            currentState == HamsterEntity.AggressionState.MENACE
+                                    && hamster.getTarget() != null);
+            return switch (action) {
+                case FALL_THROUGH -> AggressionToggleResult.NOT_HANDLED;
+                case END_FIGHT_IN_STANDARD ->
+                        trySetAggressionState(
+                                hamster, player, HamsterEntity.AggressionState.STANDARD);
+                case ENABLE_PACIFIST ->
+                        trySetAggressionState(
+                                hamster, player, HamsterEntity.AggressionState.PACIFIST);
+            };
         } else if (ConfigDataCache.isStandardAggressionItem(stack)) {
-            return trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.STANDARD);
+            return trySetAggressionState(hamster, player, HamsterEntity.AggressionState.STANDARD);
         } else if (ConfigDataCache.isMenaceItem(stack)) {
-            return trySetAggressionState(hamster, player, stack, HamsterEntity.AggressionState.MENACE);
+            return trySetAggressionState(hamster, player, HamsterEntity.AggressionState.MENACE);
         }
-        return 0;
+        return AggressionToggleResult.NOT_HANDLED;
     }
 
-    private static int trySetAggressionState(HamsterEntity hamster, PlayerEntity player, ItemStack stack, HamsterEntity.AggressionState targetState) {
+    private static AggressionToggleResult trySetAggressionState(
+            HamsterEntity hamster,
+            PlayerEntity player,
+            HamsterEntity.AggressionState targetState) {
         if (hamster.getAggressionState() == targetState) {
-            return 0; // Already in this state. Fall through
+            return AggressionToggleResult.NOT_HANDLED;
         }
 
         if (!hamster.getWorld().isClient()) {
             hamster.setAggressionState(targetState);
-
-            // Audio Feedback
-            SoundEvent sound = targetState == HamsterEntity.AggressionState.MENACE ? SoundEvents.ENTITY_ENDER_DRAGON_GROWL : getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, hamster.getRandom());
-            float volume = targetState == HamsterEntity.AggressionState.MENACE ? 0.15f : 1.0f;
-            float pitch = targetState == HamsterEntity.AggressionState.MENACE ? 5.0f : 1.0f;
-            hamster.getWorld().playSound(null, hamster.getBlockPos(), sound, SoundCategory.NEUTRAL, volume, pitch);
-
-            // Visual Feedback
-            ParticleEffect particle = targetState == HamsterEntity.AggressionState.MENACE ? ParticleTypes.ANGRY_VILLAGER : ParticleTypes.HAPPY_VILLAGER;
-            ParticleEffectsUtil.spawnParticlesOnEntity(hamster, particle, 5, 0.5, 0.5, 0.0, 0.2);
-
-            // Message Feedback
-            String msgKey = switch (targetState) {
-                case PACIFIST -> "message.adorablehamsterpets.aggression.pacifist";
-                case MENACE -> "message.adorablehamsterpets.aggression.menace";
-                default -> "message.adorablehamsterpets.aggression.standard";
-            };
-            player.sendMessage(Text.translatable(msgKey).formatted(Formatting.WHITE), true);
+            applyAggressionStateFeedback(hamster, player, targetState);
 
             if (targetState == HamsterEntity.AggressionState.MENACE) {
-                // Aggression feedback
-                hamster.triggerAnimOnServer("mainController", "attack");
-                DamageSource damageSource = hamster.getDamageSources().mobAttack(hamster);
-                float damageAmount = (float) hamster.getAttributeValue(EntityAttributes.GENERIC_ATTACK_DAMAGE);
-                player.damage(damageSource, damageAmount);
-                if (player instanceof ServerPlayerEntity serverPlayer) {
-                    MiscUtil.PlayerPhysicsUtil.applyKnockback(serverPlayer, hamster.getPos());
-                }
-                SoundEvent attackSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_ATTACK_SOUNDS, hamster.getRandom());
-                if (attackSound != null) {
-                    hamster.playSound(attackSound, 1.0F, hamster.getSoundPitch());
-                }
+                applyMenaceFeedback(hamster, player);
             } else {
                 // Clear active target if switching out of menace or into pacifist
                 hamster.setTarget(null);
             }
         }
-        return 1;
+        return AggressionToggleResult.ACCEPTED_WITH_CONSUMPTION;
+    }
+
+    private static void applyAggressionStateFeedback(
+            HamsterEntity hamster,
+            PlayerEntity player,
+            HamsterEntity.AggressionState targetState) {
+        boolean isMenace = targetState == HamsterEntity.AggressionState.MENACE;
+        SoundEvent sound = isMenace
+                ? SoundEvents.ENTITY_ENDER_DRAGON_GROWL
+                : getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, hamster.getRandom());
+        float volume = isMenace ? 0.15F : 1.0F;
+        float pitch = isMenace ? 5.0F : 1.0F;
+        hamster.getWorld()
+                .playSound(
+                        null,
+                        hamster.getBlockPos(),
+                        sound,
+                        SoundCategory.NEUTRAL,
+                        volume,
+                        pitch);
+
+        ParticleEffect particle =
+                isMenace ? ParticleTypes.ANGRY_VILLAGER : ParticleTypes.HAPPY_VILLAGER;
+        ParticleEffectsUtil.spawnParticlesOnEntity(hamster, particle, 5, 0.5, 0.5, 0.0, 0.2);
+
+        String messageKey = switch (targetState) {
+            case PACIFIST -> "message.adorablehamsterpets.aggression.pacifist";
+            case MENACE -> "message.adorablehamsterpets.aggression.menace";
+            default -> "message.adorablehamsterpets.aggression.standard";
+        };
+        player.sendMessage(Text.translatable(messageKey).formatted(Formatting.WHITE), true);
+    }
+
+    private static void applyDeescalationFeedback(HamsterEntity hamster) {
+        SoundEvent sound =
+                getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, hamster.getRandom());
+        hamster.getWorld()
+                .playSound(
+                        null,
+                        hamster.getBlockPos(),
+                        sound,
+                        SoundCategory.NEUTRAL,
+                        1.0F,
+                        1.0F);
+        ParticleEffectsUtil.spawnParticlesOnEntity(
+                hamster, ParticleTypes.HAPPY_VILLAGER, 5, 0.5, 0.5, 0.0, 0.2);
+    }
+
+    private static void applyMenaceFeedback(HamsterEntity hamster, PlayerEntity player) {
+        hamster.triggerAnimOnServer("mainController", "attack");
+        DamageSource damageSource = hamster.getDamageSources().mobAttack(hamster);
+        float damageAmount =
+                (float) hamster.getAttributeValue(EntityAttributes.GENERIC_ATTACK_DAMAGE);
+        player.damage(damageSource, damageAmount);
+        if (player instanceof ServerPlayerEntity serverPlayer) {
+            MiscUtil.PlayerPhysicsUtil.applyKnockback(serverPlayer, hamster.getPos());
+        }
+
+        SoundEvent attackSound =
+                ModSounds.getRandomSoundFrom(
+                        ModSounds.HAMSTER_ATTACK_SOUNDS, hamster.getRandom());
+        if (attackSound != null) {
+            hamster.playSound(attackSound, 1.0F, hamster.getSoundPitch());
+        }
+    }
+
+    public enum AggressionToggleResult {
+        NOT_HANDLED(false, false),
+        ACCEPTED_WITH_CONSUMPTION(true, true);
+
+        private final boolean accepted;
+        private final boolean consumesItem;
+
+        AggressionToggleResult(boolean accepted, boolean consumesItem) {
+            this.accepted = accepted;
+            this.consumesItem = consumesItem;
+        }
+
+        public boolean isAccepted() {
+            return this.accepted;
+        }
+
+        public boolean consumesItem() {
+            return this.consumesItem;
+        }
     }
 }

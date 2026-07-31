@@ -1521,6 +1521,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             result = HamsterInteractionUtil.handleMouthItemReturn(this, player, hand);
             if (result != ActionResult.PASS) return result;
 
+            result = HamsterInteractionUtil.handleAggressionToggle(this, player, stack, hand);
+            if (result != ActionResult.PASS) return result;
+
             result = HamsterInteractionUtil.handleAccessoryInteraction(this, player, stack, hand);
             if (result != ActionResult.PASS) return result;
 
@@ -1531,9 +1534,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (result != ActionResult.PASS) return result;
 
             result = HamsterInteractionUtil.handleShoulderMount(this, player, stack, hand);
-            if (result != ActionResult.PASS) return result;
-
-            result = HamsterInteractionUtil.handleAggressionToggle(this, player, stack, hand);
             if (result != ActionResult.PASS) return result;
 
             result = HamsterInteractionUtil.handleInventoryOpen(this, player, hand);
