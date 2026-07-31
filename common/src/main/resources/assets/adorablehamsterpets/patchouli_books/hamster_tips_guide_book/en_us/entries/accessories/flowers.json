@@ -31,10 +31,6 @@
     {
       "type": "adorablehamsterpets:dynamic_page_no_header",
       "text": "book.adorablehamsterpets.entry.flowers.page4.body"
-    },
-    {
-      "type": "adorablehamsterpets:dynamic_page_no_header",
-      "text": "book.adorablehamsterpets.entry.flowers.page5.body"
     }
   ]
 }
