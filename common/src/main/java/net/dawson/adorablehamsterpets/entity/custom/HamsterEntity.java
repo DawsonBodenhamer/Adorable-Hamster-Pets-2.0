@@ -332,20 +332,19 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     protected void initGoals() {
         // --- Standard Goals ---
         this.goalSelector.add(0, new HamsterPlayWithItemGoal(this));
-        this.goalSelector.add(1, new HamsterMeleeAttackGoal(this, 1.5D, true));
-        this.goalSelector.add(2, new HamsterSnackOnCropGoal(this));
-        this.goalSelector.add(3, new HamsterSniffForOreGoal(this));
-        this.goalSelector.add(4, new HamsterSnackOnItemGoal(this));
-        this.goalSelector.add(5, new HamsterGoToBedAndSleepGoal(this));
-        this.goalSelector.add(6, new HamsterMateGoal(this, 0.75D));
-        this.goalSelector.add(7, new HamsterTagGoal(this));
-        this.goalSelector.add(8, new HamsterHideAndSeekGoal(this));
-        this.goalSelector.add(8, new HamsterInterHamsterTagGoal(this));
-        this.goalSelector.add(9, new HamsterFollowParentGoal(this, 1.0D));
-        this.goalSelector.add(10, new HamsterFollowOwnerGoal(this, 1.0D, 4.0F, 16.0F));
-        this.goalSelector.add(
-                11, new HamsterFleeGoal<>(this, LivingEntity.class, 8.0F, 0.75D, 1.5D));
-        this.goalSelector.add(12, new HamsterTemptGoal(this, 1.0D, false));
+        this.goalSelector.add(1, new HamsterTemptGoal(this, 1.0D, false));
+        this.goalSelector.add(2, new HamsterMeleeAttackGoal(this, 1.5D, true));
+        this.goalSelector.add(3, new HamsterSnackOnCropGoal(this));
+        this.goalSelector.add(4, new HamsterSniffForOreGoal(this));
+        this.goalSelector.add(5, new HamsterSnackOnItemGoal(this));
+        this.goalSelector.add(6, new HamsterGoToBedAndSleepGoal(this));
+        this.goalSelector.add(7, new HamsterMateGoal(this, 0.75D));
+        this.goalSelector.add(8, new HamsterTagGoal(this));
+        this.goalSelector.add(9, new HamsterHideAndSeekGoal(this));
+        this.goalSelector.add(9, new HamsterInterHamsterTagGoal(this));
+        this.goalSelector.add(10, new HamsterFollowParentGoal(this, 1.0D));
+        this.goalSelector.add(11, new HamsterFollowOwnerGoal(this, 1.0D, 4.0F, 16.0F));
+        this.goalSelector.add(12, new HamsterFleeGoal<>(this, LivingEntity.class, 8.0F, 0.75D, 1.5D));
         this.goalSelector.add(13, new HamsterSitGoal(this));
         this.goalSelector.add(14, new HamsterSleepGoal(this));
         this.goalSelector.add(15, new HamsterWanderAroundFarGoal(this, 0.75D));

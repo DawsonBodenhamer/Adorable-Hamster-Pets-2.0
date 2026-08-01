@@ -22,6 +22,10 @@ and a ready shoulder hamster can take the launch slot when another is still reco
   - Standard-mode hamsters now abandon a fight after 30 seconds without relevant combat from their owner. Menace mode remains professionally unreasonable.
 
 ### Changed
+- **Food Gets a Hamster's Attention**
+  - Every configured hamster food can now lure eligible hamsters, temporarily interrupting ordinary combat without
+    erasing a valid target. Tamed hamsters still only follow their owner.
+  - Begging is reserved for taming food and shoulder-mount treats. Other food attracts them without the performance.
 - **Cycle Aggression States Without Sneaking**
   - Configured Pacifist, Standard, and Menace items now change aggression through ordinary feeding.
   - If the hamster is already in Standard aggression mode, configured sunflower seeds remain ordinary food.

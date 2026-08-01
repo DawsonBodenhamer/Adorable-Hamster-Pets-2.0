@@ -123,6 +123,16 @@ public final class HamsterCombatUtil {
                 && hamster.getWorld().getTime() < state.deadline;
     }
 
+    public static boolean clearInvalidTarget(HamsterEntity hamster) {
+        LivingEntity target = hamster.getTarget();
+        if (target == null || canContinueTarget(hamster, target)) {
+            return false;
+        }
+
+        terminateStandardCombat(hamster, false);
+        return true;
+    }
+
     public static void acceptTarget(
             HamsterEntity hamster,
             @Nullable LivingEntity previousTarget,
