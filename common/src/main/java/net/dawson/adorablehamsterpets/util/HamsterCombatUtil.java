@@ -2,14 +2,9 @@ package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.Ownable;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.mob.CreeperEntity;
-import net.minecraft.entity.passive.AbstractHorseEntity;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Box;
@@ -246,43 +241,24 @@ public final class HamsterCombatUtil {
                 || target instanceof ArmorStandEntity) {
             return false;
         }
-        if (owner == null) {
+        UUID ownerUuid = hamster.getOwnerUuid();
+        if (ownerUuid == null) {
             return true;
         }
 
-        UUID ownerUuid = owner.getUuid();
         AdorableHamsterPets.LOGGER.trace(
                 "[canAttackWithOwner] Hamster: {}, Target: {}, Owner: {}",
                 hamster.getName().getString(),
                 target.getName().getString(),
-                owner.getName().getString());
+                owner == null ? ownerUuid : owner.getName().getString());
 
-        UUID targetOwnerUuid = resolveTargetOwnerUuid(target);
+        UUID targetOwnerUuid = PetOwnershipUtil.resolveTargetOwnerUuid(target);
         if (ownerUuid.equals(targetOwnerUuid)) {
             AdorableHamsterPets.LOGGER.trace(
                     "[canAttackWithOwner] Target belongs to the hamster owner. Preventing attack.");
             return false;
         }
         return !isAcornRingContractProtected(hamster, ownerUuid, targetOwnerUuid);
-    }
-
-    @Nullable
-    private static UUID resolveTargetOwnerUuid(LivingEntity target) {
-        if (target instanceof PlayerEntity) {
-            return target.getUuid();
-        }
-        if (target instanceof TameableEntity tameablePet) {
-            return tameablePet.getOwnerUuid();
-        }
-        if (target instanceof AbstractHorseEntity horsePet) {
-            Entity horseOwnerEntity = horsePet.getOwner();
-            return horseOwnerEntity == null ? null : horseOwnerEntity.getUuid();
-        }
-        if (target instanceof Ownable ownableFallback) {
-            Entity fallbackOwnerEntity = ownableFallback.getOwner();
-            return fallbackOwnerEntity == null ? null : fallbackOwnerEntity.getUuid();
-        }
-        return null;
     }
 
     private static boolean isAcornRingContractProtected(
@@ -311,9 +287,11 @@ public final class HamsterCombatUtil {
             UUID targetOwnerUuid,
             boolean hamsterOwnerEquipped,
             boolean targetOwnerEquipped) {
-        return !hamsterOwnerUuid.equals(targetOwnerUuid)
-                && AcornRingEquipment.hasMutualEquipment(
-                        hamsterOwnerEquipped, targetOwnerEquipped);
+        return AcornRingContractUtil.isContractProtected(
+                hamsterOwnerUuid,
+                targetOwnerUuid,
+                hamsterOwnerEquipped,
+                targetOwnerEquipped);
     }
 
     private static boolean isFreshOwnerConflict(LivingEntity owner, LivingEntity target) {

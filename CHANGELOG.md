@@ -5,21 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.6.2] - Unreleased
+## [3.7.0] - Unreleased
 
-# **The Binding Agreement Patch**
+# **The Acorn Armistice Update**
 
-Acorn Rings now let players negotiate a mutual ceasefire between their hamsters, because apparently diplomacy needed
-equipment slots. Hide & Seek is easier to understand and less determined to dominate your schedule, while stale fights,
+Acorn Rings now broker a configurable armistice between entire pet households—and keep careless swings away from your
+own pets. Hide & Seek is easier to understand and less determined to dominate your schedule, while stale fights,
 water traps, lowered blocks, and recovering shoulder hamsters received overdue administrative attention.
 
 ### Added
-- **Acorn Ring Contracts**
+- **Acorn Ring**
   - Craft an Acorn Ring from an Acorn Hat and four Copper Ingots, or find one independently in uncommon loot chests.
-  - When two players both wear a ring in their offhand or a supported Accessories, Trinkets, or Curios ring slot, their
-    hamsters will not target the other player or pets that player owns—even in Menace mode.
-  - Removing either ring ends protection without starting a fight. The contract does not prevent players from damaging
-    hamsters, and its chest frequency has a dedicated configuration setting.
+  - Wear it in your offhand with no extra mod, or in a ring slot through [**Accessories**](https://modrinth.com/mod/accessories)
+    on Fabric/NeoForge, [**Trinkets**](https://modrinth.com/mod/trinkets) on Fabric, or
+    [**Curios API**](https://modrinth.com/mod/curios) on NeoForge.
+  - When two players both wear a ring, their pets will not target the other player or pets that player owns—even in
+    Menace mode. Server owners can limit the contract to hamsters in the config.
+  - An offhand ring stays out of sight. Removing either ring ends protection without starting a fight.
+  - By default, the ring also keeps you from accidentally hitting your own pets. A separate setting can extend that
+    restraint to other ring wearers' pets; the all-pet contract and loot frequency are configurable too.
 - **Hide and Squeak Advancement**
   - Successfully find your hamster during Hide & Seek to earn a dedicated advancement.
 - **Hide & Seek Guidebook Entry**

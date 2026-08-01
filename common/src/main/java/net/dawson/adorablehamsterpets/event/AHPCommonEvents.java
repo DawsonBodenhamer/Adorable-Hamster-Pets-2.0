@@ -18,7 +18,9 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.mixin.accessor.SlotAccessor;
+import net.dawson.adorablehamsterpets.util.AcornRingContractUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
+import net.dawson.adorablehamsterpets.util.PetOwnershipUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
@@ -30,10 +32,7 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LecternBlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.Ownable;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.passive.AbstractHorseEntity;
-import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
@@ -58,7 +57,6 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import vazkii.patchouli.api.PatchouliAPI;
 
-import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -286,9 +284,8 @@ public class AHPCommonEvents {
 
     /**
      * An event listener that fires just before a living entity takes damage.
-     * Prevents friendly fire between pets that share the same owner — including our
-     * hamsters and vanilla pets (wolves, cats, parrots, horses, etc). Works cross-loader
-     * from the common source set by relying on vanilla/Yarn types and simple reflection.
+     * Applies same-owner hamster exclusions, Acorn Ring player restraint, and the
+     * last-resort Acorn Ring contract guard before damage is dealt.
      *
      * @param victim The living entity about to be hurt.
      * @param source The source of the damage.
@@ -304,6 +301,13 @@ public class AHPCommonEvents {
         Entity direct = source.getSource();
         Entity attacker = source.getAttacker();
 
+        // Ring restraint covers direct normal attacks only, not projectiles or hazards.
+        if (attacker instanceof PlayerEntity player
+                && direct == player
+                && AcornRingContractUtil.blocksDirectPlayerAttack(player, victim)) {
+            return EventResult.interruptFalse();
+        }
+
         HamsterEntity hamster = null;
         if (direct instanceof HamsterEntity h && h.isTamed()) {
             hamster = h;
@@ -311,28 +315,29 @@ public class AHPCommonEvents {
             hamster = h;
         }
 
-        // --- Hamster To Pet Protection ---
+        // Preserve the existing same-owner friendly-fire exclusions involving hamsters.
         if (hamster != null) {
-            LivingEntity hamsterOwner = hamster.getOwner();
-            LivingEntity victimOwner = getPetOwner(victim);
-
-            if (hamsterOwner != null && victimOwner != null) {
-                if (sameOwner(hamsterOwner, victimOwner)) {
-                    return EventResult.interruptFalse();
-                }
+            UUID hamsterOwnerUuid = PetOwnershipUtil.resolveOwnerUuid(hamster);
+            UUID victimOwnerUuid = PetOwnershipUtil.resolveOwnerUuid(victim);
+            if (hamsterOwnerUuid != null && hamsterOwnerUuid.equals(victimOwnerUuid)) {
+                return EventResult.interruptFalse();
             }
         }
 
-        // --- Pet To Hamster Protection ---
         if (victim instanceof HamsterEntity victimHamster && victimHamster.isTamed()) {
-            LivingEntity victimOwner = victimHamster.getOwner();
-            LivingEntity attackerOwner = (attacker instanceof LivingEntity leAttacker) ? getPetOwner(leAttacker) : null;
-
-            if (victimOwner != null && attackerOwner != null) {
-                if (sameOwner(victimOwner, attackerOwner)) {
-                    return EventResult.interruptFalse();
-                }
+            UUID victimOwnerUuid = PetOwnershipUtil.resolveOwnerUuid(victimHamster);
+            UUID attackerOwnerUuid = attacker instanceof LivingEntity livingAttacker
+                    ? PetOwnershipUtil.resolveOwnerUuid(livingAttacker)
+                    : null;
+            if (victimOwnerUuid != null && victimOwnerUuid.equals(attackerOwnerUuid)) {
+                return EventResult.interruptFalse();
             }
+        }
+
+        // Last-resort guard for owned-pet AI and projectiles that bypass normal target state.
+        LivingEntity responsiblePet = AcornRingContractUtil.responsiblePet(attacker);
+        if (responsiblePet != null && AcornRingContractUtil.protects(responsiblePet, victim)) {
+            return EventResult.interruptFalse();
         }
 
         return EventResult.pass();
@@ -355,67 +360,4 @@ public class AHPCommonEvents {
         }
     }
 
-    @Nullable
-    private static LivingEntity getPetOwner(LivingEntity entity) {
-        // --- A. Direct vanilla APIs ---
-        // TameableEntity (wolves, cats, parrots, etc.)
-        if (entity instanceof TameableEntity tame) {
-            return tame.getOwner();
-        }
-
-        // AbstractHorseEntity stores only owner's UUID; resolve into an entity
-        if (entity instanceof AbstractHorseEntity horse) {
-            UUID ownerId = horse.getOwnerUuid();
-            if (ownerId != null) {
-                return lookupLivingByUuid(entity.getWorld(), ownerId);
-            }
-        }
-
-        // Some entities (esp. projectiles/custom) may implement Ownable marker that returns an Entity
-        if (entity instanceof Ownable ownable) {
-            Entity e = ownable.getOwner();
-            return (e instanceof LivingEntity le) ? le : null;
-        }
-
-        // Reflection fallback for common mod patterns
-        try {
-            Method m = entity.getClass().getMethod("getOwner");
-            Object ret = m.invoke(entity);
-            if (ret instanceof LivingEntity le) return le;
-            if (ret instanceof Entity e) return (e instanceof LivingEntity le) ? le : null;
-        } catch (Throwable ignored) {
-        }
-
-        UUID id = tryGetUuid(entity, "getOwnerUuid");
-        if (id == null) id = tryGetUuid(entity, "getOwnerUUID");
-        if (id != null) {
-            return lookupLivingByUuid(entity.getWorld(), id);
-        }
-
-        return null;
-    }
-
-    @Nullable
-    private static UUID tryGetUuid(Object target, String methodName) {
-        try {
-            Method m = target.getClass().getMethod(methodName);
-            Object ret = m.invoke(target);
-            return (ret instanceof UUID u) ? u : null;
-        } catch (Throwable ignored) {
-            return null;
-        }
-    }
-
-    @Nullable
-    private static LivingEntity lookupLivingByUuid(World world, UUID id) {
-        if (!(world instanceof ServerWorld server)) return null;
-        Entity player = server.getPlayerByUuid(id);
-        if (player instanceof LivingEntity le) return le;
-        Entity any = server.getEntity(id);
-        return (any instanceof LivingEntity le) ? le : null;
-    }
-
-    private static boolean sameOwner(LivingEntity a, LivingEntity b) {
-        return a == b || a.getUuid().equals(b.getUuid());
-    }
 }

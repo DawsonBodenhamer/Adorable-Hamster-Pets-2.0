@@ -241,6 +241,23 @@ public class AhpMainConfig extends Config {
     @Translatable.Desc("Configure what foods turns your adorable pet into a pacifist, a standard follower, or a bloodthirsty menace.")
     public ConfigGroup aggressionSettings = new ConfigGroup("aggressionSettings", true);
 
+    @Translatable.Name("Acorn Ring Settings")
+    @Translatable.Desc("Configure who and what the Acorn Ring protects.")
+    public ConfigGroup acornRingSettings = new ConfigGroup("acornRingSettings", true);
+
+    @Translatable.Name("Only Protects Hamsters")
+    @Translatable.Desc("If true, Acorn Ring contracts only cover hamsters. If false, they cover all conventionally owned pets.")
+    public boolean acornRingOnlyProtectsHamsters = false;
+
+    @Translatable.Name("Prevents Harming Your Pets")
+    @Translatable.Desc("If true, wearing an Acorn Ring prevents your direct attacks from damaging pets you own.")
+    public boolean acornRingPreventsDamageToOwnPets = true;
+
+    @Translatable.Name("Prevents Harming Other Pets")
+    @Translatable.Desc("If true, wearing an Acorn Ring prevents your direct attacks from damaging pets owned by another ring wearer.")
+    public boolean acornRingPreventsDamageToOtherPets = false;
+
+    @ConfigGroup.Pop
     @Translatable.Name("Pacifist Break on Attack")
     @Translatable.Desc("If true, a Passive hamster will automatically revert to Neutral if it sees its owner attacking something.")
     public boolean pacifistBreakOnOwnerAttack = false;
