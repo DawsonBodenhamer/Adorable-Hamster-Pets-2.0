@@ -18,7 +18,7 @@ water traps, lowered blocks, and recovering shoulder hamsters received overdue a
   - Craft an Acorn Ring from an Acorn Hat and four Copper Ingots, or find one independently in uncommon loot chests.
   - Wear it in your offhand with no extra mod, or in a ring slot through [**Accessories**](https://modrinth.com/mod/accessories)
     on Fabric/NeoForge, [**Trinkets**](https://modrinth.com/mod/trinkets) on Fabric, or
-    [**Curios API**](https://modrinth.com/mod/curios) on NeoForge.
+    [**Curios API**](https://modrinth.com/mod/curios) on Forge/NeoForge.
   - When two players both wear a ring, their pets will not target the other player or pets that player owns—even in
     Menace mode. Server owners can limit the contract to hamsters in the config.
   - An offhand ring stays out of sight. Removing either ring ends protection without starting a fight.
