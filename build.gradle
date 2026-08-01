@@ -37,6 +37,10 @@ allprojects {
         maven { name = "Modrinth"; url = "https://api.modrinth.com/maven" }
         maven { name = "GeckoLib"; url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
         maven { name = "Patchouli"; url = 'https://maven.blamejared.com' }
+        maven { name = "WispForest"; url = "https://maven.wispforest.io/releases" }
+        maven { name = "Su5ed"; url = "https://maven.su5ed.dev/releases" }
+        maven { name = "Ladysnake"; url = "https://maven.ladysnake.org/releases" }
+        maven { name = "IllusiveSoulworks"; url = "https://maven.theillusivec4.top" }
     }
 
     tasks.withType(JavaCompile).configureEach {

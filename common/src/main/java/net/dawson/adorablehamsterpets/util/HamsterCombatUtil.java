@@ -10,6 +10,8 @@ import net.minecraft.entity.mob.CreeperEntity;
 import net.minecraft.entity.passive.AbstractHorseEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Box;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,6 +176,12 @@ public final class HamsterCombatUtil {
             return;
         }
 
+        LivingEntity target = hamster.getTarget();
+        if (target != null && !isTargetLegal(hamster, target)) {
+            terminateStandardCombat(hamster, false);
+            return;
+        }
+
         if (!usesStandardCombatWindow(hamster)) {
             if (hamster.getAggressionState() != HamsterEntity.AggressionState.STANDARD) {
                 clearStandardCombatState(hamster);
@@ -181,16 +189,11 @@ public final class HamsterCombatUtil {
             return;
         }
 
-        LivingEntity target = hamster.getTarget();
         if (target == null) {
             StandardCombatState state = hamster.getStandardCombatState();
             if (state.targetUuid != null && hamster.getWorld().getTime() >= state.deadline) {
                 terminateStandardCombat(hamster, true);
             }
-            return;
-        }
-        if (!isTargetLegal(hamster, target)) {
-            terminateStandardCombat(hamster, false);
             return;
         }
 
@@ -254,35 +257,63 @@ public final class HamsterCombatUtil {
                 target.getName().getString(),
                 owner.getName().getString());
 
-        if (target instanceof PlayerEntity && target.getUuid().equals(ownerUuid)) {
+        UUID targetOwnerUuid = resolveTargetOwnerUuid(target);
+        if (ownerUuid.equals(targetOwnerUuid)) {
+            AdorableHamsterPets.LOGGER.trace(
+                    "[canAttackWithOwner] Target belongs to the hamster owner. Preventing attack.");
             return false;
         }
-        if (target instanceof TameableEntity tameablePet) {
-            UUID petOwnerUuid = tameablePet.getOwnerUuid();
-            if (petOwnerUuid != null && petOwnerUuid.equals(ownerUuid)) {
-                AdorableHamsterPets.LOGGER.trace(
-                        "[canAttackWithOwner] Target is a TameableEntity owned by the same player."
-                                + " Preventing attack.");
-                return false;
-            }
-        } else if (target instanceof AbstractHorseEntity horsePet) {
-            Entity horseOwnerEntity = horsePet.getOwner();
-            if (horseOwnerEntity != null && horseOwnerEntity.getUuid().equals(ownerUuid)) {
-                AdorableHamsterPets.LOGGER.trace(
-                        "[canAttackWithOwner] Target is an AbstractHorseEntity owned by the same"
-                                + " player. Preventing attack.");
-                return false;
-            }
-        } else if (target instanceof Ownable ownableFallback) {
-            Entity fallbackOwnerEntity = ownableFallback.getOwner();
-            if (fallbackOwnerEntity != null && fallbackOwnerEntity.getUuid().equals(ownerUuid)) {
-                AdorableHamsterPets.LOGGER.trace(
-                        "[canAttackWithOwner] Target is an Ownable (fallback) owned by the same"
-                                + " player. Preventing attack.");
-                return false;
-            }
+        return !isAcornRingContractProtected(hamster, ownerUuid, targetOwnerUuid);
+    }
+
+    @Nullable
+    private static UUID resolveTargetOwnerUuid(LivingEntity target) {
+        if (target instanceof PlayerEntity) {
+            return target.getUuid();
         }
-        return true;
+        if (target instanceof TameableEntity tameablePet) {
+            return tameablePet.getOwnerUuid();
+        }
+        if (target instanceof AbstractHorseEntity horsePet) {
+            Entity horseOwnerEntity = horsePet.getOwner();
+            return horseOwnerEntity == null ? null : horseOwnerEntity.getUuid();
+        }
+        if (target instanceof Ownable ownableFallback) {
+            Entity fallbackOwnerEntity = ownableFallback.getOwner();
+            return fallbackOwnerEntity == null ? null : fallbackOwnerEntity.getUuid();
+        }
+        return null;
+    }
+
+    private static boolean isAcornRingContractProtected(
+            HamsterEntity hamster, UUID hamsterOwnerUuid, @Nullable UUID targetOwnerUuid) {
+        if (targetOwnerUuid == null
+                || targetOwnerUuid.equals(hamsterOwnerUuid)
+                || !(hamster.getWorld() instanceof ServerWorld serverWorld)) {
+            return false;
+        }
+
+        ServerPlayerEntity hamsterOwner =
+                serverWorld.getServer().getPlayerManager().getPlayer(hamsterOwnerUuid);
+        ServerPlayerEntity targetOwner =
+                serverWorld.getServer().getPlayerManager().getPlayer(targetOwnerUuid);
+        return hamsterOwner != null
+                && targetOwner != null
+                && isContractProtected(
+                        hamsterOwnerUuid,
+                        targetOwnerUuid,
+                        AcornRingEquipment.isEquipped(hamsterOwner),
+                        AcornRingEquipment.isEquipped(targetOwner));
+    }
+
+    static boolean isContractProtected(
+            UUID hamsterOwnerUuid,
+            UUID targetOwnerUuid,
+            boolean hamsterOwnerEquipped,
+            boolean targetOwnerEquipped) {
+        return !hamsterOwnerUuid.equals(targetOwnerUuid)
+                && AcornRingEquipment.hasMutualEquipment(
+                        hamsterOwnerEquipped, targetOwnerEquipped);
     }
 
     private static boolean isFreshOwnerConflict(LivingEntity owner, LivingEntity target) {
@@ -389,6 +420,9 @@ public final class HamsterCombatUtil {
 
         hamster.setTarget(null);
         hamster.getNavigation().stop();
+        if (target != null && target == hamster.getAttacker()) {
+            hamster.setAttacker(null);
+        }
         clearActiveCombatWindow(state);
         if (suppressConflict && expiredTargetUuid != null) {
             state.expiredTargetUuid = expiredTargetUuid;

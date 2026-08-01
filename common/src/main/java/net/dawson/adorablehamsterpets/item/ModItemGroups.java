@@ -40,6 +40,7 @@ public class ModItemGroups {
                         output.add(ModItems.ACORN.get());
                         output.add(ModItems.ACORN_SHARD.get());
                         output.add(ModItems.ACORN_HAT.get());
+                        output.add(ModItems.ACORN_RING.get());
                         output.add(ModItems.HAMSTER_ARMOR_ACORN.get());
                         output.add(ModItems.HAMSTER_ARMOR_IRON.get());
                         output.add(ModItems.HAMSTER_ARMOR_GOLD.get());

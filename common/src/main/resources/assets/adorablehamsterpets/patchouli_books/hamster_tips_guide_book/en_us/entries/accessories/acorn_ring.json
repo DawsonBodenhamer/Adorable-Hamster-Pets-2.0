@@ -1,0 +1,21 @@
+{
+  "name": "book.adorablehamsterpets.entry.acorn_ring",
+  "icon": "adorablehamsterpets:acorn_ring",
+  "category": "adorablehamsterpets:accessories",
+  "entry_color": "00AAAA",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.acorn_ring",
+      "header_color": "00AAAA",
+      "text_color": "000000",
+      "text": "book.adorablehamsterpets.entry.acorn_ring.page1.body"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "adorablehamsterpets:acorn_ring",
+      "text": "book.adorablehamsterpets.entry.acorn_ring.page2.body"
+    }
+  ]
+}

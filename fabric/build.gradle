@@ -64,6 +64,10 @@ dependencies {
     // Patchouli (Fabric/Quilt) – required
     modImplementation "vazkii.patchouli:Patchouli:${rootProject.patchouli_version}-FABRIC"
 
+    // Optional player equipment APIs
+    modCompileOnly("io.wispforest:accessories-fabric:${rootProject.accessories_version}") { transitive false }
+    modCompileOnly "dev.emi:trinkets:${rootProject.trinkets_version}"
+
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 }

@@ -44,7 +44,9 @@
   },
   "suggests": {
     "modmenu": "*",
-    "jade": "*"
+    "jade": "*",
+    "accessories": "*",
+    "trinkets": "*"
   },
   "custom": {
     "fzzy_config": [

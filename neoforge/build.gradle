@@ -67,6 +67,9 @@ dependencies {
     modCompileOnly "vazkii.patchouli:Patchouli:${rootProject.patchouli_version}-NEOFORGE:api"
     modRuntimeOnly "vazkii.patchouli:Patchouli:${rootProject.patchouli_version}-NEOFORGE"
 
+    // Optional player equipment APIs
+    modCompileOnly("io.wispforest:accessories-neoforge:${rootProject.accessories_version}") { transitive false }
+    modCompileOnly("top.theillusivec4.curios:curios-neoforge:${rootProject.curios_version}:api") { transitive false }
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive = false }

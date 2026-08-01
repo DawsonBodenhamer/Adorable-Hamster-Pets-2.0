@@ -128,6 +128,15 @@ public class ModLootTableModifiers {
                             .with(ItemEntry.builder(ModItems.HAMSTER_ARMOR_GOLD.get()).weight(1))  // Rare
                     );
                 }
+
+                float acornRingChance = config.acornRingLootChance.get();
+                if (acornRingChance > 0) {
+                    context.addPool(LootPool.builder()
+                            .rolls(ConstantLootNumberProvider.create(1))
+                            .conditionally(RandomChanceLootCondition.builder(acornRingChance))
+                            .with(ItemEntry.builder(ModItems.ACORN_RING.get()))
+                    );
+                }
             }
 
             // --- 4. High-Tier Armor (Diamond/Netherite) ---

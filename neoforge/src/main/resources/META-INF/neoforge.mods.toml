@@ -65,5 +65,19 @@ versionRange = "[15.9.3,)"
 ordering = "NONE"
 side = "BOTH"
 
+[[dependencies.adorablehamsterpets]]
+modId = "accessories"
+type = "optional"
+versionRange = "[1.1.0-beta.53,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.adorablehamsterpets]]
+modId = "curios"
+type = "optional"
+versionRange = "[9.5.1,)"
+ordering = "NONE"
+side = "BOTH"
+
 [[mixins]]
 config = "adorablehamsterpets.mixins.json"

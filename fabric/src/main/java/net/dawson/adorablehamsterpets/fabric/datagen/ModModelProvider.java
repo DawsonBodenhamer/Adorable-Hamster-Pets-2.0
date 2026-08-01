@@ -136,6 +136,7 @@ public class ModModelProvider extends FabricModelProvider {
         itemModelGenerator.register(ModItems.ACORN.get(), Models.GENERATED);
         itemModelGenerator.register(ModItems.ACORN_SHARD.get(), Models.GENERATED);
         itemModelGenerator.register(ModItems.ACORN_HAT.get(), Models.GENERATED);
+        itemModelGenerator.register(ModItems.ACORN_RING.get(), Models.GENERATED);
         itemModelGenerator.register(ModItems.HAMSTER_ARMOR_ACORN.get(), Models.GENERATED);
         itemModelGenerator.register(ModItems.HAMSTER_ARMOR_IRON.get(), Models.GENERATED);
         itemModelGenerator.register(ModItems.HAMSTER_ARMOR_GOLD.get(), Models.GENERATED);

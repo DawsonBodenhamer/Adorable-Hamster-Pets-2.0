@@ -507,6 +507,11 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Chance (0.0 to 1.0) to find accessories in rare chests. Default is low.")
     public ValidatedFloat accessoryLootChance = new ValidatedFloat(0.05f, 1.0f, 0.0f);
 
+    @Translatable.Name("Acorn Ring Loot Chance")
+    @Translatable.Desc("Chance (0.0 to 1.0) to find an Acorn Ring in uncommon chests."
+            + " Rolled independently from armor and other accessories.")
+    public ValidatedFloat acornRingLootChance = new ValidatedFloat(0.05f, 1.0f, 0.0f);
+
     @ConfigGroup.Pop
     @ConfigGroup.Pop
     @Translatable.Name("Oak Leaf Acorn Chance")
