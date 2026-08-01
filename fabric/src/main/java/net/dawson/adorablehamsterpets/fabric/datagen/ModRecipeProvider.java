@@ -181,6 +181,16 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .criterion("has_acorn_shard", conditionsFromItem(ModItems.ACORN_SHARD.get()))
                 .offerTo(exporter);
 
+        // Acorn Ring
+        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.ACORN_RING.get(), 1)
+                .pattern(" C ")
+                .pattern("CHC")
+                .pattern(" C ")
+                .input('C', Items.COPPER_INGOT)
+                .input('H', ModItems.ACORN_HAT.get())
+                .criterion("has_acorn_hat", conditionsFromItem(ModItems.ACORN_HAT.get()))
+                .offerTo(exporter);
+
         // Smithing Upgrades
         offerHamsterArmorUpgrade(exporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_IRON.get(), Items.IRON_INGOT, ModItems.HAMSTER_ARMOR_IRON.get());
         offerHamsterArmorUpgrade(exporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_GOLD.get(), Items.GOLD_INGOT, ModItems.HAMSTER_ARMOR_GOLD.get());

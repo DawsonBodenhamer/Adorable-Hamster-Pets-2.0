@@ -7,13 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.6.2] - Unreleased
 
-# **The Finders Keepers Patch**
+# **The Binding Agreement Patch**
 
-Hide & Seek is now easier to understand and less determined to dominate your hamster's schedule. Standard-mode
-hamsters also stand down from stale fights or one firmly administered flower, small rodents stay above lowered blocks,
-and a ready shoulder hamster can take the launch slot when another is still recovering.
+Acorn Rings now let players negotiate a mutual ceasefire between their hamsters, because apparently diplomacy needed
+equipment slots. Hide & Seek is easier to understand and less determined to dominate your schedule, while stale fights,
+water traps, lowered blocks, and recovering shoulder hamsters received overdue administrative attention.
 
 ### Added
+- **Acorn Ring Contracts**
+  - Craft an Acorn Ring from an Acorn Hat and four Copper Ingots, or find one independently in uncommon loot chests.
+  - When two players both wear a ring in their offhand or a supported Accessories, Trinkets, or Curios ring slot, their
+    hamsters will not target the other player or pets that player owns—even in Menace mode.
+  - Removing either ring ends protection without starting a fight. The contract does not prevent players from damaging
+    hamsters, and its chest frequency has a dedicated configuration setting.
 - **Hide and Squeak Advancement**
   - Successfully find your hamster during Hide & Seek to earn a dedicated advancement.
 - **Hide & Seek Guidebook Entry**

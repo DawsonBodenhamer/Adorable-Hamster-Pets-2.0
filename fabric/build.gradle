@@ -99,6 +99,10 @@ dependencies {
     modImplementation include("maven.modrinth:placeholder-api:2.1.1+1.20")
     modImplementation "vazkii.patchouli:Patchouli:1.20.1-84.1-FABRIC"
 
+    // Optional player equipment APIs
+    modCompileOnly("io.wispforest:accessories-fabric:${rootProject.accessories_version}") { transitive false }
+    modCompileOnly "dev.emi:trinkets:${rootProject.trinkets_version}"
+
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 }

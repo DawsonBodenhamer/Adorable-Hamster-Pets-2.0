@@ -65,5 +65,12 @@ versionRange="[11.7.0,)"
 ordering="NONE"
 side="BOTH"
 
+[[dependencies.adorablehamsterpets]]
+modId = "curios"
+mandatory = false
+versionRange = "[5.14.1,)"
+ordering = "NONE"
+side = "BOTH"
+
 [[mixins]]
 config = "adorablehamsterpets.mixins.json"

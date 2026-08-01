@@ -181,6 +181,22 @@ public class ModItems {
                 }
             });
 
+    public static final RegistrySupplier<Item> ACORN_RING = registerItem("acorn_ring",
+            () -> new Item(new Item.Settings().maxCount(1)) {
+                @Override
+                public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+                    if (Configs.AHP_UI.enableItemTooltips) {
+                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.acorn_ring.hint1")
+                                .formatted(Formatting.GOLD));
+                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.acorn_ring.hint2")
+                                .formatted(Formatting.GRAY));
+                    } else if (!Platform.isModLoaded("emi")) {
+                        tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
+                    }
+                    super.appendTooltip(stack, world, tooltip, context);
+                }
+            });
+
     public static final RegistrySupplier<Item> ACORN_SHARD = registerItem("acorn_shard",
             () -> new Item(new Item.Settings()) {
                 @Override

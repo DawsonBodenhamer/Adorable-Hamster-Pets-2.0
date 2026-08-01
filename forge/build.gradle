@@ -72,6 +72,9 @@ dependencies {
     modCompileOnly "vazkii.patchouli:Patchouli:1.20.1-84.1-FORGE:api"
     modRuntimeOnly  "vazkii.patchouli:Patchouli:1.20.1-84.1-FORGE"
 
+    // Optional player equipment API
+    modCompileOnly("top.theillusivec4.curios:curios-forge:${rootProject.curios_version}:api") { transitive false }
+
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionForge')
 }
