@@ -205,7 +205,7 @@ public final class HamsterInteractionUtil {
     // --- Taming ---
     public static ActionResult handleTaming(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
         if (!hamster.isTamed()) {
-            boolean isTamingFood = ConfigDataCache.isTamingFood(stack);
+            boolean isTamingFood = HamsterLureUtil.isTamingItem(stack);
             boolean isSneaking = player.isSneaking();
 
             // --- 1. Normal Taming Path ---
@@ -619,7 +619,7 @@ public final class HamsterInteractionUtil {
 
     // --- Shoulder Mounting ---
     public static ActionResult handleShoulderMount(HamsterEntity hamster, PlayerEntity player, ItemStack stack, Hand hand) {
-        if (ConfigDataCache.isLureItem(stack)) {
+        if (HamsterLureUtil.isShoulderMountItem(stack)) {
             if (!hamster.getWorld().isClient()) {
                 executeShoulderMount(hamster, player, stack);
             }

@@ -31,6 +31,13 @@
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.feeding.page4.body",
       "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "header": "book.adorablehamsterpets.entry.feeding.page5.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.feeding.page5.body",
+      "text_color": "000000"
     }
   ]
 }
