@@ -9,6 +9,7 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
 import net.dawson.adorablehamsterpets.networking.payload.*;
+import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreenHandler;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPhysicsUtil;
@@ -198,6 +199,14 @@ public class ModPackets {
                 })
         );
 
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.C2S,
+                UpdateHamsterArmorVisibilityPayload.ID,
+                UpdateHamsterArmorVisibilityPayload.CODEC,
+                (payload, context) ->
+                        context.queue(() -> handleUpdateArmorVisibility(payload, context))
+        );
+
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, UpdateCrownThemePayload.ID, UpdateCrownThemePayload.CODEC,
                 (payload, context) -> context.queue(() -> {
                     if (context.getPlayer() instanceof PlayerEntityAccessor player) {
@@ -324,5 +333,29 @@ public class ModPackets {
                 HamsterRenderTracker.removePlayer(id, context.getPlayer().getUuid());
             }
         }
+    }
+
+    private static void handleUpdateArmorVisibility(
+            UpdateHamsterArmorVisibilityPayload payload,
+            NetworkManager.PacketContext context) {
+        if (!(context.getPlayer() instanceof ServerPlayerEntity player)) {
+            return;
+        }
+
+        Entity entity = player.getWorld().getEntityById(payload.entityId());
+        if (!(entity instanceof HamsterEntity hamster)
+                || !hamster.isAlive()
+                || hamster.isRemoved()
+                || !hamster.isOwner(player)
+                || hamster.squaredDistanceTo(player) >= 64.0) {
+            return;
+        }
+
+        if (!(player.currentScreenHandler instanceof HamsterInventoryScreenHandler handler)
+                || handler.getHamsterEntity() != hamster) {
+            return;
+        }
+
+        hamster.setArmorVisible(payload.visible());
     }
 }

@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.util;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.minecraft.nbt.NbtCompound;
@@ -32,7 +33,8 @@ public record HamsterState(
         WanderModeData wanderModeData,
         int hamsterFlags,
         long totalAgeTicks,
-        int timesBred
+        int timesBred,
+        boolean armorVisible
 ) {
 
     public static final Codec<NbtCompound> NBT_COMPOUND_CODEC = Codec.PASSTHROUGH.comapFlatMap(
@@ -106,6 +108,18 @@ public record HamsterState(
         }
     }
 
+    private record LifeHistoryData(long totalAgeTicks, int timesBred) {
+        private static final MapCodec<LifeHistoryData> CODEC =
+                RecordCodecBuilder.mapCodec(instance ->
+                        instance.group(
+                                Codec.LONG.fieldOf("totalAgeTicks").orElse(0L)
+                                        .forGetter(LifeHistoryData::totalAgeTicks),
+                                Codec.INT.fieldOf("timesBred").orElse(0)
+                                        .forGetter(LifeHistoryData::timesBred)
+                        ).apply(instance, LifeHistoryData::new)
+                );
+    }
+
     // --- Lazy Initialized Main Codec ---
     private static Codec<HamsterState> CODEC;
 
@@ -127,9 +141,19 @@ public record HamsterState(
                     MiniGameBehaviorData.CODEC.fieldOf("seekingBehaviorData").orElse(MiniGameBehaviorData.empty()).forGetter(HamsterState::seekingBehaviorData),
                     WanderModeData.CODEC.fieldOf("wanderModeData").orElse(WanderModeData.empty()).forGetter(HamsterState::wanderModeData),
                     Codec.INT.fieldOf("hamsterFlags").orElse(0).forGetter(HamsterState::hamsterFlags),
-                    Codec.LONG.fieldOf("totalAgeTicks").orElse(0L).forGetter(HamsterState::totalAgeTicks),
-                    Codec.INT.fieldOf("timesBred").orElse(0).forGetter(HamsterState::timesBred)
-            ).apply(instance, HamsterState::new)
+                    LifeHistoryData.CODEC.forGetter(state ->
+                            new LifeHistoryData(state.totalAgeTicks(), state.timesBred())),
+                    Codec.BOOL.optionalFieldOf("armorVisible", true).forGetter(HamsterState::armorVisible)
+            ).apply(instance, (entityUuid, genomeNbt, health, inventoryNbt, breedingAge,
+                               throwCooldownEndTick, greenBeanBuffData, autoEatCooldownTicks,
+                               customName, flowerPosition, animationPersonalityId,
+                               seekingBehaviorData, wanderModeData, hamsterFlags, lifeHistoryData,
+                               armorVisible) -> new HamsterState(
+                    entityUuid, genomeNbt, health, inventoryNbt, breedingAge,
+                    throwCooldownEndTick, greenBeanBuffData, autoEatCooldownTicks,
+                    customName, flowerPosition, animationPersonalityId, seekingBehaviorData,
+                    wanderModeData, hamsterFlags, lifeHistoryData.totalAgeTicks(),
+                    lifeHistoryData.timesBred(), armorVisible))
             );
         }
         return CODEC;
@@ -145,7 +169,8 @@ public record HamsterState(
                 this.breedingAge, this.throwCooldownEndTick, this.greenBeanBuffData,
                 this.autoEatCooldownTicks, this.customName, this.flowerPosition,
                 this.animationPersonalityId, this.seekingBehaviorData,
-                this.wanderModeData, newFlags, this.totalAgeTicks, this.timesBred
+                this.wanderModeData, newFlags, this.totalAgeTicks, this.timesBred,
+                this.armorVisible
         );
     }
 

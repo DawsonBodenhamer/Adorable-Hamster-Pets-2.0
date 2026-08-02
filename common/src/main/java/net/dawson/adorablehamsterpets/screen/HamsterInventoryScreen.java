@@ -8,6 +8,7 @@ import net.dawson.adorablehamsterpets.config.RenameIconPlacement;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.networking.payload.RenameHamsterPayload;
+import net.dawson.adorablehamsterpets.networking.payload.UpdateHamsterArmorVisibilityPayload;
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -35,6 +36,20 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
 
     private static final Identifier TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/gui/hamster_inventory_gui.png");
     private static final Identifier PENCIL_ICON = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/gui/pencil_icon_ui.png");
+    private static final Identifier ARMOR_VISIBILITY_CHECKBOX = Identifier.of(
+            AdorableHamsterPets.MOD_ID, "textures/gui/armor_visibility_checkbox.png");
+    private static final Identifier ARMOR_VISIBILITY_CHECK_MARK = Identifier.of(
+            AdorableHamsterPets.MOD_ID, "textures/gui/armor_visibility_check_mark.png");
+    private static final int ARMOR_VISIBILITY_TOGGLE_X = 6;
+    private static final int ARMOR_VISIBILITY_TOGGLE_Y = 5;
+    private static final int ARMOR_VISIBILITY_TOGGLE_SIZE = 10;
+    private static final int ARMOR_VISIBILITY_CHECKBOX_X = 8;
+    private static final int ARMOR_VISIBILITY_CHECKBOX_Y = 7;
+    private static final int ARMOR_VISIBILITY_CHECKBOX_SIZE = 6;
+    private static final int RENAME_BOX_X = 18;
+    private static final int RENAME_BOX_Y = 6;
+    private static final int RENAME_BOX_WIDTH = 151;
+    private static final int RENAME_BOX_HEIGHT = 10;
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Instance Fields
@@ -91,12 +106,25 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (Configs.AHP_MAIN.enableGuiRenaming) {
-            int boxX = this.x + 7;
-            int boxY = this.y + 6;
+        HamsterEntity hamster = this.handler.getHamsterEntity();
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT
+                && hamster != null
+                && isArmorVisibilityToggleHovered(mouseX, mouseY)) {
+            NetworkManager.sendToServer(
+                    new UpdateHamsterArmorVisibilityPayload(
+                            hamster.getId(), !hamster.isArmorVisible()));
+            return true;
+        }
 
-            // Check if click occurred inside 162x10 header bounding box
-            if (mouseX >= boxX && mouseX <= boxX + 162 && mouseY >= boxY && mouseY <= boxY + 10) {
+        if (Configs.AHP_MAIN.enableGuiRenaming) {
+            int boxX = this.x + RENAME_BOX_X;
+            int boxY = this.y + RENAME_BOX_Y;
+
+            // Keep rename interaction out of the checkbox's reserved header space.
+            if (mouseX >= boxX
+                    && mouseX <= boxX + RENAME_BOX_WIDTH
+                    && mouseY >= boxY
+                    && mouseY <= boxY + RENAME_BOX_HEIGHT) {
                 if (!this.isRenaming) {
                     if (!Configs.AHP_UI.consumeNameTagForGuiRename || hasNameTag()) {
                         this.isRenaming = true;
@@ -206,6 +234,7 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         }
 
         drawMouseoverTooltip(context, mouseX, mouseY);
+        renderArmorVisibilityToggle(context, mouseX, mouseY);
     }
 
     @Override
@@ -233,11 +262,15 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
      * the blinking cursor, hover states, and dynamic tooltips.
      */
     private void renderRenameBox(DrawContext context, int mouseX, int mouseY) {
-        int boxX = this.x + 7;
-        int boxY = this.y + 6;
-        int boxWidth = 162;
-        int boxHeight = 10;
-        boolean hovered = mouseX >= boxX && mouseX <= boxX + boxWidth && mouseY >= boxY && mouseY <= boxY + boxHeight;
+        int boxX = this.x + RENAME_BOX_X;
+        int boxY = this.y + RENAME_BOX_Y;
+        int boxWidth = RENAME_BOX_WIDTH;
+        int boxHeight = RENAME_BOX_HEIGHT;
+        boolean hovered = mouseX >= boxX
+                && mouseX <= boxX + boxWidth
+                && mouseY >= boxY
+                && mouseY <= boxY + boxHeight
+                && !isArmorVisibilityToggleHovered(mouseX, mouseY);
 
         // Base text is either custom name, or configured default if no name has been set
         String defaultName = Text.translatable(Configs.AHP_MAIN.useHampterName ? "entity.adorablehamsterpets.hampter" : "entity.adorablehamsterpets.hamster").getString();
@@ -249,7 +282,7 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         int textWidth = this.textRenderer.getWidth(displayText);
         int unscaledWidth = 8 + 3 + textWidth; // Icon (8) + Margin (3) + Text
 
-        // Calculate dynamic downscaling to prevent overflowing 162px boundary
+        // Downscale before reaching the checkbox's reserved header space.
         float scale = Math.min(1.0f, boxWidth / (float) unscaledWidth);
         int scaledWidth = (int) (unscaledWidth * scale);
 
@@ -319,6 +352,60 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
             }
         }
         return false;
+    }
+
+    private void renderArmorVisibilityToggle(
+            DrawContext context, int mouseX, int mouseY) {
+        HamsterEntity hamster = this.handler.getHamsterEntity();
+        if (hamster == null) {
+            return;
+        }
+
+        context.drawTexture(
+                ARMOR_VISIBILITY_CHECKBOX,
+                this.x + ARMOR_VISIBILITY_CHECKBOX_X,
+                this.y + ARMOR_VISIBILITY_CHECKBOX_Y,
+                0,
+                0,
+                ARMOR_VISIBILITY_CHECKBOX_SIZE,
+                ARMOR_VISIBILITY_CHECKBOX_SIZE,
+                ARMOR_VISIBILITY_CHECKBOX_SIZE,
+                ARMOR_VISIBILITY_CHECKBOX_SIZE);
+
+        if (!hamster.isArmorVisible()) {
+            context.drawTexture(
+                    ARMOR_VISIBILITY_CHECK_MARK,
+                    this.x + ARMOR_VISIBILITY_TOGGLE_X,
+                    this.y + ARMOR_VISIBILITY_TOGGLE_Y,
+                    0,
+                    0,
+                    ARMOR_VISIBILITY_TOGGLE_SIZE,
+                    ARMOR_VISIBILITY_TOGGLE_SIZE,
+                    ARMOR_VISIBILITY_TOGGLE_SIZE,
+                    ARMOR_VISIBILITY_TOGGLE_SIZE);
+        }
+
+        if (isArmorVisibilityToggleHovered(mouseX, mouseY)) {
+            List<Text> tooltip = new ArrayList<>();
+            String actionKey = hamster.isArmorVisible()
+                    ? "tooltip.adorablehamsterpets.armor_visibility.hide"
+                    : "tooltip.adorablehamsterpets.armor_visibility.show";
+            tooltip.add(Text.translatable(actionKey).formatted(Formatting.GOLD));
+            String globalKey = Configs.AHP_MAIN.enableArmorVisuals
+                    ? "tooltip.adorablehamsterpets.armor_visibility.global_override"
+                    : "tooltip.adorablehamsterpets.armor_visibility.globally_disabled";
+            tooltip.add(Text.translatable(globalKey).formatted(Formatting.GRAY));
+            context.drawTooltip(this.textRenderer, tooltip, mouseX, mouseY);
+        }
+    }
+
+    private boolean isArmorVisibilityToggleHovered(double mouseX, double mouseY) {
+        int toggleX = this.x + ARMOR_VISIBILITY_TOGGLE_X;
+        int toggleY = this.y + ARMOR_VISIBILITY_TOGGLE_Y;
+        return mouseX >= toggleX
+                && mouseX < toggleX + ARMOR_VISIBILITY_TOGGLE_SIZE
+                && mouseY >= toggleY
+                && mouseY < toggleY + ARMOR_VISIBILITY_TOGGLE_SIZE;
     }
 
     private void saveAndStopRenaming() {

@@ -107,7 +107,10 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
 
         // --- Equipment State ---
         ItemStack armorStack = entity.getArmorStack();
-        boolean isArmorVisible = Configs.AHP_MAIN.enableArmorVisuals && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem;
+        boolean isArmorVisible = Configs.AHP_MAIN.enableArmorVisuals
+                && entity.isArmorVisible()
+                && !armorStack.isEmpty()
+                && armorStack.getItem() instanceof HamsterArmorItem;
 
         // --- Pink Petal Logic ---
         int flowerType = entity.getDataTracker().get(HamsterEntity.FLOWER_POS);
@@ -146,7 +149,10 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             }
 
             // Check armor slot 7 and config if not already showing hat
-            if (!shouldShowHat && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP_MAIN.renderAcornHat.get()) {
+            if (!shouldShowHat
+                    && isArmorVisible
+                    && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get())
+                    && Configs.AHP_MAIN.renderAcornHat.get()) {
                 shouldHideEar = true;
                 shouldShowHat = true;
             }

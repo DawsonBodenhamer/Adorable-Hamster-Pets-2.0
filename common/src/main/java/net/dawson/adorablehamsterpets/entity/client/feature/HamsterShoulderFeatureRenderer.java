@@ -120,6 +120,7 @@ public class HamsterShoulderFeatureRenderer
         dummyHamster.setRightCheekFull((data.hamsterFlags() & HamsterEntity.RIGHT_CHEEK_FULL_FLAG) != 0);
         dummyHamster.getDataTracker().set(HamsterEntity.FLOWER_POS, data.flowerPosition());
         dummyHamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
+        dummyHamster.setArmorVisible(data.armorVisible());
         dummyHamster.setBreedingAge(data.breedingAge());
         dummyHamster.getDataTracker().set(HamsterEntity.EXACT_AGE, data.breedingAge());
         dummyHamster.setBaby(data.breedingAge() < 0);

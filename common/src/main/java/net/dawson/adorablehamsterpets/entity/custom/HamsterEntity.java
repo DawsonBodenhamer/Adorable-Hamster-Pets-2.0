@@ -153,6 +153,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     private static final TrackedData<ItemStack> TRACKED_ARMOR_STACK =
             DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
+    private static final TrackedData<Boolean> ARMOR_VISIBLE =
+            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> FALL_IMMUNITY_ACTIVE =
             DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<String> ACTIVE_CUSTOM_GOAL_NAME_DEBUG =
@@ -326,6 +328,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         builder.add(SHOULDER_ANIMATION_STATE, ShoulderAnimationState.STANDING.ordinal());
         builder.add(TRACKED_ACCESSORY_STACK, ItemStack.EMPTY);
         builder.add(TRACKED_ARMOR_STACK, ItemStack.EMPTY);
+        builder.add(ARMOR_VISIBLE, true);
         builder.add(FALL_IMMUNITY_ACTIVE, true);
     }
 
@@ -568,6 +571,14 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
     public void setCheekPouchUnlocked(boolean unlocked) {
         setHamsterFlag(CHEEK_POUCH_UNLOCKED_FLAG, unlocked);
+    }
+
+    public boolean isArmorVisible() {
+        return this.dataTracker.get(ARMOR_VISIBLE);
+    }
+
+    public void setArmorVisible(boolean visible) {
+        this.dataTracker.set(ARMOR_VISIBLE, visible);
     }
 
     public HamsterGenome getGenome() {

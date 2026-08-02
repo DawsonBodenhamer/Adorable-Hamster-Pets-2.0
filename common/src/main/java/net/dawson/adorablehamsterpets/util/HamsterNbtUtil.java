@@ -52,6 +52,7 @@ public final class HamsterNbtUtil {
         nbt.putInt("EjectionCheckCooldown", hamster.getEjectionCheckCooldown());
         nbt.putInt("FlowerPosition", hamster.getDataTracker().get(HamsterEntity.FLOWER_POS));
         nbt.putInt("AnimationPersonalityId", hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID));
+        nbt.putBoolean("ArmorVisible", hamster.isArmorVisible());
         nbt.putBoolean("isGeneticsVisualizerMember", hamster.isGeneticsVisualizerMember());
         nbt.putInt("AggressionState", hamster.getAggressionState().ordinal());
 
@@ -162,6 +163,7 @@ public final class HamsterNbtUtil {
         } else {
             hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, nbt.getInt("AnimationPersonalityId"));
         }
+        hamster.setArmorVisible(!nbt.contains("ArmorVisible", NbtElement.BYTE_TYPE) || nbt.getBoolean("ArmorVisible"));
         hamster.setGeneticsVisualizerMember(nbt.getBoolean("isGeneticsVisualizerMember"));
         if (nbt.contains("AggressionState", NbtElement.INT_TYPE)) {
             int stateOrdinal = nbt.getInt("AggressionState");
@@ -329,7 +331,8 @@ public final class HamsterNbtUtil {
                 wanderData,
                 hamster.getDataTracker().get(HamsterEntity.HAMSTER_FLAGS),
                 hamster.totalAgeTicks,
-                hamster.timesBred
+                hamster.timesBred,
+                hamster.isArmorVisible()
         );
     }
 
@@ -362,6 +365,7 @@ public final class HamsterNbtUtil {
             hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, data.flowerPosition());
             hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
             hamster.getDataTracker().set(HamsterEntity.HAMSTER_FLAGS, data.hamsterFlags());
+            hamster.setArmorVisible(data.armorVisible());
             hamster.totalAgeTicks = data.totalAgeTicks();
             hamster.timesBred = data.timesBred();
 

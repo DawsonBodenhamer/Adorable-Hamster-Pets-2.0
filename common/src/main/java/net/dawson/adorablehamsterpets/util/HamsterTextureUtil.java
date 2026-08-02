@@ -143,7 +143,10 @@ public class HamsterTextureUtil {
         String armorMaterial = "none";
         Identifier armorTextureId = null;
 
-        if (Configs.AHP_MAIN.enableArmorVisuals && !armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
+        if (Configs.AHP_MAIN.enableArmorVisuals
+                && hamster.isArmorVisible()
+                && !armorStack.isEmpty()
+                && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
             armorMaterial = armorItem.getMaterial().getName();
             armorTextureId = armorItem.getEntityTexture();
         }
@@ -157,7 +160,10 @@ public class HamsterTextureUtil {
 
         if (accessoryStack.isOf(ModItems.ACORN_HAT.get())) {
             hasAcornHat = true;
-        } else if (!armorStack.isEmpty() && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get()) && Configs.AHP_MAIN.renderAcornHat.get()) {
+        } else if (hamster.isArmorVisible()
+                && Configs.AHP_MAIN.enableArmorVisuals
+                && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get())
+                && Configs.AHP_MAIN.renderAcornHat.get()) {
             hasAcornHat = true;
         }
 

@@ -66,6 +66,11 @@
   "entity.adorablehamsterpets.hamster.inventory_bling_title": "Bling",
   "entity.adorablehamsterpets.hamster.inventory_armor_title": "Armor",
 
+  "tooltip.adorablehamsterpets.armor_visibility.hide": "Hide this hamster's armor.",
+  "tooltip.adorablehamsterpets.armor_visibility.show": "Show this hamster's armor.",
+  "tooltip.adorablehamsterpets.armor_visibility.global_override": "The global Armor Visuals setting can still hide all armor.",
+  "tooltip.adorablehamsterpets.armor_visibility.globally_disabled": "Armor visuals are currently disabled globally.",
+
   "block.adorablehamsterpets.wild_green_bean_bush": "Wild Green Bean Bush",
   "block.adorablehamsterpets.wild_cucumber_bush": "Wild Cucumber Bush",
   "block.adorablehamsterpets.sunflower_block": "Sunflower",
