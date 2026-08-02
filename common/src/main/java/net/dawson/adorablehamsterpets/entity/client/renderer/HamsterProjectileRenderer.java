@@ -72,6 +72,7 @@ public class HamsterProjectileRenderer extends EntityRenderer<HamsterProjectileE
                         entity.clientDummyHamster.setGenome(HamsterGenome.readFromNbt(state.genomeNbt()));
                         entity.clientDummyHamster.setBaby(state.breedingAge() < 0);
                         entity.clientDummyHamster.getDataTracker().set(HamsterEntity.FLOWER_POS, state.flowerPosition());
+                        entity.clientDummyHamster.setArmorVisible(state.armorVisible());
 
                         if (!state.inventoryNbt().isEmpty()) {
                             entity.clientDummyHamster.getItems().clear();

@@ -30,6 +30,9 @@ water traps, lowered blocks, and recovering shoulder hamsters received overdue a
   - Added a *Hamster Tips* entry explaining the start message, hiding-place clues, time limit, and reward.
 - **Hamster Combat Timer**
   - Standard-mode hamsters now abandon a fight after 30 seconds without relevant combat from their owner. Menace mode remains professionally unreasonable.
+- **Per-Hamster Armor Visibility**
+  - Each hamster inventory now has a compact checkbox for hiding that hamster's armor without removing its protection.
+    The global armor-visual setting remains the final authority.
 
 ### Changed
 - **Food Gets a Hamster's Attention**

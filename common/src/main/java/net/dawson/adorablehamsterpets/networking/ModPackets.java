@@ -12,6 +12,7 @@ import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
+import net.dawson.adorablehamsterpets.screen.HamsterInventoryScreenHandler;
 import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
 import net.minecraft.advancement.Advancement;
@@ -59,6 +60,7 @@ public class ModPackets {
     public record RequestPetHamsterC2SPacket(int entityId) {}
     public record HamsterInputC2SPacket(boolean jumpHeld, boolean sprintHeld) {}
     public record RenameHamsterC2SPacket(int entityId, String newName) {}
+    public record UpdateHamsterArmorVisibilityC2SPacket(int entityId, boolean visible) {}
     public record UpdateCrownThemeC2SPacket(int themeOrdinal) {}
     public record StartCrownTrialC2SPacket(int themeOrdinal) {}
     public record AdjustGeneticsConfigC2SPacket(boolean isVariance, boolean increase) {}
@@ -283,6 +285,36 @@ public class ModPackets {
                             }
                         }
                     }
+                })
+        );
+
+        CHANNEL.register(UpdateHamsterArmorVisibilityC2SPacket.class,
+                (packet, buf) -> {
+                    buf.writeInt(packet.entityId());
+                    buf.writeBoolean(packet.visible());
+                },
+                (buf) -> new UpdateHamsterArmorVisibilityC2SPacket(
+                        buf.readInt(), buf.readBoolean()),
+                (packet, context) -> context.get().queue(() -> {
+                    if (!(context.get().getPlayer() instanceof ServerPlayerEntity player)) {
+                        return;
+                    }
+
+                    Entity entity = player.getWorld().getEntityById(packet.entityId());
+                    if (!(entity instanceof HamsterEntity hamster)
+                            || !hamster.isAlive()
+                            || hamster.isRemoved()
+                            || !hamster.isOwner(player)
+                            || hamster.squaredDistanceTo(player) >= 64.0) {
+                        return;
+                    }
+
+                    if (!(player.currentScreenHandler instanceof HamsterInventoryScreenHandler handler)
+                            || handler.getHamsterEntity() != hamster) {
+                        return;
+                    }
+
+                    hamster.setArmorVisible(packet.visible());
                 })
         );
 
