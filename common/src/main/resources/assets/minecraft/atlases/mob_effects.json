@@ -1,0 +1,9 @@
+{
+  "sources": [
+    {
+      "type": "single",
+      "resource": "minecraft:mob_effect/slow_falling",
+      "sprite": "adorablehamsterpets:feather_yeeting"
+    }
+  ]
+}

@@ -17,6 +17,8 @@ import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterProjectileEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
+import net.dawson.adorablehamsterpets.effect.FeatherYeetingStatusEffect;
+import net.dawson.adorablehamsterpets.effect.ModStatusEffects;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.networking.ModPackets;
@@ -1287,7 +1289,13 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
 
             // Update Hamster timers before packaging into projectile NBT
-            hamster.throwCooldownEndTick = currentTime + config.hamsterThrowCooldown.get();
+            boolean hasFeatherYeeting = self.hasStatusEffect(ModStatusEffects.FEATHER_YEETING.get());
+            long assignedCooldownDuration = FeatherYeetingStatusEffect.calculateThrowCooldownDuration(
+                    config.hamsterThrowCooldown.get(),
+                    hasFeatherYeeting,
+                    config.featherYeetingCooldownReductionPercent.get()
+            );
+            hamster.throwCooldownEndTick = currentTime + assignedCooldownDuration;
             NbtCompound updatedShoulderNbt = HamsterNbtUtil.saveToHamsterState(hamster).toNbt();
 
             // Create Projectile

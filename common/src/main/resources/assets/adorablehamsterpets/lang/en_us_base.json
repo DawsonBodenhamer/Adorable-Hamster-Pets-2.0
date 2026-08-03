@@ -608,6 +608,7 @@
   "config.adorablehamsterpets.condition.armor_pbr_enabled": "Only available when 'Enable Armor PBR' is TRUE.",
   "config.adorablehamsterpets.condition.trim_emissive_enabled": "Only available when 'Emissive Armor Trims' is TRUE.",
   "config.adorablehamsterpets.condition.riding_enabled": "Only available when 'Enable Hamster Riding' is TRUE.",
+  "effect.adorablehamsterpets.feather_yeeting": "Feather Yeeting",
   "config.adorablehamsterpets.condition.netherite_loot_enabled": "Only available when 'Allow Netherite Loot' is TRUE.",
   "config.adorablehamsterpets.condition.tag_limit_enabled": "Only available when 'Enable Player Daily Limit' is TRUE.",
   "config.adorablehamsterpets.condition.respawn_enabled": "Only available when 'Enable Respawn in Bed' is TRUE.",
