@@ -1165,7 +1165,6 @@ public class AhpMainConfig extends Config {
             );
 
     @ConfigGroup.Pop
-    @ConfigGroup.Pop
     @Translatable.Name("Sprint Ride Speed")
     @Translatable.Desc("The speed multiplier when sprinting. Hold on to your acorn hat. 0.35 is the default. I wish it was a nice round number, but alas, hamster riding is a complex enigma.")
     public ValidatedCondition<Double> ridingSprintSpeedMultiplier = new ValidatedDouble(0.35, 1.0, 0.0)
@@ -1174,4 +1173,14 @@ public class AhpMainConfig extends Config {
                     Text.translatable("config.adorablehamsterpets.condition.riding_enabled"),
                     () -> 0.8
             );
+
+    @Translatable.Name("Feather Yeeting Settings")
+    @Translatable.Desc("Configure the commissioned Feather Yeeting status effect.")
+    public ConfigGroup featherYeeting = new ConfigGroup("featherYeeting", true);
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Throw Cooldown Reduction")
+    @Translatable.Desc("Percentage removed from a hamster's base throw cooldown when the throwing player has Feather Yeeting. 0% preserves the base cooldown; 100% removes it.")
+    public ValidatedInt featherYeetingCooldownReductionPercent = new ValidatedInt(50, 100, 0);
 }

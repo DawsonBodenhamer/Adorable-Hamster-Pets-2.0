@@ -18,6 +18,7 @@ import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
+import net.dawson.adorablehamsterpets.effect.ModStatusEffects;
 import net.dawson.adorablehamsterpets.event.AHPCommonEvents;
 import net.dawson.adorablehamsterpets.item.ModItemGroups;
 import net.dawson.adorablehamsterpets.item.ModItems;
@@ -91,6 +92,7 @@ public class AdorableHamsterPets {
 		ModCriteria.register();
 		ModBlockEntities.register();
 		ModParticles.register();
+		ModStatusEffects.register();
 	}
 
 	/**

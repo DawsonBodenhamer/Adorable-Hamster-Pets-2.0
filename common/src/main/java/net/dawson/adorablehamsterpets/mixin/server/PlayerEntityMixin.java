@@ -18,6 +18,8 @@ import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterProjectileEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
+import net.dawson.adorablehamsterpets.effect.FeatherYeetingStatusEffect;
+import net.dawson.adorablehamsterpets.effect.ModStatusEffects;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.networking.payload.PlayGuidebookEffectsPayload;
@@ -48,6 +50,7 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -1288,7 +1291,15 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
 
             // Update Hamster timers before packaging into projectile NBT
-            hamster.throwCooldownEndTick = currentTime + config.hamsterThrowCooldown.get();
+            boolean hasFeatherYeeting = self.hasStatusEffect(
+                    Registries.STATUS_EFFECT.getEntry(ModStatusEffects.FEATHER_YEETING.get())
+            );
+            long assignedCooldownDuration = FeatherYeetingStatusEffect.calculateThrowCooldownDuration(
+                    config.hamsterThrowCooldown.get(),
+                    hasFeatherYeeting,
+                    config.featherYeetingCooldownReductionPercent.get()
+            );
+            hamster.throwCooldownEndTick = currentTime + assignedCooldownDuration;
             NbtCompound updatedShoulderNbt = HamsterNbtUtil.saveToHamsterState(hamster).toNbt();
 
             // Create Projectile
