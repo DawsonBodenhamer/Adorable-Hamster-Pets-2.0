@@ -73,6 +73,7 @@ __pycache__/
 .codegraph/
 graphify-out/
 graph.json
+codegraph.json
 
 # Local generated agent instructions
 /AGENTS.md
