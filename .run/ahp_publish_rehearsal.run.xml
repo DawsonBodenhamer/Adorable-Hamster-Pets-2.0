@@ -1,11 +1,11 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" folderName="Adorable Hamster Pets" name="AHP - Publish (Rehearsal)" type="ShConfigurationType">
-    <option name="SCRIPT_TEXT" value="cmd.exe /d /c &quot;.venv/Scripts/python.exe&quot; -m ahp_release_control.publishing_facade rehearsal --source-repository &quot;$PROJECT_DIR$&quot;" />
+    <option name="SCRIPT_TEXT" value="cmd.exe /d /c &quot;.venv/Scripts/python.exe&quot; -m ahp_release_control.publishing_facade rehearsal --source-repository &quot;$PROJECT_DIR$/dev/adorable_hamster_pets/.workspace/adorable_hamster_pets&quot;" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="false" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />
     <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
-    <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$/../../../adorable_hamster_pets_release_control/.workspace/adorable_hamster_pets_release_control" />
+    <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$/dev/adorable_hamster_pets_release_control/.workspace/adorable_hamster_pets_release_control" />
     <option name="INDEPENDENT_INTERPRETER_PATH" value="false" />
     <option name="INTERPRETER_PATH" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
