@@ -3,6 +3,7 @@ package net.dawson.adorablehamsterpets.util.fabric;
 import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.integration.accessories.fabric.AccessoriesEquipmentAdapter;
 import net.dawson.adorablehamsterpets.integration.trinkets.fabric.TrinketsEquipmentAdapter;
+import net.dawson.adorablehamsterpets.util.AcornRingEquipment;
 import net.minecraft.entity.player.PlayerEntity;
 
 public final class AcornRingEquipmentImpl {
@@ -12,13 +13,17 @@ public final class AcornRingEquipmentImpl {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     public static boolean isEquippedInOptionalSlot(PlayerEntity player) {
-        // Prefer the loader-native view; the boolean result inherently deduplicates bridged slots.
-        if (Platform.isModLoaded("trinkets")
-                && TrinketsEquipmentAdapter.isAcornRingEquipped(player)) {
-            return true;
-        }
-        return Platform.isModLoaded("accessories")
+        boolean trinketsAvailable = Platform.isModLoaded("trinkets");
+        boolean trinketsEquipped = trinketsAvailable
+                && TrinketsEquipmentAdapter.isAcornRingEquipped(player);
+        boolean accessoriesAvailable = Platform.isModLoaded("accessories");
+        boolean accessoriesEquipped = accessoriesAvailable
                 && AccessoriesEquipmentAdapter.isAcornRingEquipped(player);
+        return AcornRingEquipment.hasSupportedOptionalEquipment(
+                trinketsAvailable,
+                trinketsEquipped,
+                accessoriesAvailable,
+                accessoriesEquipped);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────

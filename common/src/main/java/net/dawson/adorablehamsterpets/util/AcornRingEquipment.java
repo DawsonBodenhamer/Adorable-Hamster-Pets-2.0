@@ -27,6 +27,19 @@ public final class AcornRingEquipment {
         return firstEquipped && secondEquipped;
     }
 
+    public static boolean hasSupportedOptionalEquipment(
+            boolean trinketsAvailable,
+            boolean trinketsEquipped,
+            boolean accessoriesAvailable,
+            boolean accessoriesEquipped) {
+        return (trinketsAvailable && trinketsEquipped)
+                || (accessoriesAvailable && accessoriesEquipped);
+    }
+
+    public static boolean isSupportedTrinketsSlot(String group, String slot) {
+        return "hand".equals(group) && "ring".equals(slot);
+    }
+
     @ExpectPlatform
     private static boolean isEquippedInOptionalSlot(PlayerEntity player) {
         throw new AssertionError();
