@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.component;
 
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
+import com.mojang.serialization.Codec;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.config.WanderDistance;
@@ -34,6 +35,14 @@ public class ModDataComponentTypes {
     public static final RegistrySupplier<ComponentType<WoodVariant>> WOOD_VARIANT =
             DATA_COMPONENT_TYPES.register("wood_variant",
                     () -> ComponentType.<WoodVariant>builder().codec(WoodVariant.CODEC).cache().build());
+
+    public static final RegistrySupplier<ComponentType<UUID>> ACORN_RING_IDENTITY =
+            DATA_COMPONENT_TYPES.register("acorn_ring_identity",
+                    () -> ComponentType.<UUID>builder().codec(Uuids.CODEC).cache().build());
+
+    public static final RegistrySupplier<ComponentType<String>> ACORN_RING_LAST_LOCATION =
+            DATA_COMPONENT_TYPES.register("acorn_ring_last_location",
+                    () -> ComponentType.<String>builder().codec(Codec.STRING).cache().build());
 
     // Called from AdorableHamsterPets.initRegistries() to perform the actual registration
     public static void registerDataComponentTypes() {

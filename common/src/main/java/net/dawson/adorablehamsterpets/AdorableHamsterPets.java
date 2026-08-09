@@ -30,6 +30,7 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
 import net.dawson.adorablehamsterpets.util.HamsterNbtUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
+import net.dawson.adorablehamsterpets.util.AcornRingEquipmentLifecycle;
 import net.dawson.adorablehamsterpets.util.ModLootTableModifiers;
 import net.dawson.adorablehamsterpets.world.ModSpawnPlacements;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
@@ -127,6 +128,7 @@ public class AdorableHamsterPets {
 
 			// --- Events ---
 			AHPCommonEvents.init();
+			AcornRingEquipmentLifecycle.init();
 			PlayerEvent.PLAYER_JOIN.register(AdorableHamsterPets::onPlayerJoin);
 			PlayerEvent.PLAYER_CLONE.register(AdorableHamsterPets::onPlayerClone);
 			PlayerEvent.PLAYER_RESPAWN.register(AdorableHamsterPets::onPlayerRespawn);
@@ -167,6 +169,7 @@ public class AdorableHamsterPets {
 	 * @param player The ServerPlayerEntity who has just joined the world.
 	 */
 	private static void onPlayerJoin(ServerPlayerEntity player) {
+		AcornRingEquipmentLifecycle.defer(player, null);
 		if (Configs.AHP_UI.enableAutoGuidebookDelivery) {
 			PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
 			Identifier flagAdvId = Identifier.of(MOD_ID, "technical/has_received_initial_guidebook");
@@ -209,6 +212,7 @@ public class AdorableHamsterPets {
 	 * Used to ensure client-side shoulder data correctly synchronizes.
 	 */
 	private static void onPlayerRespawn(ServerPlayerEntity player, boolean conqueredEnd, Entity.RemovalReason reason) {
+		AcornRingEquipmentLifecycle.defer(player, null);
 		((PlayerEntityAccessor) player).adorablehamsterpets$syncHamsterState();
 	}
 
@@ -223,6 +227,7 @@ public class AdorableHamsterPets {
 	 * @param wasDeath_UNRELIABLE A boolean flag that is not reliable on all platforms and is ignored.
 	 */
 	private static void onPlayerClone(ServerPlayerEntity oldPlayer, ServerPlayerEntity newPlayer, boolean wasDeath_UNRELIABLE) {
+		AcornRingEquipmentLifecycle.defer(newPlayer, null);
 		PlayerEntityAccessor oldPlayerAccessor = (PlayerEntityAccessor) oldPlayer;
 		PlayerEntityAccessor newPlayerAccessor = (PlayerEntityAccessor) newPlayer;
 
