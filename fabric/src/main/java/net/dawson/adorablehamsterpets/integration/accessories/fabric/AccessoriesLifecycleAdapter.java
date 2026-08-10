@@ -5,9 +5,7 @@ import io.wispforest.accessories.api.events.AccessoryChangeCallback;
 import io.wispforest.accessories.api.events.OnDropCallback;
 import io.wispforest.accessories.api.slot.SlotReference;
 import net.dawson.adorablehamsterpets.item.ModItems;
-import net.dawson.adorablehamsterpets.util.AcornRingEquipmentLifecycle;
-import net.dawson.adorablehamsterpets.util.AcornRingLifecycleUtil;
-import net.dawson.adorablehamsterpets.util.AcornRingLocation;
+import net.dawson.adorablehamsterpets.util.AcornRingUtil;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
@@ -19,7 +17,7 @@ public final class AccessoriesLifecycleAdapter {
 
     public static boolean collect(
             ServerPlayerEntity player,
-            List<AcornRingLifecycleUtil.EquippedRing> equippedRings) {
+            List<AcornRingUtil.EquippedRing> equippedRings) {
         return AccessoriesCapability.getOptionally(player)
                 .map(capability -> {
                     var container = capability.getContainers().get("ring");
@@ -31,8 +29,8 @@ public final class AccessoriesLifecycleAdapter {
                         SlotReference reference = container.createReference(index);
                         var stack = reference.getStack();
                         if (stack != null && stack.isOf(ModItems.ACORN_RING.get())) {
-                            equippedRings.add(new AcornRingLifecycleUtil.EquippedRing(
-                                    AcornRingLocation.ACCESSORIES_RING,
+                            equippedRings.add(new AcornRingUtil.EquippedRing(
+                                    AcornRingUtil.Location.ACCESSORIES_RING,
                                     stack,
                                     reference::setStack));
                         }
@@ -49,18 +47,18 @@ public final class AccessoriesLifecycleAdapter {
             }
 
             if (current.isOf(ModItems.ACORN_RING.get())) {
-                AcornRingEquipmentLifecycle.reconcileImmediately(
+                AcornRingUtil.reconcileImmediately(
                         player,
-                        AcornRingLocation.ACCESSORIES_RING,
+                        AcornRingUtil.Location.ACCESSORIES_RING,
                         current);
             } else if (previous.isOf(ModItems.ACORN_RING.get())) {
-                AcornRingEquipmentLifecycle.defer(player, previous);
+                AcornRingUtil.defer(player, previous);
             }
         });
         OnDropCallback.EVENT.register((rule, stack, reference, damageSource) -> {
             if (reference.slotName().equals("ring") && reference.entity() instanceof ServerPlayerEntity player
                     && stack.isOf(ModItems.ACORN_RING.get())) {
-                AcornRingEquipmentLifecycle.defer(player, stack);
+                AcornRingUtil.defer(player, stack);
             }
             return rule;
         });

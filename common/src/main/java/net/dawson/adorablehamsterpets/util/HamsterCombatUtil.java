@@ -278,8 +278,8 @@ public final class HamsterCombatUtil {
                 && isContractProtected(
                         hamsterOwnerUuid,
                         targetOwnerUuid,
-                        AcornRingEquipment.isEquipped(hamsterOwner),
-                        AcornRingEquipment.isEquipped(targetOwner));
+                        AcornRingUtil.isEquipped(hamsterOwner),
+                        AcornRingUtil.isEquipped(targetOwner));
     }
 
     static boolean isContractProtected(
@@ -287,7 +287,7 @@ public final class HamsterCombatUtil {
             UUID targetOwnerUuid,
             boolean hamsterOwnerEquipped,
             boolean targetOwnerEquipped) {
-        return AcornRingContractUtil.isContractProtected(
+        return AcornRingUtil.isContractProtected(
                 hamsterOwnerUuid,
                 targetOwnerUuid,
                 hamsterOwnerEquipped,

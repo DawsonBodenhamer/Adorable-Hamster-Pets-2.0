@@ -2,7 +2,7 @@ package net.dawson.adorablehamsterpets.integration.trinkets.fabric;
 
 import dev.emi.trinkets.api.TrinketsApi;
 import net.dawson.adorablehamsterpets.item.ModItems;
-import net.dawson.adorablehamsterpets.util.AcornRingEquipment;
+import net.dawson.adorablehamsterpets.util.AcornRingUtil;
 import net.minecraft.entity.player.PlayerEntity;
 
 /**
@@ -15,7 +15,7 @@ public final class TrinketsEquipmentAdapter {
                 .map(component -> {
                     for (var groupEntry : component.getInventory().entrySet()) {
                         for (var slotEntry : groupEntry.getValue().entrySet()) {
-                            if (!AcornRingEquipment.isSupportedTrinketsSlot(groupEntry.getKey(), slotEntry.getKey())) {
+                            if (!AcornRingUtil.isSupportedTrinketsSlot(groupEntry.getKey(), slotEntry.getKey())) {
                                 continue;
                             }
 
