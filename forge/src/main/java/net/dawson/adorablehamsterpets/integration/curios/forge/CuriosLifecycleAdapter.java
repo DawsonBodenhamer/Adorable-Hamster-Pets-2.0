@@ -1,9 +1,7 @@
 package net.dawson.adorablehamsterpets.integration.curios.forge;
 
 import net.dawson.adorablehamsterpets.item.ModItems;
-import net.dawson.adorablehamsterpets.util.AcornRingEquipmentLifecycle;
-import net.dawson.adorablehamsterpets.util.AcornRingLifecycleUtil;
-import net.dawson.adorablehamsterpets.util.AcornRingLocation;
+import net.dawson.adorablehamsterpets.util.AcornRingUtil;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraftforge.common.MinecraftForge;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -18,7 +16,7 @@ public final class CuriosLifecycleAdapter {
 
     public static boolean collect(
             ServerPlayerEntity player,
-            List<AcornRingLifecycleUtil.EquippedRing> equippedRings) {
+            List<AcornRingUtil.EquippedRing> equippedRings) {
         return CuriosApi.getCuriosInventory(player)
                 .map(handler -> {
                     var ringHandler = handler.getCurios().get("ring");
@@ -31,8 +29,8 @@ public final class CuriosLifecycleAdapter {
                         var stack = stacks.getStackInSlot(index);
                         if (stack.isOf(ModItems.ACORN_RING.get())) {
                             int slotIndex = index;
-                            equippedRings.add(new AcornRingLifecycleUtil.EquippedRing(
-                                    AcornRingLocation.CURIOS_RING,
+                            equippedRings.add(new AcornRingUtil.EquippedRing(
+                                    AcornRingUtil.Location.CURIOS_RING,
                                     stack,
                                     replacement -> handler.setEquippedCurio("ring", slotIndex, replacement)));
                         }
@@ -49,12 +47,12 @@ public final class CuriosLifecycleAdapter {
             }
 
             if (event.getTo().isOf(ModItems.ACORN_RING.get())) {
-                AcornRingEquipmentLifecycle.reconcileImmediately(
+                AcornRingUtil.reconcileImmediately(
                         player,
-                        AcornRingLocation.CURIOS_RING,
+                        AcornRingUtil.Location.CURIOS_RING,
                         event.getTo());
             } else if (event.getFrom().isOf(ModItems.ACORN_RING.get())) {
-                AcornRingEquipmentLifecycle.defer(player, event.getFrom());
+                AcornRingUtil.defer(player, event.getFrom());
             }
         });
     }

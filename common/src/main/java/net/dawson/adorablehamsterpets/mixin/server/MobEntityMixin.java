@@ -1,6 +1,6 @@
 package net.dawson.adorablehamsterpets.mixin.server;
 
-import net.dawson.adorablehamsterpets.util.AcornRingContractUtil;
+import net.dawson.adorablehamsterpets.util.AcornRingUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.Brain;
@@ -27,7 +27,7 @@ public abstract class MobEntityMixin {
     private void adorablehamsterpets$rejectContractTarget(
             @Nullable LivingEntity target, CallbackInfo ci) {
         MobEntity self = (MobEntity) (Object) this;
-        if (target != null && AcornRingContractUtil.protects(self, target)) {
+		if (target != null && AcornRingUtil.protects(self, target)) {
             ci.cancel();
         }
     }
@@ -43,27 +43,27 @@ public abstract class MobEntityMixin {
     }
 
     private static void adorablehamsterpets$clearContractTargets(MobEntity mob) {
-        if (mob.getWorld().isClient() || !AcornRingContractUtil.isEligiblePet(mob)) {
+		if (mob.getWorld().isClient() || !AcornRingUtil.isEligiblePet(mob)) {
             return;
         }
 
         boolean removedPursuit = false;
         LivingEntity target = mob.getTarget();
-        if (target != null && AcornRingContractUtil.protects(mob, target)) {
+		if (target != null && AcornRingUtil.protects(mob, target)) {
             mob.setTarget(null);
             removedPursuit = true;
         }
 
         Brain<?> brain = mob.getBrain();
         LivingEntity attackTarget = adorablehamsterpets$getMemory(brain, MemoryModuleType.ATTACK_TARGET);
-        if (attackTarget != null && AcornRingContractUtil.protects(mob, attackTarget)) {
+		if (attackTarget != null && AcornRingUtil.protects(mob, attackTarget)) {
             brain.forget(MemoryModuleType.ATTACK_TARGET);
             removedPursuit = true;
         }
 
         UUID angryAt = adorablehamsterpets$getMemory(brain, MemoryModuleType.ANGRY_AT);
         LivingEntity angryTarget = adorablehamsterpets$resolveLiving(mob, angryAt);
-        if (angryTarget != null && AcornRingContractUtil.protects(mob, angryTarget)) {
+		if (angryTarget != null && AcornRingUtil.protects(mob, angryTarget)) {
             brain.forget(MemoryModuleType.ANGRY_AT);
             removedPursuit = true;
         }
@@ -72,14 +72,14 @@ public abstract class MobEntityMixin {
         if (walkTarget != null
                 && walkTarget.getLookTarget() instanceof EntityLookTarget entityLookTarget
                 && entityLookTarget.getEntity() instanceof LivingEntity walkEntity
-                && AcornRingContractUtil.protects(mob, walkEntity)) {
+				&& AcornRingUtil.protects(mob, walkEntity)) {
             brain.forget(MemoryModuleType.WALK_TARGET);
             removedPursuit = true;
         }
 
         LivingEntity hurtByEntity =
                 adorablehamsterpets$getMemory(brain, MemoryModuleType.HURT_BY_ENTITY);
-        if (hurtByEntity != null && AcornRingContractUtil.protects(mob, hurtByEntity)) {
+		if (hurtByEntity != null && AcornRingUtil.protects(mob, hurtByEntity)) {
             brain.forget(MemoryModuleType.HURT_BY_ENTITY);
             removedPursuit = true;
         }
@@ -87,13 +87,13 @@ public abstract class MobEntityMixin {
         DamageSource hurtBy = adorablehamsterpets$getMemory(brain, MemoryModuleType.HURT_BY);
         if (hurtBy != null
                 && hurtBy.getAttacker() instanceof LivingEntity hurtByAttacker
-                && AcornRingContractUtil.protects(mob, hurtByAttacker)) {
+				&& AcornRingUtil.protects(mob, hurtByAttacker)) {
             brain.forget(MemoryModuleType.HURT_BY);
             removedPursuit = true;
         }
 
         LivingEntity attacker = mob.getAttacker();
-        if (attacker != null && AcornRingContractUtil.protects(mob, attacker)) {
+		if (attacker != null && AcornRingUtil.protects(mob, attacker)) {
             mob.setAttacker(null);
             removedPursuit = true;
         }

@@ -3,10 +3,7 @@ package net.dawson.adorablehamsterpets.integration.trinkets.fabric;
 import dev.emi.trinkets.api.TrinketsApi;
 import dev.emi.trinkets.api.event.TrinketDropCallback;
 import net.dawson.adorablehamsterpets.item.ModItems;
-import net.dawson.adorablehamsterpets.util.AcornRingEquipment;
-import net.dawson.adorablehamsterpets.util.AcornRingEquipmentLifecycle;
-import net.dawson.adorablehamsterpets.util.AcornRingLifecycleUtil;
-import net.dawson.adorablehamsterpets.util.AcornRingLocation;
+import net.dawson.adorablehamsterpets.util.AcornRingUtil;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -19,7 +16,7 @@ public final class TrinketsLifecycleAdapter {
 
     public static boolean collect(
             ServerPlayerEntity player,
-            List<AcornRingLifecycleUtil.EquippedRing> equippedRings) {
+            List<AcornRingUtil.EquippedRing> equippedRings) {
         return TrinketsApi.getTrinketComponent(player)
                 .map(component -> {
                     var group = component.getInventory().get("hand");
@@ -36,8 +33,8 @@ public final class TrinketsLifecycleAdapter {
                         var stack = ringInventory.getStack(index);
                         if (stack.isOf(ModItems.ACORN_RING.get())) {
                             int slotIndex = index;
-                            equippedRings.add(new AcornRingLifecycleUtil.EquippedRing(
-                                    AcornRingLocation.TRINKETS_HAND_RING,
+                            equippedRings.add(new AcornRingUtil.EquippedRing(
+                                    AcornRingUtil.Location.TRINKETS_HAND_RING,
                                     stack,
                                     replacement -> ringInventory.setStack(slotIndex, replacement)));
                         }
@@ -51,7 +48,7 @@ public final class TrinketsLifecycleAdapter {
         TrinketDropCallback.EVENT.register((rule, stack, reference, entity) -> {
             if (isSupportedRing(reference) && entity instanceof ServerPlayerEntity player
                     && stack.isOf(ModItems.ACORN_RING.get())) {
-                AcornRingEquipmentLifecycle.defer(player, stack);
+                AcornRingUtil.defer(player, stack);
             }
             return rule;
         });
@@ -59,7 +56,7 @@ public final class TrinketsLifecycleAdapter {
 
     private static boolean isSupportedRing(dev.emi.trinkets.api.SlotReference reference) {
         var slotType = reference.inventory().getSlotType();
-        return AcornRingEquipment.isSupportedTrinketsSlot(slotType.getGroup(), slotType.getName());
+        return AcornRingUtil.isSupportedTrinketsSlot(slotType.getGroup(), slotType.getName());
     }
 
     private TrinketsLifecycleAdapter() {}

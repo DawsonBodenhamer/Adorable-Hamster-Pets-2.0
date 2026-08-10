@@ -18,8 +18,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.mixin.accessor.SlotAccessor;
-import net.dawson.adorablehamsterpets.util.AcornRingContractUtil;
-import net.dawson.adorablehamsterpets.util.AcornRingEquipmentLifecycle;
+import net.dawson.adorablehamsterpets.util.AcornRingUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.util.PetOwnershipUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
@@ -91,7 +90,7 @@ public class AHPCommonEvents {
 
         InteractionEvent.RIGHT_CLICK_ITEM.register(AHPCommonEvents::onRightClickItem);
         TickEvent.SERVER_POST.register(HamsterSpawnCommandUtil::onServerTick);
-        TickEvent.SERVER_POST.register(AcornRingEquipmentLifecycle::onServerTick);
+		TickEvent.SERVER_POST.register(AcornRingUtil::onServerTick);
 
         // Trigger the genetics report on headless servers
         LifecycleEvent.SERVER_STARTED.register(server -> {
@@ -309,7 +308,7 @@ public class AHPCommonEvents {
         // Ring restraint covers direct normal attacks only, not projectiles or hazards.
         if (attacker instanceof PlayerEntity player
                 && direct == player
-                && AcornRingContractUtil.blocksDirectPlayerAttack(player, victim)) {
+				&& AcornRingUtil.blocksDirectPlayerAttack(player, victim)) {
             return EventResult.interruptFalse();
         }
 
@@ -340,8 +339,8 @@ public class AHPCommonEvents {
         }
 
         // Last-resort guard for owned-pet AI and projectiles that bypass normal target state.
-        LivingEntity responsiblePet = AcornRingContractUtil.responsiblePet(attacker);
-        if (responsiblePet != null && AcornRingContractUtil.protects(responsiblePet, victim)) {
+		LivingEntity responsiblePet = AcornRingUtil.responsiblePet(attacker);
+		if (responsiblePet != null && AcornRingUtil.protects(responsiblePet, victim)) {
             return EventResult.interruptFalse();
         }
 
