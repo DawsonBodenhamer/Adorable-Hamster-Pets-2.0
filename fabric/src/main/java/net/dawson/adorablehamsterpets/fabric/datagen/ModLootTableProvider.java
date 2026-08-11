@@ -46,6 +46,12 @@ public class ModLootTableProvider extends FabricBlockLootTableProvider {
                 .properties(StatePredicate.Builder.create().exactMatch(CucumberCropBlock.AGE, CucumberCropBlock.MAX_AGE));
         this.addDrop(ModBlocks.CUCUMBER_CROP.get(), this.cropDrops(ModBlocks.CUCUMBER_CROP.get(), ModItems.CUCUMBER.get(), ModItems.CUCUMBER_SEEDS.get(), builder4));
 
+        // --- Crate Drops ---
+        this.addDrop(ModBlocks.ACORN_CRATE.get());
+        this.addDrop(ModBlocks.CUCUMBER_CRATE.get());
+        this.addDrop(ModBlocks.GREEN_BEANS_CRATE.get());
+        this.addDrop(ModBlocks.HAMSTER_FOOD_MIX_CRATE.get());
+
         // --- Custom Sunflower Loot Table ---
         // Only drop the item when the LOWER half is broken
         LootCondition.Builder conditionBuilder = BlockStatePropertyLootCondition.builder(ModBlocks.SUNFLOWER_BLOCK.get())

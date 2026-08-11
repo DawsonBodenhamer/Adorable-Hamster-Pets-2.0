@@ -15,6 +15,11 @@ import java.util.concurrent.CompletableFuture;
 
 public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
 
+    private static final TagKey<Item> STORAGE_BLOCKS = TagKey.of(
+            RegistryKeys.ITEM,
+            Identifier.of("c", "storage_blocks")
+    );
+
     // --- Custom Tags ---
     public static final TagKey<Item> HAMSTER_ARMOR_ENCHANTABLE = TagKey.of(
             RegistryKeys.ITEM,
@@ -79,5 +84,12 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
         // 7. Vanilla Trimmable Armor Wrapper
         getOrCreateTagBuilder(ItemTags.TRIMMABLE_ARMOR)
                 .addTag(HAMSTER_ARMOR_ENCHANTABLE);
+
+        // Farmer's Delight and MineColonies use this item tag for storage-crate interoperability
+        getOrCreateTagBuilder(STORAGE_BLOCKS)
+                .add(ModItems.ACORN_CRATE.get())
+                .add(ModItems.CUCUMBER_CRATE.get())
+                .add(ModItems.GREEN_BEANS_CRATE.get())
+                .add(ModItems.HAMSTER_FOOD_MIX_CRATE.get());
     }
 }
