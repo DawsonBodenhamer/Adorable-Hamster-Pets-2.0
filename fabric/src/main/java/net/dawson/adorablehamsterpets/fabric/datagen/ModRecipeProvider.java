@@ -100,7 +100,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
         // offerHamsterBedRecipe(recipeExporter, Items.PALE_OAK_PLANKS, WoodVariant.PALE_OAK); // TODO: add pale oak when porting to 1.21.5
 
         // Hamster Food Mix
-        ShapedRecipeJsonBuilder.create(RecipeCategory.FOOD, ModItems.HAMSTER_FOOD_MIX.get(), 1)
+        ShapedRecipeJsonBuilder.create(RecipeCategory.FOOD, ModItems.HAMSTER_FOOD_MIX.get(), 4)
                 .pattern("SSS")
                 .pattern("PCP")
                 .pattern("WWW")
@@ -180,7 +180,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .offerTo(recipeExporter);
 
         // Acorn Ring
-        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.ACORN_RING.get(), 1)
+        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.ACORN_RING.get(), 2)
                 .pattern(" C ")
                 .pattern("CHC")
                 .pattern(" C ")

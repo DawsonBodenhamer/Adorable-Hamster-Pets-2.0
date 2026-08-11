@@ -188,7 +188,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> ACORN_RING = registerItem("acorn_ring",
-            () -> new Item(new Item.Settings().maxCount(1)) {
+            () -> new Item(new Item.Settings().maxCount(64)) {
                 @Override
                 public void appendTooltip(
                         ItemStack stack,
