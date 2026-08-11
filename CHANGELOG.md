@@ -65,6 +65,9 @@ water traps, lowered blocks, and recovering shoulder hamsters received overdue a
 - **Missing Guidebook Warning**
   - The warning now remembers each player's acknowledgement between restarts and mod updates instead of periodically
     forgetting and filing the same complaint again.
+- **Crate Retrieval**
+  - Acorn, cucumber, green bean, and Hamster Food Mix crates now drop themselves when broken, prefer axes, and count as
+    standard storage blocks for storage-focused mod compatibility.
 - **AI-Disabled Hamster Taming**
   - Incorrect taming attempts no longer permanently lock command-spawned, AI-disabled hamsters or disturb their frozen
     pose. A later valid sneak-taming attempt still reawakens them normally.
