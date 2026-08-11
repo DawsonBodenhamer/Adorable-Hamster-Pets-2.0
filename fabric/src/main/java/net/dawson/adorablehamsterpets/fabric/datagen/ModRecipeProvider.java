@@ -103,7 +103,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
         offerHamsterBedRecipe(exporter, Items.BAMBOO_PLANKS, WoodVariant.BAMBOO);
 
         // Hamster Food Mix
-        ShapedRecipeJsonBuilder.create(RecipeCategory.FOOD, ModItems.HAMSTER_FOOD_MIX.get(), 1)
+        ShapedRecipeJsonBuilder.create(RecipeCategory.FOOD, ModItems.HAMSTER_FOOD_MIX.get(), 4)
                 .pattern("SSS")
                 .pattern("PCP")
                 .pattern("WWW")
@@ -182,7 +182,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .offerTo(exporter);
 
         // Acorn Ring
-        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.ACORN_RING.get(), 1)
+        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.ACORN_RING.get(), 2)
                 .pattern(" C ")
                 .pattern("CHC")
                 .pattern(" C ")

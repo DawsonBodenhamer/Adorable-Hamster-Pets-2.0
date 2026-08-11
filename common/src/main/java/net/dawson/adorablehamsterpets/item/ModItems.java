@@ -182,7 +182,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> ACORN_RING = registerItem("acorn_ring",
-            () -> new Item(new Item.Settings().maxCount(1)) {
+            () -> new Item(new Item.Settings().maxCount(64)) {
                 @Override
                 public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
                     if (Configs.AHP_UI.enableItemTooltips) {

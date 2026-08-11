@@ -39,6 +39,8 @@ water traps, lowered blocks, and recovering shoulder hamsters received overdue a
   - Every configured hamster food can now lure eligible hamsters, temporarily interrupting ordinary combat without
     erasing a valid target. Tamed hamsters still only follow their owner.
   - Begging is reserved for taming food and shoulder-mount treats. Other food attracts them without the performance.
+- **Recipe Output Adjustments**
+  - Hamster Food Mix crafting now produces 4 Hamster Food Mix instead of 1.
 - **Cycle Aggression States Without Sneaking**
   - Configured Pacifist, Standard, and Menace items now change aggression through ordinary feeding.
   - If the hamster is already in Standard aggression mode, configured sunflower seeds remain ordinary food.
