@@ -54,13 +54,15 @@ logs/
 # =================================================
 # Temp Toolchain Stuff
 # =================================================
-Adorable_Hamster_Pets_Tech_Spec_*_Backup.md
-/tools/.env
-/tools/context_payload.json
-/tools/prompts/debug_last_prompt.md
-/tools/prompts/debug_last_response.md
-/tools/more_context.md
-/tools/context_manager_last_run_stats_*.json
+Adorable_Hamster_Pets_Tech_Spec_*.md
+**/src/test/**
+/tools/**
+!/tools/
+!/tools/update_languages.py
+!/tools/update_languages.bat
+!/tools/package_preview.py
+!/tools/package_preview_jars_all.bat
+!/tools/package_preview_jars_develop.bat
 
 # Ignore compiled Python files
 __pycache__/
