@@ -12,6 +12,7 @@
 # =================================com
 **/.gradle/
 **/build/
+**/bin/
 **/out/
 
 # Platform-specific build outputs
