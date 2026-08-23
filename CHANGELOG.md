@@ -40,6 +40,10 @@ encounters with cave hamsters that have glowing red eyes, frantic movement, and 
 - **Per-Hamster Armor Visibility**
   - Each hamster inventory now has a compact checkbox for hiding that hamster's armor without removing its protection.
     The global armor-visual setting remains the final authority.
+- **Hamster Reset Command**
+  - Added `/ahp reset_hamster` for server OPs. It returns the nearest hamster to a freshly spawned wild state while
+    preserving its fur, patterns, eyes, animation personality, and cheek-pouch loot. Ownership, equipment, AI state,
+    cooldowns, and other history get a clean slate.
 
 ### Changed
 - **Food Gets a Hamster's Attention**

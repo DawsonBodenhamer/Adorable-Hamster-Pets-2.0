@@ -103,6 +103,15 @@ public class ModCommands {
                 )
         );
 
+        ahpRoot.then(CommandManager.literal("reset_hamster")
+                .requires(source -> source.hasPermissionLevel(2))
+                .executes(context -> HamsterResetCommandUtil.reset(
+                        context.getSource(), Collections.emptyList()))
+                .then(CommandManager.argument("hamsters", EntityArgumentType.entities())
+                        .executes(context -> HamsterResetCommandUtil.reset(
+                                context.getSource(), EntityArgumentType.getEntities(context, "hamsters"))))
+        );
+
         ahpRoot.then(CommandManager.literal("unlock_all_advancements")
                 .requires(source -> source.hasPermissionLevel(2))
                 .executes(context -> PlayerCommandUtil.executeUnlockAllModAdvancements(context.getSource()))
