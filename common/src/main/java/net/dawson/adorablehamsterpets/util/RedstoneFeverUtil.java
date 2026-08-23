@@ -84,7 +84,7 @@ public final class RedstoneFeverUtil {
         if (resolveCommissionedRoll) {
             SoundEvent hiss = ModSounds.getRandomSoundFrom(
                     ModSounds.HAMSTER_HISS_SOUNDS, hamster.getRandom());
-            if (hiss != null) hamster.playSound(hiss, 0.5F, hamster.getSoundPitch());
+            if (hiss != null) hamster.playSound(hiss, 0.7F, hamster.getSoundPitch());
         }
         return true;
     }
@@ -338,7 +338,7 @@ public final class RedstoneFeverUtil {
         if (schedule != null && worldTime >= schedule.triggerTick()) {
             hamster.playSound(
                     schedule.sound(),
-                    0.018F,
+                    0.03F,
                     (float) (hamster.getSoundPitch() * schedule.pitchMultiplier()));
             state.clearScheduledShiver();
             state.setShiverPeakArmed(false);

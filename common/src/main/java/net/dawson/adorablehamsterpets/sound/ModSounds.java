@@ -219,6 +219,14 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
     public static final RegistrySupplier<SoundEvent> HAMSTER_SHIVER1 = registerSoundEvent("hamster_shiver1");
     public static final RegistrySupplier<SoundEvent> HAMSTER_SHIVER2 = registerSoundEvent("hamster_shiver2");
 
+    // --- Sneeze Sounds ---
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SNEEZE1 = registerSoundEvent("hamster_sneeze1");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SNEEZE2 = registerSoundEvent("hamster_sneeze2");
+
+    // --- Labored Breathing Sounds ---
+    public static final RegistrySupplier<SoundEvent> HAMSTER_LABORED_BREATHING_LOOP1 = registerSoundEvent("hamster_labored_breathing_loop1");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_LABORED_BREATHING_LOOP2 = registerSoundEvent("hamster_labored_breathing_loop2");
+
     // --- Generic Misc Sounds ---
     public static final RegistrySupplier<SoundEvent> AHP_THEME_SONG_8_BIT = registerSoundEvent("ahp_theme_song_8_bit");
     public static final RegistrySupplier<SoundEvent> AHP_THEME_SONG_LOW_FI = registerSoundEvent("ahp_theme_song_low_fi");
@@ -249,6 +257,16 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
     public static final List<TimedSound> HAMSTER_SHIVER_TIMED_SOUNDS = List.of(
             new TimedSound(HAMSTER_SHIVER1, 1.0D, 4.0D),
             new TimedSound(HAMSTER_SHIVER2, 1.0D, 4.2D)
+    );
+    public static final List<RegistrySupplier<SoundEvent>> HAMSTER_SNEEZE_SOUNDS = List.of(
+            HAMSTER_SNEEZE1, HAMSTER_SNEEZE2
+    );
+    public static final List<RegistrySupplier<SoundEvent>> HAMSTER_LABORED_BREATHING_SOUNDS = List.of(
+            HAMSTER_LABORED_BREATHING_LOOP1, HAMSTER_LABORED_BREATHING_LOOP2
+    );
+    public static final List<TimedSound> HAMSTER_LABORED_BREATHING_TIMED_SOUNDS = List.of(
+            new TimedSound(HAMSTER_LABORED_BREATHING_LOOP1, 1.9817D, 0.0D),
+            new TimedSound(HAMSTER_LABORED_BREATHING_LOOP2, 1.7533D, 0.0D)
     );
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_IDLE_SOUNDS = List.of(
             HAMSTER_IDLE1, HAMSTER_IDLE2, HAMSTER_IDLE3, HAMSTER_IDLE4, HAMSTER_IDLE5,
@@ -423,6 +441,10 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
 
     public static TimedSound getRandomTimedShiverSound(Random random) {
         return HAMSTER_SHIVER_TIMED_SOUNDS.get(random.nextInt(HAMSTER_SHIVER_TIMED_SOUNDS.size()));
+    }
+
+    public static TimedSound getRandomTimedBreathingSound(Random random) {
+        return HAMSTER_LABORED_BREATHING_TIMED_SOUNDS.get(random.nextInt(HAMSTER_LABORED_BREATHING_TIMED_SOUNDS.size()));
     }
 
     /**

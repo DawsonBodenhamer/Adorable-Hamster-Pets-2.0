@@ -446,6 +446,8 @@
   "subtitles.adorablehamsterpets.hamster_snort": "Hamster snorts",
   "subtitles.adorablehamsterpets.hamster_hiss": "Hamster hisses",
   "subtitles.adorablehamsterpets.hamster_shiver": "Hamster shivers",
+  "subtitles.adorablehamsterpets.hamster_sneeze": "Hamster sneezes",
+  "subtitles.adorablehamsterpets.hamster_labored_breathing": "Hamster breathes heavily",
 
   "config.jade.plugin_adorablehamsterpets.wild_bush_tooltips": "Wild Bush Tooltip Hints",
   "config.jade.plugin_adorablehamsterpets.hamster_debug_info": "More Hamster Info (For Debugging)",

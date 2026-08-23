@@ -30,6 +30,7 @@ import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
 import net.dawson.adorablehamsterpets.client.perk.PlayerPerkManager;
 import net.dawson.adorablehamsterpets.client.render.BlockJiggleManager;
+import net.dawson.adorablehamsterpets.client.sound.HamsterFeverBreathingSoundManager;
 import net.dawson.adorablehamsterpets.client.sound.HamsterTreeLoopSoundInstance;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.config.*;
@@ -203,6 +204,7 @@ public class AdorableHamsterPetsClient {
             clientSessionTimer = 0;
             ClientParticleManager.INSTANCE.clear();
             ClientShoulderHamsterData.REPLAY_CACHE.clear();
+            HamsterFeverBreathingSoundManager.INSTANCE.reset(MinecraftClient.getInstance());
             pendingGuidebookEffects = false;
 
             // Sync initial supporter crown theme preference to server
@@ -216,7 +218,7 @@ public class AdorableHamsterPetsClient {
                 if (entity instanceof HamsterTreeSearcherEntity hider) {
                     MinecraftClient client = MinecraftClient.getInstance();
 
-                    // Audio feedback
+                    // Audio
                     HamsterTreeLoopSoundInstance existingSound = activeTreeSounds.get(hider.getId());
 
                     if (existingSound == null || existingSound.isDone()) {
@@ -225,7 +227,7 @@ public class AdorableHamsterPetsClient {
                         activeTreeSounds.put(hider.getId(), newSound);
                     }
 
-                    // Visual feedback
+                    // Visual
                     BlockJiggleManager.INSTANCE.onHiddenEntityAdded(hider);
                 } else if (entity instanceof HamsterBlockHiderEntity hider) {
                     BlockJiggleManager.INSTANCE.onHiddenEntityAdded(hider);
@@ -298,7 +300,10 @@ public class AdorableHamsterPetsClient {
         // --- 1. Block Jiggle Manager ---
         BlockJiggleManager.INSTANCE.clientTick(client);
 
-        // --- 2. Announcement System Logic ---
+        // --- 2. Redstone Fever Breathing ---
+        HamsterFeverBreathingSoundManager.INSTANCE.tick(client);
+
+        // --- 3. Announcement System Logic ---
         boolean isGuiOpen = client.currentScreen != null;
         AnnouncementIconAnimator.INSTANCE.tick(isGuiOpen);
 
@@ -323,7 +328,7 @@ public class AdorableHamsterPetsClient {
             AdorableHamsterPets.LOGGER.debug("[AHP Client Tick] Triggered periodic manifest refresh.");
         }
 
-        // --- 3. Input & Game Logic ---
+        // --- 4. Input & Game Logic ---
         if (client.player == null || client.world == null) {
             renderedHamsterIdsThisTick.clear();
             renderedHamsterIdsLastTick.clear();
@@ -626,7 +631,7 @@ public class AdorableHamsterPetsClient {
             client.player.sendMessage(Text.translatable("message.adorablehamsterpets.crown_trial_countdown", seconds).formatted(Formatting.WHITE), false);
         }
 
-        // --- 4. Render State Tracking ---
+        // --- 5. Render State Tracking ---
         // Determine which hamsters started and stopped rendering this tick
         Set<Integer> startedRendering = new HashSet<>(renderedHamsterIdsThisTick);
         startedRendering.removeAll(renderedHamsterIdsLastTick);
@@ -646,18 +651,18 @@ public class AdorableHamsterPetsClient {
         renderedHamsterIdsLastTick.addAll(renderedHamsterIdsThisTick);
         renderedHamsterIdsThisTick.clear();
 
-        // --- 5. Hamster Dismount From Shoulder Logic ---
+        // --- 6. Hamster Dismount From Shoulder Logic ---
         handleDismountKeyPress(client);
 
-        // --- 6. Guidebook Warning Logic ---
+        // --- 7. Guidebook Warning Logic ---
         handleGuidebookWarning(client);
 
-        // --- 7. Tick Particle Manager ---
+        // --- 8. Tick Particle Manager ---
         if (client.world != null && !client.isPaused()) {
             ClientParticleManager.INSTANCE.tick(client.world);
         }
 
-        // --- 8. Deferred Guidebook Effects ---
+        // --- 9. Deferred Guidebook Effects ---
         if (pendingGuidebookEffects) {
             pendingGuidebookEffectsTimer--;
             if (client.currentScreen == null) {
@@ -670,7 +675,7 @@ public class AdorableHamsterPetsClient {
             }
         }
 
-        // --- 9. Supporter Crown Rendering ---
+        // --- 10. Supporter Crown Rendering ---
         if (client.world != null && !client.isPaused() && Configs.AHP_SUPPORTER.enableSupporterCrown) {
             boolean isFirstPerson = client.options.getPerspective().isFirstPerson();
 
@@ -749,7 +754,7 @@ public class AdorableHamsterPetsClient {
             }
         }
 
-        // --- 10. Delayed Shoulder Mount Sound ---
+        // --- 11. Delayed Shoulder Mount Sound ---
         if (mountSoundDelayTicks > 0) {
             mountSoundDelayTicks--;
             if (mountSoundDelayTicks == 0 && pendingMountSoundId != null) {
