@@ -56,7 +56,7 @@ logs/
 # Temp Toolchain Stuff
 # =================================================
 Adorable_Hamster_Pets_Tech_Spec_*.md
-**/src/test/**
+**/src/test*/**
 /tools/**
 !/tools/
 !/tools/update_languages.py
