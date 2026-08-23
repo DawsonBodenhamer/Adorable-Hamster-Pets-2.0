@@ -171,21 +171,47 @@ public final class HamsterMovementUtil {
     }
 
     /**
+     * Determines if a hamster is in a state that universally forbids self-directed locomotion.
+     *
+     * @param hamster The hamster to check.
+     * @return True if the hamster should not move under its own AI.
+     */
+    public static boolean shouldNotMove(HamsterEntity hamster) {
+        return shouldNotMove(
+                hamster.isAiDisabled(),
+                hamster.isSitting(),
+                hamster.isFrozenMovement(),
+                hamster.isCelebratingBaby(),
+                hamster.isCelebratingDiamond());
+    }
+
+    static boolean shouldNotMove(
+            boolean aiDisabled,
+            boolean sitting,
+            boolean frozenMovement,
+            boolean celebratingBaby,
+            boolean celebratingDiamond) {
+        return aiDisabled || sitting || frozenMovement || celebratingBaby || celebratingDiamond;
+    }
+
+    /**
      * Determines if the hamster is in a state that forbids following another entity.
      *
      * @param hamster The hamster to check.
      * @return True if the hamster should not follow, false otherwise.
      */
     public static boolean shouldNotFollow(HamsterEntity hamster) {
-        return hamster.isSitting() ||
-                hamster.isSleeping() ||
-                hamster.isKnockedOut() ||
-                hamster.isSulking() ||
-                hamster.isCelebratingDiamond() ||
-                hamster.isFrozenMovement() ||
-                hamster.isPlayingTag() ||
-                hamster.isCelebratingBaby() ||
-                hamster.isWanderModeActive();
+        return shouldNotFollow(
+                shouldNotMove(hamster),
+                hamster.isPlayingTag(),
+                hamster.isWanderModeActive());
+    }
+
+    static boolean shouldNotFollow(
+            boolean shouldNotMove,
+            boolean playingTag,
+            boolean wanderModeActive) {
+        return shouldNotMove || playingTag || wanderModeActive;
     }
 
     /**

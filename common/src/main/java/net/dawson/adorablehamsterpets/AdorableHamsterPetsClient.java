@@ -520,13 +520,7 @@ public class AdorableHamsterPetsClient {
                                 hamster.isTamed()
                                         && hamster.isOwner(client.player)
                                         && !hamster.isShoulderPet()
-                                        && !hamster.isAiDisabled()
-                                        && !hamster.isSleeping()
-                                        && !hamster.isKnockedOut()
-                                        && !hamster.isSulking()
-                                        && !hamster.isCelebratingBaby()
-                                        && !hamster.isCelebratingDiamond()
-                                        && !hamster.isFrozenMovement()
+                                        && !HamsterMovementUtil.shouldNotMove(hamster)
                 );
 
                 for (HamsterEntity hamster : nearbyHamsters) {

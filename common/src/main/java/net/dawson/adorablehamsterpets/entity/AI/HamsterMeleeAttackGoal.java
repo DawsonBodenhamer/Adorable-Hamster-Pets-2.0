@@ -73,7 +73,7 @@ public class HamsterMeleeAttackGoal extends MeleeAttackGoal {
     @Override
     public boolean canStart() {
         // Check the master sitting state
-        if (this.hamster.isSitting()) {
+        if (HamsterMovementUtil.shouldNotMove(this.hamster)) {
             return false;
         }
         return super.canStart();

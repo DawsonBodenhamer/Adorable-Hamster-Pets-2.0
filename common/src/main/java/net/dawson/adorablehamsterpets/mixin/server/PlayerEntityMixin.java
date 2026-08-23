@@ -1463,14 +1463,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         if (entity instanceof HamsterEntity hamster) {
             // Must meet criteria
             if (!hamster.isAlive()
-                    || hamster.isAiDisabled()
-                    || hamster.isShoulderPet()
-                    || hamster.isKnockedOut()
-                    || hamster.isSleeping()
-                    || hamster.isSulking()
-                    || hamster.isFrozenMovement()
-                    || hamster.isCelebratingBaby()
-                    || hamster.isCelebratingDiamond())
+                    || HamsterMovementUtil.shouldNotMove(hamster)
+                    || hamster.isShoulderPet())
                 return;
 
             // Strict distance check to prevent remote manipulation

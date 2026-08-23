@@ -1,5 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
+import java.lang.Math;
+
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
@@ -9,6 +11,7 @@ import net.dawson.adorablehamsterpets.util.HamsterMouthItemOffsets;
 import net.dawson.adorablehamsterpets.util.HamsterRenderUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRidingUtil;
 import net.dawson.adorablehamsterpets.util.HamsterTextureUtil;
+import net.dawson.adorablehamsterpets.util.RedstoneFeverUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -70,6 +73,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
     public HamsterRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new HamsterModel());
+        this.addRenderLayer(new RedstoneFeverEyesRenderLayer(this));
         this.shadowRadius = this.adultShadowRadius;
     }
 
@@ -119,8 +123,39 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         // Add ID to set to determine entities no longer rendered
         AdorableHamsterPetsClient.onHamsterRendered(entity.getId());
 
-        // --- 3. Smooth Ground Surface Height Adjustment ---
+        // --- 3. Redstone Fever Tremor ---
         poseStack.push();
+        if (entity.hasRedstoneFever() && !entity.isRedstoneFeverBurstActive() && !IS_RENDERING_IN_GUI.get()) {
+            // --- Tuning ---
+            double baseAmplitude =  0.000D;
+            double spikeAmplitude = 0.015D;
+            double horizontalXFrequency = 4.73D;
+            double horizontalZFrequency = 4.39D;
+
+            // --- Inputs ---
+            // Severity fades from 1.0 toward 0.0
+            double severity = entity.getSynchronizedRedstoneFeverSeverity();
+            double renderTime = entity.getWorld().getTime() + partialTick;
+
+            // --- Amplitude Pulse ---
+            double spike = RedstoneFeverUtil.getTremorSpike(renderTime, entity.getUuid()) * spikeAmplitude;
+            double finalAmplitude = (baseAmplitude + spike) * severity;
+            double amplitudePulse = (baseAmplitude + spike) / (baseAmplitude + spikeAmplitude);
+
+            // --- Horizontal Offsets ---
+            // Mismatched X/Z frequencies to prevent diagonal rocking
+            double entityPhase = entity.getUuid().hashCode() * 0.61803398875D;
+            double xOffset = Math.sin(renderTime * horizontalXFrequency + entityPhase) * finalAmplitude;
+            double zOffset = Math.cos(renderTime * horizontalZFrequency + entityPhase) * finalAmplitude;
+            poseStack.translate(xOffset, 0.0D, zOffset);
+            double roll = Math.toRadians(2.5D)
+                    * amplitudePulse
+                    * severity
+                    * Math.sin(renderTime * 4.17D + entityPhase);
+            poseStack.multiply(RotationAxis.POSITIVE_Z.rotation((float) roll));
+        }
+
+        // --- 4. Smooth Ground Surface Height Adjustment ---
         if (IS_RENDERING_IN_GUI.get() || entity.isShoulderPet() || entity.isProjectileDummy) {
             entity.renderedGroundYOffset = 0.0F;
         } else {
@@ -129,7 +164,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             poseStack.translate(0.0, entity.renderedGroundYOffset, 0.0);
         }
 
-        // --- 4. Iris/Shader Compatibility Hack ---
+        // --- 5. Iris/Shader Compatibility Hack ---
         // Force GeckoLib to rebuild bone poses for this entity. Prevents animations
         // from "bleeding" between different hamsters during multi-pass rendering.
         // I'm detecting these multi-passes (and game pauses/server lag, because those

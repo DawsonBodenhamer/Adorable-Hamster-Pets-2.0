@@ -89,6 +89,18 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
                 tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.aggression", Text.translatable(stateKey)));
             }
         }
+
+        // --- Redstone Fever ---
+        if (Configs.AHP_UI.showJadeRedstoneFeverRecovery && serverData.getBoolean("RedstoneFevered")) {
+            String stateKey = switch (serverData.getInt("RedstoneFeverRecoveryStage")) {
+                case 2 -> "tooltip.adorablehamsterpets.jade.redstone_fever.nearly_cured";
+                case 1 -> "tooltip.adorablehamsterpets.jade.redstone_fever.recovering";
+                default -> "tooltip.adorablehamsterpets.jade.redstone_fever.severe";
+            };
+            tooltip.add(Text.translatable(
+                    "tooltip.adorablehamsterpets.jade.redstone_fever",
+                    Text.translatable(stateKey)));
+        }
     }
 
     @Override
@@ -97,6 +109,8 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
             data.put("HamsterGenome", hamster.getGenome().saveToNbt());
             data.putLong("TotalAgeTicks", hamster.totalAgeTicks);
             data.putInt("AggressionState", hamster.getAggressionState().ordinal());
+            data.putBoolean("RedstoneFevered", hamster.hasRedstoneFever());
+            data.putInt("RedstoneFeverRecoveryStage", hamster.getRedstoneFeverRecoveryStage());
         }
     }
 

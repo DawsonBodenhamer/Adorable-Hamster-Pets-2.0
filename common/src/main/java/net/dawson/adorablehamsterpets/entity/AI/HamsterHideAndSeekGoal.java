@@ -81,14 +81,8 @@ public class HamsterHideAndSeekGoal extends Goal {
         if (this.hamster.getWorld().getTime() < this.hamster.hideAndSeekCooldownEndTick) return false;
 
         if (!this.hamster.isTamed()
-                || this.hamster.isSitting()
-                || this.hamster.isFrozenMovement()
-                || this.hamster.isSleeping()
-                || this.hamster.isKnockedOut()
-                || this.hamster.isSulking()
+                || HamsterMovementUtil.shouldNotMove(this.hamster)
                 || this.hamster.isHoldingMouthItem()
-                || this.hamster.isCelebratingBaby()
-                || this.hamster.isCelebratingDiamond()
                 || this.hamster.isPlayingTag()
         ) {
             return false;
@@ -120,7 +114,7 @@ public class HamsterHideAndSeekGoal extends Goal {
         if (this.isFinished) return false;
 
         if (this.targetBlock == null) return false;
-        if (this.hamster.isSitting() || this.hamster.isKnockedOut()) return false;
+        if (HamsterMovementUtil.shouldNotMove(this.hamster)) return false;
 
         // Check block validity continuously
         BlockState state = this.world.getBlockState(this.targetBlock);

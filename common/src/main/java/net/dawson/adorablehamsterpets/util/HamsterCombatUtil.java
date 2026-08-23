@@ -170,6 +170,11 @@ public final class HamsterCombatUtil {
         if (hamster.getWorld().isClient()) {
             return;
         }
+        if (hamster.hasRedstoneFever()) {
+            // Dedicated fever goals replace ordinary aggression state
+            clearStandardCombatState(hamster);
+            return;
+        }
 
         LivingEntity target = hamster.getTarget();
         if (target != null && !isTargetLegal(hamster, target)) {

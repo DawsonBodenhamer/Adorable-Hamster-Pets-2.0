@@ -82,14 +82,8 @@ public class HamsterSnackOnCropGoal extends Goal {
 
         // Exclusions
         if (this.hamster.isOnTheWayToBed()
-                || this.hamster.isSitting()
-                || this.hamster.isSleeping()
-                || this.hamster.isKnockedOut()
-                || this.hamster.isSulking()
+                || HamsterMovementUtil.shouldNotMove(this.hamster)
                 || this.hamster.isHoldingMouthItem()
-                || this.hamster.isFrozenMovement()
-                || this.hamster.isCelebratingBaby()
-                || this.hamster.isCelebratingDiamond()
         ) {
             return false;
         }
@@ -138,7 +132,7 @@ public class HamsterSnackOnCropGoal extends Goal {
         // Terminate here if finished
         if (this.isFinished) return false;
 
-        if (this.hamster.isSitting() || this.hamster.isKnockedOut()) return false;
+        if (HamsterMovementUtil.shouldNotMove(this.hamster)) return false;
 
         // If scanning crops or moving to one, ensure it still exists and is mature
         if (this.currentState == State.MOVING_TO_CROP || this.currentState == State.POUNCING_CROP) {

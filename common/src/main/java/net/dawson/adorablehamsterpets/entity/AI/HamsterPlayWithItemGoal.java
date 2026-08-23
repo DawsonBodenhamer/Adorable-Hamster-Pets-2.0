@@ -56,7 +56,8 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
     public boolean canStart() {
         // Hook for resuming an interaction if already holding an item
         if (this.hamster.isHoldingMouthItem()) {
-            if (this.hamster.isSitting() || this.hamster.isFrozenMovement() || !(this.hamster.getOwner() instanceof PlayerEntity)) {
+            if (HamsterMovementUtil.shouldNotMove(this.hamster)
+                    || !(this.hamster.getOwner() instanceof PlayerEntity)) {
                 return false;
             }
 
@@ -135,7 +136,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
             return false;
         }
 
-        if (this.hamster.isHoldingMouthItem() || this.hamster.isSitting()) {
+        if (this.hamster.isHoldingMouthItem() || HamsterMovementUtil.shouldNotMove(this.hamster)) {
             return false;
         }
 
@@ -153,7 +154,9 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
 
     @Override
     protected boolean shouldContinueBaseChecks() {
-        if (this.hamster.isSitting() || this.hamster.isFrozenMovement() || this.owner == null || !this.owner.isAlive()) {
+        if (HamsterMovementUtil.shouldNotMove(this.hamster)
+                || this.owner == null
+                || !this.owner.isAlive()) {
             return false;
         }
 

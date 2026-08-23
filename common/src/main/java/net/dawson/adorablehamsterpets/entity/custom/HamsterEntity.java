@@ -40,6 +40,7 @@ import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
@@ -56,6 +57,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.*;
 import net.minecraft.world.*;
+import org.joml.Vector3f;
 
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Unique;
@@ -123,40 +125,25 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public static final int IS_HIDING_FLAG = 1 << 31;
 
     // --- Tracked Data ---
-    public static final TrackedData<Integer> HAMSTER_FLAGS =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    public static final TrackedData<Integer> EXACT_AGE =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    public static final TrackedData<NbtCompound> GENOME =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.NBT_COMPOUND);
-    public static final TrackedData<Integer> ANIMATION_PERSONALITY_ID =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    public static final TrackedData<Integer> FLOWER_POS =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    public static final TrackedData<Integer> DOZING_PHASE =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    public static final TrackedData<String> CURRENT_DEEP_SLEEP_ANIM_ID =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.STRING);
-    public static final TrackedData<Integer> GENERIC_INTERACTION_TIMER =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    public static final TrackedData<ItemStack> MOUTH_ITEM_STACK =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
-    public static final TrackedData<Long> GREEN_BEAN_BUFF_DURATION =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.LONG);
-    public static final TrackedData<Integer> CURRENT_LOOK_UP_ANIM_ID =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    public static final TrackedData<Integer> SHOULDER_ANIMATION_STATE =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<ItemStack> TRACKED_ACCESSORY_STACK =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
-    private static final TrackedData<ItemStack> TRACKED_ARMOR_STACK =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
-    private static final TrackedData<Boolean> ARMOR_VISIBLE =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Boolean> FALL_IMMUNITY_ACTIVE =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<String> ACTIVE_CUSTOM_GOAL_NAME_DEBUG =
-            DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.STRING);
+    public static final TrackedData<Integer> HAMSTER_FLAGS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    public static final TrackedData<Integer> EXACT_AGE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    public static final TrackedData<NbtCompound> GENOME = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.NBT_COMPOUND);
+    public static final TrackedData<Integer> ANIMATION_PERSONALITY_ID = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    public static final TrackedData<Integer> FLOWER_POS = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    public static final TrackedData<Integer> DOZING_PHASE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    public static final TrackedData<String> CURRENT_DEEP_SLEEP_ANIM_ID = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.STRING);
+    public static final TrackedData<Integer> GENERIC_INTERACTION_TIMER = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    public static final TrackedData<ItemStack> MOUTH_ITEM_STACK = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
+    public static final TrackedData<Long> GREEN_BEAN_BUFF_DURATION = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.LONG);
+    public static final TrackedData<Integer> CURRENT_LOOK_UP_ANIM_ID = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    public static final TrackedData<Integer> SHOULDER_ANIMATION_STATE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<ItemStack> TRACKED_ACCESSORY_STACK = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
+    private static final TrackedData<ItemStack> TRACKED_ARMOR_STACK = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
+    private static final TrackedData<Boolean> ARMOR_VISIBLE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> FALL_IMMUNITY_ACTIVE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<String> ACTIVE_CUSTOM_GOAL_NAME_DEBUG = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.STRING);
+    private static final TrackedData<Integer> REDSTONE_FEVER_VISUAL_STATE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Boolean> REDSTONE_FEVER_BURST_ACTIVE = DataTracker.registerData(HamsterEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Static Registration and Setup
@@ -282,6 +269,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private final FeedingInteractionState feedingInteractionState = new FeedingInteractionState();
     private final InventoryRuntimeState inventoryRuntimeState = new InventoryRuntimeState();
     private final RiderInputState riderInputState = new RiderInputState();
+    private final RedstoneFeverState redstoneFeverState = new RedstoneFeverState();
     private final SleepRuntimeState sleepRuntimeState = new SleepRuntimeState();
     private final ThreeDimensionalLayoutState threeDimensionalLayoutState =
             new ThreeDimensionalLayoutState();
@@ -329,10 +317,16 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.dataTracker.startTracking(TRACKED_ARMOR_STACK, ItemStack.EMPTY);
         this.dataTracker.startTracking(ARMOR_VISIBLE, true);
         this.dataTracker.startTracking(FALL_IMMUNITY_ACTIVE, true);
+        this.dataTracker.startTracking(REDSTONE_FEVER_VISUAL_STATE, 0);
+        this.dataTracker.startTracking(REDSTONE_FEVER_BURST_ACTIVE, false);
     }
 
     @Override
     protected void initGoals() {
+        // --- Redstone Fever Goals ---
+        // Negative priorities let fever behavior interrupt every ordinary activity
+        this.goalSelector.add(-3, new HamsterRedstoneFeverBurstGoal(this));
+        this.goalSelector.add(-2, new HamsterRedstoneFeverCombatGoal(this));
         // --- Standard Goals ---
         this.goalSelector.add(0, new HamsterPlayWithItemGoal(this));
         this.goalSelector.add(1, new HamsterTemptGoal(this, 1.0D, false));
@@ -351,12 +345,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         this.goalSelector.add(13, new HamsterSitGoal(this));
         this.goalSelector.add(14, new HamsterSleepGoal(this));
         this.goalSelector.add(15, new HamsterWanderAroundFarGoal(this, 0.75D));
-        this.goalSelector.add(
-                16, new HamsterLookAtEntityGoal(this, PlayerEntity.class, 2.0F, 0.15F));
+        this.goalSelector.add(16, new HamsterLookAtEntityGoal(this, PlayerEntity.class, 2.0F, 0.15F));
         this.goalSelector.add(17, new HamsterLookAroundGoal(this));
 
         // --- Target Selector Goals ---
         this.targetSelector.add(1, new HamsterTrackOwnerAttackerGoal(this));
+        this.targetSelector.add(-2, new HamsterRedstoneFeverTargetGoal(this));
         this.targetSelector.add(2, new HamsterAttackWithOwnerGoal(this));
         this.targetSelector.add(3, new HamsterRevengeGoal(this).setGroupRevenge());
         this.targetSelector.add(4, new HamsterMenaceTargetGoal(this));
@@ -387,6 +381,58 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         HamsterNbtUtil.readCustomDataFromNbt(this, nbt);
     }
 
+    // --- Redstone Fever State ---
+    public RedstoneFeverState getRedstoneFeverState() {
+        return this.redstoneFeverState;
+    }
+
+    public boolean hasRedstoneFever() {
+        return this.getDataTracker().get(REDSTONE_FEVER_VISUAL_STATE) > 0;
+    }
+
+    public int getRedstoneFeverScarVariant() {
+        int visualState = this.getDataTracker().get(REDSTONE_FEVER_VISUAL_STATE);
+        return visualState == 0 ? -1 : (visualState - 1) & 3;
+    }
+
+    public int getRedstoneFeverRecoveryStage() {
+        int progressPercent = this.getRedstoneFeverRecoveryPercent();
+        return progressPercent >= 67 ? 2 : progressPercent >= 33 ? 1 : 0;
+    }
+
+    public int getRedstoneFeverRecoveryPercent() {
+        return this.getDataTracker().get(REDSTONE_FEVER_VISUAL_STATE) >> 2;
+    }
+
+    public double getSynchronizedRedstoneFeverSeverity() {
+        return 1.0D - this.getRedstoneFeverRecoveryPercent() / 100.0D;
+    }
+
+    public void synchronizeRedstoneFeverVisualState() {
+        // Pack scar and recovery percentage into dedicated tracked state
+        int visualState = 0;
+        if (this.redstoneFeverState.isFevered()) {
+            long required = RedstoneFeverUtil.SUNLIGHT_TICKS_PER_DAY
+                    * Configs.AHP_MAIN.redstoneFeverSunlightCureDays.get();
+            double progress = required == 0L
+                    ? 0.0D
+                    : (double) this.redstoneFeverState.getSunlightTicks() / required;
+            int progressPercent = MathHelper.clamp((int) Math.floor(progress * 100.0D), 0, 100);
+            visualState = 1 + this.redstoneFeverState.getScarVariant() | progressPercent << 2;
+        }
+        this.getDataTracker().set(REDSTONE_FEVER_VISUAL_STATE, visualState);
+        RedstoneFeverUtil.reconcileMovementSpeed(this);
+    }
+
+    public boolean isRedstoneFeverBurstActive() {
+        return this.getDataTracker().get(REDSTONE_FEVER_BURST_ACTIVE);
+    }
+
+    public void setRedstoneFeverBurstActive(boolean active) {
+        if (this.getWorld().isClient()) return;
+        this.getDataTracker().set(REDSTONE_FEVER_BURST_ACTIVE, active);
+    }
+
     // --- Age Transitions ---
     @Override
     protected void onGrowUp() {
@@ -405,6 +451,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     public void tick() {
         if (this.interactionCooldown > 0) this.interactionCooldown--;
 
+        // Apply the global Redstone Fever gate before AI-disabled presentation or ordinary behavior.
+        if (!this.getWorld().isClient()) {
+            RedstoneFeverUtil.enforceFeatureToggle(this);
+        }
+
+        // --- 1. AI-Disabled Presentation ---
         // Fast-path for AI-disabled statues
         if (this.isAiDisabled()) {
             this.baseTick();
@@ -485,6 +537,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
         // Clean up trackers
         if (!this.getWorld().isClient()) {
+            RedstoneFeverUtil.clearMovementSpeedModifier(this);
             HamsterRenderTracker.onEntityUnload(this.getId());
         }
 
@@ -1285,6 +1338,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      */
     public void setTamed(boolean tamed, boolean updateAttributes) {
         super.setTamed(tamed); // Call the parent method
+        if (tamed && this.hasRedstoneFever()) {
+            RedstoneFeverUtil.cureAdministratively(this);
+        }
         if (updateAttributes) {
             if (tamed) {
                 this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH)
@@ -1564,6 +1620,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- 0. Pre-checks ---
         if (this.hasPassenger(player)) return ActionResult.PASS;
         if (this.interactionCooldown > 0) return ActionResult.PASS;
+        // Fever blocks food, taming, play, and other ordinary interaction paths
+        if (this.hasRedstoneFever()) return ActionResult.PASS;
 
         ItemStack stack = player.getStackInHand(hand);
         World world = this.getWorld();
@@ -1910,6 +1968,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
 
     @Override
     public boolean canTarget(LivingEntity target) {
+        if (this.hasRedstoneFever()) {
+            // Fever target goals own eligibility instead of ordinary aggression policy
+            return RedstoneFeverUtil.isEligibleFeverTarget(this, target) && super.canTarget(target);
+        }
         return HamsterCombatUtil.canAcquireTarget(this, target) && super.canTarget(target);
     }
 
@@ -1924,6 +1986,15 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      */
     @Override
     public void setTarget(@Nullable LivingEntity target) {
+        if (this.hasRedstoneFever()) {
+            if (target != null && !RedstoneFeverUtil.isEligibleFeverTarget(this, target)) {
+                super.setTarget(null);
+                return;
+            }
+            // Preserve fever-selected targets without Standard combat-window filtering
+            super.setTarget(target);
+            return;
+        }
         LivingEntity previousTarget = this.getTarget();
         if (target != null && !HamsterCombatUtil.canAcquireTarget(this, target)) {
             super.setTarget(null);
@@ -2042,8 +2113,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     @Override
     public void playAmbientSound() {
         SoundEvent soundEvent = this.getAmbientSound();
-        // Check if the selected sound is a begging sound
-        if (soundEvent != null && HamsterSoundUtil.isBeggingSound(soundEvent)) {
+        if (soundEvent != null && HamsterSoundUtil.isRedstoneFeverSnort(soundEvent)) {
+            this.playSound(soundEvent, 0.4F, this.getSoundPitch() * 1.5F);
+        } else if (soundEvent != null && HamsterSoundUtil.isBeggingSound(soundEvent)) {
             // If it's a begging sound, play it with lower volume
             this.playSound(soundEvent, 0.8F, this.getSoundPitch());
         } else {
@@ -2238,13 +2310,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                             && serverPlayer.isSneaking()) {
                         // Ensure hamster is in a pet-able state & within 5 blocks
                         if (!this.isShoulderPet()
-                                && !this.isAiDisabled()
-                                && !this.isSleeping()
-                                && !this.isKnockedOut()
-                                && !this.isSulking()
-                                && !this.isCelebratingDiamond()
-                                && !this.isCelebratingBaby()
-                                && !this.isFrozenMovement()
+                                && !HamsterMovementUtil.shouldNotMove(this)
                                 && this.squaredDistanceTo(serverPlayer) < 25.0) {
                             // Verify player is looking at hamster
                             if (EntityTargetingUtil.isLookingAt(serverPlayer, this, 5.0, 0)) {
@@ -2388,6 +2454,9 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- 2. Server-Side Logic ---
         World world = this.getWorld();
         if (!world.isClient()) {
+            RedstoneFeverUtil.reconcileMovementSpeed(this);
+            // Fever transitions, rescue credit, audio, and particles remain server-authoritative
+            RedstoneFeverUtil.tick(this);
 
             // --- Tick Age ---
             //   1 real day = 86,400s * 20 MC ticks/s = 1,728,000 MC ticks
@@ -2767,11 +2836,25 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             if (this.random.nextInt(2) == 0) {
                 // Use CLOUD instead of WHITE_SMOKE on 1.20.1
                 ParticleEffectsUtil.spawnMotionTrail(
-                        this, ParticleTypes.CLOUD, 3, 1.4, 0.025, 1.7, 0.17);
+                        this, ParticleTypes.CLOUD, 3, 0.5D, 1.4D, 0.025D, 1.7D, 0.17D);
             }
         }
 
-        // --- Taunting Particle Logic ---
+        // --- 3. Redstone Fever Particles ---
+        if (world.isClient && this.hasRedstoneFever()
+                && this.getVelocity().horizontalLengthSquared() > 1.0E-6) {
+            ParticleEffectsUtil.spawnMotionTrail(
+                    this, new DustParticleEffect(new Vector3f(0.85F, 0.05F, 0.02F), 1.0F),
+                    2,
+                    0.25D,
+                    2.0D,
+                    0.15D,
+                    1.7D,
+                    0.35D
+            );
+        }
+
+        // --- 4. Taunting Particles ---
         if (this.isTaunting()) {
             if (this.random.nextInt(7) == 0) {
                 ParticleEffectsUtil.spawnParticlesOnEntity(
@@ -2779,7 +2862,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- Fall Pitch Interpolation Logic ---
+        // --- 5. Fall Pitch Interpolation ---
         if (world.isClient) {
             // Capture state for interpolation before modification
             this.prevClientFallPitchProgress = this.clientFallPitchProgress;
@@ -2797,7 +2880,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.clientFallPitchProgress =
                     MathHelper.clamp(this.clientFallPitchProgress, 0.0f, 1.0f);
 
-            // --- Swim Pitch Interpolation Logic ---
+            // --- 6. Swim Pitch Interpolation ---
             this.prevClientSwimPitch = this.clientSwimPitch;
 
             if (this.isTouchingWater() || this.isInLava()) {
@@ -2826,14 +2909,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                     this.getActiveCustomGoalName()
                             .startsWith(HamsterSniffForOreGoal.class.getSimpleName());
 
-            if (!this.isSitting()
-                    && !this.isSleeping()
-                    && !this.isKnockedOut()
-                    && !this.isSulking()
+            if (!HamsterMovementUtil.shouldNotMove(this)
                     && !this.isPlayingTag()
-                    && !this.isFrozenMovement()
-                    && !this.isCelebratingBaby()
-                    && !this.isCelebratingDiamond()
                     && !isSniffingForOre) {
                 dancing = HamsterAIUtil.isDancingSongPlayingNearby(this);
             }

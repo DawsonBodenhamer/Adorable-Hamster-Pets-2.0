@@ -124,6 +124,14 @@
       "header_color": "00AAAA",
       "text": "book.adorablehamsterpets.entry.ahp_commands.page15.body",
       "text_color": "000000"
+    },
+    {
+      "type": "adorablehamsterpets:dynamic_page",
+      "anchor": "redstone_fever",
+      "header": "book.adorablehamsterpets.entry.ahp_commands.page16.header",
+      "header_color": "00AAAA",
+      "text": "book.adorablehamsterpets.entry.ahp_commands.page16.body",
+      "text_color": "000000"
     }
   ]
 }

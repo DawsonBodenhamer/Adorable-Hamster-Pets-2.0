@@ -22,6 +22,22 @@ import java.util.List;
 
 public class ModSounds {
 
+public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeconds, double clipPeakOffsetTicks) {
+
+        public TimedSound {
+            if (durationSeconds <= 0.0D || !Double.isFinite(durationSeconds)) {
+                throw new IllegalArgumentException("Sound duration must be finite and positive");
+            }
+            if (!Double.isFinite(clipPeakOffsetTicks)) {
+                throw new IllegalArgumentException("Sound peak offset must be finite");
+            }
+        }
+
+        public long durationTicks() {
+            return Math.round(this.durationSeconds * 20.0D);
+        }
+    }
+
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constants
      * ────────────────────────────────────────────────────────────────────────────*/
@@ -186,6 +202,22 @@ public class ModSounds {
     // --- Tree Heist Sounds ---
     public static final RegistrySupplier<SoundEvent> HAMSTER_ACORN_SEARCH_LOOP = registerSoundEvent("hamster_acorn_search_in_leaves");
 
+    // --- Angry/Frustrated Vocalizations ---
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SNORT1 = registerSoundEvent("hamster_snort1");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SNORT2 = registerSoundEvent("hamster_snort2");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SNORT3 = registerSoundEvent("hamster_snort3");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SNORT4 = registerSoundEvent("hamster_snort4");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SNORT5 = registerSoundEvent("hamster_snort5");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_HISS1 = registerSoundEvent("hamster_hiss1");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_HISS2 = registerSoundEvent("hamster_hiss2");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_HISS3 = registerSoundEvent("hamster_hiss3");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_HISS4 = registerSoundEvent("hamster_hiss4");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_HISS5 = registerSoundEvent("hamster_hiss5");
+
+    // --- Shivering Sounds ---
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SHIVER1 = registerSoundEvent("hamster_shiver1");
+    public static final RegistrySupplier<SoundEvent> HAMSTER_SHIVER2 = registerSoundEvent("hamster_shiver2");
+
     // --- Generic Misc Sounds ---
     public static final RegistrySupplier<SoundEvent> AHP_THEME_SONG_8_BIT = registerSoundEvent("ahp_theme_song_8_bit");
     public static final RegistrySupplier<SoundEvent> AHP_THEME_SONG_LOW_FI = registerSoundEvent("ahp_theme_song_low_fi");
@@ -203,6 +235,19 @@ public class ModSounds {
     // --- Sound Lists ---
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_ATTACK_SOUNDS = List.of(
             HAMSTER_ATTACK1, HAMSTER_ATTACK2, HAMSTER_ATTACK3, HAMSTER_ATTACK4
+    );
+    public static final List<RegistrySupplier<SoundEvent>> HAMSTER_SNORT_SOUNDS = List.of(
+            HAMSTER_SNORT1, HAMSTER_SNORT2, HAMSTER_SNORT3, HAMSTER_SNORT4, HAMSTER_SNORT5
+    );
+    public static final List<RegistrySupplier<SoundEvent>> HAMSTER_HISS_SOUNDS = List.of(
+            HAMSTER_HISS1, HAMSTER_HISS2, HAMSTER_HISS3, HAMSTER_HISS4, HAMSTER_HISS5
+    );
+    public static final List<RegistrySupplier<SoundEvent>> HAMSTER_SHIVER_SOUNDS = List.of(
+            HAMSTER_SHIVER1, HAMSTER_SHIVER2
+    );
+    public static final List<TimedSound> HAMSTER_SHIVER_TIMED_SOUNDS = List.of(
+            new TimedSound(HAMSTER_SHIVER1, 1.0D, 4.0D),
+            new TimedSound(HAMSTER_SHIVER2, 1.0D, 4.2D)
     );
     public static final List<RegistrySupplier<SoundEvent>> HAMSTER_IDLE_SOUNDS = List.of(
             HAMSTER_IDLE1, HAMSTER_IDLE2, HAMSTER_IDLE3, HAMSTER_IDLE4, HAMSTER_IDLE5,
@@ -373,6 +418,10 @@ public class ModSounds {
             return null;
         }
         return sounds.get(random.nextInt(sounds.size())).get();
+    }
+
+    public static TimedSound getRandomTimedShiverSound(Random random) {
+        return HAMSTER_SHIVER_TIMED_SOUNDS.get(random.nextInt(HAMSTER_SHIVER_TIMED_SOUNDS.size()));
     }
 
     /**

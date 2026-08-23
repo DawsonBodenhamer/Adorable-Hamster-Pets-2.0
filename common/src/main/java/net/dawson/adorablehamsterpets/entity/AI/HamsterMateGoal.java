@@ -52,7 +52,7 @@ public class HamsterMateGoal extends Goal {
     @Override
     public boolean canStart() {
         // Master siting check
-        if (this.hamster.isSitting()) {
+        if (HamsterMovementUtil.shouldNotMove(this.hamster)) {
             return false;
         }
 
@@ -68,6 +68,7 @@ public class HamsterMateGoal extends Goal {
     public boolean shouldContinue() {
         return this.targetMate != null
                 && this.targetMate.isAlive()
+                && !HamsterMovementUtil.shouldNotMove(this.hamster)
                 && this.hamster.isInCustomLove()
                 && this.targetMate.isInCustomLove()
                 && this.timer < BREEDING_TIME_TICKS;

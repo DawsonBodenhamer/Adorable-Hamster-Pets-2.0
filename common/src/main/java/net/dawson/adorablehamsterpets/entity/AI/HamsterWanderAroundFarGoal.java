@@ -39,13 +39,8 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
     @Override
     public boolean canStart() {
         // --- 1. Initial State Checks ---
-        if (this.hamster.isSitting()
-                || this.hamster.isSleeping()
-                || this.hamster.isKnockedOut()
-                || this.hamster.isSulking()
-                || this.hamster.isCelebratingDiamond()
-                || this.hamster.isFrozenMovement()
-                || this.hamster.isCelebratingBaby()
+        if (HamsterMovementUtil.shouldNotMove(this.hamster)
+                || this.hamster.hasRedstoneFever()
                 || this.hamster.getActiveCustomGoalName().equals("Escaping Water")) {
             return false;
         }
@@ -101,14 +96,13 @@ public class HamsterWanderAroundFarGoal extends WanderAroundFarGoal {
 
     @Override
     public boolean shouldContinue() {
+        if (HamsterMovementUtil.shouldNotMove(this.hamster)
+                || this.hamster.hasRedstoneFever()) return false;
+
         if (this.hamster.hasGreenBeanBuff()) {
             // For zoomies, the goal should now stop if it's interrupted OR if it has reached its destination.
             // This allows the canStart() cooldown to be checked again.
-            return !(this.hamster.isSitting()
-                    || this.hamster.isSleeping()
-                    || this.hamster.isKnockedOut()
-            )
-                    && !this.mob.getNavigation().isIdle()
+            return !this.mob.getNavigation().isIdle()
                     && !this.hamster.getActiveCustomGoalName().equals("Escaping Water");
         } else {
             // Stop wandering if mutual eye contact established

@@ -376,13 +376,8 @@ public class HamsterInterHamsterTagGoal extends Goal {
      * Checks if a hamster is in a valid state to play tag.
      */
     private boolean isValidForTag(HamsterEntity hamster) {
-        if (hamster.isSitting()
-                || hamster.isSleeping()
-                || hamster.isKnockedOut()
-                || hamster.isSulking()
+        if (HamsterMovementUtil.shouldNotMove(hamster)
                 || hamster.isPlayingTag()
-                || hamster.isFrozenMovement()
-                || hamster.isCelebratingBaby()
                 || hamster.isWanderModeActive()
                 || hamster.isShoulderPet()
         ) {

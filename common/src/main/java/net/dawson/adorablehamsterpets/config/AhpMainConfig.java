@@ -46,6 +46,10 @@ public class AhpMainConfig extends Config {
     @Translatable.Desc("Fundamental hamster hijinks— fiddle at your own risk.")
     public ConfigGroup core = new ConfigGroup("core", true);
 
+    @Translatable.Name("Enable Redstone Fever")
+    @Translatable.Desc("Controls whether Redstone Fever can appear. Turning this off also cures every infected hamster.")
+    public boolean enableRedstoneFever = true;
+
     @Translatable.Name("Enable Breeding")
     @Translatable.Desc("Whether hamsters are allowed to multiply. Turn this off if you fear someone on your server plans to create a rodent horde.")
     public boolean enableBreeding = true;
@@ -278,6 +282,48 @@ public class AhpMainConfig extends Config {
     @Translatable.Name("Menace Targets")
     @Translatable.Desc("The hit list. What should the hamster hunt when in Menace mode? Add 'minecraft:cow' if you want a tiny slaughterhouse. Accepts Entity IDs or Tags. NOTE: The default '#adorablehamsterpets:monsters' tag is a custom tag that targets all hostile mobs.")
     public List<String> menaceTargetEntities = new ArrayList<>(List.of("#adorablehamsterpets:monsters", "#adorablehamsterpets:bosses", "minecraft:slime", "minecraft:magma_cube"));
+
+    // --- Redstone Fever ---
+    @Translatable.Name("Redstone Fever Settings")
+    @Translatable.Desc("Control how Redstone Fever behaves, from sunlight treatment to who infected hamsters attack and how often they burst with energy.")
+    public ConfigGroup redstoneFever = new ConfigGroup("redstoneFever", true);
+
+    @Translatable.Name("Enable Sunlight Curing")
+    @Translatable.Desc("Allows infected hamsters to recover by spending enough time in direct sunlight above the depths where Redstone Fever naturally appears.")
+    public boolean enableRedstoneFeverSunlightCuring = true;
+
+    @Translatable.Name("Required Curing Days")
+    @Translatable.Desc("Number of Minecraft days an infected hamster must spend in direct sunlight to be cured. Progress pauses underground, in the shade and at night.")
+    public ValidatedInt redstoneFeverSunlightCureDays = new ValidatedInt(3, 30, 1);
+
+    @Translatable.Name("Aggression Range")
+    @Translatable.Desc("Maximum range in blocks at which an infected hamster can acquire a target.")
+    public ValidatedInt redstoneFeverTargetingRange = new ValidatedInt(16, 64, 1);
+
+    @Translatable.Name("Enable Global Aggression")
+    @Translatable.Desc("Allows infected hamsters to attack nearly all types of nearby living entities. Accessible Survival and Adventure players remain first on the hit list.")
+    public boolean redstoneFeverAttackMostLivingMobs = true;
+
+    @Translatable.Name("Enable Energy Bursts")
+    @Translatable.Desc("Allows infected hamsters to occasionally race in tight circles. Perfectly normal medical behavior.")
+    public boolean enableRedstoneFeverEnergyBursts = true;
+
+    @Translatable.Name("Minimum Burst Interval")
+    @Translatable.Desc("Shortest possible wait (in seconds) before another energy burst begins.")
+    public ValidatedInt redstoneFeverMinBurstIntervalSeconds = new ValidatedInt(2, 300, 1);
+
+    @Translatable.Name("Maximum Burst Interval")
+    @Translatable.Desc("Longest possible wait (in seconds) before another energy burst begins.")
+    public ValidatedInt redstoneFeverMaxBurstIntervalSeconds = new ValidatedInt(5, 300, 1);
+
+    @Translatable.Name("Minimum Burst Duration")
+    @Translatable.Desc("Shortest possible duration of an energy burst (in seconds).")
+    public ValidatedInt redstoneFeverMinBurstDurationSeconds = new ValidatedInt(1, 30, 1);
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Maximum Burst Duration")
+    @Translatable.Desc("Longest possible duration of an energy burst (in seconds).")
+    public ValidatedInt redstoneFeverMaxBurstDurationSeconds = new ValidatedInt(2, 30, 1);
 
     // --- Breeding & Litter Size ---
     @Translatable.Name("Breeding & Litter Size")
@@ -1141,8 +1187,37 @@ public class AhpMainConfig extends Config {
     public List<String> inventoryHidingBlacklist = new ArrayList<>(List.of("minecraft:furnace", "minecraft:blast_furnace", "minecraft:smoker", "minecraft:dispenser", "minecraft:dropper", "minecraft:hopper", "minecraft:campfire", "minecraft:soul_campfire"));
 
     @Translatable.Name("Commissioned Features")
-    @Translatable.Desc("Specialized, unofficial mechanics that don't necessarily fit the theme of the mod, but were funded by various individuals in the community. Purposefully tucked away in the config to ensure most people don't notice them.")
+    @Translatable.Desc("Specialized, unofficial mechanics funded by supporters that don't necessarily fit the theme of the mod. Purposefully tucked away in the config to ensure most people don't notice them.")
     public ConfigGroup commissionedFeatures = new ConfigGroup("commissionedFeatures", true);
+
+    // --- Ultimate Nightmare Redstone Fever ---
+    @Translatable.Name("Surface Redstone Fever")
+    @Translatable.Desc("Optional surface Redstone Fever settings. The settings here are subordinate to the global Redstone Fever feature toggle.")
+    public ConfigGroup ultimateNightmareRedstoneFever = new ConfigGroup("ultimateNightmareRedstoneFever", true);
+
+    @Translatable.Name("Enable Surface Fever")
+    @Translatable.Desc("Allow healthy wild hamsters to randomly and instantly become infected with Redstone Fever when first approached by a Survival or Adventure player. The dice gets rolled once per hamster even if they are approached again later. So a hamster that doesn't turn on you after you approach can be trusted.")
+    public ValidatedBoolean enableSurfaceSurpriseRedstoneFever = new ValidatedBoolean(false);
+
+    private final ValidatedField<Boolean> isSurfaceSurpriseEnabled =
+            enableSurfaceSurpriseRedstoneFever.map(value -> value, value -> value);
+
+    @Translatable.Name("Infection Chance")
+    @Translatable.Desc("Percentage chance that an undecided hamster contracts Redstone Fever on first approach.")
+    public ValidatedCondition<Integer> surfaceSurpriseFeverChance = new ValidatedInt(25, 100, 0)
+            .toCondition(
+                    isSurfaceSurpriseEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.surface_surprise_enabled"),
+                    () -> 25);
+
+    @ConfigGroup.Pop
+    @Translatable.Name("Trigger Distance")
+    @Translatable.Desc("Distance in blocks at which the first eligible player causes the dice roll.")
+    public ValidatedCondition<Integer> surfaceSurpriseRevealDistance = new ValidatedInt(8, 40, 1)
+            .toCondition(
+                    isSurfaceSurpriseEnabled,
+                    Text.translatable("config.adorablehamsterpets.condition.surface_surprise_enabled"),
+                    () -> 8);
 
     @Translatable.Name("Hamster Riding Settings")
     @Translatable.Desc("Configure hamster-mounted cavalry. Tweak speeds, toggles, and physics. Don't blame me if you accidentally zoom off a cliff after turning up the speed too high.")

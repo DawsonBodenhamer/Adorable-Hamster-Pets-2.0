@@ -174,6 +174,11 @@ public class AhpUiConfig extends Config {
     public boolean showJadeAggressionState = true;
 
     @NonSync
+    @Translatable.Name("Show Redstone Fever Recovery")
+    @Translatable.Desc("Show Severe, Recovering, or Nearly Cured while looking at a fevered hamster.")
+    public boolean showJadeRedstoneFeverRecovery = false;
+
+    @NonSync
     @ConfigGroup.Pop
     @Translatable.Name("Show Inventory")
     @Translatable.Desc("Display the default Jade inventory contents so you can see what your hamster is hoarding.")

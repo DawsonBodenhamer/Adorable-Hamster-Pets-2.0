@@ -1,0 +1,15 @@
+{
+  "parent": "adorablehamsterpets:husbandry/root",
+  "display": {
+    "icon": { "item": "minecraft:redstone" },
+    "title": { "translate": "advancements.adorablehamsterpets.husbandry.redstone_fever.title" },
+    "description": { "translate": "advancements.adorablehamsterpets.husbandry.redstone_fever.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "damaged_by_fevered_hamster": { "trigger": "adorablehamsterpets:redstone_fever_discovered" }
+  }
+}

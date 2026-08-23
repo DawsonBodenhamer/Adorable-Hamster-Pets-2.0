@@ -109,7 +109,7 @@ public class HamsterSniffForOreGoal extends Goal {
             return false;
         }
 
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isFrozenMovement() || this.hamster.isSulking()) {
+        if (HamsterMovementUtil.shouldNotMove(this.hamster)) {
             return false;
         }
 
@@ -143,7 +143,7 @@ public class HamsterSniffForOreGoal extends Goal {
         }
 
         // Interruptions
-        if (this.hamster.isSitting() || this.hamster.isSleeping() || this.hamster.isKnockedOut() || this.hamster.isSulking()) {
+        if (HamsterMovementUtil.shouldNotMove(this.hamster)) {
             return false;
         }
 

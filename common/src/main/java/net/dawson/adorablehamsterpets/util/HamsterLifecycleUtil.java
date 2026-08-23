@@ -119,6 +119,10 @@ public final class HamsterLifecycleUtil {
         }
 
         HamsterInventoryUtil.generateWildLoot(hamster, hamster.getRandom());
+
+        if (world instanceof ServerWorld serverWorld) {
+            RedstoneFeverUtil.tryApplyNaturalFever(hamster, serverWorld, spawnReason);
+        }
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────

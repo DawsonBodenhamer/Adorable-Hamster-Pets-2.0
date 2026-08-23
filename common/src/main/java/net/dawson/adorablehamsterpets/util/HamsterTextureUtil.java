@@ -135,6 +135,8 @@ public class HamsterTextureUtil {
         boolean redEyes = genome.eyeGenotype() == 2 && Configs.AHP_MAIN.enableRedEyes;
         boolean isSweetPotato = hamster.isSweetPotato();
         boolean isHamtaro = hamster.isHamtaro();
+        boolean isRedstoneFever = hamster.hasRedstoneFever();
+        int redstoneFeverScarVariant = isRedstoneFever ? hamster.getRedstoneFeverScarVariant() : -1;
 
         // --- Extract Equipment States ---
         ItemStack armorStack = hamster.getArmorStack();
@@ -175,13 +177,15 @@ public class HamsterTextureUtil {
         String flowerTexturePath = hasFlower ? getFlowerTexture(accessoryStack) : "";
 
         // --- Generate Cache Key ---
-        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_a%s_tp%s_tm%s_h%b_f%b%s_sp%b_hm%b_pbr%b_em%b",
+        String cacheKey = String.format("comp_%s_w%d%s_b%d%s_e%b_rf%b_sr%d_a%s_tp%s_tm%s_h%b_f%b%s_sp%b_hm%b_pbr%b_em%b",
                 genome.basePaletteId(),
                 genome.wildOverlayPattern(),
                 genome.wildOverlayPaletteId() != null ? genome.wildOverlayPaletteId() : "",
                 genome.breedingOverlayPattern(),
                 genome.breedingOverlayPaletteId() != null ? genome.breedingOverlayPaletteId() : "",
                 redEyes,
+                isRedstoneFever,
+                redstoneFeverScarVariant,
                 armorMaterial,
                 trimPattern,
                 trimMaterialAsset,
@@ -301,7 +305,37 @@ public class HamsterTextureUtil {
                 eyeLayer.close();
             }
 
-            // --- 6. Armor Layer ---
+            // --- 6. Redstone Fever Skin ---
+            if (isRedstoneFever) {
+                int feverSkinSpecular = ColorHelper.Abgr.getAbgr(255, skinSss, 0, 120);
+                NativeImage feverSkinLayer = readRawImage("textures/entity/hamster/appearance/conditions/redstone_fever/skin.png");
+                if (feverSkinLayer != null) {
+                    blendLayer(composite, specularImg, normalImg, feverSkinLayer, feverSkinSpecular);
+                    feverSkinLayer.close();
+                }
+
+                // --- 7. Redstone Fever Scar ---
+                if (redstoneFeverScarVariant >= 0 && redstoneFeverScarVariant < 3) {
+                    NativeImage scarLayer = readRawImage(
+                            "textures/entity/hamster/appearance/conditions/redstone_fever/scar_"
+                                    + (redstoneFeverScarVariant + 1) + ".png");
+                    if (scarLayer != null) {
+                        blendLayer(composite, specularImg, normalImg, scarLayer, feverSkinSpecular);
+                        scarLayer.close();
+                    }
+                }
+
+                // --- 8. Redstone Fever Eye Color ---
+                // Using dedicated render layer for emissiveness so it works without shaders
+                int feverEyeSpecular = ColorHelper.Abgr.getAbgr(255, 0, 0, 0);
+                NativeImage feverEyeLayer = readRawImage("textures/entity/hamster/appearance/conditions/redstone_fever/eyes.png");
+                if (feverEyeLayer != null) {
+                    blendLayer(composite, specularImg, normalImg, feverEyeLayer, feverEyeSpecular);
+                    feverEyeLayer.close();
+                }
+            }
+
+            // --- 9. Armor Layer ---
             if (armorTextureId != null) {
                 int armorSpecular = Configs.AHP_MAIN.enableArmorPbr.get() ? getArmorSpecular(armorMaterial) : ColorHelper.Abgr.getAbgr(255, 0, 0, 0);
                 NativeImage armorLayer = readRawImage(armorTextureId.getPath());
@@ -313,7 +347,7 @@ public class HamsterTextureUtil {
                     armorLayer.close();
                 }
 
-                // --- 7. Armor Trim Layer ---
+                // --- 10. Armor Trim Layer ---
                 if (!trimPattern.equals("none") && !trimMaterialAsset.equals("none") && Configs.AHP_MAIN.enableArmorVisuals) {
                     NativeImage trimLayer = createTrimLayerImage(trimPattern, trimMaterialAsset);
                     if (trimLayer != null) {
@@ -339,7 +373,7 @@ public class HamsterTextureUtil {
                 }
             }
 
-            // --- Accessories ---
+            // --- 11. Accessories ---
             // Medium Matte → R:50
             // No Reflectance → G:0
             // Low SSS → B:80

@@ -23,7 +23,7 @@
 				{
 					"name": "body_child",
 					"parent": "body_parent",
-					"pivot": [0, 2.5, 0],
+					"pivot": [0, 0, 0],
 					"cubes": [
 						{"origin": [-3, 0.5, -2], "size": [6, 4, 6], "inflate": 0.01, "uv": [3, 3]}
 					]
