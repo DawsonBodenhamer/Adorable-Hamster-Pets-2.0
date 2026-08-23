@@ -1,4 +1,4 @@
-# Changelog
+ in version 3.7.0, the guidebook will have an entry about hide and seek so people don't keep thinking that it is some sort of strange glitch, lol will also be an advancement for finding your hamster when they are hiding from you# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -7,13 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.7.0] - Unreleased
 
-# **The Acorn Armistice Update**
+# **The Redstone Fever Update**
 
-Acorn Rings now broker a configurable armistice between entire pet households—and keep careless swings away from your
-own pets. Hide & Seek is easier to understand and less determined to dominate your schedule, while stale fights,
-water traps, lowered blocks, and recovering shoulder hamsters received overdue administrative attention.
+Some cave hamsters have inhaled a little bit too much redstone dust. Redstone Fever introduces rare aggressive
+encounters with cave hamsters that have glowing red eyes, frantic movement, and there's a new sunlight rescue challenge. The new Acorn Ring player-wearable accessory allows truces between pet households, while Hide & Seek, combat, food luring, storage crates, water rescue, and several other systems received fixy fixy attention.
 
 ### Added
+- **Redstone Fever**
+- You might now come across rare wild aggressive cave hamsters with scars, glowing red eyes, new animations, redstone particles, 3 new custom sound effect types, and unpredictable circular energy bursts. Thanks to [@The Retro Stitcher](https://theretrostitcher.com/) for the original Redstone Fever concept/idea!
+  - Currently, Redstone Fever is only applied when a hamster first spawns. Existing hamsters cannot contract it.  I might add contagiousness in the future if it's requested.
+  - Food cannot tame, distract, or pacify an untreated hamster. Lead it above redstone depth and keep it in direct clear sunlight for 3 Minecraft days to cure the condition and restore ordinary wild behavior.
+  - How do you lead it? You're the bait. Better find some good armor. For your toes.
+  - Spawning, sunlight treatment, aggression, bursts, and eligible dimensions are configurable. The Jade HUD overlay can optionally show Severe, Recovering, or Nearly Cured status if you enable it.
+  - Added a new *Hamster Tips* guidebook entry, admin apply/cure commands, and Redstone Fever and Sunshine Curing advancements. Admin cures won't grant advancements.
+  - Added a set of hidden config settings commissioned by the **After Beyond Networks** team for their upcoming "Ultimate Nightmare" event. These settings allow pre-existing wild hamsters resolve one hidden surface-surprise roll when first approached by a player. Each result persists, so reloading or changing the chance cannot reroll the same hamster. These settings are purposefully hidden at the bottom of the config under "Commissioned Features." This changelog is the only place they will be mentioned.
 - **Acorn Ring**
   - Craft an Acorn Ring from an Acorn Hat and four Copper Ingots, or find one independently in uncommon loot chests.
   - Wear it in your offhand with no extra mod, or in a ring slot through [**Accessories**](https://modrinth.com/mod/accessories)

@@ -5,6 +5,7 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.entity.ai.pathing.PathNodeType;
 import net.minecraft.item.ItemStack;
@@ -78,14 +79,8 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
 
         // Exclusions
         if (this.hamster.isOnTheWayToBed()
-                || this.hamster.isSitting()
-                || this.hamster.isSleeping()
-                || this.hamster.isKnockedOut()
-                || this.hamster.isSulking()
+                || HamsterMovementUtil.shouldNotMove(this.hamster)
                 || this.hamster.isHoldingMouthItem()
-                || this.hamster.isFrozenMovement()
-                || this.hamster.isCelebratingBaby()
-                || this.hamster.isCelebratingDiamond()
         ) {
             return false;
         }
@@ -100,7 +95,8 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
             return false;
         }
 
-        return !this.hamster.isSitting() && !this.hamster.isOnTheWayToBed();
+        return !HamsterMovementUtil.shouldNotMove(this.hamster)
+                && !this.hamster.isOnTheWayToBed();
     }
 
     @Override

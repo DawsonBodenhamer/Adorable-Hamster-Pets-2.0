@@ -6,6 +6,7 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPoseUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.block.Block;
@@ -74,7 +75,9 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
     public boolean canStart() {
         // --- 1. Pre-Checks ---
         // Basic mode & config checks
-        if (!this.hamster.isWanderModeActive() || this.hamster.isSitting() || !Configs.AHP_MAIN.allowSleepInBed.get()) {
+        if (!this.hamster.isWanderModeActive()
+                || HamsterMovementUtil.shouldNotMove(this.hamster)
+                || !Configs.AHP_MAIN.allowSleepInBed.get()) {
             return false;
         }
 
@@ -131,7 +134,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
     @Override
     public boolean shouldContinue() {
         // --- 1. Basic State Checks ---
-        if (this.hamster.isSitting() || !this.hamster.isWanderModeActive()) {
+        if (HamsterMovementUtil.shouldNotMove(this.hamster) || !this.hamster.isWanderModeActive()) {
             return false;
         }
 

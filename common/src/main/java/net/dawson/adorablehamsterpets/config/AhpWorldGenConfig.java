@@ -388,6 +388,7 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
     public List<String> plainsWeights = new ArrayList<>(List.of("ORANGE:100"));
 
+    // --- Wild Fur Overlay Settings ---
     @Translatable.Name("Wild Fur Overlay Settings")
     @Translatable.Desc("Here's where you can fulfil your urges for genetic alchemy. Note: these filtering settings only apply to hamsters that spawn in the wild, to keep things looking 'natural.' When breeding hamsters together, YOU are the filter.")
     public ConfigGroup wildFurOverlays = new ConfigGroup("wildFurOverlays", true);
@@ -409,10 +410,36 @@ public class AhpWorldGenConfig extends Config {
     public List<String> restrictedBaseZones = new ArrayList<>(List.of("BLUE", "LAVENDER"));
 
     @ConfigGroup.Pop
-    @ConfigGroup.Pop
     @Translatable.Name("Clashing Overlay Colors")
     @Translatable.Desc("A list of wild overlays that look unnatural when combined with the 'Clashing Base Colors'. By default, this prevents Cream and Dark Gray wild overlays on Blue and Lavender hamsters.")
     public List<String> clashingOverlayZones = new ArrayList<>(List.of("CREAM", "DARK_GRAY"));
+
+    // --- Redstone Fever Settings ---
+    @Translatable.Name("Redstone Fever Settings")
+    @Translatable.Desc("Control where wild hamsters can naturally spawn with Redstone Fever and how often it happens. The global 'Enable Redstone Fever' toggle in Main has final authority. If it's disabled there, these settings won't do anything.")
+    public ConfigGroup redstoneFeverSpawning = new ConfigGroup("redstoneFeverSpawning", true);
+
+    @Translatable.Name("Enable Infected Spawns")
+    @Translatable.Desc("Allows newly spawned wild hamsters underground to have a chance of starting with Redstone Fever. Hamsters created with spawn eggs are excluded so you don't jump scare yourself.")
+    public boolean enableNaturalRedstoneFeverSpawning = true;
+
+    @Translatable.Name("Infection Chance")
+    @Translatable.Desc("Percentage chance for an otherwise eligible wild cave hamster to spawn fevered. Default: 50%; range: 0–100%.")
+    public ValidatedInt redstoneFeverChance = new ValidatedInt(50, 100, 0);
+
+    @Translatable.Name("Danger Zone Cutoff")
+    @Translatable.Desc("Highest Y coordinate where hamsters can become infected upon spawning. They must also be above this level before sunlight can cure them. The default is Y 16 because it's the highest point where you might find Redstone ore.")
+    public ValidatedInt maximumRedstoneFeverSpawnY = new ValidatedInt(16, 512, -256);
+
+    @Translatable.Name("Require Cave Biome Tags")
+    @Translatable.Desc("When enabled, hamsters can only become infected upon spawning if they spawn in biomes that are included in this mod’s '#adorablehamsterpets:is_cave' tag. The other height, darkness, dimension and natural-spawn checks still apply.")
+    public boolean requireRedstoneFeverCaveBiomeTags = false;
+
+    @ConfigGroup.Pop
+    @ConfigGroup.Pop
+    @Translatable.Name("Allowed Dimensions")
+    @Translatable.Desc("Dimension IDs or #dimension tags allowed to produce natural Redstone Fever cases. Just the overworld by default.")
+    public List<String> allowedRedstoneFeverDimensions = new ArrayList<>(List.of("minecraft:overworld"));
 
     // --- Cheek Pouch & World Loot Settings ---
     @Translatable.Name("Cheek Pouch & World Loot Settings")

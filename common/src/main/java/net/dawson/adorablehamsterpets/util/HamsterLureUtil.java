@@ -74,11 +74,9 @@ public final class HamsterLureUtil {
     }
 
     public static boolean canFollowLure(HamsterEntity hamster) {
-        // --- Physical and Sleep Locks ---
-        if (hamster.isSleeping()
-                || hamster.isSitting()
-                || hamster.isKnockedOut()
-                || hamster.isSulking()
+        // --- Condition, Physical, and Sleep Locks ---
+        if (hamster.hasRedstoneFever()
+                || HamsterMovementUtil.shouldNotMove(hamster)
                 || hamster.isRescueSleeping()
                 || hamster.getDozingPhase() != HamsterEntity.DozingPhase.NONE
                 || hamster.isLeashed()
@@ -92,7 +90,6 @@ public final class HamsterLureUtil {
         if (hamster.isOnTheWayToBed()
                 || hamster.isPlayingTag()
                 || hamster.isHiding()
-                || hamster.isFrozenMovement()
                 || hamster.isHoldingMouthItem()
                 || hamster.getGenericInteractionTimer() > 0
                 || hamster.isAutoEating()

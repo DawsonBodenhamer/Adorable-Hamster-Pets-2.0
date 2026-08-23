@@ -122,12 +122,21 @@ public class ParticleEffectsUtil {
      * @param entity            The entity leaving the trail.
      * @param particle          The particle effect to spawn.
      * @param countPerTick      Number of particles to spawn per call.
+     * @param heightFactor      Height multiplier relative to entity height (e.g. 0.5 for center-mass, 0.25 for lower body).
      * @param offsetMultiplier  Multiplies the entity's velocity to determine spawn offset behind the entity. Higher values spawn particles further back.
      * @param scatter           Random spread applied to both spawn position and particle velocity.
      * @param velocityScale     Multiplier for the backward velocity of the particles relative to the entity's movement.
      * @param downwardVelocity  Constant downward velocity applied to particles (useful for dust/smoke).
      */
-    public static <T extends ParticleEffect> void spawnMotionTrail(Entity entity, T particle, int countPerTick, double offsetMultiplier, double scatter, double velocityScale, double downwardVelocity) {
+    public static <T extends ParticleEffect> void spawnMotionTrail(
+            Entity entity,
+            T particle,
+            int countPerTick,
+            double heightFactor,
+            double offsetMultiplier,
+            double scatter,
+            double velocityScale,
+            double downwardVelocity) {
         World world = entity.getWorld();
         Vec3d velocity = entity.getVelocity();
 
@@ -139,7 +148,7 @@ public class ParticleEffectsUtil {
         for (int i = 0; i < countPerTick; ++i) {
             // 1. Calculate base spawn position (Behind the entity)
             double baseX = entity.getX() - (velocity.x * offsetMultiplier);
-            double baseY = entity.getY() + (entity.getHeight() / 2.0) - (velocity.y * offsetMultiplier);
+            double baseY = entity.getY() + (entity.getHeight() * heightFactor) - (velocity.y * offsetMultiplier);
             double baseZ = entity.getZ() - (velocity.z * offsetMultiplier);
 
             // 2. Apply random scatter

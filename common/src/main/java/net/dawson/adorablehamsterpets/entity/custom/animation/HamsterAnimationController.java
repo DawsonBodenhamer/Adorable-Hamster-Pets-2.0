@@ -31,32 +31,22 @@ public final class HamsterAnimationController {
     // --- Impact, Flight, and Refusal ---
     private static final RawAnimation CRASH_ANIM = animation("anim_hamster_crash");
     private static final RawAnimation KNOCKED_OUT_ANIM = animation("anim_hamster_ko");
-    private static final RawAnimation WAKE_UP_FROM_KO_ANIM =
-            animation("anim_hamster_wakeup_from_ko");
+    private static final RawAnimation WAKE_UP_FROM_KO_ANIM = animation("anim_hamster_wakeup_from_ko");
     private static final RawAnimation FLYING_ANIM = animation("anim_hamster_flying");
-    private static final RawAnimation STANDING_HEADSHAKE_ANIM =
-            animation("anim_hamster_standing_headshake");
-    private static final RawAnimation SITTING_HEADSHAKE_ANIM =
-            animation("anim_hamster_sitting_headshake");
-    private static final RawAnimation MOVING_HEADSHAKE_ANIM =
-            animation("anim_hamster_moving_headshake");
+    private static final RawAnimation STANDING_HEADSHAKE_ANIM = animation("anim_hamster_standing_headshake");
+    private static final RawAnimation SITTING_HEADSHAKE_ANIM = animation("anim_hamster_sitting_headshake");
+    private static final RawAnimation MOVING_HEADSHAKE_ANIM = animation("anim_hamster_moving_headshake");
 
     // --- Sleep Poses and Transitions ---
     private static final RawAnimation SLEEP_POSE1_ANIM = animation("anim_hamster_sleep_pose1");
     private static final RawAnimation SLEEP_POSE2_ANIM = animation("anim_hamster_sleep_pose2");
     private static final RawAnimation SLEEP_POSE3_ANIM = animation("anim_hamster_sleep_pose3");
-    private static final RawAnimation SIT_SETTLE_SLEEP1_ANIM =
-            animation("anim_hamster_sit_settle_sleep1");
-    private static final RawAnimation SIT_SETTLE_SLEEP2_ANIM =
-            animation("anim_hamster_sit_settle_sleep2");
-    private static final RawAnimation SIT_SETTLE_SLEEP3_ANIM =
-            animation("anim_hamster_sit_settle_sleep3");
-    private static final RawAnimation STAND_SETTLE_SLEEP1_ANIM =
-            animation("anim_hamster_stand_settle_sleep1");
-    private static final RawAnimation STAND_SETTLE_SLEEP2_ANIM =
-            animation("anim_hamster_stand_settle_sleep2");
-    private static final RawAnimation STAND_SETTLE_SLEEP3_ANIM =
-            animation("anim_hamster_stand_settle_sleep3");
+    private static final RawAnimation SIT_SETTLE_SLEEP1_ANIM = animation("anim_hamster_sit_settle_sleep1");
+    private static final RawAnimation SIT_SETTLE_SLEEP2_ANIM = animation("anim_hamster_sit_settle_sleep2");
+    private static final RawAnimation SIT_SETTLE_SLEEP3_ANIM = animation("anim_hamster_sit_settle_sleep3");
+    private static final RawAnimation STAND_SETTLE_SLEEP1_ANIM = animation("anim_hamster_stand_settle_sleep1");
+    private static final RawAnimation STAND_SETTLE_SLEEP2_ANIM = animation("anim_hamster_stand_settle_sleep2");
+    private static final RawAnimation STAND_SETTLE_SLEEP3_ANIM = animation("anim_hamster_stand_settle_sleep3");
 
     // --- Sitting and Waking Transitions ---
     private static final RawAnimation SIT1_ANIM = animation("anim_hamster_sit1");
@@ -73,12 +63,9 @@ public final class HamsterAnimationController {
     private static final RawAnimation SITTING_POSE1_ANIM = animation("anim_hamster_sitting_pose1");
     private static final RawAnimation SITTING_POSE2_ANIM = animation("anim_hamster_sitting_pose2");
     private static final RawAnimation SITTING_POSE3_ANIM = animation("anim_hamster_sitting_pose3");
-    private static final RawAnimation DRIFTING_OFF_POSE1_ANIM =
-            animation("anim_hamster_drifting_off_pose1");
-    private static final RawAnimation DRIFTING_OFF_POSE2_ANIM =
-            animation("anim_hamster_drifting_off_pose2");
-    private static final RawAnimation DRIFTING_OFF_POSE3_ANIM =
-            animation("anim_hamster_drifting_off_pose3");
+    private static final RawAnimation DRIFTING_OFF_POSE1_ANIM = animation("anim_hamster_drifting_off_pose1");
+    private static final RawAnimation DRIFTING_OFF_POSE2_ANIM = animation("anim_hamster_drifting_off_pose2");
+    private static final RawAnimation DRIFTING_OFF_POSE3_ANIM = animation("anim_hamster_drifting_off_pose3");
 
     // --- Locomotion and Idle ---
     private static final RawAnimation CLEANING_ANIM = animation("anim_hamster_cleaning");
@@ -88,48 +75,36 @@ public final class HamsterAnimationController {
     private static final RawAnimation BOUNCING_ANIM = animation("anim_hamster_bouncing");
     private static final RawAnimation IDLE1_ANIM = animation("anim_hamster_idle1");
     private static final RawAnimation IDLE2_ANIM = animation("anim_hamster_idle2");
-    private static final RawAnimation IDLE_LOOKING_UP1_ANIM =
-            animation("anim_hamster_idle_looking_up1");
-    private static final RawAnimation IDLE_LOOKING_UP2_ANIM =
-            animation("anim_hamster_idle_looking_up2");
-    private static final RawAnimation IDLE_LOOKING_UP3_ANIM =
-            animation("anim_hamster_idle_looking_up3");
+    private static final RawAnimation FEVER_IDLE_ANIM = animation("anim_hamster_idle_fever");
+    private static final RawAnimation IDLE_LOOKING_UP1_ANIM = animation("anim_hamster_idle_looking_up1");
+    private static final RawAnimation IDLE_LOOKING_UP2_ANIM = animation("anim_hamster_idle_looking_up2");
+    private static final RawAnimation IDLE_LOOKING_UP3_ANIM = animation("anim_hamster_idle_looking_up3");
 
     // --- Combat, Goals, and Interaction ---
     private static final RawAnimation ATTACK_ANIM = animation("anim_hamster_attack");
+    private static final RawAnimation FREAK_OUT_ANIM = animation("anim_hamster_freak_out");
     private static final RawAnimation SULK_ANIM = animation("anim_hamster_sulk");
     private static final RawAnimation SULKING_ANIM = animation("anim_hamster_sulking");
     private static final RawAnimation SEEKING_ORE_ANIM = animation("anim_hamster_seeking_ore");
-    private static final RawAnimation WANTS_TO_SEEK_ORE_ABOVE_ANIM =
-            animation("anim_hamster_wants_to_seek_ore_above");
-    private static final RawAnimation WANTS_TO_SEEK_ORE_BELOW_ANIM =
-            animation("anim_hamster_wants_to_seek_ore_below");
+    private static final RawAnimation WANTS_TO_SEEK_ORE_ABOVE_ANIM = animation("anim_hamster_wants_to_seek_ore_above");
+    private static final RawAnimation WANTS_TO_SEEK_ORE_BELOW_ANIM = animation("anim_hamster_wants_to_seek_ore_below");
     private static final RawAnimation POUNCE_ANIM = animation("anim_hamster_pounce");
     private static final RawAnimation TAUNTING_ANIM = animation("anim_hamster_taunt_with_item");
-    private static final RawAnimation PRESENTING_ITEM_ANIM =
-            animation("anim_hamster_presenting_item");
+    private static final RawAnimation PRESENTING_ITEM_ANIM = animation("anim_hamster_presenting_item");
     private static final RawAnimation QUICK_BOUNCE_ANIM = animation("anim_hamster_quick_bounce");
     private static final RawAnimation CHEEK_UNLOAD_ANIM = animation("anim_hamster_cheek_unload");
-    private static final RawAnimation CROUCH_INVESTIGATE_ANIM =
-            animation("anim_hamster_crouch_and_investigate");
+    private static final RawAnimation CROUCH_INVESTIGATE_ANIM = animation("anim_hamster_crouch_and_investigate");
 
     // --- Shoulder Poses ---
-    private static final RawAnimation LAYING_DOWN_HEAD_ANIM =
-            animation("anim_hamster_shoulder_laying_down_head");
-    private static final RawAnimation LAYING_DOWN_RIGHT_SHOULDER_ANIM =
-            animation("anim_hamster_shoulder_laying_down_right_shoulder");
-    private static final RawAnimation LAYING_DOWN_LEFT_SHOULDER_ANIM =
-            animation("anim_hamster_shoulder_laying_down_left_shoulder");
+    private static final RawAnimation LAYING_DOWN_HEAD_ANIM = animation("anim_hamster_shoulder_laying_down_head");
+    private static final RawAnimation LAYING_DOWN_RIGHT_SHOULDER_ANIM = animation("anim_hamster_shoulder_laying_down_right_shoulder");
+    private static final RawAnimation LAYING_DOWN_LEFT_SHOULDER_ANIM = animation("anim_hamster_shoulder_laying_down_left_shoulder");
 
     // --- Throwing, Petting, and Status ---
-    private static final RawAnimation QUICK_BOUNCE_LOOKING_UP =
-            animation("anim_hamster_quick_bounce_looking_up");
-    private static final RawAnimation ASSUME_THROW_POSE_ANIM =
-            animation("anim_hamster_assume_throw_pose");
-    private static final RawAnimation WAITING_FOR_THROW_ANIM =
-            animation("anim_hamster_waiting_for_throw");
-    private static final RawAnimation RECEIVING_PETS_ANIM =
-            animation("anim_hamster_receiving_pets");
+    private static final RawAnimation QUICK_BOUNCE_LOOKING_UP = animation("anim_hamster_quick_bounce_looking_up");
+    private static final RawAnimation ASSUME_THROW_POSE_ANIM = animation("anim_hamster_assume_throw_pose");
+    private static final RawAnimation WAITING_FOR_THROW_ANIM = animation("anim_hamster_waiting_for_throw");
+    private static final RawAnimation RECEIVING_PETS_ANIM = animation("anim_hamster_receiving_pets");
     private static final RawAnimation STUN_ANIM = animation("anim_hamster_stun");
     private static final RawAnimation SITTING_ROLL_ANIM = animation("anim_hamster_sitting_roll");
     private static final RawAnimation SWIMMING_ANIM = animation("anim_hamster_swimming");
@@ -284,6 +259,8 @@ public final class HamsterAnimationController {
 
                                     if (state.begging()) return event.setAndContinue(BOUNCING_ANIM);
 
+                                    if (state.redstoneFever()) return event.setAndContinue(FEVER_IDLE_ANIM);
+
                                     if (activeGoalName.equals(
                                             HamsterLookAtEntityGoal.class.getSimpleName())) {
                                         return switch (state.lookUpAnimationId()) {
@@ -295,6 +272,7 @@ public final class HamsterAnimationController {
 
                                     RawAnimation current =
                                             event.getController().getCurrentRawAnimation();
+
                                     if (current != null
                                             && (current.equals(IDLE1_ANIM)
                                                     || current.equals(IDLE2_ANIM))) {
@@ -312,6 +290,7 @@ public final class HamsterAnimationController {
                         .triggerableAnim("sitting_headshake", SITTING_HEADSHAKE_ANIM)
                         .triggerableAnim("moving_headshake", MOVING_HEADSHAKE_ANIM)
                         .triggerableAnim("attack", ATTACK_ANIM)
+                        .triggerableAnim("anim_hamster_freak_out", FREAK_OUT_ANIM)
                         .triggerableAnim("quick_bounce_on_back_legs", QUICK_BOUNCE_LOOKING_UP)
                         .triggerableAnim("sit1", SIT1_ANIM)
                         .triggerableAnim("sit2", SIT2_ANIM)
@@ -418,7 +397,8 @@ public final class HamsterAnimationController {
             boolean sitting,
             boolean sleeping,
             boolean begging,
-            int lookUpAnimationId) {
+            int lookUpAnimationId,
+            boolean redstoneFever) {
         private static AnimationState capture(HamsterEntity hamster) {
             return new AnimationState(
                     hamster.isAiDisabled(),
@@ -446,7 +426,8 @@ public final class HamsterAnimationController {
                     hamster.isSitting(),
                     hamster.isSleeping(),
                     hamster.isBegging(),
-                    hamster.getDataTracker().get(HamsterEntity.CURRENT_LOOK_UP_ANIM_ID));
+                    hamster.getDataTracker().get(HamsterEntity.CURRENT_LOOK_UP_ANIM_ID),
+                    hamster.hasRedstoneFever());
         }
     }
 }

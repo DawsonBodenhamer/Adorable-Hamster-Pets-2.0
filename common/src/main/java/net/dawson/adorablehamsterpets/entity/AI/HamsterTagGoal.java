@@ -49,13 +49,8 @@ public class HamsterTagGoal extends Goal {
 
         // --- 3. Entity State Checks ---
         if (!this.hamster.isTamed()
-                || this.hamster.isSitting()
-                || this.hamster.isSleeping()
-                || this.hamster.isKnockedOut()
-                || this.hamster.isHoldingMouthItem()
-                || this.hamster.isCelebratingDiamond()
-                || this.hamster.isSulking()
-                || this.hamster.isCelebratingBaby())
+                || HamsterMovementUtil.shouldNotMove(this.hamster)
+                || this.hamster.isHoldingMouthItem())
             return false;
 
         // --- 4. Context Check ---
@@ -166,7 +161,7 @@ public class HamsterTagGoal extends Goal {
         if (!this.hamster.isPlayingTag()) return false; // Terminated by interaction
         if (this.hamster.getGenericInteractionTimer() <= 0) return false; // Timed out
         if (this.targetPlayer == null || !this.targetPlayer.isAlive()) return false;
-        if (this.hamster.isSitting() || this.hamster.isKnockedOut()) return false;
+        if (HamsterMovementUtil.shouldNotMove(this.hamster)) return false;
         return true;
     }
 

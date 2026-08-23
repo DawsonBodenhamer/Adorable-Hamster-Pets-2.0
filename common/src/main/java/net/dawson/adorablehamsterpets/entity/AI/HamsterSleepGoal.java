@@ -5,6 +5,7 @@ import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterPoseUtil;
+import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.HamsterState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.goal.Goal;
@@ -52,11 +53,10 @@ public class HamsterSleepGoal extends Goal {
     @Override
     public boolean canStart() {
         // Only wild hamsters sleep via this goal
-        if (this.hamster.isTamed() ||
-                this.hamster.isSleeping() ||
-                this.hamster.isSitting() ||
-                this.hamster.isKnockedOut() ||
-                this.hamster.isPlayingTag()) {
+        if (this.hamster.isTamed()
+                || this.hamster.hasRedstoneFever()
+                || HamsterMovementUtil.shouldNotMove(this.hamster)
+                || this.hamster.isPlayingTag()) {
             return false;
         }
         if (!this.hamster.getWorld().isDay()) {
@@ -88,7 +88,9 @@ public class HamsterSleepGoal extends Goal {
 
     @Override
     public boolean shouldContinue() {
-        if (this.hamster.isTamed() || !this.hamster.getWorld().isDay()) {
+        if (this.hamster.isTamed()
+                || this.hamster.hasRedstoneFever()
+                || !this.hamster.getWorld().isDay()) {
             return false;
         }
 

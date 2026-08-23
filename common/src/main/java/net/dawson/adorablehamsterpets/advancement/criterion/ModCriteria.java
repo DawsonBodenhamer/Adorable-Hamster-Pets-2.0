@@ -37,6 +37,10 @@ public class ModCriteria {
             CRITERIA.register("hide_and_seek_found", HideAndSeekFoundCriterion::new);
     public static final RegistrySupplier<WitnessGlowingSunflowerCriterion> WITNESS_GLOWING_SUNFLOWER = CRITERIA.register("witness_glowing_sunflower", WitnessGlowingSunflowerCriterion::new);
     public static final RegistrySupplier<MaxShoulderHamstersCriterion> MAX_SHOULDER_HAMSTERS = CRITERIA.register("max_shoulder_hamsters", MaxShoulderHamstersCriterion::new);
+    public static final RegistrySupplier<RedstoneFeverCriterion> REDSTONE_FEVER_DISCOVERED =
+            CRITERIA.register("redstone_fever_discovered", RedstoneFeverCriterion::new);
+    public static final RegistrySupplier<RedstoneFeverCriterion> SUNSHINE_CURING =
+            CRITERIA.register("sunshine_curing", RedstoneFeverCriterion::new);
 
     // --- 3. Main Registration Call ---
     public static void register() {

@@ -55,6 +55,11 @@ public class HamsterTemptGoal extends TemptGoal {
 
     @Override
     public void tick() {
+        if (this.hamster.hasRedstoneFever()) {
+            this.hamster.setBegging(false);
+            return;
+        }
+
         // --- Combat Target Maintenance ---
         HamsterCombatUtil.clearInvalidTarget(this.hamster);
         super.tick();

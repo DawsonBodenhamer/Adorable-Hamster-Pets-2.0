@@ -55,6 +55,7 @@ public final class HamsterNbtUtil {
         nbt.putBoolean("ArmorVisible", hamster.isArmorVisible());
         nbt.putBoolean("isGeneticsVisualizerMember", hamster.isGeneticsVisualizerMember());
         nbt.putInt("AggressionState", hamster.getAggressionState().ordinal());
+        hamster.getRedstoneFeverState().writeNbt(nbt);
 
         // --- 2. Parent Following ---
         if (hamster.getParentUuid() != null) {
@@ -171,6 +172,9 @@ public final class HamsterNbtUtil {
                 hamster.setAggressionState(HamsterEntity.AggressionState.values()[stateOrdinal]);
             }
         }
+        hamster.getRedstoneFeverState().readNbt(nbt);
+        RedstoneFeverUtil.normalizeDisabledState(hamster);
+        hamster.synchronizeRedstoneFeverVisualState();
 
         // --- 2. Parent Following ---
         if (nbt.containsUuid("ParentUuid")) {
@@ -296,7 +300,7 @@ public final class HamsterNbtUtil {
         // --- 3. Get Custom Name ---
         Optional<String> nameOptional = Optional.ofNullable(hamster.getCustomName()).map(Text::getString);
 
-        // --- 4. Create Inner Data Record Instances ---
+        // --- 4. Create Domain Transfer Records ---
         HamsterState.MiniGameBehaviorData seekingData = new HamsterState.MiniGameBehaviorData(
                 hamster.isPrimedToSeekDiamonds,
                 hamster.foundOreCooldownEndTick,
@@ -314,25 +318,44 @@ public final class HamsterNbtUtil {
                 hamster.shouldBypassNextSleepDelay()
         );
 
-        // --- 5. Create and Return the Main Data Record ---
-        return new HamsterState(
+        HamsterState.IdentityData identityData = new HamsterState.IdentityData(
                 hamster.getUuid(),
                 hamster.getGenome().saveToNbt(),
-                hamster.getHealth(),
-                inventoryNbt,
+                nameOptional
+        );
+        HamsterState.LifeHistoryData lifeHistoryData = new HamsterState.LifeHistoryData(
                 hamster.getBreedingAge(),
+                hamster.totalAgeTicks,
+                hamster.timesBred
+        );
+        HamsterState.StatusData statusData = new HamsterState.StatusData(
                 hamster.throwCooldownEndTick,
                 buffData,
-                hamster.getAutoEatCooldownTicks(),
-                nameOptional,
+                hamster.getAutoEatCooldownTicks()
+        );
+        HamsterState.AppearanceData appearanceData = new HamsterState.AppearanceData(
                 hamster.getDataTracker().get(HamsterEntity.FLOWER_POS),
                 hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID),
+                hamster.isArmorVisible()
+        );
+        HamsterState.BehaviorData behaviorData = new HamsterState.BehaviorData(
                 seekingData,
                 wanderData,
-                hamster.getDataTracker().get(HamsterEntity.HAMSTER_FLAGS),
-                hamster.totalAgeTicks,
-                hamster.timesBred,
-                hamster.isArmorVisible()
+                hamster.getDataTracker().get(HamsterEntity.HAMSTER_FLAGS)
+        );
+        HamsterState.HamsterConditionData conditionData =
+                HamsterState.HamsterConditionData.capture(hamster.getRedstoneFeverState());
+
+        // --- 5. Create and Return Main Data Record ---
+        return new HamsterState(
+                identityData,
+                hamster.getHealth(),
+                inventoryNbt,
+                lifeHistoryData,
+                statusData,
+                appearanceData,
+                behaviorData,
+                conditionData
         );
     }
 
@@ -358,6 +381,9 @@ public final class HamsterNbtUtil {
             hamster.setGenome(HamsterGenome.readFromNbt(data.genomeNbt()));
             hamster.setHealth(data.health());
             if (player != null) {hamster.setOwnerUuid(player.getUuid());}
+            data.conditionData().applyTo(hamster.getRedstoneFeverState());
+            RedstoneFeverUtil.normalizeDisabledState(hamster);
+            hamster.synchronizeRedstoneFeverVisualState();
             hamster.setTamed(true, true);
             hamster.setBreedingAge(data.breedingAge());
             hamster.throwCooldownEndTick = data.throwCooldownEndTick();

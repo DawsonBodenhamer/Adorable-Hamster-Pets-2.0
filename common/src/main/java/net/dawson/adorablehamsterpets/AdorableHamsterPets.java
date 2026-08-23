@@ -32,6 +32,7 @@ import net.dawson.adorablehamsterpets.util.HamsterNbtUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
 import net.dawson.adorablehamsterpets.util.AcornRingUtil;
 import net.dawson.adorablehamsterpets.util.ModLootTableModifiers;
+import net.dawson.adorablehamsterpets.util.RedstoneFeverCureCreditState;
 import net.dawson.adorablehamsterpets.world.ModSpawnPlacements;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
@@ -170,6 +171,7 @@ public class AdorableHamsterPets {
 	 */
 	private static void onPlayerJoin(ServerPlayerEntity player) {
 		AcornRingUtil.defer(player, null);
+		RedstoneFeverCureCreditState.consume(player);
 		if (Configs.AHP_UI.enableAutoGuidebookDelivery) {
 			PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
 			Identifier flagAdvId = Identifier.of(MOD_ID, "technical/has_received_initial_guidebook");

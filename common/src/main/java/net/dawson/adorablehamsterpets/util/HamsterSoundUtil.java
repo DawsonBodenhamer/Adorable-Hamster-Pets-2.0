@@ -10,8 +10,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundEvent;
 
-import java.util.Arrays;
-
 /**
  * Selects hamster vocalizations and server-side fallback footsteps.
  */
@@ -36,6 +34,10 @@ public final class HamsterSoundUtil {
             return null;
         }
 
+        if (hamster.hasRedstoneFever()) {
+            return getRandomSoundFrom(ModSounds.HAMSTER_SNORT_SOUNDS, hamster.getRandom());
+        }
+
         if (hamster.isBegging() || hamster.isTaunting()) {
             return getRandomSoundFrom(ModSounds.HAMSTER_BEG_SOUNDS, hamster.getRandom());
         }
@@ -58,7 +60,13 @@ public final class HamsterSoundUtil {
     }
 
     public static boolean isBeggingSound(SoundEvent sound) {
-        return Arrays.asList(ModSounds.HAMSTER_BEG_SOUNDS).contains(sound);
+        return ModSounds.HAMSTER_BEG_SOUNDS.stream()
+                .anyMatch(soundSupplier -> soundSupplier.get().equals(sound));
+    }
+
+    public static boolean isRedstoneFeverSnort(SoundEvent sound) {
+        return ModSounds.HAMSTER_SNORT_SOUNDS.stream()
+                .anyMatch(soundSupplier -> soundSupplier.get().equals(sound));
     }
 
     public static SoundEvent selectHurtSound(HamsterEntity hamster) {

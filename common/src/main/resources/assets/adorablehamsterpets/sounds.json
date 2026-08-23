@@ -486,5 +486,53 @@
   "hamster_slap": {
     "subtitle": "subtitles.adorablehamsterpets.hamster_slap",
     "sounds": [ "adorablehamsterpets:hamster_slap" ]
+  },
+  "hamster_snort1": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_snort",
+    "sounds": [ "adorablehamsterpets:hamster_snort1" ]
+  },
+  "hamster_snort2": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_snort",
+    "sounds": [ "adorablehamsterpets:hamster_snort2" ]
+  },
+  "hamster_snort3": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_snort",
+    "sounds": [ "adorablehamsterpets:hamster_snort3" ]
+  },
+  "hamster_snort4": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_snort",
+    "sounds": [ "adorablehamsterpets:hamster_snort4" ]
+  },
+  "hamster_snort5": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_snort",
+    "sounds": [ "adorablehamsterpets:hamster_snort5" ]
+  },
+  "hamster_hiss1": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_hiss",
+    "sounds": [ "adorablehamsterpets:hamster_hiss1" ]
+  },
+  "hamster_hiss2": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_hiss",
+    "sounds": [ "adorablehamsterpets:hamster_hiss2" ]
+  },
+  "hamster_hiss3": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_hiss",
+    "sounds": [ "adorablehamsterpets:hamster_hiss3" ]
+  },
+  "hamster_hiss4": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_hiss",
+    "sounds": [ "adorablehamsterpets:hamster_hiss4" ]
+  },
+  "hamster_hiss5": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_hiss",
+    "sounds": [ "adorablehamsterpets:hamster_hiss5" ]
+  },
+  "hamster_shiver1": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_shiver",
+    "sounds": [ "adorablehamsterpets:hamster_shiver1" ]
+  },
+  "hamster_shiver2": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_shiver",
+    "sounds": [ "adorablehamsterpets:hamster_shiver2" ]
   }
 }

@@ -113,6 +113,22 @@ public class ModCommands {
                 .executes(context -> PlayerCommandUtil.executeResetHeistHistory(context.getSource()))
         );
 
+        ahpRoot.then(CommandManager.literal("redstone_fever")
+                .requires(source -> source.hasPermissionLevel(2))
+                .then(CommandManager.literal("apply")
+                        .executes(context -> RedstoneFeverCommandUtil.apply(
+                                context.getSource(), Collections.emptyList()))
+                        .then(CommandManager.argument("hamsters", EntityArgumentType.entities())
+                                .executes(context -> RedstoneFeverCommandUtil.apply(
+                                        context.getSource(), EntityArgumentType.getEntities(context, "hamsters")))))
+                .then(CommandManager.literal("cure")
+                        .executes(context -> RedstoneFeverCommandUtil.cure(
+                                context.getSource(), Collections.emptyList()))
+                        .then(CommandManager.argument("hamsters", EntityArgumentType.entities())
+                                .executes(context -> RedstoneFeverCommandUtil.cure(
+                                        context.getSource(), EntityArgumentType.getEntities(context, "hamsters")))))
+        );
+
         // No OP required
         ahpRoot.then(CommandManager.literal("trigger_guidebook_fx")
                 .requires(source -> true)
