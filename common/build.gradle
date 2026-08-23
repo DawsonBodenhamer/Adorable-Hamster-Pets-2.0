@@ -27,6 +27,11 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
 }
 
+sourceSets.test {
+    java.srcDirs = ["src/test_1_20_x/java"]
+    resources.srcDirs = ["src/test_1_20_x/resources"]
+}
+
 tasks.named("test") {
     useJUnitPlatform()
 }
