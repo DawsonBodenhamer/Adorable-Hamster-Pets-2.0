@@ -56,7 +56,10 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import net.minecraft.world.EntityView;
+import net.minecraft.world.LocalDifficulty;
+import net.minecraft.world.ServerWorldAccess;
+import net.minecraft.world.World;
 import org.joml.Vector3f;
 
 import org.jetbrains.annotations.Nullable;
@@ -284,7 +287,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         super(entityType, world);
         this.experiencePoints = 3;
 
-        // --- Set pathfinding penalties for all relevant goals ---
+        // --- Pathfinding Penalties ---
         this.setPathfindingPenalty(PathNodeType.WATER, 16.0F);
         this.setPathfindingPenalty(PathNodeType.LAVA, -1.0F);
         this.setPathfindingPenalty(PathNodeType.DAMAGE_FIRE, -1.0F);
@@ -460,63 +463,24 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // Fast-path for AI-disabled statues
         if (this.isAiDisabled()) {
             this.baseTick();
-
-            // --- Cylinder Visuals for 3D Spawning Command ---
             this.tickAiDisabledCommandVisuals();
             return;
         }
 
-        // --- Triggerable Animation Cancellation Scheduler ---
-        // --- Decrement Simple Timers ---
-        // --- Sulking Timer ---
-        // --- Settle "Thump" Sound Effect ---
+        // --- 2. Timers and Pre-Super Behavior ---
         this.tickSchedulersAndTimers();
-
-        // --- Bed Leaf Particle Effect ---
-        // --- Ambient Sitting Behaviors ---
-        // --- Celebration Logic (Tag Game; New Baby) ---
-        // --- Tamed Hamster "Path to Slumber" State Machine ---
-        // --- Auto-Petting Logic ---
         this.tickPreSuperBehaviors();
         HamsterCombatUtil.tickStandardCombat(this);
 
+        // --- 3. Vanilla Tick ---
         super.tick();
 
-        // --- Swimming Physics ---
-        // --- Check for Armor Changes & Update Attributes ---
-        // --- Dynamic Navigation Swapping & Periodic Config Sync ---
-        // --- Apply extra gravity during sulking jump ---
+        // --- 4. Post-Super Physics and Server Lifecycle ---
         this.tickPostSuperPhysics();
-
-        // --- 2. Server-Side Logic ---
-        // --- Tick Age ---
-        // --- Dynamic Water Pathfinding Penalty & Escape Logic ---
-        // --- Sync Throw Cooldown Flag ---
-        // --- Process Deferred Armor Breakage ---
-        // --- Circadian Chaos Wake-Up Logic ---
-        // --- Sync Exact Age for Smooth Visual Growth ---
-        // --- Day/Night Cycle Wake-Up Logic ---
-        // --- Bed State Self-Healing ---
-        // --- Suffocation Self-Rescue Logic ---
-        // --- Ejection Logic ---
-        // --- Auto Eating Logic ---
-        // --- Stage 1: Check Eligibility and Start "Considering" ---
-        // --- Stage 2: Process "Considering" Delay & Start Actual Eating ---
-        // --- Stage 3: Apply Healing After Eating Progress Finishes ---
-        // --- Handle Continuous Diamond Celebration Effects ---
-        // --- Handle Continuous Sulking Effects ---
-        // --- Pacifist Break on Owner Attack ---
         this.tickServerLifecycle();
 
-        // --- 4. Client-Side Logic ---
-        // --- Rolling Animation State ---
-        // --- Buff Particle Logic (Zoomies) ---
-        // --- Taunting Particle Logic ---
-        // --- Fall Pitch Interpolation Logic ---
-        // --- Swim Pitch Interpolation Logic ---
+        // --- 5. Client Presentation and Interaction State ---
         this.tickClientPresentation();
-
-        // --- 5. Other Non-Movement Tick Logic ---
         this.tickJukeboxAndInteractionState();
     }
 
@@ -1137,7 +1101,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         int personalityId = this.getDataTracker().get(ANIMATION_PERSONALITY_ID);
         this.triggerAnimOnServer("mainController", HamsterPoseUtil.getWakeUpAnimId(personalityId));
 
-        // --- Conditional Sound Logic ---
+        // --- Conditional Sounds ---
         // Swish sound plays for both manual and natural wake-ups.
         this.getWorld()
                 .playSound(
@@ -1195,12 +1159,11 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             return false;
         }
 
-        // Prevent visual glitch where entities loading in apparently have enough downward velocity
-        // to trigger flying
+        // Ignore transient downward velocity while newly loaded entities settle
         if (this.dataTracker.get(FALL_IMMUNITY_ACTIVE) && this.localSpawnImmunityTicks > 0)
             return false;
 
-        return !this.isOnGround() && this.getVelocity().y < -0.01; // Extremely high sensitivity
+        return !this.isOnGround() && this.getVelocity().y < -0.01; // Detect even slight falls
     }
 
     /** Checks if this hamster has been named "Sweet Potato" for an easter egg. */
@@ -1329,34 +1292,6 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         }
     }
 
-    /**
-     * Custom implementation of setTamed that allows controlling the attribute update. In 1.20.1,
-     * this is now a helper method for the mod's internal use.
-     *
-     * @param tamed True if the entity is being tamed.
-     * @param updateAttributes True to update the entity's attributes (e.g., max health).
-     */
-    public void setTamed(boolean tamed, boolean updateAttributes) {
-        super.setTamed(tamed); // Call the parent method
-        if (tamed && this.hasRedstoneFever()) {
-            RedstoneFeverUtil.cureAdministratively(this);
-        }
-        if (updateAttributes) {
-            if (tamed) {
-                this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH)
-                        .setBaseValue(Configs.AHP_MAIN.tamedMaxHealth.get());
-                this.setHealth(this.getMaxHealth());
-                this.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE)
-                        .setBaseValue(Configs.AHP_MAIN.meleeDamage.get());
-            } else {
-                this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH)
-                        .setBaseValue(Configs.AHP_MAIN.wildMaxHealth.get());
-                this.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE)
-                        .setBaseValue(Configs.AHP_MAIN.meleeDamage.get());
-            }
-        }
-    }
-
     public boolean isInCustomLove() {
         return this.customLoveTimer > 0;
     }
@@ -1385,7 +1320,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.triggerAnim(controllerName, animName);
             AdorableHamsterPets.LOGGER.trace(
                     "[HamsterEntity {}] Triggered server-side animation: Controller='{}',"
-                        + " Anim='{}'",
+                            + " Anim='{}'",
                     this.getId(),
                     controllerName,
                     animName);
@@ -1590,10 +1525,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         // --- 4. Reset Armor Flag ---
         this.armorRuntimeState.absorbedDamage = false;
 
-        // --- 5. Delegate to Vanilla Logic ---
+        // --- 5. Vanilla Damage ---
         boolean result = super.damage(source, amount);
 
-        // --- 6. Armor Absorption Override ---
+        // --- 6. Armor Absorption ---
         // If armor absorbed damage, tell engine entity was hit so it applies knockback/SFX
         if (this.armorRuntimeState.absorbedDamage) {
             return true;
@@ -1617,7 +1552,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     // --- Interaction Callback ---
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        // --- 0. Pre-checks ---
+        // --- 1. Pre-Checks ---
         if (this.hasPassenger(player)) return ActionResult.PASS;
         if (this.interactionCooldown > 0) return ActionResult.PASS;
         // Fever blocks food, taming, play, and other ordinary interaction paths
@@ -1626,7 +1561,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         ItemStack stack = player.getStackInHand(hand);
         World world = this.getWorld();
 
-        // --- 1. Global Interactions ---
+        // --- 2. Global Interactions ---
         ActionResult result = HamsterInteractionUtil.handleDebugToggle(this, player, stack, hand);
         if (result != ActionResult.PASS) return result;
 
@@ -1639,10 +1574,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         result = HamsterInteractionUtil.handleTaming(this, player, stack, hand);
         if (result != ActionResult.PASS) return result;
 
-        // --- 2. Fallback for Untamed ---
+        // --- 3. Untamed Fallback ---
         if (!this.isTamed()) return super.interactMob(player, hand);
 
-        // --- 3. Owner-Only Interactions ---
+        // --- 4. Owner Interactions ---
         if (this.isOwner(player)) {
 
             result = HamsterInteractionUtil.handleBedLinking(this, player, stack, hand);
@@ -1701,7 +1636,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             return ActionResult.PASS;
         }
 
-        // --- 4. Non-Owner Tamed Fallback ---
+        // --- 5. Non-Owner Fallback ---
         return super.interactMob(player, hand);
     }
 
@@ -1843,9 +1778,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         return result;
     }
 
-    // Map the custom ARMOR_SLOT_INDEX to the vanilla FEET slot
-    // Allows vanilla systems (Frost Walker, Thorns) to see the armor and execute their logic
-    // automatically
+    // Expose custom armor as feet equipment for vanilla systems such as Frost Walker and Thorns
     @Override
     public ItemStack getEquippedStack(EquipmentSlot slot) {
         if (slot == EquipmentSlot.FEET) {
@@ -2007,16 +1940,33 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     // --- Taming and Breeding ---
-    /**
-     * Overrides the vanilla setTamed method. This is the method called by vanilla logic. It
-     * delegates to our custom implementation, ensuring attributes are always updated.
-     *
-     * @param tamed True if the entity is being tamed.
-     */
     @Override
     public void setTamed(boolean tamed) {
-        // Always update attributes when this vanilla method is called.
         this.setTamed(tamed, true);
+    }
+
+    public void setTamed(boolean tamed, boolean updateAttributes) {
+        // --- Tamed State and Attributes ---
+        super.setTamed(tamed);
+        if (tamed && this.hasRedstoneFever()) {
+            RedstoneFeverUtil.cureAdministratively(this);
+        }
+        if (updateAttributes) {
+            if (tamed) {
+                this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH)
+                        .setBaseValue(Configs.AHP_MAIN.tamedMaxHealth.get());
+                this.setHealth(this.getMaxHealth()); // Set health to the updated maximum
+                // Set the base attack damage attribute to the defined melee damage when tamed.
+                this.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE)
+                        .setBaseValue(Configs.AHP_MAIN.meleeDamage.get());
+            } else {
+                this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH)
+                        .setBaseValue(Configs.AHP_MAIN.wildMaxHealth.get());
+                // Reset attack damage if untamed
+                this.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE)
+                        .setBaseValue(Configs.AHP_MAIN.meleeDamage.get());
+            }
+        }
     }
 
     /**
@@ -2026,7 +1976,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
      */
     @Override
     public void setInSittingPose(boolean inSittingPose) {
-        // --- 1. Call Superclass Method ---
+        // --- 1. Vanilla Pose ---
         super.setInSittingPose(inSittingPose);
 
         // --- 2. Synchronize Custom Flag ---
@@ -2197,12 +2147,12 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     private void tickSchedulersAndTimers() {
-        // --- Triggerable Animation Cancellation Scheduler ---
+        // --- 1. Animation Cancellation Scheduler ---
         if (!this.getWorld().isClient()) {
             this.animScheduler.tick(this.getWorld().getTime());
         }
 
-        // --- Decrement Simple Timers ---
+        // --- 2. Simple Timers ---
         if (this.suffocationGracePeriod > 0) this.suffocationGracePeriod--;
         if (this.wakingUpTicks > 0) this.wakingUpTicks--;
         if (this.autoEatState.cooldownTicks > 0) this.autoEatState.cooldownTicks--;
@@ -2234,7 +2184,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.sleepRuntimeState.napInBedDurationTimer--;
         if (this.localSpawnImmunityTicks > 0) this.localSpawnImmunityTicks--;
 
-        // --- Sulking Timer ---
+        // --- 3. Sulking Timer ---
         if (this.sulkTimer > 0) {
             this.sulkTimer--;
             if (this.sulkTimer == 0 && this.isSulking() && !this.getWorld().isClient()) {
@@ -2243,7 +2193,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- Settle "Thump" Sound Effect ---
+        // --- 4. Settle Thump ---
         if (this.thumpSoundState.delayTicks > 0) {
             this.thumpSoundState.delayTicks--;
             if (this.thumpSoundState.delayTicks == 0 && !this.getWorld().isClient()) {
@@ -2260,15 +2210,15 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     private void tickPreSuperBehaviors() {
-        // --- Bed Leaf Particle Effect ---
+        // --- 1. Bed Leaf Particles ---
         HamsterBedUtil.tickBedLeafParticles(this);
 
-        // --- Ambient Sitting Behaviors ---
+        // --- 2. Ambient Sitting ---
         if (!this.getWorld().isClient()) {
             HamsterAIUtil.tickAmbientSittingBehaviors(this);
         }
 
-        // --- Celebration Logic (Tag Game; New Baby) ---
+        // --- 3. Celebration State ---
         if (this.isFrozenMovement() || this.isCelebratingBaby()) {
             if (this.isFrozenMovement()) {
                 if (this.celebrationRuntimeState.ticks > 0) {
@@ -2292,13 +2242,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- Tamed Hamster "Path to Slumber" State Machine ---
+        // --- 4. Tamed Sleep State Machine ---
         // This logic only applies to tamed hamsters and runs on the server
         if (!this.getWorld().isClient() && this.isTamed() && !this.isKnockedOut()) {
             HamsterSleepUtil.tickTamedSleepLogic(this);
         }
 
-        // --- Auto-Petting Logic ---
+        // --- 5. Auto-Petting ---
         if (!this.getWorld().isClient()
                 && Configs.AHP_MAIN.enablePetting
                 && Platform.isModLoaded("punchy")) {
@@ -2333,11 +2283,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     private void tickPostSuperPhysics() {
-        // --- Swimming Physics ---
+        // --- 1. Swimming Physics ---
         if (this.isTouchingWater() || this.isInLava()) {
 
-            // 1. Bypass vanilla pathfinder's node-by-node navigation which causes orbital loops in
-            // water
+            // Bypass node-by-node navigation that causes orbital loops in water
             if (this.getNavigation().isFollowingPath()
                     && this.getNavigation().getTargetPos() != null) {
                 BlockPos finalTarget = this.getNavigation().getTargetPos();
@@ -2364,7 +2313,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             double newVelY = velocity.y;
             double newVelZ = velocity.z;
 
-            // 2. Vertical
+            // Vertical motion
             Vec3d lookVec = this.getRotationVec(1.0F);
 
             if (this.getRandom().nextFloat() < 0.60F) { // 60% chance per tick
@@ -2388,7 +2337,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // 3. Horizontal
+            // Horizontal motion
             boolean isTryingToMove =
                     Math.abs(this.forwardSpeed) > 0.01F || Math.abs(this.sidewaysSpeed) > 0.01F;
 
@@ -2419,7 +2368,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             this.smoothedWaterThrust = Vec3d.ZERO;
         }
 
-        // --- Check for Armor Changes & Update Attributes ---
+        // --- 2. Armor and Attribute Updates ---
         if (!this.getWorld().isClient) {
             ItemStack currentArmor = this.getArmorStack();
             if (!ItemStack.areEqual(currentArmor, this.armorRuntimeState.lastStack)) {
@@ -2428,7 +2377,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- Dynamic Navigation Swapping & Periodic Config Sync ---
+        // --- 3. Navigation and Config Sync ---
         if (!this.getWorld().isClient() && this.age % 20 == 0) { // Check once per second
             this.updateNavigation();
 
@@ -2436,7 +2385,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             HamsterPhysicsUtil.updateArmorModifiers(this, this.getArmorStack());
         }
 
-        // --- Apply extra gravity during sulking jump ---
+        // --- 4. Sulking Gravity ---
         // This runs on the server to ensure physics are authoritative.
         if (!this.getWorld().isClient()) {
             // If the hamster is sulking, not on the ground, and is currently falling (negative Y
@@ -2451,14 +2400,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     }
 
     private void tickServerLifecycle() {
-        // --- 2. Server-Side Logic ---
         World world = this.getWorld();
         if (!world.isClient()) {
             RedstoneFeverUtil.reconcileMovementSpeed(this);
             // Fever transitions, rescue credit, audio, and particles remain server-authoritative
             RedstoneFeverUtil.tick(this);
 
-            // --- Tick Age ---
+            // --- 1. Age ---
             //   1 real day = 86,400s * 20 MC ticks/s = 1,728,000 MC ticks
             //   1,728,000 / 24,000 = 72 MC ticks per age tick
             int ageProgressInterval = Configs.AHP_UI.displayAgeInIrlTime ? 72 : 1;
@@ -2466,7 +2414,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 this.totalAgeTicks++;
             }
 
-            // --- Dynamic Water Pathfinding Penalty & Escape Logic ---
+            // --- 2. Water Pathfinding and Escape ---
             if (this.age % 10 == 0) {
                 String activeGoal = this.getActiveCustomGoalName();
                 boolean isLooting =
@@ -2503,20 +2451,20 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // --- Sync Throw Cooldown Flag ---
+            // --- 3. Throw Cooldown Sync ---
             boolean hasThrowCooldown = this.throwCooldownEndTick > world.getTime();
             if (this.getHamsterFlag(THROW_COOLDOWN_FLAG) != hasThrowCooldown) {
                 this.setHamsterFlag(THROW_COOLDOWN_FLAG, hasThrowCooldown);
             }
 
-            // --- Process Deferred Armor Breakage ---
+            // --- 4. Deferred Armor Breakage ---
             // Prevents "Equipment Update" packet from colliding with the "Hurt" packet
             if (this.armorRuntimeState.deferredUpdate) {
                 this.setArmorStack(ItemStack.EMPTY);
                 this.armorRuntimeState.deferredUpdate = false;
             }
 
-            // --- Circadian Chaos Wake-Up Logic ---
+            // --- 5. Circadian Chaos Wake-Up ---
             if (Configs.AHP_MAIN.circadianChaos.get()
                     && HamsterBedUtil.isSleepingInBed(this)
                     && this.sleepRuntimeState.napInBedDurationTimer == 0) {
@@ -2526,10 +2474,10 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // --- Sync Exact Age for Smooth Visual Growth ---
+            // --- 6. Exact Age Sync ---
             this.dataTracker.set(EXACT_AGE, this.getBreedingAge());
 
-            // --- Day/Night Cycle Wake-Up Logic ---
+            // --- 7. Day/Night Wake-Up ---
             if (!Configs.AHP_MAIN.circadianChaos.get() && HamsterBedUtil.isSleepingInBed(this)) {
                 // If rescued, bypass time check entirely. Hamster stays asleep
                 if (!this.isRescueSleeping()) {
@@ -2554,13 +2502,13 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 HamsterBedUtil.wakeUpFromBed(this, false); // Natural wake-up
             }
 
-            // --- Bed State Self-Healing ---
+            // --- 8. Bed State Repair ---
             HamsterBedUtil.autoHealBedState(this);
 
-            // --- Suffocation Self-Rescue Logic ---
+            // --- 9. Suffocation Rescue ---
             HamsterPlacementUtil.trySuffocationRescue(this);
 
-            // --- Ejection Logic ---
+            // --- 10. Inventory Ejection ---
             if (this.inventoryRuntimeState.ejectionCheckCooldown <= 0) {
                 this.inventoryRuntimeState.ejectionCheckCooldown =
                         100; // Reset cooldown (check every 5 seconds)
@@ -2569,9 +2517,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // --- Auto Eating Logic ---
-            // This section now handles the multi-stage auto-eating: considering, eating, healing.
-            // --- Stage 1: Check Eligibility and Start "Considering" ---
+            // --- 11. Auto-Eating ---
+            // Stage 1: Check eligibility and start considering
             if (this.isTamed()
                     && this.getHealth() < this.getMaxHealth()
                     && !this.isAutoEating()
@@ -2590,7 +2537,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // --- Stage 2: Process "Considering" Delay & Start Actual Eating ---
+            // Stage 2: Process consideration delay and start eating
             if (this.isConsideringAutoEat() && this.autoEatState.preEatDelayTicks == 0) {
                 setHamsterFlag(CONSIDERING_AUTO_EAT_FLAG, false); // No longer just considering
 
@@ -2630,7 +2577,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // --- Stage 3: Apply Healing After Eating Progress Finishes ---
+            // Stage 3: Apply healing after eating finishes
             if (this.isAutoEating() && this.autoEatState.progressTicks == 0) {
                 this.heal(Configs.AHP_ITEMS.hamsterFoodMixHealing.get());
                 this.autoEatState.cooldownTicks = 60; // Set main cooldown (3 seconds)
@@ -2641,7 +2588,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // --- Handle Continuous Diamond Celebration Effects ---
+            // --- 12. Diamond Celebration Effects ---
             if (!this.getWorld().isClient()) {
                 if (this.isCelebratingDiamond()) {
                     // Delayed Diamond Sparkle Sound
@@ -2714,7 +2661,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // --- Handle Continuous Sulking Effects ---
+            // --- 13. Sulking Effects ---
             if (this.isSulking()) {
                 // Delayed Orchestra Hit
                 if (this.celebrationRuntimeState.sulkOrchestraHitDelayTicks
@@ -2769,7 +2716,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
                 }
             }
 
-            // --- Pacifist Break on Owner Attack ---
+            // --- 14. Pacifist Break ---
             if (Configs.AHP_MAIN.pacifistBreakOnOwnerAttack
                     && this.getAggressionState() == AggressionState.PACIFIST
                     && this.isTamed()) {
@@ -2805,9 +2752,8 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private void tickClientPresentation() {
         World world = this.getWorld();
 
-        // --- 4. Client-Side Logic ---
+        // --- 1. Rolling Animation ---
         if (world.isClient()) {
-            // --- Rolling Animation State ---
             this.prevClientRollTimer = this.clientRollTimer;
             boolean isRolling = false;
 
@@ -2831,7 +2777,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // --- Buff Particle Logic (Zoomies) ---
+        // --- 2. Zoomies Particles ---
         if (world.isClient && this.hasGreenBeanBuff()) {
             if (this.random.nextInt(2) == 0) {
                 // Use CLOUD instead of WHITE_SMOKE on 1.20.1
@@ -2901,8 +2847,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
     private void tickJukeboxAndInteractionState() {
         World world = this.getWorld();
 
-        // --- 5. Other Non-Movement Tick Logic ---
-        // Jukebox Dancing
+        // --- 1. Jukebox Dancing ---
         if (!world.isClient() && this.age % 20 == 0) {
             boolean dancing = false;
             boolean isSniffingForOre =
@@ -2920,7 +2865,7 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
             }
         }
 
-        // Miscellaneous
+        // --- 2. Interaction Timers ---
         if (this.isRefusingFood() && this.feedingInteractionState.refuseTimer > 0) {
             if (--this.feedingInteractionState.refuseTimer <= 0) this.setRefusingFood(false);
         }
