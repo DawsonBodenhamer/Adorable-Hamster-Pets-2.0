@@ -85,6 +85,8 @@ encounters with cave hamsters that have glowing red eyes, frantic movement, and 
     partially or even sometimes completely hidden.
 - **Guidebook Taming Typo**
   - Corrected an extra word in the sliced-cucumber instructions.
+- **Symphonic Dairy Translation**
+  - The Symphonic Dairy advancement now displays its title instead of its translation key.
 
 ---
 
