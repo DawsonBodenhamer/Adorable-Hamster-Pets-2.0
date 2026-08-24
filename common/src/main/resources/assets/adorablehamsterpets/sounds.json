@@ -534,5 +534,21 @@
   "hamster_shiver2": {
     "subtitle": "subtitles.adorablehamsterpets.hamster_shiver",
     "sounds": [ "adorablehamsterpets:hamster_shiver2" ]
+  },
+  "hamster_sneeze1": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_sneeze",
+    "sounds": [ "adorablehamsterpets:hamster_sneeze1" ]
+  },
+  "hamster_sneeze2": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_sneeze",
+    "sounds": [ "adorablehamsterpets:hamster_sneeze2" ]
+  },
+  "hamster_labored_breathing_loop1": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_labored_breathing",
+    "sounds": [ "adorablehamsterpets:hamster_labored_breathing_loop1" ]
+  },
+  "hamster_labored_breathing_loop2": {
+    "subtitle": "subtitles.adorablehamsterpets.hamster_labored_breathing",
+    "sounds": [ "adorablehamsterpets:hamster_labored_breathing_loop2" ]
   }
 }

@@ -102,7 +102,7 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
         SoundEvent hiss = ModSounds.getRandomSoundFrom(
                 ModSounds.HAMSTER_HISS_SOUNDS, this.hamster.getRandom());
         if (hiss != null) {
-            this.hamster.playSound(hiss, 0.4F, this.hamster.getSoundPitch());
+            this.hamster.playSound(hiss, 0.7F, this.hamster.getSoundPitch());
         }
         RedstoneFeverUtil.spawnRedstoneParticles(this.hamster, 24, 0.2F);
     }

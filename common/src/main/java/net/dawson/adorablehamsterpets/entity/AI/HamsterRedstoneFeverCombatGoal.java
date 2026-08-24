@@ -95,7 +95,7 @@ public final class HamsterRedstoneFeverCombatGoal extends Goal {
         SoundEvent attackSound = ModSounds.getRandomSoundFrom(
                 ModSounds.HAMSTER_HISS_SOUNDS, this.hamster.getRandom());
         if (attackSound != null) {
-            this.hamster.playSound(attackSound, 0.5F, this.hamster.getSoundPitch());
+            this.hamster.playSound(attackSound, 0.7F, this.hamster.getSoundPitch());
         }
         this.hamster.triggerAnimOnServer("mainController", "attack");
         DamageSource source = this.hamster.getDamageSources().mobAttack(this.hamster);

@@ -569,6 +569,15 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                     ));
                 }
                 break;
+            case "hamster_sneeze_sound":
+                SoundEvent sneezeSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SNEEZE_SOUNDS, animatable.getRandom());
+                if (sneezeSound != null) {
+                    client.getSoundManager().play(new PositionedSoundInstance(
+                            sneezeSound, SoundCategory.NEUTRAL, 0.6f, 1.0f,
+                            animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
+                    ));
+                }
+                break;
         }
         animatable.soundEffectId = null;
     }
