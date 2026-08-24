@@ -71,7 +71,7 @@ public final class HamsterFeverBreathingSoundInstance extends MovingSoundInstanc
         return this.hamster.getWorld() == world;
     }
 
-    void stop() {
+    void markDone() {
         this.setDone();
     }
 }

@@ -93,8 +93,22 @@ public final class HamsterLifecycleUtil {
 
     public static void initializeSpawn(
             HamsterEntity hamster, ServerWorldAccess world, SpawnReason spawnReason) {
+        initializeSpawn(hamster, world, spawnReason, false);
+    }
+
+    /**
+     * Initializes a hamster with an already resolved cave-spawn context.
+     */
+    public static void initializeSpawn(
+            HamsterEntity hamster,
+            ServerWorldAccess world,
+            SpawnReason spawnReason,
+            boolean supplementalCaveSpawn) {
         AdorableHamsterPets.LOGGER.debug(
                 "[AHP Spawn Debug] HamsterEntity.initialize called. SpawnReason: {}", spawnReason);
+
+        boolean caveEnvironment = HamsterGeneticsUtil.isCaveEnvironment(
+                world, hamster.getBlockPos(), supplementalCaveSpawn);
 
         if (!world.isClient()) {
             int personalityId = hamster.getRandom().nextBetween(1, 3);
@@ -103,7 +117,7 @@ public final class HamsterLifecycleUtil {
 
         HamsterGenome wildGenome =
                 HamsterGeneticsUtil.generateWildGenome(
-                        world, hamster.getBlockPos(), hamster.getRandom());
+                        world, hamster.getBlockPos(), hamster.getRandom(), caveEnvironment);
         hamster.setGenome(wildGenome);
 
         if (!hamster.isTamed()) {
@@ -118,7 +132,7 @@ public final class HamsterLifecycleUtil {
             hamster.totalAgeTicks = 24000L;
         }
 
-        HamsterInventoryUtil.generateWildLoot(hamster, hamster.getRandom());
+        HamsterInventoryUtil.generateWildLoot(hamster, hamster.getRandom(), caveEnvironment);
 
         if (world instanceof ServerWorld serverWorld) {
             RedstoneFeverUtil.tryApplyNaturalFever(hamster, serverWorld, spawnReason);

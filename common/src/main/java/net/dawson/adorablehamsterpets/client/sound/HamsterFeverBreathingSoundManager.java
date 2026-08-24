@@ -49,7 +49,7 @@ public final class HamsterFeverBreathingSoundManager {
 
     public void reset(MinecraftClient client) {
         for (HamsterFeverBreathingSoundInstance sound : this.activeSounds.values()) {
-            sound.stop();
+            sound.markDone();
             client.getSoundManager().stop(sound);
         }
         this.activeSounds.clear();
@@ -68,7 +68,7 @@ public final class HamsterFeverBreathingSoundManager {
                     || !sound.shouldRemainActive()
                     || !sound.belongsTo(client.world)
                     || !client.getSoundManager().isPlaying(sound)) {
-                sound.stop();
+                sound.markDone();
                 client.getSoundManager().stop(sound);
                 iterator.remove();
             }
@@ -80,7 +80,7 @@ public final class HamsterFeverBreathingSoundManager {
         if (activeSound != null && activeSound.belongsTo(hamster)) return;
 
         if (activeSound != null) {
-            activeSound.stop();
+            activeSound.markDone();
             client.getSoundManager().stop(activeSound);
         }
 
