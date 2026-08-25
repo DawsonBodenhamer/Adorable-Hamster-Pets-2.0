@@ -271,7 +271,7 @@ public class ConfigDataCache {
 
         ENVIRONMENTS.add(parseEnvironment(wgc.wildcardBiomes, wgc.wildcardTags, wgc.wildcardExclusionBiomes, wgc.wildcardExclusionTags, wgc.wildcardWeights, "Wildcard"));
         ENVIRONMENTS.add(parseEnvironment(wgc.icyBiomes, wgc.icyTags, wgc.icyExclusionBiomes, wgc.icyExclusionTags, wgc.icyWeights, "Icy"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.magicBiomes, wgc.magicTags, wgc.magicExclusionBiomes, wgc.magicExclusionTags, wgc.magicWeights, "Magical"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.magicalBiomes, wgc.magicalTags, wgc.magicalExclusionBiomes, wgc.magicalExclusionTags, wgc.magicalWeights, "Magical"));
         ENVIRONMENTS.add(parseEnvironment(wgc.cherryBiomes, wgc.cherryTags, wgc.cherryExclusionBiomes, wgc.cherryExclusionTags, wgc.cherryWeights, "Cherry"));
         ENVIRONMENTS.add(parseEnvironment(wgc.snowyBiomes, wgc.snowyTags, wgc.snowyExclusionBiomes, wgc.snowyExclusionTags, wgc.snowyWeights, "Snowy"));
         ENVIRONMENTS.add(parseEnvironment(wgc.skyBiomes, wgc.skyTags, wgc.skyExclusionBiomes, wgc.skyExclusionTags, wgc.skyWeights, "Sky"));

@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Some cave hamsters have inhaled a little bit too much redstone dust. Redstone Fever introduces rare aggressive
 encounters with cave hamsters that have glowing red eyes, frantic movement, and there's a new sunlight rescue challenge. The new Acorn Ring player-wearable accessory allows truces between pet households, while Hide & Seek, combat, food luring, storage crates, water rescue, and several other systems received fixy fixy attention.
 
-<font color="red">**IMPORTANT:**</font> If you've been looking for white hamsters in snowy biomes and couldn't find any, this update fixes that, **with one important condition:** you must follow the _**Snowy and Icy Hamster Fur Colors**_ instructions down below (I colored it red) to reset the affected settings back to their new defaults. Why? Because I didn't want to overwrite everyone's custom worldgen config settings in case some people had spent a lot of time on it.
+<font color="red">**IMPORTANT:**</font> If you've been looking for **White** or **Pearl Rose** hamsters and couldn't find them, this update fixes that— but **with one important condition:** you must follow the _**Missing White & Pearl Rose Hamsters**_ instructions down below (I colored it red) to manually restore the affected settings to their new defaults. Why? Because I didn't want to overwrite everyone's custom worldgen config settings in case some people have spent a lot of time on it.
 
 ### Added
 - **Redstone Fever**
@@ -76,9 +76,6 @@ encounters with cave hamsters that have glowing red eyes, frantic movement, and 
   - This bug existed from the mod's first release because I was relying on vanilla Minecraft's passive-animal spawner.
     That system starts its search at the surface instead of looking for cave floors, so underground hamsters never
     received a fair spawn attempt.
-- **Pearl Rose Hamster Spawning**
-  - Pearl Rose hamsters could not spawn in Magical Environments due to a config typo, so if you searched those biomes and didn't find them you weren't just unlucky. They can now be found there normally!
-  - If you had previously customized the Magical Environments spawn settings, you'll need to redo that. I tweaked the internal names on purpose so that everyone's config would reset to defaults for those specific settings. Otherwise you would only get this fix if you manually went into your config and reset it to defaults.
 - **Water Rescue**
   - Following hamsters now escape waterlogged navigation traps, and drowning hamsters teleport to nearby safe dry
     ground when one is available. Failed rescues no longer provide free drowning immunity.
@@ -102,17 +99,25 @@ encounters with cave hamsters that have glowing red eyes, frantic movement, and 
   - Corrected an extra word in the sliced-cucumber instructions.
 - **Symphonic Dairy Translation**
   - The Symphonic Dairy advancement now displays its title instead of its translation key.
-- **Snowy and Icy Hamster Fur Colors**
-  - If you've been exploring snowy biomes (like Snowy Plains or Snowy Taiga) hoping to find pure white hamsters, you might have wondered why you were getting mostly blue and sky-colored hamsters instead. Snowy biomes were accidentally getting lumped into the "Icy" environment group, but they now correctly spawn with their intended snowy coat colors.
+- **Missing White & Pearl Rose Hamsters**
+  - If you've been exploring snowy biomes hoping to find pure white hamsters, you might have wondered why you were getting mostly blue and sky-colored hamsters instead. Snowy biomes were accidentally getting lumped into the "Icy" environment group, but they now correctly spawn with their intended snowy coat colors.
   - This happened because the color-sorting system checks for Icy biomes before Snowy ones, and the Icy filter was accidentally set up to catch anything labeled as "snowy." Since snowy biomes got caught in the icy filter first, they were given icy blue palettes instead of white ones.
+  - If you've been looking for Pearl Rose hamsters in Magical Environments and couldn't find any, it wasn't just bad luck. A typo in the Magical Environment config names kept the settings from loading correctly, so Pearl Rose hamsters couldn't spawn there.
   - Also cleaned up a few modded biome defaults and restored compatibility tag support so hamsters spawn properly across modded biomes.
-  - <font color="red">You'll need to reset a few worldgen config settings to get this fix.</font> If you want to do so without resetting your entire worldgen config, go to the config screen for AHP and open **World Generation → Region-Based Color Filters**. Under each environment listed below, right-click **Included Biomes** and select **Restore Defaults**:
+  - <font color="red">You'll need to restore a few worldgen config settings to get these fixes.</font> To opt into the corrected defaults without resetting your entire worldgen config, open the AHP config screen, go to **World Generation → Region-Based Color Filters**, and follow the exact reset locations below:
     - **Priority 2: Icy Environments**
+      - Right-click **Included Biomes** and select **Restore Defaults**.
     - **Priority 3: Magical Environments**
+      - Right-click **Included Biomes** and select **Restore Defaults**.
+      - Right-click **Zone Weights** and select **Restore Defaults**.
     - **Priority 4: Cherry Environments**
+      - Right-click **Included Biomes** and select **Restore Defaults**.
     - **Priority 5: Snowy Environments**
+      - Right-click **Included Biomes** and select **Restore Defaults**.
     - **Priority 9: Sandy Environments**
+      - Right-click **Included Biomes** and select **Restore Defaults**.
     - **Priority 10: Forest Environments**
+      - Right-click **Included Biomes** and select **Restore Defaults**.
 
 ---
 
