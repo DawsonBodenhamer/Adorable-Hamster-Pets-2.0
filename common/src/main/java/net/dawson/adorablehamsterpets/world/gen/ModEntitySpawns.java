@@ -78,6 +78,13 @@ public class ModEntitySpawns {
      * This should be called once during mod initialization.
      */
     public static void parseConfig() {
+        parseConfig(Configs.AHP_WORLDGEN);
+    }
+
+    /**
+     * Parses the biome lists from the supplied config instance into Sets for efficient lookup.
+     */
+    public static void parseConfig(net.dawson.adorablehamsterpets.config.AhpWorldGenConfig config) {
         // Clear existing sets to allow for config reloading
         PARSED_TAGS.clear();
         PARSED_INCLUDES.clear();
@@ -85,7 +92,14 @@ public class ModEntitySpawns {
         PARSED_EXCLUDE_TAGS.clear();
 
         // Parse Tags
-        for (String tagStr : Configs.AHP_WORLDGEN.spawnBiomeTags) {
+        for (String tagStr : config.spawnBiomeTags) {
+            try {
+                PARSED_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
+            } catch (Exception e) {
+                AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome tag identifier in config: '{}'", tagStr);
+            }
+        }
+        for (String tagStr : config.spawnBiomeConventionTags) {
             try {
                 PARSED_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
             } catch (Exception e) {
@@ -94,7 +108,7 @@ public class ModEntitySpawns {
         }
 
         // Parse Includes
-        for (String biomeIdStr : Configs.AHP_WORLDGEN.includeBiomes) {
+        for (String biomeIdStr : config.includeBiomes) {
             try {
                 PARSED_INCLUDES.add(Identifier.of(biomeIdStr));
             } catch (Exception e) {
@@ -103,7 +117,7 @@ public class ModEntitySpawns {
         }
 
         // Parse Excludes (IDs)
-        for (String biomeIdStr : Configs.AHP_WORLDGEN.excludeBiomes) {
+        for (String biomeIdStr : config.excludeBiomes) {
             try {
                 PARSED_EXCLUDES.add(Identifier.of(biomeIdStr));
             } catch (Exception e) {
@@ -112,7 +126,7 @@ public class ModEntitySpawns {
         }
 
         // Parse Excludes (Tags)
-        for (String tagStr : Configs.AHP_WORLDGEN.excludeBiomeTags) {
+        for (String tagStr : config.excludeBiomeTags) {
             try {
                 PARSED_EXCLUDE_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
             } catch (Exception e) {

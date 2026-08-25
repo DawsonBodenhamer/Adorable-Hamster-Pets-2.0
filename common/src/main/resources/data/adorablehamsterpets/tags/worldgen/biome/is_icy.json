@@ -3,7 +3,7 @@
   "values": [
     { "id": "#c:is_icy", "required": false },
     { "id": "#forge:is_icy", "required": false },
-    { "id": "#c:aquatic_icy", "required": false },
-    { "id": "#c:snowy", "required": false }
+    { "id": "#c:is_aquatic_icy", "required": false },
+    { "id": "#c:aquatic_icy", "required": false }
   ]
 }

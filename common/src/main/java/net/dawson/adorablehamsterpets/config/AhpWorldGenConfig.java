@@ -175,8 +175,7 @@ public class AhpWorldGenConfig extends Config {
     public ConfigGroup icyEnvironment = new ConfigGroup("icyEnvironment", true);
     @Translatable.Name("Included Biomes")
     public List<String> icyBiomes = new ArrayList<>(List.of(
-            "terralith:glacial_chasm", "terralith:mirage_isles", "terralith:moonlight_valley", "biomesoplenty:enchanted_garden",
-            "biomeswevegone:eroded_borealis"
+            "terralith:glacial_chasm", "terralith:mirage_isles", "terralith:moonlight_valley", "biomesoplenty:enchanted_garden"
     ));
     @Translatable.Name("Included Tags")
     public List<String> icyTags = new ArrayList<>(List.of("adorablehamsterpets:is_icy"));
@@ -198,7 +197,7 @@ public class AhpWorldGenConfig extends Config {
             "biomesoplenty:mystic_grove",
             "biomeswevegone:pumpkin_valley", "biomeswevegone:weeping_witch_forest", "biomeswevegone:jacaranda_jungle",
             "biomeswevegone:bayou", "biomeswevegone:cypress_swamplands", "biomeswevegone:cypress_wetlands",
-            "biomeswevegone:black_forest", "biomeswevegone:ebony_woodss", "biomeswevegone:overgrowth_woodlands"
+            "biomeswevegone:black_forest", "biomeswevegone:ebony_woods", "biomeswevegone:forgotten_forest"
     ));
     @Translatable.Name("Included Tags")
     public List<String> magicTags = new ArrayList<>(List.of("adorablehamsterpets:is_magical", "adorablehamsterpets:is_mushroom", "terralith:mystical"));
@@ -218,7 +217,7 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Name("Included Biomes")
     public List<String> cherryBiomes = new ArrayList<>(List.of(
             "minecraft:cherry_grove",
-            "biomeswevegone:sakura_grove", "biomeswevegone:windswept_desert"
+            "biomeswevegone:sakura_grove"
     ));
     @Translatable.Name("Included Tags")
     public List<String> cherryTags = new ArrayList<>();
@@ -238,7 +237,8 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Name("Included Biomes")
     public List<String> snowyBiomes = new ArrayList<>(List.of(
             "terralith:snowy_maple_forest", "terralith:wintry_forest", "terralith:alpine_grove", "terralith:siberian_grove",
-            "biomeswevegone:frosted_coniferous_forest", "biomeswevegone:frosted_taiga", "biomeswevegone:howling_peaks"
+            "biomeswevegone:frosted_coniferous_forest", "biomeswevegone:frosted_taiga", "biomeswevegone:howling_peaks",
+            "biomeswevegone:eroded_borealis"
     ));
     @Translatable.Name("Included Tags")
     public List<String> snowyTags = new ArrayList<>(List.of("adorablehamsterpets:is_cold", "adorablehamsterpets:is_snowy"));
@@ -320,7 +320,7 @@ public class AhpWorldGenConfig extends Config {
     public List<String> sandyBiomes = new ArrayList<>(List.of(
             "minecraft:old_growth_birch_forest", "minecraft:birch_forest", "terralith:ancient_sands",
             "terralith:sandstone_valley", "biomesoplenty:wasteland",
-            "biomeswevegone:mojave_desert", "biomeswevegone:aspen_boreal", "biomeswevegone:dacite_shore"
+            "biomeswevegone:mojave_desert", "biomeswevegone:dacite_shore", "biomeswevegone:windswept_desert"
     ));
     @Translatable.Name("Included Tags")
     public List<String> sandyTags = new ArrayList<>(List.of("adorablehamsterpets:is_sandy"));
@@ -340,9 +340,9 @@ public class AhpWorldGenConfig extends Config {
     @Translatable.Name("Included Biomes")
     public List<String> forestBiomes = new ArrayList<>(List.of(
             "terralith:cloud_forest", "biomesoplenty:redwood_forest", "biomesoplenty:fungi_forest", "minecraft:taiga",
-            "biomeswevegone:overgrowth_woodlands", "biomeswevegone:forgotten_forest", "biomeswevegone:ironwood_gour",
-            "biomeswevegone:tropical_rainforest", "biomeswevegone:fragment_jungle", "biomeswevegone:coniferous_forest",
-            "biomeswevegone:canadian_shield"
+            "biomeswevegone:overgrowth_woodlands", "biomeswevegone:ironwood_gour", "biomeswevegone:tropical_rainforest",
+            "biomeswevegone:fragment_jungle", "biomeswevegone:coniferous_forest", "biomeswevegone:canadian_shield",
+            "biomeswevegone:aspen_boreal"
     ));
     @Translatable.Name("Included Tags")
     public List<String> forestTags = new ArrayList<>(List.of("adorablehamsterpets:is_forest", "adorablehamsterpets:is_dense_vegetation"));
@@ -647,7 +647,7 @@ public class AhpWorldGenConfig extends Config {
 
     @Translatable.Name("Vanilla Biome Tags")
     @Translatable.Desc("Biome tags for bean growth. Empty by default—choose wisely. Format: 'mod_id:tag_name', for example: 'minecraft:is_jungle'.")
-    public List<String> greenBeanBushTags = new ArrayList<>(List.of("mod_id:biome_name"));
+    public List<String> greenBeanBushTags = new ArrayList<>();
 
     @Translatable.Name("Convention Biome Tags")
     @Translatable.Desc("Convention tags for mod-friendly bean spam. Format: 'namespace:tag_name', for example: 'adorablehamsterpets:is_wet', which points to the 'c:is_wet' convention tag.")

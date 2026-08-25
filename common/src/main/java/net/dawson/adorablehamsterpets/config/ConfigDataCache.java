@@ -169,24 +169,7 @@ public class ConfigDataCache {
         parseBlockList(Configs.AHP_MAIN.inventoryHidingBlacklist, hideAndSeekBlacklistBlocks, hideAndSeekBlacklistTags, "inventoryHidingBlacklist");
 
         // --- Parse Region-Based Color Filters ---
-        ENVIRONMENTS.clear();
-        AhpWorldGenConfig wgc = Configs.AHP_WORLDGEN;
-
-        ENVIRONMENTS.add(parseEnvironment(wgc.wildcardBiomes, wgc.wildcardTags, wgc.wildcardExclusionBiomes, wgc.wildcardExclusionTags, wgc.wildcardWeights, "Wildcard"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.icyBiomes, wgc.icyTags, wgc.icyExclusionBiomes, wgc.icyExclusionTags, wgc.icyWeights, "Icy"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.magicBiomes, wgc.magicTags, wgc.magicExclusionBiomes, wgc.magicExclusionTags, wgc.magicWeights, "Magical"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.cherryBiomes, wgc.cherryTags, wgc.cherryExclusionBiomes, wgc.cherryExclusionTags, wgc.cherryWeights, "Cherry"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.snowyBiomes, wgc.snowyTags, wgc.snowyExclusionBiomes, wgc.snowyExclusionTags, wgc.snowyWeights, "Snowy"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.skyBiomes, wgc.skyTags, wgc.skyExclusionBiomes, wgc.skyExclusionTags, wgc.skyWeights, "Sky"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.rockyBiomes, wgc.rockyTags, wgc.rockyExclusionBiomes, wgc.rockyExclusionTags, wgc.rockyWeights, "Rocky"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.darkBiomes, wgc.darkTags, wgc.darkExclusionBiomes, wgc.darkExclusionTags, wgc.darkWeights, "Cave"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.sandyBiomes, wgc.sandyTags, wgc.sandyExclusionBiomes, wgc.sandyExclusionTags, wgc.sandyWeights, "Sandy"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.forestBiomes, wgc.forestTags, wgc.forestExclusionBiomes, wgc.forestExclusionTags, wgc.forestWeights, "Forested"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.auburnBiomes, wgc.auburnTags, wgc.auburnExclusionBiomes, wgc.auburnExclusionTags, wgc.auburnWeights, "Auburn"));
-
-        // Cave spawning always uses cave colors, while plains provides ordinary fallback colors
-        CAVE_WEIGHTS = parseWeights(wgc.darkWeights, "Cave");
-        FALLBACK_WEIGHTS = parseWeights(wgc.plainsWeights, "Plains");
+        parseWorldGenConfig(Configs.AHP_WORLDGEN);
 
         // --- Parse Wild Overlays ---
         allowedWildOverlayZones.clear();
@@ -280,6 +263,29 @@ public class ConfigDataCache {
     public static boolean isHideAndSeekBlacklisted(BlockState state) {return matchesBlock(state, hideAndSeekBlacklistBlocks, hideAndSeekBlacklistTags);}
 
     // --- Public Environment Checker Methods ---
+    /**
+     * Parses region-based color filters and weights from the supplied worldgen config.
+     */
+    public static void parseWorldGenConfig(AhpWorldGenConfig wgc) {
+        ENVIRONMENTS.clear();
+
+        ENVIRONMENTS.add(parseEnvironment(wgc.wildcardBiomes, wgc.wildcardTags, wgc.wildcardExclusionBiomes, wgc.wildcardExclusionTags, wgc.wildcardWeights, "Wildcard"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.icyBiomes, wgc.icyTags, wgc.icyExclusionBiomes, wgc.icyExclusionTags, wgc.icyWeights, "Icy"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.magicBiomes, wgc.magicTags, wgc.magicExclusionBiomes, wgc.magicExclusionTags, wgc.magicWeights, "Magical"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.cherryBiomes, wgc.cherryTags, wgc.cherryExclusionBiomes, wgc.cherryExclusionTags, wgc.cherryWeights, "Cherry"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.snowyBiomes, wgc.snowyTags, wgc.snowyExclusionBiomes, wgc.snowyExclusionTags, wgc.snowyWeights, "Snowy"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.skyBiomes, wgc.skyTags, wgc.skyExclusionBiomes, wgc.skyExclusionTags, wgc.skyWeights, "Sky"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.rockyBiomes, wgc.rockyTags, wgc.rockyExclusionBiomes, wgc.rockyExclusionTags, wgc.rockyWeights, "Rocky"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.darkBiomes, wgc.darkTags, wgc.darkExclusionBiomes, wgc.darkExclusionTags, wgc.darkWeights, "Cave"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.sandyBiomes, wgc.sandyTags, wgc.sandyExclusionBiomes, wgc.sandyExclusionTags, wgc.sandyWeights, "Sandy"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.forestBiomes, wgc.forestTags, wgc.forestExclusionBiomes, wgc.forestExclusionTags, wgc.forestWeights, "Forested"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.auburnBiomes, wgc.auburnTags, wgc.auburnExclusionBiomes, wgc.auburnExclusionTags, wgc.auburnWeights, "Auburn"));
+
+        // Cave spawning always uses cave colors, while plains provides ordinary fallback colors
+        CAVE_WEIGHTS = parseWeights(wgc.darkWeights, "Cave");
+        FALLBACK_WEIGHTS = parseWeights(wgc.plainsWeights, "Plains");
+    }
+
     /**
      * Determines which environment a biome belongs to and returns its configured zone weights.
      */

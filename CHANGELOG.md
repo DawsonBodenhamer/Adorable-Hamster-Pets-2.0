@@ -100,6 +100,10 @@ encounters with cave hamsters that have glowing red eyes, frantic movement, and 
   - Corrected an extra word in the sliced-cucumber instructions.
 - **Symphonic Dairy Translation**
   - The Symphonic Dairy advancement now displays its title instead of its translation key.
+- **Snowy and Icy Hamster Fur Colors**
+  - If you've been exploring snowy biomes (like Snowy Plains or Snowy Taiga) hoping to find pure white hamsters, you might have wondered why you were getting mostly blue and sky-colored hamsters instead. Snowy biomes were accidentally getting lumped into the "Icy" environment group, but they now correctly spawn with their intended snowy coat colors.
+  - This happened because the color-sorting system checks for Icy biomes before Snowy ones, and the Icy filter was accidentally set up to catch anything labeled as "snowy." Since snowy biomes got caught in the icy filter first, they were given icy blue palettes instead of white ones.
+  - Also cleaned up a few modded biome defaults and restored compatibility tag support so hamsters spawn properly across modded biomes.
 
 ---
 
