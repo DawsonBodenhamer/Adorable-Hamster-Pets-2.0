@@ -149,7 +149,7 @@ public class AhpWorldGenConfig extends Config {
     ));
 
     @Translatable.Name("Region-Based Color Filters")
-    @Translatable.Desc("For the aspiring digital zoologist. Once a hamster is approved to spawn by the global lists above, it falls through this sorting funnel to figure out what color it should be. The system checks configurable regions from top to bottom. The first one the biome qualifies for dictates the fur palette the hamster will receive when spawning in that biome.\n\n(Note: If you see unfamiliar tags like 'adorablehamsterpets:is_icy,' note that those are my own custom union tags which point to Fabric's Convention tags on 1.21 like 'c:is_icy' and Forge tags on 1.20 like 'forge:is_icy.')")
+    @Translatable.Desc("For the aspiring digital zoologist. Once a hamster is approved to spawn by the global lists above, it falls through this sorting funnel to figure out what color it should be. The system checks configurable regions from top to bottom. The first one the biome qualifies for dictates the fur palette the hamster will receive when spawning in that biome.\n\n(Note: If you see unfamiliar tags like 'adorablehamsterpets:is_cave,' note that those are my own custom union tags which point to Fabric's Convention tags on 1.21 like 'c:is_cave' and Forge tags on 1.20 like 'forge:is_cave.')")
     public ConfigGroup regionBasedColorFilters = new ConfigGroup("regionBasedColorFilters", true);
 
     // --- 1. Wildcard Environment ---

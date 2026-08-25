@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.world.gen;
 
 import dev.architectury.registry.level.biome.BiomeModifications;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -84,7 +85,7 @@ public class ModEntitySpawns {
     /**
      * Parses the biome lists from the supplied config instance into Sets for efficient lookup.
      */
-    public static void parseConfig(net.dawson.adorablehamsterpets.config.AhpWorldGenConfig config) {
+    public static void parseConfig(AhpWorldGenConfig config) {
         // Clear existing sets to allow for config reloading
         PARSED_TAGS.clear();
         PARSED_INCLUDES.clear();
