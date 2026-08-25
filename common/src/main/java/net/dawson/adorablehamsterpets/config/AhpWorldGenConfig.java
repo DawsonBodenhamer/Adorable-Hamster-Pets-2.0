@@ -191,24 +191,24 @@ public class AhpWorldGenConfig extends Config {
     // --- 3. Magical Environments ---
     @Translatable.Name("Priority 3: Magical Environments")
     @Translatable.Desc("Checked after Icy, but before the rest.")
-    public ConfigGroup magicEnvironment = new ConfigGroup("magicEnvironment", true);
+    public ConfigGroup magicalEnvironment = new ConfigGroup("magicalEnvironment", true);
     @Translatable.Name("Included Biomes")
-    public List<String> magicBiomes = new ArrayList<>(List.of(
+    public List<String> magicalBiomes = new ArrayList<>(List.of(
             "biomesoplenty:mystic_grove",
             "biomeswevegone:pumpkin_valley", "biomeswevegone:weeping_witch_forest", "biomeswevegone:jacaranda_jungle",
             "biomeswevegone:bayou", "biomeswevegone:cypress_swamplands", "biomeswevegone:cypress_wetlands",
             "biomeswevegone:black_forest", "biomeswevegone:ebony_woods", "biomeswevegone:forgotten_forest"
     ));
     @Translatable.Name("Included Tags")
-    public List<String> magicTags = new ArrayList<>(List.of("adorablehamsterpets:is_magical", "adorablehamsterpets:is_mushroom", "terralith:mystical"));
+    public List<String> magicalTags = new ArrayList<>(List.of("adorablehamsterpets:is_magical", "adorablehamsterpets:is_mushroom", "terralith:mystical"));
     @Translatable.Name("Excluded Biomes")
-    public List<String> magicExclusionBiomes = new ArrayList<>();
+    public List<String> magicalExclusionBiomes = new ArrayList<>();
     @Translatable.Name("Excluded Tags")
-    public List<String> magicExclusionTags = new ArrayList<>();
+    public List<String> magicalExclusionTags = new ArrayList<>();
     @ConfigGroup.Pop
     @Translatable.Name("Zone Weights")
     @Translatable.Desc("Format 'VARIANT_TYPE:WEIGHT'. The total weight must equal 100, so I hope you graduated third grade. Available groupings of hamster types: WHITE, BLUE, SKY, LAVENDER, CHERRY, LIGHT_GRAY, DARK_GRAY, CREAM, BLACK, CHOCOLATE, RUST, ORANGE.")
-    public List<String> magicWeights = new ArrayList<>(List.of("LAVENDER:85", "CHERRY:15"));
+    public List<String> magicalWeights = new ArrayList<>(List.of("LAVENDER:85", "CHERRY:15"));
 
     // --- 4. Cherry Environments ---
     @Translatable.Name("Priority 4: Cherry Environments")
