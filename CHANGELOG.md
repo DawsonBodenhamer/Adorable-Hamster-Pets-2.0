@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Some cave hamsters have inhaled a little bit too much redstone dust. Redstone Fever introduces rare aggressive
 encounters with cave hamsters that have glowing red eyes, frantic movement, and there's a new sunlight rescue challenge. The new Acorn Ring player-wearable accessory allows truces between pet households, while Hide & Seek, combat, food luring, storage crates, water rescue, and several other systems received fixy fixy attention.
 
+<font color="red">**IMPORTANT:**</font> If you've been looking for white hamsters in snowy biomes and couldn't find any, this update fixes that, **with one important condition:** you must follow the _**Snowy and Icy Hamster Fur Colors**_ instructions down below (I colored it red) to reset the affected settings back to their new defaults. Why? Because I didn't want to overwrite everyone's custom worldgen config settings in case some people had spent a lot of time on it.
+
 ### Added
 - **Redstone Fever**
 - You might now come across rare wild aggressive cave hamsters with scars, glowing red eyes, new animations, redstone particles, 3 new custom sound effect types, and unpredictable circular energy bursts. Thanks to [@The Retro Stitcher](https://theretrostitcher.com/) for the original Redstone Fever concept/idea!
@@ -104,6 +106,13 @@ encounters with cave hamsters that have glowing red eyes, frantic movement, and 
   - If you've been exploring snowy biomes (like Snowy Plains or Snowy Taiga) hoping to find pure white hamsters, you might have wondered why you were getting mostly blue and sky-colored hamsters instead. Snowy biomes were accidentally getting lumped into the "Icy" environment group, but they now correctly spawn with their intended snowy coat colors.
   - This happened because the color-sorting system checks for Icy biomes before Snowy ones, and the Icy filter was accidentally set up to catch anything labeled as "snowy." Since snowy biomes got caught in the icy filter first, they were given icy blue palettes instead of white ones.
   - Also cleaned up a few modded biome defaults and restored compatibility tag support so hamsters spawn properly across modded biomes.
+  - <font color="red">You'll need to reset a few worldgen config settings to get this fix.</font> If you want to do so without resetting your entire worldgen config, go to the config screen for AHP and open **World Generation → Region-Based Color Filters**. Under each environment listed below, right-click **Included Biomes** and select **Restore Defaults**:
+    - **Priority 2: Icy Environments**
+    - **Priority 3: Magical Environments**
+    - **Priority 4: Cherry Environments**
+    - **Priority 5: Snowy Environments**
+    - **Priority 9: Sandy Environments**
+    - **Priority 10: Forest Environments**
 
 ---
 
