@@ -5,15 +5,22 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
+import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.biome.Biome;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Handles the registration of entity spawns within specific biomes using the Architectury API.
@@ -118,51 +125,59 @@ public class ModEntitySpawns {
                 PARSED_TAGS.size(), PARSED_INCLUDES.size(), PARSED_EXCLUDES.size(), PARSED_EXCLUDE_TAGS.size());
     }
 
+    // --- Biome Policy Entry Points ---
+
     /**
-     * The universal decider for Fabric, driven by the parsed config.
+     * Fabric biome-registration entry point for the shared parsed policy.
      *
      * @param ctx The biome context provided by Architectury.
      * @return True if hamsters should spawn in this biome, false otherwise.
      */
-    public static boolean shouldSpawnInBiome(BiomeModifications.BiomeContext ctx) {
-        // Get the Identifier directly from the Optional.
+    public static boolean shouldAddFabricSpawn(BiomeModifications.BiomeContext ctx) {
         Identifier biomeId = ctx.getKey().orElse(null);
-        if (biomeId == null) return false;
-
-        // 1. Exclusion check (ID) - Highest Priority
-        if (PARSED_EXCLUDES.contains(biomeId)) {
-            return false;
-        }
-
-        // 2. Exclusion check (Tag) - High Priority
-        for (TagKey<Biome> tag : PARSED_EXCLUDE_TAGS) {
-            if (ctx.hasTag(tag)) {
-                return false;
-            }
-        }
-
-        // 3. Inclusion check (ID)
-        if (PARSED_INCLUDES.contains(biomeId)) {
-            return true;
-        }
-
-        // 4. Inclusion check (Tag)
-        for (TagKey<Biome> tag : PARSED_TAGS) {
-            if (ctx.hasTag(tag)) {
-                return true;
-            }
-        }
-        return false;
+        return matchesConfiguredBiomePolicy(biomeId, ctx::hasTag);
     }
 
     /**
-     * A Forge-specific decider that works directly with a RegistryEntry.
+     * Forge biome-registration entry point for the shared parsed policy.
      *
-     * @param biomeEntry The biome entry from the Forge modifier.
-     * @return True if hamsters should spawn, false otherwise.
+     * @param biomeEntry Biome being evaluated.
+     * @return True if hamsters should spawn in this biome, false otherwise.
      */
-    public static boolean shouldSpawnInBiomeForge(RegistryEntry<Biome> biomeEntry) {
+    public static boolean shouldAddForgeSpawn(RegistryEntry<Biome> biomeEntry) {
+        return isBiomeAllowed(biomeEntry);
+    }
+
+    // --- Spawn Placement ---
+
+    /**
+     * Applies the registered hamster floor predicate to vanilla and supplemental natural spawning.
+     */
+    public static boolean isValidHamsterNaturalSpawn(
+            EntityType<? extends AnimalEntity> type,
+            ServerWorldAccess world,
+            SpawnReason reason,
+            BlockPos position,
+            Random random) {
+        return AnimalEntity.isValidNaturalSpawn(type, world, reason, position, random)
+                || VALID_SPAWN_BLOCKS.contains(world.getBlockState(position.down()).getBlock());
+    }
+
+    // --- Shared Biome Policy ---
+
+    /**
+     * Applies the shared include/exclude policy to a biome registry entry.
+     *
+     * @param biomeEntry Biome being evaluated.
+     * @return True when the biome permits hamster spawning.
+     */
+    public static boolean isBiomeAllowed(RegistryEntry<Biome> biomeEntry) {
         Identifier biomeId = biomeEntry.getKey().map(RegistryKey::getValue).orElse(null);
+        return matchesConfiguredBiomePolicy(biomeId, biomeEntry::isIn);
+    }
+
+    private static boolean matchesConfiguredBiomePolicy(
+            Identifier biomeId, Predicate<TagKey<Biome>> matchesTag) {
         if (biomeId == null) return false;
 
         // 1. Exclusion check (ID) - Highest Priority
@@ -172,7 +187,7 @@ public class ModEntitySpawns {
 
         // 2. Exclusion check (Tag) - High Priority
         for (TagKey<Biome> tag : PARSED_EXCLUDE_TAGS) {
-            if (biomeEntry.isIn(tag)) {
+            if (matchesTag.test(tag)) {
                 return false;
             }
         }
@@ -184,7 +199,7 @@ public class ModEntitySpawns {
 
         // 4. Inclusion check (Tag)
         for (TagKey<Biome> tag : PARSED_TAGS) {
-            if (biomeEntry.isIn(tag)) {
+            if (matchesTag.test(tag)) {
                 return true;
             }
         }

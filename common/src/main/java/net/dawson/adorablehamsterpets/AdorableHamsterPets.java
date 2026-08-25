@@ -144,8 +144,7 @@ public class AdorableHamsterPets {
 		// Use SpawnRestriction.Location on 1.20.1
 		ModSpawnPlacements.register(ModEntities.HAMSTER, SpawnRestriction.Location.ON_GROUND,
 				Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,
-				(type, world, reason, pos, random) -> (world.getBlockState(pos.down()).isIn(net.minecraft.registry.tag.BlockTags.ANIMALS_SPAWNABLE_ON) ||
-						ModEntitySpawns.VALID_SPAWN_BLOCKS.contains(world.getBlockState(pos.down()).getBlock())));
+				ModEntitySpawns::isValidHamsterNaturalSpawn);
 	}
 
 	/**

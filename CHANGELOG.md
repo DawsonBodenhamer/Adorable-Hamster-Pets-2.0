@@ -68,6 +68,15 @@ encounters with cave hamsters that have glowing red eyes, frantic movement, and 
     FIFO/LIFO order. If every mounted hamster is recovering, the normal cooldown message still appears.
 
 ### Fixed
+- **Cave Hamster Spawning**
+  - Wild hamsters can now spawn naturally on valid underground cave floors instead of leaving every cave suspiciously
+    rodent-free. Existing surface spawning remains unchanged, and cave hamsters use the configured cave color weights.
+  - This bug existed from the mod's first release because I was relying on vanilla Minecraft's passive-animal spawner.
+    That system starts its search at the surface instead of looking for cave floors, so underground hamsters never
+    received a fair spawn attempt.
+- **Pearl Rose Hamster Spawning**
+  - Pearl Rose hamsters could not spawn in Magical Environments due to a config typo, so if you searched those biomes and didn't find them you weren't just unlucky. They can now be found there normally!
+  - If you had previously customized the Magical Environments spawn settings, you'll need to redo that. I tweaked the internal names on purpose so that everyone's config would reset to defaults for those specific settings. Otherwise you would only get this fix if you manually went into your config and reset it to defaults.
 - **Water Rescue**
   - Following hamsters now escape waterlogged navigation traps, and drowning hamsters teleport to nearby safe dry
     ground when one is available. Failed rescues no longer provide free drowning immunity.

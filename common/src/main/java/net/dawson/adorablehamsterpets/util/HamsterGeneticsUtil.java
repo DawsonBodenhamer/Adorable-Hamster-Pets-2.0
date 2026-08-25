@@ -9,6 +9,7 @@ import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.PaletteDefinition;
 import net.dawson.adorablehamsterpets.tag.ModBiomeTags;
+import net.dawson.adorablehamsterpets.world.gen.CaveHamsterSpawnPolicy;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.math.BlockPos;
@@ -225,10 +226,20 @@ public final class HamsterGeneticsUtil {
      * Selects a base color zone using weighted config probabilities, then selects a wild overlay.
      */
     public static HamsterGenome generateWildGenome(WorldView world, BlockPos pos, Random random) {
+        return generateWildGenome(world, pos, random, isCaveEnvironment(world, pos));
+    }
+
+    /**
+     * Calculates a wild genome with an already resolved cave-spawn context.
+     */
+    public static HamsterGenome generateWildGenome(
+            WorldView world, BlockPos pos, Random random, boolean caveEnvironment) {
         RegistryEntry<Biome> biomeEntry = world.getBiome(pos);
 
         // --- 1. Find the Environment and Pick a Base Zone ---
-        Map<HamsterColorZone, Integer> weights = ConfigDataCache.getWeightsForBiome(biomeEntry);
+        Map<HamsterColorZone, Integer> weights = caveEnvironment
+                ? ConfigDataCache.getCaveWeights()
+                : ConfigDataCache.getWeightsForBiome(biomeEntry);
         HamsterColorZone baseZone = pickZoneFromWeights(weights, random);
 
         // Pick a random palette (static or programmatic) that belongs to this zone
@@ -237,8 +248,6 @@ public final class HamsterGeneticsUtil {
         // --- 2. Determine Wild Overlay ---
         int wildPattern = 0;
         String wildPaletteId = null;
-
-        boolean isCaveSpawning = isCaveEnvironment(world, pos);
 
         // 45% chance for wild hamsters to have an overlay
         if (random.nextFloat() < 0.45f) {
@@ -256,7 +265,7 @@ public final class HamsterGeneticsUtil {
             }
 
             // Prevent bright overlays on cave-spawned hamsters to help them blend in
-            if (isCaveSpawning) {
+            if (caveEnvironment) {
                 allowedWildZones.remove(HamsterColorZone.WHITE);
                 allowedWildZones.remove(HamsterColorZone.LIGHT_GRAY);
             }
@@ -271,7 +280,7 @@ public final class HamsterGeneticsUtil {
                 wildPaletteId = validOverlays.get(random.nextInt(validOverlays.size())).id();
             } else {
                 // Fallback if no colors meet criteria
-                HamsterColorZone fallbackZone = isCaveSpawning ? HamsterColorZone.LIGHT_GRAY : HamsterColorZone.WHITE;
+                HamsterColorZone fallbackZone = caveEnvironment ? HamsterColorZone.LIGHT_GRAY : HamsterColorZone.WHITE;
 
                 // In case user removed fallback zone from the allowed list, pick the first allowed zone
                 if (!ConfigDataCache.getAllowedWildOverlayZones().contains(fallbackZone) && !ConfigDataCache.getAllowedWildOverlayZones().isEmpty()) {
@@ -328,11 +337,17 @@ public final class HamsterGeneticsUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     public static boolean isCaveEnvironment(WorldView world, BlockPos pos) {
-        RegistryEntry<Biome> biomeEntry = world.getBiome(pos);
-        boolean isCaveBiome = biomeEntry.isIn(ModBiomeTags.IS_CAVE);
-        boolean isDeepAndDark = pos.getY() < 50 && !world.isSkyVisible(pos);
+        return isCaveEnvironment(world, pos, false);
+    }
 
-        return isCaveBiome || isDeepAndDark;
+    public static boolean isCaveEnvironment(
+            WorldView world, BlockPos pos, boolean supplementalCaveSpawn) {
+        if (supplementalCaveSpawn) return true;
+
+        RegistryEntry<Biome> biomeEntry = world.getBiome(pos);
+        return CaveHamsterSpawnPolicy.isInitializationCaveEnvironment(
+                supplementalCaveSpawn,
+                biomeEntry.isIn(ModBiomeTags.IS_CAVE));
     }
 
     /**

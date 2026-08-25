@@ -17,7 +17,7 @@ public final class AdorableHamsterPetsFabric implements ModInitializer {
         AdorableHamsterPets.initCommonSetup();
         AdorableHamsterPets.registerSpawnPlacements();
         BiomeModifications.addProperties(
-                ModEntitySpawns::shouldSpawnInBiome, // Use the common decider method
+                ModEntitySpawns::shouldAddFabricSpawn,
                 (context, props) -> {
                     props.getSpawnProperties().addSpawn(
                             SpawnGroup.CREATURE,
@@ -32,7 +32,6 @@ public final class AdorableHamsterPetsFabric implements ModInitializer {
         );
     }
 }
-
 
 
 

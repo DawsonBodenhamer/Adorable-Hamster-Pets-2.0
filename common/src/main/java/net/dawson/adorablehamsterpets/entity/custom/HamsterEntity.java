@@ -371,6 +371,15 @@ public class HamsterEntity extends TameableEntity implements GeoEntity, Implemen
         return super.initialize(world, difficulty, spawnReason, entityData, nbt);
     }
 
+    /**
+     * Runs the normal natural-spawn lifecycle for a position already selected as a cave.
+     */
+    public EntityData initializeCaveSpawn(
+            ServerWorldAccess world, LocalDifficulty difficulty) {
+        HamsterLifecycleUtil.initializeSpawn(this, world, SpawnReason.NATURAL, true);
+        return super.initialize(world, difficulty, SpawnReason.NATURAL, null, null);
+    }
+
     // --- Persistence ---
     @Override
     public void writeCustomDataToNbt(NbtCompound nbt) {

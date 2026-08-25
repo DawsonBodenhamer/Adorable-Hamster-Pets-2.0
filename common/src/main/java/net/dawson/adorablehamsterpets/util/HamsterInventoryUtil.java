@@ -276,6 +276,16 @@ public final class HamsterInventoryUtil {
      * Generates context-aware wild loot for newly spawned untamed hamsters.
      */
     public static void generateWildLoot(HamsterEntity hamster, Random random) {
+        boolean caveEnvironment = !hamster.getWorld().isClient()
+                && HamsterGeneticsUtil.isCaveEnvironment(hamster.getWorld(), hamster.getBlockPos());
+        generateWildLoot(hamster, random, caveEnvironment);
+    }
+
+    /**
+     * Generates context-aware wild loot with an already resolved cave-spawn context.
+     */
+    public static void generateWildLoot(
+            HamsterEntity hamster, Random random, boolean caveEnvironment) {
         // --- 1. Global Eligibility ---
         if (hamster.isTamed() || !hamster.getItems().get(0).isEmpty()) return;
 
@@ -309,14 +319,8 @@ public final class HamsterInventoryUtil {
                 };
 
         // --- 3. Cave Loot ---
-        boolean isCaveHamster = false;
-        World world = hamster.getWorld();
-        if (!world.isClient()) {
-            isCaveHamster = HamsterGeneticsUtil.isCaveEnvironment(world, hamster.getBlockPos());
-        }
-
         boolean caveLootSelected = false;
-        if (isCaveHamster) {
+        if (caveEnvironment) {
             float caveChance = Configs.AHP_WORLDGEN.caveCheekLootChance.get();
             if (random.nextFloat() < caveChance) {
                 caveLootSelected = true;

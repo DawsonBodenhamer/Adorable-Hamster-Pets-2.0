@@ -104,6 +104,7 @@ public class ConfigDataCache {
 
     // --- Cached Lists for Environment-Spawning Performance ---
     private static final List<EnvironmentDefinition> ENVIRONMENTS = new ArrayList<>();
+    private static Map<HamsterColorZone, Integer> CAVE_WEIGHTS = new EnumMap<>(HamsterColorZone.class);
     private static Map<HamsterColorZone, Integer> FALLBACK_WEIGHTS = new EnumMap<>(HamsterColorZone.class);
     private static final Set<HamsterColorZone> allowedWildOverlayZones = new HashSet<>();
     private static final Set<HamsterColorZone> restrictedBaseZones = new HashSet<>();
@@ -173,7 +174,7 @@ public class ConfigDataCache {
 
         ENVIRONMENTS.add(parseEnvironment(wgc.wildcardBiomes, wgc.wildcardTags, wgc.wildcardExclusionBiomes, wgc.wildcardExclusionTags, wgc.wildcardWeights, "Wildcard"));
         ENVIRONMENTS.add(parseEnvironment(wgc.icyBiomes, wgc.icyTags, wgc.icyExclusionBiomes, wgc.icyExclusionTags, wgc.icyWeights, "Icy"));
-        ENVIRONMENTS.add(parseEnvironment(wgc.magicalBiomes, wgc.magicalTags, wgc.magicalExclusionBiomes, wgc.magicalExclusionTags, wgc.magicalWeights, "Magical"));
+        ENVIRONMENTS.add(parseEnvironment(wgc.magicBiomes, wgc.magicTags, wgc.magicExclusionBiomes, wgc.magicExclusionTags, wgc.magicWeights, "Magical"));
         ENVIRONMENTS.add(parseEnvironment(wgc.cherryBiomes, wgc.cherryTags, wgc.cherryExclusionBiomes, wgc.cherryExclusionTags, wgc.cherryWeights, "Cherry"));
         ENVIRONMENTS.add(parseEnvironment(wgc.snowyBiomes, wgc.snowyTags, wgc.snowyExclusionBiomes, wgc.snowyExclusionTags, wgc.snowyWeights, "Snowy"));
         ENVIRONMENTS.add(parseEnvironment(wgc.skyBiomes, wgc.skyTags, wgc.skyExclusionBiomes, wgc.skyExclusionTags, wgc.skyWeights, "Sky"));
@@ -183,7 +184,8 @@ public class ConfigDataCache {
         ENVIRONMENTS.add(parseEnvironment(wgc.forestBiomes, wgc.forestTags, wgc.forestExclusionBiomes, wgc.forestExclusionTags, wgc.forestWeights, "Forested"));
         ENVIRONMENTS.add(parseEnvironment(wgc.auburnBiomes, wgc.auburnTags, wgc.auburnExclusionBiomes, wgc.auburnExclusionTags, wgc.auburnWeights, "Auburn"));
 
-        // Fallback: Plains environment doesn't need biome checks, just the weights
+        // Cave spawning always uses cave colors, while plains provides ordinary fallback colors
+        CAVE_WEIGHTS = parseWeights(wgc.darkWeights, "Cave");
         FALLBACK_WEIGHTS = parseWeights(wgc.plainsWeights, "Plains");
 
         // --- Parse Wild Overlays ---
@@ -288,6 +290,10 @@ public class ConfigDataCache {
             }
         }
         return FALLBACK_WEIGHTS; // Fallback to Plains
+    }
+
+    public static Map<HamsterColorZone, Integer> getCaveWeights() {
+        return CAVE_WEIGHTS;
     }
 
     // --- Private Helper Methods ---

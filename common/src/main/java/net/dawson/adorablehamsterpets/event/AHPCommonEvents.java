@@ -23,6 +23,7 @@ import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.util.PetOwnershipUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
+import net.dawson.adorablehamsterpets.world.gen.CaveHamsterSpawner;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -90,7 +91,8 @@ public class AHPCommonEvents {
 
         InteractionEvent.RIGHT_CLICK_ITEM.register(AHPCommonEvents::onRightClickItem);
         TickEvent.SERVER_POST.register(HamsterSpawnCommandUtil::onServerTick);
-		TickEvent.SERVER_POST.register(AcornRingUtil::onServerTick);
+        TickEvent.SERVER_POST.register(AcornRingUtil::onServerTick);
+        TickEvent.SERVER_POST.register(CaveHamsterSpawner::onServerTick);
 
         // Trigger the genetics report on headless servers
         LifecycleEvent.SERVER_STARTED.register(server -> {
