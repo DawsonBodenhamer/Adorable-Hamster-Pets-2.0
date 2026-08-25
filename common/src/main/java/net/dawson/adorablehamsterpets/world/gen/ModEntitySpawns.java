@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.world.gen;
 
 import dev.architectury.registry.level.biome.BiomeModifications;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -78,6 +79,13 @@ public class ModEntitySpawns {
      * This should be called once during mod initialization.
      */
     public static void parseConfig() {
+        parseConfig(Configs.AHP_WORLDGEN);
+    }
+
+    /**
+     * Parses the biome lists from the supplied config instance into Sets for efficient lookup.
+     */
+    public static void parseConfig(AhpWorldGenConfig config) {
         // Clear existing sets to allow for config reloading
         PARSED_TAGS.clear();
         PARSED_INCLUDES.clear();
@@ -85,7 +93,14 @@ public class ModEntitySpawns {
         PARSED_EXCLUDE_TAGS.clear();
 
         // Parse Tags
-        for (String tagStr : Configs.AHP_WORLDGEN.spawnBiomeTags) {
+        for (String tagStr : config.spawnBiomeTags) {
+            try {
+                PARSED_TAGS.add(TagKey.of(RegistryKeys.BIOME, new Identifier(tagStr)));
+            } catch (Exception e) {
+                AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome tag identifier in config: '{}'", tagStr);
+            }
+        }
+        for (String tagStr : config.spawnBiomeConventionTags) {
             try {
                 PARSED_TAGS.add(TagKey.of(RegistryKeys.BIOME, new Identifier(tagStr)));
             } catch (Exception e) {
@@ -94,7 +109,7 @@ public class ModEntitySpawns {
         }
 
         // Parse Includes
-        for (String biomeIdStr : Configs.AHP_WORLDGEN.includeBiomes) {
+        for (String biomeIdStr : config.includeBiomes) {
             try {
                 PARSED_INCLUDES.add(new Identifier(biomeIdStr));
             } catch (Exception e) {
@@ -103,7 +118,7 @@ public class ModEntitySpawns {
         }
 
         // Parse Excludes (IDs)
-        for (String biomeIdStr : Configs.AHP_WORLDGEN.excludeBiomes) {
+        for (String biomeIdStr : config.excludeBiomes) {
             try {
                 PARSED_EXCLUDES.add(new Identifier(biomeIdStr));
             } catch (Exception e) {
@@ -112,7 +127,7 @@ public class ModEntitySpawns {
         }
 
         // Parse Excludes (Tags)
-        for (String tagStr : Configs.AHP_WORLDGEN.excludeBiomeTags) {
+        for (String tagStr : config.excludeBiomeTags) {
             try {
                 // 1.20.1: Identifier.of(tagStr) -> new Identifier(tagStr)
                 PARSED_EXCLUDE_TAGS.add(TagKey.of(RegistryKeys.BIOME, new Identifier(tagStr)));
