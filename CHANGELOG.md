@@ -1,4 +1,4 @@
- in version 3.7.0, the guidebook will have an entry about hide and seek so people don't keep thinking that it is some sort of strange glitch, lol will also be an advancement for finding your hamster when they are hiding from you# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -70,6 +70,8 @@ encounters with cave hamsters that have glowing red eyes, frantic movement, and 
     FIFO/LIFO order. If every mounted hamster is recovering, the normal cooldown message still appears.
 
 ### Fixed
+- **Crop Tag Compatibility**
+  - Cucumber and Green Bean crops now work with vanilla crop and farmland-maintenance checks, improving compatibility with crop-focused mods.
 - **Cave Hamster Spawning**
   - Wild hamsters can now spawn naturally on valid underground cave floors instead of leaving every cave suspiciously
     rodent-free. Existing surface spawning remains unchanged, and cave hamsters use the configured cave color weights.
