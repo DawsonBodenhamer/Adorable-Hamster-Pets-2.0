@@ -25,6 +25,14 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 
     @Override
     protected void configure(RegistryWrapper.WrapperLookup arg) {
+        getOrCreateTagBuilder(BlockTags.CROPS)
+                .add(ModBlocks.CUCUMBER_CROP.get())
+                .add(ModBlocks.GREEN_BEANS_CROP.get());
+
+        getOrCreateTagBuilder(BlockTags.MAINTAINS_FARMLAND)
+                .add(ModBlocks.CUCUMBER_CROP.get())
+                .add(ModBlocks.GREEN_BEANS_CROP.get());
+
         getOrCreateTagBuilder(BlockTags.AXE_MINEABLE)
                 .add(ModBlocks.ACORN_CRATE.get())
                 .add(ModBlocks.CUCUMBER_CRATE.get())
