@@ -22,7 +22,7 @@ import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
 import com.geckolib.animation.AnimationController;
 
-public enum HamsterDebugComponentProvider implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {
+public enum HamsterDebugComponentProvider implements IEntityComponentProvider {
     INSTANCE;
 
     private static final Identifier UID = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_debug_info");
@@ -167,27 +167,6 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
     @Override
     public Identifier getUid() {
         return UID;
-    }
-
-    @Override
-    public void appendServerData(CompoundTag data, EntityAccessor accessor) {
-        Entity entity = accessor.getEntity();
-        if (entity instanceof HamsterEntity hamster) {
-            data.putBoolean("IsWanderModeActive", hamster.isWanderModeActive());
-            data.putBoolean("IsOnTheWayToBed", hamster.isOnTheWayToBed());
-            data.putInt("GoToBedDelay", hamster.getGoToBedDelayTicks());
-
-            if (hamster.isWanderModeActive()) {
-                hamster.getLinkedBedPos().ifPresent(globalPos -> {
-                    Level world = hamster.level();
-                    if (world instanceof ServerLevel serverWorld && serverWorld.dimension() == globalPos.dimension()) {
-                        if (serverWorld.getBlockEntity(globalPos.pos()) instanceof HamsterBedBlockEntity bedEntity) {
-                            data.putString("WanderDistance", bedEntity.getWanderDistance().getSerializedName());
-                        }
-                    }
-                });
-            }
-        }
     }
 
     // Helper for formatted text

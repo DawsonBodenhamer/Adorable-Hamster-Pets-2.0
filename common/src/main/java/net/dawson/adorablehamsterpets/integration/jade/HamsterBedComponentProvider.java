@@ -24,7 +24,7 @@ import snownee.jade.api.config.IPluginConfig;
 
 import java.util.Optional;
 
-public enum HamsterBedComponentProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+public enum HamsterBedComponentProvider implements IBlockComponentProvider {
     INSTANCE;
 
     private static final Identifier UID = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_bed_info");
@@ -116,44 +116,6 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
         } else {
             // --- Unlinked Bed Tooltip (shows regardless of sneak) ---
             tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.unlinked").withStyle(ChatFormatting.GOLD));
-        }
-    }
-
-    @Override
-    public void appendServerData(CompoundTag data, BlockAccessor accessor) {
-        BlockEntity blockEntity = accessor.getBlockEntity();
-        if (blockEntity instanceof HamsterBedBlockEntity bedEntity) {
-            if (accessor.getPlayer() instanceof ServerPlayer player) {
-                ServerLevel serverWorld = ((ServerLevel) player.level());
-
-                // Dynamic Name Resolution
-                Optional<Component> liveName = bedEntity.getLinkedHamsterUuid()
-                        .map(serverWorld::getEntity)
-                        .filter(e -> e instanceof HamsterEntity)
-                        .map(entity -> {
-                            HamsterEntity hamster = (HamsterEntity) entity;
-                            if (hamster.hasCustomName()) {
-                                return hamster.getName();
-                            } else {
-                                // Use getDisplayName() to respect the "Hampter" config and append the ID
-                                return hamster.getDisplayName().copy().append(" " + hamster.getId());
-                            }
-                        });
-
-                // Use the live name if found; otherwise, fall back to the name stored in the BlockEntity.
-                Component nameToShow = liveName.or(bedEntity::getLinkedHamsterName).orElse(null);
-
-                if (nameToShow != null) {
-                    data.store("LinkedHamsterName", ComponentSerialization.CODEC, nameToShow);
-                }
-            }
-
-            data.putBoolean("WanderModeActive", bedEntity.isWanderModeActive());
-            data.putString("WanderDistance", bedEntity.getWanderDistance().getSerializedName());
-            data.putBoolean("AllowSleepInBed", bedEntity.isSleepingAllowed());
-            data.putBoolean("RespawnEnabled", bedEntity.isRespawnEnabled());
-            data.putBoolean("ConfigRespawnEnabled", Configs.AHP_MAIN.enableRespawnInBed.get());
-            data.putBoolean("FreeBedRespawns", Configs.AHP_MAIN.freeBedRespawns.get());
         }
     }
 

@@ -19,7 +19,7 @@ import snownee.jade.api.IServerDataProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
 
-public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {
+public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider {
     INSTANCE;
 
     private static final Identifier UID = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_genetics");
@@ -100,17 +100,6 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
             tooltip.add(Component.translatable(
                     "tooltip.adorablehamsterpets.jade.redstone_fever",
                     Component.translatable(stateKey)));
-        }
-    }
-
-    @Override
-    public void appendServerData(CompoundTag data, EntityAccessor accessor) {
-        if (accessor.getEntity() instanceof HamsterEntity hamster) {
-            data.put("HamsterGenome", hamster.getGenome().saveToNbt());
-            data.putLong("TotalAgeTicks", hamster.totalAgeTicks);
-            data.putInt("AggressionState", hamster.getAggressionState().ordinal());
-            data.putBoolean("RedstoneFevered", hamster.hasRedstoneFever());
-            data.putInt("RedstoneFeverRecoveryStage", hamster.getRedstoneFeverRecoveryStage());
         }
     }
 
