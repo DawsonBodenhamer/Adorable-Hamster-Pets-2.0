@@ -35,6 +35,25 @@ public class HamsterRenderState extends LivingEntityRenderState implements GeoRe
         return this.geckolibData;
     }
 
+    /* GeckoLib 5 mixes GeoRenderState into the vanilla render state and its own
+       addGeckolibData/hasGeckolibData write to a mixin-private map. Override them so
+       every read and write goes through this class's single map. */
+    @Override
+    public <D> void addGeckolibData(DataTicket<D> dataTicket, D data) {
+        this.geckolibData.put(dataTicket, data);
+    }
+
+    @Override
+    public boolean hasGeckolibData(DataTicket<?> dataTicket) {
+        return this.geckolibData.containsKey(dataTicket);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <D> D getGeckolibData(DataTicket<D> dataTicket) {
+        return (D) this.geckolibData.get(dataTicket);
+    }
+
     /* ── Hamster-specific snapshot ───────────────────────────────────────── */
 
     /** Horizontal shake from Redstone Fever, already resolved for this frame. */
