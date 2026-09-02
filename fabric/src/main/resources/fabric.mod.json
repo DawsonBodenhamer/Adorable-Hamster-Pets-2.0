@@ -40,7 +40,8 @@
   },
   "suggests": {
     "modmenu": "*",
-    "jade": "*"
+    "jade": "*",
+    "patchouli": "*"
   },
   "custom": {
     "fzzy_config": [

@@ -6,6 +6,7 @@ loom {
 }
 
 dependencies {
+    compileOnly files("/Users/muratdugan/PROJECTS/NazCraft/fabric262/mods/patchouli-fabric-26.1-94.jar") // 26.2 port: Patchouli API (runtime jar = ported build)
     // Depend on Fabric Loader here to use the Fabric @Environment annotations
     implementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
