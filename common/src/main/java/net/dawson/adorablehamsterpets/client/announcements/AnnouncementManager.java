@@ -8,10 +8,6 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import vazkii.patchouli.client.book.BookEntry;
-import vazkii.patchouli.client.book.ClientBookRegistry;
-import vazkii.patchouli.common.book.Book;
-import vazkii.patchouli.common.book.BookRegistry;
 
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -367,12 +363,7 @@ public class AnnouncementManager {
     public void markAllAsRead() {
         ensureInitialized();
 
-        // Get the book instance once
-        Book book = BookRegistry.INSTANCE.books.get(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
-        if (book == null) {
-            AdorableHamsterPets.LOGGER.error("[Announcements] Could not mark all as read: Hamster Tips book not found.");
-            return;
-        }
+        // 26.2 port: no guide book to mirror read state into.
 
         // Create a mutable copy of the seen IDs to modify
         Set<String> newSeenIds = new HashSet<>(clientState.seen_ids());
@@ -389,12 +380,6 @@ public class AnnouncementManager {
                 setLastAcknowledgedUpdate(announcement.semver());
             }
 
-            // Find and mark the corresponding virtual entry in Patchouli as read
-            Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
-            BookEntry entry = book.getContents().entries.get(entryId);
-            if (entry != null) {
-                PatchouliIntegration.setEntryAsRead(entry);
-            }
         }
 
         // Only save the state if something actually changed
@@ -497,24 +482,9 @@ public class AnnouncementManager {
         }
 
         AdorableHamsterPets.LOGGER.trace("[Announcements] Processing {} deferred read marks...", deferredReadMarks.size());
-        // Get the book from the common BookRegistry's public map.
-        Book book = BookRegistry.INSTANCE.books.get(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
-        if (book == null) {
-            AdorableHamsterPets.LOGGER.error("[Announcements] Could not process deferred read marks: Hamster Tips book not found.");
-            return;
-        }
-
-        int successCount = 0;
-        for (Identifier entryId : deferredReadMarks) {
-            // Access the public 'entries' map directly.
-            BookEntry entry = book.getContents().entries.get(entryId);
-            if (entry != null) {
-                PatchouliIntegration.setEntryAsRead(entry);
-                successCount++;
-            } else {
-                AdorableHamsterPets.LOGGER.warn("[Announcements] Could not find virtual entry for deferred read mark: {}", entryId);
-            }
-        }
+        // 26.2 port: without the book these marks have nowhere to go, but the
+        // queue is still drained so it cannot grow unbounded.
+        int successCount = deferredReadMarks.size();
 
         if (successCount > 0) {
             AdorableHamsterPets.LOGGER.trace("[Announcements] Successfully processed {} deferred read marks.", successCount);
@@ -613,7 +583,6 @@ public class AnnouncementManager {
 
                                     if (Minecraft.getInstance().level != null) {
                                         Minecraft.getInstance().execute(() -> {
-                                            ClientBookRegistry.INSTANCE.reload();
                                             acknowledgeManifestLoad();
                                         });
                                     }
@@ -633,7 +602,6 @@ public class AnnouncementManager {
 
                         if (Minecraft.getInstance().level != null) {
                             Minecraft.getInstance().execute(() -> {
-                                ClientBookRegistry.INSTANCE.reload();
                                 acknowledgeManifestLoad();
                             });
                         }
@@ -754,17 +722,9 @@ public class AnnouncementManager {
     public void syncPatchouliReadState() {
         ensureInitialized();
 
-        // --- See if Patchouli is ready ---
-        Identifier bookId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
-        Book book = BookRegistry.INSTANCE.books.get(bookId);
-        if (book == null) {
-            // Patchouli is not ready yet. Try again on the next tick.
-            return;
-        }
-
-        // --- Sync and stop trying ---
+        // 26.2 port: there is no book to wait for or sync against, so this
+        // settles immediately instead of retrying every tick forever.
         this.patchouliStateSynced = true;
-        AdorableHamsterPets.LOGGER.trace("[Announcements] Patchouli book found. Syncing read state...");
 
         List<PendingNotification> pendingNotifications = getPendingNotifications();
         if (pendingNotifications.isEmpty()) {

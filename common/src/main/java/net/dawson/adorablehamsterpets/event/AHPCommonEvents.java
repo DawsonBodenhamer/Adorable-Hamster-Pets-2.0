@@ -56,7 +56,6 @@ import net.minecraft.world.level.block.entity.LecternBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import vazkii.patchouli.api.PatchouliAPI;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -130,25 +129,9 @@ public class AHPCommonEvents {
             // Allow non-owners normal interaction
         }
 
-        // --- Lectern Intercept ---
-        // Intercept the read action and route it through the Patchouli API
-        if (state.is(Blocks.LECTERN) && state.getValue(LecternBlock.HAS_BOOK)) {
-            // Let sneaking players take book out normally
-            if (!player.isShiftKeyDown()) {
-                BlockEntity be = world.getBlockEntity(pos);
-                if (be instanceof LecternBlockEntity lectern) {
-                    ItemStack bookStack = lectern.getBook();
-
-                    if (bookStack.is(ModItems.HAMSTER_GUIDE_BOOK.get())) {
-                        if (!world.isClientSide() && player instanceof ServerPlayer serverPlayer) {
-                            PatchouliAPI.get().openBookGUI(serverPlayer, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
-                        }
-                        // Interrupt to avoid vanilla written book UI
-                        return EventResult.interruptTrue();
-                    }
-                }
-            }
-        }
+        // 26.2 port: the lectern used to open the Patchouli guide book here.
+        // Patchouli has no 26.2 build, so the interception is dropped and the
+        // lectern behaves normally.
 
         // --- Hamster Bed Unlink ---
         ItemStack stack = player.getItemInHand(hand);

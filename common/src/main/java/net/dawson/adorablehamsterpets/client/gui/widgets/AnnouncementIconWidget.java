@@ -25,10 +25,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
-import vazkii.patchouli.api.PatchouliAPI;
-import vazkii.patchouli.client.book.BookEntry;
-import vazkii.patchouli.common.book.Book;
-import vazkii.patchouli.common.book.BookRegistry;
 
 import java.util.Comparator;
 import java.util.List;
@@ -177,25 +173,9 @@ public class AnnouncementIconWidget extends Button {
                     .max(Comparator.comparing(n -> Semver.parse(n.announcement().semver()))) // Find the highest version
                     .ifPresent(notification -> {
                         Announcement announcement = notification.announcement();
-                        Book book = BookRegistry.INSTANCE.books.get(bookId);
-                        if (book != null) {
-                            Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
-                            JsonObject json = new JsonObject();
-                            json.addProperty("name", announcement.title());
-                            json.addProperty("icon", "minecraft:writable_book");
-                            json.addProperty("category", "adorablehamsterpets:update_notes");
-                            json.add("pages", new JsonArray());
-
-                            // Use fallback registry lookup if world is null (bc it is null on title screen)
-                            HolderLookup.Provider registries = client.level != null
-                                    ? client.level.registryAccess()
-                                    : RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
-
-                            BookEntry virtualEntry = new BookEntry(json, entryId, book, AdorableHamsterPets.MOD_ID, registries);
-
-                            // Open the screen with the TitleScreen as its parent
-                            client.setScreen(new AnnouncementScreen(announcement, notification.reason(), this.parentScreen, virtualEntry));
-                        }
+                        // 26.2 port: a Patchouli virtual entry used to be built here purely
+                        // to hand to the screen; without the book there is nothing to pass.
+                        client.setScreen(new AnnouncementScreen(announcement, notification.reason(), this.parentScreen, null));
                     });
         } else {
             if (notifications.size() == 1) {
@@ -203,35 +183,14 @@ public class AnnouncementIconWidget extends Button {
                 // Open directly to the custom GUI if only one message is available
                 AnnouncementManager.PendingNotification notification = notifications.get(0);
                 Announcement announcement = notifications.get(0).announcement();
-                Book book = BookRegistry.INSTANCE.books.get(bookId);
-                if (book != null) {
-                    // Get the "real" virtual entry from the book's contents
-                    Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
-                    BookEntry realVirtualEntry = book.getContents().entries.get(entryId);
-
-                    if (realVirtualEntry != null) {
-                        // Open the screen with the real entry and a null parent
-                        // Passing null tells the screen to return to the game HUD on close.
-                        client.setScreen(new AnnouncementScreen(announcement, notification.reason(), null, realVirtualEntry));
-                    } else {
-                        AdorableHamsterPets.LOGGER.error("[AHP] Could not find virtual entry '{}' in book contents to open announcement screen.", entryId);
-                    }
-                }
+                // Passing null as the parent tells the screen to return to the game HUD on close.
+                client.setScreen(new AnnouncementScreen(announcement, notification.reason(), null, null));
             } else {
                 // --- Multiple Pending Notifications Logic ---
-                // If multiple, open the Patchouli book to the main landing page
-                Book book = BookRegistry.INSTANCE.books.get(bookId);
-                if (book != null) {
-                    // By setting the book's current GUI instance to null, we force Patchouli's
-                    // internal logic to create a new GuiBookLanding instance upon opening.
-                    book.getContents().currentGui = null;
-                    // Clear the GUI history to prevent the back button from navigating to the previous entry.
-                    book.getContents().guiStack.clear();
-                }
-
-                // Use the client-side method that only takes the book's ID.
-                // The user will land on the book's main page.
-                PatchouliAPI.get().openBookGUI(bookId);
+                // 26.2 port: this used to open the guide book's landing page. With no
+                // book, show the most recent notification instead of dropping the click.
+                AnnouncementManager.PendingNotification latest = notifications.get(notifications.size() - 1);
+                client.setScreen(new AnnouncementScreen(latest.announcement(), latest.reason(), null, null));
             }
         }
     }

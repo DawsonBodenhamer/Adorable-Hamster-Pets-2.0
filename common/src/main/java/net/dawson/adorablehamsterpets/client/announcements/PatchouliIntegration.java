@@ -1,90 +1,29 @@
 package net.dawson.adorablehamsterpets.client.announcements;
 
-import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.minecraft.resources.Identifier;
-import vazkii.patchouli.client.base.PersistentData;
-import vazkii.patchouli.client.book.BookEntry;
-import vazkii.patchouli.common.book.Book;
-import vazkii.patchouli.common.book.BookRegistry;
 
-import java.util.List;
+/**
+ * 26.2 port: Patchouli has no 26.2 build, so the in-game guide book is gone.
+ * <p>
+ * This is a no-op stand-in. The announcement system still tracks read state on
+ * its own; these methods used to mirror that state into the guide book, which
+ * no longer exists. Keeping the class means the call sites stay untouched, so
+ * restoring the real integration later is a one-file change.
+ */
+public final class PatchouliIntegration {
+    private PatchouliIntegration() {}
 
-public class PatchouliIntegration {
-
-    /**
-     * Marks a specific entry as "read" in Patchouli's data, preventing duplicates.
-     *
-     * @param entry The BookEntry to mark as read.
-     */
-    public static void setEntryAsRead(BookEntry entry) {
-        if (entry == null) return;
-
-        PersistentData.BookData data = PersistentData.data.getBookData(entry.getBook());
-        Identifier entryId = entry.getId();
-
-        // Check if the entry is already in the list before adding
-        if (!data.viewedEntries.contains(entryId)) {
-            data.viewedEntries.add(entryId);
-
-            // If the book doesn't exist yet on the title screen, save the
-            // data to the file, but don't try to refresh the book UI
-            if (entry.getCategory() != null) {
-                entry.markReadStateDirty();
-            }
-
-            PersistentData.save();
-            AdorableHamsterPets.LOGGER.debug("[Announcements] Marked Patchouli entry '{}' as read.", entryId);
-        }
+    /** No-op: there is no book to mark. Returns false so callers treat it as "not mirrored". */
+    public static boolean setEntryAsRead(Object entry) {
+        return false;
     }
 
-    /**
-     * Removes an entry from Patchouli's "viewedEntries" list, making it appear as "unread" again.
-     *
-     * @param entryId The full Identifier of the entry to mark as unread.
-     */
+    /** No-op counterpart to {@link #setEntryAsRead}. */
     public static boolean setEntryAsUnread(Identifier entryId) {
-        Identifier bookId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
-        Book book = BookRegistry.INSTANCE.books.get(bookId);
-        if (book == null) {
-            return false;
-        }
-
-        PersistentData.BookData data = PersistentData.data.getBookData(book);
-        if (data.viewedEntries.remove(entryId)) {
-            BookEntry entry = book.getContents().entries.get(entryId);
-            if (entry != null) {
-                entry.markReadStateDirty(); // Tell Patchouli its visual state needs an update
-            }
-            PersistentData.save(); // Save the changes to patchouli_data.json
-            return true; // The entry was found and removed from the 'viewed' list.
-        }
-        return false; // The entry was not in the 'viewed' list to begin with.
+        return false;
     }
 
-    /**
-     * Clears all virtual announcement and update entries from Patchouli's history.
-     */
+    /** No-op: nothing keeps a virtual entry history without the book. */
     public static void clearAllVirtualEntriesFromHistory() {
-        Identifier bookId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
-        Book book = BookRegistry.INSTANCE.books.get(bookId);
-        if (book == null) return;
-
-        PersistentData.BookData data = PersistentData.data.getBookData(book);
-        List<Identifier> viewed = data.viewedEntries;
-
-        // Use removeIf to efficiently remove all entries that match our virtual entry prefix
-        boolean removed = viewed.removeIf(id ->
-                id.getNamespace().equals(AdorableHamsterPets.MOD_ID) &&
-                        id.getPath().startsWith("announcement_")
-        );
-
-        if (removed) {
-            // If any entries were removed, mark all book contents as dirty to force a UI refresh
-            if (book.getContents() != null) {
-                book.getContents().entries.values().forEach(BookEntry::markReadStateDirty);
-            }
-            PersistentData.save();
-            AdorableHamsterPets.LOGGER.debug("[Announcements] Cleared all virtual announcement entries from Patchouli history.");
-        }
     }
 }

@@ -23,9 +23,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
-import vazkii.patchouli.client.book.BookEntry;
-import vazkii.patchouli.common.book.Book;
-import vazkii.patchouli.common.book.BookRegistry;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.net.URI;
 import java.time.Duration;
@@ -88,7 +85,8 @@ public class AnnouncementScreen extends Screen {
     private int guiTop;
     @Nullable private Style hoveredStyle = null;
     private final Screen parentScreen;
-    private final BookEntry virtualEntry;
+    /** 26.2 port: was a Patchouli BookEntry; the book is gone, so this is only passed through. */
+    private final Object virtualEntry;
     private final String reason;
     private float uiScale = 1.0f;
     private boolean isDraggingScrollbar = false;
@@ -107,7 +105,7 @@ public class AnnouncementScreen extends Screen {
     private int scaledButtonHeight;
     private int scaledButtonPadding;
 
-    public AnnouncementScreen(Announcement announcement, String reason, @Nullable Screen parentScreen, BookEntry virtualEntry) {
+    public AnnouncementScreen(Announcement announcement, String reason, @Nullable Screen parentScreen, Object virtualEntry) {
         super(Component.literal(announcement.title()));
         this.announcement = announcement;
         this.reason = reason;
@@ -205,8 +203,9 @@ public class AnnouncementScreen extends Screen {
         primaryBuilders.add(Button.builder(Component.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read"), button -> {
             if (Screen.hasShiftDown()) {
                 // --- Shift-Click Action: Mark ALL as read ---
-                Book book = BookRegistry.INSTANCE.books.get(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
-                if (book != null) {
+                // 26.2 port: no guide book to mirror read state into; the
+                // announcement side of this still runs.
+                {
                     AnnouncementManager.INSTANCE.getAllManifestMessages().forEach(msg -> {
                         // Mark the announcement as seen in my system
                         AnnouncementManager.INSTANCE.markAsSeen(msg.id());
@@ -216,12 +215,6 @@ public class AnnouncementScreen extends Screen {
                             AnnouncementManager.INSTANCE.setLastAcknowledgedUpdate(msg.semver());
                         }
 
-                        // Find and mark the corresponding virtual entry in Patchouli as read
-                        Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + msg.id());
-                        BookEntry entry = book.getContents().entries.get(entryId);
-                        if (entry != null) {
-                            PatchouliIntegration.setEntryAsRead(entry);
-                        }
                     });
                 }
             } else {
