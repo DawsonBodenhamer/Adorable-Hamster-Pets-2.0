@@ -1,17 +1,17 @@
 package net.dawson.adorablehamsterpets.networking.payload;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-public record ResetHeistHistoryPayload() implements CustomPayload {
-    public static final CustomPayload.Id<ResetHeistHistoryPayload> ID = new CustomPayload.Id<>(Identifier.of(AdorableHamsterPets.MOD_ID, "reset_tree_economy"));
-    public static final PacketCodec<RegistryByteBuf, ResetHeistHistoryPayload> CODEC = PacketCodec.unit(new ResetHeistHistoryPayload());
+public record ResetHeistHistoryPayload() implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<ResetHeistHistoryPayload> ID = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "reset_tree_economy"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, ResetHeistHistoryPayload> CODEC = StreamCodec.unit(new ResetHeistHistoryPayload());
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

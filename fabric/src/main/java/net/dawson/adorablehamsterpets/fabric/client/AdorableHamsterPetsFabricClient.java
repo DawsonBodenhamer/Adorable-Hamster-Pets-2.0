@@ -18,8 +18,8 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.particle.SimpleParticleType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.particles.SimpleParticleType;
 
 public final class AdorableHamsterPetsFabricClient implements ClientModInitializer {
     @Override
@@ -58,14 +58,14 @@ public final class AdorableHamsterPetsFabricClient implements ClientModInitializ
 
         // --- Register Block Jiggle Renderer ---
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
-            MinecraftClient client = MinecraftClient.getInstance();
+            Minecraft client = Minecraft.getInstance();
 
             BlockJiggleRenderer.render(
                     client,
                     context.matrixStack(),
                     context.consumers(),
-                    context.camera().getPos(),
-                    context.tickCounter().getTickDelta(client.isPaused())
+                    context.camera().getPosition(),
+                    context.tickCounter().getGameTimeDeltaPartialTick(client.isPaused())
             );
         });
     }

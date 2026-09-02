@@ -3,10 +3,10 @@ package net.dawson.adorablehamsterpets.mixin.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.mixin.accessor.ScreenWidgetAdder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -33,7 +33,7 @@ import vazkii.patchouli.common.book.Book;
 public abstract class GuiBookLandingMixin extends GuiBook {
 
     // This constructor is required by the compiler because GuiBook has a constructor.
-    public GuiBookLandingMixin(Book book, Text title) {
+    public GuiBookLandingMixin(Book book, Component title) {
         super(book, title);
     }
 
@@ -46,7 +46,7 @@ public abstract class GuiBookLandingMixin extends GuiBook {
      */
     private boolean isHamsterBook() {
         // The 'book' field is inherited from the parent GuiBook class.
-        return this.book != null && this.book.id.equals(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+        return this.book != null && this.book.id.equals(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
     }
 
     /**
@@ -77,7 +77,7 @@ public abstract class GuiBookLandingMixin extends GuiBook {
      * @param ci       The CallbackInfo, used to cancel the original method.
      */
     @Inject(method = "drawHeader", at = @At("HEAD"), cancellable = true)
-    private void adorablehamsterpets$onDrawHeader(DrawContext graphics, CallbackInfo ci) {
+    private void adorablehamsterpets$onDrawHeader(GuiGraphics graphics, CallbackInfo ci) {
         // --- SAFETY CHECK ---
         // If this is not the Hamster Tips guide book, do nothing and let the original method run.
         if (!isHamsterBook()) {
@@ -99,17 +99,17 @@ public abstract class GuiBookLandingMixin extends GuiBook {
 
         // --- 3. Render the Main Book Title ---
         int titleColor = this.book.nameplateColor;
-        Text titleText = this.book.getBookItem().getName();
+        Component titleText = this.book.getBookItem().getHoverName();
         int titleX = 13 + 7; // MODIFIED: Shifted right by 7
         int titleY = 16;
-        graphics.drawText(MinecraftClient.getInstance().textRenderer, titleText, titleX, titleY, titleColor, false);
+        graphics.drawString(Minecraft.getInstance().font, titleText, titleX, titleY, titleColor, false);
 
         // --- 4. Render the Wrapped Subtitle ---
-        Text subtitleText = this.book.getSubtitle().fillStyle(this.book.getFontStyle());
+        Component subtitleText = this.book.getSubtitle().withStyle(this.book.getFontStyle());
         int subtitleX = 24 - 5; // MODIFIED: Shifted left by 5
         int subtitleY = 24 + 2; // MODIFIED: Shifted down by 2
         int wrapWidth = 100;    // The available width for the text
-        graphics.drawTextWrapped(MinecraftClient.getInstance().textRenderer, subtitleText, subtitleX, subtitleY, wrapWidth, titleColor);
+        graphics.drawWordWrap(Minecraft.getInstance().font, subtitleText, subtitleX, subtitleY, wrapWidth, titleColor);
 
         // --- 5. Cancel the Original Method ---
         ci.cancel();
@@ -143,7 +143,7 @@ public abstract class GuiBookLandingMixin extends GuiBook {
         GuiButtonCategory button;
         GuiBookLanding self = (GuiBookLanding) (Object) this;
         if (category == null) {
-            button = new GuiButtonCategory(this, x, y, this.book.getIcon(), Text.translatable("patchouli.gui.lexicon.index"), self::handleButtonIndex);
+            button = new GuiButtonCategory(this, x, y, this.book.getIcon(), Component.translatable("patchouli.gui.lexicon.index"), self::handleButtonIndex);
         } else {
             button = new GuiButtonCategory(this, x, y, category, self::handleButtonCategory);
         }

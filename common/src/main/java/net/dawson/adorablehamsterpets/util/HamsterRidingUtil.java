@@ -4,15 +4,14 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpMainConfig;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.math.Vec3d;
-
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,12 +35,12 @@ public final class HamsterRidingUtil {
     /**
      * Forces stand up and disables wander mode for full control
      */
-    public static void putPlayerOnBack(HamsterEntity hamster, PlayerEntity player) {
+    public static void putPlayerOnBack(HamsterEntity hamster, Player player) {
         if (!hamster.hasPassenger(player)) {
             player.startRiding(hamster);
             hamster.setSitting(false, false);
 
-            if (hamster.isOwner(player)) {
+            if (hamster.isOwnedBy(player)) {
                 hamster.setWanderModeActive(false);
             }
         }
@@ -52,9 +51,9 @@ public final class HamsterRidingUtil {
      */
     @Nullable
     public static LivingEntity getControllingPassenger(HamsterEntity hamster) {
-        if (hamster.isTamed()) {
+        if (hamster.isTame()) {
             Entity firstPassenger = hamster.getFirstPassenger();
-            if (firstPassenger instanceof LivingEntity passenger && hamster.isOwner(passenger)) {
+            if (firstPassenger instanceof LivingEntity passenger && hamster.isOwnedBy(passenger)) {
                 return passenger;
             }
         }
@@ -71,7 +70,7 @@ public final class HamsterRidingUtil {
             hamster.setRiderJumpQueued(true);
 
             // Keep diagnostics server-side to avoid duplicate client prediction logs.
-            if (!hamster.getWorld().isClient()) {
+            if (!hamster.level().isClientSide()) {
                 AdorableHamsterPets.LOGGER.info(
                         "[AHP JUMP][SERVER] hamsterId={} queuedJump=true", hamster.getId());
             }
@@ -100,9 +99,9 @@ public final class HamsterRidingUtil {
     /**
      * Calculates the scale-aware position where a passenger attaches to the hamster.
      */
-    public static Vec3d getPassengerAttachmentPos(HamsterEntity hamster, Entity passenger) {
+    public static Vec3 getPassengerAttachmentPos(HamsterEntity hamster, Entity passenger) {
         // Vehicle (hamster) height is already scaled at runtime.
-        double baseY = hamster.getHeight() * 0.85;
+        double baseY = hamster.getBbHeight() * 0.85;
 
         // Passenger-size compensation (applying the attachment scale again causes scale^2 offsets).
         double riderAdjustY =
@@ -110,7 +109,7 @@ public final class HamsterRidingUtil {
                         ? HamsterSeatOffsets.physicsSeatAdjustY(living, hamster.getScale())
                         : 0.0;
 
-        return new Vec3d(0.0, baseY + riderAdjustY, 0.0);
+        return new Vec3(0.0, baseY + riderAdjustY, 0.0);
     }
 
     // --- Physics and Movement ---
@@ -121,25 +120,25 @@ public final class HamsterRidingUtil {
      * Synchronizes rotation, calculates speed based on config settings, and executes jump
      * logic on both the Client (for prediction) and Server (for sound/authority).
      */
-    public static boolean handleTravel(HamsterEntity hamster, Vec3d movementInput) {
+    public static boolean handleTravel(HamsterEntity hamster, Vec3 movementInput) {
         if (!hamster.isAlive()) return false;
 
         LivingEntity passenger = hamster.getControllingPassenger();
-        if (!hamster.isTamed() || !(passenger instanceof PlayerEntity player)) {
+        if (!hamster.isTame() || !(passenger instanceof Player player)) {
             return false;
         }
 
         // --- Synchronize Rider Orientation ---
-        hamster.setYaw(player.getYaw());
-        hamster.prevYaw = hamster.getYaw();
-        hamster.setPitch(player.getPitch() * 0.5F);
-        hamster.delegateSetRotation(hamster.getYaw(), hamster.getPitch());
-        hamster.bodyYaw = hamster.getYaw();
-        hamster.headYaw = hamster.bodyYaw;
+        hamster.setYRot(player.getYRot());
+        hamster.yRotO = hamster.getYRot();
+        hamster.setXRot(player.getXRot() * 0.5F);
+        hamster.delegateSetRotation(hamster.getYRot(), hamster.getXRot());
+        hamster.yBodyRot = hamster.getYRot();
+        hamster.yHeadRot = hamster.yBodyRot;
 
         // --- Resolve Movement Input and Speed ---
-        float forwardSpeed = player.forwardSpeed;
-        float sidewaysSpeed = player.sidewaysSpeed;
+        float forwardSpeed = player.zza;
+        float sidewaysSpeed = player.xxa;
 
         if (forwardSpeed <= 0.0F) {
             forwardSpeed *= 0.25F;
@@ -157,14 +156,14 @@ public final class HamsterRidingUtil {
                         : config.ridingBaseSpeedMultiplier.get();
 
         float attributeSpeed =
-                (float) hamster.getAttributeValue(EntityAttributes.GENERIC_MOVEMENT_SPEED);
+                (float) hamster.getAttributeValue(Attributes.MOVEMENT_SPEED);
         float finalSpeed = (float) (attributeSpeed * speedMultiplier);
 
         // Speed effects remain additive after the configured riding multiplier.
-        if (hamster.hasStatusEffect(StatusEffects.SPEED)) {
+        if (hamster.hasEffect(MobEffects.MOVEMENT_SPEED)) {
             finalSpeed += 0.1f;
         }
-        hamster.setMovementSpeed(finalSpeed);
+        hamster.setSpeed(finalSpeed);
 
         // --- Consume Jump Input ---
         if (hamster.getRiderJumpCooldown() > 0) {
@@ -175,10 +174,10 @@ public final class HamsterRidingUtil {
         }
 
         // --- Apply Predicted or Authoritative Travel ---
-        if (hamster.isLogicalSideForUpdatingMovement()) {
-            hamster.delegateTravel(new Vec3d(sidewaysSpeed, 0.0, forwardSpeed));
-        } else if (player instanceof ClientPlayerEntity) {
-            hamster.delegateTravel(new Vec3d(sidewaysSpeed, 0.0, forwardSpeed));
+        if (hamster.isControlledByLocalInstance()) {
+            hamster.delegateTravel(new Vec3(sidewaysSpeed, 0.0, forwardSpeed));
+        } else if (player instanceof LocalPlayer) {
+            hamster.delegateTravel(new Vec3(sidewaysSpeed, 0.0, forwardSpeed));
         }
 
         return true;
@@ -191,7 +190,7 @@ public final class HamsterRidingUtil {
      * jump cooldown, and plays a bounce sound.
      */
     private static void tryRiderJump(HamsterEntity hamster) {
-        if (!hamster.isOnGround() || hamster.isTouchingWater() || hamster.isInLava()) {
+        if (!hamster.onGround() || hamster.isInWater() || hamster.isInLava()) {
             return;
         }
 
@@ -199,23 +198,23 @@ public final class HamsterRidingUtil {
         hamster.executeJump();
 
         // Override the vanilla vertical component with the configured riding impulse.
-        Vec3d v = hamster.getVelocity();
-        hamster.setVelocity(v.x, RIDER_JUMP_VELOCITY, v.z);
-        hamster.velocityDirty = true;
+        Vec3 v = hamster.getDeltaMovement();
+        hamster.setDeltaMovement(v.x, RIDER_JUMP_VELOCITY, v.z);
+        hamster.hasImpulse = true;
         hamster.fallDistance = 0.0F;
 
         // Attribute the bounce sound to the rider when one is still controlling the hamster.
-        PlayerEntity rider =
-                (hamster.getControllingPassenger() instanceof PlayerEntity p) ? p : null;
+        Player rider =
+                (hamster.getControllingPassenger() instanceof Player p) ? p : null;
         float randomPitch = 1.2f + (hamster.getRandom().nextFloat() * 0.4f - 0.2f);
-        hamster.getWorld()
+        hamster.level()
                 .playSound(
                         rider,
                         hamster.getX(),
                         hamster.getY(),
                         hamster.getZ(),
                         ModSounds.HAMSTER_BOUNCE.get(),
-                        SoundCategory.PLAYERS,
+                        SoundSource.PLAYERS,
                         0.6f,
                         randomPitch);
 
@@ -266,9 +265,9 @@ public final class HamsterRidingUtil {
          * <p>Mount-aware in Y: the intercept scales with {@code mountScale} to keep the rider on top of larger mounts,
          * while the passenger term is passenger-only. Z is visual-only.
          */
-        public static Vec3d visualSeatOffset(LivingEntity passenger, float mountScale) {
+        public static Vec3 visualSeatOffset(LivingEntity passenger, float mountScale) {
             float s = passenger.getScale();
-            return new Vec3d(0.0, seatY(s, mountScale), seatZ(s));
+            return new Vec3(0.0, seatY(s, mountScale), seatZ(s));
         }
 
         /**

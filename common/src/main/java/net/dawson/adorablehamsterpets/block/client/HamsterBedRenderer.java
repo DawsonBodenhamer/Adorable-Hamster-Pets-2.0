@@ -1,53 +1,53 @@
 package net.dawson.adorablehamsterpets.block.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.RotationAxis;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockState;
 import software.bernie.geckolib.renderer.GeoBlockRenderer;
 
 public class HamsterBedRenderer extends GeoBlockRenderer<HamsterBedBlockEntity> {
-    public HamsterBedRenderer(BlockEntityRendererFactory.Context context) {
+    public HamsterBedRenderer(BlockEntityRendererProvider.Context context) {
         super(new HamsterBedModel());
     }
 
     @Override
-    public RenderLayer getRenderType(HamsterBedBlockEntity animatable, Identifier texture, @org.jetbrains.annotations.Nullable VertexConsumerProvider bufferSource, float partialTick) {
-        return RenderLayer.getEntityCutout(getTextureLocation(animatable));
+    public RenderType getRenderType(HamsterBedBlockEntity animatable, ResourceLocation texture, @org.jetbrains.annotations.Nullable MultiBufferSource bufferSource, float partialTick) {
+        return RenderType.entityCutout(getTextureLocation(animatable));
     }
 
     @Override
     protected Direction getFacing(HamsterBedBlockEntity block) {
-        BlockState state = block.getCachedState();
+        BlockState state = block.getBlockState();
         // fall back to super if the property isn’t present
-        return state.contains(HamsterBedBlock.ORIENTATION)
-                ? state.get(HamsterBedBlock.ORIENTATION)
+        return state.hasProperty(HamsterBedBlock.ORIENTATION)
+                ? state.getValue(HamsterBedBlock.ORIENTATION)
                 : super.getFacing(block);
     }
 
     @Override
-    public void render(HamsterBedBlockEntity blockEntity, float partialTick, MatrixStack poseStack, VertexConsumerProvider bufferSource, int packedLight, int packedOverlay) {
-        BlockState blockState = blockEntity.getCachedState();
-        if (blockState.get(HamsterBedBlock.UPSIDE_DOWN)) {
-            poseStack.push();
+    public void render(HamsterBedBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        BlockState blockState = blockEntity.getBlockState();
+        if (blockState.getValue(HamsterBedBlock.UPSIDE_DOWN)) {
+            poseStack.pushPose();
             // Translate to the center of the block to rotate around it
             poseStack.translate(0.5, 0.5, 0.5);
             // Rotate 180 degrees around the X-axis
-            poseStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(180));
+            poseStack.mulPose(Axis.XP.rotationDegrees(180));
             // Translate back
             poseStack.translate(-0.5, -0.5, -0.5);
         }
 
         super.render(blockEntity, partialTick, poseStack, bufferSource, packedLight, packedOverlay);
 
-        if (blockState.get(HamsterBedBlock.UPSIDE_DOWN)) {
-            poseStack.pop();
+        if (blockState.getValue(HamsterBedBlock.UPSIDE_DOWN)) {
+            poseStack.popPose();
         }
     }
 }

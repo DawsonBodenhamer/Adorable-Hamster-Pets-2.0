@@ -6,11 +6,12 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animation.AnimationProcessor;
 import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.model.GeoModel;
@@ -30,27 +31,27 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
     private static final float BABY_SCALE = 0.5f;
     private static final float BABY_HEAD_SCALE = 1.2f;
 
-    private static final Identifier MODEL_RESOURCE = Identifier.of(AdorableHamsterPets.MOD_ID, "geo/hamster.geo.json");
-    private static final Identifier ANIMATION_RESOURCE = Identifier.of(AdorableHamsterPets.MOD_ID, "animations/anim_hamster.animation.json");
-    private static final Identifier FALLBACK_TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
+    private static final ResourceLocation MODEL_RESOURCE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "geo/hamster.geo.json");
+    private static final ResourceLocation ANIMATION_RESOURCE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "animations/anim_hamster.animation.json");
+    private static final ResourceLocation FALLBACK_TEXTURE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Overrides
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public Identifier getModelResource(HamsterEntity animatable, @Nullable GeoRenderer<HamsterEntity> renderer) {
+    public ResourceLocation getModelResource(HamsterEntity animatable, @Nullable GeoRenderer<HamsterEntity> renderer) {
         return MODEL_RESOURCE;
     }
 
     @Override
-    public Identifier getTextureResource(HamsterEntity animatable, @Nullable GeoRenderer<HamsterEntity> renderer) {
+    public ResourceLocation getTextureResource(HamsterEntity animatable, @Nullable GeoRenderer<HamsterEntity> renderer) {
         // Fallback texture; actual texture handled by renderer
         return FALLBACK_TEXTURE;
     }
 
     @Override
-    public Identifier getAnimationResource(HamsterEntity animatable) {
+    public ResourceLocation getAnimationResource(HamsterEntity animatable) {
         return ANIMATION_RESOURCE;
     }
 
@@ -99,7 +100,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         // --- Statue / AI Disabled Logic ---
         var closedEyesBone = processor.getBone("closed_eyes");
         if (closedEyesBone != null) {
-            closedEyesBone.setHidden(entity.isAiDisabled()); // Ensure eyes remain open in t-pose
+            closedEyesBone.setHidden(entity.isNoAi()); // Ensure eyes remain open in t-pose
         }
 
         // --- Easter Egg Logic ---
@@ -113,7 +114,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
                 && armorStack.getItem() instanceof HamsterArmorItem;
 
         // --- Pink Petal Logic ---
-        int flowerType = entity.getDataTracker().get(HamsterEntity.FLOWER_POS);
+        int flowerType = entity.getEntityData().get(HamsterEntity.FLOWER_POS);
         boolean useArmorFlowers = isArmorVisible && Configs.AHP_MAIN.renderFlowersWithArmor.get();
 
         if (flowerHeadNoArmorBone != null) flowerHeadNoArmorBone.setHidden(flowerType != 1 || useArmorFlowers);
@@ -143,7 +144,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
 
             // Check bling slot 6 for highest priority
             ItemStack blingStack = entity.getAccessoryStack();
-            if (blingStack.isOf(ModItems.ACORN_HAT.get())) {
+            if (blingStack.is(ModItems.ACORN_HAT.get())) {
                 shouldHideEar = true; // Prevent clipping through hat
                 shouldShowHat = true;
             }
@@ -151,7 +152,7 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             // Check armor slot 7 and config if not already showing hat
             if (!shouldShowHat
                     && isArmorVisible
-                    && armorStack.isOf(ModItems.HAMSTER_ARMOR_ACORN.get())
+                    && armorStack.is(ModItems.HAMSTER_ARMOR_ACORN.get())
                     && Configs.AHP_MAIN.renderAcornHat.get()) {
                 shouldHideEar = true;
                 shouldShowHat = true;
@@ -170,13 +171,13 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             // Calculate continuous growth progress (0.0 = newborn, 1.0 = adult)
             float ageProgress = 1.0f;
             if (entity.isBaby()) {
-                int exactAge = entity.getDataTracker().get(HamsterEntity.EXACT_AGE);
+                int exactAge = entity.getEntityData().get(HamsterEntity.EXACT_AGE);
                 ageProgress = 1.0f - (Math.abs(exactAge) / 24000.0f);
             }
 
             // Smoothly lerp between baby and adult scales
-            float currentBaseScale = MathHelper.lerp(ageProgress, BABY_SCALE, ADULT_SCALE);
-            float currentHeadScale = MathHelper.lerp(ageProgress, BABY_HEAD_SCALE, ADULT_HEAD_SCALE);
+            float currentBaseScale = Mth.lerp(ageProgress, BABY_SCALE, ADULT_SCALE);
+            float currentHeadScale = Mth.lerp(ageProgress, BABY_HEAD_SCALE, ADULT_HEAD_SCALE);
 
             rootBone.setScaleX(currentBaseScale);
             rootBone.setScaleZ(currentBaseScale);
@@ -198,22 +199,22 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
             if (entity.isProjectileDummy) {
                 // --- Projectile Mode ---
                 // Align with velocity vector (follow flight arc)
-                Vec3d velocity = entity.getVelocity();
+                Vec3 velocity = entity.getDeltaMovement();
                 double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
 
                 // Calculate pitch: Positive RotX = Nose Up, Negative RotX = Nose Down
                 pitchOffset = (float) Math.atan2(velocity.y, horizontalSpeed);
-            } else if (entity.isTouchingWater() || entity.isInLava()) {
+            } else if (entity.isInWater() || entity.isInLava()) {
                 // --- Swim Mode ---
                 // Use pre-smoothed pitch to eliminate buoyancy RNG flickering
                 float partialTick = animationState.getPartialTick();
-                pitchOffset = MathHelper.lerp(partialTick, entity.prevClientSwimPitch, entity.clientSwimPitch);
+                pitchOffset = Mth.lerp(partialTick, entity.prevClientSwimPitch, entity.clientSwimPitch);
             } else if (entity.clientFallPitchProgress > 0.0f || entity.prevClientFallPitchProgress > 0.0f) {
                 float partialTick = animationState.getPartialTick();
-                float lerpedProgress = MathHelper.lerp(partialTick, entity.prevClientFallPitchProgress, entity.clientFallPitchProgress);
+                float lerpedProgress = Mth.lerp(partialTick, entity.prevClientFallPitchProgress, entity.clientFallPitchProgress);
 
                 // Natural Fall Mode: Procedural Nose Dive (Cosine Interpolation)
-                float interpolated = (1.0f - MathHelper.cos(lerpedProgress * (float) Math.PI)) * 0.5f;
+                float interpolated = (1.0f - Mth.cos(lerpedProgress * (float) Math.PI)) * 0.5f;
 
                 // Rotate to face downward
                 pitchOffset = (float) (-Math.PI / 2.0) * interpolated;
@@ -234,13 +235,13 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
     // Deprecated methods required by superclass
     @Deprecated(forRemoval = true)
     @Override
-    public Identifier getModelResource(HamsterEntity animatable) {
+    public ResourceLocation getModelResource(HamsterEntity animatable) {
         return this.getModelResource(animatable, null);
     }
 
     @Deprecated(forRemoval = true)
     @Override
-    public Identifier getTextureResource(HamsterEntity animatable) {
+    public ResourceLocation getTextureResource(HamsterEntity animatable) {
         return this.getTextureResource(animatable, null);
     }
 }

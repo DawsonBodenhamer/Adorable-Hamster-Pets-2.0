@@ -5,10 +5,9 @@ import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
-import net.minecraft.particle.ParticleType;
-import net.minecraft.particle.SimpleParticleType;
-import net.minecraft.registry.RegistryKeys;
-
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.registries.Registries;
 import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
@@ -18,7 +17,7 @@ import java.util.Map;
  */
 public class ModParticles {
     public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES =
-            DeferredRegister.create(AdorableHamsterPets.MOD_ID, RegistryKeys.PARTICLE_TYPE);
+            DeferredRegister.create(AdorableHamsterPets.MOD_ID, Registries.PARTICLE_TYPE);
 
     // Map to link each particle type back to its wood variant
     public static final Map<WoodVariant, RegistrySupplier<SimpleParticleType>> BEDDING_PARTICLES = new EnumMap<>(WoodVariant.class);
@@ -28,7 +27,7 @@ public class ModParticles {
 
     static {
         for (WoodVariant variant : WoodVariant.values()) {
-            String id = "hamster_bedding_" + variant.asString();
+            String id = "hamster_bedding_" + variant.getSerializedName();
             BEDDING_PARTICLES.put(variant, PARTICLE_TYPES.register(id, () -> new SimpleParticleType(false) {}));
         }
 

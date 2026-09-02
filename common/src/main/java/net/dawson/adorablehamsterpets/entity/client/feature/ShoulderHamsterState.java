@@ -5,11 +5,11 @@ import net.dawson.adorablehamsterpets.config.ForcedShoulderState;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 
 /**
  * Manages the animation state for a single shoulder-mounted hamster.
@@ -19,7 +19,7 @@ public class ShoulderHamsterState {
     private ShoulderAnimationState currentState;
     private final ShoulderLocation location;
     private int timer; // Ticks remaining in the current state
-    private final Random random = Random.create();
+    private final RandomSource random = RandomSource.create();
     private int sprintTransitionDelay = 0;
     private int idleSoundCooldown = 0;
 
@@ -42,7 +42,7 @@ public class ShoulderHamsterState {
         if (shouldForceLayDown) {
             // If not already laying down or preparing to, start the transition.
             if (this.currentState != ShoulderAnimationState.LAYING_DOWN && this.sprintTransitionDelay == 0) {
-                this.sprintTransitionDelay = random.nextBetween(1, 7);
+                this.sprintTransitionDelay = random.nextIntBetweenInclusive(1, 7);
             }
 
             // Countdown the sprint delay timer.
@@ -51,7 +51,7 @@ public class ShoulderHamsterState {
                 if (this.sprintTransitionDelay == 0) {
                     // Transition is complete. Force the state and set the temporary timer.
                     this.currentState = ShoulderAnimationState.LAYING_DOWN;
-                    this.timer = random.nextBetween(5, 40); // 0.25-2 seconds
+                    this.timer = random.nextIntBetweenInclusive(5, 40); // 0.25-2 seconds
                 }
             }
             // The state is now either LAYING_DOWN or a previous state during the delay.
@@ -101,14 +101,14 @@ public class ShoulderHamsterState {
             if (this.idleSoundCooldown > 0) {
                 this.idleSoundCooldown--;
             } else if (this.random.nextInt(250) == 0) { // Average once every 12.5 seconds
-                MinecraftClient client = MinecraftClient.getInstance();
+                Minecraft client = Minecraft.getInstance();
                 if (client.player != null) {
                     SoundEvent idleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_IDLE_SOUNDS, this.random);
                     if (idleSound != null) {
                         client.getSoundManager().play(
-                                new PositionedSoundInstance(
+                                new SimpleSoundInstance(
                                         idleSound,
-                                        SoundCategory.PLAYERS,
+                                        SoundSource.PLAYERS,
                                         0.25f, // Quieter volume for shoulder pets
                                         1.2f + (this.random.nextFloat() - 0.5f) * 0.4f, // Higher, varied pitch
                                         this.random,
@@ -137,7 +137,7 @@ public class ShoulderHamsterState {
      */
     private void updateHamsterEntityState(HamsterEntity hamster, ShoulderAnimationState stateToApply) {
         // Set the primary shoulder animation state tracker
-        hamster.getDataTracker().set(HamsterEntity.SHOULDER_ANIMATION_STATE, stateToApply.ordinal());
+        hamster.getEntityData().set(HamsterEntity.SHOULDER_ANIMATION_STATE, stateToApply.ordinal());
 
         // Also update the core 'isSitting' flag. This is essential for the cleaning animation logic
         // and any other logic that relies on the general sitting state.
@@ -148,6 +148,6 @@ public class ShoulderHamsterState {
         int min = Configs.AHP_MAIN.shoulderMinStateSeconds.get() * 20;
         int max = Configs.AHP_MAIN.shoulderMaxStateSeconds.get() * 20;
         if (min >= max) return min;
-        return this.random.nextBetween(min, max);
+        return this.random.nextIntBetweenInclusive(min, max);
     }
 }

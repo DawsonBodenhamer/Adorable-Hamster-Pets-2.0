@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.mixin.client;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -29,7 +29,7 @@ public abstract class GuiBookIndexMixin {
         Book thisBook = self.book;
 
         // Only filter entries for our Hamster Tips guide book.
-        Identifier hamsterBookId = Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
+        ResourceLocation hamsterBookId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
         if (thisBook == null || !hamsterBookId.equals(thisBook.id)) {
             return;
         }
@@ -41,7 +41,7 @@ public abstract class GuiBookIndexMixin {
         // Use a stream to create a new list, excluding any entry whose category is one of our virtual ones.
         Collection<BookEntry> filteredEntries = originalEntries.stream()
                 .filter(entry -> {
-                    Identifier categoryId = entry.getCategory().getId();
+                    ResourceLocation categoryId = entry.getCategory().getId();
                     boolean isVirtualCategory = categoryId.getNamespace().equals(AdorableHamsterPets.MOD_ID) &&
                             (categoryId.getPath().equals("update_notes") || categoryId.getPath().equals("announcements"));
                     // Keep the entry only if it's NOT in a virtual category.

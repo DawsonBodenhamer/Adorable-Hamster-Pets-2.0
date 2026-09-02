@@ -36,27 +36,26 @@ import net.dawson.adorablehamsterpets.util.RedstoneFeverCureCreditState;
 import net.dawson.adorablehamsterpets.world.ModSpawnPlacements;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
-import net.minecraft.advancement.AdvancementProgress;
-import net.minecraft.advancement.PlayerAdvancementTracker;
-import net.minecraft.block.BlockState;
-import net.minecraft.component.ComponentType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.SpawnLocationTypes;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.World;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.PlayerAdvancements;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -152,8 +151,8 @@ public class AdorableHamsterPets {
 	 * - NeoForge: During the RegisterSpawnPlacementsEvent (or queued before it).
 	 */
 	public static void registerSpawnPlacements() {
-		ModSpawnPlacements.register(ModEntities.HAMSTER, SpawnLocationTypes.ON_GROUND,
-				Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,
+		ModSpawnPlacements.register(ModEntities.HAMSTER, SpawnPlacementTypes.ON_GROUND,
+				Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
 				ModEntitySpawns::isValidHamsterNaturalSpawn);
 	}
 
@@ -167,16 +166,16 @@ public class AdorableHamsterPets {
 	 *
 	 * @param player The ServerPlayerEntity who has just joined the world.
 	 */
-	private static void onPlayerJoin(ServerPlayerEntity player) {
+	private static void onPlayerJoin(ServerPlayer player) {
 		AcornRingUtil.defer(player, null);
 		RedstoneFeverCureCreditState.consume(player);
 		if (Configs.AHP_UI.enableAutoGuidebookDelivery) {
-			PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
-			Identifier flagAdvId = Identifier.of(MOD_ID, "technical/has_received_initial_guidebook");
-			net.minecraft.advancement.AdvancementEntry flagAdvancementEntry = player.server.getAdvancementLoader().get(flagAdvId);
+			PlayerAdvancements advancementTracker = player.getAdvancements();
+			ResourceLocation flagAdvId = ResourceLocation.fromNamespaceAndPath(MOD_ID, "technical/has_received_initial_guidebook");
+			net.minecraft.advancements.AdvancementHolder flagAdvancementEntry = player.server.getAdvancements().get(flagAdvId);
 
 			if (flagAdvancementEntry != null) {
-				AdvancementProgress flagProgress = advancementTracker.getProgress(flagAdvancementEntry);
+				AdvancementProgress flagProgress = advancementTracker.getOrStartProgress(flagAdvancementEntry);
 				if (!flagProgress.isDone()) {
 					// Deliver guidebook (grant advancement, no fallback message, don't play effects, don't close screen)
 					deliverGuidebook(player, true, false, false, false);
@@ -203,7 +202,7 @@ public class AdorableHamsterPets {
 	 * An event handler called when a player changes dimensions.
 	 * Forces a resync of shoulder data (only necessary on 1.20.1).
 	 */
-	private static void onPlayerChangeDimension(ServerPlayerEntity player, RegistryKey<World> oldWorld, RegistryKey<World> newWorld) {
+	private static void onPlayerChangeDimension(ServerPlayer player, ResourceKey<Level> oldWorld, ResourceKey<Level> newWorld) {
 		((PlayerEntityAccessor) player).adorablehamsterpets$syncHamsterState();
 	}
 
@@ -211,7 +210,7 @@ public class AdorableHamsterPets {
 	 * An event handler called when a player respawns.
 	 * Used to ensure client-side shoulder data correctly synchronizes.
 	 */
-	private static void onPlayerRespawn(ServerPlayerEntity player, boolean conqueredEnd, Entity.RemovalReason reason) {
+	private static void onPlayerRespawn(ServerPlayer player, boolean conqueredEnd, Entity.RemovalReason reason) {
 		AcornRingUtil.defer(player, null);
 		((PlayerEntityAccessor) player).adorablehamsterpets$syncHamsterState();
 	}
@@ -226,7 +225,7 @@ public class AdorableHamsterPets {
 	 * @param newPlayer The new player entity instance created upon respawn.
 	 * @param wasDeath_UNRELIABLE A boolean flag that is not reliable on all platforms and is ignored.
 	 */
-	private static void onPlayerClone(ServerPlayerEntity oldPlayer, ServerPlayerEntity newPlayer, boolean wasDeath_UNRELIABLE) {
+	private static void onPlayerClone(ServerPlayer oldPlayer, ServerPlayer newPlayer, boolean wasDeath_UNRELIABLE) {
 		AcornRingUtil.defer(newPlayer, null);
 		PlayerEntityAccessor oldPlayerAccessor = (PlayerEntityAccessor) oldPlayer;
 		PlayerEntityAccessor newPlayerAccessor = (PlayerEntityAccessor) newPlayer;
@@ -240,7 +239,7 @@ public class AdorableHamsterPets {
 		if (Configs.AHP_MAIN.keepHamstersOnShoulderOnDeath) {
 			newPlayerAccessor.adorablehamsterpets$getMountOrderQueue().addAll(oldPlayerAccessor.adorablehamsterpets$getMountOrderQueue());
 			for (ShoulderLocation location : ShoulderLocation.values()) {
-				NbtCompound shoulderNbt = oldPlayerAccessor.getShoulderHamster(location);
+				CompoundTag shoulderNbt = oldPlayerAccessor.getShoulderHamster(location);
 				if (!shoulderNbt.isEmpty()) {
 					newPlayerAccessor.setShoulderHamster(location, shoulderNbt);
 					AdorableHamsterPets.LOGGER.debug("Player {} respawned with 'Keep on Shoulder' enabled. Transferring {} hamster to new entity.", newPlayer.getName().getString(), location);
@@ -250,22 +249,22 @@ public class AdorableHamsterPets {
 		}
 
 		// --- 3. Handle Spawning at Death Location (Default) ---
-		ServerWorld world = oldPlayer.getServerWorld();
-		BlockPos deathPos = oldPlayer.getBlockPos();
-		boolean isVoidDeath = deathPos.getY() < world.getBottomY();
+		ServerLevel world = oldPlayer.serverLevel();
+		BlockPos deathPos = oldPlayer.blockPosition();
+		boolean isVoidDeath = deathPos.getY() < world.getMinBuildHeight();
 		Set<BlockPos> occupiedSpawnPositions = new HashSet<>();
 
 		for (ShoulderLocation location : ShoulderLocation.values()) {
-			NbtCompound shoulderNbt = oldPlayerAccessor.getShoulderHamster(location);
+			CompoundTag shoulderNbt = oldPlayerAccessor.getShoulderHamster(location);
 			if (shoulderNbt.isEmpty()) continue;
 
 			// Modify NBT to set the knocked-out state before spawning
-			NbtCompound modifiedNbt = HamsterNbtUtil.setKnockedOutInNbt(shoulderNbt);
+			CompoundTag modifiedNbt = HamsterNbtUtil.setKnockedOutInNbt(shoulderNbt);
 			HamsterEntity hamster = HamsterNbtUtil.createFromNbt(world, oldPlayer, modifiedNbt);
 			if (hamster == null) continue;
 
 			BlockPos finalSpawnPos = null;
-			ServerWorld targetWorld = world;
+			ServerLevel targetWorld = world;
 			boolean positionAlreadySet = false;
 
 			// Attempt to find a local safe spot first
@@ -280,13 +279,13 @@ public class AdorableHamsterPets {
 				// 1. Try Linked Bed
 				if (hamster.getLinkedBedPos().isPresent()) {
 					GlobalPos linkedBed = hamster.getLinkedBedPos().get();
-					ServerWorld bedWorld = oldPlayer.getServer().getWorld(linkedBed.dimension());
+					ServerLevel bedWorld = oldPlayer.getServer().getLevel(linkedBed.dimension());
 					if (bedWorld != null) {
 						BlockPos bedPos = linkedBed.pos();
 						BlockState bedState = bedWorld.getBlockState(bedPos);
 
 						// Verify bed is valid and unoccupied before sending them
-						if (bedState.getBlock() instanceof HamsterBedBlock && !bedState.get(HamsterBedBlock.OCCUPIED)) {
+						if (bedState.getBlock() instanceof HamsterBedBlock && !bedState.getValue(HamsterBedBlock.OCCUPIED)) {
 							targetWorld = bedWorld;
 							finalSpawnPos = bedPos; // Satisfy fallback check
 							HamsterBedUtil.forceTeleportAndSleepInBed(hamster, bedWorld, bedPos, bedState);
@@ -297,14 +296,14 @@ public class AdorableHamsterPets {
 
 				// 2. Try Player's Respawn Point
 				if (finalSpawnPos == null) {
-					ServerWorld spawnWorld = oldPlayer.getServer().getWorld(newPlayer.getSpawnPointDimension());
+					ServerLevel spawnWorld = oldPlayer.getServer().getLevel(newPlayer.getRespawnDimension());
 					if (spawnWorld != null) {
 						targetWorld = spawnWorld;
-						BlockPos spawnPoint = newPlayer.getSpawnPointPosition();
+						BlockPos spawnPoint = newPlayer.getRespawnPosition();
 						if (spawnPoint != null) {
 							finalSpawnPos = spawnPoint;
 						} else {
-							finalSpawnPos = targetWorld.getSpawnPos();
+							finalSpawnPos = targetWorld.getSharedSpawnPos();
 						}
 						// Find safe spot around the respawn point so they don't spawn inside a block
 						finalSpawnPos = HamsterPlacementUtil.findSafeSpawnPosition(finalSpawnPos, targetWorld, 5, occupiedSpawnPositions, hamster).orElse(finalSpawnPos);
@@ -321,18 +320,18 @@ public class AdorableHamsterPets {
 
 			// Set initial position if not already handled by the bed rescue
 			if (!positionAlreadySet) {
-				hamster.refreshPositionAndAngles(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, 0, 0);
+				hamster.moveTo(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, 0, 0);
 			}
 
 			// Spawn the entity in the correct world
-			targetWorld.spawnEntityAndPassengers(hamster);
+			targetWorld.addFreshEntityWithPassengers(hamster);
 
 			// Randomize the Yaw so they don't all face the exact same direction
 			float randomYaw = targetWorld.random.nextFloat() * 360.0F;
-			hamster.setBodyYaw(randomYaw);
-			hamster.setHeadYaw(randomYaw);
+			hamster.setYBodyRot(randomYaw);
+			hamster.setYHeadRot(randomYaw);
 
-			AdorableHamsterPets.LOGGER.debug("Player {} died. Spawning {} hamster at {} in target world {}.", oldPlayer.getName().getString(), location, finalSpawnPos, targetWorld.getRegistryKey().getValue());
+			AdorableHamsterPets.LOGGER.debug("Player {} died. Spawning {} hamster at {} in target world {}.", oldPlayer.getName().getString(), location, finalSpawnPos, targetWorld.dimension().location());
 		}
 		// By not transferring any data to newPlayer, they will respawn with empty shoulders.
 	}
@@ -348,36 +347,36 @@ public class AdorableHamsterPets {
 	 * @param playEffects If true, triggers the client-side 'rediscovered' effects.
 	 * @param closeScreen If true, tells the client to close their current GUI screen.
 	 */
-	public static void deliverGuidebook(ServerPlayerEntity player, boolean grantInitialAdvancement, boolean sendFallbackMessage, boolean playEffects, boolean closeScreen) {
+	public static void deliverGuidebook(ServerPlayer player, boolean grantInitialAdvancement, boolean sendFallbackMessage, boolean playEffects, boolean closeScreen) {
 		// --- 1. Create the Book ItemStack Directly ---
 		ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
 		@SuppressWarnings("unchecked")
-		ComponentType<Identifier> bookComponent = (ComponentType<Identifier>) Registries.DATA_COMPONENT_TYPE.get(Identifier.of("patchouli", "book"));
+		DataComponentType<ResourceLocation> bookComponent = (DataComponentType<ResourceLocation>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(ResourceLocation.fromNamespaceAndPath("patchouli", "book"));
 		if (bookComponent != null) {
-			bookStack.set(bookComponent, Identifier.of(MOD_ID, "hamster_tips_guide_book"));
+			bookStack.set(bookComponent, ResourceLocation.fromNamespaceAndPath(MOD_ID, "hamster_tips_guide_book"));
 		} else {
 			LOGGER.error("Could not find Patchouli's book component type! Guidebook will not be functional.");
 		}
 
 		// --- 2. Give the Item to the Player ---
-		player.getInventory().offerOrDrop(bookStack);
+		player.getInventory().placeItemBackInInventory(bookStack);
 
 		// --- 3. Grant the Flag Advancement ---
 		if (grantInitialAdvancement) {
-			PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
-			Identifier flagAdvId = Identifier.of(MOD_ID, "technical/has_received_initial_guidebook");
-			net.minecraft.advancement.AdvancementEntry flagAdvancementEntry = player.server.getAdvancementLoader().get(flagAdvId);
+			PlayerAdvancements advancementTracker = player.getAdvancements();
+			ResourceLocation flagAdvId = ResourceLocation.fromNamespaceAndPath(MOD_ID, "technical/has_received_initial_guidebook");
+			net.minecraft.advancements.AdvancementHolder flagAdvancementEntry = player.server.getAdvancements().get(flagAdvId);
 
 			if (flagAdvancementEntry != null) {
 				for (String criterion : flagAdvancementEntry.value().criteria().keySet()) {
-					advancementTracker.grantCriterion(flagAdvancementEntry, criterion);
+					advancementTracker.award(flagAdvancementEntry, criterion);
 				}
 			}
 		}
 
 		// --- 4. Send Fallback Message ---
 		if (sendFallbackMessage) {
-			player.sendMessage(Text.translatable("message.adorablehamsterpets.guidebook_obtained_fallback").formatted(Formatting.GOLD), false);
+			player.displayClientMessage(Component.translatable("message.adorablehamsterpets.guidebook_obtained_fallback").withStyle(ChatFormatting.GOLD), false);
 		}
 
 		// --- 5. Trigger Client Effects ---
@@ -392,11 +391,11 @@ public class AdorableHamsterPets {
 	 *
 	 * @param inventory The inventory to scan and upgrade.
 	 */
-	public static void replaceOldBooksInInventory(Inventory inventory) {
+	public static void replaceOldBooksInInventory(Container inventory) {
 		// --- 1. Get the component type for Patchouli books ---
 		// Suppress the "unchecked" warning because the 'patchouli:book' component is of type ComponentType<Identifier>.
 		@SuppressWarnings("unchecked")
-		ComponentType<Identifier> bookComponent = (ComponentType<Identifier>) Registries.DATA_COMPONENT_TYPE.get(Identifier.of("patchouli", "book"));
+		DataComponentType<ResourceLocation> bookComponent = (DataComponentType<ResourceLocation>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(ResourceLocation.fromNamespaceAndPath("patchouli", "book"));
 
 		if (bookComponent == null) {
 			// This can happen if Patchouli is not present, so fail gracefully.
@@ -404,18 +403,18 @@ public class AdorableHamsterPets {
 		}
 
 		// --- 2. Iterate through all slots in the provided inventory ---
-		for (int i = 0; i < inventory.size(); i++) {
-			ItemStack stack = inventory.getStack(i);
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			ItemStack stack = inventory.getItem(i);
 
 			// --- 3. Check if the item is an OLD guide book ---
 			// It's an old book if it's the guide book item but lacks the Patchouli component.
-			if (stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get()) && !stack.contains(bookComponent)) {
+			if (stack.is(ModItems.HAMSTER_GUIDE_BOOK.get()) && !stack.has(bookComponent)) {
 				// --- 4. Create the new, upgraded book stack ---
 				ItemStack newBookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get(), stack.getCount());
-				newBookStack.set(bookComponent, Identifier.of(MOD_ID, "hamster_tips_guide_book"));
+				newBookStack.set(bookComponent, ResourceLocation.fromNamespaceAndPath(MOD_ID, "hamster_tips_guide_book"));
 
 				// --- 5. Replace the old stack with the new one ---
-				inventory.setStack(i, newBookStack);
+				inventory.setItem(i, newBookStack);
 				LOGGER.info("Upgraded an old Hamster Tips Guide Book to the new Patchouli version.");
 			}
 		}

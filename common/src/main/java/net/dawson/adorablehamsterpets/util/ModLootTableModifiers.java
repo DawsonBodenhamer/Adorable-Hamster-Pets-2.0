@@ -4,100 +4,99 @@ import dev.architectury.event.events.common.LootEvent;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.dawson.adorablehamsterpets.item.ModItems;
-import net.minecraft.block.Blocks;
-import net.minecraft.loot.LootPool;
-import net.minecraft.loot.LootTables;
-import net.minecraft.loot.condition.RandomChanceLootCondition;
-import net.minecraft.loot.entry.ItemEntry;
-import net.minecraft.loot.function.SetCountLootFunction;
-import net.minecraft.loot.provider.number.ConstantLootNumberProvider;
-import net.minecraft.loot.provider.number.UniformLootNumberProvider;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
+import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
+import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import java.util.List;
 
 public class ModLootTableModifiers {
-    private static final Identifier OAK_LEAVES_ID = Blocks.OAK_LEAVES.getLootTableKey().getValue();
+    private static final ResourceLocation OAK_LEAVES_ID = Blocks.OAK_LEAVES.getLootTable().location();
 
     // --- Loot Table Categories ---
 
     // Common Loot: Seeds
     // Locations: Basic surface structures, supply chests, low-tier village chests
-    private static final List<Identifier> COMMON_LOOT_LOCATIONS = List.of(
-            LootTables.SPAWN_BONUS_CHEST.getValue(),
-            LootTables.SIMPLE_DUNGEON_CHEST.getValue(),
-            LootTables.ABANDONED_MINESHAFT_CHEST.getValue(),
-            LootTables.VILLAGE_PLAINS_CHEST.getValue(),
-            LootTables.VILLAGE_SAVANNA_HOUSE_CHEST.getValue(),
-            LootTables.VILLAGE_SNOWY_HOUSE_CHEST.getValue(),
-            LootTables.VILLAGE_TAIGA_HOUSE_CHEST.getValue(),
-            LootTables.VILLAGE_DESERT_HOUSE_CHEST.getValue(),
-            LootTables.VILLAGE_SHEPARD_CHEST.getValue(),
-            LootTables.VILLAGE_BUTCHER_CHEST.getValue(),
-            LootTables.SHIPWRECK_SUPPLY_CHEST.getValue(),
-            LootTables.PILLAGER_OUTPOST_CHEST.getValue(),
-            LootTables.UNDERWATER_RUIN_SMALL_CHEST.getValue(),
-            LootTables.TRIAL_CHAMBERS_SUPPLY_CHEST.getValue()
+    private static final List<ResourceLocation> COMMON_LOOT_LOCATIONS = List.of(
+            BuiltInLootTables.SPAWN_BONUS_CHEST.location(),
+            BuiltInLootTables.SIMPLE_DUNGEON.location(),
+            BuiltInLootTables.ABANDONED_MINESHAFT.location(),
+            BuiltInLootTables.VILLAGE_PLAINS_HOUSE.location(),
+            BuiltInLootTables.VILLAGE_SAVANNA_HOUSE.location(),
+            BuiltInLootTables.VILLAGE_SNOWY_HOUSE.location(),
+            BuiltInLootTables.VILLAGE_TAIGA_HOUSE.location(),
+            BuiltInLootTables.VILLAGE_DESERT_HOUSE.location(),
+            BuiltInLootTables.VILLAGE_SHEPHERD.location(),
+            BuiltInLootTables.VILLAGE_BUTCHER.location(),
+            BuiltInLootTables.SHIPWRECK_SUPPLY.location(),
+            BuiltInLootTables.PILLAGER_OUTPOST.location(),
+            BuiltInLootTables.UNDERWATER_RUIN_SMALL.location(),
+            BuiltInLootTables.TRIAL_CHAMBERS_SUPPLY.location()
     );
 
     // Standard Gear: Acorn/Iron/Gold Armor
     // Locations: Slightly better structures, specific village professions
-    private static final List<Identifier> UNCOMMON_LOOT_LOCATIONS = List.of(
-            LootTables.SIMPLE_DUNGEON_CHEST.getValue(),
-            LootTables.ABANDONED_MINESHAFT_CHEST.getValue(),
-            LootTables.DESERT_PYRAMID_CHEST.getValue(),
-            LootTables.JUNGLE_TEMPLE_CHEST.getValue(),
-            LootTables.IGLOO_CHEST_CHEST.getValue(),
-            LootTables.RUINED_PORTAL_CHEST.getValue(),
-            LootTables.SHIPWRECK_TREASURE_CHEST.getValue(),
-            LootTables.UNDERWATER_RUIN_BIG_CHEST.getValue(),
-            LootTables.VILLAGE_ARMORER_CHEST.getValue(),
-            LootTables.VILLAGE_WEAPONSMITH_CHEST.getValue(),
-            LootTables.VILLAGE_TOOLSMITH_CHEST.getValue()
+    private static final List<ResourceLocation> UNCOMMON_LOOT_LOCATIONS = List.of(
+            BuiltInLootTables.SIMPLE_DUNGEON.location(),
+            BuiltInLootTables.ABANDONED_MINESHAFT.location(),
+            BuiltInLootTables.DESERT_PYRAMID.location(),
+            BuiltInLootTables.JUNGLE_TEMPLE.location(),
+            BuiltInLootTables.IGLOO_CHEST.location(),
+            BuiltInLootTables.RUINED_PORTAL.location(),
+            BuiltInLootTables.SHIPWRECK_TREASURE.location(),
+            BuiltInLootTables.UNDERWATER_RUIN_BIG.location(),
+            BuiltInLootTables.VILLAGE_ARMORER.location(),
+            BuiltInLootTables.VILLAGE_WEAPONSMITH.location(),
+            BuiltInLootTables.VILLAGE_TOOLSMITH.location()
     );
 
     // High-End Gear: Diamond Armor, Netherite (if enabled), Basic Templates (Iron/Gold)
     // Locations: Nether, End, Strongholds, Major structures
-    private static final List<Identifier> HIGH_TIER_LOOT_LOCATIONS = List.of(
-            LootTables.NETHER_BRIDGE_CHEST.getValue(),
-            LootTables.BASTION_TREASURE_CHEST.getValue(),
-            LootTables.BASTION_OTHER_CHEST.getValue(),
-            LootTables.BASTION_BRIDGE_CHEST.getValue(),
-            LootTables.BASTION_HOGLIN_STABLE_CHEST.getValue(),
-            LootTables.END_CITY_TREASURE_CHEST.getValue(),
-            LootTables.STRONGHOLD_CROSSING_CHEST.getValue(),
-            LootTables.STRONGHOLD_CORRIDOR_CHEST.getValue(),
-            LootTables.ANCIENT_CITY_CHEST.getValue(),
-            LootTables.TRIAL_CHAMBERS_REWARD_CHEST.getValue(),
-            LootTables.TRIAL_CHAMBERS_REWARD_RARE_CHEST.getValue()
+    private static final List<ResourceLocation> HIGH_TIER_LOOT_LOCATIONS = List.of(
+            BuiltInLootTables.NETHER_BRIDGE.location(),
+            BuiltInLootTables.BASTION_TREASURE.location(),
+            BuiltInLootTables.BASTION_OTHER.location(),
+            BuiltInLootTables.BASTION_BRIDGE.location(),
+            BuiltInLootTables.BASTION_HOGLIN_STABLE.location(),
+            BuiltInLootTables.END_CITY_TREASURE.location(),
+            BuiltInLootTables.STRONGHOLD_CROSSING.location(),
+            BuiltInLootTables.STRONGHOLD_CORRIDOR.location(),
+            BuiltInLootTables.ANCIENT_CITY.location(),
+            BuiltInLootTables.TRIAL_CHAMBERS_REWARD.location(),
+            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_RARE.location()
     );
 
     // Legendary Artifacts: Accessories, Advanced Templates (Diamond/Netherite)
     // Locations: Rarest containers in the game
-    private static final List<Identifier> LEGENDARY_LOOT_LOCATIONS = List.of(
-            LootTables.ANCIENT_CITY_CHEST.getValue(),
-            LootTables.WOODLAND_MANSION_CHEST.getValue(),
-            LootTables.STRONGHOLD_LIBRARY_CHEST.getValue(),
-            LootTables.END_CITY_TREASURE_CHEST.getValue(),
-            LootTables.BURIED_TREASURE_CHEST.getValue(),
-            LootTables.TRIAL_CHAMBERS_REWARD_UNIQUE_CHEST.getValue(),
-            LootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_RARE_CHEST.getValue(),
-            LootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_UNIQUE_CHEST.getValue()
+    private static final List<ResourceLocation> LEGENDARY_LOOT_LOCATIONS = List.of(
+            BuiltInLootTables.ANCIENT_CITY.location(),
+            BuiltInLootTables.WOODLAND_MANSION.location(),
+            BuiltInLootTables.STRONGHOLD_LIBRARY.location(),
+            BuiltInLootTables.END_CITY_TREASURE.location(),
+            BuiltInLootTables.BURIED_TREASURE.location(),
+            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_UNIQUE.location(),
+            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_RARE.location(),
+            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_UNIQUE.location()
     );
 
     public static void init() {
         LootEvent.MODIFY_LOOT_TABLE.register((key, context, builtin) -> {
-            Identifier tableId = key.getValue();
+            ResourceLocation tableId = key.location();
             final AhpWorldGenConfig config = AdorableHamsterPets.WORLD_GEN_CONFIG;
 
             // --- 1. Acorns from Oak Leaves ---
             if (OAK_LEAVES_ID.equals(tableId)) {
                 float chance = config.oakLeavesAcornDropChance.get();
                 if (chance > 0) {
-                    context.addPool(LootPool.builder()
-                            .rolls(ConstantLootNumberProvider.create(1))
-                            .conditionally(RandomChanceLootCondition.builder(chance))
-                            .with(ItemEntry.builder(ModItems.ACORN.get())));
+                    context.addPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .when(LootItemRandomChanceCondition.randomChance(chance))
+                            .add(LootItem.lootTableItem(ModItems.ACORN.get())));
                 }
             }
 
@@ -105,13 +104,13 @@ public class ModLootTableModifiers {
             if (COMMON_LOOT_LOCATIONS.contains(tableId)) {
                 float chance = config.seedLootChance.get();
                 if (chance > 0) {
-                    context.addPool(LootPool.builder()
-                            .rolls(ConstantLootNumberProvider.create(1))
-                            .conditionally(RandomChanceLootCondition.builder(chance)) // 60% chance to find a seed stash
-                            .with(ItemEntry.builder(ModItems.GREEN_BEAN_SEEDS.get()).weight(1))
-                            .with(ItemEntry.builder(ModItems.CUCUMBER_SEEDS.get()).weight(1))
-                            .with(ItemEntry.builder(ModItems.SUNFLOWER_SEEDS.get()).weight(1))
-                            .apply(SetCountLootFunction.builder(UniformLootNumberProvider.create(1.0f, 3.0f))) // 1-3 seeds
+                    context.addPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .when(LootItemRandomChanceCondition.randomChance(chance)) // 60% chance to find a seed stash
+                            .add(LootItem.lootTableItem(ModItems.GREEN_BEAN_SEEDS.get()).setWeight(1))
+                            .add(LootItem.lootTableItem(ModItems.CUCUMBER_SEEDS.get()).setWeight(1))
+                            .add(LootItem.lootTableItem(ModItems.SUNFLOWER_SEEDS.get()).setWeight(1))
+                            .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0f, 3.0f))) // 1-3 seeds
                     );
                 }
             }
@@ -120,21 +119,21 @@ public class ModLootTableModifiers {
             if (UNCOMMON_LOOT_LOCATIONS.contains(tableId)) {
                 float chance = config.standardArmorLootChance.get();
                 if (chance > 0) {
-                    context.addPool(LootPool.builder()
-                            .rolls(ConstantLootNumberProvider.create(1))
-                            .conditionally(RandomChanceLootCondition.builder(chance)) // 30% Chance
-                            .with(ItemEntry.builder(ModItems.HAMSTER_ARMOR_ACORN.get()).weight(3)) // Common
-                            .with(ItemEntry.builder(ModItems.HAMSTER_ARMOR_IRON.get()).weight(2))  // Uncommon
-                            .with(ItemEntry.builder(ModItems.HAMSTER_ARMOR_GOLD.get()).weight(1))  // Rare
+                    context.addPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .when(LootItemRandomChanceCondition.randomChance(chance)) // 30% Chance
+                            .add(LootItem.lootTableItem(ModItems.HAMSTER_ARMOR_ACORN.get()).setWeight(3)) // Common
+                            .add(LootItem.lootTableItem(ModItems.HAMSTER_ARMOR_IRON.get()).setWeight(2))  // Uncommon
+                            .add(LootItem.lootTableItem(ModItems.HAMSTER_ARMOR_GOLD.get()).setWeight(1))  // Rare
                     );
                 }
 
                 float acornRingChance = config.acornRingLootChance.get();
                 if (acornRingChance > 0) {
-                    context.addPool(LootPool.builder()
-                            .rolls(ConstantLootNumberProvider.create(1))
-                            .conditionally(RandomChanceLootCondition.builder(acornRingChance))
-                            .with(ItemEntry.builder(ModItems.ACORN_RING.get()))
+                    context.addPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .when(LootItemRandomChanceCondition.randomChance(acornRingChance))
+                            .add(LootItem.lootTableItem(ModItems.ACORN_RING.get()))
                     );
                 }
             }
@@ -144,10 +143,10 @@ public class ModLootTableModifiers {
                 // Diamond
                 float diamondChance = config.highTierArmorLootChance.get();
                 if (diamondChance > 0) {
-                    context.addPool(LootPool.builder()
-                            .rolls(ConstantLootNumberProvider.create(1))
-                            .conditionally(RandomChanceLootCondition.builder(diamondChance)) // 20% chance
-                            .with(ItemEntry.builder(ModItems.HAMSTER_ARMOR_DIAMOND.get()))
+                    context.addPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .when(LootItemRandomChanceCondition.randomChance(diamondChance)) // 20% chance
+                            .add(LootItem.lootTableItem(ModItems.HAMSTER_ARMOR_DIAMOND.get()))
                     );
                 }
 
@@ -155,10 +154,10 @@ public class ModLootTableModifiers {
                 if (config.enableNetheriteArmorLoot.get()) {
                     float netheriteChance = config.netheriteArmorLootChance.get();
                     if (netheriteChance > 0) {
-                        context.addPool(LootPool.builder()
-                                .rolls(ConstantLootNumberProvider.create(1))
-                                .conditionally(RandomChanceLootCondition.builder(netheriteChance)) // 10% chance
-                                .with(ItemEntry.builder(ModItems.HAMSTER_ARMOR_NETHERITE.get()))
+                        context.addPool(LootPool.lootPool()
+                                .setRolls(ConstantValue.exactly(1))
+                                .when(LootItemRandomChanceCondition.randomChance(netheriteChance)) // 10% chance
+                                .add(LootItem.lootTableItem(ModItems.HAMSTER_ARMOR_NETHERITE.get()))
                         );
                     }
                 }
@@ -168,10 +167,10 @@ public class ModLootTableModifiers {
             if (LEGENDARY_LOOT_LOCATIONS.contains(tableId)) {
                 float chance = config.accessoryLootChance.get();
                 if (chance > 0) {
-                    context.addPool(LootPool.builder()
-                            .rolls(ConstantLootNumberProvider.create(1))
-                            .conditionally(RandomChanceLootCondition.builder(chance)) // 2.5% Chance
-                            .with(ItemEntry.builder(ModItems.ACORN_HAT.get()))
+                    context.addPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .when(LootItemRandomChanceCondition.randomChance(chance)) // 2.5% Chance
+                            .add(LootItem.lootTableItem(ModItems.ACORN_HAT.get()))
                     );
                 }
             }
@@ -180,11 +179,11 @@ public class ModLootTableModifiers {
             if (HIGH_TIER_LOOT_LOCATIONS.contains(tableId)) {
                 float basicChance = config.basicSmithingTemplateLootChance.get();
                 if (basicChance > 0) {
-                    context.addPool(LootPool.builder()
-                            .rolls(ConstantLootNumberProvider.create(1))
-                            .conditionally(RandomChanceLootCondition.builder(basicChance)) // 20% chance
-                            .with(ItemEntry.builder(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_IRON.get()).weight(1))
-                            .with(ItemEntry.builder(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_GOLD.get()).weight(1))
+                    context.addPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .when(LootItemRandomChanceCondition.randomChance(basicChance)) // 20% chance
+                            .add(LootItem.lootTableItem(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_IRON.get()).setWeight(1))
+                            .add(LootItem.lootTableItem(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_GOLD.get()).setWeight(1))
                     );
                 }
             }
@@ -193,11 +192,11 @@ public class ModLootTableModifiers {
             if (LEGENDARY_LOOT_LOCATIONS.contains(tableId)) {
                 float advancedChance = config.advancedSmithingTemplateLootChance.get();
                 if (advancedChance > 0) {
-                    context.addPool(LootPool.builder()
-                            .rolls(ConstantLootNumberProvider.create(1))
-                            .conditionally(RandomChanceLootCondition.builder(advancedChance)) // 10% chance
-                            .with(ItemEntry.builder(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_DIAMOND.get()).weight(1))
-                            .with(ItemEntry.builder(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_NETHERITE.get()).weight(1))
+                    context.addPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .when(LootItemRandomChanceCondition.randomChance(advancedChance)) // 10% chance
+                            .add(LootItem.lootTableItem(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_DIAMOND.get()).setWeight(1))
+                            .add(LootItem.lootTableItem(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_NETHERITE.get()).setWeight(1))
                     );
                 }
             }

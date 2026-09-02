@@ -3,15 +3,15 @@ package net.dawson.adorablehamsterpets.mixin.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.mixin.client.accessor.GuiButtonEntryAccessor;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,14 +26,14 @@ import vazkii.patchouli.client.book.gui.button.GuiButtonEntry;
 import java.util.List;
 
 @Mixin(value = GuiButtonEntry.class)
-public abstract class GuiButtonEntryMixin extends ButtonWidget {
+public abstract class GuiButtonEntryMixin extends Button {
 
     @Shadow(remap = false) @Final private GuiBook parent;
     @Shadow(remap = false) @Final private BookEntry entry;
     @Shadow(remap = false) private float timeHovered;
 
     // Required constructor Mixin to compile
-    public GuiButtonEntryMixin(int x, int y, int width, int height, Text message, PressAction onPress, NarrationSupplier narrationSupplier) {
+    public GuiButtonEntryMixin(int x, int y, int width, int height, Component message, OnPress onPress, CreateNarration narrationSupplier) {
         super(x, y, width, height, message, onPress, narrationSupplier);
     }
 
@@ -42,7 +42,7 @@ public abstract class GuiButtonEntryMixin extends ButtonWidget {
      * @return True if the parent book is the hamster guide, false otherwise.
      */
     private boolean isHamsterBook() {
-        return this.parent.book != null && this.parent.book.id.equals(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+        return this.parent.book != null && this.parent.book.id.equals(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
     }
 
     /**
@@ -50,7 +50,7 @@ public abstract class GuiButtonEntryMixin extends ButtonWidget {
      * This new implementation draws the entry title with text wrapping.
      */
     @Inject(method = "renderWidget", at = @At("HEAD"), cancellable = true)
-    private void adorablehamsterpets$renderWrappedWidget(DrawContext graphics, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
+    private void adorablehamsterpets$renderWrappedWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
         // --- SAFETY CHECK ---
         // If this button is not the Hamster Tips guide book, do nothing and let the original method run.
         if (!isHamsterBook()) {
@@ -61,46 +61,46 @@ public abstract class GuiButtonEntryMixin extends ButtonWidget {
 
         if (this.active) {
             // --- 1. Replicate Hover Animation Logic ---
-            if (this.isSelected()) {
+            if (this.isHoveredOrFocused()) {
                 this.timeHovered = Math.min(5.0F, this.timeHovered + ClientTicker.delta);
             } else {
                 this.timeHovered = Math.max(0.0F, this.timeHovered - ClientTicker.delta);
             }
-            float time = Math.max(0.0F, Math.min(5.0F, this.timeHovered + (this.isSelected() ? partialTicks : -partialTicks)));
+            float time = Math.max(0.0F, Math.min(5.0F, this.timeHovered + (this.isHoveredOrFocused() ? partialTicks : -partialTicks)));
             float widthFract = time / 5.0F;
 
             // --- 2. Replicate Background, Icon, and Lock Rendering ---
             boolean locked = this.entry.isLocked();
-            graphics.getMatrices().scale(0.5F, 0.5F, 0.5F);
+            graphics.pose().scale(0.5F, 0.5F, 0.5F);
             graphics.fill(this.getX() * 2, this.getY() * 2, (this.getX() + (int)((float)this.width * widthFract)) * 2, (this.getY() + this.height) * 2, 570425344);
             RenderSystem.enableBlend();
             if (locked) {
-                graphics.setShaderColor(1.0F, 1.0F, 1.0F, 0.7F);
+                graphics.setColor(1.0F, 1.0F, 1.0F, 0.7F);
                 GuiBook.drawLock(graphics, this.parent.book, this.getX() * 2 + 2, this.getY() * 2 + 2);
             } else {
                 this.entry.getIcon().render(graphics, this.getX() * 2 + 2, this.getY() * 2 + 2);
             }
-            graphics.getMatrices().scale(2.0F, 2.0F, 2.0F);
+            graphics.pose().scale(2.0F, 2.0F, 2.0F);
 
             // --- 3. Prepare Text for Wrapping ---
-            MutableText name = locked
-                    ? Text.translatable("patchouli.gui.lexicon.locked")
+            MutableComponent name = locked
+                    ? Component.translatable("patchouli.gui.lexicon.locked")
                     : this.entry.getName().copy();
             if (!locked && this.entry.isPriority()) {
-                name.formatted(Formatting.DARK_AQUA);
+                name.withStyle(ChatFormatting.DARK_AQUA);
             }
-            name.fillStyle(this.entry.getBook().getFontStyle());
+            name.withStyle(this.entry.getBook().getFontStyle());
 
             // --- 4. Wrap and Render Text ---
-            TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+            Font textRenderer = Minecraft.getInstance().font;
             int availableWidth = this.width - 12; // Width of button minus icon/padding
-            List<OrderedText> lines = textRenderer.wrapLines(name, availableWidth);
+            List<FormattedCharSequence> lines = textRenderer.split(name, availableWidth);
 
             for (int i = 0; i < lines.size(); i++) {
-                OrderedText line = lines.get(i);
+                FormattedCharSequence line = lines.get(i);
                 // Calculate Y position for each line, adding a small top margin
                 int lineY = this.getY() + 1 + (i * 10);
-                graphics.drawText(textRenderer, line, this.getX() + 12, lineY, ((GuiButtonEntryAccessor) this).adorablehamsterpets$invokeGetColor(), false);
+                graphics.drawString(textRenderer, line, this.getX() + 12, lineY, ((GuiButtonEntryAccessor) this).adorablehamsterpets$invokeGetColor(), false);
             }
 
             // --- 5. Replicate Read-State Marking ---

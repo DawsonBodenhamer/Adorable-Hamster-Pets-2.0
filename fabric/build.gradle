@@ -25,6 +25,11 @@ loom {
 
 sourceSets {
     main {
+        // 26.2 portu: datagen kodu devre disi. Uretilmis JSON'lar
+        // src/main/generated ve common/src/main/resources icinde zaten mevcut.
+        java {
+            exclude 'net/dawson/adorablehamsterpets/fabric/datagen/**'
+        }
         resources {
             srcDir file('src/main/generated')
             exclude('.cache/**')
@@ -89,7 +94,6 @@ tasks.named("runDatagen") {
 }
 
 shadowJar {
-    dependsOn(tasks.named("runDatagen"))
 
     exclude "architectury.common.json"
     configurations = [project.configurations.shadowCommon]
@@ -97,7 +101,6 @@ shadowJar {
     archiveClassifier = "dev-shadow"
     dependsOn project(':common').tasks.named('transformProductionFabric')
 
-    dependsOn(tasks.named("runDatagen"))
 
     // Exclude the generated hamster bed item model
     from(file('src/main/generated')) {
@@ -116,7 +119,6 @@ sourcesJar {
     dependsOn commonSources
     from commonSources.archiveFile.map { zipTree(it) }
 
-    dependsOn(tasks.named("runDatagen"))
     from(file('src/main/generated'))
 }
 

@@ -2,23 +2,23 @@ package net.dawson.adorablehamsterpets.item.custom;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 import vazkii.patchouli.api.PatchouliAPI;
 
 import java.util.List;
 
 public class PatchouliGuideBookItem extends Item {
-    public PatchouliGuideBookItem(Settings settings) {
+    public PatchouliGuideBookItem(Properties settings) {
         super(settings);
     }
 
@@ -27,12 +27,12 @@ public class PatchouliGuideBookItem extends Item {
      * This opens the Patchouli book screen for the player.
      */
     @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        ItemStack stack = user.getStackInHand(hand);
-        if (user instanceof ServerPlayerEntity serverPlayer) {
-            PatchouliAPI.get().openBookGUI(serverPlayer, Identifier.of("adorablehamsterpets", "hamster_tips_guide_book"));
+    public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+        ItemStack stack = user.getItemInHand(hand);
+        if (user instanceof ServerPlayer serverPlayer) {
+            PatchouliAPI.get().openBookGUI(serverPlayer, ResourceLocation.fromNamespaceAndPath("adorablehamsterpets", "hamster_tips_guide_book"));
         }
-        return TypedActionResult.success(stack);
+        return InteractionResultHolder.success(stack);
     }
 
     /**
@@ -42,9 +42,9 @@ public class PatchouliGuideBookItem extends Item {
      */
     @Override
     @Environment(EnvType.CLIENT)
-    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
         // --- 1. Add the primary hint text unconditionally ---
-        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_guide_book.hint").formatted(Formatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_guide_book.hint").withStyle(ChatFormatting.GRAY));
 
 //        Note: The logic below does not seem to work and I'm tired of trying to figure it out, and it's not crucial so here we are.
 //        // --- 2. Get Contextual Information ---
@@ -64,6 +64,6 @@ public class PatchouliGuideBookItem extends Item {
 //            tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
 //        }
 
-        super.appendTooltip(stack, context, tooltip, type);
+        super.appendHoverText(stack, context, tooltip, type);
     }
 }

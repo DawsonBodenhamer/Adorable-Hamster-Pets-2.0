@@ -4,15 +4,15 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.FuzzyTargeting;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.util.LandRandomPos;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
@@ -43,7 +43,7 @@ public final class HamsterMovementUtil {
         boolean isClockwise = hamster.getZoomiesIsClockwise();
 
         // Calculate the next angle step (degrees in radians)
-        double angleStep = Math.toRadians(hamster.getRandom().nextBetween(minAngleDegrees, maxAngleDegrees));
+        double angleStep = Math.toRadians(hamster.getRandom().nextIntBetweenInclusive(minAngleDegrees, maxAngleDegrees));
         double newAngle = isClockwise ? lastAngle + angleStep : lastAngle - angleStep;
         hamster.setLastZoomiesAngle(newAngle); // Persist the new angle on the entity
 
@@ -56,7 +56,7 @@ public final class HamsterMovementUtil {
         BlockPos idealPos = new BlockPos((int)targetX, (int)hamster.getY(), (int)targetZ);
 
         // Use findSafeSpawnPosition to locate a valid block near the ideal point
-        Optional<BlockPos> finalTargetPos = HamsterPlacementUtil.findSafeSpawnPosition(idealPos, hamster.getWorld(), 2, hamster);
+        Optional<BlockPos> finalTargetPos = HamsterPlacementUtil.findSafeSpawnPosition(idealPos, hamster.level(), 2, hamster);
 
         // --- LOGGING ---
         AdorableHamsterPets.LOGGER.trace(
@@ -82,19 +82,19 @@ public final class HamsterMovementUtil {
      * @param hamster  The hamster entity for collision contexts.
      * @return An Optional containing the nearest safe land BlockPos.
      */
-    public static Optional<BlockPos> findNearbyLand(World world, BlockPos startPos, int radius, HamsterEntity hamster) {
+    public static Optional<BlockPos> findNearbyLand(Level world, BlockPos startPos, int radius, HamsterEntity hamster) {
         BlockPos nearestLand = null;
         double nearestDistSq = Double.MAX_VALUE;
 
-        for (BlockPos checkPos : BlockPos.iterateOutwards(startPos, radius, radius, radius)) {
+        for (BlockPos checkPos : BlockPos.withinManhattan(startPos, radius, radius, radius)) {
             // Check that block is not submerged and the space above is air/empty
-            if (world.getFluidState(checkPos).isEmpty() && world.getFluidState(checkPos.up()).isEmpty()) {
+            if (world.getFluidState(checkPos).isEmpty() && world.getFluidState(checkPos.above()).isEmpty()) {
                 // Check if valid surface
                 if (HamsterPlacementUtil.isSafeSpawnLocation(checkPos, world, hamster)) {
-                    double distSq = checkPos.getSquaredDistance(startPos);
+                    double distSq = checkPos.distSqr(startPos);
                     if (distSq < nearestDistSq) {
                         nearestDistSq = distSq;
-                        nearestLand = checkPos.toImmutable();
+                        nearestLand = checkPos.immutable();
                     }
                 }
             }
@@ -108,9 +108,9 @@ public final class HamsterMovementUtil {
      * @param mob    The observer.
      * @param target The entity to look at.
      */
-    public static void faceEntity(MobEntity mob, Entity target) {
+    public static void faceEntity(Mob mob, Entity target) {
         if (mob != null && target != null) {
-            mob.getLookControl().lookAt(target, 25.0f, 25.0f);
+            mob.getLookControl().setLookAt(target, 25.0f, 25.0f);
         }
     }
 
@@ -122,9 +122,9 @@ public final class HamsterMovementUtil {
      * @param y   Target Y.
      * @param z   Target Z.
      */
-    public static void facePosition(MobEntity mob, double x, double y, double z) {
+    public static void facePosition(Mob mob, double x, double y, double z) {
         if (mob != null) {
-            mob.getLookControl().lookAt(x, y, z, 25.0f, 25.0f);
+            mob.getLookControl().setLookAt(x, y, z, 25.0f, 25.0f);
         }
     }
 
@@ -137,7 +137,7 @@ public final class HamsterMovementUtil {
      * @return True if the runner is too close.
      */
     public static boolean shouldFlee(Entity runner, Entity chaser, double minFleeDist) {
-        return runner.squaredDistanceTo(chaser) < minFleeDist * minFleeDist;
+        return runner.distanceToSqr(chaser) < minFleeDist * minFleeDist;
     }
 
     /**
@@ -150,7 +150,7 @@ public final class HamsterMovementUtil {
      * @return True if the runner is safe.
      */
     public static boolean shouldStopFleeing(Entity runner, Entity chaser, double maxFleeDist) {
-        return runner.squaredDistanceTo(chaser) > maxFleeDist * maxFleeDist;
+        return runner.distanceToSqr(chaser) > maxFleeDist * maxFleeDist;
     }
 
     /**
@@ -163,11 +163,11 @@ public final class HamsterMovementUtil {
      * @return A Vec3d coordinate to run to, or null if no path found.
      */
     @Nullable
-    public static Vec3d findFleePosition(PathAwareEntity runner, Entity chaser, double minDistance, double maxDistance) {
+    public static Vec3 findFleePosition(PathfinderMob runner, Entity chaser, double minDistance, double maxDistance) {
         // Find a position away from the chaser
         // FuzzyTargeting.findFrom creates a target vector away from the provided start pos (the chaser)
         // arg 2: horizontal spread, arg 3: vertical spread
-        return FuzzyTargeting.findFrom(runner, (int) maxDistance, 7, chaser.getPos());
+        return LandRandomPos.getPosAway(runner, (int) maxDistance, 7, chaser.position());
     }
 
     /**
@@ -178,8 +178,8 @@ public final class HamsterMovementUtil {
      */
     public static boolean shouldNotMove(HamsterEntity hamster) {
         return shouldNotMove(
-                hamster.isAiDisabled(),
-                hamster.isSitting(),
+                hamster.isNoAi(),
+                hamster.isOrderedToSit(),
                 hamster.isFrozenMovement(),
                 hamster.isCelebratingBaby(),
                 hamster.isCelebratingDiamond());
@@ -225,7 +225,7 @@ public final class HamsterMovementUtil {
      */
     public static boolean shouldTeleportTo(HamsterEntity hamster, Entity target) {
         // Fast Fail
-        if (hamster.isLeashed() || hamster.hasVehicle()) {
+        if (hamster.isLeashed() || hamster.isPassenger()) {
             return false;
         }
 
@@ -238,7 +238,7 @@ public final class HamsterMovementUtil {
         }
 
         // Final distance check
-        return hamster.squaredDistanceTo(target) > maxDistSq;
+        return hamster.distanceToSqr(target) > maxDistSq;
     }
 
     /**
@@ -264,8 +264,8 @@ public final class HamsterMovementUtil {
      */
     public static TeleportResult tryTeleportTo(
             HamsterEntity hamster, Entity target, boolean allowPocketRescue) {
-        World world = hamster.getWorld();
-        if (world.isClient()) {
+        Level world = hamster.level();
+        if (world.isClientSide()) {
             return TeleportResult.FAILED;
         }
 
@@ -273,21 +273,21 @@ public final class HamsterMovementUtil {
         // Force Pocket Rescue Protocol for teleports more than 32 blocks
         if (allowPocketRescue
                 && Configs.AHP_MAIN.enableTeleportRescue
-                && hamster.squaredDistanceTo(target) > 1024.0) {
-            PlayerEntity ownerPlayer = null;
+                && hamster.distanceToSqr(target) > 1024.0) {
+            Player ownerPlayer = null;
 
-            if (target instanceof PlayerEntity playerTarget) {
+            if (target instanceof Player playerTarget) {
                 ownerPlayer = playerTarget;
-            } else if (target instanceof HamsterEntity parentHamster && parentHamster.getOwner() instanceof PlayerEntity parentOwner) {
+            } else if (target instanceof HamsterEntity parentHamster && parentHamster.getOwner() instanceof Player parentOwner) {
                 ownerPlayer = parentOwner;
             }
 
             if (ownerPlayer instanceof PlayerEntityAccessor accessor) {
-                NbtCompound nbt = new NbtCompound();
-                hamster.writeNbt(nbt); // Save full state
+                CompoundTag nbt = new CompoundTag();
+                hamster.saveWithoutId(nbt); // Save full state
 
                 // Save target (parent or player)
-                nbt.putUuid("AHPTransitTargetUuid", target.getUuid());
+                nbt.putUUID("AHPTransitTargetUuid", target.getUUID());
 
                 accessor.ahp$getInTransitHamsters().add(nbt);
                 accessor.ahp$setTransitTimer(15); // Wait 15 ticks for client to load
@@ -303,9 +303,9 @@ public final class HamsterMovementUtil {
 
         // --- Standard Vanilla Teleport ---
         // Apply a random offset so multiple hamsters don't all teleport into the exact same BlockPos and cause massive collision lag
-        int offsetX = hamster.getRandom().nextBetween(-2, 2);
-        int offsetZ = hamster.getRandom().nextBetween(-2, 2);
-        BlockPos searchStart = target.getBlockPos().add(offsetX, 0, offsetZ);
+        int offsetX = hamster.getRandom().nextIntBetweenInclusive(-2, 2);
+        int offsetZ = hamster.getRandom().nextIntBetweenInclusive(-2, 2);
+        BlockPos searchStart = target.blockPosition().offset(offsetX, 0, offsetZ);
 
         Optional<BlockPos> safePos =
                 HamsterPlacementUtil.findSafeSpawnPosition(searchStart, world, 3, hamster);
@@ -314,12 +314,12 @@ public final class HamsterMovementUtil {
         }
 
         BlockPos destination = safePos.get();
-        hamster.refreshPositionAndAngles(
+        hamster.moveTo(
                 destination.getX() + 0.5,
                 destination.getY(),
                 destination.getZ() + 0.5,
-                hamster.getYaw(),
-                hamster.getPitch());
+                hamster.getYRot(),
+                hamster.getXRot());
         hamster.getNavigation().stop();
         return TeleportResult.TELEPORTED;
     }

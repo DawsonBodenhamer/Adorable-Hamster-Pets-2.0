@@ -6,52 +6,52 @@ import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.util.ClientParticleManager;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Fertilizable;
-import net.minecraft.block.TallFlowerBlock;
-import net.minecraft.block.enums.DoubleBlockHalf;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.ItemScatterer;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
-import net.minecraft.world.WorldView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.TallFlowerBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
-public class SunflowerBlock extends TallFlowerBlock implements Fertilizable {
+public class SunflowerBlock extends TallFlowerBlock implements BonemealableBlock {
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constants and Static Utilities
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static final MapCodec<SunflowerBlock> CODEC = TallFlowerBlock.createCodec(SunflowerBlock::new);
-    public static final BooleanProperty HAS_SEEDS = BooleanProperty.of("has_seeds");
-    public static final BooleanProperty LIT = Properties.LIT; // For glowing sunflower Easter egg
+    public static final MapCodec<SunflowerBlock> CODEC = TallFlowerBlock.simpleCodec(SunflowerBlock::new);
+    public static final BooleanProperty HAS_SEEDS = BooleanProperty.create("has_seeds");
+    public static final BooleanProperty LIT = BlockStateProperties.LIT; // For glowing sunflower Easter egg
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public SunflowerBlock(Settings settings) {
+    public SunflowerBlock(Properties settings) {
         super(settings);
-        this.setDefaultState(this.stateManager.getDefaultState()
-                .with(HALF, DoubleBlockHalf.LOWER)
-                .with(HAS_SEEDS, true)
-                .with(LIT, false));
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(HALF, DoubleBlockHalf.LOWER)
+                .setValue(HAS_SEEDS, true)
+                .setValue(LIT, false));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -60,22 +60,22 @@ public class SunflowerBlock extends TallFlowerBlock implements Fertilizable {
 
     @SuppressWarnings("unchecked")
     @Override
-    public MapCodec<TallFlowerBlock> getCodec() {
+    public MapCodec<TallFlowerBlock> codec() {
         return (MapCodec<TallFlowerBlock>) (Object) CODEC;
     }
 
     @Override
-    public boolean hasRandomTicks(BlockState state) {
+    public boolean isRandomlyTicking(BlockState state) {
         // Only upper half needs ticks for regrowth or glowing
-        return state.get(HALF) == DoubleBlockHalf.UPPER;
+        return state.getValue(HALF) == DoubleBlockHalf.UPPER;
     }
 
     @Override
-    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        if (state.get(HALF) != DoubleBlockHalf.UPPER) return;
+    public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
+        if (state.getValue(HALF) != DoubleBlockHalf.UPPER) return;
 
         // --- 1. Seed Regrowth ---
-        if (!state.get(HAS_SEEDS)) {
+        if (!state.getValue(HAS_SEEDS)) {
             final AhpWorldGenConfig config = AdorableHamsterPets.WORLD_GEN_CONFIG;
 
             double modifier = config.sunflowerRegrowthModifier.get();
@@ -86,54 +86,54 @@ public class SunflowerBlock extends TallFlowerBlock implements Fertilizable {
             effectiveDenominator = Math.max(1, effectiveDenominator);
 
             if (random.nextInt(effectiveDenominator) == 0) {
-                world.setBlockState(pos, state.with(HAS_SEEDS, true), Block.NOTIFY_LISTENERS);
+                world.setBlock(pos, state.setValue(HAS_SEEDS, true), Block.UPDATE_CLIENTS);
             }
         }
 
         // --- 2. Glowing Easter Egg ---
         // Only activate if enabled, at night, and currently unlit
-        if (AdorableHamsterPets.WORLD_GEN_CONFIG.enableGlowingSunflowers && !world.isDay() && !state.get(LIT)) {
+        if (AdorableHamsterPets.WORLD_GEN_CONFIG.enableGlowingSunflowers && !world.isDay() && !state.getValue(LIT)) {
             int chance = AdorableHamsterPets.WORLD_GEN_CONFIG.glowingSunflowerChance.get();
             if (random.nextInt(chance) == 0) {
-                world.setBlockState(pos, state.with(LIT, true), Block.NOTIFY_LISTENERS);
+                world.setBlock(pos, state.setValue(LIT, true), Block.UPDATE_CLIENTS);
                 // Schedule turn-off (10-30 seconds)
-                world.scheduleBlockTick(pos, this, random.nextBetween(200, 600));
+                world.scheduleTick(pos, this, random.nextIntBetweenInclusive(200, 600));
             }
         }
 
         // --- 3. Safety Cleanup ---
         // Ensure not lit during day
-        if (state.get(LIT) && world.isDay()) {
-            world.setBlockState(pos, state.with(LIT, false), Block.NOTIFY_LISTENERS);
+        if (state.getValue(LIT) && world.isDay()) {
+            world.setBlock(pos, state.setValue(LIT, false), Block.UPDATE_CLIENTS);
         }
     }
 
     @Override
-    public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+    public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
         // Handles the scheduled turn-off for the glowing effect
         BlockState currentState = world.getBlockState(pos);
-        if (currentState.isOf(this) && currentState.get(LIT)) {
-            world.setBlockState(pos, currentState.with(LIT, false), Block.NOTIFY_LISTENERS);
+        if (currentState.is(this) && currentState.getValue(LIT)) {
+            world.setBlock(pos, currentState.setValue(LIT, false), Block.UPDATE_CLIENTS);
         }
     }
 
     @Override
-    public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
         // Prevent lighting glitches if a lit block is broken
-        if (!state.isOf(newState.getBlock())) {
-            if (state.get(LIT)) {
-                world.updateNeighborsAlways(pos, this);
+        if (!state.is(newState.getBlock())) {
+            if (state.getValue(LIT)) {
+                world.updateNeighborsAt(pos, this);
             }
         }
-        super.onStateReplaced(state, world, pos, newState, moved);
+        super.onRemove(state, world, pos, newState, moved);
     }
 
     @Override
-    public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-        super.randomDisplayTick(state, world, pos, random);
+    public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
+        super.animateTick(state, world, pos, random);
 
-        if (state.get(LIT) && state.get(HALF) == DoubleBlockHalf.UPPER) {
-            BlockPos immutablePos = pos.toImmutable();
+        if (state.getValue(LIT) && state.getValue(HALF) == DoubleBlockHalf.UPPER) {
+            BlockPos immutablePos = pos.immutable();
 
             // Delegate to centralized particle manager
             ClientParticleManager.INSTANCE.addOrUpdate(immutablePos, "sunflower_glow_ring", (w) -> {
@@ -151,77 +151,77 @@ public class SunflowerBlock extends TallFlowerBlock implements Fertilizable {
                 );
             }, (w, p) -> {
                 BlockState current = w.getBlockState(p);
-                return current.isOf(this) && current.get(LIT);
+                return current.is(this) && current.getValue(LIT);
             });
         }
     }
 
     @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+    public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
         // --- 1. Redirect Lower Clicks to Upper Half ---
-        if (state.get(HALF) == DoubleBlockHalf.LOWER) {
-            BlockPos topPos = pos.up();
+        if (state.getValue(HALF) == DoubleBlockHalf.LOWER) {
+            BlockPos topPos = pos.above();
             BlockState topState = world.getBlockState(topPos);
-            if (topState.isOf(this) && topState.get(HALF) == DoubleBlockHalf.UPPER) {
-                return this.onUse(topState, world, topPos, player, hit);
+            if (topState.is(this) && topState.getValue(HALF) == DoubleBlockHalf.UPPER) {
+                return this.useWithoutItem(topState, world, topPos, player, hit);
             }
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
 
         // --- 2. Harvest Seeds ---
-        if (state.get(HAS_SEEDS)) {
-            if (!world.isClient) {
+        if (state.getValue(HAS_SEEDS)) {
+            if (!world.isClientSide) {
                 int seedAmount = world.random.nextInt(3) + 1; // 1-3 seeds
                 ItemStack seedStack = new ItemStack(ModItems.SUNFLOWER_SEEDS.get(), seedAmount);
-                ItemScatterer.spawn(world, (double) pos.getX() + 0.5, (double) pos.getY() + 0.5, (double) pos.getZ() + 0.5, seedStack);
+                Containers.dropItemStack(world, (double) pos.getX() + 0.5, (double) pos.getY() + 0.5, (double) pos.getZ() + 0.5, seedStack);
 
-                world.setBlockState(pos, state.with(HAS_SEEDS, false), Block.NOTIFY_LISTENERS);
-                world.playSound(null, pos, SoundEvents.BLOCK_SWEET_BERRY_BUSH_PICK_BERRIES, SoundCategory.BLOCKS, 1.0f, 1.0f);
+                world.setBlock(pos, state.setValue(HAS_SEEDS, false), Block.UPDATE_CLIENTS);
+                world.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0f, 1.0f);
             }
-            return ActionResult.success(world.isClient);
+            return InteractionResult.sidedSuccess(world.isClientSide);
         }
 
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
     @Override
-    public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-        super.onPlaced(world, pos, state, placer, itemStack);
-        if (!world.isClient) {
-            BlockPos topPos = pos.up();
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+        super.setPlacedBy(world, pos, state, placer, itemStack);
+        if (!world.isClientSide) {
+            BlockPos topPos = pos.above();
             BlockState topState = world.getBlockState(topPos);
             // Newly placed sunflowers start without seeds
-            if (topState.isOf(this) && topState.get(HALF) == DoubleBlockHalf.UPPER) {
-                world.setBlockState(topPos, topState.with(HAS_SEEDS, false), Block.NOTIFY_LISTENERS);
+            if (topState.is(this) && topState.getValue(HALF) == DoubleBlockHalf.UPPER) {
+                world.setBlock(topPos, topState.setValue(HAS_SEEDS, false), Block.UPDATE_CLIENTS);
             }
         }
     }
 
     @Override
-    public ItemStack getPickStack(WorldView world, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state) {
         return new ItemStack(ModItems.SUNFLOWER_BLOCK_ITEM);
     }
 
     @Override
-    public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState neighborState, WorldAccess world, BlockPos pos, BlockPos neighborPos) {
-        return super.getStateForNeighborUpdate(state, direction, neighborState, world, pos, neighborPos);
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
+        return super.updateShape(state, direction, neighborState, world, pos, neighborPos);
     }
 
     @Override
-    public boolean isFertilizable(WorldView world, BlockPos pos, BlockState state) {
+    public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state) {
         // Allow bonemeal anywhere to duplicate the flower (vanilla behavior for tall flowers)
         return true;
     }
 
     @Override
-    public boolean canGrow(World world, Random random, BlockPos pos, BlockState state) {
+    public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void grow(ServerWorld world, Random random, BlockPos pos, BlockState state) {
+    public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
         // Vanilla behavior: drop a copy of the flower
-        dropStack(world, pos, new ItemStack(ModItems.SUNFLOWER_BLOCK_ITEM));
+        popResource(world, pos, new ItemStack(ModItems.SUNFLOWER_BLOCK_ITEM));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -229,8 +229,8 @@ public class SunflowerBlock extends TallFlowerBlock implements Fertilizable {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        super.appendProperties(builder);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(HAS_SEEDS, LIT);
     }
 }

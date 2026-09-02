@@ -7,12 +7,11 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterGeneticsAdvancementUtil;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvent;
-
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -42,7 +41,7 @@ public class HamsterMateGoal extends Goal {
     public HamsterMateGoal(HamsterEntity hamster, double speed) {
         this.hamster = hamster;
         this.speed = speed;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -50,7 +49,7 @@ public class HamsterMateGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         // Master siting check
         if (HamsterMovementUtil.shouldNotMove(this.hamster)) {
             return false;
@@ -65,7 +64,7 @@ public class HamsterMateGoal extends Goal {
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return this.targetMate != null
                 && this.targetMate.isAlive()
                 && !HamsterMovementUtil.shouldNotMove(this.hamster)
@@ -92,7 +91,7 @@ public class HamsterMateGoal extends Goal {
     @Override
     public void tick() {
         // Move towards partner; stare lovingly etc. ;D
-        this.hamster.getNavigation().startMovingTo(this.targetMate, this.speed);
+        this.hamster.getNavigation().moveTo(this.targetMate, this.speed);
         HamsterMovementUtil.faceEntity(this.hamster, this.targetMate);
         this.timer++;
 
@@ -107,10 +106,10 @@ public class HamsterMateGoal extends Goal {
 
     private HamsterEntity getNearbyMate() {
         // Scan area for willing partners
-        List<HamsterEntity> candidates = this.hamster.getWorld().getEntitiesByClass(
+        List<HamsterEntity> candidates = this.hamster.level().getEntitiesOfClass(
                 HamsterEntity.class,
-                this.hamster.getBoundingBox().expand(8.0D),
-                hamster -> hamster != this.hamster && hamster.isInCustomLove() && hamster.getBreedingAge() == 0
+                this.hamster.getBoundingBox().inflate(8.0D),
+                hamster -> hamster != this.hamster && hamster.isInCustomLove() && hamster.getAge() == 0
         );
 
         return candidates.stream().findAny().orElse(null);
@@ -123,8 +122,8 @@ public class HamsterMateGoal extends Goal {
         // --- 2. Cooldown Application ---
         final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
         int cooldown = config.breedingCooldownSeconds.get() * 20;
-        this.hamster.setBreedingAge(cooldown);
-        this.targetMate.setBreedingAge(cooldown);
+        this.hamster.setAge(cooldown);
+        this.targetMate.setAge(cooldown);
 
         // Clear love status
         this.hamster.customLoveTimer = 0;
@@ -139,29 +138,29 @@ public class HamsterMateGoal extends Goal {
         // --- 4. Determine Litter Size ---
         int min = config.litterSizeMin.get();
         int max = Math.max(min, config.litterSizeMax.get());
-        int litterSize = min >= max ? min : this.hamster.getRandom().nextBetween(min, max);
+        int litterSize = min >= max ? min : this.hamster.getRandom().nextIntBetweenInclusive(min, max);
 
         // --- 5. Spawn Litter ---
-        ServerWorld world = (ServerWorld) this.hamster.getWorld();
+        ServerLevel world = (ServerLevel) this.hamster.level();
         List<HamsterEntity> spawnedBabies = new ArrayList<>();
 
         for (int i = 0; i < litterSize; i++) {
-            HamsterEntity baby = (HamsterEntity) this.hamster.createChild(world, this.targetMate);
+            HamsterEntity baby = (HamsterEntity) this.hamster.getBreedOffspring(world, this.targetMate);
             if (baby != null) {
                 // Random scatter so they don't merge into mega-baby
                 double offsetX = (this.hamster.getRandom().nextDouble() - 0.5) * 0.5;
                 double offsetZ = (this.hamster.getRandom().nextDouble() - 0.5) * 0.5;
 
-                baby.refreshPositionAndAngles(this.hamster.getX() + offsetX, this.hamster.getY(), this.hamster.getZ() + offsetZ, 0.0F, 0.0F);
-                world.spawnEntity(baby);
+                baby.moveTo(this.hamster.getX() + offsetX, this.hamster.getY(), this.hamster.getZ() + offsetZ, 0.0F, 0.0F);
+                world.addFreshEntity(baby);
                 spawnedBabies.add(baby);
 
                 // --- Track Genetics for Advancements ---
                 // Credit owner(s) of the parents
-                if (this.hamster.getOwner() instanceof ServerPlayerEntity sp1) {
+                if (this.hamster.getOwner() instanceof ServerPlayer sp1) {
                     HamsterGeneticsAdvancementUtil.trackBredHamster(sp1, baby);
                 }
-                if (this.targetMate.getOwner() instanceof ServerPlayerEntity sp2 && sp2 != this.hamster.getOwner()) {
+                if (this.targetMate.getOwner() instanceof ServerPlayer sp2 && sp2 != this.hamster.getOwner()) {
                     HamsterGeneticsAdvancementUtil.trackBredHamster(sp2, baby);
                 }
             }
@@ -185,7 +184,7 @@ public class HamsterMateGoal extends Goal {
     }
 
     private void scheduleCelebration(HamsterEntity parent, HamsterEntity targetBaby) {
-        long currentTime = parent.getWorld().getTime();
+        long currentTime = parent.level().getGameTime();
 
         // Lock out AI goals and face designated baby
         parent.setCelebratingBaby(true);
@@ -216,7 +215,7 @@ public class HamsterMateGoal extends Goal {
             // Sound Effects
             SoundEvent affectionSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, parent.getRandom());
             if (affectionSound != null) {
-                parent.playSound(affectionSound, 1.0f, parent.getSoundPitch());
+                parent.playSound(affectionSound, 1.0f, parent.getVoicePitch());
             }
         });
 

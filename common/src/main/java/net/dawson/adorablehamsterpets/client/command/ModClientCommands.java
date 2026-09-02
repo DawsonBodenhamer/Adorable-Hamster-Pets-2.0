@@ -5,22 +5,22 @@ import dev.architectury.event.events.client.ClientCommandRegistrationEvent;
 import me.fzzyhmstrs.fzzy_config.api.ConfigApiJava;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.util.HamsterTextureUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 
 public class ModClientCommands {
-    public static void register(CommandDispatcher<ClientCommandRegistrationEvent.ClientCommandSourceStack> dispatcher, CommandRegistryAccess registryAccess) {
+    public static void register(CommandDispatcher<ClientCommandRegistrationEvent.ClientCommandSourceStack> dispatcher, CommandBuildContext registryAccess) {
         dispatcher.register(ClientCommandRegistrationEvent.literal("ahp_print_currently_rendered_hamster_textures_to_disc")
                 .executes(context -> {
-                    MinecraftClient.getInstance().getSoundManager().play(
-                            PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F)
+                    Minecraft.getInstance().getSoundManager().play(
+                            SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F)
                     );
 
-                    HamsterTextureUtil.dumpAllCachedTextures(MinecraftClient.getInstance().player);
+                    HamsterTextureUtil.dumpAllCachedTextures(Minecraft.getInstance().player);
                     return 1;
                 })
         );
@@ -28,8 +28,8 @@ public class ModClientCommands {
         dispatcher.register(ClientCommandRegistrationEvent.literal("ahp_open_config_screen")
                 .executes(context -> {
 
-                    MinecraftClient.getInstance().getSoundManager().play(
-                            PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F)
+                    Minecraft.getInstance().getSoundManager().play(
+                            SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F)
                     );
 
                     // Root config screen
@@ -44,12 +44,12 @@ public class ModClientCommands {
                     Configs.AHP_UI.enableThrowCancellationWarning = false;
                     Configs.AHP_UI.save();
 
-                    MinecraftClient.getInstance().getSoundManager().play(
-                            PositionedSoundInstance.master(SoundEvents.BLOCK_NOTE_BLOCK_BASS, 1.5F)
+                    Minecraft.getInstance().getSoundManager().play(
+                            SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_BASS, 1.5F)
                     );
 
-                    if (MinecraftClient.getInstance().player != null) {
-                        MinecraftClient.getInstance().player.sendMessage(Text.translatable("message.adorablehamsterpets.throw_warning.disabled").formatted(Formatting.YELLOW), false);
+                    if (Minecraft.getInstance().player != null) {
+                        Minecraft.getInstance().player.displayClientMessage(Component.translatable("message.adorablehamsterpets.throw_warning.disabled").withStyle(ChatFormatting.YELLOW), false);
                     }
                     return 1;
                 })

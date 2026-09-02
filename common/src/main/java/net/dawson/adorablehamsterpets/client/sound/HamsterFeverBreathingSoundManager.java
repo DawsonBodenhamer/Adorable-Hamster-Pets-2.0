@@ -2,9 +2,8 @@ package net.dawson.adorablehamsterpets.client.sound;
 
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.Entity;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,15 +28,15 @@ public final class HamsterFeverBreathingSoundManager {
      *        Lifecycle
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public void tick(MinecraftClient client) {
-        if (client.world == null) {
+    public void tick(Minecraft client) {
+        if (client.level == null) {
             this.reset(client);
             return;
         }
 
         this.removeStoppedSounds(client);
 
-        for (Entity entity : client.world.getEntities()) {
+        for (Entity entity : client.level.entitiesForRendering()) {
             if (entity instanceof HamsterEntity hamster
                     && hamster.isAlive()
                     && !hamster.isRemoved()
@@ -47,7 +46,7 @@ public final class HamsterFeverBreathingSoundManager {
         }
     }
 
-    public void reset(MinecraftClient client) {
+    public void reset(Minecraft client) {
         for (HamsterFeverBreathingSoundInstance sound : this.activeSounds.values()) {
             sound.markDone();
             client.getSoundManager().stop(sound);
@@ -59,15 +58,15 @@ public final class HamsterFeverBreathingSoundManager {
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private void removeStoppedSounds(MinecraftClient client) {
+    private void removeStoppedSounds(Minecraft client) {
         Iterator<Map.Entry<UUID, HamsterFeverBreathingSoundInstance>> iterator =
                 this.activeSounds.entrySet().iterator();
         while (iterator.hasNext()) {
             HamsterFeverBreathingSoundInstance sound = iterator.next().getValue();
-            if (sound.isDone()
+            if (sound.isStopped()
                     || !sound.shouldRemainActive()
-                    || !sound.belongsTo(client.world)
-                    || !client.getSoundManager().isPlaying(sound)) {
+                    || !sound.belongsTo(client.level)
+                    || !client.getSoundManager().isActive(sound)) {
                 sound.markDone();
                 client.getSoundManager().stop(sound);
                 iterator.remove();
@@ -75,8 +74,8 @@ public final class HamsterFeverBreathingSoundManager {
         }
     }
 
-    private void ensureSoundPlaying(MinecraftClient client, HamsterEntity hamster) {
-        HamsterFeverBreathingSoundInstance activeSound = this.activeSounds.get(hamster.getUuid());
+    private void ensureSoundPlaying(Minecraft client, HamsterEntity hamster) {
+        HamsterFeverBreathingSoundInstance activeSound = this.activeSounds.get(hamster.getUUID());
         if (activeSound != null && activeSound.belongsTo(hamster)) return;
 
         if (activeSound != null) {
@@ -88,7 +87,7 @@ public final class HamsterFeverBreathingSoundManager {
                 hamster,
                 ModSounds.getRandomTimedBreathingSound(hamster.getRandom())
         );
-        this.activeSounds.put(hamster.getUuid(), newSound);
+        this.activeSounds.put(hamster.getUUID(), newSound);
         client.getSoundManager().play(newSound);
     }
 }

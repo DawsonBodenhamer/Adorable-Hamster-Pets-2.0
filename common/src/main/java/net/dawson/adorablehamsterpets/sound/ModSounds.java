@@ -4,21 +4,20 @@ import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.mixin.accessor.LivingEntityInvoker;
-import net.minecraft.block.BlockState;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.vehicle.AbstractMinecartEntity;
-import net.minecraft.entity.vehicle.BoatEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.random.Random;
-
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import java.util.List;
 
 public class ModSounds {
@@ -43,7 +42,7 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
      *        Constants
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(AdorableHamsterPets.MOD_ID, RegistryKeys.SOUND_EVENT);
+    public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(AdorableHamsterPets.MOD_ID, Registries.SOUND_EVENT);
 
     // --- Ambient Weather Sounds ---
     public static final RegistrySupplier<SoundEvent> GENTLE_BREEZE = registerSoundEvent("gentle_breeze"); // Used for hamster bedding particles
@@ -354,10 +353,10 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
      */
     public static SoundEvent getDynamicItemSound(ItemStack stack) {
         if (stack.isEmpty()) {
-            return SoundEvents.BLOCK_WOOL_PLACE; // Fallback for safety
+            return SoundEvents.WOOL_PLACE; // Fallback for safety
         }
         Item item = stack.getItem();
-        String translationKey = item.getTranslationKey();
+        String translationKey = item.getDescriptionId();
 
         // --- Keyword Lists ---
         List<String> clinkKeywords = List.of(
@@ -396,12 +395,12 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
         }
         for (String keyword : stoneKeywords) {
             if (translationKey.contains(keyword)) {
-                return SoundEvents.BLOCK_STONE_PLACE; // "Scuff" (for stony items)
+                return SoundEvents.STONE_PLACE; // "Scuff" (for stony items)
             }
         }
         for (String keyword : woodKeywords) {
             if (translationKey.contains(keyword)) {
-                return SoundEvents.BLOCK_WOOD_PLACE; // "Thud" (for wooden items)
+                return SoundEvents.WOOD_PLACE; // "Thud" (for wooden items)
             }
         }
         for (String keyword : squishKeywords) {
@@ -409,12 +408,12 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
                 return ModSounds.CHEESE_USE_SOUND.get(); // "Squish" (for wet/moist items)
             }
         }
-        if (item.getComponents().contains(DataComponentTypes.FOOD)) {
-            return SoundEvents.ENTITY_GENERIC_EAT; // "Crunch" (for food items)
+        if (item.components().has(DataComponents.FOOD)) {
+            return SoundEvents.GENERIC_EAT; // "Crunch" (for food items)
         }
 
         // --- Fallback ---
-        return SoundEvents.BLOCK_WOOL_PLACE; // "Fump" (for generic/soft items)
+        return SoundEvents.WOOL_PLACE; // "Fump" (for generic/soft items)
     }
 
     /**
@@ -425,13 +424,13 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
      * @return The normalized volume multiplier.
      */
     public static float getDynamicSoundVolume(SoundEvent sound) {
-        return (sound == SoundEvents.ENTITY_GENERIC_EAT) ? 0.35f : 1.0f;
+        return (sound == SoundEvents.GENERIC_EAT) ? 0.35f : 1.0f;
     }
 
     /**
      * Selects a random sound event from a provided list of suppliers.
      */
-    public static SoundEvent getRandomSoundFrom(List<RegistrySupplier<SoundEvent>> sounds, Random random) {
+    public static SoundEvent getRandomSoundFrom(List<RegistrySupplier<SoundEvent>> sounds, RandomSource random) {
         if (sounds == null || sounds.isEmpty()) {
             AdorableHamsterPets.LOGGER.warn("Attempted to get random sound from empty or null list");
             return null;
@@ -439,11 +438,11 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
         return sounds.get(random.nextInt(sounds.size())).get();
     }
 
-    public static TimedSound getRandomTimedShiverSound(Random random) {
+    public static TimedSound getRandomTimedShiverSound(RandomSource random) {
         return HAMSTER_SHIVER_TIMED_SOUNDS.get(random.nextInt(HAMSTER_SHIVER_TIMED_SOUNDS.size()));
     }
 
-    public static TimedSound getRandomTimedBreathingSound(Random random) {
+    public static TimedSound getRandomTimedBreathingSound(RandomSource random) {
         return HAMSTER_LABORED_BREATHING_TIMED_SOUNDS.get(random.nextInt(HAMSTER_LABORED_BREATHING_TIMED_SOUNDS.size()));
     }
 
@@ -452,9 +451,9 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
      */
     public static SoundEvent getDynamicBlockSound(BlockState state) {
         if (state == null || state.isAir()) {
-            return SoundEvents.ENTITY_GENERIC_SMALL_FALL;
+            return SoundEvents.GENERIC_SMALL_FALL;
         }
-        return state.getSoundGroup().getFallSound();
+        return state.getSoundType().getFallSound();
     }
 
     /**
@@ -474,11 +473,11 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
         }
 
         // Fallbacks for common non-living entities
-        if (entity instanceof AbstractMinecartEntity) return SoundEvents.ENTITY_MINECART_RIDING;
-        if (entity instanceof BoatEntity) return SoundEvents.ENTITY_BOAT_PADDLE_LAND;
+        if (entity instanceof AbstractMinecart) return SoundEvents.MINECART_RIDING;
+        if (entity instanceof Boat) return SoundEvents.BOAT_PADDLE_LAND;
 
         // --- Fallback ---
-        return SoundEvents.ENTITY_GENERIC_SMALL_FALL;
+        return SoundEvents.GENERIC_SMALL_FALL;
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -486,7 +485,7 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private static RegistrySupplier<SoundEvent> registerSoundEvent(String name) {
-        Identifier id = Identifier.of(AdorableHamsterPets.MOD_ID, name);
-        return SOUND_EVENTS.register(id, () -> SoundEvent.of(id));
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, name);
+        return SOUND_EVENTS.register(id, () -> SoundEvent.createVariableRangeEvent(id));
     }
 }

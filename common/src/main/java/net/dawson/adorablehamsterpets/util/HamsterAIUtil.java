@@ -3,20 +3,19 @@ package net.dawson.adorablehamsterpets.util;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.JukeboxBlockEntity;
-import net.minecraft.block.jukebox.JukeboxSong;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.LoreComponent;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.JukeboxSong;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
+import net.minecraft.world.level.pathfinder.PathType;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -40,21 +39,21 @@ public final class HamsterAIUtil {
      */
     public static Optional<ItemEntity> findReachableItem(HamsterEntity hamster, double radius, Predicate<ItemEntity> filter) {
         // Temporarily clear water penalty to allow pathing into water if that's where item is
-        float oldWaterPenalty = hamster.getPathfindingPenalty(PathNodeType.WATER);
-        hamster.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
+        float oldWaterPenalty = hamster.getPathfindingMalus(PathType.WATER);
+        hamster.setPathfindingMalus(PathType.WATER, 0.0F);
 
-        List<ItemEntity> nearbyItems = hamster.getWorld().getEntitiesByClass(
+        List<ItemEntity> nearbyItems = hamster.level().getEntitiesOfClass(
                 ItemEntity.class,
-                hamster.getBoundingBox().expand(radius),
+                hamster.getBoundingBox().inflate(radius),
                 itemEntity -> !itemEntity.isRemoved() && filter.test(itemEntity)
         );
 
         Optional<ItemEntity> closestItem = nearbyItems.stream()
-                .filter(item -> hamster.getNavigation().findPathTo(item, 1) != null)
+                .filter(item -> hamster.getNavigation().createPath(item, 1) != null)
                 .min((item1, item2) -> Float.compare(item1.distanceTo(hamster), item2.distanceTo(hamster)));
 
         // Restore penalty after evaluation
-        hamster.setPathfindingPenalty(PathNodeType.WATER, oldWaterPenalty);
+        hamster.setPathfindingMalus(PathType.WATER, oldWaterPenalty);
 
         return closestItem;
     }
@@ -82,7 +81,7 @@ public final class HamsterAIUtil {
         }
 
         // --- 2. Handle External Interruptions ---
-        if (hamster.isKnockedOut() || !hamster.isSitting()) {
+        if (hamster.isKnockedOut() || !hamster.isOrderedToSit()) {
             if (hamster.getHamsterFlag(HamsterEntity.CLEANING_FLAG)) {
                 hamster.setHamsterFlag(HamsterEntity.CLEANING_FLAG, false);
             }
@@ -91,7 +90,7 @@ public final class HamsterAIUtil {
         }
 
         // --- 3. Evaluate Start Conditions ---
-        if (!hamster.isTamed() || hamster.ambientSittingCooldown > 0 || hamster.ambientSittingTimer > 0) {
+        if (!hamster.isTame() || hamster.ambientSittingCooldown > 0 || hamster.ambientSittingTimer > 0) {
             return;
         }
 
@@ -103,12 +102,12 @@ public final class HamsterAIUtil {
 
         // --- 4. Roll for Behaviors ---
         // Order technically dictates priority if both hit on same tick
-        Random random = hamster.getRandom();
+        RandomSource random = hamster.getRandom();
 
         // Behavior A: Looping Cleaning Animation
         int cleaningChance = Configs.AHP_MAIN.cleaningChanceDenominator.get();
         if (cleaningChance > 0 && random.nextInt(cleaningChance) == 0) {
-            hamster.ambientSittingTimer = random.nextBetween(30, 60);
+            hamster.ambientSittingTimer = random.nextIntBetweenInclusive(30, 60);
             hamster.setHamsterFlag(HamsterEntity.CLEANING_FLAG, true);
             return; // Exit after successful trigger
         }
@@ -128,13 +127,13 @@ public final class HamsterAIUtil {
      * custom discs to which the hamster is intended to dance.
      */
     public static boolean isDancingSongPlayingNearby(HamsterEntity hamster) {
-        World world = hamster.getWorld();
+        Level world = hamster.level();
 
-        for (BlockPos p : BlockPos.iterateOutwards(hamster.getBlockPos(), 8, 4, 8)) {
-            if (world.getBlockState(p).isOf(Blocks.JUKEBOX)) {
+        for (BlockPos p : BlockPos.withinManhattan(hamster.blockPosition(), 8, 4, 8)) {
+            if (world.getBlockState(p).is(Blocks.JUKEBOX)) {
                 if (world.getBlockEntity(p) instanceof JukeboxBlockEntity jbe) {
-                    if (jbe.getManager().isPlaying() && jbe.getManager().getSong() != null) {
-                        JukeboxSong song = jbe.getManager().getSong();
+                    if (jbe.getSongPlayer().isPlaying() && jbe.getSongPlayer().getSong() != null) {
+                        JukeboxSong song = jbe.getSongPlayer().getSong();
 
                         // Check AHP theme song
                         SoundEvent currentSong = song.soundEvent().value();
@@ -146,12 +145,12 @@ public final class HamsterAIUtil {
 
                         // Check dynamic config strings
                         if (!Configs.AHP_ITEMS.dancingMusicDiscStrings.isEmpty()) {
-                            ItemStack discStack = jbe.getStack();
+                            ItemStack discStack = jbe.getTheItem();
                             String songDesc = song.description().getString().toLowerCase(Locale.ROOT);
-                            String itemName = discStack.getName().getString().toLowerCase(Locale.ROOT);
-                            String itemKey = discStack.getTranslationKey().toLowerCase(Locale.ROOT);
+                            String itemName = discStack.getHoverName().getString().toLowerCase(Locale.ROOT);
+                            String itemKey = discStack.getDescriptionId().toLowerCase(Locale.ROOT);
 
-                            LoreComponent lore = discStack.get(DataComponentTypes.LORE);
+                            ItemLore lore = discStack.get(DataComponents.LORE);
 
                             for (String searchStr : Configs.AHP_ITEMS.dancingMusicDiscStrings) {
                                 String lowerSearch = searchStr.toLowerCase(Locale.ROOT);
@@ -161,7 +160,7 @@ public final class HamsterAIUtil {
                                 }
 
                                 if (lore != null) {
-                                    for (Text line : lore.lines()) {
+                                    for (Component line : lore.lines()) {
                                         if (line.getString().toLowerCase(Locale.ROOT).contains(lowerSearch)) {
                                             return true;
                                         }

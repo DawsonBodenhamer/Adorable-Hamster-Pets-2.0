@@ -1,8 +1,8 @@
 package net.dawson.adorablehamsterpets.item.custom;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.item.Item;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 
 /**
  * Custom item class for Hamster Armor.
@@ -12,10 +12,10 @@ import net.minecraft.util.Identifier;
 public class HamsterArmorItem extends Item {
 
     private final HamsterArmorMaterial material;
-    private final Identifier entityTexture;
+    private final ResourceLocation entityTexture;
 
-    public HamsterArmorItem(HamsterArmorMaterial material, Settings settings) {
-        super(settings.maxDamage(material.getDurability()));
+    public HamsterArmorItem(HamsterArmorMaterial material, Properties settings) {
+        super(settings.durability(material.getDurability()));
         this.material = material;
 
         // --- Fix Texture Path Generation ---
@@ -29,19 +29,19 @@ public class HamsterArmorItem extends Item {
             fileName = "acorn_armor_" + material.getName();
         }
 
-        this.entityTexture = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/armor/" + fileName + ".png");
+        this.entityTexture = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/armor/" + fileName + ".png");
     }
 
     public HamsterArmorMaterial getMaterial() {
         return material;
     }
 
-    public Identifier getEntityTexture() {
+    public ResourceLocation getEntityTexture() {
         return entityTexture;
     }
 
     @Override
-    public int getEnchantability() {
+    public int getEnchantmentValue() {
         return this.material.getEnchantability();
     }
 

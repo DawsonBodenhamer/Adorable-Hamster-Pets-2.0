@@ -7,48 +7,47 @@ import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.World;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 public class HamsterBeddingItem extends Item {
-    public HamsterBeddingItem(Settings settings) {
+    public HamsterBeddingItem(Properties settings) {
         super(settings);
     }
 
     @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        ItemStack stack = user.getStackInHand(hand);
+    public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+        ItemStack stack = user.getItemInHand(hand);
 
-        if (world.isClient) {
+        if (world.isClientSide) {
             // Perform a raycast to see what the player is looking at
-            BlockHitResult hitResult = raycast(world, user, RaycastContext.FluidHandling.NONE);
-            Vec3d particlePos;
+            BlockHitResult hitResult = getPlayerPOVHitResult(world, user, ClipContext.Fluid.NONE);
+            Vec3 particlePos;
 
             if (hitResult.getType() == HitResult.Type.BLOCK) {
                 // Player is looking at a block, spawn particles in the adjacent air block
-                BlockPos adjacentPos = hitResult.getBlockPos().offset(hitResult.getSide());
-                particlePos = Vec3d.ofCenter(adjacentPos);
+                BlockPos adjacentPos = hitResult.getBlockPos().relative(hitResult.getDirection());
+                particlePos = Vec3.atCenterOf(adjacentPos);
             } else {
                 // Player is looking at the air, spawn particles in front of them
-                particlePos = user.getEyePos().add(user.getRotationVec(1.0f).multiply(1.5));
+                particlePos = user.getEyePosition().add(user.getViewVector(1.0f).scale(1.5));
             }
 
             // Spawn a puff of leaf particles
@@ -64,34 +63,34 @@ public class HamsterBeddingItem extends Item {
             // Play leaf sound
             SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, world.random);
             if (rustleSound != null) {
-                world.playSound(user, user.getBlockPos(), rustleSound, SoundCategory.PLAYERS, 0.2f, 1.5f);
+                world.playSound(user, user.blockPosition(), rustleSound, SoundSource.PLAYERS, 0.2f, 1.5f);
             }
         }
 
         // Trigger advancement on server
-        if (!world.isClient && user instanceof ServerPlayerEntity serverPlayer) {
+        if (!world.isClientSide && user instanceof ServerPlayer serverPlayer) {
             ModCriteria.USED_HAMSTER_BEDDING.get().trigger(serverPlayer);
         }
 
-        return TypedActionResult.success(stack, world.isClient());
+        return InteractionResultHolder.sidedSuccess(stack, world.isClientSide());
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
         if (Configs.AHP_UI.enableItemTooltips) {
             if (Screen.hasShiftDown()) {
                 // --- Expanded Tooltip (Shift) ---
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint1").formatted(Formatting.GOLD));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint2").formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint3").formatted(Formatting.GRAY));
+                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint1").withStyle(ChatFormatting.GOLD));
+                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint2").withStyle(ChatFormatting.GRAY));
+                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint3").withStyle(ChatFormatting.GRAY));
             } else {
                 // --- Default Tooltip ---
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint1").formatted(Formatting.GOLD));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.shift_for_info").formatted(Formatting.DARK_GRAY));
+                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint1").withStyle(ChatFormatting.GOLD));
+                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.shift_for_info").withStyle(ChatFormatting.DARK_GRAY));
             }
         } else if (!Platform.isModLoaded("emi")) {
-            tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
+            tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
         }
-        super.appendTooltip(stack, context, tooltip, type);
+        super.appendHoverText(stack, context, tooltip, type);
     }
 }

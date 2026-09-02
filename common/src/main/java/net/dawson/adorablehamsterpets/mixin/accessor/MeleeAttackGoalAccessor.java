@@ -1,6 +1,6 @@
 package net.dawson.adorablehamsterpets.mixin.accessor;
 
-import net.minecraft.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -15,6 +15,6 @@ public interface MeleeAttackGoalAccessor {
      * Provides write access to the cooldown field in MeleeAttackGoal.
      * @param cooldown The new value for the cooldown timer.
      */
-    @Accessor("cooldown")
+    @Accessor("ticksUntilNextAttack")
     void setCooldown(int cooldown);
 }

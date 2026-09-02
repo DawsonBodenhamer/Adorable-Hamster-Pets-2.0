@@ -4,34 +4,32 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.util.HamsterState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.client.renderer.ShoulderHamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.feature.FeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRendererContext;
-import net.minecraft.client.render.entity.model.PlayerEntityModel;
-import net.minecraft.client.util.SkinTextures;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.RotationAxis;
-import net.minecraft.world.World;
 import org.joml.Matrix4f;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
-
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -41,7 +39,7 @@ import java.util.Map;
  */
 
 public class HamsterShoulderFeatureRenderer
-        extends FeatureRenderer<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>> {
+        extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
     // --- 1. Constants ---
     private static final float HAMSTER_SHOULDER_SCALE = 0.8f;
@@ -51,15 +49,15 @@ public class HamsterShoulderFeatureRenderer
 
     // --- 3. Constructor ---
     public HamsterShoulderFeatureRenderer(
-            FeatureRendererContext<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>> context
+            RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> context
     ) {
         super(context);
     }
 
     // --- 4. Public Methods (Overrides from FeatureRenderer) ---
     @Override
-    public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light,
-                       AbstractClientPlayerEntity player, float limbAngle, float limbDistance,
+    public void render(PoseStack matrices, MultiBufferSource vertexConsumers, int light,
+                       AbstractClientPlayer player, float limbAngle, float limbDistance,
                        float tickDelta, float animationProgress, float headYaw, float headPitch) {
 
         PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
@@ -84,7 +82,7 @@ public class HamsterShoulderFeatureRenderer
 
         // --- Render Hamster for Each Occupied Slot ---
         for (ShoulderLocation location : ShoulderLocation.values()) {
-            NbtCompound shoulderNbt = playerAccessor.getShoulderHamster(location);
+            CompoundTag shoulderNbt = playerAccessor.getShoulderHamster(location);
             if (!shoulderNbt.isEmpty()) {
                 HamsterState.fromNbt(shoulderNbt).ifPresent(hamsterState ->
                         renderShoulderHamster(matrices, vertexConsumers, light, player, hamsterState, tickDelta, clientData, location)
@@ -113,21 +111,21 @@ public class HamsterShoulderFeatureRenderer
      * Applies visual data from the stored shoulder NBT to a specific dummy entity.
      * This ensures the rendered model has the correct appearance (variant, age, cheeks, etc.).
      */
-    private void applyHamsterState(HamsterEntity dummyHamster, HamsterState data, PlayerEntity owner) {
+    private void applyHamsterState(HamsterEntity dummyHamster, HamsterState data, Player owner) {
         // --- Apply Visual Data ---
         dummyHamster.setGenome(HamsterGenome.readFromNbt(data.genomeNbt()));
         dummyHamster.setLeftCheekFull((data.hamsterFlags() & HamsterEntity.LEFT_CHEEK_FULL_FLAG) != 0);
         dummyHamster.setRightCheekFull((data.hamsterFlags() & HamsterEntity.RIGHT_CHEEK_FULL_FLAG) != 0);
-        dummyHamster.getDataTracker().set(HamsterEntity.FLOWER_POS, data.flowerPosition());
-        dummyHamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
+        dummyHamster.getEntityData().set(HamsterEntity.FLOWER_POS, data.flowerPosition());
+        dummyHamster.getEntityData().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
         dummyHamster.setArmorVisible(data.armorVisible());
-        dummyHamster.setBreedingAge(data.breedingAge());
-        dummyHamster.getDataTracker().set(HamsterEntity.EXACT_AGE, data.breedingAge());
+        dummyHamster.setAge(data.breedingAge());
+        dummyHamster.getEntityData().set(HamsterEntity.EXACT_AGE, data.breedingAge());
         dummyHamster.setBaby(data.breedingAge() < 0);
 
         // --- Apply Core Flags ---
         // Restore all states from when the hamster was picked up
-        dummyHamster.getDataTracker().set(HamsterEntity.HAMSTER_FLAGS, data.hamsterFlags());
+        dummyHamster.getEntityData().set(HamsterEntity.HAMSTER_FLAGS, data.hamsterFlags());
 
         // --- Mark as shoulder hamster for animation controller ---
         dummyHamster.setShoulderPet(true);
@@ -136,7 +134,7 @@ public class HamsterShoulderFeatureRenderer
         dummyHamster.setCustomName(null);
         data.customName().ifPresent(name -> {
             if (!name.isEmpty()) {
-                dummyHamster.setCustomName(Text.literal(name));
+                dummyHamster.setCustomName(Component.literal(name));
             }
         });
 
@@ -146,30 +144,30 @@ public class HamsterShoulderFeatureRenderer
 
         if (!data.inventoryNbt().isEmpty()) {
             // Use the owner's registry manager since we are on the client
-            RegistryWrapper.WrapperLookup registries = owner.getRegistryManager();
+            HolderLookup.Provider registries = owner.registryAccess();
 
             // Populate the dummy's inventory from NBT
-            Inventories.readNbt(data.inventoryNbt(), dummyHamster.getItems(), registries);
+            ContainerHelper.loadAllItems(data.inventoryNbt(), dummyHamster.getItems(), registries);
 
             // Force update the tracked data fields so the RenderLayers can see the items
             HamsterInventoryUtil.syncEquipmentTrackers(dummyHamster);
         }
 
         // --- Set Ownership for Animation Logic ---
-        dummyHamster.setOwnerUuid(owner.getUuid());
-        dummyHamster.setTamed(true, false); // No attribute update needed
+        dummyHamster.setOwnerUUID(owner.getUUID());
+        dummyHamster.setTame(true, false); // No attribute update needed
     }
 
     /**
      * Renders the GeckoLib model on the player's shoulder with appropriate transformations and animations.
      */
     private void renderShoulderHamster(
-            MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light,
-            AbstractClientPlayerEntity player, HamsterState hamsterState, float tickDelta,
+            PoseStack matrices, MultiBufferSource vertexConsumers, int light,
+            AbstractClientPlayer player, HamsterState hamsterState, float tickDelta,
             ClientShoulderHamsterData clientData, ShoulderLocation location
     ) {
         // --- 1. Get the player's personal dummy entity to prevent animation bleed across different players ---
-        HamsterEntity dummyHamster = clientData.getOrCreateDummy(location, player.getWorld());
+        HamsterEntity dummyHamster = clientData.getOrCreateDummy(location, player.level());
         ShoulderHamsterRenderer hamsterRenderer = this.hamsterRenderers.get(location);
         if (dummyHamster == null || hamsterRenderer == null) return;
 
@@ -181,7 +179,7 @@ public class HamsterShoulderFeatureRenderer
         // from "bleeding" between different hamsters during multi-pass rendering.
         // I'm detecting these multi-passes (and game pauses/server lag, because those
         // also cause this) by checking if the render time hasn't changed.
-        double currentTick = dummyHamster.age + tickDelta;
+        double currentTick = dummyHamster.tickCount + tickDelta;
         AnimatableInstanceCache cache = dummyHamster.getAnimatableInstanceCache();
         if (cache != null) {
             AnimatableManager<?> manager = cache.getManagerForId(dummyHamster.getId());
@@ -199,16 +197,16 @@ public class HamsterShoulderFeatureRenderer
         float renderScaleY = clientData.getRenderScaleY(location, tickDelta);
         dummyHamster.dynamicScaleY = renderScaleY; // Set the scale on the dummy entity
 
-        matrices.push();
+        matrices.pushPose();
 
         // --- 4. Apply Transformations Based on Location ---
-        ItemStack chestStack = player.getInventory().getArmorStack(2);
-        boolean isWearingChestplate = !chestStack.isEmpty() && !chestStack.isOf(Items.ELYTRA);
-        boolean isSlim = player.getSkinTextures().model() == SkinTextures.Model.SLIM;
+        ItemStack chestStack = player.getInventory().getArmor(2);
+        boolean isWearingChestplate = !chestStack.isEmpty() && !chestStack.is(Items.ELYTRA);
+        boolean isSlim = player.getSkin().model() == PlayerSkin.Model.SLIM;
 
         switch (location) {
             case RIGHT_SHOULDER -> {
-                this.getContextModel().rightArm.rotate(matrices);
+                this.getParentModel().rightArm.translateAndRotate(matrices);
                 float xOffset, yOffset;
                 if (isWearingChestplate) {
                     // Universal offsets for when armor is worn
@@ -220,10 +218,10 @@ public class HamsterShoulderFeatureRenderer
                     yOffset = -0.12F;
                 }
                 matrices.translate(xOffset, yOffset, -0.016F);
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(15.0F));
+                matrices.mulPose(Axis.YP.rotationDegrees(15.0F));
             }
             case LEFT_SHOULDER -> {
-                this.getContextModel().leftArm.rotate(matrices);
+                this.getParentModel().leftArm.translateAndRotate(matrices);
                 float xOffset, yOffset;
                 if (isWearingChestplate) {
                     // Universal offsets for when armor is worn
@@ -235,10 +233,10 @@ public class HamsterShoulderFeatureRenderer
                     yOffset = -0.12F;
                 }
                 matrices.translate(xOffset, yOffset, -0.016F);
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-15.0F));
+                matrices.mulPose(Axis.YP.rotationDegrees(-15.0F));
             }
             case HEAD -> {
-                this.getContextModel().head.rotate(matrices);
+                this.getParentModel().head.translateAndRotate(matrices);
                 matrices.translate(0.0F, -0.5F, -0.05F);
             }
         }
@@ -248,14 +246,14 @@ public class HamsterShoulderFeatureRenderer
         // into the model's "up is negative" local coordinate space.
         matrices.translate(0.0F, -renderOffsetY, 0.0F);
 
-        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(180.0F));
+        matrices.mulPose(Axis.XP.rotationDegrees(180.0F));
         matrices.scale(HAMSTER_SHOULDER_SCALE, HAMSTER_SHOULDER_SCALE, HAMSTER_SHOULDER_SCALE);
-        float renderYaw = 180.0F - player.getBodyYaw();
+        float renderYaw = 180.0F - player.getVisualRotationYInDegrees();
 
         // --- 6. Render the Dummy Entity ---
         hamsterRenderer.render(dummyHamster, renderYaw, tickDelta, matrices, vertexConsumers, light);
 
-        matrices.pop();
+        matrices.popPose();
     }
 
     /**
@@ -265,11 +263,11 @@ public class HamsterShoulderFeatureRenderer
      * @param anchorBone The ModelPart (e.g., head, rightArm) to measure.
      * @return The world-space Y-coordinate of the bone's pivot point.
      */
-    private double getAnchorBoneWorldY(MatrixStack matrices, ModelPart anchorBone) {
-        MatrixStack tempMatrices = new MatrixStack();
-        tempMatrices.multiplyPositionMatrix(matrices.peek().getPositionMatrix());
-        anchorBone.rotate(tempMatrices);
-        Matrix4f finalMatrix = tempMatrices.peek().getPositionMatrix();
+    private double getAnchorBoneWorldY(PoseStack matrices, ModelPart anchorBone) {
+        PoseStack tempMatrices = new PoseStack();
+        tempMatrices.mulPose(matrices.last().pose());
+        anchorBone.translateAndRotate(tempMatrices);
+        Matrix4f finalMatrix = tempMatrices.last().pose();
         // The Y translation component is at index m31 in a Matrix4f
         return finalMatrix.m31();
     }
@@ -278,21 +276,21 @@ public class HamsterShoulderFeatureRenderer
      * Applies all pre-calculated state to the dummy entity right before rendering.
      * This is the final step that bridges the client-thread logic with the render-thread object.
      */
-    private void updateDummyState(HamsterEntity dummyHamster, HamsterState nbtData, ClientShoulderHamsterData clientData, ShoulderLocation location, PlayerEntity owner) {
+    private void updateDummyState(HamsterEntity dummyHamster, HamsterState nbtData, ClientShoulderHamsterData clientData, ShoulderLocation location, Player owner) {
         // --- 1. Apply visual data from NBT ---
         applyHamsterState(dummyHamster, nbtData, owner);
 
         // --- 2. Apply animation clock from client data ---
-        dummyHamster.age = clientData.getAnimationAge(location);
+        dummyHamster.tickCount = clientData.getAnimationAge(location);
 
         // Sync position so audio/particle keyframes play at the player's location instead of world origin
-        dummyHamster.setPosition(owner.getX(), owner.getY(), owner.getZ());
+        dummyHamster.setPos(owner.getX(), owner.getY(), owner.getZ());
 
         // --- 3. Apply animation state from client data ---
         ShoulderHamsterState state = clientData.getHamsterState(location);
         if (state != null) {
             ShoulderAnimationState currentState = state.getCurrentState();
-            dummyHamster.getDataTracker().set(HamsterEntity.SHOULDER_ANIMATION_STATE, currentState.ordinal());
+            dummyHamster.getEntityData().set(HamsterEntity.SHOULDER_ANIMATION_STATE, currentState.ordinal());
             dummyHamster.setSitting(currentState == ShoulderAnimationState.SITTING, true);
         }
 
@@ -304,15 +302,15 @@ public class HamsterShoulderFeatureRenderer
      * Initializes specialized shoulder hamster renderers, one for each shoulder location.
      */
     private void initializeRenderers() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        EntityRendererFactory.Context context = new EntityRendererFactory.Context(
+        Minecraft client = Minecraft.getInstance();
+        EntityRendererProvider.Context context = new EntityRendererProvider.Context(
                 client.getEntityRenderDispatcher(),
                 client.getItemRenderer(),
-                client.getBlockRenderManager(),
-                client.getEntityRenderDispatcher().getHeldItemRenderer(),
+                client.getBlockRenderer(),
+                client.getEntityRenderDispatcher().getItemInHandRenderer(),
                 client.getResourceManager(),
-                client.getEntityModelLoader(),
-                client.textRenderer
+                client.getEntityModels(),
+                client.font
         );
 
         for (ShoulderLocation location : ShoulderLocation.values()) {

@@ -2,11 +2,10 @@ package net.dawson.adorablehamsterpets.command;
 
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.util.RedstoneFeverUtil;
-import net.minecraft.entity.Entity;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Box;
-
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -17,7 +16,7 @@ public final class RedstoneFeverCommandUtil {
      *        Public API Methods
      * ──────────────────────────────────────────────────────────────────────────────*/
 
-    public static int apply(ServerCommandSource source, Collection<? extends Entity> targets) {
+    public static int apply(CommandSourceStack source, Collection<? extends Entity> targets) {
         // --- 1. Resolve and Classify Targets ---
         List<? extends Entity> resolved = resolveTargets(source, targets);
         int applied = 0;
@@ -29,7 +28,7 @@ public final class RedstoneFeverCommandUtil {
                 invalid++;
             } else if (hamster.hasRedstoneFever()) {
                 alreadyFevered++;
-            } else if (hamster.isTamed()) {
+            } else if (hamster.isTame()) {
                 rejected++;
             } else if (RedstoneFeverUtil.applyFever(hamster, true)) {
                 RedstoneFeverUtil.spawnRedstoneParticles(hamster, 20, 0.18F);
@@ -42,14 +41,14 @@ public final class RedstoneFeverCommandUtil {
         int finalAlreadyFevered = alreadyFevered;
         int finalRejected = rejected;
         int finalInvalid = invalid;
-        source.sendFeedback(() -> Text.literal("Redstone Fever applied: " + finalApplied
+        source.sendSuccess(() -> Component.literal("Redstone Fever applied: " + finalApplied
                 + "; already fevered: " + finalAlreadyFevered
                 + "; tamed/rejected: " + finalRejected
                 + "; invalid: " + finalInvalid), true);
         return applied;
     }
 
-    public static int cure(ServerCommandSource source, Collection<? extends Entity> targets) {
+    public static int cure(CommandSourceStack source, Collection<? extends Entity> targets) {
         // --- 1. Resolve and Classify Targets ---
         List<? extends Entity> resolved = resolveTargets(source, targets);
         int cured = 0;
@@ -70,7 +69,7 @@ public final class RedstoneFeverCommandUtil {
         int finalCured = cured;
         int finalNonFevered = nonFevered;
         int finalInvalid = invalid;
-        source.sendFeedback(() -> Text.literal("Redstone Fever cured: " + finalCured
+        source.sendSuccess(() -> Component.literal("Redstone Fever cured: " + finalCured
                 + "; not fevered: " + finalNonFevered
                 + "; invalid: " + finalInvalid), true);
         return cured;
@@ -81,14 +80,14 @@ public final class RedstoneFeverCommandUtil {
      * ──────────────────────────────────────────────────────────────────────────────*/
 
     private static List<? extends Entity> resolveTargets(
-            ServerCommandSource source, Collection<? extends Entity> targets) {
+            CommandSourceStack source, Collection<? extends Entity> targets) {
         if (!targets.isEmpty()) return List.copyOf(targets);
         // No argument selects nearest live hamster
-        return source.getWorld().getEntitiesByClass(
+        return source.getLevel().getEntitiesOfClass(
                         HamsterEntity.class,
-                        new Box(source.getPosition(), source.getPosition()).expand(16.0D),
+                        new AABB(source.getPosition(), source.getPosition()).inflate(16.0D),
                         Entity::isAlive).stream()
-                .min(Comparator.comparingDouble(entity -> entity.squaredDistanceTo(source.getPosition())))
+                .min(Comparator.comparingDouble(entity -> entity.distanceToSqr(source.getPosition())))
                 .map(List::of)
                 .orElseGet(List::of);
     }

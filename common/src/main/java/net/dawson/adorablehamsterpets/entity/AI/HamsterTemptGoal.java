@@ -3,8 +3,8 @@ package net.dawson.adorablehamsterpets.entity.AI;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.util.HamsterCombatUtil;
 import net.dawson.adorablehamsterpets.util.HamsterLureUtil;
-import net.minecraft.entity.ai.goal.TemptGoal;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.player.Player;
 
 public class HamsterTemptGoal extends TemptGoal {
 
@@ -26,31 +26,31 @@ public class HamsterTemptGoal extends TemptGoal {
 
     // --- 3. Public Methods (Overrides from TemptGoal/Goal) ---
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         // --- 1. Protected States ---
         if (!HamsterLureUtil.canFollowLure(this.hamster)) {
             return false;
         }
 
         // --- 2. Superclass Logic ---
-        if (!super.canStart()) {
+        if (!super.canUse()) {
             return false;
         }
 
         // --- 3. Ownership-Aware Candidate Selection ---
-        this.closestPlayer = HamsterLureUtil.resolveTemptingPlayer(this.hamster, this.closestPlayer);
-        return this.closestPlayer != null;
+        this.player = HamsterLureUtil.resolveTemptingPlayer(this.hamster, this.player);
+        return this.player != null;
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         // --- 1. Protected States ---
         if (!HamsterLureUtil.canFollowLure(this.hamster)) {
             return false;
         }
 
         // --- 2. Superclass Logic ---
-        return super.shouldContinue();
+        return super.canContinueToUse();
     }
 
     @Override
@@ -71,11 +71,11 @@ public class HamsterTemptGoal extends TemptGoal {
         }
         this.recheckTimer = 5; // Re-check begging state roughly every 5 ticks.
 
-        PlayerEntity temptingPlayer = this.closestPlayer;
+        Player temptingPlayer = this.player;
 
         if (temptingPlayer != null
                 && temptingPlayer.isAlive()
-                && this.hamster.squaredDistanceTo(temptingPlayer) < 64.0) {
+                && this.hamster.distanceToSqr(temptingPlayer) < 64.0) {
             this.hamster.setBegging(HamsterLureUtil.isHoldingBeggingItem(temptingPlayer));
         } else {
             this.hamster.setBegging(false);

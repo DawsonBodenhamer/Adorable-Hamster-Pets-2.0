@@ -2,12 +2,12 @@ package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.entity.mob.CreeperEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.Box;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -30,8 +30,8 @@ public final class HamsterCombatUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     public static boolean isInAttackRange(HamsterEntity hamster, LivingEntity target) {
-        Box attackBox =
-                hamster.getBoundingBox().expand(ATTACK_BOX_EXPANSION, 0.0D, ATTACK_BOX_EXPANSION);
+        AABB attackBox =
+                hamster.getBoundingBox().inflate(ATTACK_BOX_EXPANSION, 0.0D, ATTACK_BOX_EXPANSION);
         return attackBox.intersects(target.getBoundingBox());
     }
 
@@ -47,14 +47,14 @@ public final class HamsterCombatUtil {
         LivingEntity target = hamster.getTarget();
         StandardCombatState state = hamster.getStandardCombatState();
         return isConflictEngaged(
-                target == null ? null : target.getUuid(),
+                target == null ? null : target.getUUID(),
                 state.targetUuid,
-                hamster.getWorld().getTime(),
+                hamster.level().getGameTime(),
                 state.deadline);
     }
 
     public static boolean deescalateStandardCombat(HamsterEntity hamster) {
-        if (hamster.getWorld().isClient() || !isStandardCombatEngaged(hamster)) {
+        if (hamster.level().isClientSide() || !isStandardCombatEngaged(hamster)) {
             return false;
         }
 
@@ -64,25 +64,25 @@ public final class HamsterCombatUtil {
             refreshFromOwnerCombat(hamster, target);
         }
 
-        UUID conflictUuid = target == null ? state.targetUuid : target.getUuid();
+        UUID conflictUuid = target == null ? state.targetUuid : target.getUUID();
         LivingEntity owner = hamster.getOwner();
         int ownerAttackTime = owner == state.observedOwner
                 ? state.consumedOwnerAttackTime
-                : owner == null ? Integer.MIN_VALUE : owner.getLastAttackTime();
+                : owner == null ? Integer.MIN_VALUE : owner.getLastHurtMobTimestamp();
         int ownerAttackedTime = owner == state.observedOwner
                 ? state.consumedOwnerAttackedTime
-                : owner == null ? Integer.MIN_VALUE : owner.getLastAttackedTime();
-        LivingEntity attacker = hamster.getAttacker();
+                : owner == null ? Integer.MIN_VALUE : owner.getLastHurtByMobTimestamp();
+        LivingEntity attacker = hamster.getLastHurtByMob();
         boolean conflictMatchesRetaliation =
-                attacker != null && attacker.getUuid().equals(conflictUuid);
+                attacker != null && attacker.getUUID().equals(conflictUuid);
         int hamsterAttackedTime = conflictMatchesRetaliation
-                ? hamster.getLastAttackedTime()
+                ? hamster.getLastHurtByMobTimestamp()
                 : state.consumedHamsterAttackedTime;
 
         hamster.setTarget(null);
         hamster.getNavigation().stop();
         if (conflictMatchesRetaliation) {
-            hamster.setAttacker(null);
+            hamster.setLastHurtByMob(null);
         }
 
         clearActiveCombatWindow(state);
@@ -116,8 +116,8 @@ public final class HamsterCombatUtil {
 
         StandardCombatState state = hamster.getStandardCombatState();
         return state.targetUuid != null
-                && state.targetUuid.equals(target.getUuid())
-                && hamster.getWorld().getTime() < state.deadline;
+                && state.targetUuid.equals(target.getUUID())
+                && hamster.level().getGameTime() < state.deadline;
     }
 
     public static boolean clearInvalidTarget(HamsterEntity hamster) {
@@ -134,7 +134,7 @@ public final class HamsterCombatUtil {
             HamsterEntity hamster,
             @Nullable LivingEntity previousTarget,
             @Nullable LivingEntity acceptedTarget) {
-        if (hamster.getWorld().isClient()) {
+        if (hamster.level().isClientSide()) {
             return;
         }
         if (acceptedTarget == null) {
@@ -149,25 +149,25 @@ public final class HamsterCombatUtil {
         }
 
         StandardCombatState state = hamster.getStandardCombatState();
-        if (previousTarget == acceptedTarget && acceptedTarget.getUuid().equals(state.targetUuid)) {
+        if (previousTarget == acceptedTarget && acceptedTarget.getUUID().equals(state.targetUuid)) {
             refreshFromOwnerCombat(hamster, acceptedTarget);
             return;
         }
 
         LivingEntity owner = hamster.getOwner();
-        state.targetUuid = acceptedTarget.getUuid();
-        state.deadline = hamster.getWorld().getTime() + STANDARD_COMBAT_DURATION_TICKS;
+        state.targetUuid = acceptedTarget.getUUID();
+        state.deadline = hamster.level().getGameTime() + STANDARD_COMBAT_DURATION_TICKS;
         state.observedOwner = owner;
-        state.consumedOwnerAttackTime = owner == null ? Integer.MIN_VALUE : owner.getLastAttackTime();
+        state.consumedOwnerAttackTime = owner == null ? Integer.MIN_VALUE : owner.getLastHurtMobTimestamp();
         state.consumedOwnerAttackedTime =
-                owner == null ? Integer.MIN_VALUE : owner.getLastAttackedTime();
-        state.consumedHamsterAttackedTime = hamster.getLastAttackedTime();
+                owner == null ? Integer.MIN_VALUE : owner.getLastHurtByMobTimestamp();
+        state.consumedHamsterAttackedTime = hamster.getLastHurtByMobTimestamp();
         state.expiredTargetUuid = null;
         state.expiredOwner = null;
     }
 
     public static void tickStandardCombat(HamsterEntity hamster) {
-        if (hamster.getWorld().isClient()) {
+        if (hamster.level().isClientSide()) {
             return;
         }
         if (hamster.hasRedstoneFever()) {
@@ -191,14 +191,14 @@ public final class HamsterCombatUtil {
 
         if (target == null) {
             StandardCombatState state = hamster.getStandardCombatState();
-            if (state.targetUuid != null && hamster.getWorld().getTime() >= state.deadline) {
+            if (state.targetUuid != null && hamster.level().getGameTime() >= state.deadline) {
                 terminateStandardCombat(hamster, true);
             }
             return;
         }
 
         refreshFromOwnerCombat(hamster, target);
-        if (hamster.getWorld().getTime() >= hamster.getStandardCombatState().deadline) {
+        if (hamster.level().getGameTime() >= hamster.getStandardCombatState().deadline) {
             terminateStandardCombat(hamster, true);
         }
     }
@@ -207,7 +207,7 @@ public final class HamsterCombatUtil {
             HamsterEntity hamster,
             HamsterEntity.AggressionState previousState,
             HamsterEntity.AggressionState newState) {
-        if (hamster.getWorld().isClient() || previousState == newState) {
+        if (hamster.level().isClientSide() || previousState == newState) {
             return;
         }
         if (newState == HamsterEntity.AggressionState.MENACE) {
@@ -242,11 +242,11 @@ public final class HamsterCombatUtil {
         }
 
         LivingEntity owner = hamster.getOwner();
-        if (target == hamster || target == owner || target instanceof CreeperEntity
-                || target instanceof ArmorStandEntity) {
+        if (target == hamster || target == owner || target instanceof Creeper
+                || target instanceof ArmorStand) {
             return false;
         }
-        UUID ownerUuid = hamster.getOwnerUuid();
+        UUID ownerUuid = hamster.getOwnerUUID();
         if (ownerUuid == null) {
             return true;
         }
@@ -270,14 +270,14 @@ public final class HamsterCombatUtil {
             HamsterEntity hamster, UUID hamsterOwnerUuid, @Nullable UUID targetOwnerUuid) {
         if (targetOwnerUuid == null
                 || targetOwnerUuid.equals(hamsterOwnerUuid)
-                || !(hamster.getWorld() instanceof ServerWorld serverWorld)) {
+                || !(hamster.level() instanceof ServerLevel serverWorld)) {
             return false;
         }
 
-        ServerPlayerEntity hamsterOwner =
-                serverWorld.getServer().getPlayerManager().getPlayer(hamsterOwnerUuid);
-        ServerPlayerEntity targetOwner =
-                serverWorld.getServer().getPlayerManager().getPlayer(targetOwnerUuid);
+        ServerPlayer hamsterOwner =
+                serverWorld.getServer().getPlayerList().getPlayer(hamsterOwnerUuid);
+        ServerPlayer targetOwner =
+                serverWorld.getServer().getPlayerList().getPlayer(targetOwnerUuid);
         return hamsterOwner != null
                 && targetOwner != null
                 && isContractProtected(
@@ -301,11 +301,11 @@ public final class HamsterCombatUtil {
 
     private static boolean isFreshOwnerConflict(LivingEntity owner, LivingEntity target) {
         boolean freshOwnerAttack =
-                target == owner.getAttacking()
-                        && owner.age - owner.getLastAttackTime() <= OWNER_EVENT_FRESHNESS_TICKS;
+                target == owner.getLastHurtMob()
+                        && owner.tickCount - owner.getLastHurtMobTimestamp() <= OWNER_EVENT_FRESHNESS_TICKS;
         boolean freshOwnerAttacker =
-                target == owner.getAttacker()
-                        && owner.age - owner.getLastAttackedTime() <= OWNER_EVENT_FRESHNESS_TICKS;
+                target == owner.getLastHurtByMob()
+                        && owner.tickCount - owner.getLastHurtByMobTimestamp() <= OWNER_EVENT_FRESHNESS_TICKS;
         return freshOwnerAttack || freshOwnerAttacker;
     }
 
@@ -315,7 +315,7 @@ public final class HamsterCombatUtil {
         }
 
         StandardCombatState state = hamster.getStandardCombatState();
-        if (!target.getUuid().equals(state.expiredTargetUuid)) {
+        if (!target.getUUID().equals(state.expiredTargetUuid)) {
             return false;
         }
 
@@ -324,17 +324,17 @@ public final class HamsterCombatUtil {
             return !isFreshOwnerConflict(owner, target);
         }
         if (owner != null) {
-            if (target == owner.getAttacking()
-                    && owner.getLastAttackTime() > state.expiredOwnerAttackTime) {
+            if (target == owner.getLastHurtMob()
+                    && owner.getLastHurtMobTimestamp() > state.expiredOwnerAttackTime) {
                 return false;
             }
-            if (target == owner.getAttacker()
-                    && owner.getLastAttackedTime() > state.expiredOwnerAttackedTime) {
+            if (target == owner.getLastHurtByMob()
+                    && owner.getLastHurtByMobTimestamp() > state.expiredOwnerAttackedTime) {
                 return false;
             }
         }
-        return target != hamster.getAttacker()
-                || hamster.getLastAttackedTime() <= state.expiredHamsterAttackedTime;
+        return target != hamster.getLastHurtByMob()
+                || hamster.getLastHurtByMobTimestamp() <= state.expiredHamsterAttackedTime;
     }
 
     private static void refreshFromOwnerCombat(HamsterEntity hamster, LivingEntity target) {
@@ -345,29 +345,29 @@ public final class HamsterCombatUtil {
         }
         if (owner != state.observedOwner) {
             state.observedOwner = owner;
-            state.consumedOwnerAttackTime = owner.getLastAttackTime();
-            state.consumedOwnerAttackedTime = owner.getLastAttackedTime();
+            state.consumedOwnerAttackTime = owner.getLastHurtMobTimestamp();
+            state.consumedOwnerAttackedTime = owner.getLastHurtByMobTimestamp();
             return;
         }
 
         boolean refreshed = false;
-        if (target == owner.getAttacking()
-                && owner.getLastAttackTime() > state.consumedOwnerAttackTime) {
-            state.consumedOwnerAttackTime = owner.getLastAttackTime();
+        if (target == owner.getLastHurtMob()
+                && owner.getLastHurtMobTimestamp() > state.consumedOwnerAttackTime) {
+            state.consumedOwnerAttackTime = owner.getLastHurtMobTimestamp();
             refreshed = true;
         }
-        if (target == owner.getAttacker()
-                && owner.getLastAttackedTime() > state.consumedOwnerAttackedTime) {
-            state.consumedOwnerAttackedTime = owner.getLastAttackedTime();
+        if (target == owner.getLastHurtByMob()
+                && owner.getLastHurtByMobTimestamp() > state.consumedOwnerAttackedTime) {
+            state.consumedOwnerAttackedTime = owner.getLastHurtByMobTimestamp();
             refreshed = true;
         }
         if (refreshed) {
-            state.deadline = hamster.getWorld().getTime() + STANDARD_COMBAT_DURATION_TICKS;
+            state.deadline = hamster.level().getGameTime() + STANDARD_COMBAT_DURATION_TICKS;
         }
     }
 
     private static boolean usesStandardCombatWindow(HamsterEntity hamster) {
-        return hamster.isTamed()
+        return hamster.isTame()
                 && hamster.getAggressionState() == HamsterEntity.AggressionState.STANDARD;
     }
 
@@ -384,7 +384,7 @@ public final class HamsterCombatUtil {
         LivingEntity target = hamster.getTarget();
         StandardCombatState state = hamster.getStandardCombatState();
         UUID expiredTargetUuid = suppressConflict
-                ? target == null ? state.targetUuid : target.getUuid()
+                ? target == null ? state.targetUuid : target.getUUID()
                 : null;
         LivingEntity expiredOwner = suppressConflict
                 ? state.observedOwner == null ? hamster.getOwner() : state.observedOwner
@@ -393,18 +393,18 @@ public final class HamsterCombatUtil {
                 ? Integer.MIN_VALUE
                 : expiredOwner == state.observedOwner
                         ? state.consumedOwnerAttackTime
-                        : expiredOwner.getLastAttackTime();
+                        : expiredOwner.getLastHurtMobTimestamp();
         int expiredOwnerAttackedTime = expiredOwner == null
                 ? Integer.MIN_VALUE
                 : expiredOwner == state.observedOwner
                         ? state.consumedOwnerAttackedTime
-                        : expiredOwner.getLastAttackedTime();
-        int expiredHamsterAttackedTime = hamster.getLastAttackedTime();
+                        : expiredOwner.getLastHurtByMobTimestamp();
+        int expiredHamsterAttackedTime = hamster.getLastHurtByMobTimestamp();
 
         hamster.setTarget(null);
         hamster.getNavigation().stop();
-        if (target != null && target == hamster.getAttacker()) {
-            hamster.setAttacker(null);
+        if (target != null && target == hamster.getLastHurtByMob()) {
+            hamster.setLastHurtByMob(null);
         }
         clearActiveCombatWindow(state);
         if (suppressConflict && expiredTargetUuid != null) {

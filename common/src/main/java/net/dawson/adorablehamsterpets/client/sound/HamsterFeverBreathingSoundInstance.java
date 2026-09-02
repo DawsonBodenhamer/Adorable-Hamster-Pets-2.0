@@ -2,15 +2,15 @@ package net.dawson.adorablehamsterpets.client.sound;
 
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.client.sound.MovingSoundInstance;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.world.World;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.Level;
 
 /**
  * Follows one fevered hamster for the duration of one breathing clip.
  */
-public final class HamsterFeverBreathingSoundInstance extends MovingSoundInstance {
+public final class HamsterFeverBreathingSoundInstance extends AbstractTickableSoundInstance {
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Instance State
@@ -21,9 +21,9 @@ public final class HamsterFeverBreathingSoundInstance extends MovingSoundInstanc
     private int ticksPlaying;
 
     public HamsterFeverBreathingSoundInstance(HamsterEntity hamster, ModSounds.TimedSound timedSound) {
-        super(timedSound.sound().get(), SoundCategory.NEUTRAL, SoundInstance.createRandom());
+        super(timedSound.sound().get(), SoundSource.NEUTRAL, SoundInstance.createUnseededRandom());
         this.hamster = hamster;
-        this.repeat = false;
+        this.looping = false;
         this.volume = 0.2F;
         this.pitch = 1.0F;
         this.durationTicks = (int) timedSound.durationTicks();
@@ -39,7 +39,7 @@ public final class HamsterFeverBreathingSoundInstance extends MovingSoundInstanc
     @Override
     public void tick() {
         if (!this.shouldRemainActive()) {
-            this.setDone();
+            this.stop();
             return;
         }
 
@@ -49,7 +49,7 @@ public final class HamsterFeverBreathingSoundInstance extends MovingSoundInstanc
 
         this.ticksPlaying++;
         if (this.ticksPlaying >= this.durationTicks) {
-            this.setDone();
+            this.stop();
         }
     }
 
@@ -67,11 +67,11 @@ public final class HamsterFeverBreathingSoundInstance extends MovingSoundInstanc
         return this.hamster == hamster;
     }
 
-    boolean belongsTo(World world) {
-        return this.hamster.getWorld() == world;
+    boolean belongsTo(Level world) {
+        return this.hamster.level() == world;
     }
 
     void markDone() {
-        this.setDone();
+        this.stop();
     }
 }

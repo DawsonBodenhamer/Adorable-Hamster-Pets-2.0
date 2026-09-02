@@ -5,17 +5,17 @@ import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.screen.slot.HamsterSlot;
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SimpleInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.core.Holder;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
  * This screen handler synchronizes the hamster's 8-slot inventory (6 Pouch + Bling + Armor)
  * with the client and handles item transfers between the hamster and the player.
  */
-public class HamsterInventoryScreenHandler extends ScreenHandler {
-    private final Inventory inventory;
+public class HamsterInventoryScreenHandler extends AbstractContainerMenu {
+    private final Container inventory;
     @Nullable
     private final HamsterEntity hamsterEntityInstance;
 
@@ -38,21 +38,21 @@ public class HamsterInventoryScreenHandler extends ScreenHandler {
      * and the client. On the client, the hamster entity is provided by Architectury's
      * extended menu factory system.
      */
-    public HamsterInventoryScreenHandler(int syncId, PlayerInventory playerInventory, @Nullable HamsterEntity hamsterEntity) {
+    public HamsterInventoryScreenHandler(int syncId, Inventory playerInventory, @Nullable HamsterEntity hamsterEntity) {
         super(ModScreenHandlers.HAMSTER_INVENTORY_SCREEN_HANDLER.get(), syncId);
 
         if (hamsterEntity != null) {
             this.inventory = hamsterEntity;
             this.hamsterEntityInstance = hamsterEntity;
-            checkSize(this.inventory, INVENTORY_SIZE);
+            checkContainerSize(this.inventory, INVENTORY_SIZE);
         } else {
             // Fallback for client if entity is somehow not found
             // Must match server size (8) to prevent crash
-            this.inventory = new SimpleInventory(INVENTORY_SIZE);
+            this.inventory = new SimpleContainer(INVENTORY_SIZE);
             this.hamsterEntityInstance = null;
         }
 
-        this.inventory.onOpen(playerInventory.player);
+        this.inventory.startOpen(playerInventory.player);
         setupSlots(playerInventory);
     }
 
@@ -71,7 +71,7 @@ public class HamsterInventoryScreenHandler extends ScreenHandler {
      * Sets up the slots for the hamster's inventory and the player's inventory.
      * @param playerInventory The player's inventory.
      */
-    private void setupSlots(PlayerInventory playerInventory) {
+    private void setupSlots(Inventory playerInventory) {
         // --- 1. Cheek Pouch Slots (0-5) ---
         // Row 1: Left Cheeks
         this.addSlot(new HamsterSlot(this.inventory, 0, 26, 95));
@@ -79,10 +79,10 @@ public class HamsterInventoryScreenHandler extends ScreenHandler {
         this.addSlot(new HamsterSlot(this.inventory, 2, 62, 95));
 
         // Visual Gap Slot (Dummy)
-        this.addSlot(new Slot(new SimpleInventory(1), 0, 80, 95) {
-            @Override public boolean canInsert(ItemStack stack) { return false; }
-            @Override public boolean canTakeItems(PlayerEntity playerEntity) { return false; }
-            @Override public boolean isEnabled() { return false; }
+        this.addSlot(new Slot(new SimpleContainer(1), 0, 80, 95) {
+            @Override public boolean mayPlace(ItemStack stack) { return false; }
+            @Override public boolean mayPickup(Player playerEntity) { return false; }
+            @Override public boolean isActive() { return false; }
         });
 
         // Row 1: Right Cheek
@@ -94,21 +94,21 @@ public class HamsterInventoryScreenHandler extends ScreenHandler {
         // Bling Slot (Index 6)
         this.addSlot(new Slot(this.inventory, BLING_SLOT_INDEX, 82, 44) {
             @Override
-            public boolean canInsert(ItemStack stack) {
-                return stack.isOf(ModItems.ACORN_HAT.get()) || stack.isOf(Items.PINK_PETALS);
+            public boolean mayPlace(ItemStack stack) {
+                return stack.is(ModItems.ACORN_HAT.get()) || stack.is(Items.PINK_PETALS);
             }
             @Override
-            public int getMaxItemCount() { return 1; }
+            public int getMaxStackSize() { return 1; }
         });
 
         // Armor Slot (Index 7)
         this.addSlot(new Slot(this.inventory, ARMOR_SLOT_INDEX, 134, 44) {
             @Override
-            public boolean canInsert(ItemStack stack) {
+            public boolean mayPlace(ItemStack stack) {
                 return stack.getItem() instanceof HamsterArmorItem;
             }
             @Override
-            public int getMaxItemCount() { return 1; }
+            public int getMaxStackSize() { return 1; }
         });
 
         // --- 3. Player Inventory & Hotbar ---
@@ -123,17 +123,17 @@ public class HamsterInventoryScreenHandler extends ScreenHandler {
     }
 
     @Override
-    public boolean canUse(PlayerEntity player) {
-        return this.inventory.canPlayerUse(player);
+    public boolean stillValid(Player player) {
+        return this.inventory.stillValid(player);
     }
 
     @Override
-    public ItemStack quickMove(PlayerEntity player, int slotIndex) {
+    public ItemStack quickMoveStack(Player player, int slotIndex) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(slotIndex);
 
-        if (slot.hasStack()) {
-            ItemStack sourceStack = slot.getStack();
+        if (slot.hasItem()) {
+            ItemStack sourceStack = slot.getItem();
             itemStack = sourceStack.copy();
 
             // Calculate slot ranges
@@ -159,17 +159,17 @@ public class HamsterInventoryScreenHandler extends ScreenHandler {
 
                 // --- Sound Logic ---
                 // Detect if moving from an equipment slot before the move happens
-                boolean isFromHamster = slot.inventory == this.inventory;
-                boolean isArmorSlot = isFromHamster && slot.getIndex() == ARMOR_SLOT_INDEX;
-                boolean isBlingSlot = isFromHamster && slot.getIndex() == BLING_SLOT_INDEX;
+                boolean isFromHamster = slot.container == this.inventory;
+                boolean isArmorSlot = isFromHamster && slot.getContainerSlot() == ARMOR_SLOT_INDEX;
+                boolean isBlingSlot = isFromHamster && slot.getContainerSlot() == BLING_SLOT_INDEX;
 
-                if (!this.insertItem(sourceStack, playerStart, playerEnd, true)) {
+                if (!this.moveItemStackTo(sourceStack, playerStart, playerEnd, true)) {
                     return ItemStack.EMPTY;
                 }
 
                 // If the move was successful, manually trigger the unequip sound.
-                if ((isArmorSlot || isBlingSlot) && this.hamsterEntityInstance != null && !this.hamsterEntityInstance.getWorld().isClient) {
-                    RegistryEntry<SoundEvent> soundEntry = isArmorSlot ? SoundEvents.ITEM_ARMOR_EQUIP_WOLF : SoundEvents.ITEM_ARMOR_EQUIP_GENERIC;
+                if ((isArmorSlot || isBlingSlot) && this.hamsterEntityInstance != null && !this.hamsterEntityInstance.level().isClientSide) {
+                    Holder<SoundEvent> soundEntry = isArmorSlot ? SoundEvents.ARMOR_EQUIP_WOLF : SoundEvents.ARMOR_EQUIP_GENERIC;
                     // Play with unequip pitch (0.8f) and lower volume (0.4f)
                     this.hamsterEntityInstance.playSound(soundEntry.value(), 0.4f, 0.8f);
                 }
@@ -178,13 +178,13 @@ public class HamsterInventoryScreenHandler extends ScreenHandler {
             else {
                 // Priority 1: Armor Slot
                 if (sourceStack.getItem() instanceof HamsterArmorItem) {
-                    if (!this.insertItem(sourceStack, 8, 9, false)) {
+                    if (!this.moveItemStackTo(sourceStack, 8, 9, false)) {
                         if (!insertIntoPouches(sourceStack)) return ItemStack.EMPTY;
                     }
                 }
                 // Priority 2: Bling Slot
-                else if (sourceStack.isOf(ModItems.ACORN_HAT.get()) || sourceStack.isOf(Items.PINK_PETALS)) {
-                    if (!this.insertItem(sourceStack, 7, 8, false)) {
+                else if (sourceStack.is(ModItems.ACORN_HAT.get()) || sourceStack.is(Items.PINK_PETALS)) {
+                    if (!this.moveItemStackTo(sourceStack, 7, 8, false)) {
                         if (!insertIntoPouches(sourceStack)) return ItemStack.EMPTY;
                     }
                 }
@@ -200,16 +200,16 @@ public class HamsterInventoryScreenHandler extends ScreenHandler {
             }
 
             if (sourceStack.isEmpty()) {
-                slot.setStack(ItemStack.EMPTY);
+                slot.setByPlayer(ItemStack.EMPTY);
             } else {
-                slot.markDirty();
+                slot.setChanged();
             }
 
             if (sourceStack.getCount() == itemStack.getCount()) {
                 return ItemStack.EMPTY;
             }
 
-            slot.onTakeItem(player, sourceStack);
+            slot.onTake(player, sourceStack);
         }
 
         return itemStack;
@@ -220,8 +220,8 @@ public class HamsterInventoryScreenHandler extends ScreenHandler {
      */
     private boolean insertIntoPouches(ItemStack stack) {
         // Try Left Pouch (Slots 0-2)
-        if (this.insertItem(stack, 0, 3, false)) return true;
+        if (this.moveItemStackTo(stack, 0, 3, false)) return true;
         // Try Right Pouch (Slots 4-6) - Note: index 3 is gap
-        return this.insertItem(stack, 4, 7, false);
+        return this.moveItemStackTo(stack, 4, 7, false);
     }
 }

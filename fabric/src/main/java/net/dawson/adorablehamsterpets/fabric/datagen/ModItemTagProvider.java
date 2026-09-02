@@ -4,54 +4,53 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
-import net.minecraft.item.Item;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import java.util.concurrent.CompletableFuture;
 
 public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
 
-    private static final TagKey<Item> STORAGE_BLOCKS = TagKey.of(
-            RegistryKeys.ITEM,
-            Identifier.of("c", "storage_blocks")
+    private static final TagKey<Item> STORAGE_BLOCKS = TagKey.create(
+            Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath("c", "storage_blocks")
     );
 
     // --- Custom Tags ---
-    public static final TagKey<Item> HAMSTER_ARMOR_ENCHANTABLE = TagKey.of(
-            RegistryKeys.ITEM,
-            Identifier.of(AdorableHamsterPets.MOD_ID, "enchantable/hamster_armor")
+    public static final TagKey<Item> HAMSTER_ARMOR_ENCHANTABLE = TagKey.create(
+            Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/hamster_armor")
     );
 
     // Frost Walker (Vanilla Foot Armor + Hamster Armor)
-    public static final TagKey<Item> FROST_WALKER_SUPPORTED = TagKey.of(
-            RegistryKeys.ITEM,
-            Identifier.of(AdorableHamsterPets.MOD_ID, "enchantable/frost_walker_supported")
+    public static final TagKey<Item> FROST_WALKER_SUPPORTED = TagKey.create(
+            Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/frost_walker_supported")
     );
 
     // Fire Protection (Vanilla Armor + Hamster Armor)
-    public static final TagKey<Item> FIRE_PROTECTION_SUPPORTED = TagKey.of(
-            RegistryKeys.ITEM,
-            Identifier.of(AdorableHamsterPets.MOD_ID, "enchantable/fire_protection_supported")
+    public static final TagKey<Item> FIRE_PROTECTION_SUPPORTED = TagKey.create(
+            Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/fire_protection_supported")
     );
 
     // Soul Speed (Vanilla Foot Armor + Hamster Armor)
-    public static final TagKey<Item> SOUL_SPEED_SUPPORTED = TagKey.of(
-            RegistryKeys.ITEM,
-            Identifier.of(AdorableHamsterPets.MOD_ID, "enchantable/soul_speed_supported")
+    public static final TagKey<Item> SOUL_SPEED_SUPPORTED = TagKey.create(
+            Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/soul_speed_supported")
     );
 
-    public ModItemTagProvider(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> completableFuture) {
+    public ModItemTagProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> completableFuture) {
         super(output, completableFuture);
     }
 
     @Override
-    protected void configure(RegistryWrapper.WrapperLookup arg) {
+    protected void addTags(HolderLookup.Provider arg) {
         // 1. Define Hamster Armor Group
-        getOrCreateTagBuilder(HAMSTER_ARMOR_ENCHANTABLE)
+        tag(HAMSTER_ARMOR_ENCHANTABLE)
                 .add(ModItems.HAMSTER_ARMOR_ACORN.get())
                 .add(ModItems.HAMSTER_ARMOR_IRON.get())
                 .add(ModItems.HAMSTER_ARMOR_GOLD.get())
@@ -59,34 +58,34 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
                 .add(ModItems.HAMSTER_ARMOR_NETHERITE.get());
 
         // 2. Add to Vanilla Durability (Enables Unbreaking/Mending)
-        getOrCreateTagBuilder(ItemTags.DURABILITY_ENCHANTABLE)
+        tag(ItemTags.DURABILITY_ENCHANTABLE)
                 .addTag(HAMSTER_ARMOR_ENCHANTABLE);
 
         // 3. Frost Walker Wrapper
-        getOrCreateTagBuilder(FROST_WALKER_SUPPORTED)
+        tag(FROST_WALKER_SUPPORTED)
                 .forceAddTag(ItemTags.FOOT_ARMOR_ENCHANTABLE)
                 .addTag(HAMSTER_ARMOR_ENCHANTABLE);
 
         // 4. Fire Protection Wrapper
-        getOrCreateTagBuilder(FIRE_PROTECTION_SUPPORTED)
+        tag(FIRE_PROTECTION_SUPPORTED)
                 .forceAddTag(ItemTags.ARMOR_ENCHANTABLE)
                 .addTag(HAMSTER_ARMOR_ENCHANTABLE);
 
         // 5. Soul Speed Wrapper
-        getOrCreateTagBuilder(SOUL_SPEED_SUPPORTED)
+        tag(SOUL_SPEED_SUPPORTED)
                 .forceAddTag(ItemTags.FOOT_ARMOR_ENCHANTABLE)
                 .addTag(HAMSTER_ARMOR_ENCHANTABLE);
 
         // 6. Lectern Books Wrapper
-        getOrCreateTagBuilder(ItemTags.LECTERN_BOOKS)
+        tag(ItemTags.LECTERN_BOOKS)
                 .add(ModItems.HAMSTER_GUIDE_BOOK.get());
 
         // 7. Vanilla Trimmable Armor Wrapper
-        getOrCreateTagBuilder(ItemTags.TRIMMABLE_ARMOR)
+        tag(ItemTags.TRIMMABLE_ARMOR)
                 .addTag(HAMSTER_ARMOR_ENCHANTABLE);
 
         // Farmer's Delight and MineColonies use this item tag for storage-crate interoperability
-        getOrCreateTagBuilder(STORAGE_BLOCKS)
+        tag(STORAGE_BLOCKS)
                 .add(ModItems.ACORN_CRATE.get())
                 .add(ModItems.CUCUMBER_CRATE.get())
                 .add(ModItems.GREEN_BEANS_CRATE.get())

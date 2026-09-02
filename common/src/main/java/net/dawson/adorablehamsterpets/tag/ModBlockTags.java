@@ -1,10 +1,10 @@
 package net.dawson.adorablehamsterpets.tag;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.block.Block;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
 
 /**
  * Centralizes all custom "union" block tags for the mod.
@@ -16,6 +16,6 @@ public class ModBlockTags {
     public static final TagKey<Block> BUSHES = of("bushes");
 
     private static TagKey<Block> of(String path) {
-        return TagKey.of(RegistryKeys.BLOCK, Identifier.of(AdorableHamsterPets.MOD_ID, path));
+        return TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, path));
     }
 }

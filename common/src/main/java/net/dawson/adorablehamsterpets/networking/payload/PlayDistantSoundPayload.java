@@ -1,24 +1,24 @@
 package net.dawson.adorablehamsterpets.networking.payload;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-public record PlayDistantSoundPayload(Identifier soundId, float volume, float pitch) implements CustomPayload {
-    public static final CustomPayload.Id<PlayDistantSoundPayload> ID = new CustomPayload.Id<>(Identifier.of(AdorableHamsterPets.MOD_ID, "play_distant_sound"));
+public record PlayDistantSoundPayload(ResourceLocation soundId, float volume, float pitch) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<PlayDistantSoundPayload> ID = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "play_distant_sound"));
 
-    public static final PacketCodec<RegistryByteBuf, PlayDistantSoundPayload> CODEC = PacketCodec.tuple(
-            Identifier.PACKET_CODEC, PlayDistantSoundPayload::soundId,
-            PacketCodecs.FLOAT, PlayDistantSoundPayload::volume,
-            PacketCodecs.FLOAT, PlayDistantSoundPayload::pitch,
+    public static final StreamCodec<RegistryFriendlyByteBuf, PlayDistantSoundPayload> CODEC = StreamCodec.composite(
+            ResourceLocation.STREAM_CODEC, PlayDistantSoundPayload::soundId,
+            ByteBufCodecs.FLOAT, PlayDistantSoundPayload::volume,
+            ByteBufCodecs.FLOAT, PlayDistantSoundPayload::pitch,
             PlayDistantSoundPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

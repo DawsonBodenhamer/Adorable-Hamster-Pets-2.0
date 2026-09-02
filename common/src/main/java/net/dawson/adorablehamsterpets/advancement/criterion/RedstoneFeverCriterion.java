@@ -2,28 +2,27 @@ package net.dawson.adorablehamsterpets.advancement.criterion;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.advancement.criterion.AbstractCriterion;
-import net.minecraft.predicate.entity.EntityPredicate;
-import net.minecraft.predicate.entity.LootContextPredicate;
-import net.minecraft.server.network.ServerPlayerEntity;
-
 import java.util.Optional;
+import net.minecraft.advancements.critereon.ContextAwarePredicate;
+import net.minecraft.advancements.critereon.EntityPredicate;
+import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
+import net.minecraft.server.level.ServerPlayer;
 
-public final class RedstoneFeverCriterion extends AbstractCriterion<RedstoneFeverCriterion.Conditions> {
+public final class RedstoneFeverCriterion extends SimpleCriterionTrigger<RedstoneFeverCriterion.Conditions> {
 
     /* ─────────────────────────────────────────────────────────────────────────────
      *        Constants
      * ───────────────────────────────────────────────────────────────────────────*/
 
     private static final Codec<Conditions> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            EntityPredicate.LOOT_CONTEXT_PREDICATE_CODEC.optionalFieldOf("player").forGetter(Conditions::player)
+            EntityPredicate.ADVANCEMENT_CODEC.optionalFieldOf("player").forGetter(Conditions::player)
     ).apply(instance, Conditions::new));
 
     /* ────────────────────────────────────────────────────────────────────────────
      *        Public API Methods
      * ──────────────────────────────────────────────────────────────────────────────*/
 
-    public void trigger(ServerPlayerEntity player) {
+    public void trigger(ServerPlayer player) {
         this.trigger(player, conditions -> conditions.matches(player));
     }
 
@@ -32,7 +31,7 @@ public final class RedstoneFeverCriterion extends AbstractCriterion<RedstoneFeve
      * ─────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public Codec<Conditions> getConditionsCodec() {
+    public Codec<Conditions> codec() {
         return CODEC;
     }
 
@@ -40,11 +39,11 @@ public final class RedstoneFeverCriterion extends AbstractCriterion<RedstoneFeve
      *        Nested Types
      * ─────────────────────────────────────────────────────────────────────────────*/
 
-    public record Conditions(Optional<LootContextPredicate> player) implements AbstractCriterion.Conditions {
-        private boolean matches(ServerPlayerEntity playerEntity) {
+    public record Conditions(Optional<ContextAwarePredicate> player) implements SimpleCriterionTrigger.SimpleInstance {
+        private boolean matches(ServerPlayer playerEntity) {
             // Empty predicate keeps direct server-side triggers lightweight
             return this.player.isEmpty()
-                    || this.player.get().test(EntityPredicate.createAdvancementEntityLootContext(playerEntity, playerEntity));
+                    || this.player.get().matches(EntityPredicate.createContext(playerEntity, playerEntity));
         }
     }
 }

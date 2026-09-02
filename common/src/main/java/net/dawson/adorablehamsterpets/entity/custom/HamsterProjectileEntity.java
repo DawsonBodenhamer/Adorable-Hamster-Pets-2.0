@@ -12,46 +12,46 @@ import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.mob.CreeperEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.thrown.ThrownEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.ItemScatterer;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.Containers;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * A standard thrown entity wrapper for hamsters.
  * Acts as a compatibility layer for any mods that interact with projectiles.
  */
-public class HamsterProjectileEntity extends ThrownEntity {
+public class HamsterProjectileEntity extends ThrowableProjectile {
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constants and Static Utilities
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static final TrackedData<NbtCompound> HAMSTER_DATA = DataTracker.registerData(HamsterProjectileEntity.class, TrackedDataHandlerRegistry.NBT_COMPOUND);
+    public static final EntityDataAccessor<CompoundTag> HAMSTER_DATA = SynchedEntityData.defineId(HamsterProjectileEntity.class, EntityDataSerializers.COMPOUND_TAG);
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Instance Fields
@@ -65,11 +65,11 @@ public class HamsterProjectileEntity extends ThrownEntity {
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public HamsterProjectileEntity(EntityType<? extends ThrownEntity> entityType, World world) {
+    public HamsterProjectileEntity(EntityType<? extends ThrowableProjectile> entityType, Level world) {
         super(entityType, world);
     }
 
-    public HamsterProjectileEntity(World world, LivingEntity owner) {
+    public HamsterProjectileEntity(Level world, LivingEntity owner) {
         super(ModEntities.HAMSTER_PROJECTILE.get(), owner, world);
     }
 
@@ -81,11 +81,11 @@ public class HamsterProjectileEntity extends ThrownEntity {
     public void tick() {
         // --- Custom Collision Check ---
         // Used for non-solid heistable blocks (e.g. Dynamic Trees mod)
-        if (!this.getWorld().isClient()) {
+        if (!this.level().isClientSide()) {
             BlockHitResult bhr = TreeHeistUtil.checkNonSolidCollision(this);
 
             if (bhr != null) {
-                this.onCollision(bhr);
+                this.onHit(bhr);
                 return; // Stop tick, entity is discarded in onCollision
             }
         }
@@ -93,41 +93,41 @@ public class HamsterProjectileEntity extends ThrownEntity {
         super.tick();
 
         // Simulate trajectory to play warning sound
-        if (!this.getWorld().isClient() && !this.hasPlayedIncomingSound && this.age > 1) {
+        if (!this.level().isClientSide() && !this.hasPlayedIncomingSound && this.tickCount > 1) {
             HamsterPhysicsUtil.simulateTrajectoryAndCheckSound(this);
         }
 
         // --- Particle Trail Logic ---
-        if (!this.getWorld().isClient()) {
+        if (!this.level().isClientSide()) {
             boolean isBuffed = false;
-            NbtCompound nbt = this.getHamsterData();
+            CompoundTag nbt = this.getHamsterData();
             if (!nbt.isEmpty() && nbt.contains("greenBeanBuffData")) {
-                NbtCompound buffData = nbt.getCompound("greenBeanBuffData");
-                isBuffed = buffData.getLong("greenBeanBuffDuration") > this.getWorld().getTime();
+                CompoundTag buffData = nbt.getCompound("greenBeanBuffData");
+                isBuffed = buffData.getLong("greenBeanBuffDuration") > this.level().getGameTime();
             }
 
             int particleDelay = isBuffed ? 3 : 5;
 
-            if (this.age > particleDelay) {
-                Vec3d currentVelocity = this.getVelocity();
+            if (this.tickCount > particleDelay) {
+                Vec3 currentVelocity = this.getDeltaMovement();
                 double offsetMultiplier = 1.5;
-                double spawnX = this.prevX - (currentVelocity.x * offsetMultiplier);
-                double spawnY = this.prevY + (this.getHeight() / 2.0) - (currentVelocity.y * offsetMultiplier);
-                double spawnZ = this.prevZ - (currentVelocity.z * offsetMultiplier);
+                double spawnX = this.xo - (currentVelocity.x * offsetMultiplier);
+                double spawnY = this.yo + (this.getBbHeight() / 2.0) - (currentVelocity.y * offsetMultiplier);
+                double spawnZ = this.zo - (currentVelocity.z * offsetMultiplier);
 
                 ParticleEffectsUtil.spawnParticles(
-                        this.getWorld(),
-                        new Vec3d(spawnX, spawnY, spawnZ),
+                        this.level(),
+                        new Vec3(spawnX, spawnY, spawnZ),
                         ParticleTypes.GUST,
                         1,
-                        new Vec3d(0.1, 0.1, 0.1),
+                        new Vec3(0.1, 0.1, 0.1),
                         0.0
                 );
             }
         }
 
         // Failsafe
-        if (!this.getWorld().isClient() && this.getHamsterData().isEmpty()) {
+        if (!this.level().isClientSide() && this.getHamsterData().isEmpty()) {
             this.discard();
         }
     }
@@ -136,12 +136,12 @@ public class HamsterProjectileEntity extends ThrownEntity {
      *        Public API Methods
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public void setHamsterData(NbtCompound nbt) {
-        this.dataTracker.set(HAMSTER_DATA, nbt);
+    public void setHamsterData(CompoundTag nbt) {
+        this.entityData.set(HAMSTER_DATA, nbt);
     }
 
-    public NbtCompound getHamsterData() {
-        return this.dataTracker.get(HAMSTER_DATA);
+    public CompoundTag getHamsterData() {
+        return this.entityData.get(HAMSTER_DATA);
     }
 
     public void setHasPlayedIncomingSound(boolean val) {
@@ -153,19 +153,19 @@ public class HamsterProjectileEntity extends ThrownEntity {
     }
 
     public boolean isHitTargetValid(Entity entity) {
-        return this.canHit(entity);
+        return this.canHitEntity(entity);
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(CompoundTag nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.put("HamsterData", this.getHamsterData());
         nbt.putBoolean("HasPlayedIncomingSound", this.hasPlayedIncomingSound);
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
+    public void readAdditionalSaveData(CompoundTag nbt) {
+        super.readAdditionalSaveData(nbt);
         if (nbt.contains("HamsterData", 10)) { // 10 = Compound
             this.setHamsterData(nbt.getCompound("HamsterData"));
         }
@@ -177,22 +177,22 @@ public class HamsterProjectileEntity extends ThrownEntity {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        builder.add(HAMSTER_DATA, new NbtCompound());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(HAMSTER_DATA, new CompoundTag());
     }
 
     @Override
-    protected double getGravity() {
+    protected double getDefaultGravity() {
         return AdorableHamsterPets.MAIN_CONFIG.hamsterThrowGravity.get();
     }
 
     @Override
-    protected boolean canHit(Entity entity) {
+    protected boolean canHitEntity(Entity entity) {
         if (entity == this) {
             return false;
         }
 
-        if (entity instanceof ArmorStandEntity) {
+        if (entity instanceof ArmorStand) {
             return !entity.isSpectator();
         }
 
@@ -203,55 +203,55 @@ public class HamsterProjectileEntity extends ThrownEntity {
             }
         }
 
-        return super.canHit(entity);
+        return super.canHitEntity(entity);
     }
 
     @Override
-    protected void onEntityHit(EntityHitResult entityHitResult) {
-        super.onEntityHit(entityHitResult);
-        if (this.getWorld().isClient()) return;
+    protected void onHitEntity(EntityHitResult entityHitResult) {
+        super.onHitEntity(entityHitResult);
+        if (this.level().isClientSide()) return;
 
         Entity hitEntity = entityHitResult.getEntity();
-        NbtCompound hamsterNbt = this.getHamsterData();
+        CompoundTag hamsterNbt = this.getHamsterData();
 
         // Safety check
-        PlayerEntity ownerPlayer = this.getOwner() instanceof PlayerEntity p ? p : null;
+        Player ownerPlayer = this.getOwner() instanceof Player p ? p : null;
 
         if (!hamsterNbt.isEmpty()) {
-            HamsterEntity hamster = HamsterNbtUtil.createFromNbt((ServerWorld) this.getWorld(), ownerPlayer, hamsterNbt);
+            HamsterEntity hamster = HamsterNbtUtil.createFromNbt((ServerLevel) this.level(), ownerPlayer, hamsterNbt);
             if (hamster != null) {
                 boolean playEffects = false;
-                SoundEvent impactSound = SoundEvents.ENTITY_GENERIC_SMALL_FALL; // Fallback
+                SoundEvent impactSound = SoundEvents.GENERIC_SMALL_FALL; // Fallback
 
                 // Create DamageSource where thrown hamster is attacker
-                DamageSource damageSource = hamster.getDamageSources().mobAttack(hamster);
+                DamageSource damageSource = hamster.damageSources().mobAttack(hamster);
 
-                if (hitEntity instanceof ArmorStandEntity) {
+                if (hitEntity instanceof ArmorStand) {
                     playEffects = true;
                     impactSound = ModSounds.getDynamicEntitySound(hitEntity, false, damageSource);
                 } else if (hitEntity instanceof LivingEntity livingHit && this.getOwner() != null) {
 
                     float damageAmount = HamsterPhysicsUtil.calculateThrowDamage(hamster, hamster.getArmorStack());
-                    boolean damaged = livingHit.damage(damageSource, damageAmount); // Hamster is damage source
+                    boolean damaged = livingHit.hurt(damageSource, damageAmount); // Hamster is damage source
 
                     if (damaged) {
-                        boolean isDeath = livingHit.isDead() || livingHit.getHealth() <= 0.0f;
+                        boolean isDeath = livingHit.isDeadOrDying() || livingHit.getHealth() <= 0.0f;
                         impactSound = ModSounds.getDynamicEntitySound(hitEntity, isDeath, damageSource);
 
                         // Music Disc Drop Logic
-                        if (isDeath && livingHit instanceof CreeperEntity creeper && creeper.shouldRenderOverlay()) {
-                            ItemScatterer.spawn(this.getWorld(), creeper.getX(), creeper.getY(), creeper.getZ(), new ItemStack(ModItems.MUSIC_DISC_CHEESE.get()));
+                        if (isDeath && livingHit instanceof Creeper creeper && creeper.isPowered()) {
+                            Containers.dropItemStack(this.level(), creeper.getX(), creeper.getY(), creeper.getZ(), new ItemStack(ModItems.MUSIC_DISC_CHEESE.get()));
                         }
 
                         // Apply damage
-                        livingHit.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 20, 0, false, false, false));
+                        livingHit.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 20, 0, false, false, false));
 
                         // Calculate knockback direction based on velocity
-                        Vec3d currentVel = this.getVelocity();
+                        Vec3 currentVel = this.getDeltaMovement();
                         double knockbackStrength = 0.5;
 
                         // Apply knockback
-                        livingHit.takeKnockback(knockbackStrength, -currentVel.x, -currentVel.z);
+                        livingHit.knockback(knockbackStrength, -currentVel.x, -currentVel.z);
                         playEffects = true;
                     }
                 } else {
@@ -261,57 +261,57 @@ public class HamsterProjectileEntity extends ThrownEntity {
 
                 if (playEffects) {
                     // Temporarily give unspawned hamster the projectile's position so SFX works
-                    hamster.setPosition(this.getPos());
+                    hamster.setPos(this.position());
                     // Feedback
                     HamsterPhysicsUtil.broadcastImpactSound(hamster, impactSound, 1.0f);
                     HamsterPhysicsUtil.broadcastImpactSound(hamster, ModSounds.HAMSTER_IMPACT.get(), 1.0f);
-                    ParticleEffectsUtil.spawnParticles(this.getWorld(), new Vec3d(this.getX(), this.getY() + this.getHeight() / 2.0, this.getZ()), ParticleTypes.POOF, 50, new Vec3d(0.4, 0.4, 0.4), 0.1);
+                    ParticleEffectsUtil.spawnParticles(this.level(), new Vec3(this.getX(), this.getY() + this.getBbHeight() / 2.0, this.getZ()), ParticleTypes.POOF, 50, new Vec3(0.4, 0.4, 0.4), 0.1);
                 }
 
-                Vec3d impactPos = this.getPos();
+                Vec3 impactPos = this.position();
 
                 // Pass null for face & state since impacting an entity
-                HamsterPhysicsUtil.finalizeImpact(hamster, this.getVelocity(), impactPos, null, null);
+                HamsterPhysicsUtil.finalizeImpact(hamster, this.getDeltaMovement(), impactPos, null, null);
             }
         }
         this.discard();
     }
 
     @Override
-    protected void onBlockHit(BlockHitResult blockHitResult) {
-        super.onBlockHit(blockHitResult);
-        if (this.getWorld().isClient()) return;
+    protected void onHitBlock(BlockHitResult blockHitResult) {
+        super.onHitBlock(blockHitResult);
+        if (this.level().isClientSide()) return;
 
-        NbtCompound hamsterNbt = this.getHamsterData();
-        PlayerEntity ownerPlayer = this.getOwner() instanceof PlayerEntity p ? p : null;
+        CompoundTag hamsterNbt = this.getHamsterData();
+        Player ownerPlayer = this.getOwner() instanceof Player p ? p : null;
 
         if (!hamsterNbt.isEmpty()) {
-            HamsterEntity hamster = HamsterNbtUtil.createFromNbt((ServerWorld) this.getWorld(), ownerPlayer, hamsterNbt);
+            HamsterEntity hamster = HamsterNbtUtil.createFromNbt((ServerLevel) this.level(), ownerPlayer, hamsterNbt);
             if (hamster != null) {
                 BlockPos hitPos = blockHitResult.getBlockPos();
-                BlockState hitState = this.getWorld().getBlockState(hitPos);
+                BlockState hitState = this.level().getBlockState(hitPos);
 
                 if (TreeHeistUtil.isValidHeistStartBlock(hitState)) {
                     // 1. Scan first to identify the tree anchor
-                    TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(this.getWorld(), hitPos);
+                    TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(this.level(), hitPos);
 
                     // 2. Check occupancy
-                    if (HamsterTreeSearcherEntity.isBlockOccupied(this.getWorld(), scanResult.treeId())) {
+                    if (HamsterTreeSearcherEntity.isBlockOccupied(this.level(), scanResult.treeId())) {
                         // Tree is busy
                         if (ownerPlayer != null) {
-                            ownerPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
+                            ownerPlayer.displayClientMessage(Component.translatable("message.adorablehamsterpets.tree_heist_occupied").withStyle(ChatFormatting.RED), true);
                         }
                         fallbackBlockHit(blockHitResult, hamster);
                     } else {
                         // Tree is free. Start Heist
                         hamster.triggerLeafPopEffects(hitPos, true);
-                        HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(this.getWorld());
+                        HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(this.level());
                         if (searcher != null) {
-                            NbtCompound fullNbt = new NbtCompound();
-                            hamster.writeNbt(fullNbt); // Use writeNbt to capture full entity state (Owner, Attributes, etc.)
+                            CompoundTag fullNbt = new CompoundTag();
+                            hamster.saveWithoutId(fullNbt); // Use writeNbt to capture full entity state (Owner, Attributes, etc.)
                             // Pass already-calculated scan result
                             searcher.initializeSearch(hitPos, scanResult, fullNbt);
-                            this.getWorld().spawnEntity(searcher);
+                            this.level().addFreshEntity(searcher);
                         }
                     }
                 } else {
@@ -328,17 +328,17 @@ public class HamsterProjectileEntity extends ThrownEntity {
 
     private void fallbackBlockHit(BlockHitResult blockHitResult, HamsterEntity hamster) {
         // --- Standard Block Collision Handling ---
-        Vec3d impactPos = this.getPos();
-        BlockState hitState = this.getWorld().getBlockState(blockHitResult.getBlockPos());
+        Vec3 impactPos = this.position();
+        BlockState hitState = this.level().getBlockState(blockHitResult.getBlockPos());
 
         // Temporarily position so SFX works
-        hamster.setPosition(impactPos);
+        hamster.setPos(impactPos);
 
         // Feedback
         SoundEvent impactSound = ModSounds.getDynamicBlockSound(hitState);
         HamsterPhysicsUtil.broadcastImpactSound(hamster, impactSound, 1.2f); // Dynamic block sound based on surface
-        HamsterPhysicsUtil.broadcastImpactSound(hamster, SoundEvents.ENTITY_GENERIC_SMALL_FALL, 1.2f); // Armor sound if applicable
+        HamsterPhysicsUtil.broadcastImpactSound(hamster, SoundEvents.GENERIC_SMALL_FALL, 1.2f); // Armor sound if applicable
 
-        HamsterPhysicsUtil.finalizeImpact(hamster, this.getVelocity(), impactPos, blockHitResult.getSide(), hitState);
+        HamsterPhysicsUtil.finalizeImpact(hamster, this.getDeltaMovement(), impactPos, blockHitResult.getDirection(), hitState);
     }
 }

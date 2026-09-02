@@ -1,8 +1,8 @@
 package net.dawson.adorablehamsterpets.entity.control;
 
-import net.minecraft.entity.ai.control.BodyControl;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.control.BodyRotationControl;
 
 /**
  * A custom BodyControl that overrides the vanilla logic to ensure instant, unified rotation
@@ -13,10 +13,10 @@ import net.minecraft.util.math.MathHelper;
  * instantly sync with the head yaw when standing still. This allows LookControl to
  * function correctly without the undesirable slow interpolation of the vanilla BodyControl.
  */
-public class HamsterBodyControl extends BodyControl {
-    private final MobEntity entity;
+public class HamsterBodyControl extends BodyRotationControl {
+    private final Mob entity;
 
-    public HamsterBodyControl(MobEntity entity) {
+    public HamsterBodyControl(Mob entity) {
         super(entity);
         this.entity = entity;
     }
@@ -25,14 +25,14 @@ public class HamsterBodyControl extends BodyControl {
      * Overrides the default body rotation logic to force an immediate sync based on entity state.
      */
     @Override
-    public void tick() {
+    public void clientTick() {
         // If the hamster is moving (pathfinding), its body should face the direction of movement.
         if (this.isMoving()) {
-            this.entity.bodyYaw = MathHelper.wrapDegrees(this.entity.getYaw());
+            this.entity.yBodyRot = Mth.wrapDegrees(this.entity.getYRot());
         } else {
             // If the hamster is standing still, its body should instantly face where its head is looking.
             // This allows LookControl and AI goals to turn the hamster in place without a slow delay.
-            this.entity.bodyYaw = MathHelper.wrapDegrees(this.entity.headYaw);
+            this.entity.yBodyRot = Mth.wrapDegrees(this.entity.yHeadRot);
         }
     }
 
@@ -42,8 +42,8 @@ public class HamsterBodyControl extends BodyControl {
      * @return True if the entity is moving, false otherwise.
      */
     private boolean isMoving() {
-        double d = this.entity.getX() - this.entity.prevX;
-        double e = this.entity.getZ() - this.entity.prevZ;
+        double d = this.entity.getX() - this.entity.xo;
+        double e = this.entity.getZ() - this.entity.zo;
         // A very small threshold to detect any horizontal movement.
         return d * d + e * e > 2.5000003E-7F;
     }

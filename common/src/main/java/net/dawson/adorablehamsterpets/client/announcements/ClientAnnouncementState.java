@@ -2,13 +2,12 @@ package net.dawson.adorablehamsterpets.client.announcements;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.dynamic.Codecs;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import net.minecraft.util.ExtraCodecs;
 
 public record ClientAnnouncementState(
         Set<String> seen_ids,
@@ -19,7 +18,7 @@ public record ClientAnnouncementState(
 ) {
     // Custom codec for a Set of Strings, built from a List codec
     private static final Codec<Set<String>> STRING_SET_CODEC = Codec.STRING.listOf().xmap(Set::copyOf, List::copyOf);
-    private static final Codec<Map<String, Instant>> SNOOZE_MAP_CODEC = Codec.unboundedMap(Codec.STRING, Codecs.INSTANT);
+    private static final Codec<Map<String, Instant>> SNOOZE_MAP_CODEC = Codec.unboundedMap(Codec.STRING, ExtraCodecs.INSTANT_ISO8601);
 
     public static final Codec<ClientAnnouncementState> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             STRING_SET_CODEC.fieldOf("seen_ids").forGetter(ClientAnnouncementState::seen_ids),

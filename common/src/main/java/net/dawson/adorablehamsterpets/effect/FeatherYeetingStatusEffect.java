@@ -1,12 +1,12 @@
 package net.dawson.adorablehamsterpets.effect;
 
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.entity.effect.StatusEffectCategory;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 
-public final class FeatherYeetingStatusEffect extends StatusEffect {
+public final class FeatherYeetingStatusEffect extends MobEffect {
 
     protected FeatherYeetingStatusEffect() {
-        super(StatusEffectCategory.BENEFICIAL, 0xF3CFB9);
+        super(MobEffectCategory.BENEFICIAL, 0xF3CFB9);
     }
 
     public static long calculateThrowCooldownDuration(

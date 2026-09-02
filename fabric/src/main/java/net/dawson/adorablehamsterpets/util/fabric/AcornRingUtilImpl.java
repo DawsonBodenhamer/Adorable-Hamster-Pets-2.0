@@ -7,9 +7,9 @@ import net.dawson.adorablehamsterpets.integration.accessories.fabric.Accessories
 import net.dawson.adorablehamsterpets.integration.trinkets.fabric.TrinketsEquipmentAdapter;
 import net.dawson.adorablehamsterpets.integration.trinkets.fabric.TrinketsLifecycleAdapter;
 import net.dawson.adorablehamsterpets.util.AcornRingUtil;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ import java.util.UUID;
 
 public final class AcornRingUtilImpl {
 
-    public static boolean isEquippedInOptionalSlot(PlayerEntity player) {
+    public static boolean isEquippedInOptionalSlot(Player player) {
         boolean trinketsAvailable = Platform.isModLoaded("trinkets");
         boolean trinketsEquipped = trinketsAvailable
                 && TrinketsEquipmentAdapter.isAcornRingEquipped(player);
@@ -43,7 +43,7 @@ public final class AcornRingUtilImpl {
     }
 
     public static boolean reconcilePlatform(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             @Nullable AcornRingUtil.Location preferredLocation,
             Set<UUID> removedIdentities) {
         List<AcornRingUtil.EquippedRing> equippedRings = new ArrayList<>();

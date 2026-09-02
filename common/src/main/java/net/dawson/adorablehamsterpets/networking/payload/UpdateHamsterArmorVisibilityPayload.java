@@ -1,28 +1,28 @@
 package net.dawson.adorablehamsterpets.networking.payload;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 public record UpdateHamsterArmorVisibilityPayload(int entityId, boolean visible)
-        implements CustomPayload {
-    public static final CustomPayload.Id<UpdateHamsterArmorVisibilityPayload> ID =
-            new CustomPayload.Id<>(
-                    Identifier.of(AdorableHamsterPets.MOD_ID, "update_hamster_armor_visibility"));
+        implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<UpdateHamsterArmorVisibilityPayload> ID =
+            new CustomPacketPayload.Type<>(
+                    ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "update_hamster_armor_visibility"));
 
-    public static final PacketCodec<RegistryByteBuf, UpdateHamsterArmorVisibilityPayload> CODEC =
-            PacketCodec.tuple(
-                    PacketCodecs.VAR_INT,
+    public static final StreamCodec<RegistryFriendlyByteBuf, UpdateHamsterArmorVisibilityPayload> CODEC =
+            StreamCodec.composite(
+                    ByteBufCodecs.VAR_INT,
                     UpdateHamsterArmorVisibilityPayload::entityId,
-                    PacketCodecs.BOOL,
+                    ByteBufCodecs.BOOL,
                     UpdateHamsterArmorVisibilityPayload::visible,
                     UpdateHamsterArmorVisibilityPayload::new);
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

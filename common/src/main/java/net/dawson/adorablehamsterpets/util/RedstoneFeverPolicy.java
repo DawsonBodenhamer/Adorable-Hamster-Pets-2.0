@@ -1,14 +1,14 @@
 package net.dawson.adorablehamsterpets.util;
 
-import net.minecraft.entity.SpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 
 /**
  * Pure Redstone Fever policy contracts shared by runtime code and private tests.
  */
 final class RedstoneFeverPolicy {
 
-    static boolean isEligibleFreshSpawnReason(SpawnReason spawnReason) {
-        return spawnReason != SpawnReason.SPAWN_EGG;
+    static boolean isEligibleFreshSpawnReason(MobSpawnType spawnReason) {
+        return spawnReason != MobSpawnType.SPAWN_EGG;
     }
 
     static boolean isEligiblePlayerState(

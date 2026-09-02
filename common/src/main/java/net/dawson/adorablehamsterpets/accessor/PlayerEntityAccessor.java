@@ -2,10 +2,9 @@ package net.dawson.adorablehamsterpets.accessor;
 
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
 import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.player.Player;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.UUID;
@@ -19,8 +18,8 @@ public interface PlayerEntityAccessor {
     int ahp$getLastRandomMessageIndex(String context);
     void ahp$setLastRandomMessageIndex(String context, int index);
 
-    NbtCompound getShoulderHamster(ShoulderLocation location);
-    void setShoulderHamster(ShoulderLocation location, NbtCompound nbt);
+    CompoundTag getShoulderHamster(ShoulderLocation location);
+    void setShoulderHamster(ShoulderLocation location, CompoundTag nbt);
     boolean hasAnyShoulderHamster();
 
     int ahp_getLastGoldMessageIndex();
@@ -30,7 +29,7 @@ public interface PlayerEntityAccessor {
     default void adorablehamsterpets$dismountShoulderHamster() {
         adorablehamsterpets$dismountShoulderHamster(false);
     }
-    void adorablehamsterpets$setRawHamsterState(net.minecraft.nbt.NbtCompound nbt);
+    void adorablehamsterpets$setRawHamsterState(net.minecraft.nbt.CompoundTag nbt);
     void adorablehamsterpets$syncHamsterState();
     ArrayDeque<ShoulderLocation> adorablehamsterpets$getMountOrderQueue();
     ClientShoulderHamsterData adorablehamsterpets$getClientHamsterState();
@@ -41,7 +40,7 @@ public interface PlayerEntityAccessor {
     void ahp$clearHeistHistory();
 
     void ahp$initGuideBookTracking(boolean currentlyHasGuideBook);
-    boolean ahp$computeHasGuideBook(PlayerEntity player);
+    boolean ahp$computeHasGuideBook(Player player);
 
     boolean ahp$canPlayTagGame();
     void ahp$incrementTagGameCount();
@@ -67,7 +66,7 @@ public interface PlayerEntityAccessor {
     int ahp$getSupporterCrownTrialTicks();
     void ahp$setSupporterCrownTrialTicks(int ticks);
 
-    List<NbtCompound> ahp$getInTransitHamsters();
+    List<CompoundTag> ahp$getInTransitHamsters();
     int ahp$getTransitTimer();
     void ahp$setTransitTimer(int timer);
 

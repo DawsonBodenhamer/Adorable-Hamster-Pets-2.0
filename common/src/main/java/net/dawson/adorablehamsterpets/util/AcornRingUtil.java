@@ -4,14 +4,15 @@ import dev.architectury.injectables.annotations.ExpectPlatform;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.item.ModItems;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -47,13 +48,13 @@ public final class AcornRingUtil {
      *        Equipment and Contract Utilities
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static boolean isEquipped(PlayerEntity player) {
-        return player.getOffHandStack().isOf(ModItems.ACORN_RING.get())
+    public static boolean isEquipped(Player player) {
+        return player.getOffhandItem().is(ModItems.ACORN_RING.get())
                 || isEquippedInOptionalSlot(player);
     }
 
-    public static boolean hasMutualContract(PlayerEntity first, PlayerEntity second) {
-        return !first.getUuid().equals(second.getUuid())
+    public static boolean hasMutualContract(Player first, Player second) {
+        return !first.getUUID().equals(second.getUUID())
                 && hasMutualEquipment(isEquipped(first), isEquipped(second));
     }
 
@@ -75,7 +76,7 @@ public final class AcornRingUtil {
     }
 
     public static boolean protects(LivingEntity attackingPet, LivingEntity target) {
-        if (!(attackingPet.getWorld() instanceof ServerWorld serverWorld)
+        if (!(attackingPet.level() instanceof ServerLevel serverWorld)
                 || !isEligiblePet(attackingPet)) {
             return false;
         }
@@ -97,12 +98,12 @@ public final class AcornRingUtil {
     }
 
     /** Returns whether an equipped ring prevents its wearer from directly attacking this pet. */
-    public static boolean blocksDirectPlayerAttack(PlayerEntity attacker, LivingEntity target) {
+    public static boolean blocksDirectPlayerAttack(Player attacker, LivingEntity target) {
         UUID targetOwnerUuid = PetOwnershipUtil.resolveOwnerUuid(target);
         return blocksDirectPlayerAttack(
                 Configs.AHP_MAIN.acornRingPreventsDamageToOwnPets,
                 Configs.AHP_MAIN.acornRingPreventsDamageToOtherPets,
-                attacker.getUuid(),
+                attacker.getUUID(),
                 targetOwnerUuid,
                 isEquipped(attacker),
                 isEquippedOnlineOwner(attacker, targetOwnerUuid));
@@ -125,7 +126,7 @@ public final class AcornRingUtil {
 
     @Nullable
     public static LivingEntity responsiblePet(@Nullable Entity attacker) {
-        if (!(attacker instanceof LivingEntity living) || attacker instanceof PlayerEntity) {
+        if (!(attacker instanceof LivingEntity living) || attacker instanceof Player) {
             return null;
         }
         return isEligiblePet(living) ? living : null;
@@ -165,12 +166,12 @@ public final class AcornRingUtil {
      *        Lifecycle Hooks and Reconciliation
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static void defer(ServerPlayerEntity player, @Nullable ItemStack removedStack) {
-        if (player.getWorld().isClient()) {
+    public static void defer(ServerPlayer player, @Nullable ItemStack removedStack) {
+        if (player.level().isClientSide()) {
             return;
         }
 
-        UUID playerId = player.getUuid();
+        UUID playerId = player.getUUID();
         DEFERRED_PLAYERS.add(playerId);
         if (removedStack != null) {
             UUID removedIdentity = getId(removedStack);
@@ -181,10 +182,10 @@ public final class AcornRingUtil {
     }
 
     public static void reconcileImmediately(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             Location preferredLocation,
             @Nullable ItemStack currentStack) {
-        UUID playerId = player.getUuid();
+        UUID playerId = player.getUUID();
         if (currentStack != null) {
             UUID currentIdentity = getId(currentStack);
             if (currentIdentity != null) {
@@ -205,8 +206,8 @@ public final class AcornRingUtil {
     }
 
     public static void onServerTick(MinecraftServer server) {
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            UUID playerId = player.getUuid();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID playerId = player.getUUID();
             Set<UUID> removedIdentities = DEFERRED_REMOVALS.getOrDefault(playerId, Set.of());
             if (reconcilePlatform(player, null, removedIdentities)) {
                 DEFERRED_PLAYERS.remove(playerId);
@@ -214,15 +215,15 @@ public final class AcornRingUtil {
             }
         }
 
-        Set<UUID> activePlayers = server.getPlayerManager().getPlayerList().stream()
-                .map(ServerPlayerEntity::getUuid)
+        Set<UUID> activePlayers = server.getPlayerList().getPlayers().stream()
+                .map(ServerPlayer::getUUID)
                 .collect(Collectors.toSet());
         DEFERRED_PLAYERS.removeIf(playerId -> !activePlayers.contains(playerId));
         DEFERRED_REMOVALS.keySet().removeIf(playerId -> !activePlayers.contains(playerId));
     }
 
     public static void reconcile(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             List<EquippedRing> equippedRings,
             Set<UUID> removedIdentities,
             @Nullable Location preferredLocation) {
@@ -349,22 +350,22 @@ public final class AcornRingUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private static boolean isHamster(LivingEntity entity) {
-        var entityId = Registries.ENTITY_TYPE.getId(entity.getType());
+        var entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         return entityId.getNamespace().equals(AdorableHamsterPets.MOD_ID)
                 && entityId.getPath().equals("hamster");
     }
 
     private static boolean protects(
-            ServerWorld world, @Nullable UUID attackingOwnerUuid, @Nullable UUID targetOwnerUuid) {
+            ServerLevel world, @Nullable UUID attackingOwnerUuid, @Nullable UUID targetOwnerUuid) {
         if (attackingOwnerUuid == null
                 || targetOwnerUuid == null
                 || attackingOwnerUuid.equals(targetOwnerUuid)) {
             return false;
         }
 
-        ServerPlayerEntity attackingOwner =
+        ServerPlayer attackingOwner =
                 PetOwnershipUtil.resolveOnlineOwner(world, attackingOwnerUuid);
-        ServerPlayerEntity targetOwner = PetOwnershipUtil.resolveOnlineOwner(world, targetOwnerUuid);
+        ServerPlayer targetOwner = PetOwnershipUtil.resolveOnlineOwner(world, targetOwnerUuid);
         return attackingOwner != null
                 && targetOwner != null
                 && isContractProtected(
@@ -384,19 +385,19 @@ public final class AcornRingUtil {
     }
 
     private static boolean isEquippedOnlineOwner(
-            PlayerEntity attacker, @Nullable UUID targetOwnerUuid) {
+            Player attacker, @Nullable UUID targetOwnerUuid) {
         if (targetOwnerUuid == null
-                || targetOwnerUuid.equals(attacker.getUuid())
-                || !(attacker.getWorld() instanceof ServerWorld serverWorld)) {
+                || targetOwnerUuid.equals(attacker.getUUID())
+                || !(attacker.level() instanceof ServerLevel serverWorld)) {
             return false;
         }
-        ServerPlayerEntity targetOwner =
+        ServerPlayer targetOwner =
                 PetOwnershipUtil.resolveOnlineOwner(serverWorld, targetOwnerUuid);
         return targetOwner != null && isEquipped(targetOwner);
     }
 
     private static void removeIdentitiesBeingUnequipped(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             List<EquippedRing> equippedRings,
             Set<UUID> removedIdentities) {
         if (removedIdentities.isEmpty()) {
@@ -417,10 +418,10 @@ public final class AcornRingUtil {
         equippedRings.removeAll(staleRings);
     }
 
-    private static boolean hasOrdinaryInventoryIdentity(ServerPlayerEntity player, UUID identity) {
-        for (int index = 0; index < player.getInventory().size(); index++) {
-            ItemStack stack = player.getInventory().getStack(index);
-            if (stack.isOf(ModItems.ACORN_RING.get())
+    private static boolean hasOrdinaryInventoryIdentity(ServerPlayer player, UUID identity) {
+        for (int index = 0; index < player.getInventory().getContainerSize(); index++) {
+            ItemStack stack = player.getInventory().getItem(index);
+            if (stack.is(ModItems.ACORN_RING.get())
                     && identity.equals(getId(stack))) {
                 return true;
             }
@@ -429,7 +430,7 @@ public final class AcornRingUtil {
     }
 
     private static void reconcileLegacyDuplicates(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             List<EquippedRing> legacyRings,
             @Nullable Location preferredLocation) {
         Location ownerLocation = chooseLegacyOwner(
@@ -450,7 +451,7 @@ public final class AcornRingUtil {
             setId(recoveredStack, UUID.randomUUID());
             setLastLocation(recoveredStack, ring.location());
             ring.clear();
-            player.getInventory().offerOrDrop(recoveredStack);
+            player.getInventory().placeItemBackInInventory(recoveredStack);
         }
     }
 
@@ -498,7 +499,7 @@ public final class AcornRingUtil {
     }
 
     @ExpectPlatform
-    private static boolean isEquippedInOptionalSlot(PlayerEntity player) {
+    private static boolean isEquippedInOptionalSlot(Player player) {
         throw new AssertionError();
     }
 
@@ -509,7 +510,7 @@ public final class AcornRingUtil {
 
     @ExpectPlatform
     private static boolean reconcilePlatform(
-            ServerPlayerEntity player,
+            ServerPlayer player,
             @Nullable Location preferredLocation,
             Set<UUID> removedIdentities) {
         throw new AssertionError();

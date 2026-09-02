@@ -10,24 +10,24 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.MinigameUtil;
 import net.dawson.adorablehamsterpets.util.MiscUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
@@ -62,7 +62,7 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public HamsterBlockHiderEntity(EntityType<?> type, World world) {
+    public HamsterBlockHiderEntity(EntityType<?> type, Level world) {
         super(type, world);
     }
 
@@ -70,69 +70,69 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
      *        Public API Methods
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public void initializeHiding(BlockPos targetBlock, int durationTicks, NbtCompound originalHamsterNbt) {
+    public void initializeHiding(BlockPos targetBlock, int durationTicks, CompoundTag originalHamsterNbt) {
         this.hamsterNbt = originalHamsterNbt;
         this.anchorPos = targetBlock;
         this.hideTimer = durationTicks;
         this.maxHideDuration = durationTicks;
         this.validationTimer = VALIDATION_INTERVAL;
-        this.jiggleTimer = this.random.nextBetween(5, 15); // First jiggle gets random delay
+        this.jiggleTimer = this.random.nextIntBetweenInclusive(5, 15); // First jiggle gets random delay
         this.ambientHintTimer = 14;
         this.breadcrumbTimer = 12;
-        this.setPosition(targetBlock.getX() + 0.5, targetBlock.getY() + 0.5, targetBlock.getZ() + 0.5);
+        this.setPos(targetBlock.getX() + 0.5, targetBlock.getY() + 0.5, targetBlock.getZ() + 0.5);
 
         registerOccupancy();
     }
 
-    public void finishHiding(boolean success, @Nullable PlayerEntity finder) {
-        if (this.getWorld().isClient) return;
-        ServerWorld serverWorld = (ServerWorld) this.getWorld();
+    public void finishHiding(boolean success, @Nullable Player finder) {
+        if (this.level().isClientSide) return;
+        ServerLevel serverWorld = (ServerLevel) this.level();
 
         HamsterEntity newHamster = super.popOut(success);
 
         if (newHamster != null) {
-            newHamster.hideAndSeekCooldownEndTick = serverWorld.getTime() + (Configs.AHP_MAIN.hideAndSeekCooldownSeconds.get() * 20L);
+            newHamster.hideAndSeekCooldownEndTick = serverWorld.getGameTime() + (Configs.AHP_MAIN.hideAndSeekCooldownSeconds.get() * 20L);
 
             if (!success) {
                 // Failure: Timer expired or block broken
-                MinigameUtil.executeSulkFailure(newHamster, Vec3d.ofCenter(this.anchorPos));
+                MinigameUtil.executeSulkFailure(newHamster, Vec3.atCenterOf(this.anchorPos));
             }
 
             // Visuals & Audio
             BlockState state = serverWorld.getBlockState(this.anchorPos);
             SoundEvent dynamicSound = ModSounds.getDynamicBlockSound(state);
-            serverWorld.playSound(null, this.anchorPos, dynamicSound, SoundCategory.NEUTRAL, 1.8F, 1.2F);
+            serverWorld.playSound(null, this.anchorPos, dynamicSound, SoundSource.NEUTRAL, 1.8F, 1.2F);
             BlockPos popPos = this.anchorPos;
-            newHamster.scheduleTask(serverWorld.getTime() + 4, "hide_and_seek_pop", () -> { // 4 tick delay for pop sound
+            newHamster.scheduleTask(serverWorld.getGameTime() + 4, "hide_and_seek_pop", () -> { // 4 tick delay for pop sound
                 if (newHamster.isAlive()) {
-                    serverWorld.playSound(null, popPos, ModSounds.HAMSTER_POP.get(), SoundCategory.NEUTRAL, 0.25F, 1.0F);
+                    serverWorld.playSound(null, popPos, ModSounds.HAMSTER_POP.get(), SoundSource.NEUTRAL, 0.25F, 1.0F);
                 }
             });
 
             ParticleEffectsUtil.spawnParticles(
                     serverWorld,
-                    Vec3d.ofCenter(this.anchorPos),
+                    Vec3.atCenterOf(this.anchorPos),
                     ParticleTypes.POOF,
                     25,
-                    new Vec3d(0.3, 0.3, 0.3),
+                    new Vec3(0.3, 0.3, 0.3),
                     0.05
             );
 
             // Spawn contextual block particles
             ParticleEffectsUtil.spawnParticles(
                     serverWorld,
-                    Vec3d.ofCenter(this.anchorPos),
+                    Vec3.atCenterOf(this.anchorPos),
                     MiscUtil.BlockStateUtil.getHidingSpotParticle(state),
                     30,
-                    new Vec3d(0.4, 0.4, 0.4),
+                    new Vec3(0.4, 0.4, 0.4),
                     0.0
             );
 
-            serverWorld.spawnEntityAndPassengers(newHamster);
+            serverWorld.addFreshEntityWithPassengers(newHamster);
 
             if (success) {
                 // Success: Player found hamster
-                if (finder instanceof ServerPlayerEntity serverPlayer) {
+                if (finder instanceof ServerPlayer serverPlayer) {
                     ModCriteria.HIDE_AND_SEEK_FOUND.get().trigger(serverPlayer);
                 }
 
@@ -142,20 +142,20 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
                     newHamster.setCelebrationTicks(10);
 
                     // Delay slightly to ensure client rendering entity before sending animation packet
-                    newHamster.scheduleTask(serverWorld.getTime() + 5, "start_gift_delivery", () -> {
+                    newHamster.scheduleTask(serverWorld.getGameTime() + 5, "start_gift_delivery", () -> {
                         MinigameUtil.executeGiftDeliverySequence(newHamster, new ItemStack(giftItem), finder);
                     });
                 }
 
                 SoundEvent sparkleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, this.random);
                 if (sparkleSound != null) {
-                    serverWorld.playSound(null, newHamster.getBlockPos(), sparkleSound, SoundCategory.NEUTRAL, 0.5F, 1.0F);
+                    serverWorld.playSound(null, newHamster.blockPosition(), sparkleSound, SoundSource.NEUTRAL, 0.5F, 1.0F);
                 }
             }
         }
 
         // Trigger exit jiggle on client
-        serverWorld.sendEntityStatus(this, (byte) 60);
+        serverWorld.broadcastEntityEvent(this, (byte) 60);
         this.discard();
     }
 
@@ -164,14 +164,14 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public void handleStatus(byte status) {
+    public void handleEntityEvent(byte status) {
         if (status == 60) {
             // Trigger client side matrix deformation manually
-            long posLong = this.getBlockPos().asLong();
+            long posLong = this.blockPosition().asLong();
             long seed = (posLong ^ (this.getId() * 0x9E3779B97F4A7C15L));
-            BlockJiggleManager.INSTANCE.startJiggle(posLong, this.getWorld().getTime(), seed, BlockJiggleManager.HIDE_AND_SEEK_JIGGLE);
+            BlockJiggleManager.INSTANCE.startJiggle(posLong, this.level().getGameTime(), seed, BlockJiggleManager.HIDE_AND_SEEK_JIGGLE);
         } else {
-            super.handleStatus(status);
+            super.handleEntityEvent(status);
         }
     }
 
@@ -179,7 +179,7 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
     public void tick() {
         super.tick();
 
-        if (this.getWorld().isClient) return;
+        if (this.level().isClientSide) return;
 
         if (!this.isRegistered && this.anchorPos != null) {
             registerOccupancy();
@@ -198,7 +198,7 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
 
         // --- Ambient Feedback ---
         if (--this.ambientHintTimer <= 0) {
-            this.ambientHintTimer = (int) MathHelper.lerp(progress, AMBIENT_START_INTERVAL, AMBIENT_END_INTERVAL);
+            this.ambientHintTimer = (int) Mth.lerp(progress, AMBIENT_START_INTERVAL, AMBIENT_END_INTERVAL);
             MinigameUtil.executeOngoingBlockLocationHint(
                     this,
                     ModParticles.PIXIE_DUST.get(PixieDustParticleTheme.GOLD).get(),
@@ -212,10 +212,10 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
 
         // --- Breadcrumbs Trail ---
         if (--this.breadcrumbTimer <= 0) {
-            this.breadcrumbTimer = (int) MathHelper.lerp(progress, BREADCRUMB_START_INTERVAL, BREADCRUMB_END_INTERVAL);
+            this.breadcrumbTimer = (int) Mth.lerp(progress, BREADCRUMB_START_INTERVAL, BREADCRUMB_END_INTERVAL);
 
-            if (this.hamsterNbt != null && this.hamsterNbt.containsUuid("Owner")) {
-                PlayerEntity owner = this.getWorld().getPlayerByUuid(this.hamsterNbt.getUuid("Owner"));
+            if (this.hamsterNbt != null && this.hamsterNbt.hasUUID("Owner")) {
+                Player owner = this.level().getPlayerByUUID(this.hamsterNbt.getUUID("Owner"));
                 MinigameUtil.executeBreadcrumbHint(
                         this,
                         owner,
@@ -224,7 +224,7 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
                         0.65,
                         ModParticles.PIXIE_DUST.get(PixieDustParticleTheme.GOLD).get(),
                         1,
-                        new Vec3d(0.05, 0.05, 0.05),
+                        new Vec3(0.05, 0.05, 0.05),
                         0.0
                 );
             }
@@ -232,11 +232,11 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
 
         // --- Periodic Feedback ---
         if (--this.jiggleTimer <= 0) {
-            int baseInterval = (int) MathHelper.lerp(progress, JIGGLE_START_INTERVAL, JIGGLE_END_INTERVAL);
-            this.jiggleTimer = baseInterval + this.random.nextBetween(-JIGGLE_INTERVAL_VARIANCE, JIGGLE_INTERVAL_VARIANCE);
+            int baseInterval = (int) Mth.lerp(progress, JIGGLE_START_INTERVAL, JIGGLE_END_INTERVAL);
+            this.jiggleTimer = baseInterval + this.random.nextIntBetweenInclusive(-JIGGLE_INTERVAL_VARIANCE, JIGGLE_INTERVAL_VARIANCE);
 
             if (this.anchorPos != null) {
-                BlockState state = this.getWorld().getBlockState(this.anchorPos);
+                BlockState state = this.level().getBlockState(this.anchorPos);
                 SoundEvent sound = ModSounds.getDynamicBlockSound(state);
 
                 MinigameUtil.executePeriodicBlockLocationHint(
@@ -247,7 +247,7 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
                         1.2F,
                         MiscUtil.BlockStateUtil.getHidingSpotParticle(state),
                         15,
-                        new Vec3d(0.3, 0.3, 0.3),
+                        new Vec3(0.3, 0.3, 0.3),
                         0.2
                 );
             }
@@ -263,8 +263,8 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    protected void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    protected void addAdditionalSaveData(CompoundTag nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putInt("HideTimer", this.hideTimer);
         nbt.putInt("MaxHideDuration", this.maxHideDuration);
         nbt.putInt("AmbientHintTimer", this.ambientHintTimer);
@@ -272,18 +272,18 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
     }
 
     @Override
-    protected void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
+    protected void readAdditionalSaveData(CompoundTag nbt) {
+        super.readAdditionalSaveData(nbt);
         this.hideTimer = nbt.getInt("HideTimer");
-        this.maxHideDuration = nbt.contains("MaxHideDuration", NbtElement.INT_TYPE) ? nbt.getInt("MaxHideDuration") : Math.max(1, this.hideTimer);
+        this.maxHideDuration = nbt.contains("MaxHideDuration", Tag.TAG_INT) ? nbt.getInt("MaxHideDuration") : Math.max(1, this.hideTimer);
         this.validationTimer = VALIDATION_INTERVAL;
 
         float progress = this.maxHideDuration > 0 ? 1.0f - ((float) this.hideTimer / this.maxHideDuration) : 0.0f;
-        int baseInterval = (int) MathHelper.lerp(progress, 220.0f, 40.0f);
-        this.jiggleTimer = baseInterval + this.random.nextBetween(-30, 30);
+        int baseInterval = (int) Mth.lerp(progress, 220.0f, 40.0f);
+        this.jiggleTimer = baseInterval + this.random.nextIntBetweenInclusive(-30, 30);
 
-        this.ambientHintTimer = nbt.contains("AmbientHintTimer", NbtElement.INT_TYPE) ? nbt.getInt("AmbientHintTimer") : 14;
-        this.breadcrumbTimer = nbt.contains("BreadcrumbTimer", NbtElement.INT_TYPE) ? nbt.getInt("BreadcrumbTimer") : 12;
+        this.ambientHintTimer = nbt.contains("AmbientHintTimer", Tag.TAG_INT) ? nbt.getInt("AmbientHintTimer") : 14;
+        this.breadcrumbTimer = nbt.contains("BreadcrumbTimer", Tag.TAG_INT) ? nbt.getInt("BreadcrumbTimer") : 12;
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -292,11 +292,11 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
 
     private boolean isBlockValid() {
         if (this.anchorPos == null) return false;
-        BlockState state = this.getWorld().getBlockState(this.anchorPos);
+        BlockState state = this.level().getBlockState(this.anchorPos);
 
         if (ConfigDataCache.isHideAndSeekBlacklisted(state)) return false;
         if (ConfigDataCache.isHideAndSeekBlock(state)) return true;
-        if (Configs.AHP_MAIN.allowInventoryHiding && this.getWorld().getBlockEntity(this.anchorPos) instanceof Inventory) return true;
+        if (Configs.AHP_MAIN.allowInventoryHiding && this.level().getBlockEntity(this.anchorPos) instanceof Container) return true;
 
         return false;
     }

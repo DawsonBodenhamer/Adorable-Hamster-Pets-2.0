@@ -7,19 +7,18 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.SpawnEggItem;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ItemScatterer;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.Containers;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.level.Level;
 import java.util.function.BiConsumer;
 import java.util.function.IntPredicate;
 
@@ -55,7 +54,7 @@ public final class HamsterInventoryUtil {
 
         // --- 2. Accessory Slot ---
         if (slot == ACCESSORY_SLOT_INDEX) {
-            return stack.isOf(ModItems.ACORN_HAT.get()) || stack.isIn(ItemTags.FLOWERS);
+            return stack.is(ModItems.ACORN_HAT.get()) || stack.is(ItemTags.FLOWERS);
         }
 
         // --- 3. Armor Slot ---
@@ -88,7 +87,7 @@ public final class HamsterInventoryUtil {
         }
 
         // --- 4. Vanilla Food Components ---
-        if (stack.get(DataComponentTypes.FOOD) != null) return true;
+        if (stack.get(DataComponents.FOOD) != null) return true;
 
         Item item = stack.getItem();
 
@@ -108,8 +107,8 @@ public final class HamsterInventoryUtil {
         for (int i = 0; i < CHEEK_POUCH_SIZE; i++) {
             ItemStack slotStack = hamster.getItems().get(i);
             if (slotStack.isEmpty()
-                    || (ItemStack.areItemsEqual(slotStack, stack)
-                            && slotStack.getCount() < slotStack.getMaxCount())) {
+                    || (ItemStack.isSameItem(slotStack, stack)
+                            && slotStack.getCount() < slotStack.getMaxStackSize())) {
                 return true;
             }
         }
@@ -129,15 +128,15 @@ public final class HamsterInventoryUtil {
             ItemStack slotStack = hamster.getItems().get(i);
 
             if (slotStack.isEmpty()) {
-                hamster.setStack(i, remaining.split(remaining.getCount()));
-            } else if (ItemStack.areItemsEqual(slotStack, remaining)
-                    && slotStack.getCount() < slotStack.getMaxCount()) {
-                int spaceLeft = slotStack.getMaxCount() - slotStack.getCount();
+                hamster.setItem(i, remaining.split(remaining.getCount()));
+            } else if (ItemStack.isSameItem(slotStack, remaining)
+                    && slotStack.getCount() < slotStack.getMaxStackSize()) {
+                int spaceLeft = slotStack.getMaxStackSize() - slotStack.getCount();
                 int amountToMove = Math.min(spaceLeft, remaining.getCount());
 
-                slotStack.increment(amountToMove);
-                remaining.decrement(amountToMove);
-                hamster.setStack(i, slotStack); // Trigger sync
+                slotStack.grow(amountToMove);
+                remaining.shrink(amountToMove);
+                hamster.setItem(i, slotStack); // Trigger sync
             }
         }
 
@@ -151,7 +150,7 @@ public final class HamsterInventoryUtil {
         // Cheek inventory is server-authoritative and is not mirrored to the client. Client-side
         // derivation would therefore erase correctly tracked cheek flags whenever this helper is
         // reached by presentation or compatibility code.
-        if (hamster.getWorld().isClient()) return;
+        if (hamster.level().isClientSide()) return;
 
         // --- Cheek Occupancy ---
         CheekOccupancy occupancy =
@@ -163,8 +162,8 @@ public final class HamsterInventoryUtil {
         if (hamster.isRightCheekFull() != rightFull) hamster.setRightCheekFull(rightFull);
 
         // --- Full-Pouch Advancement ---
-        if (!hamster.getWorld().isClient()
-                && hamster.getOwner() instanceof ServerPlayerEntity serverPlayer) {
+        if (!hamster.level().isClientSide()
+                && hamster.getOwner() instanceof ServerPlayer serverPlayer) {
             boolean allSlotsFilled = true;
             for (int i = 0; i < CHEEK_POUCH_SIZE; i++) {
                 if (hamster.getItems().get(i).isEmpty()) {
@@ -214,14 +213,14 @@ public final class HamsterInventoryUtil {
      */
     public static void updateAccessoryState(HamsterEntity hamster) {
         ItemStack accessory = hamster.getItems().get(ACCESSORY_SLOT_INDEX);
-        int flowerPosition = hamster.getDataTracker().get(HamsterEntity.FLOWER_POS);
+        int flowerPosition = hamster.getEntityData().get(HamsterEntity.FLOWER_POS);
 
-        if (accessory.isIn(ItemTags.FLOWERS)) {
+        if (accessory.is(ItemTags.FLOWERS)) {
             if (flowerPosition == 0) {
-                hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, 1);
+                hamster.getEntityData().set(HamsterEntity.FLOWER_POS, 1);
             }
         } else if (flowerPosition != 0) {
-            hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, 0);
+            hamster.getEntityData().set(HamsterEntity.FLOWER_POS, 0);
         }
     }
 
@@ -229,7 +228,7 @@ public final class HamsterInventoryUtil {
      * Syncs equipment visually onto the client DataTrackers.
      */
     public static void syncEquipmentTrackers(HamsterEntity hamster) {
-        if (hamster.getWorld().isClient() && !hamster.isShoulderPet() && !hamster.isProjectileDummy)
+        if (hamster.level().isClientSide() && !hamster.isShoulderPet() && !hamster.isProjectileDummy)
             return;
 
         ItemStack accessory = hamster.getItems().get(ACCESSORY_SLOT_INDEX);
@@ -247,23 +246,23 @@ public final class HamsterInventoryUtil {
         boolean isEmpty = newStack.isEmpty();
         boolean wasEmpty = oldStack.isEmpty();
 
-        if (ItemStack.areEqual(oldStack, newStack)) return;
+        if (ItemStack.matches(oldStack, newStack)) return;
 
         if (slot == ARMOR_SLOT_INDEX) {
             if (wasEmpty && !isEmpty) {
-                hamster.playSound(SoundEvents.ITEM_ARMOR_EQUIP_WOLF.value(), 0.6f, 1.2f);
+                hamster.playSound(SoundEvents.ARMOR_EQUIP_WOLF.value(), 0.6f, 1.2f);
             } else if (!wasEmpty && isEmpty) {
-                hamster.playSound(SoundEvents.ITEM_ARMOR_EQUIP_WOLF.value(), 0.4f, 0.8f);
+                hamster.playSound(SoundEvents.ARMOR_EQUIP_WOLF.value(), 0.4f, 0.8f);
             } else if (!wasEmpty && !isEmpty) {
-                hamster.playSound(SoundEvents.ITEM_ARMOR_EQUIP_WOLF.value(), 0.6f, 1.2f);
+                hamster.playSound(SoundEvents.ARMOR_EQUIP_WOLF.value(), 0.6f, 1.2f);
             }
         } else if (slot == ACCESSORY_SLOT_INDEX) {
             if (wasEmpty && !isEmpty) {
-                hamster.playSound(SoundEvents.ITEM_ARMOR_EQUIP_GENERIC.value(), 0.6f, 1.2f);
+                hamster.playSound(SoundEvents.ARMOR_EQUIP_GENERIC.value(), 0.6f, 1.2f);
             } else if (!wasEmpty && isEmpty) {
-                hamster.playSound(SoundEvents.ITEM_ARMOR_EQUIP_GENERIC.value(), 0.4f, 0.8f);
+                hamster.playSound(SoundEvents.ARMOR_EQUIP_GENERIC.value(), 0.4f, 0.8f);
             } else if (!wasEmpty && !isEmpty) {
-                hamster.playSound(SoundEvents.ITEM_ARMOR_EQUIP_GENERIC.value(), 0.6f, 1.2f);
+                hamster.playSound(SoundEvents.ARMOR_EQUIP_GENERIC.value(), 0.6f, 1.2f);
             }
         }
     }
@@ -273,9 +272,9 @@ public final class HamsterInventoryUtil {
     /**
      * Generates context-aware wild loot for newly spawned untamed hamsters.
      */
-    public static void generateWildLoot(HamsterEntity hamster, Random random) {
-        boolean caveEnvironment = !hamster.getWorld().isClient()
-                && HamsterGeneticsUtil.isCaveEnvironment(hamster.getWorld(), hamster.getBlockPos());
+    public static void generateWildLoot(HamsterEntity hamster, RandomSource random) {
+        boolean caveEnvironment = !hamster.level().isClientSide()
+                && HamsterGeneticsUtil.isCaveEnvironment(hamster.level(), hamster.blockPosition());
         generateWildLoot(hamster, random, caveEnvironment);
     }
 
@@ -283,9 +282,9 @@ public final class HamsterInventoryUtil {
      * Generates context-aware wild loot with an already resolved cave-spawn context.
      */
     public static void generateWildLoot(
-            HamsterEntity hamster, Random random, boolean caveEnvironment) {
+            HamsterEntity hamster, RandomSource random, boolean caveEnvironment) {
         // --- 1. Global Eligibility ---
-        if (hamster.isTamed() || !hamster.getItems().get(0).isEmpty()) return;
+        if (hamster.isTame() || !hamster.getItems().get(0).isEmpty()) return;
 
         float globalChance = Configs.AHP_WORLDGEN.globalCheekLootChance.get();
         if (random.nextFloat() > globalChance) return;
@@ -366,7 +365,7 @@ public final class HamsterInventoryUtil {
      */
     public static boolean enforceInventoryRules(HamsterEntity hamster) {
         boolean inventoryChanged = false;
-        World world = hamster.getWorld();
+        Level world = hamster.level();
 
         for (int i = 0; i < INVENTORY_SIZE; ++i) {
             ItemStack stack = hamster.getItems().get(i);
@@ -377,7 +376,7 @@ public final class HamsterInventoryUtil {
                         stack.getItem(),
                         i);
 
-                ItemScatterer.spawn(
+                Containers.dropItemStack(
                         world, hamster.getX(), hamster.getY(), hamster.getZ(), stack.copy());
                 hamster.getItems().set(i, ItemStack.EMPTY);
 

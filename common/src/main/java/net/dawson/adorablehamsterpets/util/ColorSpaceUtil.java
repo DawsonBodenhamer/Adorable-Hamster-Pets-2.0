@@ -2,10 +2,9 @@ package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterColorZone;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.phys.Vec3;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -38,9 +37,9 @@ public final class ColorSpaceUtil {
 
         public static float getShiftDegrees(float brightness, float saturation, boolean isWarm) {
             // Sliding scale for brightness
-            float shiftB = MathHelper.lerp(brightness, HUE_SHIFT_MAX_B, HUE_SHIFT_MIN_B);
+            float shiftB = Mth.lerp(brightness, HUE_SHIFT_MAX_B, HUE_SHIFT_MIN_B);
             // Sliding scale for saturation
-            float shiftS = MathHelper.lerp(saturation, HUE_SHIFT_MAX_S, HUE_SHIFT_MIN_S);
+            float shiftS = Mth.lerp(saturation, HUE_SHIFT_MAX_S, HUE_SHIFT_MIN_S);
 
             // Average the two shifts
             float finalShift = (shiftB + shiftS) / 2.0f;
@@ -54,14 +53,14 @@ public final class ColorSpaceUtil {
     /**
      * A record representing a color's position in 3D space and its genetic diluteness.
      */
-    public record ColorData(Vec3d position, float dilutenessScore) {}
+    public record ColorData(Vec3 position, float dilutenessScore) {}
 
     /**
      * Analyzes an array of Hex color codes and returns its averaged 3D spatial coordinate.
      */
     public static ColorData analyzePalette(int[] paletteHexCodes) {
         if (paletteHexCodes == null || paletteHexCodes.length == 0) {
-            return new ColorData(Vec3d.ZERO, 0.0f);
+            return new ColorData(Vec3.ZERO, 0.0f);
         }
 
         double sumX = 0, sumY = 0, sumZ = 0;
@@ -83,7 +82,7 @@ public final class ColorSpaceUtil {
 
         int count = paletteHexCodes.length;
         return new ColorData(
-                new Vec3d(sumX / count, sumY / count, sumZ / count),
+                new Vec3(sumX / count, sumY / count, sumZ / count),
                 0.0f
         );
     }
@@ -101,7 +100,7 @@ public final class ColorSpaceUtil {
         try (InputStream stream = ColorSpaceUtil.class.getResourceAsStream(resourcePath)) {
             if (stream == null) {
                 AdorableHamsterPets.LOGGER.error("Could not find image for genetic analysis: {}", resourcePath);
-                return new ColorData(Vec3d.ZERO, 0.0f);
+                return new ColorData(Vec3.ZERO, 0.0f);
             }
 
             BufferedImage image = ImageIO.read(stream);
@@ -129,23 +128,23 @@ public final class ColorSpaceUtil {
                 }
             }
 
-            if (validPixels == 0) return new ColorData(Vec3d.ZERO, 0.0f);
+            if (validPixels == 0) return new ColorData(Vec3.ZERO, 0.0f);
 
             return new ColorData(
-                    new Vec3d(sumX / validPixels, sumY / validPixels, sumZ / validPixels),
+                    new Vec3(sumX / validPixels, sumY / validPixels, sumZ / validPixels),
                     0.0f
             );
 
         } catch (Exception e) {
             AdorableHamsterPets.LOGGER.error("Failed to analyze image for genetics: {}", resourcePath, e);
-            return new ColorData(Vec3d.ZERO, 0.0f);
+            return new ColorData(Vec3.ZERO, 0.0f);
         }
     }
 
     /**
      * Dynamically maps lowest brightness to 0 and highest saturation to 1.
      */
-    public static float calculateNormalizedDiluteness(Vec3d colorSpacePos, double minBri, double maxSat) {
+    public static float calculateNormalizedDiluteness(Vec3 colorSpacePos, double minBri, double maxSat) {
         double avgBri = getBrightness(colorSpacePos);
         double avgSat = getSaturation(colorSpacePos);
 
@@ -194,14 +193,14 @@ public final class ColorSpaceUtil {
 
             // --- Apply Dynamic Saturation Boost ---
             // 1. Calculate base boost based on brightness
-            float brightnessBoost = MathHelper.lerp(
+            float brightnessBoost = Mth.lerp(
                     hsb[2],
                     ColorTuning.SAT_BOOST_MIN_B,
                     ColorTuning.SAT_BOOST_MAX_B
             );
 
             // 2. Calculate multiplier based on the original saturation
-            float saturationMultiplier = MathHelper.lerp(
+            float saturationMultiplier = Mth.lerp(
                     hsb[1],
                     ColorTuning.SAT_BOOST_MIN_S,
                     ColorTuning.SAT_BOOST_MAX_S
@@ -216,7 +215,7 @@ public final class ColorSpaceUtil {
 
             float normalizedDistance = hueDistance * 2.0f;
 
-            float hueMultiplier = net.minecraft.util.math.MathHelper.lerp(
+            float hueMultiplier = net.minecraft.util.Mth.lerp(
                     normalizedDistance,
                     ColorTuning.DAMPENING_MULTIPLIER,
                     1.0f
@@ -234,7 +233,7 @@ public final class ColorSpaceUtil {
      * Represents a "probabilistic slider" for the offspring of two parents.
      * Adds a randomized jitter to "thicken" the line, expanding the pool of potential genetic results.
      */
-    public static Vec3d calculateGeneticMidpoint(Vec3d parentA, Vec3d parentB, Random random) {
+    public static Vec3 calculateGeneticMidpoint(Vec3 parentA, Vec3 parentB, RandomSource random) {
         double variance = AdorableHamsterPets.MAIN_CONFIG.geneticVariance.get();
         double mutationRate = AdorableHamsterPets.MAIN_CONFIG.geneticMutationRate.get();
 
@@ -245,7 +244,7 @@ public final class ColorSpaceUtil {
         t = Math.max(0.0, Math.min(1.0, t));
 
         // Lerp along the 3D line segment
-        Vec3d mid = parentA.lerp(parentB, t);
+        Vec3 mid = parentA.lerp(parentB, t);
 
         // Add random scatter offset on all axes
         double jx = (random.nextDouble() - 0.5) * mutationRate;
@@ -259,7 +258,7 @@ public final class ColorSpaceUtil {
      * Determines the closest abstract HamsterColorZone for a given 3D color coordinate.
      * Uses a rule-based HSB categorization to prioritize Hue.
      */
-    public static HamsterColorZone determineZone(Vec3d colorSpacePos) {
+    public static HamsterColorZone determineZone(Vec3 colorSpacePos) {
         HamsterColorZone closestZone = HamsterColorZone.ORANGE;
         double minDistance = Double.MAX_VALUE;
 
@@ -279,21 +278,21 @@ public final class ColorSpaceUtil {
      * Calculates the Euclidean distance between two colors in a 3D Cartesian space.
      * The smaller the distance, the closer the colors are visually.
      */
-    public static double getColorDistance(Vec3d colorA, Vec3d colorB) {
+    public static double getColorDistance(Vec3 colorA, Vec3 colorB) {
         return colorA.distanceTo(colorB);
     }
 
     /**
      * Extracts the average saturation from a 3D color space coordinate.
      */
-    public static double getSaturation(Vec3d colorSpacePos) {
+    public static double getSaturation(Vec3 colorSpacePos) {
         return Math.sqrt(colorSpacePos.x * colorSpacePos.x + colorSpacePos.y * colorSpacePos.y);
     }
 
     /**
      * Extracts the average brightness from a 3D color space coordinate.
      */
-    public static double getBrightness(Vec3d colorSpacePos) {
+    public static double getBrightness(Vec3 colorSpacePos) {
         return colorSpacePos.z;
     }
 }

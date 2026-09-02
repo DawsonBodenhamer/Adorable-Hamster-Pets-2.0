@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.client.particle;
 
 import me.fzzyhmstrs.fzzy_config.util.EnumTranslatable;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
@@ -46,7 +46,7 @@ public enum PixieDustParticleTheme implements EnumTranslatable {
         return Color.HSBtoRGB(h / 360f, s / 100f, b / 100f) & 0xFFFFFF;
     }
 
-    public int getRandomColor(Random random) {
+    public int getRandomColor(RandomSource random) {
         return colors[random.nextInt(colors.length)];
     }
 

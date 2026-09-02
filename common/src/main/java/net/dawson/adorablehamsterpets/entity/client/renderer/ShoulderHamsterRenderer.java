@@ -1,11 +1,10 @@
 package net.dawson.adorablehamsterpets.entity.client.renderer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 
@@ -17,7 +16,7 @@ import software.bernie.geckolib.cache.object.BakedGeoModel;
  */
 public class ShoulderHamsterRenderer extends HamsterRenderer {
 
-    public ShoulderHamsterRenderer(EntityRendererFactory.Context ctx) {
+    public ShoulderHamsterRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
     }
 
@@ -26,8 +25,8 @@ public class ShoulderHamsterRenderer extends HamsterRenderer {
      * for a shoulder-mounted entity, such as cleaning sounds and snow offset.
      */
     @Override
-    public void render(HamsterEntity entity, float entityYaw, float partialTick, MatrixStack poseStack,
-                       VertexConsumerProvider bufferSource, int packedLight) {
+    public void render(HamsterEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
+                       MultiBufferSource bufferSource, int packedLight) {
         this.shadowRadius = entity.isBaby() ? 0.1F : 0.2F;
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
     }

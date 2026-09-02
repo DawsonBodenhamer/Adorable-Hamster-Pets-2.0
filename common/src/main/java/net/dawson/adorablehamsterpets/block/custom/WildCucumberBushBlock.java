@@ -4,66 +4,72 @@ import com.mojang.serialization.MapCodec;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.dawson.adorablehamsterpets.item.ModItems;
-import net.minecraft.block.*;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldView;
-import net.minecraft.world.event.GameEvent;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * Represents a wild cucumber bush block that can be harvested for seeds and regrows over time.
  */
-public class WildCucumberBushBlock extends PlantBlock {
+public class WildCucumberBushBlock extends BushBlock {
     // --- Constants and Static Fields ---
-    public static final MapCodec<WildCucumberBushBlock> CODEC = createCodec(WildCucumberBushBlock::new);
-    public static final BooleanProperty SEEDED = BooleanProperty.of("seeded");
+    public static final MapCodec<WildCucumberBushBlock> CODEC = simpleCodec(WildCucumberBushBlock::new);
+    public static final BooleanProperty SEEDED = BooleanProperty.create("seeded");
 
-    private static final VoxelShape SEEDLESS_SHAPE = Block.createCuboidShape(3.0, 0.0, 3.0, 13.0, 8.0, 13.0);
-    private static final VoxelShape SEEDED_SHAPE = Block.createCuboidShape(1.0, 0.0, 1.0, 15.0, 16.0, 15.0);
+    private static final VoxelShape SEEDLESS_SHAPE = Block.box(3.0, 0.0, 3.0, 13.0, 8.0, 13.0);
+    private static final VoxelShape SEEDED_SHAPE = Block.box(1.0, 0.0, 1.0, 15.0, 16.0, 15.0);
 
     // --- Constructor ---
-    public WildCucumberBushBlock(Settings settings) {
+    public WildCucumberBushBlock(Properties settings) {
         super(settings);
-        this.setDefaultState(this.stateManager.getDefaultState().with(SEEDED, true));
+        this.registerDefaultState(this.stateDefinition.any().setValue(SEEDED, true));
     }
 
     // --- Overridden Methods ---
     @Override
-    public MapCodec<WildCucumberBushBlock> getCodec() {
+    public MapCodec<WildCucumberBushBlock> codec() {
         return CODEC;
     }
 
     @Override
-    public ItemStack getPickStack(WorldView world, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state) {
         return new ItemStack(ModItems.CUCUMBER_SEEDS.get());
     }
 
     @Override
-    public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-        return state.get(SEEDED) ? SEEDED_SHAPE : SEEDLESS_SHAPE;
+    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+        return state.getValue(SEEDED) ? SEEDED_SHAPE : SEEDLESS_SHAPE;
     }
 
     @Override
-    public boolean hasRandomTicks(BlockState state) {
-        return !state.get(SEEDED); // Only ticks when seedless to regrow
+    public boolean isRandomlyTicking(BlockState state) {
+        return !state.getValue(SEEDED); // Only ticks when seedless to regrow
     }
 
     @Override
-    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+    public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
         // --- Regrowth Logic ---
-        if (!state.get(SEEDED)) {
+        if (!state.getValue(SEEDED)) {
             final AhpWorldGenConfig config = AdorableHamsterPets.WORLD_GEN_CONFIG;
             double modifier = config.wildBushRegrowthModifier.get();
             modifier = Math.max(0.1, modifier); // Ensure positive modifier
@@ -72,44 +78,44 @@ public class WildCucumberBushBlock extends PlantBlock {
             int effectiveDenominator = (int) Math.round(baseRegrowthChanceDenominator * modifier);
             effectiveDenominator = Math.max(1, effectiveDenominator);
 
-            if (world.getBaseLightLevel(pos.up(), 0) >= 9 && random.nextInt(effectiveDenominator) == 0) {
-                BlockState newState = state.with(SEEDED, true);
-                world.setBlockState(pos, newState, Block.NOTIFY_LISTENERS);
-                world.emitGameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Emitter.of(newState));
+            if (world.getRawBrightness(pos.above(), 0) >= 9 && random.nextInt(effectiveDenominator) == 0) {
+                BlockState newState = state.setValue(SEEDED, true);
+                world.setBlock(pos, newState, Block.UPDATE_CLIENTS);
+                world.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(newState));
             }
         }
     }
 
     @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+    public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
         // --- Harvesting Logic ---
-        if (state.get(SEEDED)) {
-            if (!world.isClient) {
+        if (state.getValue(SEEDED)) {
+            if (!world.isClientSide) {
                 int seedAmount = 1 + world.random.nextInt(2); // Drop 1 or 2 seeds
-                dropStack(world, pos, new ItemStack(ModItems.CUCUMBER_SEEDS.get(), seedAmount));
+                popResource(world, pos, new ItemStack(ModItems.CUCUMBER_SEEDS.get(), seedAmount));
 
-                world.playSound(null, pos, SoundEvents.BLOCK_SWEET_BERRY_BUSH_PICK_BERRIES, SoundCategory.BLOCKS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
+                world.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
 
-                BlockState newState = state.with(SEEDED, false);
-                world.setBlockState(pos, newState, Block.NOTIFY_LISTENERS);
-                world.emitGameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Emitter.of(player, newState));
+                BlockState newState = state.setValue(SEEDED, false);
+                world.setBlock(pos, newState, Block.UPDATE_CLIENTS);
+                world.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, newState));
 
-                return ActionResult.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
-            return ActionResult.success(world.isClient); // Indicate client-side success
+            return InteractionResult.sidedSuccess(world.isClientSide); // Indicate client-side success
         }
-        return ActionResult.PASS; // Not seeded, pass interaction
+        return InteractionResult.PASS; // Not seeded, pass interaction
     }
 
     @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(SEEDED);
     }
 
     @Override
-    protected boolean canPlantOnTop(BlockState floor, BlockView world, BlockPos pos) {
-        return floor.isOf(Blocks.GRASS_BLOCK) || floor.isOf(Blocks.DIRT) || floor.isOf(Blocks.COARSE_DIRT)
-                || floor.isOf(Blocks.PODZOL) || floor.isOf(Blocks.FARMLAND) || floor.isOf(Blocks.CLAY)
-                || floor.isOf(Blocks.MOSS_BLOCK) || floor.isOf(Blocks.MUD);
+    protected boolean mayPlaceOn(BlockState floor, BlockGetter world, BlockPos pos) {
+        return floor.is(Blocks.GRASS_BLOCK) || floor.is(Blocks.DIRT) || floor.is(Blocks.COARSE_DIRT)
+                || floor.is(Blocks.PODZOL) || floor.is(Blocks.FARMLAND) || floor.is(Blocks.CLAY)
+                || floor.is(Blocks.MOSS_BLOCK) || floor.is(Blocks.MUD);
     }
 }

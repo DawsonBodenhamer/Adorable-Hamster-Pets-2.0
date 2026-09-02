@@ -1,29 +1,29 @@
 package net.dawson.adorablehamsterpets.client.render;
 
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 
 /**
  * A custom texture wrapper that holds references to its generated Normal and Specular maps.
  * This class allows external shader mods (like Iris) to safely extract the PBR data
  * from in-memory generated textures without relying on file discovery.
  */
-public class HamsterPBRTexture extends NativeImageBackedTexture {
+public class HamsterPBRTexture extends DynamicTexture {
 
-    private final NativeImageBackedTexture normalTexture;
-    private final NativeImageBackedTexture specularTexture;
+    private final DynamicTexture normalTexture;
+    private final DynamicTexture specularTexture;
 
-    public HamsterPBRTexture(NativeImage image, NativeImageBackedTexture normalTexture, NativeImageBackedTexture specularTexture) {
+    public HamsterPBRTexture(NativeImage image, DynamicTexture normalTexture, DynamicTexture specularTexture) {
         super(image);
         this.normalTexture = normalTexture;
         this.specularTexture = specularTexture;
     }
 
-    public NativeImageBackedTexture getNormalTexture() {
+    public DynamicTexture getNormalTexture() {
         return this.normalTexture;
     }
 
-    public NativeImageBackedTexture getSpecularTexture() {
+    public DynamicTexture getSpecularTexture() {
         return this.specularTexture;
     }
 }

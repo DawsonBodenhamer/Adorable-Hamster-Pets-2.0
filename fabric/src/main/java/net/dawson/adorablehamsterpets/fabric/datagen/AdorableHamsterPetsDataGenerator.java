@@ -6,10 +6,9 @@ import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;
-import net.minecraft.registry.RegistryBuilder;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryWrapper;
-
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistrySetBuilder;
+import net.minecraft.core.registries.Registries;
 import java.util.concurrent.CompletableFuture;
 
 public class AdorableHamsterPetsDataGenerator implements DataGeneratorEntrypoint {
@@ -26,14 +25,14 @@ public class AdorableHamsterPetsDataGenerator implements DataGeneratorEntrypoint
 	}
 
 	private static class ModWorldGenerator extends FabricDynamicRegistryProvider {
-		public ModWorldGenerator(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
+		public ModWorldGenerator(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
 			super(output, registriesFuture);
 		}
 
 		@Override
-		protected void configure(RegistryWrapper.WrapperLookup registries, Entries entries) {
-			entries.addAll(registries.getWrapperOrThrow(RegistryKeys.CONFIGURED_FEATURE));
-			entries.addAll(registries.getWrapperOrThrow(RegistryKeys.PLACED_FEATURE));
+		protected void configure(HolderLookup.Provider registries, Entries entries) {
+			entries.addAll(registries.lookupOrThrow(Registries.CONFIGURED_FEATURE));
+			entries.addAll(registries.lookupOrThrow(Registries.PLACED_FEATURE));
 		}
 
 		@Override
@@ -43,8 +42,8 @@ public class AdorableHamsterPetsDataGenerator implements DataGeneratorEntrypoint
 	}
 
 	@Override
-	public void buildRegistry(RegistryBuilder registryBuilder) {
-		registryBuilder.addRegistry(RegistryKeys.CONFIGURED_FEATURE, ModConfiguredFeatures::bootstrap);
-		registryBuilder.addRegistry(RegistryKeys.PLACED_FEATURE, ModPlacedFeatures::bootstrap);
+	public void buildRegistry(RegistrySetBuilder registryBuilder) {
+		registryBuilder.add(Registries.CONFIGURED_FEATURE, ModConfiguredFeatures::bootstrap);
+		registryBuilder.add(Registries.PLACED_FEATURE, ModPlacedFeatures::bootstrap);
 	}
 }

@@ -12,10 +12,9 @@ subprojects {
 
     dependencies {
         minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-        mappings loom.layered {
-            it.mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-            it.mappings "dev.architectury:yarn-mappings-patch-neoforge:${project.neoforge_yarn_patch}"
-        }
+        // 26.2 port: Minecraft artik obfuscate edilmiyor, Yarn de 26.x icin yok.
+        // Mojang resmi isimlendirmesine gecildi.
+        mappings loom.officialMojangMappings()
     }
 }
 

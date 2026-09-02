@@ -2,14 +2,14 @@ package net.dawson.adorablehamsterpets.mixin.client;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.mixin.client.accessor.GuiBookAccessor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.dawson.adorablehamsterpets.mixin.accessor.ScreenWidgetAdder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -34,10 +34,10 @@ public abstract class GuiBookEntryListMixin extends GuiBook {
      *        Shadows
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    @Shadow @Final protected List<ButtonWidget> entryButtons;
+    @Shadow @Final protected List<Button> entryButtons;
     @Shadow @Final private List<BookEntry> visibleEntries;
     @Shadow private List<BookEntry> allEntries;
-    @Shadow private TextFieldWidget searchField;
+    @Shadow private EditBox searchField;
 
     @Shadow protected abstract void addSubcategoryButtons();
 
@@ -45,7 +45,7 @@ public abstract class GuiBookEntryListMixin extends GuiBook {
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public GuiBookEntryListMixin(Book book, Text title) {
+    public GuiBookEntryListMixin(Book book, Component title) {
         super(book, title);
     }
 
@@ -71,7 +71,7 @@ public abstract class GuiBookEntryListMixin extends GuiBook {
         this.entryButtons.clear();
         this.visibleEntries.clear();
 
-        String query = this.searchField.getText().toLowerCase();
+        String query = this.searchField.getValue().toLowerCase();
         Stream<BookEntry> stream = this.allEntries.stream().filter((e) -> e.isFoundByQuery(query));
         Objects.requireNonNull(this.visibleEntries);
         stream.forEach(this.visibleEntries::add);
@@ -82,7 +82,7 @@ public abstract class GuiBookEntryListMixin extends GuiBook {
         pageStartIndices.add(0);
 
         if (!this.visibleEntries.isEmpty()) {
-            TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+            Font textRenderer = Minecraft.getInstance().font;
             int availableWidth = 116 - 12; // Button width minus padding
 
             // Define height limits (Top Y + Limit = Bottom Y ~156)
@@ -99,10 +99,10 @@ public abstract class GuiBookEntryListMixin extends GuiBook {
                 // Simulate filling the current page column
                 while (currentEntryIndex < this.visibleEntries.size()) {
                     BookEntry entry = this.visibleEntries.get(currentEntryIndex);
-                    MutableText name = entry.isLocked() ? Text.translatable("patchouli.gui.lexicon.locked") : entry.getName().copy();
+                    MutableComponent name = entry.isLocked() ? Component.translatable("patchouli.gui.lexicon.locked") : entry.getName().copy();
 
                     // Calculate wrapped height
-                    int buttonHeight = textRenderer.wrapLines(name, availableWidth).size() * 10;
+                    int buttonHeight = textRenderer.split(name, availableWidth).size() * 10;
 
                     // Break if adding this button overflows the page
                     if (currentY > 0 && currentY + buttonHeight > pageHeightLimit) {
@@ -172,13 +172,13 @@ public abstract class GuiBookEntryListMixin extends GuiBook {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private boolean isHamsterBook() {
-        return this.book != null && this.book.id.equals(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+        return this.book != null && this.book.id.equals(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
     }
 
     private void addWrappedEntryButtons(int x, int y, int start, int count) {
         GuiBookEntryList self = (GuiBookEntryList) (Object) this;
         GuiBookAccessor accessor = (GuiBookAccessor) self;
-        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+        Font textRenderer = Minecraft.getInstance().font;
 
         int bookLeft = accessor.adorablehamsterpets$getBookLeft();
         int bookTop = accessor.adorablehamsterpets$getBookTop();
@@ -190,12 +190,12 @@ public abstract class GuiBookEntryListMixin extends GuiBook {
             if (entryIndex >= this.visibleEntries.size()) break;
 
             BookEntry entry = this.visibleEntries.get(entryIndex);
-            MutableText name = entry.isLocked() ? Text.translatable("patchouli.gui.lexicon.locked") : entry.getName().copy();
+            MutableComponent name = entry.isLocked() ? Component.translatable("patchouli.gui.lexicon.locked") : entry.getName().copy();
 
             // Calculate height dynamically
-            int buttonHeight = textRenderer.wrapLines(name, availableWidth).size() * 10;
+            int buttonHeight = textRenderer.split(name, availableWidth).size() * 10;
 
-            ButtonWidget button = new GuiButtonEntry(self, bookLeft + x, bookTop + yOffset, entry, self::handleButtonEntry);
+            Button button = new GuiButtonEntry(self, bookLeft + x, bookTop + yOffset, entry, self::handleButtonEntry);
             button.setHeight(buttonHeight);
 
             // Use Accessor for cross-loader compatibility

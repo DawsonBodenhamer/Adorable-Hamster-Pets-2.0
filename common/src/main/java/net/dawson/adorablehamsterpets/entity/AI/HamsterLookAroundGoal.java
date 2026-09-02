@@ -4,25 +4,25 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.LookAroundGoalAccessor;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
-import net.minecraft.entity.ai.goal.LookAroundGoal;
-import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 
-public class HamsterLookAroundGoal extends LookAroundGoal {
+public class HamsterLookAroundGoal extends RandomLookAroundGoal {
 
     // --- Fields ---
-    private final MobEntity hamsterMob;
+    private final Mob hamsterMob;
 
     // --- Constructor ---
-    public HamsterLookAroundGoal(MobEntity mob) {
+    public HamsterLookAroundGoal(Mob mob) {
         super(mob);
         this.hamsterMob = mob;
     }
 
     // --- Overrides ---
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         LookAroundGoalAccessor accessor = (LookAroundGoalAccessor) this;
-        MobEntity mob = accessor.getMob();
+        Mob mob = accessor.getMob();
 
         // Perform vanilla probability check
         if (mob.getRandom().nextFloat() >= 0.02F) {
@@ -31,7 +31,7 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
 
         // Check Hamster State
         if (this.hamsterMob instanceof HamsterEntity hamster) {
-            return !hamster.isSitting()
+            return !hamster.isOrderedToSit()
                     && !hamster.isSleeping()
                     && !hamster.isKnockedOut()
                     && !hamster.isSulking()
@@ -55,10 +55,10 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         // --- 1. Check Hamster State ---
         if (this.hamsterMob instanceof HamsterEntity hamster) {
-            if (hamster.isSitting()
+            if (hamster.isOrderedToSit()
                     || hamster.isSleeping()
                     || hamster.isKnockedOut()
                     || hamster.isSulking()
@@ -70,7 +70,7 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
                 return false;
             }
         }
-        return super.shouldContinue();
+        return super.canContinueToUse();
     }
 
     @Override
@@ -86,7 +86,7 @@ public class HamsterLookAroundGoal extends LookAroundGoal {
     @Override
     public void tick() {
         LookAroundGoalAccessor accessor = (LookAroundGoalAccessor) this;
-        MobEntity mob = accessor.getMob();
+        Mob mob = accessor.getMob();
 
         // Replicate the vanilla logic of decrementing the timer
         accessor.setLookTime(accessor.getLookTime() - 1);

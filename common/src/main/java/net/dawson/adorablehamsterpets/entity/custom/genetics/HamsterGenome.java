@@ -2,7 +2,7 @@ package net.dawson.adorablehamsterpets.entity.custom.genetics;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
@@ -34,12 +34,12 @@ public record HamsterGenome(
         return new HamsterGenome("orange", 0, null, 0, null, 0);
     }
 
-    public NbtCompound saveToNbt() {
-        return (NbtCompound) CODEC.encodeStart(NbtOps.INSTANCE, this)
+    public CompoundTag saveToNbt() {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this)
                 .getOrThrow(error -> new IllegalStateException("Could not encode HamsterGenome: " + error));
     }
 
-    public static HamsterGenome readFromNbt(NbtCompound nbt) {
+    public static HamsterGenome readFromNbt(CompoundTag nbt) {
         return CODEC.parse(NbtOps.INSTANCE, nbt).result().orElseGet(HamsterGenome::createDefault);
     }
 }

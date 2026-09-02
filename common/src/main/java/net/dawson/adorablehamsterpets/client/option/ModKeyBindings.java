@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.client.option;
 
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.KeyMapping;
 import org.lwjgl.glfw.GLFW;
 
 /** Holds the mod's key mappings. */
@@ -21,91 +21,91 @@ public class ModKeyBindings {
     public static final String KEY_TOGGLE_PERFORMANCE_MODE = "key.adorablehamsterpets.toggle_performance_mode";
 
     // --- KeyBinding Instances ---
-    public static KeyBinding THROW_HAMSTER_KEY;
-    public static KeyBinding TOGGLE_SUPPORTER_CROWN_KEY;
-    public static KeyBinding DISMOUNT_HAMSTER_KEY;
-    public static KeyBinding PET_HAMSTER_KEY;
-    public static KeyBinding FORCE_MOUNT_HAMSTER_KEY;
-    public static KeyBinding RIDE_HAMSTER_KEY;
-    public static KeyBinding GENETICS_VISUALIZER_VAR_UP_KEY;
-    public static KeyBinding GENETICS_VISUALIZER_VAR_DOWN_KEY;
-    public static KeyBinding GENETICS_VISUALIZER_MUT_UP_KEY;
-    public static KeyBinding GENETICS_VISUALIZER_MUT_DOWN_KEY;
-    public static KeyBinding TOGGLE_PERFORMANCE_MODE_KEY;
+    public static KeyMapping THROW_HAMSTER_KEY;
+    public static KeyMapping TOGGLE_SUPPORTER_CROWN_KEY;
+    public static KeyMapping DISMOUNT_HAMSTER_KEY;
+    public static KeyMapping PET_HAMSTER_KEY;
+    public static KeyMapping FORCE_MOUNT_HAMSTER_KEY;
+    public static KeyMapping RIDE_HAMSTER_KEY;
+    public static KeyMapping GENETICS_VISUALIZER_VAR_UP_KEY;
+    public static KeyMapping GENETICS_VISUALIZER_VAR_DOWN_KEY;
+    public static KeyMapping GENETICS_VISUALIZER_MUT_UP_KEY;
+    public static KeyMapping GENETICS_VISUALIZER_MUT_DOWN_KEY;
+    public static KeyMapping TOGGLE_PERFORMANCE_MODE_KEY;
 
     /**
      * Initializes the KeyBinding objects. This should be called during client setup
      * before the keys are registered by the platform-specific loader.
      */
     public static void init() {
-        THROW_HAMSTER_KEY = new KeyBinding(
+        THROW_HAMSTER_KEY = new KeyMapping(
                 KEY_THROW_HAMSTER,
-                InputUtil.Type.KEYSYM,
+                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_G, // Default to 'G'
                 KEY_CATEGORY_AHP
         );
 
-        TOGGLE_SUPPORTER_CROWN_KEY = new KeyBinding(
+        TOGGLE_SUPPORTER_CROWN_KEY = new KeyMapping(
                 KEY_TOGGLE_SUPPORTER_CROWN,
-                InputUtil.UNKNOWN_KEY.getCode(), // Unbound by default
+                InputConstants.UNKNOWN.getValue(), // Unbound by default
                 KEY_CATEGORY_AHP
         );
 
-        DISMOUNT_HAMSTER_KEY = new KeyBinding(
+        DISMOUNT_HAMSTER_KEY = new KeyMapping(
                 KEY_DISMOUNT_HAMSTER,
-                InputUtil.UNKNOWN_KEY.getCode(), // Unbound by default
+                InputConstants.UNKNOWN.getValue(), // Unbound by default
                 KEY_CATEGORY_AHP
         );
 
-        PET_HAMSTER_KEY = new KeyBinding(
+        PET_HAMSTER_KEY = new KeyMapping(
                 KEY_PET_HAMSTER,
-                InputUtil.UNKNOWN_KEY.getCode(), // Unbound by default
+                InputConstants.UNKNOWN.getValue(), // Unbound by default
                 KEY_CATEGORY_AHP
         );
 
         FORCE_MOUNT_HAMSTER_KEY = new DynamicForceMountKeyBinding(
                 KEY_FORCE_MOUNT_HAMSTER,
-                InputUtil.UNKNOWN_KEY.getCode(), // Unbound by default
+                InputConstants.UNKNOWN.getValue(), // Unbound by default
                 KEY_CATEGORY_AHP
         );
 
         RIDE_HAMSTER_KEY = new DynamicRideKeyBinding(
                 KEY_RIDE_HAMSTER,
-                InputUtil.UNKNOWN_KEY.getCode(), // Unbound by default
+                InputConstants.UNKNOWN.getValue(), // Unbound by default
                 KEY_CATEGORY_AHP
         );
 
-        GENETICS_VISUALIZER_VAR_UP_KEY = new KeyBinding(
+        GENETICS_VISUALIZER_VAR_UP_KEY = new KeyMapping(
                 KEY_GENETICS_VISUALIZER_VAR_UP,
-                InputUtil.Type.KEYSYM,
+                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_RIGHT,
                 KEY_CATEGORY_AHP
         );
 
-        GENETICS_VISUALIZER_VAR_DOWN_KEY = new KeyBinding(
+        GENETICS_VISUALIZER_VAR_DOWN_KEY = new KeyMapping(
                 KEY_GENETICS_VISUALIZER_VAR_DOWN,
-                InputUtil.Type.KEYSYM,
+                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_LEFT,
                 KEY_CATEGORY_AHP
         );
 
-        GENETICS_VISUALIZER_MUT_UP_KEY = new KeyBinding(
+        GENETICS_VISUALIZER_MUT_UP_KEY = new KeyMapping(
                 KEY_GENETICS_VISUALIZER_MUT_UP,
-                InputUtil.Type.KEYSYM,
+                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_UP,
                 KEY_CATEGORY_AHP
         );
 
-        GENETICS_VISUALIZER_MUT_DOWN_KEY = new KeyBinding(
+        GENETICS_VISUALIZER_MUT_DOWN_KEY = new KeyMapping(
                 KEY_GENETICS_VISUALIZER_MUT_DOWN,
-                InputUtil.Type.KEYSYM,
+                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_DOWN,
                 KEY_CATEGORY_AHP
         );
 
-        TOGGLE_PERFORMANCE_MODE_KEY = new KeyBinding(
+        TOGGLE_PERFORMANCE_MODE_KEY = new KeyMapping(
                 KEY_TOGGLE_PERFORMANCE_MODE,
-                InputUtil.UNKNOWN_KEY.getCode(), // Unbound by default
+                InputConstants.UNKNOWN.getValue(), // Unbound by default
                 KEY_CATEGORY_AHP
         );
     }

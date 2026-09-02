@@ -10,20 +10,18 @@ import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.MinigameUtil;
 import net.dawson.adorablehamsterpets.util.MiscUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -58,11 +56,11 @@ public class HamsterSniffForOreGoal extends Goal {
      * @param orePos The position of the ore block.
      * @return True if the ore is exposed, false otherwise.
      */
-    public static boolean isOreExposed(BlockPos orePos, World world) {
+    public static boolean isOreExposed(BlockPos orePos, Level world) {
         for (Direction direction : Direction.values()) {
-            BlockPos adjacentPos = orePos.offset(direction);
+            BlockPos adjacentPos = orePos.relative(direction);
             // Exposed if adjacent block has no collision shape
-            if (world.getBlockState(adjacentPos).getCollisionShape(world, adjacentPos, ShapeContext.absent()).isEmpty()) {
+            if (world.getBlockState(adjacentPos).getCollisionShape(world, adjacentPos, CollisionContext.empty()).isEmpty()) {
                 return true;
             }
         }
@@ -74,7 +72,7 @@ public class HamsterSniffForOreGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private final HamsterEntity hamster;
-    private final World world;
+    private final Level world;
 
     private BlockPos targetOrePos;
     private boolean isSeekingDisappointingOre;
@@ -91,8 +89,8 @@ public class HamsterSniffForOreGoal extends Goal {
 
     public HamsterSniffForOreGoal(HamsterEntity hamster) {
         this.hamster = hamster;
-        this.world = hamster.getWorld();
-        this.setControls(EnumSet.of(Goal.Control.MOVE, Goal.Control.LOOK));
+        this.world = hamster.level();
+        this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -100,8 +98,8 @@ public class HamsterSniffForOreGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
-        if (this.world.isClient || !Configs.AHP_MAIN.enableIndependentDiamondSeeking) {
+    public boolean canUse() {
+        if (this.world.isClientSide || !Configs.AHP_MAIN.enableIndependentDiamondSeeking) {
             return false;
         }
 
@@ -118,7 +116,7 @@ public class HamsterSniffForOreGoal extends Goal {
             return false;
         }
 
-        if (Configs.AHP_MAIN.enableIndependentDiamondSeekCooldown && this.hamster.foundOreCooldownEndTick > this.world.getTime()) {
+        if (Configs.AHP_MAIN.enableIndependentDiamondSeekCooldown && this.hamster.foundOreCooldownEndTick > this.world.getGameTime()) {
             return false;
         }
 
@@ -136,7 +134,7 @@ public class HamsterSniffForOreGoal extends Goal {
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         // Terminal states
         if (this.currentState == SeekingState.IDLE || this.currentState == SeekingState.CELEBRATING_DIAMOND || this.currentState == SeekingState.SULKING_AT_GOLD) {
             return false;
@@ -230,9 +228,9 @@ public class HamsterSniffForOreGoal extends Goal {
         switch (this.currentState) {
             case MOVING_TO_ORE -> {
                 // Spawn particle breadcrumbs
-                if (!this.world.isClient()) {
+                if (!this.world.isClientSide()) {
                     ParticleEffectsUtil.spawnBreadcrumbs(
-                            (ServerWorld) this.world,
+                            (ServerLevel) this.world,
                             this.path,
                             ParticleTypes.MYCELIUM,
                             1,
@@ -243,9 +241,9 @@ public class HamsterSniffForOreGoal extends Goal {
                     );
                 }
 
-                if (this.hamster.getNavigation().isIdle() || this.hamster.getBlockPos().isWithinDistance(this.targetOrePos, 1.5)) {
+                if (this.hamster.getNavigation().isDone() || this.hamster.blockPosition().closerThan(this.targetOrePos, 1.5)) {
                     // Only celebrate if hamster close and ore exposed
-                    if (this.hamster.getBlockPos().isWithinDistance(this.targetOrePos, 1.5) && isOreExposed(this.targetOrePos, this.world)) {
+                    if (this.hamster.blockPosition().closerThan(this.targetOrePos, 1.5) && isOreExposed(this.targetOrePos, this.world)) {
                         onOreReached();
                     } else {
                         // Clear old path and wait for re-evaluation
@@ -280,18 +278,18 @@ public class HamsterSniffForOreGoal extends Goal {
         List<BlockPos> buriedSulkingOres = new ArrayList<>();
         int radius = Configs.AHP_MAIN.diamondSeekRadius.get();
 
-        for (BlockPos pos : BlockPos.iterateOutwards(this.hamster.getBlockPos(), radius, radius, radius)) {
+        for (BlockPos pos : BlockPos.withinManhattan(this.hamster.blockPosition(), radius, radius, radius)) {
             BlockState state = this.world.getBlockState(pos);
 
             if (ConfigDataCache.isCelebrationOre(state)) {
                 if (isOreExposed(pos, this.world)) {
-                    exposedCelebrationOres.add(pos.toImmutable());
+                    exposedCelebrationOres.add(pos.immutable());
                 } else {
-                    buriedCelebrationOres.add(pos.toImmutable());
+                    buriedCelebrationOres.add(pos.immutable());
                 }
             } else if (ConfigDataCache.isSulkingOre(state)) {
                 if (!isOreExposed(pos, this.world)) {
-                    buriedSulkingOres.add(pos.toImmutable());
+                    buriedSulkingOres.add(pos.immutable());
                 }
             }
         }
@@ -300,15 +298,15 @@ public class HamsterSniffForOreGoal extends Goal {
         boolean targetIsSulkingOre = !buriedSulkingOres.isEmpty() && this.world.random.nextFloat() < Configs.AHP_MAIN.goldMistakeChance.get();
 
         if (targetIsSulkingOre) {
-            buriedSulkingOres.sort(Comparator.comparingDouble(pos -> pos.getSquaredDistance(this.hamster.getPos())));
+            buriedSulkingOres.sort(Comparator.comparingDouble(pos -> pos.distToCenterSqr(this.hamster.position())));
             this.targetOrePos = buriedSulkingOres.get(0);
             this.isSeekingDisappointingOre = true;
         } else {
             if (!exposedCelebrationOres.isEmpty()) {
-                exposedCelebrationOres.sort(Comparator.comparingDouble(pos -> pos.getSquaredDistance(this.hamster.getPos())));
+                exposedCelebrationOres.sort(Comparator.comparingDouble(pos -> pos.distToCenterSqr(this.hamster.position())));
                 this.targetOrePos = exposedCelebrationOres.get(0);
             } else if (!buriedCelebrationOres.isEmpty()) {
-                buriedCelebrationOres.sort(Comparator.comparingDouble(pos -> pos.getSquaredDistance(this.hamster.getPos())));
+                buriedCelebrationOres.sort(Comparator.comparingDouble(pos -> pos.distToCenterSqr(this.hamster.position())));
                 this.targetOrePos = buriedCelebrationOres.get(0);
             }
         }
@@ -328,7 +326,7 @@ public class HamsterSniffForOreGoal extends Goal {
             return;
         }
 
-        this.path = this.hamster.getNavigation().findPathTo(
+        this.path = this.hamster.getNavigation().createPath(
                 this.targetOrePos.getX() + 0.5,
                 this.targetOrePos.getY(),
                 this.targetOrePos.getZ() + 0.5,
@@ -336,7 +334,7 @@ public class HamsterSniffForOreGoal extends Goal {
         );
 
         if (this.path != null) {
-            this.hamster.getNavigation().startMovingAlong(this.path, 0.5D);
+            this.hamster.getNavigation().moveTo(this.path, 0.5D);
             this.currentState = SeekingState.MOVING_TO_ORE;
         } else {
             this.currentState = SeekingState.WAITING_FOR_PATH;
@@ -351,7 +349,7 @@ public class HamsterSniffForOreGoal extends Goal {
         this.hamster.isPrimedToSeekDiamonds = false;
 
         if (Configs.AHP_MAIN.enableIndependentDiamondSeekCooldown) {
-            this.hamster.foundOreCooldownEndTick = this.world.getTime() + Configs.AHP_MAIN.independentOreSeekCooldownTicks.get();
+            this.hamster.foundOreCooldownEndTick = this.world.getGameTime() + Configs.AHP_MAIN.independentOreSeekCooldownTicks.get();
         }
 
         if (this.isSeekingDisappointingOre) {
@@ -364,15 +362,15 @@ public class HamsterSniffForOreGoal extends Goal {
     private void processGoldMistake() {
         this.currentState = SeekingState.SULKING_AT_GOLD;
 
-        if (this.hamster.getOwner() instanceof ServerPlayerEntity owner) {
-            if (this.hamster.squaredDistanceTo(owner) < 36.0) {
+        if (this.hamster.getOwner() instanceof ServerPlayer owner) {
+            if (this.hamster.distanceToSqr(owner) < 36.0) {
                 HamsterMovementUtil.faceEntity(this.hamster, owner);
             }
 
             // Output randomized snarky message for owner and trigger advancement
             MiscUtil.MessagingUtil.sendRandomizedSequentialMessage(
                     owner,
-                    Identifier.of(AdorableHamsterPets.MOD_ID, "technical/hamster_found_gold_first_time"),
+                    ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "technical/hamster_found_gold_first_time"),
                     "message.adorablehamsterpets.found_gold_mistake",
                     7,
                     "gold_mistake_messages"
@@ -380,14 +378,14 @@ public class HamsterSniffForOreGoal extends Goal {
             ModCriteria.HAMSTER_FOUND_GOLD.get().trigger(owner);
         }
 
-        MinigameUtil.executeSulkFailure(this.hamster, Vec3d.ofCenter(this.targetOrePos));
+        MinigameUtil.executeSulkFailure(this.hamster, Vec3.atCenterOf(this.targetOrePos));
     }
 
     private void processDiamondFind() {
         this.currentState = SeekingState.CELEBRATING_DIAMOND;
         this.hamster.setCelebratingDiamond(true);
 
-        if (this.hamster.getOwner() instanceof ServerPlayerEntity serverPlayerOwner) {
+        if (this.hamster.getOwner() instanceof ServerPlayer serverPlayerOwner) {
             ModCriteria.HAMSTER_LED_TO_DIAMOND.get().trigger(serverPlayerOwner, this.hamster, this.targetOrePos);
         }
     }

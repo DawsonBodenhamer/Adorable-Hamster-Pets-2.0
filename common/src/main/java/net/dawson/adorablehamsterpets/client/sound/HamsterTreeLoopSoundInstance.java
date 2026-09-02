@@ -2,18 +2,18 @@ package net.dawson.adorablehamsterpets.client.sound;
 
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.client.sound.MovingSoundInstance;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.sound.SoundCategory;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.sounds.SoundSource;
 
-public class HamsterTreeLoopSoundInstance extends MovingSoundInstance {
+public class HamsterTreeLoopSoundInstance extends AbstractTickableSoundInstance {
     private final HamsterTreeSearcherEntity entity;
 
     public HamsterTreeLoopSoundInstance(HamsterTreeSearcherEntity entity) {
-        super(ModSounds.HAMSTER_ACORN_SEARCH_LOOP.get(), SoundCategory.NEUTRAL, SoundInstance.createRandom());
+        super(ModSounds.HAMSTER_ACORN_SEARCH_LOOP.get(), SoundSource.NEUTRAL, SoundInstance.createUnseededRandom());
         this.entity = entity;
-        this.repeat = true;
-        this.repeatDelay = 0;
+        this.looping = true;
+        this.delay = 0;
         this.volume = 1.0F;
         this.pitch = 1.0F;
         // Start at the entity's location
@@ -26,7 +26,7 @@ public class HamsterTreeLoopSoundInstance extends MovingSoundInstance {
     public void tick() {
         // Stop if the entity is removed (search finished or aborted) or dead
         if (this.entity.isRemoved() || !this.entity.isAlive()) {
-            this.setDone();
+            this.stop();
             return;
         }
 

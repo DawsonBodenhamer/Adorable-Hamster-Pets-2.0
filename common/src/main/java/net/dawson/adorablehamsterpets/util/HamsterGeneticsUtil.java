@@ -10,14 +10,13 @@ import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManag
 import net.dawson.adorablehamsterpets.entity.custom.genetics.PaletteDefinition;
 import net.dawson.adorablehamsterpets.tag.ModBiomeTags;
 import net.dawson.adorablehamsterpets.world.gen.CaveHamsterSpawnPolicy;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.WorldView;
-import net.minecraft.world.biome.Biome;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.phys.Vec3;
 import java.util.*;
 
 /**
@@ -29,8 +28,8 @@ public final class HamsterGeneticsUtil {
      *        Constants
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static final Vec3d SWEET_POTATO_HSB;
-    private static final Vec3d HAMTARO_HSB;
+    private static final Vec3 SWEET_POTATO_HSB;
+    private static final Vec3 HAMTARO_HSB;
 
     static {
         SWEET_POTATO_HSB = ColorSpaceUtil.analyzeImage("assets/adorablehamsterpets/textures/entity/hamster/easter_egg/sweet_potato.png").position();
@@ -75,7 +74,7 @@ public final class HamsterGeneticsUtil {
     /**
      * Calculates the genome for a newborn hamster based on inheritance rules and 3D color space midpoints.
      */
-    public static HamsterGenome calculateBabyGenome(HamsterEntity parentAEntity, PassiveEntity parentBEntity, Random random) {
+    public static HamsterGenome calculateBabyGenome(HamsterEntity parentAEntity, AgeableMob parentBEntity, RandomSource random) {
         if (!(parentBEntity instanceof HamsterEntity parentB)) {
             AdorableHamsterPets.LOGGER.warn("Hamster breeding attempted with non-hamster mate. Returning default genome.");
             return HamsterGenome.createDefault();
@@ -88,11 +87,11 @@ public final class HamsterGeneticsUtil {
         PaletteDefinition baseA = HamsterPaletteManager.PALETTE_REGISTRY.get(genomeA.basePaletteId());
         PaletteDefinition baseB = HamsterPaletteManager.PALETTE_REGISTRY.get(genomeB.basePaletteId());
 
-        Vec3d posA = parentAEntity.isSweetPotato() ? SWEET_POTATO_HSB : (parentAEntity.isHamtaro() ? HAMTARO_HSB : baseA.colorSpacePos());
-        Vec3d posB = parentB.isSweetPotato() ? SWEET_POTATO_HSB : (parentB.isHamtaro() ? HAMTARO_HSB : baseB.colorSpacePos());
+        Vec3 posA = parentAEntity.isSweetPotato() ? SWEET_POTATO_HSB : (parentAEntity.isHamtaro() ? HAMTARO_HSB : baseA.colorSpacePos());
+        Vec3 posB = parentB.isSweetPotato() ? SWEET_POTATO_HSB : (parentB.isHamtaro() ? HAMTARO_HSB : baseB.colorSpacePos());
 
         // Find exact mathematical center between parent colors
-        Vec3d baseMidpoint = ColorSpaceUtil.calculateGeneticMidpoint(posA, posB, random);
+        Vec3 baseMidpoint = ColorSpaceUtil.calculateGeneticMidpoint(posA, posB, random);
 
         // HashSet avoids crash if both parents have same base color
         Set<String> baseExclusions = new HashSet<>();
@@ -128,7 +127,7 @@ public final class HamsterGeneticsUtil {
                 PaletteDefinition wPalA = HamsterPaletteManager.PALETTE_REGISTRY.get(genomeA.wildOverlayPaletteId());
                 PaletteDefinition wPalB = HamsterPaletteManager.PALETTE_REGISTRY.get(genomeB.wildOverlayPaletteId());
                 if (wPalA != null && wPalB != null) {
-                    Vec3d wildMidpoint = ColorSpaceUtil.calculateGeneticMidpoint(wPalA.colorSpacePos(), wPalB.colorSpacePos(), random);
+                    Vec3 wildMidpoint = ColorSpaceUtil.calculateGeneticMidpoint(wPalA.colorSpacePos(), wPalB.colorSpacePos(), random);
                     babyWildPaletteId = HamsterPaletteManager.getClosestPalette(wildMidpoint, null, wildZones, true).id();
                 }
             } else if (wildCount == 1) {
@@ -169,7 +168,7 @@ public final class HamsterGeneticsUtil {
                 PaletteDefinition bPalA = HamsterPaletteManager.PALETTE_REGISTRY.get(genomeA.breedingOverlayPaletteId());
                 PaletteDefinition bPalB = HamsterPaletteManager.PALETTE_REGISTRY.get(genomeB.breedingOverlayPaletteId());
                 if (bPalA != null && bPalB != null) {
-                    Vec3d breedMidpoint = ColorSpaceUtil.calculateGeneticMidpoint(bPalA.colorSpacePos(), bPalB.colorSpacePos(), random);
+                    Vec3 breedMidpoint = ColorSpaceUtil.calculateGeneticMidpoint(bPalA.colorSpacePos(), bPalB.colorSpacePos(), random);
                     babyBreedingPaletteId = HamsterPaletteManager.getClosestPalette(breedMidpoint, null, null, true).id();
                 }
             } else if (breedCount == 1) {
@@ -212,7 +211,7 @@ public final class HamsterGeneticsUtil {
      * Determines if a newly spawned wild hamster carries the recessive red-eye gene.
      * Driven dynamically by the diluteness score of its assigned color palette.
      */
-    public static int generateWildEyeGenotype(String paletteId, Random random) {
+    public static int generateWildEyeGenotype(String paletteId, RandomSource random) {
         PaletteDefinition def = HamsterPaletteManager.PALETTE_REGISTRY.get(paletteId);
         if (def == null) return 0;
 
@@ -225,7 +224,7 @@ public final class HamsterGeneticsUtil {
      * Calculates the genome for a newly spawned wild hamster based on its environment.
      * Selects a base color zone using weighted config probabilities, then selects a wild overlay.
      */
-    public static HamsterGenome generateWildGenome(WorldView world, BlockPos pos, Random random) {
+    public static HamsterGenome generateWildGenome(LevelReader world, BlockPos pos, RandomSource random) {
         return generateWildGenome(world, pos, random, isCaveEnvironment(world, pos));
     }
 
@@ -233,8 +232,8 @@ public final class HamsterGeneticsUtil {
      * Calculates a wild genome with an already resolved cave-spawn context.
      */
     public static HamsterGenome generateWildGenome(
-            WorldView world, BlockPos pos, Random random, boolean caveEnvironment) {
-        RegistryEntry<Biome> biomeEntry = world.getBiome(pos);
+            LevelReader world, BlockPos pos, RandomSource random, boolean caveEnvironment) {
+        Holder<Biome> biomeEntry = world.getBiome(pos);
 
         // --- 1. Find the Environment and Pick a Base Zone ---
         Map<HamsterColorZone, Integer> weights = caveEnvironment
@@ -252,7 +251,7 @@ public final class HamsterGeneticsUtil {
         // 45% chance for wild hamsters to have an overlay
         if (random.nextFloat() < 0.45f) {
             int maxPattern = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.size() - 1;
-            wildPattern = random.nextBetween(1, maxPattern);
+            wildPattern = random.nextIntBetweenInclusive(1, maxPattern);
 
             List<HamsterColorZone> allowedWildZones = new ArrayList<>(ConfigDataCache.getAllowedWildOverlayZones());
 
@@ -336,24 +335,24 @@ public final class HamsterGeneticsUtil {
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static boolean isCaveEnvironment(WorldView world, BlockPos pos) {
+    public static boolean isCaveEnvironment(LevelReader world, BlockPos pos) {
         return isCaveEnvironment(world, pos, false);
     }
 
     public static boolean isCaveEnvironment(
-            WorldView world, BlockPos pos, boolean supplementalCaveSpawn) {
+            LevelReader world, BlockPos pos, boolean supplementalCaveSpawn) {
         if (supplementalCaveSpawn) return true;
 
-        RegistryEntry<Biome> biomeEntry = world.getBiome(pos);
+        Holder<Biome> biomeEntry = world.getBiome(pos);
         return CaveHamsterSpawnPolicy.isInitializationCaveEnvironment(
                 supplementalCaveSpawn,
-                biomeEntry.isIn(ModBiomeTags.IS_CAVE));
+                biomeEntry.is(ModBiomeTags.IS_CAVE));
     }
 
     /**
      * Performs a weighted random selection of a HamsterColorZone.
      */
-    private static HamsterColorZone pickZoneFromWeights(Map<HamsterColorZone, Integer> weights, Random random) {
+    private static HamsterColorZone pickZoneFromWeights(Map<HamsterColorZone, Integer> weights, RandomSource random) {
         int totalWeight = weights.values().stream().mapToInt(Integer::intValue).sum();
         if (totalWeight <= 0) return HamsterColorZone.ORANGE;
 
@@ -373,7 +372,7 @@ public final class HamsterGeneticsUtil {
      * Resolves the Mendelian inheritance for eye colors with a boosted reward rate.
      * Genotypes: 0 = BB (Black), 1 = Br (Carrier), 2 = rr (Red)
      */
-    private static int calculateBabyEyeGenotype(int genA, int genB, Random random) {
+    private static int calculateBabyEyeGenotype(int genA, int genB, RandomSource random) {
         if (genA == 0 && genB == 0) return 0;
         if (genA == 2 && genB == 2) return 2;
 
@@ -404,7 +403,7 @@ public final class HamsterGeneticsUtil {
     /**
      * Randomly selects a pattern (1-8) while ensuring it does not overlap with exclusions.
      */
-    private static int pickPattern(Random random, Set<Integer> exclusions) {
+    private static int pickPattern(RandomSource random, Set<Integer> exclusions) {
         List<Integer> available = new ArrayList<>();
         int maxPattern = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.size() - 1;
 
@@ -414,7 +413,7 @@ public final class HamsterGeneticsUtil {
             }
         }
         if (available.isEmpty()) {
-            return random.nextBetween(1, maxPattern); // Fallback if everything is excluded
+            return random.nextIntBetweenInclusive(1, maxPattern); // Fallback if everything is excluded
         }
         return available.get(random.nextInt(available.size()));
     }

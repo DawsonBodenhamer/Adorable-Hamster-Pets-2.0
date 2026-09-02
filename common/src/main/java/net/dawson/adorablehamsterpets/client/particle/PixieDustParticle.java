@@ -1,14 +1,14 @@
 package net.dawson.adorablehamsterpets.client.particle;
 
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.particle.SimpleParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
 
 /**
  * A dense, short-lived, sparkling particle that dynamically tints itself
  * based on its assigned PixieDustParticleTheme palette.
  */
-public class PixieDustParticle extends SpriteBillboardParticle {
+public class PixieDustParticle extends TextureSheetParticle {
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constants and Static Utilities
@@ -35,21 +35,21 @@ public class PixieDustParticle extends SpriteBillboardParticle {
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    protected PixieDustParticle(ClientWorld world, double x, double y, double z, double vx, double vy, double vz, SpriteProvider spriteProvider, PixieDustParticleTheme theme) {
+    protected PixieDustParticle(ClientLevel world, double x, double y, double z, double vx, double vy, double vz, SpriteSet spriteProvider, PixieDustParticleTheme theme) {
         super(world, x, y, z, vx, vy, vz);
         this.theme = theme;
-        this.setSprite(spriteProvider.getSprite(this.random));
+        this.setSprite(spriteProvider.get(this.random));
 
-        this.maxAge = MIN_LIFETIME + this.random.nextInt(MAX_LIFETIME - MIN_LIFETIME + 1);
+        this.lifetime = MIN_LIFETIME + this.random.nextInt(MAX_LIFETIME - MIN_LIFETIME + 1);
         this.baseScale = BASE_SCALE_MIN + this.random.nextFloat() * BASE_SCALE_VARIANCE;
-        this.scale = this.baseScale;
+        this.quadSize = this.baseScale;
 
-        this.velocityX = vx + (this.random.nextDouble() - 0.5) * VELOCITY_SPREAD;
-        this.velocityY = vy + (this.random.nextDouble() - 0.5) * VELOCITY_SPREAD;
-        this.velocityZ = vz + (this.random.nextDouble() - 0.5) * VELOCITY_SPREAD;
+        this.xd = vx + (this.random.nextDouble() - 0.5) * VELOCITY_SPREAD;
+        this.yd = vy + (this.random.nextDouble() - 0.5) * VELOCITY_SPREAD;
+        this.zd = vz + (this.random.nextDouble() - 0.5) * VELOCITY_SPREAD;
 
-        this.gravityStrength = GRAVITY;
-        this.collidesWithWorld = false;
+        this.gravity = GRAVITY;
+        this.hasPhysics = false;
 
         updateColor();
     }
@@ -60,12 +60,12 @@ public class PixieDustParticle extends SpriteBillboardParticle {
 
     @Override
     public void tick() {
-        this.prevPosX = this.x;
-        this.prevPosY = this.y;
-        this.prevPosZ = this.z;
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
 
-        if (this.age++ >= this.maxAge) {
-            this.markDead();
+        if (this.age++ >= this.lifetime) {
+            this.remove();
             return;
         }
 
@@ -73,16 +73,16 @@ public class PixieDustParticle extends SpriteBillboardParticle {
         updateColor();
 
         // Shrink over time
-        this.scale = this.baseScale * (1.0f - ((float)this.age / this.maxAge));
+        this.quadSize = this.baseScale * (1.0f - ((float)this.age / this.lifetime));
 
         // Fade out
         this.alpha = Math.max(0.0f, this.alpha - ALPHA_FADE_AMOUNT);
 
         // Move and apply air resistance
-        this.move(this.velocityX, this.velocityY, this.velocityZ);
-        this.velocityX *= VELOCITY_DECAY;
-        this.velocityY *= VELOCITY_DECAY;
-        this.velocityZ *= VELOCITY_DECAY;
+        this.move(this.xd, this.yd, this.zd);
+        this.xd *= VELOCITY_DECAY;
+        this.yd *= VELOCITY_DECAY;
+        this.zd *= VELOCITY_DECAY;
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -90,14 +90,14 @@ public class PixieDustParticle extends SpriteBillboardParticle {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public ParticleTextureSheet getType() {
-        return ParticleTextureSheet.PARTICLE_SHEET_TRANSLUCENT;
+    public ParticleRenderType getRenderType() {
+        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
     @Override
-    public int getBrightness(float tint) {
+    public int getLightColor(float tint) {
         // Calculate relative brightness of current color
-        float colorBrightness = Math.max(this.red, Math.max(this.green, this.blue));
+        float colorBrightness = Math.max(this.rCol, Math.max(this.gCol, this.bCol));
 
         // Clamp it so darker colors get boosted to minimum threshold
         float adjustedBrightness = Math.max(MIN_BRIGHTNESS_CLAMP, colorBrightness);
@@ -106,7 +106,7 @@ public class PixieDustParticle extends SpriteBillboardParticle {
         int dynamicBlockLight = (int) (adjustedBrightness * 240.0f);
 
         // Get the actual ambient world light
-        int worldLight = super.getBrightness(tint);
+        int worldLight = super.getLightColor(tint);
 
         // Use the higher of the two so it doesn't artificially darken in bright areas
         int finalBlockLight = Math.max(dynamicBlockLight, worldLight & 0xFFFF);
@@ -129,17 +129,17 @@ public class PixieDustParticle extends SpriteBillboardParticle {
      *        Inner Classes
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static class Factory implements ParticleFactory<SimpleParticleType> {
-        private final SpriteProvider sprites;
+    public static class Factory implements ParticleProvider<SimpleParticleType> {
+        private final SpriteSet sprites;
         private final PixieDustParticleTheme theme;
 
-        public Factory(SpriteProvider sprites, PixieDustParticleTheme theme) {
+        public Factory(SpriteSet sprites, PixieDustParticleTheme theme) {
             this.sprites = sprites;
             this.theme = theme;
         }
 
         @Override
-        public Particle createParticle(SimpleParticleType type, ClientWorld world,
+        public Particle createParticle(SimpleParticleType type, ClientLevel world,
                                        double x, double y, double z,
                                        double vx, double vy, double vz) {
             return new PixieDustParticle(world, x, y, z, vx, vy, vz, this.sprites, this.theme);

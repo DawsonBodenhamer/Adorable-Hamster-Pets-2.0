@@ -2,26 +2,26 @@ package net.dawson.adorablehamsterpets.networking.payload;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-public record SpawnBeddingParticlesPayload(BlockPos pos, Direction direction, WoodVariant variant) implements CustomPayload {
-    public static final Id<SpawnBeddingParticlesPayload> ID = new Id<>(Identifier.of(AdorableHamsterPets.MOD_ID, "spawn_bedding_particles"));
+public record SpawnBeddingParticlesPayload(BlockPos pos, Direction direction, WoodVariant variant) implements CustomPacketPayload {
+    public static final Type<SpawnBeddingParticlesPayload> ID = new Type<>(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "spawn_bedding_particles"));
 
-    public static final PacketCodec<RegistryByteBuf, SpawnBeddingParticlesPayload> CODEC = PacketCodec.tuple(
-            BlockPos.PACKET_CODEC, SpawnBeddingParticlesPayload::pos,
-            PacketCodecs.indexed(Direction::byId, Direction::getId), SpawnBeddingParticlesPayload::direction,
-            PacketCodecs.indexed(i -> WoodVariant.values()[i], WoodVariant::ordinal), SpawnBeddingParticlesPayload::variant,
+    public static final StreamCodec<RegistryFriendlyByteBuf, SpawnBeddingParticlesPayload> CODEC = StreamCodec.composite(
+            BlockPos.STREAM_CODEC, SpawnBeddingParticlesPayload::pos,
+            ByteBufCodecs.idMapper(Direction::from3DDataValue, Direction::get3DDataValue), SpawnBeddingParticlesPayload::direction,
+            ByteBufCodecs.idMapper(i -> WoodVariant.values()[i], WoodVariant::ordinal), SpawnBeddingParticlesPayload::variant,
             SpawnBeddingParticlesPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

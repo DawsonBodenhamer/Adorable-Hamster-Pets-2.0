@@ -1,9 +1,9 @@
 package net.dawson.adorablehamsterpets.block.custom;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringIdentifiable;
+import net.minecraft.util.StringRepresentable;
 
-public enum WoodVariant implements StringIdentifiable {
+public enum WoodVariant implements StringRepresentable {
     ACACIA("acacia"),
     BAMBOO("bamboo"),
     BIRCH("birch"),
@@ -15,7 +15,7 @@ public enum WoodVariant implements StringIdentifiable {
     PALE_OAK("pale_oak"),
     SPRUCE("spruce");
 
-    public static final Codec<WoodVariant> CODEC = StringIdentifiable.createCodec(WoodVariant::values);
+    public static final Codec<WoodVariant> CODEC = StringRepresentable.fromEnum(WoodVariant::values);
     private final String name;
 
     WoodVariant(String name) {
@@ -23,7 +23,7 @@ public enum WoodVariant implements StringIdentifiable {
     }
 
     @Override
-    public String asString() {
+    public String getSerializedName() {
         return this.name;
     }
 }

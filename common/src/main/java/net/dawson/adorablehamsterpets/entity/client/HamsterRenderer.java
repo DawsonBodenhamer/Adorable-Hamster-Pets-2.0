@@ -1,7 +1,9 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
 import java.lang.Math;
-
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.config.Configs;
@@ -13,33 +15,30 @@ import net.dawson.adorablehamsterpets.util.HamsterRenderUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRidingUtil;
 import net.dawson.adorablehamsterpets.util.HamsterTextureUtil;
 import net.dawson.adorablehamsterpets.util.RedstoneFeverUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.BlockStateParticleEffect;
-import net.minecraft.particle.ItemStackParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RotationAxis;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ItemParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
@@ -72,7 +71,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public HamsterRenderer(EntityRendererFactory.Context ctx) {
+    public HamsterRenderer(EntityRendererProvider.Context ctx) {
         super(ctx, new HamsterModel());
         this.addRenderLayer(new RedstoneFeverEyesRenderLayer(this));
         this.shadowRadius = this.adultShadowRadius;
@@ -83,21 +82,21 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public Identifier getTextureLocation(HamsterEntity entity) {
+    public ResourceLocation getTextureLocation(HamsterEntity entity) {
         // Defer to caching utility
         return HamsterTextureUtil.getHamsterTexture(entity);
     }
 
     @Override
-    public boolean hasLabel(HamsterEntity entity) {
+    public boolean shouldShowName(HamsterEntity entity) {
         if (IS_RENDERING_IN_GUI.get()) {
             return false;
         }
-        return super.hasLabel(entity);
+        return super.shouldShowName(entity);
     }
 
     @Override
-    public void preRender(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel model, @Nullable VertexConsumerProvider bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
+    public void preRender(PoseStack poseStack, HamsterEntity animatable, BakedGeoModel model, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
 
         // Track matrices for post render access
@@ -107,8 +106,8 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
     }
 
     @Override
-    public void render(HamsterEntity entity, float entityYaw, float partialTick, MatrixStack poseStack,
-                       VertexConsumerProvider bufferSource, int packedLight) {
+    public void render(HamsterEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
+                       MultiBufferSource bufferSource, int packedLight) {
         // --- 1. Set Shadow Radius ---
         if (entity.isBaby()) {
             this.shadowRadius = this.adultShadowRadius * 0.5f;
@@ -121,7 +120,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         AdorableHamsterPetsClient.onHamsterRendered(entity.getId());
 
         // --- 3. Redstone Fever Tremor ---
-        poseStack.push();
+        poseStack.pushPose();
         if (entity.hasRedstoneFever() && !entity.isRedstoneFeverBurstActive() && !IS_RENDERING_IN_GUI.get()) {
             // --- Tuning ---
             double baseAmplitude =  0.000D;
@@ -132,16 +131,16 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             // --- Inputs ---
             // Severity fades from 1.0 toward 0.0
             double severity = entity.getSynchronizedRedstoneFeverSeverity();
-            double renderTime = entity.getWorld().getTime() + partialTick;
+            double renderTime = entity.level().getGameTime() + partialTick;
 
             // --- Amplitude Pulse ---
-            double spike = RedstoneFeverUtil.getTremorSpike(renderTime, entity.getUuid()) * spikeAmplitude;
+            double spike = RedstoneFeverUtil.getTremorSpike(renderTime, entity.getUUID()) * spikeAmplitude;
             double finalAmplitude = (baseAmplitude + spike) * severity;
             double amplitudePulse = (baseAmplitude + spike) / (baseAmplitude + spikeAmplitude);
 
             // --- Horizontal Offsets ---
             // Mismatched X/Z frequencies to prevent diagonal rocking
-            double entityPhase = entity.getUuid().hashCode() * 0.61803398875D;
+            double entityPhase = entity.getUUID().hashCode() * 0.61803398875D;
             double xOffset = Math.sin(renderTime * horizontalXFrequency + entityPhase) * finalAmplitude;
             double zOffset = Math.cos(renderTime * horizontalZFrequency + entityPhase) * finalAmplitude;
             poseStack.translate(xOffset, 0.0D, zOffset);
@@ -149,7 +148,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                     * amplitudePulse
                     * severity
                     * Math.sin(renderTime * 4.17D + entityPhase);
-            poseStack.multiply(RotationAxis.POSITIVE_Z.rotation((float) roll));
+            poseStack.mulPose(Axis.ZP.rotation((float) roll));
         }
 
         // --- 4. Smooth Ground Surface Height Adjustment ---
@@ -166,7 +165,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         // from "bleeding" between different hamsters during multi-pass rendering.
         // I'm detecting these multi-passes (and game pauses/server lag, because those
         // also cause this) by checking if the render time hasn't changed.
-        double currentTick = entity.age + partialTick;
+        double currentTick = entity.tickCount + partialTick;
         AnimatableInstanceCache cache = entity.getAnimatableInstanceCache();
         if (cache != null) {
             AnimatableManager<?> manager = cache.getManagerForId(entity.getId());
@@ -181,15 +180,15 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
-        poseStack.pop();
+        poseStack.popPose();
     }
 
     @Override
-    public void renderFinal(MatrixStack poseStack, HamsterEntity animatable, BakedGeoModel model, VertexConsumerProvider bufferSource, @Nullable VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay, int colour) {
+    public void renderFinal(PoseStack poseStack, HamsterEntity animatable, BakedGeoModel model, MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay, int colour) {
         super.renderFinal(poseStack, animatable, model, bufferSource, buffer, partialTick, packedLight, packedOverlay, colour);
 
         // --- 1. Handle Passengers ---
-        if (!animatable.getPassengerList().isEmpty()) {
+        if (!animatable.getPassengers().isEmpty()) {
             model.getBone(SEAT_BONE).ifPresent(bone -> {
                 renderPassengersForBone(poseStack, animatable, bone, bufferSource, packedLight, partialTick);
             });
@@ -220,7 +219,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
     /**
      * Renders hamster passengers "bone-locked" to a GeckoLib bone.
      *
-     * <p>Core trick: Manually apply the bone's tracked matrix transform to the {@link MatrixStack}.
+     * <p>Core trick: Manually apply the bone's tracked matrix transform to the {@link PoseStack}.
      * <p>
      * Then:
      * <ul>
@@ -230,14 +229,14 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
      *   <li>Pre-cancel vanilla LivingEntityRenderer yaw rotation (avoid "double yaw")</li>
      * </ul>
      */
-    private void renderPassengersForBone(MatrixStack matrices,
+    private void renderPassengersForBone(PoseStack matrices,
                                          HamsterEntity hamster,
                                          GeoBone bone,
-                                         VertexConsumerProvider bufferSource,
+                                         MultiBufferSource bufferSource,
                                          int packedLight,
                                          float partialTick) {
 
-        final MinecraftClient client = MinecraftClient.getInstance();
+        final Minecraft client = Minecraft.getInstance();
         final EntityRenderDispatcher dispatcher = client.getEntityRenderDispatcher();
 
         // --- Base Pose: Hamster Render Space ---
@@ -246,23 +245,23 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
         final Matrix3f modelBaseNormal = new Matrix3f(modelBase).invert().transpose();
 
         // Temporarily disable shadow rendering for rider to prevent double shadows or artifacts
-        dispatcher.setRenderShadows(false);
+        dispatcher.setRenderShadow(false);
         try {
-            for (Entity passenger : hamster.getPassengerList()) {
+            for (Entity passenger : hamster.getPassengers()) {
                 if (!(passenger instanceof LivingEntity living)) {
                     continue;
                 }
 
                 // Skip fake rider in first person so it doesn't obstruct view
-                if (passenger == client.player && client.options.getPerspective().isFirstPerson()) {
+                if (passenger == client.player && client.options.getCameraType().isFirstPerson()) {
                     continue;
                 }
 
-                matrices.push();
+                matrices.pushPose();
                 try {
                     // --- 1. Jump Into Hamster's Model Render-Space ---
-                    matrices.peek().getPositionMatrix().set(modelBase);
-                    matrices.peek().getNormalMatrix().set(modelBaseNormal);
+                    matrices.last().pose().set(modelBase);
+                    matrices.last().normal().set(modelBaseNormal);
 
                     // --- 2. Apply Bone Translation and Rotation ---
                     Matrix4f bonePose = new Matrix4f(bone.getModelSpaceMatrix()); // tracked during recursive render
@@ -274,10 +273,10 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                     Matrix4f boneTR = new Matrix4f().identity().translate(t).rotate(r);
 
                     // Apply to current pose
-                    matrices.peek().getPositionMatrix().mul(boneTR);
+                    matrices.last().pose().mul(boneTR);
 
                     // Keep normals correct (translation ignored automatically by Matrix3f ctor)
-                    matrices.peek().getNormalMatrix().set(new Matrix3f(matrices.peek().getPositionMatrix()).invert().transpose());
+                    matrices.last().normal().set(new Matrix3f(matrices.last().pose()).invert().transpose());
 
 
                     // --- 4. Cancel Vehicle Global Scale ---
@@ -290,14 +289,14 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
                     // --- 5. Apply Seat Offsets ---
                     // Use centralized logic to position rider correctly on hamster's back
-                    Vec3d seat = HamsterRidingUtil.HamsterSeatOffsets.visualSeatOffset(living, hamster.getScale());
+                    Vec3 seat = HamsterRidingUtil.HamsterSeatOffsets.visualSeatOffset(living, hamster.getScale());
                     matrices.translate(seat.x, seat.y, seat.z);
 
                     // --- 6. Neutralize Vanilla Yaw ---
                     // Vanilla LivingEntityRenderer applies rotY(180 - yaw), so pre-apply the inverse
                     // to keep rider locked to the bone's rotation instead of the entity's global rotation.
-                    float passengerYaw = MathHelper.lerpAngleDegrees(partialTick, passenger.prevYaw, passenger.getYaw());
-                    matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(passengerYaw - 180.0f));
+                    float passengerYaw = Mth.rotLerp(partialTick, passenger.yRotO, passenger.getYRot());
+                    matrices.mulPose(Axis.YP.rotationDegrees(passengerYaw - 180.0f));
 
                     // --- 7. Render the Passenger ---
                     // Set thread-local flag to bypass the Mixin that cancels vanilla rendering
@@ -308,12 +307,12 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                         IS_RENDERING_PASSENGER.set(false);
                     }
                 } finally {
-                    matrices.pop();
+                    matrices.popPose();
                 }
             }
         } finally {
             // Re-enable shadows for subsequent renders
-            dispatcher.setRenderShadows(true);
+            dispatcher.setRenderShadow(true);
         }
     }
 
@@ -321,49 +320,49 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
      * Renders an item held in the hamster's mouth, locked to the "nose" bone.
      * Mimics passenger rendering, but keeps the bone's scale logic intact.
      */
-    private void renderItemForBone(MatrixStack matrices,
+    private void renderItemForBone(PoseStack matrices,
                                    HamsterEntity hamster,
                                    GeoBone bone,
-                                   VertexConsumerProvider bufferSource,
+                                   MultiBufferSource bufferSource,
                                    int packedLight,
                                    int packedOverlay) {
 
         ItemStack itemStack = hamster.getMouthItemStack();
         if (itemStack.isEmpty()) return;
 
-        ItemRenderer itemRenderer = MinecraftClient.getInstance().getItemRenderer();
+        ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
 
         // --- Base Pose: Hamster Render Space ---
         final Matrix4f modelBase = new Matrix4f(this.modelRenderTranslations);
         final Matrix3f modelBaseNormal = new Matrix3f(modelBase).invert().transpose();
 
-        matrices.push();
+        matrices.pushPose();
         try {
             // 1. Jump Into Hamster's Model Render-Space
-            matrices.peek().getPositionMatrix().set(modelBase);
-            matrices.peek().getNormalMatrix().set(modelBaseNormal);
+            matrices.last().pose().set(modelBase);
+            matrices.last().normal().set(modelBaseNormal);
 
             // 2. Apply Full Bone Transform (T, R, S)
             // Using getModelSpaceMatrix() applies T, R, and S relative to the entity root.
             Matrix4f bonePose = new Matrix4f(bone.getModelSpaceMatrix());
-            matrices.peek().getPositionMatrix().mul(bonePose);
+            matrices.last().pose().mul(bonePose);
 
             // 3. Keep normals correct
-            matrices.peek().getNormalMatrix().set(new Matrix3f(matrices.peek().getPositionMatrix()).invert().transpose());
+            matrices.last().normal().set(new Matrix3f(matrices.last().pose()).invert().transpose());
 
             // 4. Apply Manual Adjustments
             HamsterMouthItemOffsets.applyMouthItemTransforms(matrices);
 
             // 5. Render Item
-            itemRenderer.renderItem(itemStack, ModelTransformationMode.THIRD_PERSON_RIGHT_HAND, packedLight, packedOverlay, matrices, bufferSource, hamster.getWorld(), hamster.getId());
+            itemRenderer.renderStatic(itemStack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, packedLight, packedOverlay, matrices, bufferSource, hamster.level(), hamster.getId());
 
         } finally {
-            matrices.pop();
+            matrices.popPose();
         }
     }
 
     private void handleParticleKeyframes(HamsterEntity animatable, BakedGeoModel model) {
-        Random random = animatable.getRandom();
+        RandomSource random = animatable.getRandom();
         switch (animatable.particleEffectId) {
             case "attack_poof":
                 model.getBone("left_foot").ifPresent(bone -> {
@@ -372,7 +371,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                         double d = random.nextGaussian() * 0.1;
                         double e = random.nextGaussian() * 0.2;
                         double f = random.nextGaussian() * 0.1;
-                        animatable.getWorld().addParticle(ParticleTypes.WHITE_SMOKE,
+                        animatable.level().addParticle(ParticleTypes.WHITE_SMOKE,
                                 pos.x + d, pos.y + e, pos.z + f,
                                 random.nextGaussian() * 0.05,
                                 random.nextGaussian() * 0.05,
@@ -383,14 +382,14 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             case "seeking_dust":
                 model.getBone("nose").ifPresent(bone -> {
                     Vector3d pos = bone.getWorldPosition();
-                    BlockPos blockBelow = BlockPos.ofFloored(pos.x, pos.y - 0.1, pos.z).down();
-                    BlockState state = animatable.getWorld().getBlockState(blockBelow);
-                    if (state.isAir()) state = Blocks.DIRT.getDefaultState();
+                    BlockPos blockBelow = BlockPos.containing(pos.x, pos.y - 0.1, pos.z).below();
+                    BlockState state = animatable.level().getBlockState(blockBelow);
+                    if (state.isAir()) state = Blocks.DIRT.defaultBlockState();
                     for (int i = 0; i < 12; ++i) {
                         double d = random.nextGaussian() * 0.2;
                         double e = random.nextGaussian() * 0.03;
                         double f = random.nextGaussian() * 0.2;
-                        animatable.getWorld().addParticle(new BlockStateParticleEffect(ParticleTypes.FALLING_DUST, state),
+                        animatable.level().addParticle(new BlockParticleOption(ParticleTypes.FALLING_DUST, state),
                                 pos.x + d, pos.y + e, pos.z + f,
                                 0.0, 0.0, 0.0);
                     }
@@ -404,8 +403,8 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                     ItemStack mouthStack = animatable.getMouthItemStack();
                     if (!mouthStack.isEmpty()) {
                         for (int i = 0; i < 5; i++) {
-                            animatable.getWorld().addParticle(
-                                    new ItemStackParticleEffect(ParticleTypes.ITEM, mouthStack),
+                            animatable.level().addParticle(
+                                    new ItemParticleOption(ParticleTypes.ITEM, mouthStack),
                                     pos.x, pos.y, pos.z,
                                     (random.nextDouble() - 0.5) * 0.3,
                                     random.nextDouble() * 0.2,
@@ -415,7 +414,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                     }
                     // 2. Llama Spit Particles
                     for (int i = 0; i < 8; i++) {
-                        animatable.getWorld().addParticle(
+                        animatable.level().addParticle(
                                 ParticleTypes.SPIT,
                                 pos.x, pos.y, pos.z,
                                 (random.nextDouble() - 0.5) * 0.1,
@@ -430,7 +429,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
     }
 
     private void handleSoundKeyframes(HamsterEntity animatable) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         switch (animatable.soundEffectId) {
             case "dynamic_item_sound":
                 ItemStack mouthStack = animatable.getMouthItemStack();
@@ -438,8 +437,8 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                     SoundEvent dynamicSound = ModSounds.getDynamicItemSound(mouthStack);
                     float baseVol = ModSounds.getDynamicSoundVolume(dynamicSound);
 
-                    client.getSoundManager().play(new PositionedSoundInstance(
-                            dynamicSound, SoundCategory.NEUTRAL, baseVol * 0.6f, 1.0f + (animatable.getRandom().nextFloat() - 0.5f) * 0.2f,
+                    client.getSoundManager().play(new SimpleSoundInstance(
+                            dynamicSound, SoundSource.NEUTRAL, baseVol * 0.6f, 1.0f + (animatable.getRandom().nextFloat() - 0.5f) * 0.2f,
                             animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                     ));
                 }
@@ -447,8 +446,8 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             case "hamster_scratch_sound":
                 SoundEvent scratchSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SCRATCH_SOUNDS, animatable.getRandom());
                 if (scratchSound != null) {
-                    client.getSoundManager().play(new PositionedSoundInstance(
-                            scratchSound, SoundCategory.NEUTRAL, 0.2f, 0.8f,
+                    client.getSoundManager().play(new SimpleSoundInstance(
+                            scratchSound, SoundSource.NEUTRAL, 0.2f, 0.8f,
                             animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                     ));
                 }
@@ -458,26 +457,26 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                         ? ModSounds.HAMSTER_ROLL_BACK.get()
                         : ModSounds.HAMSTER_ROLL_BACK_NO_SLIDE_WHISTLE.get();
 
-                client.getSoundManager().play(new PositionedSoundInstance(
-                        rollBackSound, SoundCategory.NEUTRAL, 0.3f, 1.4f,
+                client.getSoundManager().play(new SimpleSoundInstance(
+                        rollBackSound, SoundSource.NEUTRAL, 0.3f, 1.4f,
                         animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                 ));
                 break;
             case "hamster_roll_forward_sound":
-                client.getSoundManager().play(new PositionedSoundInstance(
-                        ModSounds.HAMSTER_ROLL_FORWARD.get(), SoundCategory.NEUTRAL, 0.2f, 1.4f,
+                client.getSoundManager().play(new SimpleSoundInstance(
+                        ModSounds.HAMSTER_ROLL_FORWARD.get(), SoundSource.NEUTRAL, 0.2f, 1.4f,
                         animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                 ));
                 break;
             case "hamster_step_sound":
-                BlockPos pos = animatable.getBlockPos();
-                BlockState blockState = animatable.getWorld().getBlockState(pos.down());
-                if (blockState.isAir()) blockState = animatable.getWorld().getBlockState(pos.down(2));
+                BlockPos pos = animatable.blockPosition();
+                BlockState blockState = animatable.level().getBlockState(pos.below());
+                if (blockState.isAir()) blockState = animatable.level().getBlockState(pos.below(2));
                 if (!blockState.isAir()) {
-                    BlockSoundGroup group = blockState.getSoundGroup();
-                    float volume = blockState.isOf(Blocks.GRAVEL) ? (0.10F * 0.60F) : 0.10F;
-                    client.getSoundManager().play(new PositionedSoundInstance(
-                            group.getStepSound(), SoundCategory.NEUTRAL, volume,
+                    SoundType group = blockState.getSoundType();
+                    float volume = blockState.is(Blocks.GRAVEL) ? (0.10F * 0.60F) : 0.10F;
+                    client.getSoundManager().play(new SimpleSoundInstance(
+                            group.getStepSound(), SoundSource.NEUTRAL, volume,
                             group.getPitch() * 1.5F, animatable.getRandom(),
                             animatable.getX(), animatable.getY(), animatable.getZ()
                     ));
@@ -487,25 +486,25 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                 if (animatable.isDancing()) break; // Mute bounce sound when dancing to music disc
                 SoundEvent bounceSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BOUNCE_SOUNDS, animatable.getRandom());
                 if (bounceSound != null) {
-                    float basePitch = animatable.getSoundPitch();
+                    float basePitch = animatable.getVoicePitch();
                     float randomPitchAddition = animatable.getRandom().nextFloat() * 0.2f;
                     float finalPitch = (basePitch * 1.2f) + randomPitchAddition;
-                    client.getSoundManager().play(new PositionedSoundInstance(
-                            bounceSound, SoundCategory.NEUTRAL, 0.6f, finalPitch,
+                    client.getSoundManager().play(new SimpleSoundInstance(
+                            bounceSound, SoundSource.NEUTRAL, 0.6f, finalPitch,
                             animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                     ));
                 }
                 break;
             case "hamster_thump_sound":
                 float thumpPitch = 1.0F + animatable.getRandom().nextFloat() * 0.4F;
-                client.getSoundManager().play(new PositionedSoundInstance(
-                        ModSounds.HAMSTER_THUMP.get(), SoundCategory.NEUTRAL, 0.3f, thumpPitch,
+                client.getSoundManager().play(new SimpleSoundInstance(
+                        ModSounds.HAMSTER_THUMP.get(), SoundSource.NEUTRAL, 0.3f, thumpPitch,
                         animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                 ));
 
                 // Broadcast via server if >16.0 blocks from player to bypass vanilla distance attenuation
                 if (client.player != null) {
-                    if (animatable.squaredDistanceTo(client.player) > 16.0 * 16.0) {
+                    if (animatable.distanceToSqr(client.player) > 16.0 * 16.0) {
                         NetworkManager.sendToServer(
                                 new HamsterAnimationSoundPayload(animatable.getId(), "hamster_thump_sound")
                         );
@@ -513,37 +512,37 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
                 }
                 break;
             case "hamster_spit_sound":
-                client.getSoundManager().play(new PositionedSoundInstance(
-                        SoundEvents.ENTITY_LLAMA_SPIT, SoundCategory.NEUTRAL, 0.4f, 2.0f,
+                client.getSoundManager().play(new SimpleSoundInstance(
+                        SoundEvents.LLAMA_SPIT, SoundSource.NEUTRAL, 0.4f, 2.0f,
                         animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                 ));
                 break;
             case "hamster_sniff_sound":
                 SoundEvent sniffSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_DIAMOND_SNIFF_SOUNDS, animatable.getRandom());
                 if (sniffSound != null) {
-                    client.getSoundManager().play(new PositionedSoundInstance(
-                            sniffSound, SoundCategory.NEUTRAL, 1.0f, animatable.getSoundPitch(),
+                    client.getSoundManager().play(new SimpleSoundInstance(
+                            sniffSound, SoundSource.NEUTRAL, 1.0f, animatable.getVoicePitch(),
                             animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                     ));
                 }
                 break;
             case "hamster_head_shake_fast_sound":
-                client.getSoundManager().play(new PositionedSoundInstance(
-                        ModSounds.HAMSTER_HEAD_SHAKE_FAST.get(), SoundCategory.NEUTRAL, 0.35f, 1.0f + (animatable.getRandom().nextFloat() - 0.5f) * 0.2f,
+                client.getSoundManager().play(new SimpleSoundInstance(
+                        ModSounds.HAMSTER_HEAD_SHAKE_FAST.get(), SoundSource.NEUTRAL, 0.35f, 1.0f + (animatable.getRandom().nextFloat() - 0.5f) * 0.2f,
                         animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                 ));
                 break;
             case "hamster_swish_sound":
-                client.getSoundManager().play(new PositionedSoundInstance(
-                        ModSounds.HAMSTER_SWISH.get(), SoundCategory.NEUTRAL, 0.1f, 1.0f + (animatable.getRandom().nextFloat() * 0.5f),
+                client.getSoundManager().play(new SimpleSoundInstance(
+                        ModSounds.HAMSTER_SWISH.get(), SoundSource.NEUTRAL, 0.1f, 1.0f + (animatable.getRandom().nextFloat() * 0.5f),
                         animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                 ));
                 break;
             case "hamster_water_swish_sound":
                 SoundEvent waterSwishSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_WATER_SWISH_SOUNDS, animatable.getRandom());
                 if (waterSwishSound != null) {
-                    client.getSoundManager().play(new PositionedSoundInstance(
-                            waterSwishSound, SoundCategory.NEUTRAL, 0.25f, 1.0f,
+                    client.getSoundManager().play(new SimpleSoundInstance(
+                            waterSwishSound, SoundSource.NEUTRAL, 0.25f, 1.0f,
                             animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                     ));
                 }
@@ -551,8 +550,8 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             case "hamster_affection_sound":
                 SoundEvent affectionSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, animatable.getRandom());
                 if (affectionSound != null) {
-                    client.getSoundManager().play(new PositionedSoundInstance(
-                            affectionSound, SoundCategory.NEUTRAL, 1.0f, 1.0f,
+                    client.getSoundManager().play(new SimpleSoundInstance(
+                            affectionSound, SoundSource.NEUTRAL, 1.0f, 1.0f,
                             animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                     ));
                 }
@@ -560,8 +559,8 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             case "hamster_celebrate_sound":
                 SoundEvent celebrateSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, animatable.getRandom());
                 if (celebrateSound != null) {
-                    client.getSoundManager().play(new PositionedSoundInstance(
-                            celebrateSound, SoundCategory.NEUTRAL, 1.0f, 1.0f,
+                    client.getSoundManager().play(new SimpleSoundInstance(
+                            celebrateSound, SoundSource.NEUTRAL, 1.0f, 1.0f,
                             animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                     ));
                 }
@@ -569,8 +568,8 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
             case "hamster_sneeze_sound":
                 SoundEvent sneezeSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SNEEZE_SOUNDS, animatable.getRandom());
                 if (sneezeSound != null) {
-                    client.getSoundManager().play(new PositionedSoundInstance(
-                            sneezeSound, SoundCategory.NEUTRAL, 0.6f, 1.0f,
+                    client.getSoundManager().play(new SimpleSoundInstance(
+                            sneezeSound, SoundSource.NEUTRAL, 0.6f, 1.0f,
                             animatable.getRandom(), animatable.getX(), animatable.getY(), animatable.getZ()
                     ));
                 }

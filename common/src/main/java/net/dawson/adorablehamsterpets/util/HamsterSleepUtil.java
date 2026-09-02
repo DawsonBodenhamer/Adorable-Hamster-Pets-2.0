@@ -2,10 +2,9 @@ package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.world.World;
-
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.level.Level;
 import java.util.List;
 
 /**
@@ -38,7 +37,7 @@ public final class HamsterSleepUtil {
         switch (currentPhase) {
             case NONE -> {
                 // Command to sit starts Phase 1 if conditions allow
-                if (hamster.isSitting() && canInitiate) {
+                if (hamster.isOrderedToSit() && canInitiate) {
                     if (hamster.getQuiescentSitTimer() == 0) {
                         hamster.setDozingPhase(HamsterEntity.DozingPhase.QUIESCENT_SITTING);
 
@@ -53,13 +52,13 @@ public final class HamsterSleepUtil {
                         }
                         if (maxSeconds < minSeconds) maxSeconds = minSeconds;
 
-                        int durationTicks = hamster.getRandom().nextBetween(minSeconds * 20, maxSeconds * 20 + 1);
+                        int durationTicks = hamster.getRandom().nextIntBetweenInclusive(minSeconds * 20, maxSeconds * 20 + 1);
                         hamster.setQuiescentSitTimer(durationTicks);
                     }
                 }
             }
             case QUIESCENT_SITTING -> {
-                if (!hamster.isSitting() || !canInitiate) {
+                if (!hamster.isOrderedToSit() || !canInitiate) {
                     resetSleepState(hamster);
                     break;
                 }
@@ -83,7 +82,7 @@ public final class HamsterSleepUtil {
                     hamster.setDozingPhase(HamsterEntity.DozingPhase.SETTLING_INTO_SLUMBER);
 
                     // Select sleep pose based on personality
-                    int personalityId = hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+                    int personalityId = hamster.getEntityData().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
                     String settleAnimId = HamsterPoseUtil.getSettleSleepAnimId(personalityId, true);
                     String deepSleepAnimIdForTracker = HamsterPoseUtil.getDeepSleepAnimId(personalityId);
 
@@ -125,19 +124,19 @@ public final class HamsterSleepUtil {
      * Checks if conditions allow slumber.
      */
     private static boolean evaluateSleepConditions(HamsterEntity hamster, boolean isSustaining) {
-        if (!hamster.isSitting()) return false;
+        if (!hamster.isOrderedToSit()) return false;
 
-        World world = hamster.getWorld();
+        Level world = hamster.level();
         if (Configs.AHP_MAIN.requireDaytimeForTamedSleep && !world.isDay()) {
             return false;
         }
         if (hamster.isInLove()) return false;
 
         double threatRadius = Configs.AHP_MAIN.tamedSleepThreatDetectionRadiusBlocks.get();
-        List<LivingEntity> nearbyHostiles = world.getEntitiesByClass(
+        List<LivingEntity> nearbyHostiles = world.getEntitiesOfClass(
                 LivingEntity.class,
-                hamster.getBoundingBox().expand(threatRadius),
-                entity -> entity instanceof HostileEntity && entity.isAlive() && !entity.isSpectator()
+                hamster.getBoundingBox().inflate(threatRadius),
+                entity -> entity instanceof Monster && entity.isAlive() && !entity.isSpectator()
         );
         return nearbyHostiles.isEmpty();
     }

@@ -6,84 +6,88 @@ import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
-import net.minecraft.data.server.recipe.*;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.book.RecipeCategory;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.core.HolderLookup;
+import net.minecraft.data.recipes.RecipeCategory;
+import net.minecraft.data.recipes.RecipeOutput;
+import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
+import net.minecraft.data.recipes.SmithingTransformRecipeBuilder;
+import net.minecraft.data.recipes.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class ModRecipeProvider extends FabricRecipeProvider {
 
     // --- 1. Constructor ---
-    public ModRecipeProvider(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
+    public ModRecipeProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
         super(output, registriesFuture);
     }
 
     // --- 2. Helpers ---
     // For Hamster Bed variants
-    private void offerHamsterBedRecipe(RecipeExporter exporter, Item planks, WoodVariant variant) {
+    private void offerHamsterBedRecipe(RecipeOutput exporter, Item planks, WoodVariant variant) {
         // Result is the specific item for this variant
         Item resultItem = ModItems.HAMSTER_BED_ITEMS.get(variant).get();
 
-        ShapedRecipeJsonBuilder.create(RecipeCategory.DECORATIONS, resultItem)
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, resultItem)
                 .pattern(" H ")
                 .pattern("HHH")
                 .pattern("PPP")
-                .input('H', ModItems.HAMSTER_BEDDING.get())
-                .input('P', planks)
+                .define('H', ModItems.HAMSTER_BEDDING.get())
+                .define('P', planks)
                 .group("hamster_bed")
-                .criterion("has_hamster_bedding", conditionsFromItem(ModItems.HAMSTER_BEDDING.get()))
-                .offerTo(exporter, Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_bed_" + variant.asString()));
+                .unlockedBy("has_hamster_bedding", has(ModItems.HAMSTER_BEDDING.get()))
+                .save(exporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_bed_" + variant.getSerializedName()));
     }
 
     // Helper for Smithing Upgrades
-    private void offerHamsterArmorUpgrade(RecipeExporter exporter, Item template, Item material, Item result) {
-        SmithingTransformRecipeJsonBuilder.create(
-                        Ingredient.ofItems(template),
-                        Ingredient.fromTag(ModItemTagProvider.HAMSTER_ARMOR_ENCHANTABLE), // Allow any armor tier as base
-                        Ingredient.ofItems(material),
+    private void offerHamsterArmorUpgrade(RecipeOutput exporter, Item template, Item material, Item result) {
+        SmithingTransformRecipeBuilder.smithing(
+                        Ingredient.of(template),
+                        Ingredient.of(ModItemTagProvider.HAMSTER_ARMOR_ENCHANTABLE), // Allow any armor tier as base
+                        Ingredient.of(material),
                         RecipeCategory.COMBAT,
                         result
                 )
-                .criterion("has_acorn_armor", conditionsFromItem(ModItems.HAMSTER_ARMOR_ACORN.get()))
-                .criterion("has_material", conditionsFromItem(material))
-                .offerTo(exporter, getItemPath(result) + "_smithing");
+                .unlocks("has_acorn_armor", has(ModItems.HAMSTER_ARMOR_ACORN.get()))
+                .unlocks("has_material", has(material))
+                .save(exporter, getItemName(result) + "_smithing");
     }
 
     // Helper for Template Duplication
-    private void offerHamsterTemplateDuplication(RecipeExporter exporter, Item template, Item material) {
-        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, template, 2)
+    private void offerHamsterTemplateDuplication(RecipeOutput exporter, Item template, Item material) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, template, 2)
                 .pattern("STS")
                 .pattern("SMS")
                 .pattern("SSS")
-                .input('T', template)
-                .input('M', material)
-                .input('S', ModItems.ACORN_SHARD.get())
-                .criterion("has_template", conditionsFromItem(template))
-                .offerTo(exporter, Identifier.of(AdorableHamsterPets.MOD_ID, getItemPath(template) + "_duplication"));
+                .define('T', template)
+                .define('M', material)
+                .define('S', ModItems.ACORN_SHARD.get())
+                .unlockedBy("has_template", has(template))
+                .save(exporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, getItemName(template) + "_duplication"));
     }
 
     // --- 3. Public Methods ---
     @Override
-    public void generate(RecipeExporter recipeExporter) {
+    public void buildRecipes(RecipeOutput recipeExporter) {
         // --- Smelting Recipes ---
         // Smelting Green Beans to Steamed Green Beans
-        offerSmelting(recipeExporter, List.of(ModItems.GREEN_BEANS.get()), RecipeCategory.FOOD, ModItems.STEAMED_GREEN_BEANS.get(),
+        oreSmelting(recipeExporter, List.of(ModItems.GREEN_BEANS.get()), RecipeCategory.FOOD, ModItems.STEAMED_GREEN_BEANS.get(),
                 0.35f, 200, "steamed_green_beans");
 
         // Smoking Green Beans to Steamed Green Beans
-        CookingRecipeJsonBuilder.createSmoking(Ingredient.ofItems(ModItems.GREEN_BEANS.get()), RecipeCategory.FOOD, ModItems.STEAMED_GREEN_BEANS.get(), 0.35f, 100)
+        SimpleCookingRecipeBuilder.smoking(Ingredient.of(ModItems.GREEN_BEANS.get()), RecipeCategory.FOOD, ModItems.STEAMED_GREEN_BEANS.get(), 0.35f, 100)
                 .group("steamed_green_beans")
-                .criterion("has_green_beans", conditionsFromItem(ModItems.GREEN_BEANS.get()))
-                .offerTo(recipeExporter, Identifier.of(AdorableHamsterPets.MOD_ID, "steamed_green_beans_from_smoking_green_beans"));
+                .unlockedBy("has_green_beans", has(ModItems.GREEN_BEANS.get()))
+                .save(recipeExporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "steamed_green_beans_from_smoking_green_beans"));
 
         // Smelting Acorns to Charcoal
-        offerSmelting(recipeExporter, List.of(ModItems.ACORN.get()), RecipeCategory.MISC, Items.CHARCOAL,
+        oreSmelting(recipeExporter, List.of(ModItems.ACORN.get()), RecipeCategory.MISC, Items.CHARCOAL,
                 0.15f, 200, "charcoal");
 
         // --- Shaped Crafting Recipes ---
@@ -100,94 +104,94 @@ public class ModRecipeProvider extends FabricRecipeProvider {
         // offerHamsterBedRecipe(recipeExporter, Items.PALE_OAK_PLANKS, WoodVariant.PALE_OAK); // TODO: add pale oak when porting to 1.21.5
 
         // Hamster Food Mix
-        ShapedRecipeJsonBuilder.create(RecipeCategory.FOOD, ModItems.HAMSTER_FOOD_MIX.get(), 4)
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.HAMSTER_FOOD_MIX.get(), 4)
                 .pattern("SSS")
                 .pattern("PCP")
                 .pattern("WWW")
-                .input('S', ModItems.SUNFLOWER_SEEDS.get())
-                .input('P', Items.PUMPKIN_SEEDS)
-                .input('C', Items.CARROT)
-                .input('W', Items.WHEAT_SEEDS)
-                .criterion("has_sunflower_seeds", conditionsFromItem(ModItems.SUNFLOWER_SEEDS.get()))
-                .offerTo(recipeExporter, Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_food_mix_from_ingredients"));
+                .define('S', ModItems.SUNFLOWER_SEEDS.get())
+                .define('P', Items.PUMPKIN_SEEDS)
+                .define('C', Items.CARROT)
+                .define('W', Items.WHEAT_SEEDS)
+                .unlockedBy("has_sunflower_seeds", has(ModItems.SUNFLOWER_SEEDS.get()))
+                .save(recipeExporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_food_mix_from_ingredients"));
 
         // Hamster Bedding
-        ShapelessRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.HAMSTER_BEDDING.get(), 2)
-                .input(Items.OAK_LEAVES)
-                .input(Items.BIRCH_LEAVES)
-                .input(Items.DEAD_BUSH)
-                .input(Items.PODZOL)
-                .criterion("has_oak_leaves", conditionsFromItem(Items.OAK_LEAVES))
-                .criterion("has_birch_leaves", conditionsFromItem(Items.BIRCH_LEAVES))
-                .criterion("has_dead_bush", conditionsFromItem(Items.DEAD_BUSH))
-                .criterion("has_podzol", conditionsFromItem(Items.PODZOL))
-                .offerTo(recipeExporter);
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.HAMSTER_BEDDING.get(), 2)
+                .requires(Items.OAK_LEAVES)
+                .requires(Items.BIRCH_LEAVES)
+                .requires(Items.DEAD_BUSH)
+                .requires(Items.PODZOL)
+                .unlockedBy("has_oak_leaves", has(Items.OAK_LEAVES))
+                .unlockedBy("has_birch_leaves", has(Items.BIRCH_LEAVES))
+                .unlockedBy("has_dead_bush", has(Items.DEAD_BUSH))
+                .unlockedBy("has_podzol", has(Items.PODZOL))
+                .save(recipeExporter);
 
         // Restore Blue Cheese Disc to Regular
-        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.MUSIC_DISC_CHEESE.get(), 1)
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.MUSIC_DISC_CHEESE.get(), 1)
                 .pattern("CCC")
                 .pattern("CDC")
                 .pattern("CCC")
-                .input('C', ModItems.CHEESE.get())
-                .input('D', ModItems.MUSIC_DISC_BLUE_CHEESE.get())
-                .criterion("has_blue_cheese_disc", conditionsFromItem(ModItems.MUSIC_DISC_BLUE_CHEESE.get()))
-                .offerTo(recipeExporter, Identifier.of(AdorableHamsterPets.MOD_ID, "music_disc_cheese_from_blue_cheese"));
+                .define('C', ModItems.CHEESE.get())
+                .define('D', ModItems.MUSIC_DISC_BLUE_CHEESE.get())
+                .unlockedBy("has_blue_cheese_disc", has(ModItems.MUSIC_DISC_BLUE_CHEESE.get()))
+                .save(recipeExporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "music_disc_cheese_from_blue_cheese"));
 
         // Restore Parmesan Disc to Regular
-        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.MUSIC_DISC_CHEESE.get(), 1)
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.MUSIC_DISC_CHEESE.get(), 1)
                 .pattern("CCC")
                 .pattern("CDC")
                 .pattern("CCC")
-                .input('C', ModItems.CHEESE.get())
-                .input('D', ModItems.MUSIC_DISC_PARMESAN.get())
-                .criterion("has_parmesan_disc", conditionsFromItem(ModItems.MUSIC_DISC_PARMESAN.get()))
-                .offerTo(recipeExporter, Identifier.of(AdorableHamsterPets.MOD_ID, "music_disc_cheese_from_parmesan"));
+                .define('C', ModItems.CHEESE.get())
+                .define('D', ModItems.MUSIC_DISC_PARMESAN.get())
+                .unlockedBy("has_parmesan_disc", has(ModItems.MUSIC_DISC_PARMESAN.get()))
+                .save(recipeExporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "music_disc_cheese_from_parmesan"));
 
         // --- Shapeless Crafting Recipes ---
         // Sliced Cucumber
-        ShapelessRecipeJsonBuilder.create(RecipeCategory.FOOD, ModItems.SLICED_CUCUMBER.get(), 3)
-                .input(ModItems.CUCUMBER.get())
-                .criterion("has_cucumber", conditionsFromItem(ModItems.CUCUMBER.get()))
-                .offerTo(recipeExporter);
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.SLICED_CUCUMBER.get(), 3)
+                .requires(ModItems.CUCUMBER.get())
+                .unlockedBy("has_cucumber", has(ModItems.CUCUMBER.get()))
+                .save(recipeExporter);
 
         // Cheese
-        ShapelessRecipeJsonBuilder.create(RecipeCategory.FOOD, ModItems.CHEESE.get(), 3)
-                .input(Items.MILK_BUCKET)
-                .criterion("has_milk_bucket", conditionsFromItem(Items.MILK_BUCKET))
-                .offerTo(recipeExporter);
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.CHEESE.get(), 3)
+                .requires(Items.MILK_BUCKET)
+                .unlockedBy("has_milk_bucket", has(Items.MILK_BUCKET))
+                .save(recipeExporter);
 
         // Modded Sunflower to Vanilla Sunflower
-        ShapelessRecipeJsonBuilder.create(RecipeCategory.DECORATIONS, Items.SUNFLOWER, 1)
-                .input(ModBlocks.SUNFLOWER_BLOCK.get())
-                .criterion("has_modded_sunflower", conditionsFromItem(ModBlocks.SUNFLOWER_BLOCK.get()))
-                .offerTo(recipeExporter, Identifier.of(AdorableHamsterPets.MOD_ID, "vanilla_sunflower_from_modded"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, Items.SUNFLOWER, 1)
+                .requires(ModBlocks.SUNFLOWER_BLOCK.get())
+                .unlockedBy("has_modded_sunflower", has(ModBlocks.SUNFLOWER_BLOCK.get()))
+                .save(recipeExporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "vanilla_sunflower_from_modded"));
 
         // --- Acorn & Armor Recipes ---
 
         // Acorn Shard and Hat (Stonecutting)
-        offerStonecuttingRecipe(recipeExporter, RecipeCategory.MISC, ModItems.ACORN_SHARD.get(), ModItems.ACORN.get(), 2);
-        offerStonecuttingRecipe(recipeExporter, RecipeCategory.MISC, ModItems.ACORN_HAT.get(), ModItems.ACORN.get(), 1);
+        stonecutterResultFromBase(recipeExporter, RecipeCategory.MISC, ModItems.ACORN_SHARD.get(), ModItems.ACORN.get(), 2);
+        stonecutterResultFromBase(recipeExporter, RecipeCategory.MISC, ModItems.ACORN_HAT.get(), ModItems.ACORN.get(), 1);
 
         // Acorn Armor (Shaped)
-        ShapedRecipeJsonBuilder.create(RecipeCategory.COMBAT, ModItems.HAMSTER_ARMOR_ACORN.get(), 1)
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.HAMSTER_ARMOR_ACORN.get(), 1)
                 .pattern(" H ")
                 .pattern("SSS")
                 .pattern("SSS")
-                .input('H', ModItems.ACORN_HAT.get())
-                .input('S', ModItems.ACORN_SHARD.get())
-                .criterion("has_acorn_hat", conditionsFromItem(ModItems.ACORN_HAT.get()))
-                .criterion("has_acorn_shard", conditionsFromItem(ModItems.ACORN_SHARD.get()))
-                .offerTo(recipeExporter);
+                .define('H', ModItems.ACORN_HAT.get())
+                .define('S', ModItems.ACORN_SHARD.get())
+                .unlockedBy("has_acorn_hat", has(ModItems.ACORN_HAT.get()))
+                .unlockedBy("has_acorn_shard", has(ModItems.ACORN_SHARD.get()))
+                .save(recipeExporter);
 
         // Acorn Ring
-        ShapedRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.ACORN_RING.get(), 2)
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.ACORN_RING.get(), 2)
                 .pattern(" C ")
                 .pattern("CHC")
                 .pattern(" C ")
-                .input('C', Items.COPPER_INGOT)
-                .input('H', ModItems.ACORN_HAT.get())
-                .criterion("has_acorn_hat", conditionsFromItem(ModItems.ACORN_HAT.get()))
-                .offerTo(recipeExporter);
+                .define('C', Items.COPPER_INGOT)
+                .define('H', ModItems.ACORN_HAT.get())
+                .unlockedBy("has_acorn_hat", has(ModItems.ACORN_HAT.get()))
+                .save(recipeExporter);
 
         // Smithing Upgrades
         offerHamsterArmorUpgrade(recipeExporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_IRON.get(), Items.IRON_INGOT, ModItems.HAMSTER_ARMOR_IRON.get());
@@ -202,9 +206,9 @@ public class ModRecipeProvider extends FabricRecipeProvider {
         offerHamsterTemplateDuplication(recipeExporter, ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_NETHERITE.get(), Items.NETHERITE_INGOT);
 
         // --- Compacting Recipes (Crates) ---
-        offerReversibleCompactingRecipes(recipeExporter, RecipeCategory.MISC, ModItems.ACORN.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.ACORN_CRATE.get());
-        offerReversibleCompactingRecipes(recipeExporter, RecipeCategory.FOOD, ModItems.CUCUMBER.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.CUCUMBER_CRATE.get());
-        offerReversibleCompactingRecipes(recipeExporter, RecipeCategory.FOOD, ModItems.GREEN_BEANS.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.GREEN_BEANS_CRATE.get());
-        offerReversibleCompactingRecipes(recipeExporter, RecipeCategory.FOOD, ModItems.HAMSTER_FOOD_MIX.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.HAMSTER_FOOD_MIX_CRATE.get());
+        nineBlockStorageRecipes(recipeExporter, RecipeCategory.MISC, ModItems.ACORN.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.ACORN_CRATE.get());
+        nineBlockStorageRecipes(recipeExporter, RecipeCategory.FOOD, ModItems.CUCUMBER.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.CUCUMBER_CRATE.get());
+        nineBlockStorageRecipes(recipeExporter, RecipeCategory.FOOD, ModItems.GREEN_BEANS.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.GREEN_BEANS_CRATE.get());
+        nineBlockStorageRecipes(recipeExporter, RecipeCategory.FOOD, ModItems.HAMSTER_FOOD_MIX.get(), RecipeCategory.BUILDING_BLOCKS, ModItems.HAMSTER_FOOD_MIX_CRATE.get());
     }
 }

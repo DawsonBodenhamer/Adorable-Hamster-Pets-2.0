@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.entity.client.renderer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
@@ -8,16 +9,15 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterProjectileEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
 import net.dawson.adorablehamsterpets.util.HamsterState;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * A specialized renderer for the HamsterProjectileEntity.
@@ -35,7 +35,7 @@ public class HamsterProjectileRenderer extends EntityRenderer<HamsterProjectileE
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public HamsterProjectileRenderer(EntityRendererFactory.Context ctx) {
+    public HamsterProjectileRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
         this.hamsterRenderer = new HamsterRenderer(ctx);
     }
@@ -45,9 +45,9 @@ public class HamsterProjectileRenderer extends EntityRenderer<HamsterProjectileE
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public Identifier getTexture(HamsterProjectileEntity entity) {
+    public ResourceLocation getTextureLocation(HamsterProjectileEntity entity) {
         // Fallback; never actually drawn
-        return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
+        return ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
     }
 
     @Override
@@ -56,27 +56,27 @@ public class HamsterProjectileRenderer extends EntityRenderer<HamsterProjectileE
     }
 
     @Override
-    public void render(HamsterProjectileEntity entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+    public void render(HamsterProjectileEntity entity, float yaw, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light) {
         // Ensure dummy exists
         if (entity.clientDummyHamster == null) {
-            entity.clientDummyHamster = ModEntities.HAMSTER.get().create(entity.getWorld());
+            entity.clientDummyHamster = ModEntities.HAMSTER.get().create(entity.level());
             if (entity.clientDummyHamster != null) {
                 entity.clientDummyHamster.setNoGravity(true);
-                entity.clientDummyHamster.setAiDisabled(true); // Disable AI ticking
+                entity.clientDummyHamster.setNoAi(true); // Disable AI ticking
                 entity.clientDummyHamster.isProjectileDummy = true;
 
                 // Decode NBT for visuals
-                NbtCompound nbt = entity.getHamsterData();
+                CompoundTag nbt = entity.getHamsterData();
                 if (nbt != null && !nbt.isEmpty()) {
                     HamsterState.fromNbt(nbt).ifPresent(state -> {
                         entity.clientDummyHamster.setGenome(HamsterGenome.readFromNbt(state.genomeNbt()));
                         entity.clientDummyHamster.setBaby(state.breedingAge() < 0);
-                        entity.clientDummyHamster.getDataTracker().set(HamsterEntity.FLOWER_POS, state.flowerPosition());
+                        entity.clientDummyHamster.getEntityData().set(HamsterEntity.FLOWER_POS, state.flowerPosition());
                         entity.clientDummyHamster.setArmorVisible(state.armorVisible());
 
                         if (!state.inventoryNbt().isEmpty()) {
                             entity.clientDummyHamster.getItems().clear();
-                            Inventories.readNbt(state.inventoryNbt(), entity.clientDummyHamster.getItems(), entity.getWorld().getRegistryManager());
+                            ContainerHelper.loadAllItems(state.inventoryNbt(), entity.clientDummyHamster.getItems(), entity.level().registryAccess());
                             HamsterInventoryUtil.syncEquipmentTrackers(entity.clientDummyHamster);
                         }
                     });
@@ -86,19 +86,19 @@ public class HamsterProjectileRenderer extends EntityRenderer<HamsterProjectileE
 
         if (entity.clientDummyHamster != null) {
             // Sync physics states
-            entity.clientDummyHamster.setVelocity(entity.getVelocity());
-            entity.clientDummyHamster.setPosition(entity.getX(), entity.getY(), entity.getZ());
-            entity.clientDummyHamster.age = entity.age;
+            entity.clientDummyHamster.setDeltaMovement(entity.getDeltaMovement());
+            entity.clientDummyHamster.setPos(entity.getX(), entity.getY(), entity.getZ());
+            entity.clientDummyHamster.tickCount = entity.tickCount;
 
             // Force yaw sync
-            Vec3d vel = entity.getVelocity();
-            float livingYaw = (float)(MathHelper.atan2(-vel.x, vel.z) * MathHelper.DEGREES_PER_RADIAN);
+            Vec3 vel = entity.getDeltaMovement();
+            float livingYaw = (float)(Mth.atan2(-vel.x, vel.z) * Mth.RAD_TO_DEG);
 
-            entity.clientDummyHamster.setYaw(livingYaw);
-            entity.clientDummyHamster.bodyYaw = livingYaw;
-            entity.clientDummyHamster.prevBodyYaw = livingYaw;
-            entity.clientDummyHamster.headYaw = livingYaw;
-            entity.clientDummyHamster.prevHeadYaw = livingYaw;
+            entity.clientDummyHamster.setYRot(livingYaw);
+            entity.clientDummyHamster.yBodyRot = livingYaw;
+            entity.clientDummyHamster.yBodyRotO = livingYaw;
+            entity.clientDummyHamster.yHeadRot = livingYaw;
+            entity.clientDummyHamster.yHeadRotO = livingYaw;
 
             // Delegate to real renderer
             this.hamsterRenderer.render(entity.clientDummyHamster, livingYaw, tickDelta, matrices, vertexConsumers, light);

@@ -7,7 +7,7 @@ import net.dawson.adorablehamsterpets.block.custom.WildGreenBeanBushBlock;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import snownee.jade.api.*;
 
 @WailaPlugin
@@ -30,23 +30,23 @@ public final class AHPJadePlugin implements IWailaPlugin {
         registration.addTooltipCollectedCallback((tooltipBox, accessor) -> {
             if (accessor instanceof snownee.jade.api.EntityAccessor entityAccessor && entityAccessor.getEntity() instanceof HamsterEntity) {
                 ITooltip tooltip = tooltipBox.getTooltip();
-                boolean playerSneaking = entityAccessor.getPlayer().isSneaking();
+                boolean playerSneaking = entityAccessor.getPlayer().isShiftKeyDown();
                 boolean hideDueToSneak = Configs.AHP_UI.requireSneakForDefaultJadeInfo && !playerSneaking;
 
                 if (!Configs.AHP_UI.showJadeEntityName || hideDueToSneak) {
-                    tooltip.remove(Identifier.of("jade", "object_name"));
+                    tooltip.remove(ResourceLocation.fromNamespaceAndPath("jade", "object_name"));
                 }
                 if (!Configs.AHP_UI.showJadeEntityHealth || hideDueToSneak) {
-                    tooltip.remove(Identifier.of("minecraft", "entity_health"));
+                    tooltip.remove(ResourceLocation.fromNamespaceAndPath("minecraft", "entity_health"));
                 }
                 if (!Configs.AHP_UI.showJadeGrowthTime || hideDueToSneak) {
-                    tooltip.remove(Identifier.of("minecraft", "mob_growth"));
+                    tooltip.remove(ResourceLocation.fromNamespaceAndPath("minecraft", "mob_growth"));
                 }
                 if (!Configs.AHP_UI.showJadeOwner || hideDueToSneak) {
-                    tooltip.remove(Identifier.of("minecraft", "animal_owner"));
+                    tooltip.remove(ResourceLocation.fromNamespaceAndPath("minecraft", "animal_owner"));
                 }
                 if (!Configs.AHP_UI.showJadeInventory || hideDueToSneak) {
-                    tooltip.remove(Identifier.of("minecraft", "item_storage"));
+                    tooltip.remove(ResourceLocation.fromNamespaceAndPath("minecraft", "item_storage"));
                 }
             }
         });

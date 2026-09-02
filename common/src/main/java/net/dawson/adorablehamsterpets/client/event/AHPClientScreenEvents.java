@@ -5,8 +5,8 @@ import dev.architectury.hooks.client.screen.ScreenAccess;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconWidget;
 import net.dawson.adorablehamsterpets.config.Configs;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 /**
  * Handles client-side screen events for dynamically injecting the announcement icon widget.
@@ -27,7 +27,7 @@ public final class AHPClientScreenEvents {
         if (AdorableHamsterPetsClient.getPendingNotifications().isEmpty()) {
             return;
         }
-        if (!(screen instanceof HandledScreen<?>)) {
+        if (!(screen instanceof AbstractContainerScreen<?>)) {
             return;
         }
 

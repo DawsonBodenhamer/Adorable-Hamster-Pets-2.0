@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.player.Player;
 
 /**
  * Utility for tracking and evaluating complex player input gestures.
@@ -14,9 +14,9 @@ public final class PlayerGestureUtil {
      * Tracks the player's sneak state to detect rapid toggling (spamming).
      * Should be called every tick from the player entity.
      */
-    public static void tickSneakTracking(PlayerEntity player) {
+    public static void tickSneakTracking(Player player) {
         PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
-        boolean isSneaking = player.isSneaking();
+        boolean isSneaking = player.isShiftKeyDown();
         boolean wasSneaking = accessor.ahp$getWasSneaking();
 
         // Detect state change
@@ -40,14 +40,14 @@ public final class PlayerGestureUtil {
     /**
      * Checks if the player has toggled their sneak state the required number of times.
      */
-    public static boolean isSpammingSneak(PlayerEntity player, int requiredToggles) {
+    public static boolean isSpammingSneak(Player player, int requiredToggles) {
         return ((PlayerEntityAccessor) player).ahp$getSneakToggleCount() >= requiredToggles;
     }
 
     /**
      * Consumes the current sneak spam sequence, resetting the count so it doesn't trigger multiple times.
      */
-    public static void consumeSneakSpam(PlayerEntity player) {
+    public static void consumeSneakSpam(Player player) {
         PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
         accessor.ahp$setSneakToggleCount(0);
         accessor.ahp$setSneakToggleTimer(0);

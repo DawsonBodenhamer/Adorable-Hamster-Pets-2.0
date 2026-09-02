@@ -4,18 +4,16 @@ import dev.architectury.injectables.annotations.ExpectPlatform;
 import dev.architectury.registry.level.biome.BiomeModifications;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.entry.RegistryEntryList;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.gen.GenerationStep;
-import net.minecraft.world.gen.feature.PlacedFeature;
-import net.minecraft.world.gen.feature.VegetationPlacedFeatures;
-
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.data.worldgen.placement.VegetationPlacements;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -24,16 +22,16 @@ import java.util.Set;
 public class ModWorldGeneration {
 
     // --- Caches for Parsed Config Values ---
-    private static final Set<Identifier> SUNFLOWER_IDS = new HashSet<>();
+    private static final Set<ResourceLocation> SUNFLOWER_IDS = new HashSet<>();
     private static final Set<TagKey<Biome>> SUNFLOWER_TAGS = new HashSet<>();
-    private static final Set<Identifier> GREEN_BEAN_BUSH_IDS = new HashSet<>();
+    private static final Set<ResourceLocation> GREEN_BEAN_BUSH_IDS = new HashSet<>();
     private static final Set<TagKey<Biome>> GREEN_BEAN_BUSH_TAGS = new HashSet<>();
     private static final Set<TagKey<Biome>> GREEN_BEAN_BUSH_CONVENTION_TAGS = new HashSet<>();
-    private static final Set<Identifier> GREEN_BEAN_BUSH_EXCLUSIONS = new HashSet<>();
-    private static final Set<Identifier> CUCUMBER_BUSH_IDS = new HashSet<>();
+    private static final Set<ResourceLocation> GREEN_BEAN_BUSH_EXCLUSIONS = new HashSet<>();
+    private static final Set<ResourceLocation> CUCUMBER_BUSH_IDS = new HashSet<>();
     private static final Set<TagKey<Biome>> CUCUMBER_BUSH_TAGS = new HashSet<>();
     private static final Set<TagKey<Biome>> CUCUMBER_BUSH_CONVENTION_TAGS = new HashSet<>();
-    private static final Set<Identifier> CUCUMBER_BUSH_EXCLUSIONS = new HashSet<>();
+    private static final Set<ResourceLocation> CUCUMBER_BUSH_EXCLUSIONS = new HashSet<>();
 
     public static void generateModWorldGen() {
         AdorableHamsterPets.LOGGER.info("Registering Biome Modifications for " + AdorableHamsterPets.MOD_ID);
@@ -89,9 +87,9 @@ public class ModWorldGeneration {
      * @param biome   The Biome where the feature might be placed.
      * @return True if the feature should spawn in this biome according to config rules.
      */
-    public static boolean shouldFeatureSpawnInBiome(RegistryEntry<PlacedFeature> feature, RegistryEntry<Biome> biome) {
-        Identifier featureId = feature.getKey().map(RegistryKey::getValue).orElse(null);
-        Identifier biomeId = biome.getKey().map(RegistryKey::getValue).orElse(null);
+    public static boolean shouldFeatureSpawnInBiome(Holder<PlacedFeature> feature, Holder<Biome> biome) {
+        ResourceLocation featureId = feature.unwrapKey().map(ResourceKey::location).orElse(null);
+        ResourceLocation biomeId = biome.unwrapKey().map(ResourceKey::location).orElse(null);
 
         if (featureId == null || biomeId == null) {
             return false;
@@ -101,29 +99,29 @@ public class ModWorldGeneration {
 
         boolean isCandidate = switch (featurePath) {
             case "custom_sunflower_placed", "patch_sunflower" -> {
-                boolean isAllowedByConfig = SUNFLOWER_IDS.contains(biomeId) || SUNFLOWER_TAGS.stream().anyMatch(biome::isIn);
+                boolean isAllowedByConfig = SUNFLOWER_IDS.contains(biomeId) || SUNFLOWER_TAGS.stream().anyMatch(biome::is);
                 if (!isAllowedByConfig) yield false;
 
-                List<RegistryEntryList<PlacedFeature>> allFeaturesByStep = biome.value().getGenerationSettings().getFeatures();
-                int vegetalStep = GenerationStep.Feature.VEGETAL_DECORATION.ordinal();
+                List<HolderSet<PlacedFeature>> allFeaturesByStep = biome.value().getGenerationSettings().features();
+                int vegetalStep = GenerationStep.Decoration.VEGETAL_DECORATION.ordinal();
 
                 if (vegetalStep >= allFeaturesByStep.size()) yield false;
 
-                RegistryEntryList<PlacedFeature> vegetalFeatures = allFeaturesByStep.get(vegetalStep);
+                HolderSet<PlacedFeature> vegetalFeatures = allFeaturesByStep.get(vegetalStep);
                 // Iterate through the entries and check their keys.
-                for (RegistryEntry<PlacedFeature> entry : vegetalFeatures) {
-                    if (entry.matchesKey(VegetationPlacedFeatures.PATCH_SUNFLOWER)) {
+                for (Holder<PlacedFeature> entry : vegetalFeatures) {
+                    if (entry.is(VegetationPlacements.PATCH_SUNFLOWER)) {
                         yield true;
                     }
                 }
                 yield false;
             }
             case "wild_green_bean_bush_placed" -> GREEN_BEAN_BUSH_IDS.contains(biomeId) ||
-                    GREEN_BEAN_BUSH_TAGS.stream().anyMatch(biome::isIn) ||
-                    GREEN_BEAN_BUSH_CONVENTION_TAGS.stream().anyMatch(biome::isIn);
+                    GREEN_BEAN_BUSH_TAGS.stream().anyMatch(biome::is) ||
+                    GREEN_BEAN_BUSH_CONVENTION_TAGS.stream().anyMatch(biome::is);
             case "wild_cucumber_bush_placed" -> CUCUMBER_BUSH_IDS.contains(biomeId) ||
-                    CUCUMBER_BUSH_TAGS.stream().anyMatch(biome::isIn) ||
-                    CUCUMBER_BUSH_CONVENTION_TAGS.stream().anyMatch(biome::isIn);
+                    CUCUMBER_BUSH_TAGS.stream().anyMatch(biome::is) ||
+                    CUCUMBER_BUSH_CONVENTION_TAGS.stream().anyMatch(biome::is);
             default -> false;
         };
 
@@ -147,13 +145,13 @@ public class ModWorldGeneration {
      * @param context    The BiomeContext for the biome where the feature might be placed.
      * @return True if the feature should spawn in this biome according to config rules.
      */
-    public static boolean shouldFeatureSpawnInBiome(RegistryKey<PlacedFeature> featureKey, BiomeModifications.BiomeContext context) {
-        Identifier biomeId = context.getKey().orElse(null);
+    public static boolean shouldFeatureSpawnInBiome(ResourceKey<PlacedFeature> featureKey, BiomeModifications.BiomeContext context) {
+        ResourceLocation biomeId = context.getKey().orElse(null);
         if (biomeId == null) {
             return false;
         }
 
-        String featurePath = featureKey.getValue().getPath();
+        String featurePath = featureKey.location().getPath();
 
         boolean isCandidate = switch (featurePath) {
             case "custom_sunflower_placed", "patch_sunflower" -> SUNFLOWER_IDS.contains(biomeId) ||
@@ -180,9 +178,9 @@ public class ModWorldGeneration {
     }
 
     // --- Private Helper Methods for Parsing ---
-    private static void parseIdentifier(String idStr, Set<Identifier> set, String configListName) {
+    private static void parseIdentifier(String idStr, Set<ResourceLocation> set, String configListName) {
         try {
-            set.add(Identifier.of(idStr));
+            set.add(ResourceLocation.parse(idStr));
         } catch (Exception e) {
             AdorableHamsterPets.LOGGER.info("[FeatureConfig] Invalid identifier in '{}' config list: '{}'", configListName, idStr);
         }
@@ -190,7 +188,7 @@ public class ModWorldGeneration {
 
     private static void parseTag(String tagStr, Set<TagKey<Biome>> set, String configListName) {
         try {
-            set.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
+            set.add(TagKey.create(Registries.BIOME, ResourceLocation.parse(tagStr)));
         } catch (Exception e) {
             AdorableHamsterPets.LOGGER.info("[FeatureConfig] Invalid biome tag identifier in '{}' config list: '{}'", configListName, tagStr);
         }

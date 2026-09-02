@@ -5,7 +5,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.render.HamsterPBRTexture;
 import net.irisshaders.iris.pbr.loader.PBRTextureLoader;
 import net.irisshaders.iris.pbr.loader.PBRTextureLoaderRegistry;
-import net.minecraft.resource.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 /**
  * Safely manages the integration between Adorable Hamster Pets and Iris Shaders.

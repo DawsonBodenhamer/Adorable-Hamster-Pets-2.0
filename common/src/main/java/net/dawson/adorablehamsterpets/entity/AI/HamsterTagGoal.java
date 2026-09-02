@@ -6,25 +6,24 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.*;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Vec3d;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
 public class HamsterTagGoal extends Goal {
 
     private final HamsterEntity hamster;
-    private PlayerEntity targetPlayer;
+    private Player targetPlayer;
 
     private enum State {
         FLEEING,
@@ -36,19 +35,19 @@ public class HamsterTagGoal extends Goal {
 
     public HamsterTagGoal(HamsterEntity hamster) {
         this.hamster = hamster;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         // --- 1. Config Check ---
         if (!Configs.AHP_MAIN.enableTagGame) return false;
 
         // --- 2. Cooldown Check ---
-        if (this.hamster.getWorld().getTime() < this.hamster.tagGameCooldownEndTick) return false;
+        if (this.hamster.level().getGameTime() < this.hamster.tagGameCooldownEndTick) return false;
 
         // --- 3. Entity State Checks ---
-        if (!this.hamster.isTamed()
+        if (!this.hamster.isTame()
                 || HamsterMovementUtil.shouldNotMove(this.hamster)
                 || this.hamster.isHoldingMouthItem())
             return false;
@@ -60,11 +59,11 @@ public class HamsterTagGoal extends Goal {
         }
 
         // Find nearest player within 5 blocks
-        PlayerEntity player = this.hamster.getWorld().getClosestPlayer(this.hamster, 5.0);
+        Player player = this.hamster.level().getNearestPlayer(this.hamster, 5.0);
         if (player == null) return false;
 
         // Prevent start if player is looking inside a GUI
-        if (player.currentScreenHandler != player.playerScreenHandler) {
+        if (player.containerMenu != player.inventoryMenu) {
             return false;
         }
 
@@ -75,12 +74,12 @@ public class HamsterTagGoal extends Goal {
         boolean isSpammingSneak = PlayerGestureUtil.isSpammingSneak(player, 8);
 
         // Prevent automatic tag initiation if sneaking
-        if (player.isSneaking() && !isSpammingSneak) {
+        if (player.isShiftKeyDown() && !isSpammingSneak) {
             return false;
         }
 
         // --- 6. Permission Check ---
-        boolean isOwner = this.hamster.isOwner(player);
+        boolean isOwner = this.hamster.isOwnedBy(player);
         if (!isOwner && !Configs.AHP_MAIN.allowStrangerTag) return false;
 
         // --- 7. Player Limit Check ---
@@ -115,25 +114,25 @@ public class HamsterTagGoal extends Goal {
 
         // Feedback
         this.hamster.triggerAnimOnServer("mainController", "attack");
-        this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), ModSounds.HAMSTER_SLAP.get(), SoundCategory.NEUTRAL, 0.5f, 1.0f);
+        this.hamster.level().playSound(null, this.hamster.blockPosition(), ModSounds.HAMSTER_SLAP.get(), SoundSource.NEUTRAL, 0.5f, 1.0f);
 
-        if (!this.hamster.getWorld().isClient() && this.targetPlayer instanceof ServerPlayerEntity serverPlayer) {
+        if (!this.hamster.level().isClientSide() && this.targetPlayer instanceof ServerPlayer serverPlayer) {
             // Instant feedback
-            MiscUtil.PlayerPhysicsUtil.applyKnockback(serverPlayer, this.hamster.getPos());
-            serverPlayer.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 140, 1, false, false, false));
+            MiscUtil.PlayerPhysicsUtil.applyKnockback(serverPlayer, this.hamster.position());
+            serverPlayer.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 140, 1, false, false, false));
 
             // Randomly select one of 4 messages
             int msgIndex = this.hamster.getRandom().nextInt(4) + 1; // 1 to 4
-            serverPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.tag_game_start." + msgIndex).formatted(Formatting.WHITE), true);
+            serverPlayer.displayClientMessage(Component.translatable("message.adorablehamsterpets.tag_game_start." + msgIndex).withStyle(ChatFormatting.WHITE), true);
 
             // Delayed feedback
-            this.hamster.scheduleTask(this.hamster.getWorld().getTime() + 20, "tag_game_start_effects", () -> {
+            this.hamster.scheduleTask(this.hamster.level().getGameTime() + 20, "tag_game_start_effects", () -> {
                 if (this.hamster.isPlayingTag() && this.targetPlayer != null && this.targetPlayer.isAlive()) {
                     SoundEvent startSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BEG_SOUNDS, this.hamster.getRandom());
                     if (startSound != null) {
                         this.hamster.playSound(startSound, 1.0f, 1.2f);
                     }
-                    this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.NEUTRAL, 0.5f, 1.5f);
+                    this.hamster.level().playSound(null, this.hamster.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.NEUTRAL, 0.5f, 1.5f);
                     ParticleEffectsUtil.spawnParticlesOnEntity(
                             this.hamster,
                             ParticleTypes.HEART,
@@ -150,14 +149,14 @@ public class HamsterTagGoal extends Goal {
         // Init timeout from config
         int minDuration = Configs.AHP_MAIN.minMiniGameFleeDurationSeconds.get() * 20;
         int maxDuration = Configs.AHP_MAIN.maxMiniGameFleeDurationSeconds.get() * 20;
-        int gameDuration = this.hamster.getRandom().nextBetween(minDuration, maxDuration);
+        int gameDuration = this.hamster.getRandom().nextIntBetweenInclusive(minDuration, maxDuration);
 
         this.hamster.setGenericInteractionTimer(gameDuration);
         this.currentState = State.FLEEING;
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         if (!this.hamster.isPlayingTag()) return false; // Terminated by interaction
         if (this.hamster.getGenericInteractionTimer() <= 0) return false; // Timed out
         if (this.targetPlayer == null || !this.targetPlayer.isAlive()) return false;
@@ -198,9 +197,9 @@ public class HamsterTagGoal extends Goal {
                     this.currentState = State.TAUNTING;
                     this.hamster.getNavigation().stop();
                 } else if (HamsterMovementUtil.shouldFlee(this.hamster, this.targetPlayer, minFleeDist)) {
-                    Vec3d fleePos = HamsterMovementUtil.findFleePosition(this.hamster, this.targetPlayer, minFleeDist, maxFleeDist);
+                    Vec3 fleePos = HamsterMovementUtil.findFleePosition(this.hamster, this.targetPlayer, minFleeDist, maxFleeDist);
                     if (fleePos != null) {
-                        this.hamster.getNavigation().startMovingTo(fleePos.x, fleePos.y, fleePos.z, 1.5D);
+                        this.hamster.getNavigation().moveTo(fleePos.x, fleePos.y, fleePos.z, 1.5D);
                     }
                 }
             }

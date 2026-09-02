@@ -1,10 +1,9 @@
 package net.dawson.adorablehamsterpets.util;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-
 import java.util.Optional;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Utility for calculating entity orientation and line-of-sight relationships.
@@ -28,10 +27,10 @@ public final class EntityTargetingUtil {
     public static boolean isFacing(LivingEntity observer, LivingEntity target, double dotThreshold) {
         if (observer == null || target == null) return false;
 
-        Vec3d observerLook = observer.getRotationVec(1.0F).normalize();
-        Vec3d vecToTarget = target.getEyePos().subtract(observer.getEyePos()).normalize();
+        Vec3 observerLook = observer.getViewVector(1.0F).normalize();
+        Vec3 vecToTarget = target.getEyePosition().subtract(observer.getEyePosition()).normalize();
 
-        return observerLook.dotProduct(vecToTarget) > dotThreshold;
+        return observerLook.dot(vecToTarget) > dotThreshold;
     }
 
     /**
@@ -49,18 +48,18 @@ public final class EntityTargetingUtil {
     public static boolean isLookingAt(LivingEntity observer, LivingEntity target, double maxDistance, double padding) {
         if (observer == null || target == null) return false;
 
-        Vec3d eyePos = observer.getEyePos();
-        Vec3d lookVec = observer.getRotationVec(1.0F);
-        Vec3d endPos = eyePos.add(lookVec.multiply(maxDistance));
+        Vec3 eyePos = observer.getEyePosition();
+        Vec3 lookVec = observer.getViewVector(1.0F);
+        Vec3 endPos = eyePos.add(lookVec.scale(maxDistance));
 
         // Get target box and apply optional padding
-        Box targetBox = target.getBoundingBox();
+        AABB targetBox = target.getBoundingBox();
         if (padding > 0.0) {
-            targetBox = targetBox.expand(padding);
+            targetBox = targetBox.inflate(padding);
         }
 
         // Calculate intersection
-        Optional<Vec3d> hit = targetBox.raycast(eyePos, endPos);
+        Optional<Vec3> hit = targetBox.clip(eyePos, endPos);
 
         return hit.isPresent();
     }
@@ -77,10 +76,10 @@ public final class EntityTargetingUtil {
     public static boolean areFacingEachOther(LivingEntity entity1, LivingEntity entity2, double dotThreshold) {
         if (entity1 == null || entity2 == null) return false;
 
-        Vec3d look1 = entity1.getRotationVec(1.0F).normalize();
-        Vec3d look2 = entity2.getRotationVec(1.0F).normalize();
+        Vec3 look1 = entity1.getViewVector(1.0F).normalize();
+        Vec3 look2 = entity2.getViewVector(1.0F).normalize();
 
         // If dot product is close to -1, vectors are opposite (facing each other)
-        return look1.dotProduct(look2) < -dotThreshold;
+        return look1.dot(look2) < -dotThreshold;
     }
 }

@@ -9,17 +9,17 @@ import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPoseUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoBlockEntity;
 
@@ -45,13 +45,13 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private final HamsterEntity hamster;
-    private final World world;
+    private final Level world;
 
     // State tracking
     private State currentState = State.MOVING_TO_BED;
     private int pounceTicks;
     @Nullable
-    private Vec3d pounceStartPos;
+    private Vec3 pounceStartPos;
     private int startDelay = 0;
     private boolean wasLured = false;
     private int awakeTimer = 0;
@@ -63,8 +63,8 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
 
     public HamsterGoToBedAndSleepGoal(HamsterEntity hamster) {
         this.hamster = hamster;
-        this.world = hamster.getWorld();
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+        this.world = hamster.level();
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         // --- 1. Pre-Checks ---
         // Basic mode & config checks
         if (!this.hamster.isWanderModeActive()
@@ -87,7 +87,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
         }
 
         Optional<GlobalPos> bedPosOptional = this.hamster.getLinkedBedPos();
-        if (bedPosOptional.isEmpty() || this.world.getRegistryKey() != bedPosOptional.get().dimension()) {
+        if (bedPosOptional.isEmpty() || this.world.dimension() != bedPosOptional.get().dimension()) {
             return false;
         }
 
@@ -96,7 +96,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
         BlockEntity be = this.world.getBlockEntity(bedPos);
 
         // Validate bed block state and entity type
-        if (!(bedState.getBlock() instanceof HamsterBedBlock) || bedState.get(HamsterBedBlock.OCCUPIED) || !(be instanceof HamsterBedBlockEntity bedEntity)) {
+        if (!(bedState.getBlock() instanceof HamsterBedBlock) || bedState.getValue(HamsterBedBlock.OCCUPIED) || !(be instanceof HamsterBedBlockEntity bedEntity)) {
             return false;
         }
 
@@ -132,7 +132,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         // --- 1. Basic State Checks ---
         if (HamsterMovementUtil.shouldNotMove(this.hamster) || !this.hamster.isWanderModeActive()) {
             return false;
@@ -145,14 +145,14 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
 
         // --- 3. Bed Validity Checks ---
         Optional<GlobalPos> bedPosOptional = this.hamster.getLinkedBedPos();
-        if (bedPosOptional.isEmpty() || this.world.getRegistryKey() != bedPosOptional.get().dimension()) {
+        if (bedPosOptional.isEmpty() || this.world.dimension() != bedPosOptional.get().dimension()) {
             return false;
         }
         BlockPos bedPos = bedPosOptional.get().pos();
         BlockState bedState = this.world.getBlockState(bedPos);
 
         // Ensure bed still exists and isn't stolen
-        if (!(bedState.getBlock() instanceof HamsterBedBlock) || bedState.get(HamsterBedBlock.OCCUPIED)) {
+        if (!(bedState.getBlock() instanceof HamsterBedBlock) || bedState.getValue(HamsterBedBlock.OCCUPIED)) {
             return false;
         }
 
@@ -168,7 +168,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
         if (Configs.AHP_MAIN.circadianChaos.get()) {
             int min = Configs.AHP_MAIN.minNapInBedIntervalSeconds.get() * 20;
             int max = Configs.AHP_MAIN.maxNapInBedIntervalSeconds.get() * 20;
-            this.awakeTimer = this.hamster.getRandom().nextBetween(min, max);
+            this.awakeTimer = this.hamster.getRandom().nextIntBetweenInclusive(min, max);
         }
 
         boolean isLured = this.hamster.getLureToBedTimer() > 0;
@@ -180,7 +180,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
         Optional<GlobalPos> bedPosOpt = this.hamster.getLinkedBedPos();
         if (bedPosOpt.isPresent()) {
             BlockPos bedPos = bedPosOpt.get().pos();
-            if (this.world.getRegistryKey() == bedPosOpt.get().dimension()) {
+            if (this.world.dimension() == bedPosOpt.get().dimension()) {
                 BlockEntity be = this.world.getBlockEntity(bedPos);
                 if (be instanceof HamsterBedBlockEntity bedEntity) {
                     isNewBed = bedEntity.isNewlyPlaced();
@@ -199,7 +199,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
                 this.hamster.setBypassNextSleepDelay(false);
             }
         } else {
-            this.startDelay = this.hamster.getRandom().nextBetween(MIN_START_DELAY_TICKS, MAX_START_DELAY_TICKS);
+            this.startDelay = this.hamster.getRandom().nextIntBetweenInclusive(MIN_START_DELAY_TICKS, MAX_START_DELAY_TICKS);
         }
 
         this.hamster.setGoToBedDelayTicks(this.startDelay);
@@ -238,15 +238,15 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
         BlockPos bedPos = bedPosOptional.get().pos();
 
         // Start moving if idle
-        if (this.currentState == State.MOVING_TO_BED && this.hamster.getNavigation().isIdle()) {
-            this.hamster.getNavigation().startMovingTo(bedPos.getX() + 0.5, bedPos.getY(), bedPos.getZ() + 0.5, 0.75D);
+        if (this.currentState == State.MOVING_TO_BED && this.hamster.getNavigation().isDone()) {
+            this.hamster.getNavigation().moveTo(bedPos.getX() + 0.5, bedPos.getY(), bedPos.getZ() + 0.5, 0.75D);
         }
 
         // --- 2. Pathfinding & Stuck Check ---
         if (this.currentState == State.MOVING_TO_BED) {
             // Refresh path occasionally or if idle
-            if (this.hamster.getNavigation().isIdle() || this.hamster.age % 20 == 0) {
-                boolean success = this.hamster.getNavigation().startMovingTo(bedPos.getX() + 0.5, bedPos.getY(), bedPos.getZ() + 0.5, 0.75D);
+            if (this.hamster.getNavigation().isDone() || this.hamster.tickCount % 20 == 0) {
+                boolean success = this.hamster.getNavigation().moveTo(bedPos.getX() + 0.5, bedPos.getY(), bedPos.getZ() + 0.5, 0.75D);
 
                 if (!success) {
                     this.pathfindingFailureCount++;
@@ -266,13 +266,13 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
         // --- 3. State Machine ---
         switch (this.currentState) {
             case MOVING_TO_BED:
-                this.hamster.getLookControl().lookAt(Vec3d.ofCenter(bedPos));
+                this.hamster.getLookControl().setLookAt(Vec3.atCenterOf(bedPos));
 
                 // Particle breadcrumbs
-                if (this.wasLured && !this.world.isClient() && !this.hamster.getNavigation().isIdle()) {
+                if (this.wasLured && !this.world.isClientSide() && !this.hamster.getNavigation().isDone()) {
                     ParticleEffectsUtil.spawnBreadcrumbs(
-                            (ServerWorld) this.world,
-                            this.hamster.getNavigation().getCurrentPath(),
+                            (ServerLevel) this.world,
+                            this.hamster.getNavigation().getPath(),
                             ParticleTypes.MYCELIUM,
                             1,
                             0.2,
@@ -282,66 +282,66 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
                     );
                 }
 
-                if (this.hamster.getNavigation().isIdle()) {
+                if (this.hamster.getNavigation().isDone()) {
                     // Abort if stuck
                     stop();
                     return;
                 }
 
                 // Transition to pounce when close
-                if (this.hamster.getBlockPos().isWithinDistance(bedPos, 1.2)) {
+                if (this.hamster.blockPosition().closerThan(bedPos, 1.2)) {
                     this.hamster.getNavigation().stop();
                     this.currentState = State.POUNCING_INTO_BED;
                     this.pounceTicks = 5;
-                    this.pounceStartPos = this.hamster.getPos();
+                    this.pounceStartPos = this.hamster.position();
 
                     // Apply initial hop velocity
-                    this.hamster.setVelocity(this.hamster.getVelocity().x, 0.4, this.hamster.getVelocity().z);
-                    this.hamster.velocityDirty = true;
+                    this.hamster.setDeltaMovement(this.hamster.getDeltaMovement().x, 0.4, this.hamster.getDeltaMovement().z);
+                    this.hamster.hasImpulse = true;
 
                     this.hamster.suffocationGracePeriod = 40;
 
-                    this.world.playSound(null, this.hamster.getBlockPos(), ModSounds.HAMSTER_SWISH.get(), SoundCategory.NEUTRAL, 0.35f, 1.0f + this.hamster.getRandom().nextFloat() * 0.5f);
+                    this.world.playSound(null, this.hamster.blockPosition(), ModSounds.HAMSTER_SWISH.get(), SoundSource.NEUTRAL, 0.35f, 1.0f + this.hamster.getRandom().nextFloat() * 0.5f);
 
                     // --- Select sleep pose based on personality ---
-                    int personalityId = this.hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+                    int personalityId = this.hamster.getEntityData().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
                     String settleAnimId = HamsterPoseUtil.getSettleSleepAnimId(personalityId, false);
                     String deepSleepAnimIdForTracker = HamsterPoseUtil.getDeepSleepAnimId(personalityId);
 
-                    this.hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, deepSleepAnimIdForTracker);
+                    this.hamster.getEntityData().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, deepSleepAnimIdForTracker);
                     this.hamster.triggerAnimOnServer("mainController", settleAnimId);
                 }
                 break;
 
             case POUNCING_INTO_BED:
                 this.pounceTicks--;
-                this.hamster.getLookControl().lookAt(Vec3d.ofCenter(bedPos));
+                this.hamster.getLookControl().setLookAt(Vec3.atCenterOf(bedPos));
 
                 if (this.pounceStartPos != null && this.pounceTicks >= 0) {
                     // Calc ease-in progress
                     double progress = 1.0 - ((double) this.pounceTicks / 5.0);
                     double easedProgress = progress * progress;
-                    Vec3d targetCenter = Vec3d.ofCenter(bedPos).add(0, 0.1, 0);
+                    Vec3 targetCenter = Vec3.atCenterOf(bedPos).add(0, 0.1, 0);
 
                     // Interpolate position
                     double newX = pounceStartPos.x + easedProgress * (targetCenter.x - pounceStartPos.x);
                     double newZ = pounceStartPos.z + easedProgress * (targetCenter.z - pounceStartPos.z);
-                    this.hamster.setPosition(newX, this.hamster.getY(), newZ);
+                    this.hamster.setPos(newX, this.hamster.getY(), newZ);
                 }
 
                 if (this.pounceTicks < 0) {
                     // --- Finalize Landing ---
                     // Set position slightly elevated inside the bed to prevent clipping through the floor
-                    Vec3d targetCenter = Vec3d.ofCenter(bedPos).add(0, 0.1, 0);
-                    this.hamster.setPosition(targetCenter.x, targetCenter.y, targetCenter.z);
-                    this.hamster.setVelocity(Vec3d.ZERO);
-                    this.hamster.velocityDirty = true;
+                    Vec3 targetCenter = Vec3.atCenterOf(bedPos).add(0, 0.1, 0);
+                    this.hamster.setPos(targetCenter.x, targetCenter.y, targetCenter.z);
+                    this.hamster.setDeltaMovement(Vec3.ZERO);
+                    this.hamster.hasImpulse = true;
 
                     // Update hamster state
                     this.hamster.setDozingPhase(HamsterEntity.DozingPhase.DEEP_SLEEP);
                     this.hamster.setSleeping(true);
                     this.hamster.setInSittingPose(true);
-                    this.world.setBlockState(bedPos, this.world.getBlockState(bedPos).with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
+                    this.world.setBlock(bedPos, this.world.getBlockState(bedPos).setValue(HamsterBedBlock.OCCUPIED, true), Block.UPDATE_ALL);
 
                     HamsterBedUtil.startNapTimer(this.hamster);
 

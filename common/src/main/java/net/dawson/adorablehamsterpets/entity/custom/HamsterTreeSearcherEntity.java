@@ -12,26 +12,25 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtLong;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -55,13 +54,13 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
     private static final int BASE_DURATION_MAX = 280;  // 14 sec
     private static final float HAT_DROP_CHANCE_MULTIPLIER = 2.0f;
 
-    public HamsterTreeSearcherEntity(EntityType<?> type, World world) {
+    public HamsterTreeSearcherEntity(EntityType<?> type, Level world) {
         super(type, world);
     }
 
-    public void initializeSearch(BlockPos startPos, TreeHeistUtil.TreeScanResult scanResult, NbtCompound originalHamsterNbt) {
+    public void initializeSearch(BlockPos startPos, TreeHeistUtil.TreeScanResult scanResult, CompoundTag originalHamsterNbt) {
         this.hamsterNbt = originalHamsterNbt;
-        this.setPosition(startPos.getX() + 0.5, startPos.getY() + 0.5, startPos.getZ() + 0.5);
+        this.setPos(startPos.getX() + 0.5, startPos.getY() + 0.5, startPos.getZ() + 0.5);
 
         // --- 1. Apply Pre-Calculated Scan Result ---
         this.validLeafPositions.clear();
@@ -89,14 +88,14 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
 
         // --- 2. Debug Visualization ---
         if (Configs.AHP_MAIN.debugTreeDetection) {
-            TreeHeistUtil.spawnDebugParticles(this.getWorld(), scanResult);
+            TreeHeistUtil.spawnDebugParticles(this.level(), scanResult);
             AdorableHamsterPets.LOGGER.info("[TreeHeist] Identified Tree ID: {} | Canopy Size: {}", this.anchorPos, this.validLeafPositions.size());
         }
 
         // --- 3. Calculate Profitability & Depletion ---
-        if (this.hamsterNbt.containsUuid("Owner")) {
-            UUID ownerUuid = this.hamsterNbt.getUuid("Owner");
-            PlayerEntity player = this.getWorld().getPlayerByUuid(ownerUuid);
+        if (this.hamsterNbt.hasUUID("Owner")) {
+            UUID ownerUuid = this.hamsterNbt.getUUID("Owner");
+            Player player = this.level().getPlayerByUUID(ownerUuid);
 
             if (player instanceof PlayerEntityAccessor accessor) {
                 // Get profitability based on the unique Tree ID
@@ -115,27 +114,27 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
                 }
 
                 // Trigger advancement
-                if (player instanceof ServerPlayerEntity serverPlayer) {
+                if (player instanceof ServerPlayer serverPlayer) {
                     ModCriteria.TREE_HEIST_STARTED.get().trigger(serverPlayer);
                 }
             }
         }
 
         // --- 4. Calculate Duration & Perks ---
-        int baseDuration = this.random.nextBetween(BASE_DURATION_MIN, BASE_DURATION_MAX);
+        int baseDuration = this.random.nextIntBetweenInclusive(BASE_DURATION_MIN, BASE_DURATION_MAX);
 
         // Check for Acorn Hat in Slot 6
         this.hasAcornHat = false;
-        if (this.hamsterNbt.contains("Inventory", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound invNbt = this.hamsterNbt.getCompound("Inventory");
-            if (invNbt.contains("Items", NbtElement.LIST_TYPE)) {
-                NbtList itemsList = invNbt.getList("Items", NbtElement.COMPOUND_TYPE);
+        if (this.hamsterNbt.contains("Inventory", Tag.TAG_COMPOUND)) {
+            CompoundTag invNbt = this.hamsterNbt.getCompound("Inventory");
+            if (invNbt.contains("Items", Tag.TAG_LIST)) {
+                ListTag itemsList = invNbt.getList("Items", Tag.TAG_COMPOUND);
                 for (int i = 0; i < itemsList.size(); ++i) {
-                    NbtCompound itemTag = itemsList.getCompound(i);
+                    CompoundTag itemTag = itemsList.getCompound(i);
                     int slot = itemTag.getByte("Slot") & 255;
                     if (slot == HamsterInventoryUtil.ACCESSORY_SLOT_INDEX) {
-                        ItemStack stack = ItemStack.fromNbt(this.getRegistryManager(), itemTag).orElse(ItemStack.EMPTY);
-                        if (stack.isOf(ModItems.ACORN_HAT.get())) {
+                        ItemStack stack = ItemStack.parse(this.registryAccess(), itemTag).orElse(ItemStack.EMPTY);
+                        if (stack.is(ModItems.ACORN_HAT.get())) {
                             this.hasAcornHat = true;
                             break;
                         }
@@ -182,7 +181,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
     @Override
     public void tick() {
         super.tick();
-        if (this.getWorld().isClient) return;
+        if (this.level().isClientSide) return;
 
         // 1. Ensure registration in case of server restart
         if (!this.isRegistered && this.anchorPos != null) {
@@ -191,7 +190,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
 
         // 2. Safety check: if initialized with no leaves or data lost
         if (this.validLeafPositions.isEmpty()) {
-            if (this.age > 5) discard();
+            if (this.tickCount > 5) discard();
             return;
         }
 
@@ -202,7 +201,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
 
         // 4. Continuous Debug Visualization
         if (Configs.AHP_MAIN.debugTreeDetection) {
-            TreeHeistUtil.spawnDebugParticles(this.getWorld(), this.anchorPos, this.validLeafPositions);
+            TreeHeistUtil.spawnDebugParticles(this.level(), this.anchorPos, this.validLeafPositions);
         }
 
         // 5. Validation (Tree Integrity)
@@ -216,7 +215,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
 
         // 6. Rummaging Behavior
         if (--this.rummageTimer <= 0) {
-            this.rummageTimer = this.random.nextBetween(3, 5);
+            this.rummageTimer = this.random.nextIntBetweenInclusive(3, 5);
             rummage();
         }
 
@@ -233,8 +232,8 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
 
         for (int i = 0; i < samples; i++) {
             long posLong = this.validLeafPositions.get(this.random.nextInt(this.validLeafPositions.size()));
-            BlockPos pos = BlockPos.fromLong(posLong);
-            if (!ConfigDataCache.isHeistableLeaf(this.getWorld().getBlockState(pos))) {
+            BlockPos pos = BlockPos.of(posLong);
+            if (!ConfigDataCache.isHeistableLeaf(this.level().getBlockState(pos))) {
                 failures++;
             }
         }
@@ -244,7 +243,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
     }
 
     private void rummage() {
-        BlockPos currentPos = this.getBlockPos();
+        BlockPos currentPos = this.blockPosition();
         BlockPos targetPos = null;
 
         // --- 1. Simulate Realistic Movement with Surface Bias ---
@@ -252,10 +251,10 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
         List<BlockPos> nearbyBuried = new ArrayList<>();
 
         for (Long posLong : this.validLeafPositions) {
-            BlockPos p = BlockPos.fromLong(posLong);
+            BlockPos p = BlockPos.of(posLong);
             // Check distance (not self, and close enough to scurry to)
-            if (!p.equals(currentPos) && p.getManhattanDistance(currentPos) <= 2) {
-                if (isLeafExposed(this.getWorld(), p)) {
+            if (!p.equals(currentPos) && p.distManhattan(currentPos) <= 2) {
+                if (isLeafExposed(this.level(), p)) {
                     nearbyExposed.add(p);
                 } else {
                     nearbyBuried.add(p);
@@ -275,8 +274,8 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
         else {
             List<BlockPos> allExposed = new ArrayList<>();
             for (Long posLong : this.validLeafPositions) {
-                BlockPos p = BlockPos.fromLong(posLong);
-                if (isLeafExposed(this.getWorld(), p)) {
+                BlockPos p = BlockPos.of(posLong);
+                if (isLeafExposed(this.level(), p)) {
                     allExposed.add(p);
                 }
             }
@@ -286,29 +285,29 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
             } else {
                 // Fallback: If isolated or stuck, jump to random position to keep feature working
                 long posLong = this.validLeafPositions.get(this.random.nextInt(this.validLeafPositions.size()));
-                targetPos = BlockPos.fromLong(posLong);
+                targetPos = BlockPos.of(posLong);
             }
         }
 
         // Teleport entity (moves sound source)
-        this.setPosition(targetPos.getX() + 0.5, targetPos.getY() + 0.5, targetPos.getZ() + 0.5);
+        this.setPos(targetPos.getX() + 0.5, targetPos.getY() + 0.5, targetPos.getZ() + 0.5);
 
         // Effects
         ParticleEffectsUtil.spawnParticles(
-                this.getWorld(),
-                new Vec3d(this.getX(), this.getY(), this.getZ()),
+                this.level(),
+                new Vec3(this.getX(), this.getY(), this.getZ()),
                 ModParticles.getForVariant(WoodVariant.BAMBOO), // BAMBOO variant for green leaves
                 50,
-                new Vec3d(0.4, 0.4, 0.4),
+                new Vec3(0.4, 0.4, 0.4),
                 0.0
         );
 
         ParticleEffectsUtil.spawnParticles(
-                this.getWorld(),
-                new Vec3d(this.getX() + 0.5, this.getY() + 0.5, this.getZ() + 0.5),
+                this.level(),
+                new Vec3(this.getX() + 0.5, this.getY() + 0.5, this.getZ() + 0.5),
                 ParticleTypes.WHITE_ASH,
                 7,
-                new Vec3d(0.4, 0.4, 0.4),
+                new Vec3(0.4, 0.4, 0.4),
                 0.1
         );
 
@@ -322,33 +321,33 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
 
         if (this.random.nextFloat() < dropChance && this.dropCooldown <= 0) {
             // Calculate spawn position using static utility
-            BlockPos spawnPos = TreeHeistUtil.findExitPosition(this.getWorld(), targetPos);
+            BlockPos spawnPos = TreeHeistUtil.findExitPosition(this.level(), targetPos);
             ItemStack acornStack = new ItemStack(ModItems.ACORN.get());
             // Spawn near the upper center of the found block
-            ItemEntity acornEntity = new ItemEntity(this.getWorld(), spawnPos.getX() + 0.5, spawnPos.getY() + 0.7, spawnPos.getZ() + 0.5, acornStack);
+            ItemEntity acornEntity = new ItemEntity(this.level(), spawnPos.getX() + 0.5, spawnPos.getY() + 0.7, spawnPos.getZ() + 0.5, acornStack);
 
             // Random outward velocity
             double velX = (this.random.nextDouble() - 0.5) * 0.7;  // Slight sideways toss
             double velY = 0.0;
             double velZ = (this.random.nextDouble() - 0.5) * 0.7;  // Slight sideways toss
-            acornEntity.setVelocity(velX, velY, velZ);
+            acornEntity.setDeltaMovement(velX, velY, velZ);
 
             // Feedback
             SoundEvent acornPopSound = ModSounds.getDynamicItemSound(acornStack);
             float baseVol = ModSounds.getDynamicSoundVolume(acornPopSound);
-            this.getWorld().playSound(null, spawnPos.getX() + 0.5, spawnPos.getY() + 0.5, spawnPos.getZ() + 0.5, acornPopSound, SoundCategory.NEUTRAL, baseVol * 0.5f, 1.8f);
-            this.getWorld().playSound(null, spawnPos.getX() + 0.5, spawnPos.getY() + 0.5, spawnPos.getZ() + 0.5, ModSounds.HAMSTER_DING.get(), SoundCategory.NEUTRAL, 0.7f, 1.0f + (this.random.nextFloat() - 0.5f) * 0.2f);
+            this.level().playSound(null, spawnPos.getX() + 0.5, spawnPos.getY() + 0.5, spawnPos.getZ() + 0.5, acornPopSound, SoundSource.NEUTRAL, baseVol * 0.5f, 1.8f);
+            this.level().playSound(null, spawnPos.getX() + 0.5, spawnPos.getY() + 0.5, spawnPos.getZ() + 0.5, ModSounds.HAMSTER_DING.get(), SoundSource.NEUTRAL, 0.7f, 1.0f + (this.random.nextFloat() - 0.5f) * 0.2f);
 
-            this.getWorld().spawnEntity(acornEntity);
+            this.level().addFreshEntity(acornEntity);
 
             // Set cooldown
             this.dropCooldown = 20;
         }
     }
 
-    private boolean isLeafExposed(World world, BlockPos pos) {
+    private boolean isLeafExposed(Level world, BlockPos pos) {
         for (Direction dir : Direction.values()) {
-            if (world.isAir(pos.offset(dir))) {
+            if (world.isEmptyBlock(pos.relative(dir))) {
                 return true;
             }
         }
@@ -356,10 +355,10 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
     }
 
     private void finishHeist(boolean success) {
-        if (this.getWorld().isClient) return;
-        ServerWorld serverWorld = (ServerWorld) this.getWorld();
+        if (this.level().isClientSide) return;
+        ServerLevel serverWorld = (ServerLevel) this.level();
 
-        BlockPos effectPos = (this.forcedExitPos != null && this.validLeafPositions.contains(this.forcedExitPos.asLong())) ? this.forcedExitPos : this.getBlockPos();
+        BlockPos effectPos = (this.forcedExitPos != null && this.validLeafPositions.contains(this.forcedExitPos.asLong())) ? this.forcedExitPos : this.blockPosition();
 
         HamsterEntity newHamster = this.popOut(success && !this.isExhausted);
 
@@ -377,7 +376,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
                 // Only play sparkle if successful
                 SoundEvent sparkleSound = ModSounds.getRandomSoundFrom(ModSounds.DIAMOND_SPARKLE_SOUNDS, this.random);
                 if (sparkleSound != null) {
-                    serverWorld.playSound(null, newHamster.getBlockPos(), sparkleSound, SoundCategory.NEUTRAL, 0.5F, 1.0F);
+                    serverWorld.playSound(null, newHamster.blockPosition(), sparkleSound, SoundSource.NEUTRAL, 0.5F, 1.0F);
                 }
 
                 // Schedule Celebration sound
@@ -388,20 +387,20 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
                 newHamster.triggerAnimOnServer("mainController", "anim_hamster_sulk");
 
                 // Send exhausted message & trigger deforestation advancement
-                if (this.isExhausted && this.hamsterNbt.containsUuid("Owner")) {
-                    UUID ownerUuid = this.hamsterNbt.getUuid("Owner");
-                    PlayerEntity owner = serverWorld.getPlayerByUuid(ownerUuid);
+                if (this.isExhausted && this.hamsterNbt.hasUUID("Owner")) {
+                    UUID ownerUuid = this.hamsterNbt.getUUID("Owner");
+                    Player owner = serverWorld.getPlayerByUUID(ownerUuid);
 
                     if (owner != null) {
-                        owner.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_exhausted").formatted(Formatting.RED), true);
-                        if (owner instanceof ServerPlayerEntity serverPlayer) {
+                        owner.displayClientMessage(Component.translatable("message.adorablehamsterpets.tree_heist_exhausted").withStyle(ChatFormatting.RED), true);
+                        if (owner instanceof ServerPlayer serverPlayer) {
                             ModCriteria.TREE_HEIST_DEPLETION.get().trigger(serverPlayer);
                         }
                     }
                 }
             }
 
-            serverWorld.spawnEntityAndPassengers(newHamster);
+            serverWorld.addFreshEntityWithPassengers(newHamster);
 
             // --- Shared Audio & Visuals ---
             // Trigger effects at the block the hamster exits from, not the one it spawns in
@@ -410,7 +409,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
             if (success && !this.isExhausted) {
                 SoundEvent celebrateSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CELEBRATE_SOUNDS, this.random);
                 if (celebrateSound != null) {
-                    serverWorld.playSound(null, newHamster.getBlockPos(), celebrateSound, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+                    serverWorld.playSound(null, newHamster.blockPosition(), celebrateSound, SoundSource.NEUTRAL, 1.0f, 1.0f);
                 }
             }
         }
@@ -419,8 +418,8 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
     }
 
     @Override
-    protected void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    protected void addAdditionalSaveData(CompoundTag nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putInt("SearchTimer", this.searchTimer);
         nbt.putInt("MaxSearchDuration", this.maxSearchDuration);
         nbt.putInt("RummageTimer", this.rummageTimer);
@@ -429,16 +428,16 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
         nbt.putBoolean("HasAcornHat", this.hasAcornHat);
         nbt.putInt("DropCooldown", this.dropCooldown);
 
-        NbtList posList = new NbtList();
+        ListTag posList = new ListTag();
         for (Long pos : this.validLeafPositions) {
-            posList.add(NbtLong.of(pos));
+            posList.add(LongTag.valueOf(pos));
         }
         nbt.put("ValidLeafPositions", posList);
     }
 
     @Override
-    protected void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
+    protected void readAdditionalSaveData(CompoundTag nbt) {
+        super.readAdditionalSaveData(nbt);
         this.searchTimer = nbt.getInt("SearchTimer");
         this.maxSearchDuration = nbt.getInt("MaxSearchDuration");
         this.rummageTimer = nbt.getInt("RummageTimer");
@@ -448,11 +447,11 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
         this.dropCooldown = nbt.getInt("DropCooldown");
 
         this.validLeafPositions.clear();
-        if (nbt.contains("ValidLeafPositions", NbtElement.LIST_TYPE)) {
-            NbtList list = nbt.getList("ValidLeafPositions", NbtElement.LONG_TYPE);
-            for (NbtElement element : list) {
-                if (element instanceof NbtLong nbtLong) {
-                    this.validLeafPositions.add(nbtLong.longValue());
+        if (nbt.contains("ValidLeafPositions", Tag.TAG_LIST)) {
+            ListTag list = nbt.getList("ValidLeafPositions", Tag.TAG_LONG);
+            for (Tag element : list) {
+                if (element instanceof LongTag nbtLong) {
+                    this.validLeafPositions.add(nbtLong.getAsLong());
                 }
             }
         }

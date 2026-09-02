@@ -1,14 +1,18 @@
 package net.dawson.adorablehamsterpets.client.gui;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.*;
+import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
-
+import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,7 +31,7 @@ public class MarkdownRenderer {
     public static final int SPACES_PER_INDENT_LEVEL = 4;
 
     // --- 2. Fields ---
-    private final TextRenderer textRenderer;
+    private final Font textRenderer;
     public final List<String> lines;
     private final int x;
     private final int startY;
@@ -36,7 +40,7 @@ public class MarkdownRenderer {
 
     // --- 3. Constructor ---
     public MarkdownRenderer(String markdownContent, int x, int startY, int width) {
-        this.textRenderer = MinecraftClient.getInstance().textRenderer;
+        this.textRenderer = Minecraft.getInstance().font;
         this.lines = markdownContent == null ? List.of() : List.of(markdownContent.split("\n"));
         this.x = x;
         this.startY = startY;
@@ -46,13 +50,13 @@ public class MarkdownRenderer {
     }
 
     // --- 4. Public Methods ---
-    public void render(DrawContext context, int scrollY, @Nullable Style hoveredStyle) {
+    public void render(GuiGraphics context, int scrollY, @Nullable Style hoveredStyle) {
         int currentY = startY - scrollY;
 
         for (String originalLine : lines) {
             String trimmedLine = originalLine.trim();
             if (trimmedLine.isEmpty()) {
-                currentY += textRenderer.fontHeight / 2;
+                currentY += textRenderer.lineHeight / 2;
                 continue;
             }
 
@@ -86,7 +90,7 @@ public class MarkdownRenderer {
     }
 
     // --- 6. Private Rendering Helpers ---
-    private int renderHeading(DrawContext context, String line, int y) {
+    private int renderHeading(GuiGraphics context, String line, int y) {
         int level = 0;
         while (level < line.length() && line.charAt(level) == '#') {
             level++;
@@ -96,33 +100,33 @@ public class MarkdownRenderer {
         int color = 0x323232;
 
         // Create a styled, bold text object for the heading
-        MutableText styledText = Text.literal(text).setStyle(Style.EMPTY.withBold(true));
+        MutableComponent styledText = Component.literal(text).setStyle(Style.EMPTY.withBold(true));
 
         // The available width for the text must be scaled down to account for the scaled-up rendering
         int scaledWidth = (int) (this.width / scale);
-        List<OrderedText> wrappedLines = this.textRenderer.wrapLines(styledText, scaledWidth);
+        List<FormattedCharSequence> wrappedLines = this.textRenderer.split(styledText, scaledWidth);
 
-        MatrixStack matrices = context.getMatrices();
-        for (OrderedText wrappedLine : wrappedLines) {
-            matrices.push();
+        PoseStack matrices = context.pose();
+        for (FormattedCharSequence wrappedLine : wrappedLines) {
+            matrices.pushPose();
             matrices.translate(x, y, 0);
             matrices.scale(scale, scale, 1.0f);
-            context.drawText(textRenderer, wrappedLine, 0, 0, color, false);
-            matrices.pop();
-            y += (int)(textRenderer.fontHeight * scale) + LINE_SPACING;
+            context.drawString(textRenderer, wrappedLine, 0, 0, color, false);
+            matrices.popPose();
+            y += (int)(textRenderer.lineHeight * scale) + LINE_SPACING;
         }
 
         // Adjust Y position: remove the last line's spacing and add the final margin
         return y - LINE_SPACING + HEADING_BOTTOM_MARGIN;
     }
 
-    private int renderDivider(DrawContext context, int y) {
+    private int renderDivider(GuiGraphics context, int y) {
         // Draw the divider 3 pixels down from the start, leaving 3px padding above.
         context.fill(x + 15, y + 3, x + width - 15, y + 4, 0xFFB3B3B3); // First two digits control the alpha.
         return y + DIVIDER_HEIGHT;
     }
 
-    private int renderListItem(DrawContext context, String line, int y, @Nullable Style hoveredStyle) {
+    private int renderListItem(GuiGraphics context, String line, int y, @Nullable Style hoveredStyle) {
         int indentationLevel = getIndentationLevel(line);
         String trimmedLine = line.trim();
 
@@ -142,29 +146,29 @@ public class MarkdownRenderer {
         int contentX = bulletX + LIST_INDENT;
         int contentWidth = width - ((indentationLevel + 1) * LIST_INDENT);
 
-        context.drawText(textRenderer, bullet, bulletX, y, 0x323232, false);
+        context.drawString(textRenderer, bullet, bulletX, y, 0x323232, false);
         return renderParagraph(context, content, y, contentX, contentWidth, hoveredStyle);
     }
 
-    private int renderParagraph(DrawContext context, String line, int y, int startX, int lineWidth, @Nullable Style hoveredStyle) {
+    private int renderParagraph(GuiGraphics context, String line, int y, int startX, int lineWidth, @Nullable Style hoveredStyle) {
         int indentationLevel = getIndentationLevel(line);
         String content = line.substring(indentationLevel * SPACES_PER_INDENT_LEVEL);
         int finalStartX = startX + (indentationLevel * LIST_INDENT);
         int finalLineWidth = lineWidth - (indentationLevel * LIST_INDENT);
 
-        MutableText styledText = parseLineToText(content, hoveredStyle);
-        List<OrderedText> wrappedLines = textRenderer.wrapLines(styledText, finalLineWidth);
+        MutableComponent styledText = parseLineToText(content, hoveredStyle);
+        List<FormattedCharSequence> wrappedLines = textRenderer.split(styledText, finalLineWidth);
 
-        for (OrderedText wrappedLine : wrappedLines) {
-            context.drawText(textRenderer, wrappedLine, finalStartX, y, 0x323232, false);
-            y += textRenderer.fontHeight + LINE_SPACING;
+        for (FormattedCharSequence wrappedLine : wrappedLines) {
+            context.drawString(textRenderer, wrappedLine, finalStartX, y, 0x323232, false);
+            y += textRenderer.lineHeight + LINE_SPACING;
         }
         return y;
     }
 
     // --- 7. Parsing Logic ---
-    public MutableText parseLineToText(String line, @Nullable Style hoveredStyle) {
-        MutableText result = Text.empty();
+    public MutableComponent parseLineToText(String line, @Nullable Style hoveredStyle) {
+        MutableComponent result = Component.empty();
         String remaining = line;
 
         while (!remaining.isEmpty()) {
@@ -185,17 +189,17 @@ public class MarkdownRenderer {
 
             if (nextMatcher != null) {
                 if (nextMatchPos > 0) {
-                    result.append(Text.literal(remaining.substring(0, nextMatchPos)));
+                    result.append(Component.literal(remaining.substring(0, nextMatchPos)));
                 }
 
                 if (nextMatcher == boldMatcher) {
-                    result.append(Text.literal(boldMatcher.group(1)).setStyle(Style.EMPTY.withBold(true)));
+                    result.append(Component.literal(boldMatcher.group(1)).setStyle(Style.EMPTY.withBold(true)));
                 } else if (nextMatcher == italicMatcher) {
-                    result.append(Text.literal(italicMatcher.group(1)).setStyle(Style.EMPTY.withItalic(true)));
+                    result.append(Component.literal(italicMatcher.group(1)).setStyle(Style.EMPTY.withItalic(true)));
                 } else if (nextMatcher == strikethroughMatcher) {
-                    result.append(Text.literal(strikethroughMatcher.group(1)).setStyle(Style.EMPTY.withStrikethrough(true)));
+                    result.append(Component.literal(strikethroughMatcher.group(1)).setStyle(Style.EMPTY.withStrikethrough(true)));
                 } else if (nextMatcher == codeMatcher) {
-                    result.append(Text.literal(codeMatcher.group(1)).setStyle(Style.EMPTY.withFont(Identifier.of("minecraft", "uniform")).withColor(Formatting.BLACK)));
+                    result.append(Component.literal(codeMatcher.group(1)).setStyle(Style.EMPTY.withFont(ResourceLocation.fromNamespaceAndPath("minecraft", "uniform")).withColor(ChatFormatting.BLACK)));
                 } else if (nextMatcher == linkMatcher) {
                     String linkText = linkMatcher.group(1);
                     String url = linkMatcher.group(2);
@@ -210,16 +214,16 @@ public class MarkdownRenderer {
                     }
 
                     // Hover logic
-                    Style linkStyle = Style.EMPTY.withColor(Formatting.AQUA).withUnderline(true).withBold(true).withClickEvent(clickEvent);
+                    Style linkStyle = Style.EMPTY.withColor(ChatFormatting.AQUA).withUnderlined(true).withBold(true).withClickEvent(clickEvent);
                     if (hoveredStyle != null && hoveredStyle.getClickEvent() != null && hoveredStyle.getClickEvent().equals(clickEvent)) {
                         // Hover style: Gold, with no underline.
-                        linkStyle = linkStyle.withColor(Formatting.GOLD).withUnderline(false).withBold(true);
+                        linkStyle = linkStyle.withColor(ChatFormatting.GOLD).withUnderlined(false).withBold(true);
                     }
-                    result.append(Text.literal(linkText).setStyle(linkStyle));
+                    result.append(Component.literal(linkText).setStyle(linkStyle));
                 }
                 remaining = remaining.substring(nextMatcher.end());
             } else {
-                result.append(Text.literal(remaining));
+                result.append(Component.literal(remaining));
                 break;
             }
         }
@@ -231,7 +235,7 @@ public class MarkdownRenderer {
         for (String line : lines) {
             String trimmedLine = line.trim(); // Trim first to identify element type
             if (trimmedLine.isEmpty()) {
-                currentY += textRenderer.fontHeight / 2;
+                currentY += textRenderer.lineHeight / 2;
                 continue;
             }
 
@@ -242,10 +246,10 @@ public class MarkdownRenderer {
                 float scale = Math.max(1.0f, 2.0f - (level - 1) * 0.25f);
 
                 int scaledWidth = (int) (lineWidth / scale);
-                MutableText styledText = Text.literal(text).setStyle(Style.EMPTY.withBold(true));
-                int wrappedLinesCount = this.textRenderer.wrapLines(styledText, scaledWidth).size();
+                MutableComponent styledText = Component.literal(text).setStyle(Style.EMPTY.withBold(true));
+                int wrappedLinesCount = this.textRenderer.split(styledText, scaledWidth).size();
 
-                int heightOfLines = wrappedLinesCount * (int)(textRenderer.fontHeight * scale);
+                int heightOfLines = wrappedLinesCount * (int)(textRenderer.lineHeight * scale);
                 int totalSpacing = Math.max(0, wrappedLinesCount - 1) * LINE_SPACING;
                 currentY += heightOfLines + totalSpacing + HEADING_BOTTOM_MARGIN;
             } else if (trimmedLine.equals("---")) {
@@ -269,9 +273,9 @@ public class MarkdownRenderer {
                     contentWidth = lineWidth - (indentationLevel * LIST_INDENT);
                 }
 
-                MutableText styledText = parseLineToText(content, null);
-                int wrappedLinesCount = textRenderer.wrapLines(styledText, contentWidth).size();
-                currentY += wrappedLinesCount * (textRenderer.fontHeight + LINE_SPACING);
+                MutableComponent styledText = parseLineToText(content, null);
+                int wrappedLinesCount = textRenderer.split(styledText, contentWidth).size();
+                currentY += wrappedLinesCount * (textRenderer.lineHeight + LINE_SPACING);
             }
         }
         this.totalHeight = currentY;

@@ -2,17 +2,17 @@ package net.dawson.adorablehamsterpets.config;
 
 import com.mojang.serialization.Codec;
 import me.fzzyhmstrs.fzzy_config.util.EnumTranslatable;
-import net.minecraft.util.StringIdentifiable;
+import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
-public enum WanderDistance implements StringIdentifiable, EnumTranslatable {
+public enum WanderDistance implements StringRepresentable, EnumTranslatable {
     NEAR("Near"),
     MEDIUM("Medium"),
     FAR("Far");
 
-    public static final Codec<WanderDistance> CODEC = StringIdentifiable.createCodec(WanderDistance::values);
+    public static final Codec<WanderDistance> CODEC = StringRepresentable.fromEnum(WanderDistance::values);
     private final String name;
 
     WanderDistance(String name) {
@@ -20,7 +20,7 @@ public enum WanderDistance implements StringIdentifiable, EnumTranslatable {
     }
 
     @Override
-    public String asString() {
+    public String getSerializedName() {
         return this.name;
     }
 

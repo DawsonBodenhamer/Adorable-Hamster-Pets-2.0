@@ -2,6 +2,7 @@ package net.dawson.adorablehamsterpets.client.gui.widgets;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.math.Axis;
 import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.announcements.Announcement;
@@ -10,22 +11,20 @@ import net.dawson.adorablehamsterpets.client.announcements.Semver;
 import net.dawson.adorablehamsterpets.client.gui.AnnouncementScreen;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.mixin.client.accessor.HandledScreenAccessor;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.TitleScreen;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.RotationAxis;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import vazkii.patchouli.api.PatchouliAPI;
 import vazkii.patchouli.client.book.BookEntry;
 import vazkii.patchouli.common.book.Book;
@@ -39,8 +38,8 @@ import java.util.List;
  * displayed on top of GUI screens. It handles its own rendering, animations,
  * tooltips, and click actions.
  */
-public class AnnouncementIconWidget extends ButtonWidget {
-    private static final Identifier ICON_TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/item/announcement_bell_icon.png");
+public class AnnouncementIconWidget extends Button {
+    private static final ResourceLocation ICON_TEXTURE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/item/announcement_bell_icon.png");
     private static final int ICON_WIDTH = 16;
     private static final int ICON_HEIGHT = 16;
 
@@ -48,17 +47,17 @@ public class AnnouncementIconWidget extends ButtonWidget {
     private int lastTargetX = -1;
     private int lastTargetY = -1;
 
-    public AnnouncementIconWidget(int x, int y, int width, int height, PressAction onPress, Screen parentScreen) {
-        super(x, y, width, height, Text.empty(), onPress, DEFAULT_NARRATION_SUPPLIER);
+    public AnnouncementIconWidget(int x, int y, int width, int height, OnPress onPress, Screen parentScreen) {
+        super(x, y, width, height, Component.empty(), onPress, DEFAULT_NARRATION);
         this.parentScreen = parentScreen;
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         AnnouncementIconAnimator animator = AnnouncementIconAnimator.INSTANCE;
 
         // --- 1. Dynamic Position Calculation ---
-        if (this.parentScreen instanceof HandledScreen<?> containerScreen) {
+        if (this.parentScreen instanceof AbstractContainerScreen<?> containerScreen) {
             // Logic for inventory screens (uses widget offsets)
             HandledScreenAccessor accessor = (HandledScreenAccessor) containerScreen;
             int guiLeft = accessor.getX();
@@ -73,7 +72,7 @@ public class AnnouncementIconWidget extends ButtonWidget {
 
             // Position slightly outside the corner, with slightly different
             // offsets for creative and survival mode to accommodate their unique shapes.
-            if (containerScreen instanceof net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen) {
+            if (containerScreen instanceof net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen) {
                 // Creative Inventory (above the top right corner, to avoid conflicting with inventory mods like JEI, EMI, and REI)
                 targetX = guiLeft + guiWidth - 22 + + neoForgeCreativeModeOffset + Configs.AHP_UI.creativeWidgetIconSettings.get().offsetX.get();
                 targetY = guiTop - 47 + Configs.AHP_UI.creativeWidgetIconSettings.get().offsetY.get();
@@ -111,25 +110,25 @@ public class AnnouncementIconWidget extends ButtonWidget {
         this.setY((int) Math.round(renderY));
 
         // --- 3. Render the Icon ---
-        context.getMatrices().push();
+        context.pose().pushPose();
         // Use the precise double values for rendering to avoid pixel-snapping.
-        context.getMatrices().translate(renderX + (this.width / 2.0), renderY + (this.height / 2.0), 0);
-        context.getMatrices().scale(finalScale, finalScale, 1.0f);
-        context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(angle));
-        context.getMatrices().translate(-(ICON_WIDTH / 2.0), -(ICON_HEIGHT / 2.0), 0);
+        context.pose().translate(renderX + (this.width / 2.0), renderY + (this.height / 2.0), 0);
+        context.pose().scale(finalScale, finalScale, 1.0f);
+        context.pose().mulPose(Axis.ZP.rotationDegrees(angle));
+        context.pose().translate(-(ICON_WIDTH / 2.0), -(ICON_HEIGHT / 2.0), 0);
 
-        context.drawTexture(ICON_TEXTURE, 0, 0, 0, 0, ICON_WIDTH, ICON_HEIGHT, ICON_WIDTH, ICON_HEIGHT);
+        context.blit(ICON_TEXTURE, 0, 0, 0, 0, ICON_WIDTH, ICON_HEIGHT, ICON_WIDTH, ICON_HEIGHT);
 
-        context.getMatrices().pop();
+        context.pose().popPose();
 
         // --- 4. Render Tooltip ---
         if (this.isHovered()) {
             List<AnnouncementManager.PendingNotification> notifications = AnnouncementManager.INSTANCE.getPendingNotifications();
             if (!notifications.isEmpty()) {
-                List<Text> tooltipLines = new java.util.ArrayList<>();
-                Text modNameText = Text.translatable("key.categories.adorablehamsterpets.main").formatted(Formatting.BLUE, Formatting.ITALIC);
+                List<Component> tooltipLines = new java.util.ArrayList<>();
+                Component modNameText = Component.translatable("key.categories.adorablehamsterpets.main").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC);
 
-                Text mainTooltipLine = null;
+                Component mainTooltipLine = null;
                 if (this.parentScreen instanceof TitleScreen) {
                     mainTooltipLine = notifications.stream()
                             .filter(n -> n.reason().equals(AnnouncementManager.PendingNotification.UPDATE_AVAILABLE_ANNOUNCEMENT))
@@ -144,7 +143,7 @@ public class AnnouncementIconWidget extends ButtonWidget {
                 if (mainTooltipLine != null) {
                     tooltipLines.add(mainTooltipLine);
                     tooltipLines.add(modNameText);
-                    context.drawTooltip(MinecraftClient.getInstance().textRenderer, tooltipLines, mouseX, mouseY);
+                    context.renderComponentTooltip(Minecraft.getInstance().font, tooltipLines, mouseX, mouseY);
                 }
             }
         }
@@ -157,7 +156,7 @@ public class AnnouncementIconWidget extends ButtonWidget {
     public void onPress() {
         // --- 1. Trigger Visual & Audio Feedback ---
         AnnouncementIconAnimator.INSTANCE.triggerClickAnimation();
-        MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 
         // --- 2. Execute Click Logic ---
         // Get notifications directly from the manager so the icon can appear on the title screen
@@ -166,8 +165,8 @@ public class AnnouncementIconWidget extends ButtonWidget {
             return;
         }
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        Identifier bookId = Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
+        Minecraft client = Minecraft.getInstance();
+        ResourceLocation bookId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
 
         if (this.parentScreen instanceof TitleScreen) {
             // --- 1. Title Screen Logic ---
@@ -180,7 +179,7 @@ public class AnnouncementIconWidget extends ButtonWidget {
                         Announcement announcement = notification.announcement();
                         Book book = BookRegistry.INSTANCE.books.get(bookId);
                         if (book != null) {
-                            Identifier entryId = Identifier.of(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
+                            ResourceLocation entryId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
                             JsonObject json = new JsonObject();
                             json.addProperty("name", announcement.title());
                             json.addProperty("icon", "minecraft:writable_book");
@@ -188,9 +187,9 @@ public class AnnouncementIconWidget extends ButtonWidget {
                             json.add("pages", new JsonArray());
 
                             // Use fallback registry lookup if world is null (bc it is null on title screen)
-                            RegistryWrapper.WrapperLookup registries = client.world != null
-                                    ? client.world.getRegistryManager()
-                                    : DynamicRegistryManager.of(Registries.REGISTRIES);
+                            HolderLookup.Provider registries = client.level != null
+                                    ? client.level.registryAccess()
+                                    : RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
 
                             BookEntry virtualEntry = new BookEntry(json, entryId, book, AdorableHamsterPets.MOD_ID, registries);
 
@@ -207,7 +206,7 @@ public class AnnouncementIconWidget extends ButtonWidget {
                 Book book = BookRegistry.INSTANCE.books.get(bookId);
                 if (book != null) {
                     // Get the "real" virtual entry from the book's contents
-                    Identifier entryId = Identifier.of(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
+                    ResourceLocation entryId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
                     BookEntry realVirtualEntry = book.getContents().entries.get(entryId);
 
                     if (realVirtualEntry != null) {

@@ -4,12 +4,12 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.util.HamsterAIUtil;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPhysicsUtil;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.ai.FuzzyTargeting;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.util.LandRandomPos;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -33,11 +33,11 @@ public abstract class HamsterAbstractItemInteractionGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     protected final HamsterEntity hamster;
-    protected final World world;
+    protected final Level world;
 
     @Nullable protected ItemEntity targetItem;
-    @Nullable protected Vec3d pounceStartPos;
-    @Nullable protected Vec3d repositionTarget;
+    @Nullable protected Vec3 pounceStartPos;
+    @Nullable protected Vec3 repositionTarget;
 
     protected int lungeTicks;
     protected int repositionAttempts;
@@ -60,8 +60,8 @@ public abstract class HamsterAbstractItemInteractionGoal extends Goal {
 
     public HamsterAbstractItemInteractionGoal(HamsterEntity hamster) {
         this.hamster = hamster;
-        this.world = hamster.getWorld();
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+        this.world = hamster.level();
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
     // Subclasses must implement these to define their specific behaviors
@@ -77,17 +77,17 @@ public abstract class HamsterAbstractItemInteractionGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
-        if (this.world.isClient()) return false;
+    public boolean canUse() {
+        if (this.world.isClientSide()) return false;
         if (!canStartBaseChecks()) return false;
 
         if (this.checkTimer > 0) {
             this.checkTimer--;
             return false;
         }
-        this.checkTimer = this.getTickCount(10);
+        this.checkTimer = this.adjustedTickDelay(10);
 
-        Optional<ItemEntity> closestItem = HamsterAIUtil.findReachableItem(this.hamster, SEARCH_RADIUS, item -> isValidTarget(item.getStack()));
+        Optional<ItemEntity> closestItem = HamsterAIUtil.findReachableItem(this.hamster, SEARCH_RADIUS, item -> isValidTarget(item.getItem()));
 
         if (closestItem.isPresent()) {
             this.targetItem = closestItem.get();
@@ -97,7 +97,7 @@ public abstract class HamsterAbstractItemInteractionGoal extends Goal {
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         if (!shouldContinueBaseChecks()) return false;
 
         if (this.currentState == State.MOVING_TO_ITEM || this.currentState == State.REPOSITIONING || this.currentState == State.POUNCING) {
@@ -113,7 +113,7 @@ public abstract class HamsterAbstractItemInteractionGoal extends Goal {
         this.moveTimeout = 0;
         this.repositionAttempts = 0;
         this.repositionTarget = null;
-        this.hamster.getNavigation().startMovingTo(this.targetItem, 1.5D);
+        this.hamster.getNavigation().moveTo(this.targetItem, 1.5D);
     }
 
     @Override
@@ -145,17 +145,17 @@ public abstract class HamsterAbstractItemInteractionGoal extends Goal {
 
                 HamsterMovementUtil.faceEntity(this.hamster, this.targetItem);
 
-                if (this.hamster.getNavigation().isIdle()) {
+                if (this.hamster.getNavigation().isDone()) {
                     this.currentState = State.REPOSITIONING;
                     return;
                 }
 
-                if (this.hamster.getBoundingBox().expand(1.5, 1.5, 1.5).intersects(this.targetItem.getBoundingBox())) {
+                if (this.hamster.getBoundingBox().inflate(1.5, 1.5, 1.5).intersects(this.targetItem.getBoundingBox())) {
                     this.currentState = State.POUNCING;
-                    this.pounceStartPos = this.hamster.getPos();
+                    this.pounceStartPos = this.hamster.position();
                     this.hamster.getNavigation().stop();
 
-                    if (this.hamster.isTouchingWater() || this.hamster.isInLava()) {
+                    if (this.hamster.isInWater() || this.hamster.isInLava()) {
                         this.lungeTicks = 0; // Skip lunge delay and animation in fluid
                     } else {
                         this.lungeTicks = LUNGE_DURATION_TICKS;
@@ -176,19 +176,19 @@ public abstract class HamsterAbstractItemInteractionGoal extends Goal {
 
                 if (this.repositionTarget == null) {
                     this.repositionAttempts++;
-                    this.repositionTarget = FuzzyTargeting.findTo(this.hamster, 2, 3, Vec3d.ofCenter(this.targetItem.getBlockPos()));
+                    this.repositionTarget = LandRandomPos.getPosTowards(this.hamster, 2, 3, Vec3.atCenterOf(this.targetItem.blockPosition()));
                     if (this.repositionTarget != null) {
-                        this.hamster.getNavigation().startMovingTo(this.repositionTarget.x, this.repositionTarget.y, this.repositionTarget.z, 1.55D);
+                        this.hamster.getNavigation().moveTo(this.repositionTarget.x, this.repositionTarget.y, this.repositionTarget.z, 1.55D);
                     } else {
                         this.targetItem = null;
                         return;
                     }
                 }
 
-                if (this.hamster.getNavigation().isIdle()) {
+                if (this.hamster.getNavigation().isDone()) {
                     this.repositionTarget = null;
                     this.currentState = State.MOVING_TO_ITEM;
-                    this.hamster.getNavigation().startMovingTo(this.targetItem, 1.5D);
+                    this.hamster.getNavigation().moveTo(this.targetItem, 1.5D);
                 }
             }
             case POUNCING -> {
@@ -204,17 +204,17 @@ public abstract class HamsterAbstractItemInteractionGoal extends Goal {
                 }
 
                 if (this.pounceStartPos != null && this.lungeTicks >= 0) {
-                    Vec3d interpolatedPos = HamsterPhysicsUtil.calculatePouncePosition(
+                    Vec3 interpolatedPos = HamsterPhysicsUtil.calculatePouncePosition(
                             this.pounceStartPos,
-                            this.targetItem.getPos(),
+                            this.targetItem.position(),
                             this.lungeTicks,
                             LUNGE_DURATION_TICKS
                     );
-                    this.hamster.setPosition(interpolatedPos.x, interpolatedPos.y, interpolatedPos.z);
+                    this.hamster.setPos(interpolatedPos.x, interpolatedPos.y, interpolatedPos.z);
                 }
 
                 if (this.lungeTicks < 0) {
-                    ItemStack stackToConsume = this.targetItem.getStack().copy();
+                    ItemStack stackToConsume = this.targetItem.getItem().copy();
                     if (!stackToConsume.isEmpty()) {
                         this.currentState = State.POST_POUNCE_ACTION;
                         onPounceComplete(stackToConsume);

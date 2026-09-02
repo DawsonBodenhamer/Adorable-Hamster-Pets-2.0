@@ -1,21 +1,21 @@
 package net.dawson.adorablehamsterpets.networking.payload;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-public record RequestHamsterMountPayload(int entityId) implements CustomPayload {
-    public static final CustomPayload.Id<RequestHamsterMountPayload> ID = new CustomPayload.Id<>(Identifier.of(AdorableHamsterPets.MOD_ID, "request_hamster_mount"));
-    public static final PacketCodec<RegistryByteBuf, RequestHamsterMountPayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.VAR_INT, RequestHamsterMountPayload::entityId,
+public record RequestHamsterMountPayload(int entityId) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<RequestHamsterMountPayload> ID = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "request_hamster_mount"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, RequestHamsterMountPayload> CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, RequestHamsterMountPayload::entityId,
             RequestHamsterMountPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

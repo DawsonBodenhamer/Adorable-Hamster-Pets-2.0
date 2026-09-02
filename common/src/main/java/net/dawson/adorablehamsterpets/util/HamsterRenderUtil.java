@@ -1,12 +1,12 @@
 package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.SnowBlock;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SnowLayerBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class HamsterRenderUtil {
 
@@ -23,23 +23,23 @@ public final class HamsterRenderUtil {
             return 0.0F;
         }
 
-        BlockPos pos = hamster.getBlockPos();
-        BlockState state = hamster.getWorld().getBlockState(pos);
-        if (state.isOf(Blocks.SNOW)) {
+        BlockPos pos = hamster.blockPosition();
+        BlockState state = hamster.level().getBlockState(pos);
+        if (state.is(Blocks.SNOW)) {
             return SNOW_SURFACE_GAP;
         }
-        if (!state.isOf(Blocks.MUD)) {
+        if (!state.is(Blocks.MUD)) {
             return 0.0F;
         }
 
-        VoxelShape collisionShape = state.getCollisionShape(hamster.getWorld(), pos);
+        VoxelShape collisionShape = state.getCollisionShape(hamster.level(), pos);
         if (collisionShape.isEmpty()) {
             return 0.0F;
         }
 
-        float surfaceOffset = (float) Math.max(0.0, 1.0 - collisionShape.getMax(Direction.Axis.Y));
-        BlockState stateAbove = hamster.getWorld().getBlockState(pos.up());
-        if (stateAbove.isOf(Blocks.SNOW) && stateAbove.get(SnowBlock.LAYERS) == 1) {
+        float surfaceOffset = (float) Math.max(0.0, 1.0 - collisionShape.max(Direction.Axis.Y));
+        BlockState stateAbove = hamster.level().getBlockState(pos.above());
+        if (stateAbove.is(Blocks.SNOW) && stateAbove.getValue(SnowLayerBlock.LAYERS) == 1) {
             surfaceOffset += SNOW_SURFACE_GAP;
         }
 

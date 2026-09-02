@@ -3,7 +3,7 @@ package net.dawson.adorablehamsterpets.mixin.client;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.announcements.Announcement;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -40,7 +40,7 @@ public abstract class GuiButtonBookMarkReadMixin {
     @Inject(method = "onPress", at = @At("HEAD"), cancellable = true)
     private void adorablehamsterpets$onPress(CallbackInfo ci) {
         // Only intercept for the Hamster Tips book
-        Identifier hamsterBookId = Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
+        ResourceLocation hamsterBookId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
         if (!this.book.id.equals(hamsterBookId)) {
             return; // not our book; fall back to original logic
         }
@@ -50,7 +50,7 @@ public abstract class GuiButtonBookMarkReadMixin {
 
         // Iterate over all entries in the book
         for (BookEntry entry : this.book.getContents().entries.values()) {
-            Identifier entryId = entry.getId();
+            ResourceLocation entryId = entry.getId();
 
             // --- Announcement Logic: Handle Virtual Announcement Entries ---
             if (entryId.getNamespace().equals(AdorableHamsterPets.MOD_ID)

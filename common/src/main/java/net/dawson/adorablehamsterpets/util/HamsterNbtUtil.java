@@ -4,19 +4,19 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
@@ -32,13 +32,13 @@ public final class HamsterNbtUtil {
      *                        Core Data Serialization
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static void writeCustomDataToNbt(HamsterEntity hamster, NbtCompound nbt) {
+    public static void writeCustomDataToNbt(HamsterEntity hamster, CompoundTag nbt) {
         // --- 1. Core Data & Flags ---
         nbt.put("HamsterGenome", hamster.getGenome().saveToNbt());
         nbt.putLong("TotalAgeTicks", hamster.totalAgeTicks);
         nbt.putInt("TimesBred", hamster.timesBred);
         // Write flags as individual booleans for backwards compat
-        if (hamster.isTamed()) {
+        if (hamster.isTame()) {
             nbt.putBoolean("Sitting", hamster.getHamsterFlag(HamsterEntity.SITTING_FLAG));
             nbt.putBoolean("IsSleeping", hamster.getHamsterFlag(HamsterEntity.SLEEPING_FLAG));
         } else {
@@ -47,11 +47,11 @@ public final class HamsterNbtUtil {
         nbt.putBoolean("KnockedOut", hamster.getHamsterFlag(HamsterEntity.KNOCKED_OUT_FLAG));
         nbt.putBoolean("CheekPouchUnlocked", hamster.getHamsterFlag(HamsterEntity.CHEEK_POUCH_UNLOCKED_FLAG));
         nbt.putLong("ThrowCooldownEnd", hamster.throwCooldownEndTick);
-        nbt.putLong("GreenBeanBuffDuration", hamster.getDataTracker().get(HamsterEntity.GREEN_BEAN_BUFF_DURATION));
+        nbt.putLong("GreenBeanBuffDuration", hamster.getEntityData().get(HamsterEntity.GREEN_BEAN_BUFF_DURATION));
         nbt.putInt("AutoEatCooldown", hamster.getAutoEatCooldownTicks());
         nbt.putInt("EjectionCheckCooldown", hamster.getEjectionCheckCooldown());
-        nbt.putInt("FlowerPosition", hamster.getDataTracker().get(HamsterEntity.FLOWER_POS));
-        nbt.putInt("AnimationPersonalityId", hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID));
+        nbt.putInt("FlowerPosition", hamster.getEntityData().get(HamsterEntity.FLOWER_POS));
+        nbt.putInt("AnimationPersonalityId", hamster.getEntityData().get(HamsterEntity.ANIMATION_PERSONALITY_ID));
         nbt.putBoolean("ArmorVisible", hamster.isArmorVisible());
         nbt.putBoolean("isGeneticsVisualizerMember", hamster.isGeneticsVisualizerMember());
         nbt.putInt("AggressionState", hamster.getAggressionState().ordinal());
@@ -59,20 +59,20 @@ public final class HamsterNbtUtil {
 
         // --- 2. Parent Following ---
         if (hamster.getParentUuid() != null) {
-            nbt.putUuid("ParentUuid", hamster.getParentUuid());
+            nbt.putUUID("ParentUuid", hamster.getParentUuid());
         }
 
         // --- 3. Sleep State ---
         nbt.putInt("DozingPhase", hamster.getDozingPhase().ordinal());
-        nbt.putString("CurrentDeepSleepAnimId", hamster.getDataTracker().get(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID));
+        nbt.putString("CurrentDeepSleepAnimId", hamster.getEntityData().get(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID));
         nbt.putInt("QuiescentSitTimer", hamster.getQuiescentSitTimer());
         nbt.putInt("DriftingOffTimer", hamster.getDriftingOffTimer());
         nbt.putInt("SettleSleepCooldown", hamster.getSettleSleepCooldown());
 
         // --- 4. Inventory ---
-        RegistryWrapper.WrapperLookup registries = hamster.getWorld().getRegistryManager();
-        NbtCompound inventoryWrapperNbt = new NbtCompound();
-        Inventories.writeNbt(inventoryWrapperNbt, hamster.getItems(), registries);
+        HolderLookup.Provider registries = hamster.level().registryAccess();
+        CompoundTag inventoryWrapperNbt = new CompoundTag();
+        ContainerHelper.saveAllItems(inventoryWrapperNbt, hamster.getItems(), registries);
         nbt.put("Inventory", inventoryWrapperNbt);
 
         // --- 5. Ore Seeking ---
@@ -98,28 +98,28 @@ public final class HamsterNbtUtil {
         if (hamster.isHoldingMouthItem()) {
             nbt.putBoolean("IsHoldingMouthItem", true);
             if (!hamster.getMouthItemStack().isEmpty()) {
-                nbt.put("MouthItemStack", hamster.getMouthItemStack().encode(registries));
+                nbt.put("MouthItemStack", hamster.getMouthItemStack().save(registries));
             }
         }
 
         // --- 7. Wander Mode ---
         nbt.putBoolean("IsWanderModeActive", hamster.isWanderModeActive());
         hamster.getLinkedBedPos().ifPresent(globalPos ->
-                nbt.put("LinkedBedPos", GlobalPos.CODEC.encodeStart(hamster.getWorld().getRegistryManager().getOps(NbtOps.INSTANCE), globalPos).getOrThrow()));
+                nbt.put("LinkedBedPos", GlobalPos.CODEC.encodeStart(hamster.level().registryAccess().createSerializationContext(NbtOps.INSTANCE), globalPos).getOrThrow()));
         nbt.putBoolean("BypassNextSleepDelay", hamster.shouldBypassNextSleepDelay());
         nbt.putBoolean("StuckSearchingForBed", hamster.isStuckSearchingForBed());
         nbt.putBoolean("IsRescueSleeping", hamster.isRescueSleeping());
     }
 
-    public static void readCustomDataFromNbt(HamsterEntity hamster, NbtCompound nbt) {
+    public static void readCustomDataFromNbt(HamsterEntity hamster, CompoundTag nbt) {
         // --- 1. Read Core Data ---
         hamster.setLoadingNbt(true); // Suppress sounds
         hamster.totalAgeTicks = nbt.getLong("TotalAgeTicks");
         hamster.timesBred = nbt.getInt("TimesBred");
         // Migrate legacy variant IDs to v3.6.0's Genome structure
-        if (nbt.contains("HamsterGenome", NbtElement.COMPOUND_TYPE)) {
+        if (nbt.contains("HamsterGenome", Tag.TAG_COMPOUND)) {
             hamster.setGenome(HamsterGenome.readFromNbt(nbt.getCompound("HamsterGenome")));
-        } else if (nbt.contains("HamsterVariant", NbtElement.INT_TYPE)) {
+        } else if (nbt.contains("HamsterVariant", Tag.TAG_INT)) {
             // Catch old integer IDs from pre 3.6.0
             int legacyId = nbt.getInt("HamsterVariant");
             hamster.setGenome(HamsterGeneticsUtil.getGenomeForLegacyId(legacyId));
@@ -127,12 +127,12 @@ public final class HamsterNbtUtil {
             hamster.setGenome(HamsterGenome.createDefault());
         }
         // Backwards compat: read individual booleans & set flags
-        boolean wasSittingNbt = hamster.isTamed() && nbt.getBoolean("Sitting");
+        boolean wasSittingNbt = hamster.isTame() && nbt.getBoolean("Sitting");
         hamster.setSitting(wasSittingNbt, true); // This will correctly set the SITTING_FLAG
         hamster.setHamsterFlag(HamsterEntity.KNOCKED_OUT_FLAG, nbt.getBoolean("KnockedOut"));
         hamster.setHamsterFlag(HamsterEntity.CHEEK_POUCH_UNLOCKED_FLAG, nbt.getBoolean("CheekPouchUnlocked"));
         hamster.setHamsterFlag(HamsterEntity.SULKING_FLAG, nbt.getBoolean("IsSulking"));
-        if (nbt.contains("SulkTimer", NbtElement.INT_TYPE)) {
+        if (nbt.contains("SulkTimer", Tag.TAG_INT)) {
             hamster.sulkTimer = nbt.getInt("SulkTimer");
         } else if (hamster.isSulking()) {
             // Backwards compat: if older save has them sulking, assign timer
@@ -141,32 +141,32 @@ public final class HamsterNbtUtil {
 
         hamster.setHamsterFlag(HamsterEntity.CELEBRATING_DIAMOND_FLAG, nbt.getBoolean("IsCelebratingDiamond"));
         boolean loadedSleeping = nbt.getBoolean("IsSleeping");
-        if (!hamster.isTamed()) {
+        if (!hamster.isTame()) {
             loadedSleeping = false;
         }
         hamster.setHamsterFlag(HamsterEntity.SLEEPING_FLAG, loadedSleeping);
         hamster.throwCooldownEndTick = nbt.getLong("ThrowCooldownEnd");
-        hamster.setHamsterFlag(HamsterEntity.THROW_COOLDOWN_FLAG, hamster.throwCooldownEndTick > hamster.getWorld().getTime());
-        hamster.getDataTracker().set(HamsterEntity.GREEN_BEAN_BUFF_DURATION, nbt.getLong("GreenBeanBuffDuration"));
+        hamster.setHamsterFlag(HamsterEntity.THROW_COOLDOWN_FLAG, hamster.throwCooldownEndTick > hamster.level().getGameTime());
+        hamster.getEntityData().set(HamsterEntity.GREEN_BEAN_BUFF_DURATION, nbt.getLong("GreenBeanBuffDuration"));
         hamster.setAutoEatCooldownTicks(nbt.getInt("AutoEatCooldown"));
-        hamster.setEjectionCheckCooldown(nbt.contains("EjectionCheckCooldown", NbtElement.INT_TYPE) ? nbt.getInt("EjectionCheckCooldown") : 20);
+        hamster.setEjectionCheckCooldown(nbt.contains("EjectionCheckCooldown", Tag.TAG_INT) ? nbt.getInt("EjectionCheckCooldown") : 20);
         // Backwards compat for old Pink Petals
-        if (nbt.contains("FlowerPosition", NbtElement.INT_TYPE)) {
-            hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, nbt.getInt("FlowerPosition"));
-        } else if (nbt.contains("PinkPetalType", NbtElement.INT_TYPE)) {
-            hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, nbt.getInt("PinkPetalType"));
+        if (nbt.contains("FlowerPosition", Tag.TAG_INT)) {
+            hamster.getEntityData().set(HamsterEntity.FLOWER_POS, nbt.getInt("FlowerPosition"));
+        } else if (nbt.contains("PinkPetalType", Tag.TAG_INT)) {
+            hamster.getEntityData().set(HamsterEntity.FLOWER_POS, nbt.getInt("PinkPetalType"));
         }
         // Backwards compat: personality ID verification
-        if (!nbt.contains("AnimationPersonalityId", NbtElement.INT_TYPE)) {
-            int personalityId = hamster.getRandom().nextBetween(1, 3);
-            hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, personalityId);
+        if (!nbt.contains("AnimationPersonalityId", Tag.TAG_INT)) {
+            int personalityId = hamster.getRandom().nextIntBetweenInclusive(1, 3);
+            hamster.getEntityData().set(HamsterEntity.ANIMATION_PERSONALITY_ID, personalityId);
             AdorableHamsterPets.LOGGER.debug("[NBT READ] Hamster ID {}: NBT had no personality, assigned new ID {}", hamster.getId(), personalityId);
         } else {
-            hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, nbt.getInt("AnimationPersonalityId"));
+            hamster.getEntityData().set(HamsterEntity.ANIMATION_PERSONALITY_ID, nbt.getInt("AnimationPersonalityId"));
         }
-        hamster.setArmorVisible(!nbt.contains("ArmorVisible", NbtElement.BYTE_TYPE) || nbt.getBoolean("ArmorVisible"));
+        hamster.setArmorVisible(!nbt.contains("ArmorVisible", Tag.TAG_BYTE) || nbt.getBoolean("ArmorVisible"));
         hamster.setGeneticsVisualizerMember(nbt.getBoolean("isGeneticsVisualizerMember"));
-        if (nbt.contains("AggressionState", NbtElement.INT_TYPE)) {
+        if (nbt.contains("AggressionState", Tag.TAG_INT)) {
             int stateOrdinal = nbt.getInt("AggressionState");
             if (stateOrdinal >= 0 && stateOrdinal < HamsterEntity.AggressionState.values().length) {
                 hamster.setAggressionState(HamsterEntity.AggressionState.values()[stateOrdinal]);
@@ -177,12 +177,12 @@ public final class HamsterNbtUtil {
         hamster.synchronizeRedstoneFeverVisualState();
 
         // --- 2. Parent Following ---
-        if (nbt.containsUuid("ParentUuid")) {
-            hamster.setParentUuid(nbt.getUuid("ParentUuid"));
+        if (nbt.hasUUID("ParentUuid")) {
+            hamster.setParentUuid(nbt.getUUID("ParentUuid"));
         }
 
         // --- 3. Sleep State ---
-        if (nbt.contains("DozingPhase", NbtElement.INT_TYPE)) {
+        if (nbt.contains("DozingPhase", Tag.TAG_INT)) {
             int phaseOrdinal = nbt.getInt("DozingPhase");
             if (phaseOrdinal >= 0 && phaseOrdinal < HamsterEntity.DozingPhase.values().length) {
                 HamsterEntity.DozingPhase phase = HamsterEntity.DozingPhase.values()[phaseOrdinal];
@@ -196,19 +196,19 @@ public final class HamsterNbtUtil {
         } else {
             hamster.setDozingPhase(HamsterEntity.DozingPhase.NONE);
         }
-        hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, nbt.getString("CurrentDeepSleepAnimId"));
+        hamster.getEntityData().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, nbt.getString("CurrentDeepSleepAnimId"));
         hamster.setQuiescentSitTimer(nbt.getInt("QuiescentSitTimer"));
         hamster.setDriftingOffTimer(nbt.getInt("DriftingOffTimer"));
         hamster.setSettleSleepCooldown(nbt.getInt("SettleSleepCooldown"));
 
         // --- 4. Inventory ---
-        RegistryWrapper.WrapperLookup registries = hamster.getWorld().getRegistryManager();
-        if (nbt.contains("Inventory", NbtElement.COMPOUND_TYPE)) {
+        HolderLookup.Provider registries = hamster.level().registryAccess();
+        if (nbt.contains("Inventory", Tag.TAG_COMPOUND)) {
             hamster.getItems().clear();
-            Inventories.readNbt(nbt.getCompound("Inventory"), hamster.getItems(), registries);
+            ContainerHelper.loadAllItems(nbt.getCompound("Inventory"), hamster.getItems(), registries);
             HamsterInventoryUtil.updateCheekStates(hamster);
             HamsterInventoryUtil.syncEquipmentTrackers(hamster);
-        } else if (!hamster.getWorld().isClient() && !hamster.isTamed()) {
+        } else if (!hamster.level().isClientSide() && !hamster.isTame()) {
             HamsterInventoryUtil.generateWildLoot(hamster, hamster.getRandom());
             HamsterInventoryUtil.updateCheekStates(hamster);
             HamsterInventoryUtil.syncEquipmentTrackers(hamster);
@@ -234,8 +234,8 @@ public final class HamsterNbtUtil {
         hamster.setHoldingMouthItem(holding);
 
         if (holding) {
-            if (nbt.contains("MouthItemStack", NbtElement.COMPOUND_TYPE)) {
-                ItemStack.fromNbt(registries, nbt.getCompound("MouthItemStack")).ifPresent(hamster::setMouthItemStack);
+            if (nbt.contains("MouthItemStack", Tag.TAG_COMPOUND)) {
+                ItemStack.parse(registries, nbt.getCompound("MouthItemStack")).ifPresent(hamster::setMouthItemStack);
             }
         } else {
             hamster.setMouthItemStack(ItemStack.EMPTY);
@@ -244,7 +244,7 @@ public final class HamsterNbtUtil {
         // --- 7. Wander Mode ---
         hamster.setWanderModeActive(nbt.getBoolean("IsWanderModeActive"));
         if (nbt.contains("LinkedBedPos")) {
-            hamster.setLinkedBedPos(GlobalPos.CODEC.parse(hamster.getWorld().getRegistryManager().getOps(NbtOps.INSTANCE), nbt.get("LinkedBedPos")).result());
+            hamster.setLinkedBedPos(GlobalPos.CODEC.parse(hamster.level().registryAccess().createSerializationContext(NbtOps.INSTANCE), nbt.get("LinkedBedPos")).result());
         } else {
             hamster.setLinkedBedPos(Optional.empty());
         }
@@ -269,7 +269,7 @@ public final class HamsterNbtUtil {
      * Takes a hamster's NBT data, deserializes it, sets the knocked-out flag,
      * and re-serializes it to a new NbtCompound.
      */
-    public static NbtCompound setKnockedOutInNbt(NbtCompound originalNbt) {
+    public static CompoundTag setKnockedOutInNbt(CompoundTag originalNbt) {
         return HamsterState.fromNbt(originalNbt).map(data -> {
             int newFlags = data.hamsterFlags() | HamsterEntity.KNOCKED_OUT_FLAG;
             return data.withFlags(newFlags).toNbt();
@@ -282,23 +282,23 @@ public final class HamsterNbtUtil {
     public static HamsterState saveToHamsterState(HamsterEntity hamster) {
         // --- 1. Update Trackers and Prepare NBT ---
         HamsterInventoryUtil.updateCheekStates(hamster);
-        NbtCompound inventoryNbt = new NbtCompound();
-        if (hamster.getWorld() instanceof ServerWorld serverWorld) {
-            Inventories.writeNbt(inventoryNbt, hamster.getItems(), serverWorld.getRegistryManager());
+        CompoundTag inventoryNbt = new CompoundTag();
+        if (hamster.level() instanceof ServerLevel serverWorld) {
+            ContainerHelper.saveAllItems(inventoryNbt, hamster.getItems(), serverWorld.registryAccess());
         }
 
         // --- 2. Save Active Status Effects to NBT ---
-        NbtCompound effectsNbt = new NbtCompound();
-        if (!hamster.getStatusEffects().isEmpty()) {
-            NbtList effectsList = new NbtList();
-            for (StatusEffectInstance effectInstance : hamster.getStatusEffects()) {
-                effectsList.add(effectInstance.writeNbt());
+        CompoundTag effectsNbt = new CompoundTag();
+        if (!hamster.getActiveEffects().isEmpty()) {
+            ListTag effectsList = new ListTag();
+            for (MobEffectInstance effectInstance : hamster.getActiveEffects()) {
+                effectsList.add(effectInstance.save());
             }
             effectsNbt.put("active_effects", effectsList);
         }
 
         // --- 3. Get Custom Name ---
-        Optional<String> nameOptional = Optional.ofNullable(hamster.getCustomName()).map(Text::getString);
+        Optional<String> nameOptional = Optional.ofNullable(hamster.getCustomName()).map(Component::getString);
 
         // --- 4. Create Domain Transfer Records ---
         HamsterState.MiniGameBehaviorData seekingData = new HamsterState.MiniGameBehaviorData(
@@ -310,7 +310,7 @@ public final class HamsterNbtUtil {
         );
         HamsterState.GreenBeanBuffData buffData = new HamsterState.GreenBeanBuffData(
                 hamster.getGreenBeanBuffEndTick(),
-                hamster.getDataTracker().get(HamsterEntity.GREEN_BEAN_BUFF_DURATION),
+                hamster.getEntityData().get(HamsterEntity.GREEN_BEAN_BUFF_DURATION),
                 effectsNbt
         );
         HamsterState.WanderModeData wanderData = new HamsterState.WanderModeData(
@@ -319,12 +319,12 @@ public final class HamsterNbtUtil {
         );
 
         HamsterState.IdentityData identityData = new HamsterState.IdentityData(
-                hamster.getUuid(),
+                hamster.getUUID(),
                 hamster.getGenome().saveToNbt(),
                 nameOptional
         );
         HamsterState.LifeHistoryData lifeHistoryData = new HamsterState.LifeHistoryData(
-                hamster.getBreedingAge(),
+                hamster.getAge(),
                 hamster.totalAgeTicks,
                 hamster.timesBred
         );
@@ -334,14 +334,14 @@ public final class HamsterNbtUtil {
                 hamster.getAutoEatCooldownTicks()
         );
         HamsterState.AppearanceData appearanceData = new HamsterState.AppearanceData(
-                hamster.getDataTracker().get(HamsterEntity.FLOWER_POS),
-                hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID),
+                hamster.getEntityData().get(HamsterEntity.FLOWER_POS),
+                hamster.getEntityData().get(HamsterEntity.ANIMATION_PERSONALITY_ID),
                 hamster.isArmorVisible()
         );
         HamsterState.BehaviorData behaviorData = new HamsterState.BehaviorData(
                 seekingData,
                 wanderData,
-                hamster.getDataTracker().get(HamsterEntity.HAMSTER_FLAGS)
+                hamster.getEntityData().get(HamsterEntity.HAMSTER_FLAGS)
         );
         HamsterState.HamsterConditionData conditionData =
                 HamsterState.HamsterConditionData.capture(hamster.getRedstoneFeverState());
@@ -365,7 +365,7 @@ public final class HamsterNbtUtil {
      * Does NOT set the entity's position or spawn it in the world.
      */
     @Nullable
-    public static HamsterEntity createFromNbt(ServerWorld world, @Nullable PlayerEntity player, NbtCompound nbt) {
+    public static HamsterEntity createFromNbt(ServerLevel world, @Nullable Player player, CompoundTag nbt) {
         Optional<HamsterState> dataOpt = HamsterState.fromNbt(nbt);
         if (dataOpt.isEmpty()) {
             AdorableHamsterPets.LOGGER.error("Failed to deserialize HamsterState from NBT: {}", nbt);
@@ -377,20 +377,20 @@ public final class HamsterNbtUtil {
 
         if (hamster != null) {
             // --- 1. Load Core Data ---
-            hamster.setUuid(data.entityUuid());
+            hamster.setUUID(data.entityUuid());
             hamster.setGenome(HamsterGenome.readFromNbt(data.genomeNbt()));
             hamster.setHealth(data.health());
-            if (player != null) {hamster.setOwnerUuid(player.getUuid());}
+            if (player != null) {hamster.setOwnerUUID(player.getUUID());}
             data.conditionData().applyTo(hamster.getRedstoneFeverState());
             RedstoneFeverUtil.normalizeDisabledState(hamster);
             hamster.synchronizeRedstoneFeverVisualState();
-            hamster.setTamed(true, true);
-            hamster.setBreedingAge(data.breedingAge());
+            hamster.setTame(true, true);
+            hamster.setAge(data.breedingAge());
             hamster.throwCooldownEndTick = data.throwCooldownEndTick();
             hamster.setAutoEatCooldownTicks(data.autoEatCooldownTicks());
-            hamster.getDataTracker().set(HamsterEntity.FLOWER_POS, data.flowerPosition());
-            hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
-            hamster.getDataTracker().set(HamsterEntity.HAMSTER_FLAGS, data.hamsterFlags());
+            hamster.getEntityData().set(HamsterEntity.FLOWER_POS, data.flowerPosition());
+            hamster.getEntityData().set(HamsterEntity.ANIMATION_PERSONALITY_ID, data.animationPersonalityId());
+            hamster.getEntityData().set(HamsterEntity.HAMSTER_FLAGS, data.hamsterFlags());
             hamster.setArmorVisible(data.armorVisible());
             hamster.totalAgeTicks = data.totalAgeTicks();
             hamster.timesBred = data.timesBred();
@@ -401,14 +401,14 @@ public final class HamsterNbtUtil {
             // --- 2. Load Custom Name ---
             data.customName().ifPresent(name -> {
                 if (!name.isEmpty()) {
-                    hamster.setCustomName(Text.literal(name));
+                    hamster.setCustomName(Component.literal(name));
                 }
             });
 
             // --- 3. Load Inventory ---
-            RegistryWrapper.WrapperLookup registries = world.getRegistryManager();
+            HolderLookup.Provider registries = world.registryAccess();
             if (!data.inventoryNbt().isEmpty()) {
-                Inventories.readNbt(data.inventoryNbt(), hamster.getItems(), registries);
+                ContainerHelper.loadAllItems(data.inventoryNbt(), hamster.getItems(), registries);
                 HamsterInventoryUtil.updateCheekStates(hamster);
                 HamsterInventoryUtil.syncEquipmentTrackers(hamster);
             }
@@ -416,15 +416,15 @@ public final class HamsterNbtUtil {
             // --- 4. Load Green Bean Buff Data/Status Effects ---
             HamsterState.GreenBeanBuffData buffData = data.greenBeanBuffData();
             hamster.setGreenBeanBuffEndTick(buffData.greenBeanBuffEndTick());
-            hamster.getDataTracker().set(HamsterEntity.GREEN_BEAN_BUFF_DURATION, buffData.greenBeanBuffDuration());
-            NbtCompound effectsNbt = buffData.activeEffectsNbt();
-            if (effectsNbt.contains("active_effects", NbtElement.LIST_TYPE)) {
-                NbtList effectsList = effectsNbt.getList("active_effects", NbtElement.COMPOUND_TYPE);
-                for (NbtElement effectElement : effectsList) {
-                    if (effectElement instanceof NbtCompound effectInstanceNbt) {
-                        StatusEffectInstance effectInstance = StatusEffectInstance.fromNbt(effectInstanceNbt);
+            hamster.getEntityData().set(HamsterEntity.GREEN_BEAN_BUFF_DURATION, buffData.greenBeanBuffDuration());
+            CompoundTag effectsNbt = buffData.activeEffectsNbt();
+            if (effectsNbt.contains("active_effects", Tag.TAG_LIST)) {
+                ListTag effectsList = effectsNbt.getList("active_effects", Tag.TAG_COMPOUND);
+                for (Tag effectElement : effectsList) {
+                    if (effectElement instanceof CompoundTag effectInstanceNbt) {
+                        MobEffectInstance effectInstance = MobEffectInstance.load(effectInstanceNbt);
                         if (effectInstance != null) {
-                            hamster.addStatusEffect(effectInstance);
+                            hamster.addEffect(effectInstance);
                         }
                     }
                 }
@@ -457,7 +457,7 @@ public final class HamsterNbtUtil {
      *                               Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static boolean hasInventoryData(NbtCompound nbt) {
-        return nbt.contains("Inventory", NbtElement.COMPOUND_TYPE);
+    private static boolean hasInventoryData(CompoundTag nbt) {
+        return nbt.contains("Inventory", Tag.TAG_COMPOUND);
     }
 }

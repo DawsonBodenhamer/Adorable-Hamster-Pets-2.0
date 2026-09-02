@@ -1,13 +1,12 @@
 package net.dawson.adorablehamsterpets.world;
 
 import dev.architectury.injectables.annotations.ExpectPlatform;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.SpawnLocation;
-import net.minecraft.entity.SpawnRestriction;
-import net.minecraft.world.Heightmap;
-
 import java.util.function.Supplier;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.SpawnPlacementType;
+import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 /**
  * Common class for registering entity spawn restrictions using an @ExpectPlatform bridge.
@@ -15,7 +14,7 @@ import java.util.function.Supplier;
  */
 public final class ModSpawnPlacements {
     @ExpectPlatform
-    public static <T extends MobEntity> void register(Supplier<? extends EntityType<T>> entityType, SpawnLocation location, Heightmap.Type heightmapType, SpawnRestriction.SpawnPredicate<T> predicate) {
+    public static <T extends Mob> void register(Supplier<? extends EntityType<T>> entityType, SpawnPlacementType location, Heightmap.Types heightmapType, SpawnPlacements.SpawnPredicate<T> predicate) {
         throw new AssertionError();
     }
 }

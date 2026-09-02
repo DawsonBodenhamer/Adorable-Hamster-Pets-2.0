@@ -1,18 +1,18 @@
 package net.dawson.adorablehamsterpets.mixin.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.dawson.adorablehamsterpets.item.ModItems;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.item.HeldItemRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(HeldItemRenderer.class)
+@Mixin(ItemInHandRenderer.class)
 public abstract class HeldItemRendererMixin {
 
     @Inject(
@@ -20,18 +20,18 @@ public abstract class HeldItemRendererMixin {
             at = @At("HEAD"),
             cancellable = true)
     private void adorablehamsterpets$hideAcornRingInOffhand(
-            AbstractClientPlayerEntity player,
+            AbstractClientPlayer player,
             float tickDelta,
             float pitch,
-            Hand hand,
+            InteractionHand hand,
             float swingProgress,
             ItemStack stack,
             float equipProgress,
-            MatrixStack matrices,
-            VertexConsumerProvider vertexConsumers,
+            PoseStack matrices,
+            MultiBufferSource vertexConsumers,
             int light,
             CallbackInfo ci) {
-        if (hand == Hand.OFF_HAND && stack.isOf(ModItems.ACORN_RING.get())) {
+        if (hand == InteractionHand.OFF_HAND && stack.is(ModItems.ACORN_RING.get())) {
             ci.cancel();
         }
     }

@@ -1,13 +1,14 @@
 package net.dawson.adorablehamsterpets.client.render;
 
+import it.unimi.dsi.fastutil.ints.Int2LongMap.Entry;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterAbstractHiddenEntity;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterTreeSearcherEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.Entity;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
 import java.util.Collection;
 
 public class BlockJiggleManager {
@@ -41,19 +42,19 @@ public class BlockJiggleManager {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     public void onHiddenEntityAdded(HamsterAbstractHiddenEntity entity) {
-        long posLong = entity.getBlockPos().asLong();
+        long posLong = entity.blockPosition().asLong();
         this.hiddenEntityLastPositions.put(entity.getId(), posLong);
 
         // Ensure the hit pos block jiggles as soon as event starts
-        if (entity.getWorld() != null) {
+        if (entity.level() != null) {
             JiggleConfig config = entity instanceof HamsterTreeSearcherEntity ? TREE_HEIST_JIGGLE : HIDE_AND_SEEK_JIGGLE;
-            startJiggle(posLong, entity.getWorld().getTime(), mixSeed(entity.getId(), posLong), config);
+            startJiggle(posLong, entity.level().getGameTime(), mixSeed(entity.getId(), posLong), config);
         }
     }
 
-    public void clientTick(MinecraftClient client) {
-        if (client.world == null) return;
-        long now = client.world.getTime();
+    public void clientTick(Minecraft client) {
+        if (client.level == null) return;
+        long now = client.level.getGameTime();
 
         // --- Detect Movements ---
         var iterator = this.hiddenEntityLastPositions.int2LongEntrySet().iterator();
@@ -61,14 +62,14 @@ public class BlockJiggleManager {
             var entry = iterator.next();
             int entityId = entry.getIntKey();
 
-            Entity entity = client.world.getEntityById(entityId);
+            Entity entity = client.level.getEntity(entityId);
             if (!(entity instanceof HamsterAbstractHiddenEntity hider) || !hider.isAlive()) {
                 // Cleanup if entity is gone but event missed it
                 iterator.remove();
                 continue;
             }
 
-            long currentPosLong = hider.getBlockPos().asLong();
+            long currentPosLong = hider.blockPosition().asLong();
             long lastPosLong = entry.getLongValue();
 
             // Trigger jiggle at new position

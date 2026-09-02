@@ -7,14 +7,14 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ItemStackParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.particles.ItemParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.Vec3;
 
 public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
 
@@ -40,7 +40,7 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
     @Override
     public void start() {
         super.start();
-        this.hamster.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
+        this.hamster.setPathfindingMalus(PathType.WATER, 0.0F);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
         }
 
         // Check explicit seed refusal config
-        if (Configs.AHP_MAIN.ignoreSeeds && (stack.isIn(ItemTags.VILLAGER_PLANTABLE_SEEDS) || stack.getTranslationKey().contains("seed"))) {
+        if (Configs.AHP_MAIN.ignoreSeeds && (stack.is(ItemTags.VILLAGER_PLANTABLE_SEEDS) || stack.getDescriptionId().contains("seed"))) {
             return false;
         }
 
@@ -68,7 +68,7 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
 
     @Override
     protected boolean canStartBaseChecks() {
-        if (!this.hamster.isTamed()) {
+        if (!this.hamster.isTame()) {
             return false;
         }
 
@@ -108,29 +108,29 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
             if (remaining.isEmpty()) {
                 this.targetItem.discard();
             } else {
-                this.targetItem.setStack(remaining);
+                this.targetItem.setItem(remaining);
             }
         }
 
         // Audio feedback
         SoundEvent pounceSound = ModSounds.getDynamicItemSound(stackSnapshot);
         float volume = ModSounds.getDynamicSoundVolume(pounceSound);
-        this.world.playSound(null, this.hamster.getBlockPos(), pounceSound, SoundCategory.NEUTRAL, volume, 1.0F);
+        this.world.playSound(null, this.hamster.blockPosition(), pounceSound, SoundSource.NEUTRAL, volume, 1.0F);
 
         // Visual feedback
-        if (!this.world.isClient()) {
+        if (!this.world.isClientSide()) {
             ParticleEffectsUtil.spawnParticles(
                     this.world,
-                    new Vec3d(this.hamster.getX(), this.hamster.getY() + 0.2, this.hamster.getZ()),
-                    new ItemStackParticleEffect(ParticleTypes.ITEM, stackSnapshot),
+                    new Vec3(this.hamster.getX(), this.hamster.getY() + 0.2, this.hamster.getZ()),
+                    new ItemParticleOption(ParticleTypes.ITEM, stackSnapshot),
                     15,
-                    new Vec3d(0.15, 0.15, 0.15),
+                    new Vec3(0.15, 0.15, 0.15),
                     0.0
             );
         }
 
         // If in liquid, skip animation wait time
-        if (this.hamster.isTouchingWater() || this.hamster.isInLava()) {
+        if (this.hamster.isInWater() || this.hamster.isInLava()) {
             this.postPounceTimer = 0;
         } else {
             // The pounce lunge took 5 ticks, wait 18 more ticks for the full 23-tick animation to finish
@@ -150,6 +150,6 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
     protected void onGoalStopped() {
         this.isFinished = false;
         this.postPounceTimer = 0;
-        this.hamster.cropSnackCooldownEndTick = this.world.getTime() + Configs.AHP_MAIN.cropSnackCooldownTicks.get();
+        this.hamster.cropSnackCooldownEndTick = this.world.getGameTime() + Configs.AHP_MAIN.cropSnackCooldownTicks.get();
     }
 }

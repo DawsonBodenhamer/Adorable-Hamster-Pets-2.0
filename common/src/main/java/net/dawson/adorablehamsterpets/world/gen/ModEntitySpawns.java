@@ -4,21 +4,20 @@ import dev.architectury.registry.level.biome.BiomeModifications;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.biome.Biome;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -32,8 +31,8 @@ public class ModEntitySpawns {
 
     // --- Caches for Parsed Config Values ---
     private static final Set<TagKey<Biome>> PARSED_TAGS = new HashSet<>();
-    private static final Set<Identifier> PARSED_INCLUDES = new HashSet<>();
-    private static final Set<Identifier> PARSED_EXCLUDES = new HashSet<>();
+    private static final Set<ResourceLocation> PARSED_INCLUDES = new HashSet<>();
+    private static final Set<ResourceLocation> PARSED_EXCLUDES = new HashSet<>();
     private static final Set<TagKey<Biome>> PARSED_EXCLUDE_TAGS = new HashSet<>();
 
     static {
@@ -95,14 +94,14 @@ public class ModEntitySpawns {
         // Parse Tags
         for (String tagStr : config.spawnBiomeTags) {
             try {
-                PARSED_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
+                PARSED_TAGS.add(TagKey.create(Registries.BIOME, ResourceLocation.parse(tagStr)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome tag identifier in config: '{}'", tagStr);
             }
         }
         for (String tagStr : config.spawnBiomeConventionTags) {
             try {
-                PARSED_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
+                PARSED_TAGS.add(TagKey.create(Registries.BIOME, ResourceLocation.parse(tagStr)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome tag identifier in config: '{}'", tagStr);
             }
@@ -111,7 +110,7 @@ public class ModEntitySpawns {
         // Parse Includes
         for (String biomeIdStr : config.includeBiomes) {
             try {
-                PARSED_INCLUDES.add(Identifier.of(biomeIdStr));
+                PARSED_INCLUDES.add(ResourceLocation.parse(biomeIdStr));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeConfig] Invalid biome identifier in include list: '{}'", biomeIdStr);
             }
@@ -120,7 +119,7 @@ public class ModEntitySpawns {
         // Parse Excludes (IDs)
         for (String biomeIdStr : config.excludeBiomes) {
             try {
-                PARSED_EXCLUDES.add(Identifier.of(biomeIdStr));
+                PARSED_EXCLUDES.add(ResourceLocation.parse(biomeIdStr));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeConfig] Invalid biome identifier in exclude list: '{}'", biomeIdStr);
             }
@@ -129,7 +128,7 @@ public class ModEntitySpawns {
         // Parse Excludes (Tags)
         for (String tagStr : config.excludeBiomeTags) {
             try {
-                PARSED_EXCLUDE_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
+                PARSED_EXCLUDE_TAGS.add(TagKey.create(Registries.BIOME, ResourceLocation.parse(tagStr)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome exclusion tag identifier in config: '{}'", tagStr);
             }
@@ -148,7 +147,7 @@ public class ModEntitySpawns {
      * @return True if hamsters should spawn in this biome, false otherwise.
      */
     public static boolean shouldAddFabricSpawn(BiomeModifications.BiomeContext ctx) {
-        Identifier biomeId = ctx.getKey().orElse(null);
+        ResourceLocation biomeId = ctx.getKey().orElse(null);
         return matchesConfiguredBiomePolicy(biomeId, ctx::hasTag);
     }
 
@@ -158,7 +157,7 @@ public class ModEntitySpawns {
      * @param biomeEntry Biome being evaluated.
      * @return True if hamsters should spawn in this biome, false otherwise.
      */
-    public static boolean shouldAddNeoForgeSpawn(RegistryEntry<Biome> biomeEntry) {
+    public static boolean shouldAddNeoForgeSpawn(Holder<Biome> biomeEntry) {
         return isBiomeAllowed(biomeEntry);
     }
 
@@ -168,13 +167,13 @@ public class ModEntitySpawns {
      * Applies the registered hamster floor predicate to vanilla and supplemental natural spawning.
      */
     public static boolean isValidHamsterNaturalSpawn(
-            EntityType<? extends AnimalEntity> type,
-            ServerWorldAccess world,
-            SpawnReason reason,
+            EntityType<? extends Animal> type,
+            ServerLevelAccessor world,
+            MobSpawnType reason,
             BlockPos position,
-            Random random) {
-        return AnimalEntity.isValidNaturalSpawn(type, world, reason, position, random)
-                || VALID_SPAWN_BLOCKS.contains(world.getBlockState(position.down()).getBlock());
+            RandomSource random) {
+        return Animal.checkAnimalSpawnRules(type, world, reason, position, random)
+                || VALID_SPAWN_BLOCKS.contains(world.getBlockState(position.below()).getBlock());
     }
 
     // --- Shared Biome Policy ---
@@ -185,13 +184,13 @@ public class ModEntitySpawns {
      * @param biomeEntry Biome being evaluated.
      * @return True when the biome permits hamster spawning.
      */
-    public static boolean isBiomeAllowed(RegistryEntry<Biome> biomeEntry) {
-        Identifier biomeId = biomeEntry.getKey().map(RegistryKey::getValue).orElse(null);
-        return matchesConfiguredBiomePolicy(biomeId, biomeEntry::isIn);
+    public static boolean isBiomeAllowed(Holder<Biome> biomeEntry) {
+        ResourceLocation biomeId = biomeEntry.unwrapKey().map(ResourceKey::location).orElse(null);
+        return matchesConfiguredBiomePolicy(biomeId, biomeEntry::is);
     }
 
     private static boolean matchesConfiguredBiomePolicy(
-            Identifier biomeId, Predicate<TagKey<Biome>> matchesTag) {
+            ResourceLocation biomeId, Predicate<TagKey<Biome>> matchesTag) {
         if (biomeId == null) return false;
 
         // 1. Exclusion check (ID) - Highest Priority

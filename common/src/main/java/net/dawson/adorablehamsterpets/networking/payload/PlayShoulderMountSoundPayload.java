@@ -1,24 +1,24 @@
 package net.dawson.adorablehamsterpets.networking.payload;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-public record PlayShoulderMountSoundPayload(Identifier soundId, float pitch, int delay) implements CustomPayload {
-    public static final CustomPayload.Id<PlayShoulderMountSoundPayload> ID = new CustomPayload.Id<>(Identifier.of(AdorableHamsterPets.MOD_ID, "play_mount_sound"));
+public record PlayShoulderMountSoundPayload(ResourceLocation soundId, float pitch, int delay) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<PlayShoulderMountSoundPayload> ID = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "play_mount_sound"));
 
-    public static final PacketCodec<RegistryByteBuf, PlayShoulderMountSoundPayload> CODEC = PacketCodec.tuple(
-            Identifier.PACKET_CODEC, PlayShoulderMountSoundPayload::soundId,
-            PacketCodecs.FLOAT, PlayShoulderMountSoundPayload::pitch,
-            PacketCodecs.INTEGER, PlayShoulderMountSoundPayload::delay,
+    public static final StreamCodec<RegistryFriendlyByteBuf, PlayShoulderMountSoundPayload> CODEC = StreamCodec.composite(
+            ResourceLocation.STREAM_CODEC, PlayShoulderMountSoundPayload::soundId,
+            ByteBufCodecs.FLOAT, PlayShoulderMountSoundPayload::pitch,
+            ByteBufCodecs.INT, PlayShoulderMountSoundPayload::delay,
             PlayShoulderMountSoundPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

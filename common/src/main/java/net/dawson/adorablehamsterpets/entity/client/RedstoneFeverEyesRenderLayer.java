@@ -1,12 +1,12 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
@@ -20,7 +20,7 @@ public final class RedstoneFeverEyesRenderLayer extends GeoRenderLayer<HamsterEn
      *        Constants
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static final Identifier FEVER_EYES_TEXTURE = Identifier.of(
+    private static final ResourceLocation FEVER_EYES_TEXTURE = ResourceLocation.fromNamespaceAndPath(
             "adorablehamsterpets",
             "textures/entity/hamster/appearance/conditions/redstone_fever/eyes.png");
 
@@ -38,11 +38,11 @@ public final class RedstoneFeverEyesRenderLayer extends GeoRenderLayer<HamsterEn
 
     @Override
     public void render(
-            MatrixStack poseStack,
+            PoseStack poseStack,
             HamsterEntity animatable,
             BakedGeoModel bakedModel,
-            @Nullable RenderLayer renderType,
-            VertexConsumerProvider bufferSource,
+            @Nullable RenderType renderType,
+            MultiBufferSource bufferSource,
             @Nullable VertexConsumer buffer,
             float partialTick,
             int packedLight,
@@ -51,7 +51,7 @@ public final class RedstoneFeverEyesRenderLayer extends GeoRenderLayer<HamsterEn
             return;
         }
 
-        RenderLayer eyesRenderType = RenderLayer.getEyes(FEVER_EYES_TEXTURE);
+        RenderType eyesRenderType = RenderType.eyes(FEVER_EYES_TEXTURE);
         VertexConsumer eyesBuffer = bufferSource.getBuffer(eyesRenderType);
         int renderColor = this.renderer.getRenderColor(animatable, partialTick, packedLight).argbInt();
 
@@ -63,7 +63,7 @@ public final class RedstoneFeverEyesRenderLayer extends GeoRenderLayer<HamsterEn
                 eyesRenderType,
                 eyesBuffer,
                 partialTick,
-                LightmapTextureManager.MAX_LIGHT_COORDINATE,
+                LightTexture.FULL_BRIGHT,
                 packedOverlay,
                 renderColor);
     }

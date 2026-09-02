@@ -3,7 +3,7 @@ package net.dawson.adorablehamsterpets.client.gui.widgets;
 import net.dawson.adorablehamsterpets.config.AhpUiConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.config.IconPositionPreset;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 
 /**
  * A client-side singleton that manages the animation state for the announcement icon.
@@ -372,7 +372,7 @@ public class AnnouncementIconAnimator {
         float wiggleTarget = 0.0f;
         if (wiggleTimer > WIGGLE_INTERVAL_TICKS) {
             float progress = (wiggleTimer - WIGGLE_INTERVAL_TICKS + tickDelta) / (float) WIGGLE_DURATION_TICKS;
-            wiggleTarget = MathHelper.sin(progress * (float) Math.PI * 2.0f) * WIGGLE_MAX_ANGLE_DEGREES;
+            wiggleTarget = Mth.sin(progress * (float) Math.PI * 2.0f) * WIGGLE_MAX_ANGLE_DEGREES;
         }
         this.wiggleAngle += (wiggleTarget - this.wiggleAngle) * 0.4f * tickDelta;
         return physicsAngle + this.wiggleAngle;

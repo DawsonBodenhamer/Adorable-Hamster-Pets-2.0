@@ -9,18 +9,17 @@ import net.dawson.adorablehamsterpets.util.HamsterHarvestUtil;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPhysicsUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.particle.BlockStateParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 import java.util.Optional;
 
@@ -48,14 +47,14 @@ public class HamsterSnackOnCropGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private final HamsterEntity hamster;
-    private final World world;
+    private final Level world;
     private State currentState = State.SCANNING_CROP;
     private boolean isFinished = false;
 
     private int checkTimer = 0;
     private int lungeTicks = 0;
     private int moveTimeout = 0;
-    private Vec3d pounceStartPos;
+    private Vec3 pounceStartPos;
     private BlockPos targetCrop;
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -64,8 +63,8 @@ public class HamsterSnackOnCropGoal extends Goal {
 
     public HamsterSnackOnCropGoal(HamsterEntity hamster) {
         this.hamster = hamster;
-        this.world = hamster.getWorld();
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+        this.world = hamster.level();
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -73,12 +72,12 @@ public class HamsterSnackOnCropGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
-        if (this.world.isClient() || !Configs.AHP_MAIN.enableCropSnacking) return false;
+    public boolean canUse() {
+        if (this.world.isClientSide() || !Configs.AHP_MAIN.enableCropSnacking) return false;
 
         // Ensure hamster is tamed, wandering, and has completed its cooldown
-        if (!this.hamster.isTamed() || !this.hamster.isWanderModeActive()) return false;
-        if (this.hamster.cropSnackCooldownEndTick > this.world.getTime()) return false;
+        if (!this.hamster.isTame() || !this.hamster.isWanderModeActive()) return false;
+        if (this.hamster.cropSnackCooldownEndTick > this.world.getGameTime()) return false;
 
         // Exclusions
         if (this.hamster.isOnTheWayToBed()
@@ -93,7 +92,7 @@ public class HamsterSnackOnCropGoal extends Goal {
             this.checkTimer--;
             return false;
         }
-        this.checkTimer = this.getTickCount(20);
+        this.checkTimer = this.adjustedTickDelay(20);
 
         // Add RNG element to prevent immediate harvesting (scale denominator to match check frequency)
         int denominator = Math.max(1, Configs.AHP_MAIN.cropSnackingChanceDenominator.get() / 20);
@@ -105,15 +104,15 @@ public class HamsterSnackOnCropGoal extends Goal {
         BlockPos nearest = null;
         double minDistanceSq = Double.MAX_VALUE;
 
-        for (BlockPos pos : BlockPos.iterateOutwards(this.hamster.getBlockPos(), SEARCH_RADIUS, 2, SEARCH_RADIUS)) {
+        for (BlockPos pos : BlockPos.withinManhattan(this.hamster.blockPosition(), SEARCH_RADIUS, 2, SEARCH_RADIUS)) {
             BlockState state = this.world.getBlockState(pos);
 
             // evaluate if crop is config-valid and biologically mature
             if (ConfigDataCache.isSnackableCrop(state) && HamsterHarvestUtil.isMature(state)) {
-                double distSq = this.hamster.squaredDistanceTo(Vec3d.ofCenter(pos));
+                double distSq = this.hamster.distanceToSqr(Vec3.atCenterOf(pos));
                 if (distSq < minDistanceSq) {
                     minDistanceSq = distSq;
-                    nearest = pos.toImmutable();
+                    nearest = pos.immutable();
                 }
             }
         }
@@ -128,7 +127,7 @@ public class HamsterSnackOnCropGoal extends Goal {
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         // Terminate here if finished
         if (this.isFinished) return false;
 
@@ -154,10 +153,10 @@ public class HamsterSnackOnCropGoal extends Goal {
     @Override
     public void start() {
         this.hamster.setActiveCustomGoalName(this.getClass().getSimpleName());
-        this.hamster.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
+        this.hamster.setPathfindingMalus(PathType.WATER, 0.0F);
         this.currentState = State.MOVING_TO_CROP;
         this.moveTimeout = 0;
-        this.hamster.getNavigation().startMovingTo(this.targetCrop.getX() + 0.5, this.targetCrop.getY(), this.targetCrop.getZ() + 0.5, 1.2D);
+        this.hamster.getNavigation().moveTo(this.targetCrop.getX() + 0.5, this.targetCrop.getY(), this.targetCrop.getZ() + 0.5, 1.2D);
     }
 
     @Override
@@ -171,7 +170,7 @@ public class HamsterSnackOnCropGoal extends Goal {
         }
 
         // Guarantee a cooldown whether harvest succeeded or failed/interrupted
-        this.hamster.cropSnackCooldownEndTick = this.world.getTime() + Configs.AHP_MAIN.cropSnackCooldownTicks.get();
+        this.hamster.cropSnackCooldownEndTick = this.world.getGameTime() + Configs.AHP_MAIN.cropSnackCooldownTicks.get();
     }
 
     @Override
@@ -186,15 +185,15 @@ public class HamsterSnackOnCropGoal extends Goal {
 
                 HamsterMovementUtil.facePosition(this.hamster, this.targetCrop.getX() + 0.5, this.targetCrop.getY() + 0.5, this.targetCrop.getZ() + 0.5);
 
-                if (this.hamster.getBlockPos().isWithinDistance(this.targetCrop, 1.5)) {
+                if (this.hamster.blockPosition().closerThan(this.targetCrop, 1.5)) {
                     this.currentState = State.POUNCING_CROP;
                     this.lungeTicks = LUNGE_DURATION_TICKS;
-                    this.pounceStartPos = this.hamster.getPos();
+                    this.pounceStartPos = this.hamster.position();
                     this.hamster.getNavigation().stop();
                     this.hamster.triggerAnimOnServer("mainController", "anim_hamster_pounce");
-                } else if (this.hamster.getNavigation().isIdle()) {
+                } else if (this.hamster.getNavigation().isDone()) {
                     // Try repathing if stuck, abort immediately if unreachable
-                    boolean canPath = this.hamster.getNavigation().startMovingTo(this.targetCrop.getX() + 0.5, this.targetCrop.getY(), this.targetCrop.getZ() + 0.5, 1.0D);
+                    boolean canPath = this.hamster.getNavigation().moveTo(this.targetCrop.getX() + 0.5, this.targetCrop.getY(), this.targetCrop.getZ() + 0.5, 1.0D);
                     if (!canPath) {
                         this.isFinished = true;
                         return;
@@ -209,34 +208,34 @@ public class HamsterSnackOnCropGoal extends Goal {
                 }
 
                 if (this.pounceStartPos != null && this.lungeTicks >= 0) {
-                    Vec3d interpolatedPos = HamsterPhysicsUtil.calculatePouncePosition(this.pounceStartPos, Vec3d.ofBottomCenter(this.targetCrop), this.lungeTicks, LUNGE_DURATION_TICKS);
-                    this.hamster.setPosition(interpolatedPos.x, interpolatedPos.y, interpolatedPos.z);
+                    Vec3 interpolatedPos = HamsterPhysicsUtil.calculatePouncePosition(this.pounceStartPos, Vec3.atBottomCenterOf(this.targetCrop), this.lungeTicks, LUNGE_DURATION_TICKS);
+                    this.hamster.setPos(interpolatedPos.x, interpolatedPos.y, interpolatedPos.z);
                 }
 
                 if (this.lungeTicks == -1) {
                     // Break and replant
                     BlockState state = this.world.getBlockState(this.targetCrop);
-                    HamsterHarvestUtil.harvestAndReplant((ServerWorld) this.world, this.targetCrop, state);
+                    HamsterHarvestUtil.harvestAndReplant((ServerLevel) this.world, this.targetCrop, state);
 
                     // Sound feedback
-                    this.world.playSound(null, this.targetCrop, ModSounds.getDynamicBlockSound(state), SoundCategory.BLOCKS, 1.0f, 1.0f);
-                    this.world.playSound(null, this.targetCrop, SoundEvents.BLOCK_AZALEA_LEAVES_BREAK, SoundCategory.BLOCKS, 1.2f, 1.2f);
+                    this.world.playSound(null, this.targetCrop, ModSounds.getDynamicBlockSound(state), SoundSource.BLOCKS, 1.0f, 1.0f);
+                    this.world.playSound(null, this.targetCrop, SoundEvents.AZALEA_LEAVES_BREAK, SoundSource.BLOCKS, 1.2f, 1.2f);
 
-                    if (!this.world.isClient()) {
+                    if (!this.world.isClientSide()) {
                         ParticleEffectsUtil.spawnParticles(
                                 this.world,
-                                Vec3d.ofCenter(this.targetCrop),
-                                new BlockStateParticleEffect(ParticleTypes.BLOCK, state),
+                                Vec3.atCenterOf(this.targetCrop),
+                                new BlockParticleOption(ParticleTypes.BLOCK, state),
                                 15,
-                                new Vec3d(0.2, 0.2, 0.2),
+                                new Vec3(0.2, 0.2, 0.2),
                                 0.05
                         );
                         ParticleEffectsUtil.spawnParticles(
                                 this.world,
-                                Vec3d.ofCenter(this.targetCrop),
+                                Vec3.atCenterOf(this.targetCrop),
                                 ParticleTypes.POOF,
                                 10,
-                                new Vec3d(0.2, 0.2, 0.2),
+                                new Vec3(0.2, 0.2, 0.2),
                                 0.02
                         );
                     }

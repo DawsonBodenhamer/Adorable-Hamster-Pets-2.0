@@ -2,14 +2,13 @@ package net.dawson.adorablehamsterpets.entity.custom;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Uuids;
-
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvent;
 
 /**
  * Persistent condition state for Redstone Fever. Runtime behavior accesses this state through {@link HamsterEntity}.
@@ -147,11 +146,11 @@ public final class RedstoneFeverState {
     }
 
     // --- NBT Persistence ---
-    public void writeNbt(NbtCompound nbt) {
+    public void writeNbt(CompoundTag nbt) {
         this.createTransferData().writeNbt(nbt);
     }
 
-    public void readNbt(NbtCompound nbt) {
+    public void readNbt(CompoundTag nbt) {
         this.applyTransferData(TransferData.fromNbt(nbt));
     }
 
@@ -188,9 +187,9 @@ public final class RedstoneFeverState {
                                 .forGetter(TransferData::sunlightTicks),
                         Codec.BOOL.optionalFieldOf(COMMISSIONED_ROLL_RESOLVED_KEY, false)
                                 .forGetter(TransferData::commissionedRollResolved),
-                        Uuids.CODEC.optionalFieldOf(FIRST_LEAD_RESCUER_KEY)
+                        UUIDUtil.AUTHLIB_CODEC.optionalFieldOf(FIRST_LEAD_RESCUER_KEY)
                                 .forGetter(TransferData::firstLeadRescuerUuid),
-                        Uuids.CODEC.optionalFieldOf(FIRST_SUNLIGHT_TARGET_KEY)
+                        UUIDUtil.AUTHLIB_CODEC.optionalFieldOf(FIRST_SUNLIGHT_TARGET_KEY)
                                 .forGetter(TransferData::firstSunlightTargetUuid)
                 ).apply(instance, TransferData::new)
         );
@@ -206,29 +205,29 @@ public final class RedstoneFeverState {
             return new TransferData(false, -1, 0L, false, Optional.empty(), Optional.empty());
         }
 
-        public static TransferData fromNbt(NbtCompound nbt) {
+        public static TransferData fromNbt(CompoundTag nbt) {
             boolean fevered = nbt.getBoolean(FEVERED_KEY);
             return new TransferData(
                     fevered,
                     fevered ? nbt.getInt(SCAR_KEY) : -1,
                     nbt.getLong(SUNLIGHT_TICKS_KEY),
                     nbt.getBoolean(COMMISSIONED_ROLL_RESOLVED_KEY),
-                    nbt.containsUuid(FIRST_LEAD_RESCUER_KEY)
-                            ? Optional.of(nbt.getUuid(FIRST_LEAD_RESCUER_KEY))
+                    nbt.hasUUID(FIRST_LEAD_RESCUER_KEY)
+                            ? Optional.of(nbt.getUUID(FIRST_LEAD_RESCUER_KEY))
                             : Optional.empty(),
-                    nbt.containsUuid(FIRST_SUNLIGHT_TARGET_KEY)
-                            ? Optional.of(nbt.getUuid(FIRST_SUNLIGHT_TARGET_KEY))
+                    nbt.hasUUID(FIRST_SUNLIGHT_TARGET_KEY)
+                            ? Optional.of(nbt.getUUID(FIRST_SUNLIGHT_TARGET_KEY))
                             : Optional.empty()
             );
         }
 
-        public void writeNbt(NbtCompound nbt) {
+        public void writeNbt(CompoundTag nbt) {
             nbt.putBoolean(FEVERED_KEY, this.fevered);
             nbt.putInt(SCAR_KEY, this.scarVariant);
             nbt.putLong(SUNLIGHT_TICKS_KEY, this.sunlightTicks);
             nbt.putBoolean(COMMISSIONED_ROLL_RESOLVED_KEY, this.commissionedRollResolved);
-            this.firstLeadRescuerUuid.ifPresent(uuid -> nbt.putUuid(FIRST_LEAD_RESCUER_KEY, uuid));
-            this.firstSunlightTargetUuid.ifPresent(uuid -> nbt.putUuid(FIRST_SUNLIGHT_TARGET_KEY, uuid));
+            this.firstLeadRescuerUuid.ifPresent(uuid -> nbt.putUUID(FIRST_LEAD_RESCUER_KEY, uuid));
+            this.firstSunlightTargetUuid.ifPresent(uuid -> nbt.putUUID(FIRST_SUNLIGHT_TARGET_KEY, uuid));
         }
     }
 

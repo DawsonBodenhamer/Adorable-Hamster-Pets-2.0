@@ -1,16 +1,16 @@
 package net.dawson.adorablehamsterpets.mixin.server;
 
 import net.dawson.adorablehamsterpets.util.AcornRingUtil;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.EntityLookTarget;
-import net.minecraft.entity.ai.brain.MemoryModuleType;
-import net.minecraft.entity.ai.brain.WalkTarget;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.behavior.EntityTracker;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,13 +20,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Optional;
 import java.util.UUID;
 
-@Mixin(MobEntity.class)
+@Mixin(Mob.class)
 public abstract class MobEntityMixin {
 
     @Inject(method = "setTarget", at = @At("HEAD"), cancellable = true)
     private void adorablehamsterpets$rejectContractTarget(
             @Nullable LivingEntity target, CallbackInfo ci) {
-        MobEntity self = (MobEntity) (Object) this;
+        Mob self = (Mob) (Object) this;
 		if (target != null && AcornRingUtil.protects(self, target)) {
             ci.cancel();
         }
@@ -34,16 +34,16 @@ public abstract class MobEntityMixin {
 
     @Inject(method = "tickNewAi", at = @At("HEAD"))
     private void adorablehamsterpets$clearContractTargetsBeforeAi(CallbackInfo ci) {
-        adorablehamsterpets$clearContractTargets((MobEntity) (Object) this);
+        adorablehamsterpets$clearContractTargets((Mob) (Object) this);
     }
 
     @Inject(method = "tickNewAi", at = @At("RETURN"))
     private void adorablehamsterpets$clearContractTargetsAfterAi(CallbackInfo ci) {
-        adorablehamsterpets$clearContractTargets((MobEntity) (Object) this);
+        adorablehamsterpets$clearContractTargets((Mob) (Object) this);
     }
 
-    private static void adorablehamsterpets$clearContractTargets(MobEntity mob) {
-		if (mob.getWorld().isClient() || !AcornRingUtil.isEligiblePet(mob)) {
+    private static void adorablehamsterpets$clearContractTargets(Mob mob) {
+		if (mob.level().isClientSide() || !AcornRingUtil.isEligiblePet(mob)) {
             return;
         }
 
@@ -57,44 +57,44 @@ public abstract class MobEntityMixin {
         Brain<?> brain = mob.getBrain();
         LivingEntity attackTarget = adorablehamsterpets$getMemory(brain, MemoryModuleType.ATTACK_TARGET);
 		if (attackTarget != null && AcornRingUtil.protects(mob, attackTarget)) {
-            brain.forget(MemoryModuleType.ATTACK_TARGET);
+            brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
             removedPursuit = true;
         }
 
         UUID angryAt = adorablehamsterpets$getMemory(brain, MemoryModuleType.ANGRY_AT);
         LivingEntity angryTarget = adorablehamsterpets$resolveLiving(mob, angryAt);
 		if (angryTarget != null && AcornRingUtil.protects(mob, angryTarget)) {
-            brain.forget(MemoryModuleType.ANGRY_AT);
+            brain.eraseMemory(MemoryModuleType.ANGRY_AT);
             removedPursuit = true;
         }
 
         WalkTarget walkTarget = adorablehamsterpets$getMemory(brain, MemoryModuleType.WALK_TARGET);
         if (walkTarget != null
-                && walkTarget.getLookTarget() instanceof EntityLookTarget entityLookTarget
+                && walkTarget.getTarget() instanceof EntityTracker entityLookTarget
                 && entityLookTarget.getEntity() instanceof LivingEntity walkEntity
 				&& AcornRingUtil.protects(mob, walkEntity)) {
-            brain.forget(MemoryModuleType.WALK_TARGET);
+            brain.eraseMemory(MemoryModuleType.WALK_TARGET);
             removedPursuit = true;
         }
 
         LivingEntity hurtByEntity =
                 adorablehamsterpets$getMemory(brain, MemoryModuleType.HURT_BY_ENTITY);
 		if (hurtByEntity != null && AcornRingUtil.protects(mob, hurtByEntity)) {
-            brain.forget(MemoryModuleType.HURT_BY_ENTITY);
+            brain.eraseMemory(MemoryModuleType.HURT_BY_ENTITY);
             removedPursuit = true;
         }
 
         DamageSource hurtBy = adorablehamsterpets$getMemory(brain, MemoryModuleType.HURT_BY);
         if (hurtBy != null
-                && hurtBy.getAttacker() instanceof LivingEntity hurtByAttacker
+                && hurtBy.getEntity() instanceof LivingEntity hurtByAttacker
 				&& AcornRingUtil.protects(mob, hurtByAttacker)) {
-            brain.forget(MemoryModuleType.HURT_BY);
+            brain.eraseMemory(MemoryModuleType.HURT_BY);
             removedPursuit = true;
         }
 
-        LivingEntity attacker = mob.getAttacker();
+        LivingEntity attacker = mob.getLastHurtByMob();
 		if (attacker != null && AcornRingUtil.protects(mob, attacker)) {
-            mob.setAttacker(null);
+            mob.setLastHurtByMob(null);
             removedPursuit = true;
         }
 
@@ -106,17 +106,17 @@ public abstract class MobEntityMixin {
     @Nullable
     private static <T> T adorablehamsterpets$getMemory(
             Brain<?> brain, MemoryModuleType<T> memoryType) {
-        Optional<T> memory = brain.getOptionalMemory(memoryType);
+        Optional<T> memory = brain.getMemoryInternal(memoryType);
         return memory == null ? null : memory.orElse(null);
     }
 
     @Nullable
     private static LivingEntity adorablehamsterpets$resolveLiving(
-            MobEntity mob, @Nullable UUID uuid) {
-        if (uuid == null || !(mob.getWorld() instanceof ServerWorld serverWorld)) {
+            Mob mob, @Nullable UUID uuid) {
+        if (uuid == null || !(mob.level() instanceof ServerLevel serverWorld)) {
             return null;
         }
-        ServerPlayerEntity player = serverWorld.getServer().getPlayerManager().getPlayer(uuid);
+        ServerPlayer player = serverWorld.getServer().getPlayerList().getPlayer(uuid);
         if (player != null) {
             return player;
         }

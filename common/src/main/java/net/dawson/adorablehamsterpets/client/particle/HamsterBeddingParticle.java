@@ -4,13 +4,12 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.particles.common.HamsterBeddingParticleBehavior;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.IndoorOutdoorDetector;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.particle.SimpleParticleType;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.math.MathHelper;
-
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import java.util.*;
 
 /**
@@ -23,7 +22,7 @@ import java.util.*;
  *     or a dispenser. This includes a gentle pendulum-like sway and a deterministic, spatially-coherent
  *     wind gust model that creates realistic, synchronized movement among nearby particles.
  */
-public class HamsterBeddingParticle extends SpriteBillboardParticle {
+public class HamsterBeddingParticle extends TextureSheetParticle {
 
     // --- Constants ---
     /** A magic number used in the 'vy' field to signal that this particle should use the "floaty" physics simulation. */
@@ -81,14 +80,14 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
     private float gustCoupling = 0f;
     private int gustDelayTicks = 0;
 
-    public HamsterBeddingParticle(ClientWorld world,
+    public HamsterBeddingParticle(ClientLevel world,
                                   double x, double y, double z,
                                   double vx, double vy, double vz,
-                                  SpriteProvider sprites) {
+                                  SpriteSet sprites) {
         super(world, x, y, z, vx, vy, vz);
 
         // Set size to match leaf textures on bed
-        this.scale *= 2.0f;
+        this.quadSize *= 2.0f;
 
         // Use floaty physics if spawned from the Hamster Bedding item
         this.useFloatyPhysics = (vy == BEDDING_ITEM_FLAG);
@@ -96,24 +95,24 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
         // --- Set Physics based on Spawn Type ---
         if (useFloatyPhysics) {
             // "Floaty" physics for item/dispenser use.
-            this.velocityY = 0;
-            this.gravityStrength = 0.07f;
-            this.velocityMultiplier = 0.92f;
-            this.maxAge = 140 + world.random.nextInt(200);
+            this.yd = 0;
+            this.gravity = 0.07f;
+            this.friction = 0.92f;
+            this.lifetime = 140 + world.random.nextInt(200);
 
-            float theta = world.random.nextFloat() * MathHelper.TAU;
-            this.swayDirectionX = MathHelper.cos(theta);
-            this.swayDirectionZ = MathHelper.sin(theta);
+            float theta = world.random.nextFloat() * Mth.TWO_PI;
+            this.swayDirectionX = Mth.cos(theta);
+            this.swayDirectionZ = Mth.sin(theta);
 
             this.swayFrequency = 0.09f + world.random.nextFloat() * 0.05f; // Period ~ 2π/ω = 45–80 ticks
             this.swayAcceleration = 0.002f + world.random.nextFloat() * 0.0025f; // Swing radius ≈ swayAcceleration / ω^2  → ~0.15–0.35 blocks
-            this.swayPhaseOffset = world.random.nextFloat() * MathHelper.TAU;
+            this.swayPhaseOffset = world.random.nextFloat() * Mth.TWO_PI;
             this.constantRollVelocity = (world.random.nextFloat() - 0.5f) * 0.12f; // Slow constant roll
         } else {
             // Standard physics for bed interactions.
-            this.gravityStrength = HamsterBeddingParticleBehavior.GRAVITY;
-            this.velocityMultiplier = HamsterBeddingParticleBehavior.FRICTION;
-            this.maxAge = HamsterBeddingParticleBehavior.LIFETIME_MIN
+            this.gravity = HamsterBeddingParticleBehavior.GRAVITY;
+            this.friction = HamsterBeddingParticleBehavior.FRICTION;
+            this.lifetime = HamsterBeddingParticleBehavior.LIFETIME_MIN
                     + world.random.nextInt(HamsterBeddingParticleBehavior.LIFETIME_EXTRA);
 
             this.swayDirectionX = 0f;
@@ -125,13 +124,13 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
         }
 
         // --- Set Visuals ---
-        this.setSprite(sprites.getSprite(this.random));
-        this.setBoundingBoxSpacing(HamsterBeddingParticleBehavior.SIZE_X, HamsterBeddingParticleBehavior.SIZE_Y);
+        this.setSprite(sprites.get(this.random));
+        this.setSize(HamsterBeddingParticleBehavior.SIZE_X, HamsterBeddingParticleBehavior.SIZE_Y);
     }
 
     @Override
     public void tick() {
-        long worldTime = this.world.getTime();
+        long worldTime = this.level.getGameTime();
         // --- Sound Management ---
         // Prune old sounds and clear per-tick tracker
         if (worldTime != lastTick) {
@@ -149,44 +148,44 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
             float universalDriftAngle;
             if (Configs.AHP_UI.enableDynamicDriftAngle.get()) {
                 // Dynamic, time-based rotation
-                float timeWithPartial = worldTime + MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(true);
-                universalDriftAngle = (timeWithPartial / DRIFT_PERIOD_TICKS) * MathHelper.TAU;
+                float timeWithPartial = worldTime + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
+                universalDriftAngle = (timeWithPartial / DRIFT_PERIOD_TICKS) * Mth.TWO_PI;
             } else {
                 // Static angle from config
                 universalDriftAngle = (float) Math.toRadians(Configs.AHP_UI.staticDriftAngle.get());
             }
 
-            float driftDirX = MathHelper.cos(universalDriftAngle);
-            float driftDirZ = MathHelper.sin(universalDriftAngle);
+            float driftDirX = Mth.cos(universalDriftAngle);
+            float driftDirZ = Mth.sin(universalDriftAngle);
 
-            boolean isOutdoor = IndoorOutdoorDetector.isOutdoor(this.world, this.x, this.y, this.z);
+            boolean isOutdoor = IndoorOutdoorDetector.isOutdoor(this.level, this.x, this.y, this.z);
 
             // Apply drift only if outdoors
             if (isOutdoor) {
-                this.velocityX += driftDirX * UNIVERSAL_DRIFT_ACCEL;
-                this.velocityZ += driftDirZ * UNIVERSAL_DRIFT_ACCEL;
+                this.xd += driftDirX * UNIVERSAL_DRIFT_ACCEL;
+                this.zd += driftDirZ * UNIVERSAL_DRIFT_ACCEL;
             }
 
             // --- Sway Physics ---
             float phase = (this.age + this.swayPhaseOffset) * this.swayFrequency;
-            float sinPhase = MathHelper.sin(phase);
-            float cosPhase = MathHelper.cos(phase);
+            float sinPhase = Mth.sin(phase);
+            float cosPhase = Mth.cos(phase);
             float positionInSwing = Math.abs(cosPhase);
             // Swing faster in the middle and slower at the edges
             float speedMultiplier = 0.5f + 1.5f * positionInSwing;
             float modifiedAcceleration = sinPhase * this.swayAcceleration * speedMultiplier;
 
-            this.velocityX += this.swayDirectionX * modifiedAcceleration;
-            this.velocityZ += this.swayDirectionZ * modifiedAcceleration;
+            this.xd += this.swayDirectionX * modifiedAcceleration;
+            this.zd += this.swayDirectionZ * modifiedAcceleration;
 
             // Add a gradual upward boost that is strongest at the apex of the swing to create a 'U' shape motion.
             // The boost is proportional to the fourth power of the particle's position in its swing.
-            this.velocityY += UPWARD_BOOST_AT_APEX * (float)Math.pow(positionInSwing, 4);
+            this.yd += UPWARD_BOOST_AT_APEX * (float)Math.pow(positionInSwing, 4);
 
             // --- Gust Simulation ---
             float gustStrengthLocal = 0f;
             if (isOutdoor) { // Reuse the isOutdoor check
-                Gust gust = sampleGust(this.world, this.x, this.z);
+                Gust gust = sampleGust(this.level, this.x, this.z);
 
                 if (gust.active) {
                     // Initialize gust response for this particle if it's a new gust event.
@@ -195,7 +194,7 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
                         if (soundStartTimes.size() < MAX_CONCURRENT_SOUNDS && playedGustSoundsThisTick.add(gust.key)) {
                             float vol = Configs.AHP_UI.leafGustVolume.get();
                             if (vol > 0) {
-                                this.world.playSound(this.x, this.y, this.z, ModSounds.GENTLE_BREEZE.get(), SoundCategory.AMBIENT, vol, 1.0f, false);
+                                this.level.playLocalSound(this.x, this.y, this.z, ModSounds.GENTLE_BREEZE.get(), SoundSource.AMBIENT, vol, 1.0f, false);
                                 soundStartTimes.addLast(worldTime);
                             }
                         }
@@ -220,38 +219,38 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
 
                     // --- Interpolate Gust Angle ---
                     float easeOutFactor = 1.0f - (float) Math.pow(1.0f - gustProgress, 3.0); // Cubic ease-out
-                    float finalGustDirX = MathHelper.lerp(easeOutFactor, driftDirX, gust.gustDirX);
-                    float finalGustDirZ = MathHelper.lerp(easeOutFactor, driftDirZ, gust.gustDirZ);
+                    float finalGustDirX = Mth.lerp(easeOutFactor, driftDirX, gust.gustDirX);
+                    float finalGustDirZ = Mth.lerp(easeOutFactor, driftDirZ, gust.gustDirZ);
 
                     // Apply drag along the interpolated wind angle toward the wind's target speed.
-                    float along = (float)(this.velocityX * finalGustDirX + this.velocityZ * finalGustDirZ);
+                    float along = (float)(this.xd * finalGustDirX + this.zd * finalGustDirZ);
                     float target = WIND_TARGET_SPEED * gustStrengthLocal;
                     float corr = (target - along) * WIND_DRAG;
-                    this.velocityX += finalGustDirX * corr;
-                    this.velocityZ += finalGustDirZ * corr;
+                    this.xd += finalGustDirX * corr;
+                    this.zd += finalGustDirZ * corr;
 
                     // Apply upward and lateral push from the gust using the interpolated direction.
-                    this.velocityY += gustStrengthLocal * GUST_UP_ACCEL;
-                    this.velocityX += finalGustDirX * gustStrengthLocal * GUST_HORIZ_ACCEL;
-                    this.velocityZ += finalGustDirZ * gustStrengthLocal * GUST_HORIZ_ACCEL;
+                    this.yd += gustStrengthLocal * GUST_UP_ACCEL;
+                    this.xd += finalGustDirX * gustStrengthLocal * GUST_HORIZ_ACCEL;
+                    this.zd += finalGustDirZ * gustStrengthLocal * GUST_HORIZ_ACCEL;
                 }
             }
 
             // --- Velocity & Rotation Update with Dynamic Horizontal Cap ---
             float dynamicHorizontalCap = HORIZ_SPEED_CAP + gustStrengthLocal * EXTRA_HCAP;
-            float horizontalSpeedSquared = (float)(this.velocityX * this.velocityX + this.velocityZ * this.velocityZ);
+            float horizontalSpeedSquared = (float)(this.xd * this.xd + this.zd * this.zd);
             if (horizontalSpeedSquared > dynamicHorizontalCap * dynamicHorizontalCap) {
-                float scale = dynamicHorizontalCap / MathHelper.sqrt(horizontalSpeedSquared);
-                this.velocityX *= scale;
-                this.velocityZ *= scale;
+                float scale = dynamicHorizontalCap / Mth.sqrt(horizontalSpeedSquared);
+                this.xd *= scale;
+                this.zd *= scale;
             }
 
             // --- Roll update ---
-            this.prevAngle = this.angle;
+            this.oRoll = this.roll;
             this.gustSpinVel *= GUST_SPIN_DAMP;
             // Angular velocity from sway is now based on cos(phase) to make it fastest at the apex of the swing, creating a 'twist'.
             float swayAngularVelocity = cosPhase * this.swayFrequency * SWAY_ROTATION_AMPLITUDE * SWAY_ROTATION_SPEED_MOD;
-            this.angle += this.constantRollVelocity + swayAngularVelocity + this.gustSpinVel;
+            this.roll += this.constantRollVelocity + swayAngularVelocity + this.gustSpinVel;
         }
 
         super.tick();
@@ -259,13 +258,13 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
         // --- Finalization ---
         // Settle quickly after landing on a block.
         if (this.onGround) {
-            this.maxAge = Math.min(this.maxAge, this.age + 10);
+            this.lifetime = Math.min(this.lifetime, this.age + 10);
         }
     }
 
     @Override
-    public ParticleTextureSheet getType() {
-        return ParticleTextureSheet.PARTICLE_SHEET_TRANSLUCENT;
+    public ParticleRenderType getRenderType() {
+        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
     // --- Deterministic Wind Model ---
@@ -278,12 +277,12 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
      * Deterministically samples a wind gust based on the current world time and particle position.
      * This creates spatially and temporally coherent wind effects for groups of particles.
      */
-    private static Gust sampleGust(ClientWorld world, double x, double z) {
-        long worldTime = world.getTime();
+    private static Gust sampleGust(ClientLevel world, double x, double z) {
+        long worldTime = world.getGameTime();
         long gustWindowIndex = Math.floorDiv(worldTime, GUST_WINDOW_TICKS);
 
-        int cellX = MathHelper.floor((float)x) / GUST_CELL_BLOCKS;
-        int cellZ = MathHelper.floor((float)z) / GUST_CELL_BLOCKS;
+        int cellX = Mth.floor((float)x) / GUST_CELL_BLOCKS;
+        int cellZ = Mth.floor((float)z) / GUST_CELL_BLOCKS;
 
         long baseSeed = mix64(cellX, cellZ, gustWindowIndex);
         Random r = new Random(baseSeed);
@@ -302,9 +301,9 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
             return new Gust(false, key, 0, gustDurationTicks, 0f, 0f);
         }
 
-        float theta = r.nextFloat() * MathHelper.TAU;
-        float gustDirX = MathHelper.cos(theta);
-        float gustDirZ = MathHelper.sin(theta);
+        float theta = r.nextFloat() * Mth.TWO_PI;
+        float gustDirX = Mth.cos(theta);
+        float gustDirZ = Mth.sin(theta);
         long key = (baseSeed ^ gustStartTick);
         int ticksSinceGustStart = tickInCurrentWindow - gustStartTick;
 
@@ -328,7 +327,7 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
 
     /** A smoothing function (ease-in, ease-out) for gust strength envelopes. */
     private static float smooth01(float x) {
-        x = MathHelper.clamp(x, 0f, 1f);
+        x = Mth.clamp(x, 0f, 1f);
         return x * x * (3f - 2f * x);
     }
 
@@ -336,15 +335,15 @@ public class HamsterBeddingParticle extends SpriteBillboardParticle {
     /**
      * The factory for creating instances of {@link HamsterBeddingParticle}.
      */
-    public static class Factory implements ParticleFactory<SimpleParticleType> {
-        private final SpriteProvider sprites;
+    public static class Factory implements ParticleProvider<SimpleParticleType> {
+        private final SpriteSet sprites;
 
-        public Factory(SpriteProvider sprites) {
+        public Factory(SpriteSet sprites) {
             this.sprites = sprites;
         }
 
         @Override
-        public Particle createParticle(SimpleParticleType type, ClientWorld world,
+        public Particle createParticle(SimpleParticleType type, ClientLevel world,
                                        double x, double y, double z,
                                        double vx, double vy, double vz) {
             return new HamsterBeddingParticle(world, x, y, z, vx, vy, vz, this.sprites);

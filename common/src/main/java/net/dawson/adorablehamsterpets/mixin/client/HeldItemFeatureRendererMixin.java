@@ -1,20 +1,20 @@
 package net.dawson.adorablehamsterpets.mixin.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.dawson.adorablehamsterpets.item.ModItems;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.feature.HeldItemFeatureRenderer;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Arm;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(HeldItemFeatureRenderer.class)
+@Mixin(ItemInHandLayer.class)
 public abstract class HeldItemFeatureRendererMixin {
 
     @Inject(
@@ -24,15 +24,15 @@ public abstract class HeldItemFeatureRendererMixin {
     private void adorablehamsterpets$hideAcornRingInOffhand(
             LivingEntity entity,
             ItemStack stack,
-            ModelTransformationMode transformationMode,
-            Arm arm,
-            MatrixStack matrices,
-            VertexConsumerProvider vertexConsumers,
+            ItemDisplayContext transformationMode,
+            HumanoidArm arm,
+            PoseStack matrices,
+            MultiBufferSource vertexConsumers,
             int light,
             CallbackInfo ci) {
-        if (entity instanceof PlayerEntity
+        if (entity instanceof Player
                 && arm != entity.getMainArm()
-                && stack.isOf(ModItems.ACORN_RING.get())) {
+                && stack.is(ModItems.ACORN_RING.get())) {
             ci.cancel();
         }
     }

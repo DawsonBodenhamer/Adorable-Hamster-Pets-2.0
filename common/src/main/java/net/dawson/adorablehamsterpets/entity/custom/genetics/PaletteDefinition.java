@@ -1,6 +1,6 @@
 package net.dawson.adorablehamsterpets.entity.custom.genetics;
 
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Defines a single hamster color palette, storing its physical texture data (if programmatic)
@@ -11,7 +11,7 @@ public record PaletteDefinition(
         String author,
         TextureType type,
         int[] hexCodes,
-        Vec3d colorSpacePos,
+        Vec3 colorSpacePos,
         float diluteness,
         HamsterColorZone zone
 ) {}

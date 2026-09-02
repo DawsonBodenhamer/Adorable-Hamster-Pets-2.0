@@ -5,18 +5,23 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterProjectileEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.LeavesBlock;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.*;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
+import net.minecraft.core.*;
+import net.minecraft.world.phys.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -69,7 +74,7 @@ public class TreeHeistUtil {
      * Scans the structure connected to the given start position to identify a unique Tree ID and its canopy.
      * Uses a robust "Leaf -> Log -> Tree" algorithm similar to tree chopper mods.
      */
-    public static TreeScanResult scanForTree(World world, BlockPos startPos) {
+    public static TreeScanResult scanForTree(Level world, BlockPos startPos) {
         BlockState startState = world.getBlockState(startPos);
         boolean isLeaf = ConfigDataCache.isHeistableLeaf(startState);
         boolean isLog = ConfigDataCache.isHeistableLog(startState) && Platform.isModLoaded("dynamictrees");
@@ -126,8 +131,8 @@ public class TreeHeistUtil {
     /**
      * Helper to bridge between the Entity's stored data and the particle logic.
      */
-    public static void spawnDebugParticles(World world, BlockPos anchor, List<Long> leafLongs) {
-        if (world.isClient || !(world instanceof ServerWorld serverWorld)) return;
+    public static void spawnDebugParticles(Level world, BlockPos anchor, List<Long> leafLongs) {
+        if (world.isClientSide || !(world instanceof ServerLevel serverWorld)) return;
 
         // 1. Anchor Visualization
         // Spawns a rotating ring of particles around the trunk anchor
@@ -135,7 +140,7 @@ public class TreeHeistUtil {
             ParticleEffectsUtil.spawnSpinningRing(
                     world,
                     anchor,
-                    ParticleTypes.TRIAL_SPAWNER_DETECTION_OMINOUS, // TODO: Use WAX_ON on 1.20.1 with an upward velocity of 2.0 or even 3.0
+                    ParticleTypes.TRIAL_SPAWNER_DETECTED_PLAYER_OMINOUS, // TODO: Use WAX_ON on 1.20.1 with an upward velocity of 2.0 or even 3.0
                     10,
                     0.85,
                     0.0,
@@ -152,12 +157,12 @@ public class TreeHeistUtil {
             int particleCount = 200; // Spawn 200 sparkles per tick
             for (int i = 0; i < particleCount; i++) {
                 long leafPosLong = leafLongs.get(world.getRandom().nextInt(leafLongs.size()));
-                BlockPos leafPos = BlockPos.fromLong(leafPosLong);
+                BlockPos leafPos = BlockPos.of(leafPosLong);
 
                 ParticleEffectsUtil.spawnSphericalShell(
                         world,
-                        Vec3d.ofCenter(leafPos),
-                        ParticleTypes.TRIAL_SPAWNER_DETECTION, // TODO: Use WAX_OFF on 1.20.1
+                        Vec3.atCenterOf(leafPos),
+                        ParticleTypes.TRIAL_SPAWNER_DETECTED_PLAYER, // TODO: Use WAX_OFF on 1.20.1
                         1,
                         0.7,
                         0.2
@@ -169,25 +174,25 @@ public class TreeHeistUtil {
     /**
      * Adapter for TreeScanResult object.
      */
-    public static void spawnDebugParticles(World world, TreeScanResult result) {
-        if (world.isClient) return;
+    public static void spawnDebugParticles(Level world, TreeScanResult result) {
+        if (world.isClientSide) return;
         List<Long> longs = new ArrayList<>();
         for (BlockPos p : result.validCanopyPositions()) longs.add(p.asLong());
         spawnDebugParticles(world, result.treeId(), longs);
     }
 
-    public static BlockPos findExitPosition(World world, BlockPos startPos) {
+    public static BlockPos findExitPosition(Level world, BlockPos startPos) {
         // 1. Primary Strategy: Gravity (Downwards)
         for (int y = 1; y <= 15; y++) {
-            BlockPos check = startPos.down(y);
+            BlockPos check = startPos.below(y);
             if (isSafeExit(world, check)) {
                 return check;
             }
         }
 
         // 2. Secondary Strategy: Ejection (Horizontal)
-        for (Direction dir : Direction.Type.HORIZONTAL) {
-            BlockPos check = startPos.offset(dir);
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            BlockPos check = startPos.relative(dir);
             if (isSafeExit(world, check)) {
                 return check;
             }
@@ -195,7 +200,7 @@ public class TreeHeistUtil {
 
         // 3. Tertiary Strategy: Escape (Upwards)
         for (int y = 1; y <= 5; y++) {
-            BlockPos check = startPos.up(y);
+            BlockPos check = startPos.above(y);
             if (isSafeExit(world, check)) {
                 return check;
             }
@@ -208,11 +213,11 @@ public class TreeHeistUtil {
     /**
      * Sends the appropriate start message to the player based on the calculated profitability of the area.
      */
-    public static void sendHeistStartMessage(PlayerEntity player, float profitability) {
+    public static void sendHeistStartMessage(Player player, float profitability) {
         if (!Configs.AHP_UI.enableTreeHeistStartMessage) return;
 
         String key = "message.adorablehamsterpets.tree_heist_start_high";
-        Formatting color = Formatting.WHITE;
+        ChatFormatting color = ChatFormatting.WHITE;
 
         if (profitability < 0.4f) {
             key = "message.adorablehamsterpets.tree_heist_start_low";
@@ -228,7 +233,7 @@ public class TreeHeistUtil {
                     key);
         }
 
-        player.sendMessage(Text.translatable(key).formatted(color), true);
+        player.displayClientMessage(Component.translatable(key).withStyle(color), true);
     }
 
     /**
@@ -238,22 +243,22 @@ public class TreeHeistUtil {
     @Nullable
     public static BlockHitResult checkNonSolidCollision(HamsterProjectileEntity projectile) {
 
-        Box moveBox = projectile.getBoundingBox().stretch(projectile.getVelocity());
-        World world = projectile.getWorld();
+        AABB moveBox = projectile.getBoundingBox().expandTowards(projectile.getDeltaMovement());
+        Level world = projectile.level();
 
-        for (BlockPos checkPos : BlockPos.iterate(
-                MathHelper.floor(moveBox.minX),
-                MathHelper.floor(moveBox.minY),
-                MathHelper.floor(moveBox.minZ),
-                MathHelper.floor(moveBox.maxX),
-                MathHelper.floor(moveBox.maxY),
-                MathHelper.floor(moveBox.maxZ)
+        for (BlockPos checkPos : BlockPos.betweenClosed(
+                Mth.floor(moveBox.minX),
+                Mth.floor(moveBox.minY),
+                Mth.floor(moveBox.minZ),
+                Mth.floor(moveBox.maxX),
+                Mth.floor(moveBox.maxY),
+                Mth.floor(moveBox.maxZ)
         )) {
             BlockState state = world.getBlockState(checkPos);
             if (TreeHeistUtil.isValidHeistStartBlock(state)) {
-                Vec3d hitPos = new Vec3d(checkPos.getX() + 0.5, checkPos.getY() + 0.5, checkPos.getZ() + 0.5);
+                Vec3 hitPos = new Vec3(checkPos.getX() + 0.5, checkPos.getY() + 0.5, checkPos.getZ() + 0.5);
                 // Create fake block hit result to pass into collision handler
-                return new BlockHitResult(hitPos, Direction.UP, checkPos.toImmutable(), false);
+                return new BlockHitResult(hitPos, Direction.UP, checkPos.immutable(), false);
             }
         }
 
@@ -268,7 +273,7 @@ public class TreeHeistUtil {
     /**
      * Helper Step A: Performs a gradient-descent BFS to find the nearest log connected to the leaves.
      */
-    private static BlockPos findConnectedLog(World world, BlockPos startNode) {
+    private static BlockPos findConnectedLog(Level world, BlockPos startNode) {
         Queue<BlockPos> queue = new ArrayDeque<>();
         Set<BlockPos> visited = new HashSet<>();
 
@@ -287,13 +292,13 @@ public class TreeHeistUtil {
 
             // Check all 6 neighbors
             for (Direction dir : Direction.values()) {
-                BlockPos neighbor = current.offset(dir);
+                BlockPos neighbor = current.relative(dir);
                 if (!visited.add(neighbor)) continue;
 
                 BlockState state = world.getBlockState(neighbor);
 
                 // Found a log. Return immediately.
-                if (state.isIn(BlockTags.LOGS)) {
+                if (state.is(BlockTags.LOGS)) {
                     return neighbor;
                 }
 
@@ -304,7 +309,7 @@ public class TreeHeistUtil {
                     // Follow the path of decreasing distance (towards trunk).
                     if (dist <= startDist || dist < 7) {
                         // Don't wander too far from origin
-                        if (neighbor.getManhattanDistance(startNode) <= MAX_TRUNK_SEARCH_DIST) {
+                        if (neighbor.distManhattan(startNode) <= MAX_TRUNK_SEARCH_DIST) {
                             queue.add(neighbor);
                         }
                     }
@@ -318,7 +323,7 @@ public class TreeHeistUtil {
      * Helper Step B: Maps an entire tree (logs + canopy) starting from a known log block.
      * Calculates the Tree ID from the bottom-most log.
      */
-    private static TreeScanResult mapTreeFromLog(World world, BlockPos initialLog) {
+    private static TreeScanResult mapTreeFromLog(Level world, BlockPos initialLog) {
         // 1. Scan Logs (Trunk & Branches)
         Set<BlockPos> treeLogs = new HashSet<>();
         Queue<BlockPos> logQueue = new ArrayDeque<>();
@@ -346,7 +351,7 @@ public class TreeHeistUtil {
                     for (int z = -1; z <= 1; z++) {
                         if (x == 0 && y == 0 && z == 0) continue;
 
-                        BlockPos neighbor = current.add(x, y, z);
+                        BlockPos neighbor = current.offset(x, y, z);
                         if (!treeLogs.contains(neighbor)) {
                             if (ConfigDataCache.isHeistableLog(world.getBlockState(neighbor))) {
                                 treeLogs.add(neighbor);
@@ -371,7 +376,7 @@ public class TreeHeistUtil {
         // Seed with neighbors of all logs
         for (BlockPos log : treeLogs) {
             for (Direction dir : Direction.values()) {
-                BlockPos n = log.offset(dir);
+                BlockPos n = log.relative(dir);
                 // Mark visited immediately to prevent adding same leaf multiple times
                 if (!treeLogs.contains(n) && visitedLeaves.add(n)) {
                     BlockState nState = world.getBlockState(n);
@@ -391,7 +396,7 @@ public class TreeHeistUtil {
             BlockState state = world.getBlockState(current);
 
             // Double check validity (should be valid from queue, but safe)
-            if (state.isIn(BlockTags.LEAVES)) {
+            if (state.is(BlockTags.LEAVES)) {
                 int dist = getLeafDistance(state);
 
                 // Add to result set
@@ -399,7 +404,7 @@ public class TreeHeistUtil {
 
                 // Expand to neighbors
                 for (Direction dir : Direction.values()) {
-                    BlockPos n = current.offset(dir);
+                    BlockPos n = current.relative(dir);
                     if (!treeLogs.contains(n) && visitedLeaves.add(n)) {
                         BlockState nState = world.getBlockState(n);
                         if (ConfigDataCache.isHeistableLeaf(nState)) {
@@ -427,7 +432,7 @@ public class TreeHeistUtil {
      * Helper Step C: Maps a "floating bush" (no logs).
      * Calculates Tree ID from the spatially lowest/first block.
      */
-    private static TreeScanResult mapFloatingBush(World world, BlockPos startPos) {
+    private static TreeScanResult mapFloatingBush(Level world, BlockPos startPos) {
         Set<BlockPos> validLeaves = new HashSet<>(); // The Result Set: Only confirmed leaves
         Set<BlockPos> visited = new HashSet<>();     // The Checked Set: Leaves + Neighbors
         Queue<BlockPos> queue = new ArrayDeque<>();
@@ -449,7 +454,7 @@ public class TreeHeistUtil {
             }
 
             for (Direction dir : Direction.values()) {
-                BlockPos n = current.offset(dir);
+                BlockPos n = current.relative(dir);
                 // Mark as visited to prevent re-processing
                 if (visited.add(n)) {
                     // Check if it is a valid leaf block before adding to queue or result
@@ -471,7 +476,7 @@ public class TreeHeistUtil {
      * within a set radius from the starting point. Used for compatibility with mods
      * like Dynamic Trees that don't use vanilla distance properties for their leaf blocks.
      */
-    private static TreeScanResult mapLocalizedCanopy(World world, BlockPos startPos) {
+    private static TreeScanResult mapLocalizedCanopy(Level world, BlockPos startPos) {
         Set<BlockPos> validLeaves = new HashSet<>();
         Queue<BlockPos> queue = new ArrayDeque<>();
         Set<BlockPos> visited = new HashSet<>();
@@ -490,7 +495,7 @@ public class TreeHeistUtil {
             BlockPos current = queue.poll();
 
             for (Direction dir : Direction.values()) {
-                BlockPos n = current.offset(dir);
+                BlockPos n = current.relative(dir);
 
                 // Keep within radius to prevent scanning the entire forest
                 int dx = Math.abs(n.getX() - startPos.getX());
@@ -526,8 +531,8 @@ public class TreeHeistUtil {
      * Gets the 'distance' property from a leaf block state safely.
      */
     private static int getLeafDistance(BlockState state) {
-        if (state.contains(LeavesBlock.DISTANCE)) {
-            return state.get(LeavesBlock.DISTANCE);
+        if (state.hasProperty(LeavesBlock.DISTANCE)) {
+            return state.getValue(LeavesBlock.DISTANCE);
         }
         return 7; // Treat as far/decayable if property missing
     }
@@ -536,14 +541,14 @@ public class TreeHeistUtil {
      * Determines if a position is a valid, safe exit point for the hamster.
      * Checks for collision and ensures the spot isn't a 1x1 enclosed pocket.
      */
-    private static boolean isSafeExit(World world, BlockPos pos) {
+    private static boolean isSafeExit(Level world, BlockPos pos) {
         // 1. Must be non-colliding (Air, Grass, Water, etc.)
         if (!world.getBlockState(pos).getCollisionShape(world, pos).isEmpty()) {
             return false;
         }
 
         // 2. Vertical Check: Is there a floor?
-        BlockPos below = pos.down();
+        BlockPos below = pos.below();
         if (world.getBlockState(below).getCollisionShape(world, below).isEmpty()) {
             // The block below is non-colliding (Air/Passable).
             // Consider this SAFE because it prevents getting stuck in a 1x1x1 gap.
@@ -559,7 +564,7 @@ public class TreeHeistUtil {
      * Performs a limited flood fill to determine if the given position is part of a small enclosed space.
      * @return true if the space is smaller than the threshold (5 blocks), indicating a pocket.
      */
-    private static boolean isSmallPocket(World world, BlockPos startPos) {
+    private static boolean isSmallPocket(Level world, BlockPos startPos) {
         Set<BlockPos> visited = new HashSet<>();
         Queue<BlockPos> queue = new ArrayDeque<>();
 
@@ -577,8 +582,8 @@ public class TreeHeistUtil {
                 return false; // Found enough space, it's not a pocket.
             }
 
-            for (Direction dir : Direction.Type.HORIZONTAL) {
-                BlockPos neighbor = current.offset(dir);
+            for (Direction dir : Direction.Plane.HORIZONTAL) {
+                BlockPos neighbor = current.relative(dir);
                 if (!visited.contains(neighbor)) {
                     // If neighbor is air (no collision), add to queue
                     if (world.getBlockState(neighbor).getCollisionShape(world, neighbor).isEmpty()) {

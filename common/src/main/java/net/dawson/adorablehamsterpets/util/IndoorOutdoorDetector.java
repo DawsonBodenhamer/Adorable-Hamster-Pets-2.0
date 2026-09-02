@@ -1,11 +1,19 @@
 package net.dawson.adorablehamsterpets.util;
 
-import net.minecraft.block.*;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.LightType;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.*;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FenceBlock;
+import net.minecraft.world.level.block.IronBarsBlock;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.StainedGlassBlock;
+import net.minecraft.world.level.block.TintedGlassBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * A client-side utility for robust indoor vs. outdoor detection.
@@ -70,11 +78,11 @@ public final class IndoorOutdoorDetector {
      * @param z The Z coordinate.
      * @return True if the position is considered outdoors, false otherwise.
      */
-    public static boolean isOutdoor(ClientWorld world, double x, double y, double z) {
-        if (!world.getDimension().hasSkyLight()) return false; // Nether/End are always indoors for wind
+    public static boolean isOutdoor(ClientLevel world, double x, double y, double z) {
+        if (!world.dimensionType().hasSkyLight()) return false; // Nether/End are always indoors for wind
 
-        final long nowTick = world.getTime();
-        final BlockPos basePos = BlockPos.ofFloored(x, y + 0.2, z);
+        final long nowTick = world.getGameTime();
+        final BlockPos basePos = BlockPos.containing(x, y + 0.2, z);
         final long key = keyFor(world, basePos);
         final int idx = bucketIndex(key);
 
@@ -112,7 +120,7 @@ public final class IndoorOutdoorDetector {
 
     // --- Scoring Logic ---
 
-    private static float computeOutdoorScore(ClientWorld world, BlockPos pos) {
+    private static float computeOutdoorScore(ClientLevel world, BlockPos pos) {
         float horizontalOpenFrac = horizontalOpennessFraction(world, pos);
         float roofClearanceScore = roofClearanceFactor(world, pos);
         float skylightScore = skylightFactorCorrected(world, pos);
@@ -122,14 +130,14 @@ public final class IndoorOutdoorDetector {
                 + WEIGHT_ROOF_CLEARANCE * roofClearanceScore
                 + WEIGHT_SKYLIGHT * skylightScore;
 
-        return MathHelper.clamp(score, 0f, 1f);
+        return Mth.clamp(score, 0f, 1f);
     }
 
     /** More open directions result in a score closer to 1.0. */
-    private static float horizontalOpennessFraction(ClientWorld world, BlockPos base) {
+    private static float horizontalOpennessFraction(ClientLevel world, BlockPos base) {
         int openDirections = 0;
         for (int i = 0; i < HORIZONTAL_OPENNESS_RAY_COUNT; i++) {
-            double ang = (MathHelper.TAU * i) / HORIZONTAL_OPENNESS_RAY_COUNT;
+            double ang = (Mth.TWO_PI * i) / HORIZONTAL_OPENNESS_RAY_COUNT;
             double cos = Math.cos(ang), sin = Math.sin(ang);
 
             boolean reachedOpening = false;
@@ -152,7 +160,7 @@ public final class IndoorOutdoorDetector {
 
                 // If this column can see the sky or has strong skylight, it's an opening
                 BlockPos check = new BlockPos(sx, base.getY() + 1, sz);
-                if (world.isSkyVisible(check) || world.getLightLevel(LightType.SKY, check) >= HORIZONTAL_OPENNESS_STRONG_SKYLIGHT_THRESHOLD) {
+                if (world.canSeeSky(check) || world.getBrightness(LightLayer.SKY, check) >= HORIZONTAL_OPENNESS_STRONG_SKYLIGHT_THRESHOLD) {
                     reachedOpening = true;
                     break;
                 }
@@ -165,11 +173,11 @@ public final class IndoorOutdoorDetector {
     }
 
     /** More clearance up to the search range results in a score closer to 1.0. */
-    private static float roofClearanceFactor(ClientWorld world, BlockPos pos) {
+    private static float roofClearanceFactor(ClientLevel world, BlockPos pos) {
         int clearance = 0;
         // Scan upwards from the particle's position.
         for (int i = 1; i <= ROOF_CLEARANCE_VERTICAL_SEARCH_RANGE_BLOCKS; i++) {
-            BlockPos checkPos = pos.up(i);
+            BlockPos checkPos = pos.above(i);
             BlockState state = world.getBlockState(checkPos);
             // A non-porous block is considered a roof.
             if (isNonPorousWindBlock(state, world, checkPos)) {
@@ -177,35 +185,35 @@ public final class IndoorOutdoorDetector {
             }
             clearance++; // The number of clear blocks above
         }
-        return MathHelper.clamp(clearance / (float) ROOF_CLEARANCE_VERTICAL_SEARCH_RANGE_BLOCKS, 0f, 1f);
+        return Mth.clamp(clearance / (float) ROOF_CLEARANCE_VERTICAL_SEARCH_RANGE_BLOCKS, 0f, 1f);
     }
 
     /** Skylight scaled to [0,1], but clamped to zero if a blocking or glass block is found above. */
-    private static float skylightFactorCorrected(ClientWorld world, BlockPos pos) {
+    private static float skylightFactorCorrected(ClientLevel world, BlockPos pos) {
         if (!columnToSkyIsClear(world, pos, SKYLIGHT_CLEAR_COLUMN_MAX_STEPS)) return 0.0f;
-        int sky = world.getLightLevel(LightType.SKY, pos);
-        return MathHelper.clamp(sky / 15.0f, 0f, 1f);
+        int sky = world.getBrightness(LightLayer.SKY, pos);
+        return Mth.clamp(sky / 15.0f, 0f, 1f);
     }
 
     // --- Block Property Checks ---
 
     /** Checks if there is no solid or glass-like block within maxSteps above the position. */
-    private static boolean columnToSkyIsClear(ClientWorld world, BlockPos from, int maxSteps) {
+    private static boolean columnToSkyIsClear(ClientLevel world, BlockPos from, int maxSteps) {
         for (int dy = 1; dy <= maxSteps; dy++) {
-            BlockPos p = from.up(dy);
+            BlockPos p = from.above(dy);
             BlockState s = world.getBlockState(p);
-            if (isGlassLike(s) || s.getBlock() instanceof PaneBlock) return false;
+            if (isGlassLike(s) || s.getBlock() instanceof IronBarsBlock) return false;
             if (!s.isAir() && !s.getCollisionShape(world, p).isEmpty()) return false;
         }
         return true;
     }
 
     /** A non-porous wind blocker has a solid collision shape and is not a porous block like a fence or leaves. */
-    private static boolean isNonPorousWindBlock(BlockState s, ClientWorld world, BlockPos at) {
+    private static boolean isNonPorousWindBlock(BlockState s, ClientLevel world, BlockPos at) {
         if (s.isAir()) return false;
         Block block = s.getBlock();
         if (block instanceof FenceBlock || block instanceof LeavesBlock) return false;
-        if (isGlassLike(s) || block instanceof PaneBlock) return true; // Glass blocks wind
+        if (isGlassLike(s) || block instanceof IronBarsBlock) return true; // Glass blocks wind
         return !s.getCollisionShape(world, at).isEmpty();
     }
 
@@ -217,11 +225,11 @@ public final class IndoorOutdoorDetector {
 
     // --- Cache Management ---
 
-    private static long keyFor(ClientWorld world, BlockPos pos) {
+    private static long keyFor(ClientLevel world, BlockPos pos) {
         int cellX = pos.getX() >> 1;
         int cellZ = pos.getZ() >> 1;
         int yQuart = pos.getY() >> 1;
-        long dimHint = world.getDimension().hasSkyLight() ? 1L : 2L;
+        long dimHint = world.dimensionType().hasSkyLight() ? 1L : 2L;
         long k = (dimHint << 48)
                 ^ (((long)cellX & 0xFFFFL) << 32)
                 ^ (((long)cellZ & 0xFFFFL) << 16)

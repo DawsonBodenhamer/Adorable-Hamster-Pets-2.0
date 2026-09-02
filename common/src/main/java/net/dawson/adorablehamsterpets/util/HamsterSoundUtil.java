@@ -5,10 +5,10 @@ import static net.dawson.adorablehamsterpets.sound.ModSounds.getRandomSoundFrom;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.sound.SoundEvent;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Selects hamster vocalizations and server-side fallback footsteps.
@@ -30,7 +30,7 @@ public final class HamsterSoundUtil {
 
     public static SoundEvent selectAmbientSound(HamsterEntity hamster) {
         // Statues and knocked-out hamsters remain silent.
-        if (hamster.isAiDisabled() || hamster.isKnockedOut()) {
+        if (hamster.isNoAi() || hamster.isKnockedOut()) {
             return null;
         }
 
@@ -43,7 +43,7 @@ public final class HamsterSoundUtil {
         }
 
         boolean playSleepSounds;
-        if (hamster.isTamed()) {
+        if (hamster.isTame()) {
             HamsterEntity.DozingPhase phase = hamster.getDozingPhase();
             playSleepSounds =
                     phase == HamsterEntity.DozingPhase.DRIFTING_OFF
@@ -81,15 +81,15 @@ public final class HamsterSoundUtil {
 
     public static void playFallbackStepSound(HamsterEntity hamster, BlockState state) {
         // Rendered hamsters produce their footsteps through the client animation path.
-        if (hamster.getWorld().isClient()
+        if (hamster.level().isClientSide()
                 || HamsterRenderTracker.isBeingRendered(hamster.getId())) {
             return;
         }
 
         try {
-            BlockSoundGroup group = state.getSoundGroup();
+            SoundType group = state.getSoundType();
             float volume =
-                    state.isOf(Blocks.GRAVEL)
+                    state.is(Blocks.GRAVEL)
                             ? DEFAULT_FOOTSTEP_VOLUME * GRAVEL_VOLUME_MODIFIER
                             : DEFAULT_FOOTSTEP_VOLUME;
             hamster.playSound(group.getStepSound(), volume, group.getPitch() * 1.5F);

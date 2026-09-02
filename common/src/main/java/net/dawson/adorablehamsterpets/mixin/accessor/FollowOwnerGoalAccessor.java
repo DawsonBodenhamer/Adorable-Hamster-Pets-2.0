@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.mixin.accessor;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.FollowOwnerGoal;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.FollowOwnerGoal;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -11,18 +11,18 @@ public interface FollowOwnerGoalAccessor {
     @Accessor("owner")
     LivingEntity getOwner();
 
-    @Accessor("minDistance")
+    @Accessor("startDistance")
     float getMinDistance();
 
-    @Accessor("maxDistance")
+    @Accessor("stopDistance")
     float getMaxDistance();
 
-    @Accessor("speed")
+    @Accessor("speedModifier")
     double getSpeed();
 
-    @Accessor("updateCountdownTicks")
+    @Accessor("timeToRecalcPath")
     int getUpdateCountdownTicks();
 
-    @Accessor("updateCountdownTicks")
+    @Accessor("timeToRecalcPath")
     void setUpdateCountdownTicks(int value);
 }

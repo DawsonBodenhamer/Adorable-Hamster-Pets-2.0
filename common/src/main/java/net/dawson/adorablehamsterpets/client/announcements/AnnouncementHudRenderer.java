@@ -1,18 +1,17 @@
 package net.dawson.adorablehamsterpets.client.announcements;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.math.Axis;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconAnimator;
 import net.dawson.adorablehamsterpets.config.AhpUiConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.RotationAxis;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 
 /**
@@ -21,17 +20,17 @@ import java.util.List;
  * and drawing it using animation values from the central AnnouncementIconAnimator.
  */
 public class AnnouncementHudRenderer {
-    private static final Identifier ICON_TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/item/announcement_bell_icon.png");
+    private static final ResourceLocation ICON_TEXTURE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/item/announcement_bell_icon.png");
     private static final int ICON_WIDTH = 16;
     private static final int ICON_HEIGHT = 16;
 
-    public void render(DrawContext context, float tickDelta) {
-        MinecraftClient client = MinecraftClient.getInstance();
+    public void render(GuiGraphics context, float tickDelta) {
+        Minecraft client = Minecraft.getInstance();
         final AhpUiConfig config = Configs.AHP_UI;
 
         // --- 1. Pre-render Checks ---
         // Do not render if the config disables it, a GUI is open, or there are no notifications
-        if (!config.enableHudIcon.get() || config.serverDisableAnnouncements || client.currentScreen != null) {
+        if (!config.enableHudIcon.get() || config.serverDisableAnnouncements || client.screen != null) {
             return;
         }
         List<AnnouncementManager.PendingNotification> notifications = AdorableHamsterPetsClient.getPendingNotifications();
@@ -44,8 +43,8 @@ public class AnnouncementHudRenderer {
         animator.setHovered(false); // The HUD icon is never hovered
 
         // --- 3. Calculate Position and Update Animator ---
-        int screenWidth = context.getScaledWindowWidth();
-        int screenHeight = context.getScaledWindowHeight();
+        int screenWidth = context.guiWidth();
+        int screenHeight = context.guiHeight();
 
         // This now calculates and sets the target position inside the animator
         animator.updateTargetPosition(screenWidth, screenHeight);
@@ -62,39 +61,39 @@ public class AnnouncementHudRenderer {
         double renderY = animator.getRenderY(tickDelta);
 
         // --- 5. Render the Icon ---
-        context.getMatrices().push();
+        context.pose().pushPose();
         // Use the interpolated renderX and renderY values
         // Translate to the icon's center for proper scaling and rotation
         try {
-            context.getMatrices().translate(renderX + (ICON_WIDTH / 2.0), renderY + (ICON_HEIGHT / 2.0), 0);
-            context.getMatrices().scale(finalScale, finalScale, 1.0f);
-            context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(angle));
+            context.pose().translate(renderX + (ICON_WIDTH / 2.0), renderY + (ICON_HEIGHT / 2.0), 0);
+            context.pose().scale(finalScale, finalScale, 1.0f);
+            context.pose().mulPose(Axis.ZP.rotationDegrees(angle));
             // Translate back to the top-left corner to draw the texture
-            context.getMatrices().translate(-(ICON_WIDTH / 2.0), -(ICON_HEIGHT / 2.0), 0);
+            context.pose().translate(-(ICON_WIDTH / 2.0), -(ICON_HEIGHT / 2.0), 0);
 
             RenderSystem.enableBlend();
-            context.drawTexture(ICON_TEXTURE, 0, 0, 0, 0, ICON_WIDTH, ICON_HEIGHT, ICON_WIDTH, ICON_HEIGHT);
+            context.blit(ICON_TEXTURE, 0, 0, 0, 0, ICON_WIDTH, ICON_HEIGHT, ICON_WIDTH, ICON_HEIGHT);
         } finally {
-            context.getMatrices().pop();
+            context.pose().popPose();
         }
 
         // --- 6. Render Tooltip on Hover ---
-        double mouseX = client.mouse.getX();
-        double mouseY = client.mouse.getY();
+        double mouseX = client.mouseHandler.xpos();
+        double mouseY = client.mouseHandler.ypos();
 
         if (mouseX >= renderX && mouseX <= renderX + (ICON_WIDTH * finalScale) &&
                 mouseY >= renderY && mouseY <= renderY + (ICON_HEIGHT * finalScale)) {
 
-            List<Text> tooltipLines = new java.util.ArrayList<>();
-            Text modNameText = Text.translatable("key.categories.adorablehamsterpets.main").formatted(Formatting.BLUE, Formatting.ITALIC);
+            List<Component> tooltipLines = new java.util.ArrayList<>();
+            Component modNameText = Component.translatable("key.categories.adorablehamsterpets.main").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC);
 
             AnnouncementManager.PendingNotification primary = notifications.get(0);
             // Use centralized helper method to get the main tooltip line
-            Text mainTooltipLine = AnnouncementManager.getTooltipTextForNotification(primary);
+            Component mainTooltipLine = AnnouncementManager.getTooltipTextForNotification(primary);
 
             tooltipLines.add(mainTooltipLine);
             tooltipLines.add(modNameText);
-            context.drawTooltip(client.textRenderer, tooltipLines, (int)mouseX, (int)mouseY);
+            context.renderComponentTooltip(client.font, tooltipLines, (int)mouseX, (int)mouseY);
         }
     }
 }

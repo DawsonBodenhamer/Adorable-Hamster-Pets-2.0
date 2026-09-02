@@ -19,9 +19,9 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedFloat;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.networking.payload.ResetHeistHistoryPayload;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import java.util.List;
 public class AhpMainConfig extends Config {
 
     public AhpMainConfig() {
-        super(Identifier.of(AdorableHamsterPets.MOD_ID, "main"));
+        super(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "main"));
     }
 
     @Override
@@ -353,12 +353,12 @@ public class AhpMainConfig extends Config {
     @NonSync
     @Translatable.Name("Reset Your Breeding History")
     public ConfigAction resetBreedingHistory = new ConfigAction.Builder()
-            .title(Text.translatable("config.adorablehamsterpets.main.breedingSettings.resetBreedingHistory"))
-            .desc(Text.translatable("config.adorablehamsterpets.main.breedingSettings.resetBreedingHistory.desc"))
+            .title(Component.translatable("config.adorablehamsterpets.main.breedingSettings.resetBreedingHistory"))
+            .desc(Component.translatable("config.adorablehamsterpets.main.breedingSettings.resetBreedingHistory.desc"))
             .decoration(TextureIds.INSTANCE.getRESTORE())
             .build(() -> {
-                if (MinecraftClient.getInstance().getNetworkHandler() != null) {
-                    MinecraftClient.getInstance().getNetworkHandler().sendCommand("ahp reset_player_breeding_history");
+                if (Minecraft.getInstance().getConnection() != null) {
+                    Minecraft.getInstance().getConnection().sendUnsignedCommand("ahp reset_player_breeding_history");
                 }
             });
 
@@ -391,12 +391,12 @@ public class AhpMainConfig extends Config {
     @Translatable.Name("Player Breeding Limit Type")
     @Translatable.Desc("Whether the limit resets daily, or if it's a lifetime cap per player.")
     public ValidatedCondition<LitterLimitType> playerBreedingLimitType = new ValidatedEnum<>(LitterLimitType.DAILY)
-            .toCondition(isPlayerBreedingLimitEnabled, Text.translatable("config.adorablehamsterpets.condition.litter_limit_enabled"), () -> LitterLimitType.DAILY);
+            .toCondition(isPlayerBreedingLimitEnabled, Component.translatable("config.adorablehamsterpets.condition.litter_limit_enabled"), () -> LitterLimitType.DAILY);
 
     @Translatable.Name("Max Litters Per Player")
     @Translatable.Desc("How many litters a player can orchestrate before their breeding license is revoked.")
     public ValidatedCondition<Integer> maxLittersPerPlayer = new ValidatedInt(5, 100, 1)
-            .toCondition(isPlayerBreedingLimitEnabled, Text.translatable("config.adorablehamsterpets.condition.litter_limit_enabled"), () -> 5);
+            .toCondition(isPlayerBreedingLimitEnabled, Component.translatable("config.adorablehamsterpets.condition.litter_limit_enabled"), () -> 5);
 
     @ConfigGroup.Pop
     @ConfigGroup.Pop
@@ -404,7 +404,7 @@ public class AhpMainConfig extends Config {
     @Translatable.Name("Use IRL Time")
     @Translatable.Desc("If true, 'Daily Player Breeding Limit' means 24 real-world hours. If false, it means 20 Minecraft minutes.")
     public ValidatedCondition<Boolean> useIrlTimeForBreedingLimit = new ValidatedBoolean(false)
-            .toCondition(isPlayerBreedingLimitEnabled, Text.translatable("config.adorablehamsterpets.condition.litter_limit_enabled"), () -> false);
+            .toCondition(isPlayerBreedingLimitEnabled, Component.translatable("config.adorablehamsterpets.condition.litter_limit_enabled"), () -> false);
 
     // --- Armor Perks & Visuals ---
     @Translatable.Name("Armor Perks & Visuals")
@@ -420,7 +420,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Double> ironArmorThrowSpeedBoost = new ValidatedDouble(0.5, 5.0, 0.0)
             .toCondition(
                     areArmorPerksEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
                     () -> 0.0
             );
 
@@ -429,7 +429,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Double> goldArmorSpeedBoost = new ValidatedDouble(0.20, 2.0, 0.0)
             .toCondition(
                     areArmorPerksEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
                     () -> 0.0
             );
 
@@ -443,7 +443,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Double> netheriteArmorKnockbackResist = new ValidatedDouble(0.5, 1.0, 0.0)
             .toCondition(
                     areArmorPerksEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
                     () -> 0.0
             );
 
@@ -454,7 +454,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Double> netheriteArmorThrowDamageBonus = new ValidatedDouble(10.0, 100.0, 0.0)
             .toCondition(
                     areArmorPerksEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.armor_perks_enabled"),
                     () -> 0.0
             );
 
@@ -472,7 +472,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Boolean> renderAcornHat = new ValidatedBoolean(true)
             .toCondition(
                     isArmorVisualsEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
                     () -> false
             );
 
@@ -483,7 +483,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Boolean> renderFlowersWithArmor = new ValidatedBoolean(true)
             .toCondition(
                     isArmorVisualsEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
                     () -> false
             );
 
@@ -562,7 +562,7 @@ public class AhpMainConfig extends Config {
             new ValidatedInt(10, 40, 5)
                     .toCondition(
                             isDoubleTap,
-                            Text.translatable("config.adorablehamsterpets.condition.double_tap"),
+                            Component.translatable("config.adorablehamsterpets.condition.double_tap"),
                             () -> 10
                     );
 
@@ -591,7 +591,7 @@ public class AhpMainConfig extends Config {
                             // Use the inverted validated field as gating condition
                             dynamicShoulderDisabled,
                             // Message shown when condition fails
-                            Text.translatable("config.adorablehamsterpets.condition.dynamic_shoulder_off"),
+                            Component.translatable("config.adorablehamsterpets.condition.dynamic_shoulder_off"),
                             // Fallback
                             () -> ForcedShoulderState.ALWAYS_STAND
                     );
@@ -603,7 +603,7 @@ public class AhpMainConfig extends Config {
             new ValidatedEnum<>(ForcedShoulderState.ALWAYS_STAND)
                     .toCondition(
                             dynamicShoulderDisabled,
-                            Text.translatable("config.adorablehamsterpets.condition.dynamic_shoulder_off"),
+                            Component.translatable("config.adorablehamsterpets.condition.dynamic_shoulder_off"),
                             () -> ForcedShoulderState.ALWAYS_STAND
                     );
 
@@ -614,7 +614,7 @@ public class AhpMainConfig extends Config {
             new ValidatedEnum<>(ForcedShoulderState.ALWAYS_STAND)
                     .toCondition(
                             dynamicShoulderDisabled,
-                            Text.translatable("config.adorablehamsterpets.condition.dynamic_shoulder_off"),
+                            Component.translatable("config.adorablehamsterpets.condition.dynamic_shoulder_off"),
                             () -> ForcedShoulderState.ALWAYS_STAND
                     );
 
@@ -716,14 +716,14 @@ public class AhpMainConfig extends Config {
     @Translatable.Desc("If true, the bed only requires the resurrection tribute item once to be permanently activated for infinite respawns. (Ignored if 'Free Bed Respawns' is already enabled).")
     public ValidatedCondition<Boolean> infiniteRespawnsAfterTribute = new ValidatedBoolean(false)
             .toCondition(isRespawnInBedEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.respawn_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.respawn_enabled"),
                     () -> false);
 
     @Translatable.Name("Free Bed Respawns")
     @Translatable.Desc("If true, Hamster Beds do not require a tribute item to function as a respawn point. They will work indefinitely for free.")
     public ValidatedCondition<Boolean> freeBedRespawns = new ValidatedBoolean(false)
             .toCondition(isRespawnInBedEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.respawn_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.respawn_enabled"),
                     () -> false);
 
     @Translatable.Name("Resurrection Tributes")
@@ -762,7 +762,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Boolean> circadianChaos = new ValidatedBoolean(false)
             .toCondition(
                     isSleepInBedAllowed,
-                    Text.translatable("config.adorablehamsterpets.condition.sleep_in_bed_allowed"),
+                    Component.translatable("config.adorablehamsterpets.condition.sleep_in_bed_allowed"),
                     () -> false
             );
 
@@ -774,7 +774,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Integer> minNapInBedIntervalSeconds  = new ValidatedInt(300, 7000, 5)
             .toCondition(
                     () -> allowSleepInBed.get() && circadianChaos.get(),
-                    Text.translatable("config.adorablehamsterpets.condition.circadian_chaos_on"),
+                    Component.translatable("config.adorablehamsterpets.condition.circadian_chaos_on"),
                     () -> 300
             );
 
@@ -783,7 +783,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Integer> maxNapInBedIntervalSeconds = new ValidatedInt(600, 7200, 10)
             .toCondition(
                     () -> allowSleepInBed.get() && circadianChaos.get(),
-                    Text.translatable("config.adorablehamsterpets.condition.circadian_chaos_on"),
+                    Component.translatable("config.adorablehamsterpets.condition.circadian_chaos_on"),
                     () -> 900
             );
 
@@ -792,7 +792,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Boolean> sleepDuringDay = new ValidatedBoolean(true)
             .toCondition(
                     () -> allowSleepInBed.get() && !circadianChaos.get(),
-                    Text.translatable("config.adorablehamsterpets.condition.circadian_chaos_overrides"),
+                    Component.translatable("config.adorablehamsterpets.condition.circadian_chaos_overrides"),
                     () -> true
             );
 
@@ -801,7 +801,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Integer> bedWakeUpCooldown = new ValidatedInt(300, 1200, 20)
             .toCondition(
                     isSleepInBedAllowed,
-                    Text.translatable("config.adorablehamsterpets.condition.sleep_in_bed_allowed"),
+                    Component.translatable("config.adorablehamsterpets.condition.sleep_in_bed_allowed"),
                     () -> 300
             );
 
@@ -898,7 +898,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Boolean> enableArmorPbr = new ValidatedBoolean(true)
             .toCondition(
                     isArmorVisualsEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
                     () -> false
             );
 
@@ -930,7 +930,7 @@ public class AhpMainConfig extends Config {
             new ValidatedAny<ArmorPbrValues>(new AcornPbrValues())
                     .toCondition(
                             isArmorPbrEnabled,
-                            Text.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
+                            Component.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
                             AcornPbrValues::new
                     );
 
@@ -940,7 +940,7 @@ public class AhpMainConfig extends Config {
             new ValidatedAny<ArmorPbrValues>(new IronPbrValues())
                     .toCondition(
                             isArmorPbrEnabled,
-                            Text.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
+                            Component.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
                             IronPbrValues::new
                     );
 
@@ -950,7 +950,7 @@ public class AhpMainConfig extends Config {
             new ValidatedAny<ArmorPbrValues>(new GoldPbrValues())
                     .toCondition(
                             isArmorPbrEnabled,
-                            Text.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
+                            Component.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
                             GoldPbrValues::new
                     );
 
@@ -960,7 +960,7 @@ public class AhpMainConfig extends Config {
             new ValidatedAny<ArmorPbrValues>(new DiamondPbrValues())
                     .toCondition(
                             isArmorPbrEnabled,
-                            Text.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
+                            Component.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
                             DiamondPbrValues::new
                     );
 
@@ -971,7 +971,7 @@ public class AhpMainConfig extends Config {
             new ValidatedAny<ArmorPbrValues>(new NetheritePbrValues())
                     .toCondition(
                             isArmorPbrEnabled,
-                            Text.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
+                            Component.translatable("config.adorablehamsterpets.condition.armor_pbr_enabled"),
                             NetheritePbrValues::new
                     );
 
@@ -981,7 +981,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Boolean> emissiveArmorTrims = new ValidatedBoolean(true)
             .toCondition(
                     isArmorVisualsEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.armor_visuals_enabled"),
                     () -> false
             );
 
@@ -995,7 +995,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Integer> trimEmissiveBrightness = new ValidatedInt(254, 254, 0)
             .toCondition(
                     isTrimEmissiveEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.trim_emissive_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.trim_emissive_enabled"),
                     () -> 254
             );
 
@@ -1052,8 +1052,8 @@ public class AhpMainConfig extends Config {
     @NonSync
     @Translatable.Name("Reset History")
     public ConfigAction resetHeistHistory = new ConfigAction.Builder()
-            .title(Text.translatable("config.adorablehamsterpets.main.treeHeist.resetHeistHistory"))
-            .desc(Text.translatable("config.adorablehamsterpets.main.treeHeist.resetHeistHistory.desc"))
+            .title(Component.translatable("config.adorablehamsterpets.main.treeHeist.resetHeistHistory"))
+            .desc(Component.translatable("config.adorablehamsterpets.main.treeHeist.resetHeistHistory.desc"))
             .decoration(TextureIds.INSTANCE.getRESTORE())
             .build(() -> {
                 NetworkManager.sendToServer(new ResetHeistHistoryPayload());
@@ -1145,7 +1145,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Integer> maxDailyTagGamesPerPlayer = new ValidatedInt(3, 100, 0)
             .toCondition(
                     isTagLimitEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.tag_limit_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.tag_limit_enabled"),
                     () -> 3
             );
 
@@ -1207,7 +1207,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Integer> surfaceSurpriseFeverChance = new ValidatedInt(25, 100, 0)
             .toCondition(
                     isSurfaceSurpriseEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.surface_surprise_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.surface_surprise_enabled"),
                     () -> 25);
 
     @ConfigGroup.Pop
@@ -1216,7 +1216,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Integer> surfaceSurpriseRevealDistance = new ValidatedInt(8, 40, 1)
             .toCondition(
                     isSurfaceSurpriseEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.surface_surprise_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.surface_surprise_enabled"),
                     () -> 8);
 
     @Translatable.Name("Hamster Riding Settings")
@@ -1235,7 +1235,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Double> ridingBaseSpeedMultiplier = new ValidatedDouble(0.25, 0.8, 0.0)
             .toCondition(
                     isRidingEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.riding_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.riding_enabled"),
                     () -> 0.25
             );
 
@@ -1245,7 +1245,7 @@ public class AhpMainConfig extends Config {
     public ValidatedCondition<Double> ridingSprintSpeedMultiplier = new ValidatedDouble(0.35, 1.0, 0.0)
             .toCondition(
                     isRidingEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.riding_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.riding_enabled"),
                     () -> 0.8
             );
 

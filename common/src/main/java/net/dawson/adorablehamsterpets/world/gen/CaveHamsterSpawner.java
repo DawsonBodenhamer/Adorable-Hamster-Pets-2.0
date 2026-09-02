@@ -5,16 +5,15 @@ import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.tag.ModBiomeTags;
 import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
-import net.minecraft.entity.SpawnReason;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.Heightmap;
-
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,11 +45,11 @@ public final class CaveHamsterSpawner {
      * Evaluates eligible players once per cave-spawn cycle on the server thread.
      */
     public static void onServerTick(MinecraftServer server) {
-        if (server.getTicks() % ATTEMPT_INTERVAL_TICKS != 0) return;
+        if (server.getTickCount() % ATTEMPT_INTERVAL_TICKS != 0) return;
 
-        for (ServerWorld world : server.getWorlds()) {
-            List<ServerPlayerEntity> players = world.getPlayers(player -> !player.isSpectator());
-            for (ServerPlayerEntity player : selectPlayerRepresentatives(players)) {
+        for (ServerLevel world : server.getAllLevels()) {
+            List<ServerPlayer> players = world.getPlayers(player -> !player.isSpectator());
+            for (ServerPlayer player : selectPlayerRepresentatives(players)) {
                 attemptSpawn(world, player);
             }
         }
@@ -60,9 +59,9 @@ public final class CaveHamsterSpawner {
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static List<ServerPlayerEntity> selectPlayerRepresentatives(List<ServerPlayerEntity> players) {
-        List<ServerPlayerEntity> representatives = new ArrayList<>();
-        for (ServerPlayerEntity player : players) {
+    private static List<ServerPlayer> selectPlayerRepresentatives(List<ServerPlayer> players) {
+        List<ServerPlayer> representatives = new ArrayList<>();
+        for (ServerPlayer player : players) {
             CaveHamsterSpawnPolicy.PlayerPosition position =
                     new CaveHamsterSpawnPolicy.PlayerPosition(player.getX(), player.getZ());
             boolean overlaps = representatives.stream().anyMatch(representative -> {
@@ -77,9 +76,9 @@ public final class CaveHamsterSpawner {
         return representatives;
     }
 
-    private static void attemptSpawn(ServerWorld world, ServerPlayerEntity player) {
+    private static void attemptSpawn(ServerLevel world, ServerPlayer player) {
         // --- Attempt Gate ---
-        Random random = world.getRandom();
+        RandomSource random = world.getRandom();
         if (!CaveHamsterSpawnPolicy.shouldAttempt(Configs.AHP_WORLDGEN.spawnWeight.get(), random.nextInt(100))) return;
         int nearbyCaveHamsters = countNearbyCaveHamsters(world, player);
         if (CaveHamsterSpawnPolicy.limitGroupSize(nearbyCaveHamsters, 1) == 0) return;
@@ -89,32 +88,32 @@ public final class CaveHamsterSpawner {
         if (candidate == null) return;
 
         // --- Group Spawning ---
-        int requestedGroupSize = random.nextBetween(1, Configs.AHP_WORLDGEN.maxGroupSize.get());
+        int requestedGroupSize = random.nextIntBetweenInclusive(1, Configs.AHP_WORLDGEN.maxGroupSize.get());
         int groupSize = CaveHamsterSpawnPolicy.limitGroupSize(nearbyCaveHamsters, requestedGroupSize);
         for (int index = 0; index < groupSize; index++) {
             BlockPos groupPosition = index == 0
                     ? candidate
-                    : candidate.add(random.nextBetween(-2, 2), 0, random.nextBetween(-2, 2));
+                    : candidate.offset(random.nextIntBetweenInclusive(-2, 2), 0, random.nextIntBetweenInclusive(-2, 2));
             spawnAt(world, player, groupPosition, random);
         }
     }
 
     private static BlockPos findCavePosition(
-            ServerWorld world, ServerPlayerEntity player, Random random) {
-        double angle = random.nextDouble() * MathHelper.TAU;
-        double radiusSquared = MathHelper.lerp(
+            ServerLevel world, ServerPlayer player, RandomSource random) {
+        double angle = random.nextDouble() * Mth.TWO_PI;
+        double radiusSquared = Mth.lerp(
                 random.nextDouble(),
                 MINIMUM_PLAYER_DISTANCE * MINIMUM_PLAYER_DISTANCE,
                 MAXIMUM_PLAYER_DISTANCE * MAXIMUM_PLAYER_DISTANCE);
         double radius = Math.sqrt(radiusSquared);
-        int x = MathHelper.floor(player.getX() + Math.cos(angle) * radius);
-        int z = MathHelper.floor(player.getZ() + Math.sin(angle) * radius);
-        if (!world.isChunkLoaded(x >> 4, z >> 4)) return null;
+        int x = Mth.floor(player.getX() + Math.cos(angle) * radius);
+        int z = Mth.floor(player.getZ() + Math.sin(angle) * radius);
+        if (!world.hasChunk(x >> 4, z >> 4)) return null;
 
-        int surfaceY = world.getTopY(Heightmap.Type.MOTION_BLOCKING, x, z);
+        int surfaceY = world.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
         BlockPos selected = null;
         int validFloors = 0;
-        for (int y = world.getBottomY() + 1; y < surfaceY; y++) {
+        for (int y = world.getMinBuildHeight() + 1; y < surfaceY; y++) {
             BlockPos position = new BlockPos(x, y, z);
             if (!isCaveEnvironment(world, position, surfaceY)) continue;
             if (!isValidSpawnPosition(world, player, position, null)) continue;
@@ -128,83 +127,83 @@ public final class CaveHamsterSpawner {
     }
 
     private static boolean spawnAt(
-            ServerWorld world, ServerPlayerEntity player, BlockPos position, Random random) {
+            ServerLevel world, ServerPlayer player, BlockPos position, RandomSource random) {
         HamsterEntity hamster = ModEntities.HAMSTER.get().create(world);
         if (hamster == null || !isValidSpawnPosition(world, player, position, hamster)) return false;
 
-        hamster.refreshPositionAndAngles(
+        hamster.moveTo(
                 position.getX() + 0.5,
                 position.getY(),
                 position.getZ() + 0.5,
                 random.nextFloat() * 360.0F,
                 0.0F);
-        if (!world.isSpaceEmpty(hamster)) return false;
+        if (!world.noCollision(hamster)) return false;
 
-        hamster.initializeCaveSpawn(world, world.getLocalDifficulty(position));
-        return world.spawnEntity(hamster);
+        hamster.initializeCaveSpawn(world, world.getCurrentDifficultyAt(position));
+        return world.addFreshEntity(hamster);
     }
 
     private static boolean isValidSpawnPosition(
-            ServerWorld world,
-            ServerPlayerEntity player,
+            ServerLevel world,
+            ServerPlayer player,
             BlockPos position,
             HamsterEntity hamster) {
-        if (!world.isChunkLoaded(position.getX() >> 4, position.getZ() >> 4)) return false;
-        if (!world.getWorldBorder().contains(position)) return false;
+        if (!world.hasChunk(position.getX() >> 4, position.getZ() >> 4)) return false;
+        if (!world.getWorldBorder().isWithinBounds(position)) return false;
         if (!isWithinPlayerDistance(player, position)) return false;
-        if (world.isPlayerInRange(
+        if (world.hasNearbyAlivePlayer(
                 position.getX() + 0.5,
                 position.getY(),
                 position.getZ() + 0.5,
                 MINIMUM_PLAYER_DISTANCE)) return false;
         if (!ModEntitySpawns.isBiomeAllowed(world.getBiome(position))) return false;
-        if (!world.getFluidState(position).isEmpty() || !world.getFluidState(position.up()).isEmpty()) return false;
+        if (!world.getFluidState(position).isEmpty() || !world.getFluidState(position.above()).isEmpty()) return false;
         if (!hasSpawnHeadroom(world, position)) return false;
         if (!ModEntitySpawns.isValidHamsterNaturalSpawn(
-                ModEntities.HAMSTER.get(), world, SpawnReason.NATURAL, position, world.getRandom())) return false;
+                ModEntities.HAMSTER.get(), world, MobSpawnType.NATURAL, position, world.getRandom())) return false;
         if (hamster != null && !HamsterPlacementUtil.isSafeSpawnLocation(position, world, hamster)) return false;
         return isCaveEnvironment(
                 world,
                 position,
-                world.getTopY(Heightmap.Type.MOTION_BLOCKING, position.getX(), position.getZ()));
+                world.getHeight(Heightmap.Types.MOTION_BLOCKING, position.getX(), position.getZ()));
     }
 
-    private static boolean isWithinPlayerDistance(ServerPlayerEntity player, BlockPos position) {
-        double distanceSquared = position.getSquaredDistance(player.getX(), player.getY(), player.getZ());
+    private static boolean isWithinPlayerDistance(ServerPlayer player, BlockPos position) {
+        double distanceSquared = position.distToLowCornerSqr(player.getX(), player.getY(), player.getZ());
         return distanceSquared >= MINIMUM_PLAYER_DISTANCE * MINIMUM_PLAYER_DISTANCE
                 && distanceSquared <= MAXIMUM_PLAYER_DISTANCE * MAXIMUM_PLAYER_DISTANCE;
     }
 
-    private static boolean isCaveEnvironment(ServerWorld world, BlockPos position, int surfaceY) {
+    private static boolean isCaveEnvironment(ServerLevel world, BlockPos position, int surfaceY) {
         return CaveHamsterSpawnPolicy.isCavePosition(
-                world.getBiome(position).isIn(ModBiomeTags.IS_CAVE),
-                world.isSkyVisible(position),
+                world.getBiome(position).is(ModBiomeTags.IS_CAVE),
+                world.canSeeSky(position),
                 position.getY(),
                 surfaceY);
     }
 
-    private static boolean hasSpawnHeadroom(ServerWorld world, BlockPos position) {
+    private static boolean hasSpawnHeadroom(ServerLevel world, BlockPos position) {
         return world.getBlockState(position).getCollisionShape(world, position).isEmpty()
-                && world.getBlockState(position.up()).getCollisionShape(world, position.up()).isEmpty();
+                && world.getBlockState(position.above()).getCollisionShape(world, position.above()).isEmpty();
     }
 
-    private static int countNearbyCaveHamsters(ServerWorld world, ServerPlayerEntity player) {
-        Box searchBox = player.getBoundingBox().expand(SPAWN_RADIUS);
-        return world.getEntitiesByClass(
+    private static int countNearbyCaveHamsters(ServerLevel world, ServerPlayer player) {
+        AABB searchBox = player.getBoundingBox().inflate(SPAWN_RADIUS);
+        return world.getEntitiesOfClass(
                         HamsterEntity.class,
                         searchBox,
-                        hamster -> !hamster.isTamed()
-                                && hamster.squaredDistanceTo(player) <= SPAWN_RADIUS * SPAWN_RADIUS
+                        hamster -> !hamster.isTame()
+                                && hamster.distanceToSqr(player) <= SPAWN_RADIUS * SPAWN_RADIUS
                                 && isCaveHamster(world, hamster))
                 .size();
     }
 
-    private static boolean isCaveHamster(ServerWorld world, HamsterEntity hamster) {
-        BlockPos position = hamster.getBlockPos();
-        if (!world.isChunkLoaded(position.getX() >> 4, position.getZ() >> 4)) return false;
+    private static boolean isCaveHamster(ServerLevel world, HamsterEntity hamster) {
+        BlockPos position = hamster.blockPosition();
+        if (!world.hasChunk(position.getX() >> 4, position.getZ() >> 4)) return false;
 
-        int surfaceY = world.getTopY(
-                Heightmap.Type.MOTION_BLOCKING, position.getX(), position.getZ());
+        int surfaceY = world.getHeight(
+                Heightmap.Types.MOTION_BLOCKING, position.getX(), position.getZ());
         return isCaveEnvironment(world, position, surfaceY);
     }
 }
