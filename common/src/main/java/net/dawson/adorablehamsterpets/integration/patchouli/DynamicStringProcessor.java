@@ -102,7 +102,7 @@ public class DynamicStringProcessor implements IComponentProcessor {
     public IVariable process(Level level, String key) {
         // Hand it my string when Patchouli asks for text variable
         if ("text".equals(key)) {
-            return IVariable.from(this.processedText, level.registryAccess());
+            return IVariable.wrap(new com.google.gson.JsonPrimitive(this.processedText), level.registryAccess()); // 26.x API: raw String is not serializable
         }
         return null;
     }
