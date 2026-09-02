@@ -67,6 +67,7 @@ public class HamsterProjectileRenderer extends EntityRenderer<HamsterProjectileE
         // Ensure dummy exists
         if (entity.clientDummyHamster == null) {
             entity.clientDummyHamster = ModEntities.HAMSTER.get().create(entity.level(), EntitySpawnReason.LOAD);
+            if (entity.clientDummyHamster != null) entity.clientDummyHamster.setId(-2000 - (entity.getId() & 0xFFFF)); // 26.2: dummies need an id
             if (entity.clientDummyHamster != null) {
                 entity.clientDummyHamster.setNoGravity(true);
                 entity.clientDummyHamster.setNoAi(true); // Disable AI ticking
