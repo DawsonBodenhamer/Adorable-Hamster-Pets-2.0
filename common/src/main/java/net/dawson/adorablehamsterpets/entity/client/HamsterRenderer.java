@@ -16,10 +16,7 @@ import net.dawson.adorablehamsterpets.util.HamsterRidingUtil;
 import net.dawson.adorablehamsterpets.util.HamsterTextureUtil;
 import net.dawson.adorablehamsterpets.util.RedstoneFeverUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -42,12 +39,14 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
-import com.geckolib.animation.AnimatableManager;
-import com.geckolib.cache.object.BakedGeoModel;
-import com.geckolib.cache.object.GeoBone;
+import com.geckolib.animatable.manager.AnimatableManager;
+import com.geckolib.cache.model.BakedGeoModel;
+import com.geckolib.cache.model.GeoBone;
 import com.geckolib.renderer.GeoEntityRenderer;
+import com.geckolib.renderer.base.RenderPassInfo;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 
-public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
+public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRenderState> {
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constants and Static Utilities
@@ -73,7 +72,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
     public HamsterRenderer(EntityRendererProvider.Context ctx) {
         super(ctx, new HamsterModel());
-        this.addRenderLayer(new RedstoneFeverEyesRenderLayer(this));
+        this.withRenderLayer(new RedstoneFeverEyesRenderLayer<>(this));
         this.shadowRadius = this.adultShadowRadius;
     }
 
@@ -82,284 +81,167 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public Identifier getTextureLocation(HamsterEntity entity) {
-        // Defer to caching utility
-        return HamsterTextureUtil.getHamsterTexture(entity);
+    public HamsterRenderState createRenderState(HamsterEntity entity, Void relatedObject) {
+        return new HamsterRenderState();
     }
 
     @Override
-    public boolean shouldShowName(HamsterEntity entity) {
+    public Identifier getTextureLocation(HamsterRenderState renderState) {
+        // Resolved during extraction, where the entity is still reachable.
+        return renderState.textureLocation;
+    }
+
+    @Override
+    public boolean shouldShowName(HamsterEntity entity, double distanceSq) {
         if (IS_RENDERING_IN_GUI.get()) {
             return false;
         }
-        return super.shouldShowName(entity);
+        return super.shouldShowName(entity, distanceSq);
     }
 
     @Override
-    public void preRender(PoseStack poseStack, HamsterEntity animatable, BakedGeoModel model, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
-        super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
+    public void preRenderPass(RenderPassInfo<HamsterRenderState> renderPass, SubmitNodeCollector collector) {
+        super.preRenderPass(renderPass, collector);
 
-        // Track matrices for post render access
+        // Track matrices so the post pass can position passengers, the mouth item
+        // and particle emitters against live bone transforms.
+        BakedGeoModel model = renderPass.model();
         model.getBone("left_foot").ifPresent(bone -> bone.setTrackingMatrices(true));
         model.getBone("nose").ifPresent(bone -> bone.setTrackingMatrices(true));
         model.getBone(SEAT_BONE).ifPresent(bone -> bone.setTrackingMatrices(true));
     }
 
+    /**
+     * 26.2 port: everything the old {@code render} read off the entity happens here.
+     * Drawing runs later against {@link HamsterRenderState} alone, so any value the
+     * pose or post pass needs has to be resolved and stored now.
+     */
     @Override
-    public void render(HamsterEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
-                       MultiBufferSource bufferSource, int packedLight) {
-        // --- 1. Set Shadow Radius ---
-        if (entity.isBaby()) {
-            this.shadowRadius = this.adultShadowRadius * 0.5f;
-        } else {
-            this.shadowRadius = this.adultShadowRadius;
-        }
+    public void extractRenderState(HamsterEntity entity, HamsterRenderState state, float partialTick) {
+        super.extractRenderState(entity, state, partialTick);
+
+        final boolean inGui = IS_RENDERING_IN_GUI.get();
+        state.renderingInGui = inGui;
+        state.textureLocation = HamsterTextureUtil.getHamsterTexture(entity);
+
+        // --- 1. Shadow Size ---
+        this.shadowRadius = entity.isBaby() ? this.adultShadowRadius * 0.5f : this.adultShadowRadius;
 
         // --- 2. Report to Client-Side Tracker ---
-        // Add ID to set to determine entities no longer rendered
         AdorableHamsterPetsClient.onHamsterRendered(entity.getId());
 
         // --- 3. Redstone Fever Tremor ---
-        poseStack.pushPose();
-        if (entity.hasRedstoneFever() && !entity.isRedstoneFeverBurstActive() && !IS_RENDERING_IN_GUI.get()) {
-            // --- Tuning ---
-            double baseAmplitude =  0.000D;
-            double spikeAmplitude = 0.015D;
-            double horizontalXFrequency = 4.73D;
-            double horizontalZFrequency = 4.39D;
+        // Resolved to finished offsets here; the pose pass only applies them.
+        state.tremorOffsetX = 0.0D;
+        state.tremorOffsetZ = 0.0D;
+        state.tremorRoll = 0.0F;
 
-            // --- Inputs ---
+        if (entity.hasRedstoneFever() && !entity.isRedstoneFeverBurstActive() && !inGui) {
+            final double baseAmplitude = 0.000D;
+            final double spikeAmplitude = 0.015D;
+            final double horizontalXFrequency = 4.73D;
+            final double horizontalZFrequency = 4.39D;
+
             // Severity fades from 1.0 toward 0.0
             double severity = entity.getSynchronizedRedstoneFeverSeverity();
             double renderTime = entity.level().getGameTime() + partialTick;
 
-            // --- Amplitude Pulse ---
             double spike = RedstoneFeverUtil.getTremorSpike(renderTime, entity.getUUID()) * spikeAmplitude;
             double finalAmplitude = (baseAmplitude + spike) * severity;
             double amplitudePulse = (baseAmplitude + spike) / (baseAmplitude + spikeAmplitude);
 
-            // --- Horizontal Offsets ---
             // Mismatched X/Z frequencies to prevent diagonal rocking
             double entityPhase = entity.getUUID().hashCode() * 0.61803398875D;
-            double xOffset = Math.sin(renderTime * horizontalXFrequency + entityPhase) * finalAmplitude;
-            double zOffset = Math.cos(renderTime * horizontalZFrequency + entityPhase) * finalAmplitude;
-            poseStack.translate(xOffset, 0.0D, zOffset);
-            double roll = Math.toRadians(2.5D)
+            state.tremorOffsetX = Math.sin(renderTime * horizontalXFrequency + entityPhase) * finalAmplitude;
+            state.tremorOffsetZ = Math.cos(renderTime * horizontalZFrequency + entityPhase) * finalAmplitude;
+            state.tremorRoll = (float) (Math.toRadians(2.5D)
                     * amplitudePulse
                     * severity
-                    * Math.sin(renderTime * 4.17D + entityPhase);
-            poseStack.mulPose(Axis.ZP.rotation((float) roll));
+                    * Math.sin(renderTime * 4.17D + entityPhase));
         }
 
         // --- 4. Smooth Ground Surface Height Adjustment ---
-        if (IS_RENDERING_IN_GUI.get() || entity.isShoulderPet() || entity.isProjectileDummy) {
+        if (inGui || entity.isShoulderPet() || entity.isProjectileDummy) {
             entity.renderedGroundYOffset = 0.0F;
+            state.groundYOffset = 0.0F;
         } else {
             float targetYOffset = HamsterRenderUtil.getGroundSurfaceOffset(entity);
             entity.renderedGroundYOffset += (targetYOffset - entity.renderedGroundYOffset) * 0.15F;
-            poseStack.translate(0.0, entity.renderedGroundYOffset, 0.0);
+            state.groundYOffset = entity.renderedGroundYOffset;
         }
 
         // --- 5. Iris/Shader Compatibility Hack ---
         // Force GeckoLib to rebuild bone poses for this entity. Prevents animations
         // from "bleeding" between different hamsters during multi-pass rendering.
-        // I'm detecting these multi-passes (and game pauses/server lag, because those
-        // also cause this) by checking if the render time hasn't changed.
+        // Multi-passes (and game pauses/server lag) show up as an unchanged render time.
         double currentTick = entity.tickCount + partialTick;
         AnimatableInstanceCache cache = entity.getAnimatableInstanceCache();
         if (cache != null) {
             AnimatableManager<?> manager = cache.getManagerForId(entity.getId());
-            if (manager != null) {
-                if (currentTick == entity.lastRenderTime) {
-                    // Use microscopic delta to prevent transition math from stretching model
-                    manager.updatedAt(currentTick - 0.0000001);
-                }
+            if (manager != null && currentTick == entity.lastRenderTime) {
+                // Microscopic delta, so transition math does not stretch the model
+                manager.updatedAt(currentTick - 0.0000001);
             }
         }
         entity.lastRenderTime = currentTick;
 
-        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        // --- 6. Data the post pass needs ---
+        state.entity = entity;
+        state.hasPassengers = !entity.getPassengers().isEmpty();
+    }
 
-        poseStack.popPose();
+    /** Applies the offsets resolved during extraction. */
+    @Override
+    public void adjustRenderPose(RenderPassInfo<HamsterRenderState> renderPass) {
+        super.adjustRenderPose(renderPass);
+
+        HamsterRenderState state = renderPass.renderState();
+        PoseStack poseStack = renderPass.poseStack();
+
+        if (state.tremorOffsetX != 0.0D || state.tremorOffsetZ != 0.0D) {
+            poseStack.translate(state.tremorOffsetX, 0.0D, state.tremorOffsetZ);
+        }
+        if (state.tremorRoll != 0.0F) {
+            poseStack.mulPose(Axis.ZP.rotation(state.tremorRoll));
+        }
+        if (state.groundYOffset != 0.0F) {
+            poseStack.translate(0.0D, state.groundYOffset, 0.0D);
+        }
     }
 
     @Override
-    public void renderFinal(PoseStack poseStack, HamsterEntity animatable, BakedGeoModel model, MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay, int colour) {
-        super.renderFinal(poseStack, animatable, model, bufferSource, buffer, partialTick, packedLight, packedOverlay, colour);
+    public void postRenderPass(RenderPassInfo<HamsterRenderState> renderPass, SubmitNodeCollector collector) {
+        super.postRenderPass(renderPass, collector);
 
-        // --- 1. Handle Passengers ---
-        if (!animatable.getPassengers().isEmpty()) {
-            model.getBone(SEAT_BONE).ifPresent(bone -> {
-                renderPassengersForBone(poseStack, animatable, bone, bufferSource, packedLight, partialTick);
-            });
+        HamsterRenderState state = renderPass.renderState();
+        HamsterEntity animatable = state.entity;
+        if (animatable == null) {
+            return;
         }
 
-        // --- 2. Handle Mouth Item ---
-        if (animatable.isHoldingMouthItem()) {
-            model.getBone("nose").ifPresent(bone -> {
-                renderItemForBone(poseStack, animatable, bone, bufferSource, packedLight, packedOverlay);
-            });
-        }
+        BakedGeoModel model = renderPass.model();
 
-        // --- 3. Handle Keyframe Particles ---
+        // --- 1. Handle Keyframe Particles ---
         if (animatable.particleEffectId != null) {
             handleParticleKeyframes(animatable, model);
         }
 
-        // --- 4. Handle Keyframe Sounds ---
+        // --- 2. Handle Keyframe Sounds ---
         if (animatable.soundEffectId != null) {
             handleSoundKeyframes(animatable);
         }
+
+        // TODO(26.2 port): passengers and the mouth item still need porting.
+        // Both drew through MultiBufferSource/ItemRenderer, which 26.2 removed in
+        // favour of the submit-node pipeline; they need rewriting against
+        // SubmitNodeCollector rather than a mechanical signature swap. Until then a
+        // ridden hamster shows no rider and a carried item is not drawn -- the
+        // gameplay still works, only these two visuals are missing.
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
-     *        Private Helpers
+     *        Keyframe Effects
      * ────────────────────────────────────────────────────────────────────────────*/
-
-    /**
-     * Renders hamster passengers "bone-locked" to a GeckoLib bone.
-     *
-     * <p>Core trick: Manually apply the bone's tracked matrix transform to the {@link PoseStack}.
-     * <p>
-     * Then:
-     * <ul>
-     *   <li>Move to the bone pivot (stable attachment point)</li>
-     *   <li>Cancel inherited bone scaling (keep bounce on hamster, not rider)</li>
-     *   <li>Apply seat offsets (dynamic by passenger scale)</li>
-     *   <li>Pre-cancel vanilla LivingEntityRenderer yaw rotation (avoid "double yaw")</li>
-     * </ul>
-     */
-    private void renderPassengersForBone(PoseStack matrices,
-                                         HamsterEntity hamster,
-                                         GeoBone bone,
-                                         MultiBufferSource bufferSource,
-                                         int packedLight,
-                                         float partialTick) {
-
-        final Minecraft client = Minecraft.getInstance();
-        final EntityRenderDispatcher dispatcher = client.getEntityRenderDispatcher();
-
-        // --- Base Pose: Hamster Render Space ---
-        // Already includes camera-relative translation + GeoEntityRenderer.applyRotations (180 - bodyYaw) + entity scale
-        final Matrix4f modelBase = new Matrix4f(this.modelRenderTranslations);
-        final Matrix3f modelBaseNormal = new Matrix3f(modelBase).invert().transpose();
-
-        // Temporarily disable shadow rendering for rider to prevent double shadows or artifacts
-        dispatcher.setRenderShadow(false);
-        try {
-            for (Entity passenger : hamster.getPassengers()) {
-                if (!(passenger instanceof LivingEntity living)) {
-                    continue;
-                }
-
-                // Skip fake rider in first person so it doesn't obstruct view
-                if (passenger == client.player && client.options.getCameraType().isFirstPerson()) {
-                    continue;
-                }
-
-                matrices.pushPose();
-                try {
-                    // --- 1. Jump Into Hamster's Model Render-Space ---
-                    matrices.last().pose().set(modelBase);
-                    matrices.last().normal().set(modelBaseNormal);
-
-                    // --- 2. Apply Bone Translation and Rotation ---
-                    Matrix4f bonePose = new Matrix4f(bone.getModelSpaceMatrix()); // tracked during recursive render
-
-                    // Convert TRS -> TR only
-                    // The rider should maintain their own size, not squash with the hamster's animation
-                    var t = bonePose.getTranslation(new Vector3f());
-                    var r = bonePose.getUnnormalizedRotation(new Quaternionf());
-                    Matrix4f boneTR = new Matrix4f().identity().translate(t).rotate(r);
-
-                    // Apply to current pose
-                    matrices.last().pose().mul(boneTR);
-
-                    // Keep normals correct (translation ignored automatically by Matrix3f ctor)
-                    matrices.last().normal().set(new Matrix3f(matrices.last().pose()).invert().transpose());
-
-
-                    // --- 4. Cancel Vehicle Global Scale ---
-                    // If the hamster itself is scaled, undo that scale for the rider
-                    float mountScale = hamster.getScale();
-                    if (mountScale != 1.0f) {
-                        float inv = 1.0f / mountScale;
-                        matrices.scale(inv, inv, inv);
-                    }
-
-                    // --- 5. Apply Seat Offsets ---
-                    // Use centralized logic to position rider correctly on hamster's back
-                    Vec3 seat = HamsterRidingUtil.HamsterSeatOffsets.visualSeatOffset(living, hamster.getScale());
-                    matrices.translate(seat.x, seat.y, seat.z);
-
-                    // --- 6. Neutralize Vanilla Yaw ---
-                    // Vanilla LivingEntityRenderer applies rotY(180 - yaw), so pre-apply the inverse
-                    // to keep rider locked to the bone's rotation instead of the entity's global rotation.
-                    float passengerYaw = Mth.rotLerp(partialTick, passenger.yRotO, passenger.getYRot());
-                    matrices.mulPose(Axis.YP.rotationDegrees(passengerYaw - 180.0f));
-
-                    // --- 7. Render the Passenger ---
-                    // Set thread-local flag to bypass the Mixin that cancels vanilla rendering
-                    IS_RENDERING_PASSENGER.set(true);
-                    try {
-                        dispatcher.render(passenger, 0.0, 0.0, 0.0, passengerYaw, partialTick, matrices, bufferSource, packedLight);
-                    } finally {
-                        IS_RENDERING_PASSENGER.set(false);
-                    }
-                } finally {
-                    matrices.popPose();
-                }
-            }
-        } finally {
-            // Re-enable shadows for subsequent renders
-            dispatcher.setRenderShadow(true);
-        }
-    }
-
-    /**
-     * Renders an item held in the hamster's mouth, locked to the "nose" bone.
-     * Mimics passenger rendering, but keeps the bone's scale logic intact.
-     */
-    private void renderItemForBone(PoseStack matrices,
-                                   HamsterEntity hamster,
-                                   GeoBone bone,
-                                   MultiBufferSource bufferSource,
-                                   int packedLight,
-                                   int packedOverlay) {
-
-        ItemStack itemStack = hamster.getMouthItemStack();
-        if (itemStack.isEmpty()) return;
-
-        ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
-
-        // --- Base Pose: Hamster Render Space ---
-        final Matrix4f modelBase = new Matrix4f(this.modelRenderTranslations);
-        final Matrix3f modelBaseNormal = new Matrix3f(modelBase).invert().transpose();
-
-        matrices.pushPose();
-        try {
-            // 1. Jump Into Hamster's Model Render-Space
-            matrices.last().pose().set(modelBase);
-            matrices.last().normal().set(modelBaseNormal);
-
-            // 2. Apply Full Bone Transform (T, R, S)
-            // Using getModelSpaceMatrix() applies T, R, and S relative to the entity root.
-            Matrix4f bonePose = new Matrix4f(bone.getModelSpaceMatrix());
-            matrices.last().pose().mul(bonePose);
-
-            // 3. Keep normals correct
-            matrices.last().normal().set(new Matrix3f(matrices.last().pose()).invert().transpose());
-
-            // 4. Apply Manual Adjustments
-            HamsterMouthItemOffsets.applyMouthItemTransforms(matrices);
-
-            // 5. Render Item
-            itemRenderer.renderStatic(itemStack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, packedLight, packedOverlay, matrices, bufferSource, hamster.level(), hamster.getId());
-
-        } finally {
-            matrices.popPose();
-        }
-    }
 
     private void handleParticleKeyframes(HamsterEntity animatable, BakedGeoModel model) {
         RandomSource random = animatable.getRandom();
