@@ -1,22 +1,22 @@
 package net.dawson.adorablehamsterpets.client.option;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.dawson.adorablehamsterpets.config.Configs;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.KeyMapping;
 
 /**
  * A custom KeyBinding that dynamically changes its display name in the Controls menu
  * based on the "Enable Force-Mount Keybind" configuration setting.
  */
-public class DynamicForceMountKeyBinding extends KeyBinding {
+public class DynamicForceMountKeyBinding extends KeyMapping {
 
     private final String enabledTranslationKey;
 
     /**
      * Constructs a new dynamic key binding.
      */
-    public DynamicForceMountKeyBinding(String translationKey, int code, String category) {
-        super(translationKey, InputUtil.Type.KEYSYM, code, category);
+    public DynamicForceMountKeyBinding(String translationKey, int code, KeyMapping.Category category) {
+        super(translationKey, InputConstants.Type.KEYSYM, code, category);
         this.enabledTranslationKey = translationKey;
     }
 
@@ -27,7 +27,7 @@ public class DynamicForceMountKeyBinding extends KeyBinding {
      * @return The appropriate translation key based on the current config setting.
      */
     @Override
-    public String getTranslationKey() {
+    public String getName() {
         if (Configs.AHP_MAIN.enableShoulderMountKeybind) {
             return this.enabledTranslationKey;
         } else {

@@ -7,14 +7,13 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterPoseUtil;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.HamsterState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,7 +42,7 @@ public class HamsterSleepGoal extends Goal {
     public HamsterSleepGoal(HamsterEntity hamster) {
         this.hamster = hamster;
         // Control movement and look to prevent interference
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -51,18 +50,18 @@ public class HamsterSleepGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         // Only wild hamsters sleep via this goal
-        if (this.hamster.isTamed()
+        if (this.hamster.isTame()
                 || this.hamster.hasRedstoneFever()
                 || HamsterMovementUtil.shouldNotMove(this.hamster)
                 || this.hamster.isPlayingTag()) {
             return false;
         }
-        if (!this.hamster.getWorld().isDay()) {
+        if (!this.hamster.level().isBrightOutside()) {
             return false;
         }
-        if (!this.hamster.isOnGround()) {
+        if (!this.hamster.onGround()) {
             return false;
         }
 
@@ -78,19 +77,19 @@ public class HamsterSleepGoal extends Goal {
         }
 
         double radius = 5.0;
-        boolean threatNearby = !this.hamster.getWorld().getOtherEntities(
+        boolean threatNearby = !this.hamster.level().getEntities(
                 this.hamster,
-                this.hamster.getBoundingBox().expand(radius),
+                this.hamster.getBoundingBox().inflate(radius),
                 this::isThreat
         ).isEmpty();
         return !threatNearby;
     }
 
     @Override
-    public boolean shouldContinue() {
-        if (this.hamster.isTamed()
+    public boolean canContinueToUse() {
+        if (this.hamster.isTame()
                 || this.hamster.hasRedstoneFever()
-                || !this.hamster.getWorld().isDay()) {
+                || !this.hamster.level().isBrightOutside()) {
             return false;
         }
 
@@ -107,9 +106,9 @@ public class HamsterSleepGoal extends Goal {
         }
 
         double radius = 5.0;
-        boolean threatNearby = !this.hamster.getWorld().getOtherEntities(
+        boolean threatNearby = !this.hamster.level().getEntities(
                 this.hamster,
-                this.hamster.getBoundingBox().expand(radius),
+                this.hamster.getBoundingBox().inflate(radius),
                 this::isThreat
         ).isEmpty();
         return !threatNearby;
@@ -126,7 +125,7 @@ public class HamsterSleepGoal extends Goal {
 
         // Randomized delay for wild babies
         if (this.hamster.isBaby()) {
-            this.delayTimer = this.hamster.getRandom().nextBetween(20, 60); // 1 to 3 sec
+            this.delayTimer = this.hamster.getRandom().nextIntBetweenInclusive(20, 60); // 1 to 3 sec
         } else {
             this.delayTimer = 0;
             fallAsleep(); // Sleep instantly if adult
@@ -171,14 +170,14 @@ public class HamsterSleepGoal extends Goal {
         this.hamster.setInSittingPose(true); // Prevent other AI movement
 
         // --- Animation ---
-        if (!this.hamster.getWorld().isClient()) {
+        if (!this.hamster.level().isClientSide()) {
             // Select sleep pose based on personality
-            int personalityId = this.hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+            int personalityId = this.hamster.getEntityData().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
             String settleAnimId = HamsterPoseUtil.getSettleSleepAnimId(personalityId, false);
             String deepSleepAnimIdForTracker = HamsterPoseUtil.getDeepSleepAnimId(personalityId);
 
             // Store deep sleep animation name
-            this.hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, deepSleepAnimIdForTracker);
+            this.hamster.getEntityData().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, deepSleepAnimIdForTracker);
 
             // Trigger corresponding settle anim
             this.hamster.triggerAnimOnServer("mainController", settleAnimId);
@@ -187,11 +186,11 @@ public class HamsterSleepGoal extends Goal {
             this.hamster.triggerSettleEffects(0.24f, 14, 0.27f);
             SoundEvent sleepSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SLEEP_SOUNDS, this.hamster.getRandom());
             if (sleepSound != null) {
-                this.hamster.getWorld().playSound(
+                this.hamster.level().playSound(
                         null,
-                        this.hamster.getBlockPos(),
+                        this.hamster.blockPosition(),
                         sleepSound,
-                        SoundCategory.NEUTRAL,
+                        SoundSource.NEUTRAL,
                         1.0F,
                         1.0F
                 );
@@ -204,10 +203,10 @@ public class HamsterSleepGoal extends Goal {
      * which would cause it to wake up.
      */
     private boolean isThreat(Entity entity) {
-        if (entity instanceof HostileEntity) {
+        if (entity instanceof Monster) {
             return true;
         }
-        if (entity instanceof PlayerEntity) {
+        if (entity instanceof Player) {
             // Baby hamsters don't care about nearby players
             return !this.hamster.isBaby();
         }
@@ -224,20 +223,20 @@ public class HamsterSleepGoal extends Goal {
         UUID parentUuid = this.hamster.getParentUuid();
         if (parentUuid == null) return false;
 
-        if (this.hamster.getWorld() instanceof ServerWorld serverWorld) {
+        if (this.hamster.level() instanceof ServerLevel serverWorld) {
             // Retrieve parent entity
             Entity parent = serverWorld.getEntity(parentUuid);
 
             // If parent exists and is alive, check distance
             if (parent != null && parent.isAlive()) {
                 // Wake up if parent is more than 4 blocks away
-                return this.hamster.squaredDistanceTo(parent) > 16.0;
+                return this.hamster.distanceToSqr(parent) > 16.0;
             } else {
                 // Check if parent is on a player's shoulder
-                for (PlayerEntity player : serverWorld.getPlayers()) {
+                for (Player player : serverWorld.players()) {
                     if (player instanceof PlayerEntityAccessor accessor) {
                         if (isParentOnShoulder(accessor, parentUuid)) {
-                            return this.hamster.squaredDistanceTo(player) > 16.0;
+                            return this.hamster.distanceToSqr(player) > 16.0;
                         }
                     }
                 }
@@ -249,7 +248,7 @@ public class HamsterSleepGoal extends Goal {
     private boolean isParentOnShoulder(PlayerEntityAccessor accessor, UUID parentUuid) {
         if (!accessor.hasAnyShoulderHamster()) return false;
         for (ShoulderLocation loc : ShoulderLocation.values()) {
-            net.minecraft.nbt.NbtCompound nbt = accessor.getShoulderHamster(loc);
+            net.minecraft.nbt.CompoundTag nbt = accessor.getShoulderHamster(loc);
             if (!nbt.isEmpty()) {
                 Optional<HamsterState> state = HamsterState.fromNbt(nbt);
                 if (state.isPresent() && state.get().entityUuid().equals(parentUuid)) {

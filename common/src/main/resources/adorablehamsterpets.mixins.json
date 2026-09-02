@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "net.dawson.adorablehamsterpets.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [
     "server.RavagerEntityMixin",
     "server.SpiderEntityMixin",
@@ -19,28 +19,18 @@
     "accessor.LivingEntityInvoker"
   ],
   "client": [
-    "client.GuiBookLandingMixin",
-    "client.GuiButtonEntryMixin",
-    "client.GuiBookEntryListMixin",
     "client.HeldItemFeatureRendererMixin",
     "client.HeldItemRendererMixin",
     "client.PlayerEntityRendererMixin",
     "client.LivingEntityRendererInvoker",
     "client.AbstractClientPlayerEntityMixin",
     "client.TitleScreenMixin",
-    "client.BookContentsMixin",
-    "client.BookContentsBuilderMixin",
     "client.accessor.HandledScreenAccessor",
-    "client.GuiButtonBookMarkReadMixin",
-    "client.GuiBookIndexMixin",
-    "client.accessor.GuiBookAccessor",
-    "client.BlockEntityRenderDispatcherMixin",
     "accessor.ScreenWidgetAdder",
-    "accessor.BookContentsBuilderAccessor",
-    "client.accessor.GuiButtonEntryAccessor",
-    "client.LivingEntityRendererMixin",
     "client.accessor.InGameHudAccessor",
     "client.InGameHudMixin",
+    "client.AvatarRenderStateMixin",
+    "client.AvatarRendererMixin",
     "client.EntityRenderDispatcherMixin"
   ],
   "injectors": {

@@ -6,11 +6,10 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPlacementUtil;
 import net.dawson.adorablehamsterpets.util.RedstoneFeverUtil;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
 public final class HamsterRedstoneFeverBurstGoal extends Goal {
@@ -31,7 +30,7 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
     private int cooldownTicks;
     private int remainingTicks;
     private int consecutiveWaypointFailures;
-    private Vec3d anchor = Vec3d.ZERO;
+    private Vec3 anchor = Vec3.ZERO;
     private double angle;
     private double direction;
 
@@ -41,7 +40,7 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
 
     public HamsterRedstoneFeverBurstGoal(HamsterEntity hamster) {
         this.hamster = hamster;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
         this.scheduleNext();
     }
 
@@ -50,7 +49,7 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
      * ──────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         if (this.cooldownTicks > 0) {
             this.cooldownTicks--;
             return false;
@@ -58,21 +57,21 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
         return this.hamster.hasRedstoneFever()
                 && Configs.AHP_MAIN.enableRedstoneFeverEnergyBursts
                 && !HamsterMovementUtil.shouldNotMove(this.hamster)
-                && this.hamster.isOnGround()
-                && !this.hamster.isTouchingWater()
+                && this.hamster.onGround()
+                && !this.hamster.isInWater()
                 && !this.hamster.isInLava()
                 && this.hamster.isAlive()
                 && !this.hamster.isRemoved();
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return this.remainingTicks > 0
                 && this.hamster.hasRedstoneFever()
                 && Configs.AHP_MAIN.enableRedstoneFeverEnergyBursts
                 && !HamsterMovementUtil.shouldNotMove(this.hamster)
                 && this.isAnchorStable()
-                && !this.hamster.isTouchingWater()
+                && !this.hamster.isInWater()
                 && !this.hamster.isInLava()
                 && this.hamster.isAlive()
                 && !this.hamster.isRemoved();
@@ -81,7 +80,7 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
     @Override
     public void start() {
         // --- 1. Lock Burst Shape ---
-        this.anchor = this.hamster.getPos();
+        this.anchor = this.hamster.position();
         this.angle = this.hamster.getRandom().nextDouble() * Math.PI * 2.0D;
         this.direction = this.hamster.getRandom().nextBoolean() ? 1.0D : -1.0D;
         this.consecutiveWaypointFailures = 0;
@@ -94,7 +93,7 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
         int max = Math.max(
                 Configs.AHP_MAIN.redstoneFeverMinBurstDurationSeconds.get(),
                 Configs.AHP_MAIN.redstoneFeverMaxBurstDurationSeconds.get());
-        this.remainingTicks = this.hamster.getRandom().nextBetween(min, max) * 20;
+        this.remainingTicks = this.hamster.getRandom().nextIntBetweenInclusive(min, max) * 20;
 
         // --- 3. Present Burst ---
         this.hamster.triggerAnimOnServer(
@@ -102,7 +101,7 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
         SoundEvent hiss = ModSounds.getRandomSoundFrom(
                 ModSounds.HAMSTER_HISS_SOUNDS, this.hamster.getRandom());
         if (hiss != null) {
-            this.hamster.playSound(hiss, 0.7F, this.hamster.getSoundPitch());
+            this.hamster.playSound(hiss, 0.7F, this.hamster.getVoicePitch());
         }
         RedstoneFeverUtil.spawnRedstoneParticles(this.hamster, 24, 0.2F);
     }
@@ -111,15 +110,15 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
     public void tick() {
         // --- 1. Advance Orbit ---
         this.remainingTicks--;
-        Vec3d orbitTarget = orbitTarget(this.anchor, this.angle);
+        Vec3 orbitTarget = orbitTarget(this.anchor, this.angle);
 
-        if (this.remainingTicks % 4 != 0 && !this.hamster.getNavigation().isIdle()) return;
+        if (this.remainingTicks % 4 != 0 && !this.hamster.getNavigation().isDone()) return;
         this.angle += this.direction * Math.toRadians(38.0D);
 
         // --- 2. Resolve Safe Waypoint ---
-        BlockPos idealCell = BlockPos.ofFloored(orbitTarget);
+        BlockPos idealCell = BlockPos.containing(orbitTarget);
         if (!HamsterPlacementUtil.isSafeSpawnLocation(
-                idealCell, this.hamster.getWorld(), this.hamster)) {
+                idealCell, this.hamster.level(), this.hamster)) {
             this.consecutiveWaypointFailures++;
             if (this.consecutiveWaypointFailures >= MAX_CONSECUTIVE_WAYPOINT_FAILURES) {
                 this.remainingTicks = 0;
@@ -129,7 +128,7 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
 
         // --- 3. Navigate ---
         this.consecutiveWaypointFailures = 0;
-        this.hamster.getNavigation().startMovingTo(
+        this.hamster.getNavigation().moveTo(
                 orbitTarget.x, orbitTarget.y, orbitTarget.z, BURST_NAVIGATION_SPEED);
     }
 
@@ -152,7 +151,7 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
                 Configs.AHP_MAIN.redstoneFeverMaxBurstIntervalSeconds.get());
         // Recovery stretches intervals without disabling bursts before full cure
         double severity = this.hamster.hasRedstoneFever() ? RedstoneFeverUtil.getSeverity(this.hamster) : 1.0D;
-        int baseSeconds = this.hamster.getRandom().nextBetween(intervalBounds[0], intervalBounds[1]);
+        int baseSeconds = this.hamster.getRandom().nextIntBetweenInclusive(intervalBounds[0], intervalBounds[1]);
         this.cooldownTicks = (int) Math.round(baseSeconds * 20.0D / Math.max(0.1D, severity));
     }
 
@@ -161,17 +160,17 @@ public final class HamsterRedstoneFeverBurstGoal extends Goal {
     }
 
     private boolean isAnchorStable() {
-        return isAnchorStable(this.hamster.getPos(), this.anchor);
+        return isAnchorStable(this.hamster.position(), this.anchor);
     }
 
-    static Vec3d orbitTarget(Vec3d anchor, double angle) {
-        return new Vec3d(
+    static Vec3 orbitTarget(Vec3 anchor, double angle) {
+        return new Vec3(
                 anchor.x + Math.cos(angle) * BURST_ORBIT_RADIUS,
                 anchor.y,
                 anchor.z + Math.sin(angle) * BURST_ORBIT_RADIUS);
     }
 
-    static boolean isAnchorStable(Vec3d position, Vec3d anchor) {
+    static boolean isAnchorStable(Vec3 position, Vec3 anchor) {
         return (position.x - anchor.x) * (position.x - anchor.x) + (position.z - anchor.z) * (position.z - anchor.z) <= (BURST_ORBIT_RADIUS + 1.5D) * (BURST_ORBIT_RADIUS + 1.5D);
     }
 }

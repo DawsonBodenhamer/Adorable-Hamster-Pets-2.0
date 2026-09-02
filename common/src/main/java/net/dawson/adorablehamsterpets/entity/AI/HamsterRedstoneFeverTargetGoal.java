@@ -4,12 +4,12 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.RedstoneFeverUtil;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.Box;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -33,7 +33,7 @@ public final class HamsterRedstoneFeverTargetGoal extends Goal {
 
     public HamsterRedstoneFeverTargetGoal(HamsterEntity hamster) {
         this.hamster = hamster;
-        this.setControls(EnumSet.of(Control.TARGET));
+        this.setFlags(EnumSet.of(Flag.TARGET));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ public final class HamsterRedstoneFeverTargetGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         LivingEntity currentTarget = this.hamster.getTarget();
         if (!this.canAcquireFeverTarget()) {
             if (!isEligibleTarget(currentTarget)) this.clearInvalidTarget(currentTarget);
@@ -58,7 +58,7 @@ public final class HamsterRedstoneFeverTargetGoal extends Goal {
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         LivingEntity currentTarget = this.hamster.getTarget();
         if (!this.canAcquireFeverTarget()) {
             if (!isEligibleTarget(currentTarget)) this.clearInvalidTarget(currentTarget);
@@ -82,7 +82,7 @@ public final class HamsterRedstoneFeverTargetGoal extends Goal {
     @Override
     public void tick() {
         // Re-evaluate often enough for a newly eligible player to take priority immediately
-        if (this.hamster.age % 10 != 0) return;
+        if (this.hamster.tickCount % 10 != 0) return;
 
         LivingEntity currentTarget = this.hamster.getTarget();
         LivingEntity preferredTarget = this.findNearestTarget();
@@ -105,33 +105,33 @@ public final class HamsterRedstoneFeverTargetGoal extends Goal {
     private boolean canAcquireFeverTarget() {
         return this.hamster.hasRedstoneFever()
                 && !HamsterMovementUtil.shouldNotMove(this.hamster)
-                && this.hamster.getWorld().getDifficulty() != Difficulty.PEACEFUL;
+                && this.hamster.level().getDifficulty() != Difficulty.PEACEFUL;
     }
 
     @Nullable
     private LivingEntity findNearestTarget() {
         double range = Configs.AHP_MAIN.redstoneFeverTargetingRange.get();
-        PlayerEntity nearestReachablePlayer = this.hamster.getWorld().getPlayers().stream()
+        Player nearestReachablePlayer = this.hamster.level().players().stream()
                 .filter(RedstoneFeverUtil::isEligiblePlayer)
                 .filter(player -> this.isWithinRange(player))
                 .filter(this::isReachableTarget)
-                .min(Comparator.comparingDouble(this.hamster::squaredDistanceTo))
+                .min(Comparator.comparingDouble(this.hamster::distanceToSqr))
                 .orElse(null);
         if (nearestReachablePlayer != null) return nearestReachablePlayer;
 
         if (!Configs.AHP_MAIN.redstoneFeverAttackMostLivingMobs) return null;
 
-        Box searchBox = this.hamster.getBoundingBox().expand(range);
-        return this.hamster.getWorld().getEntitiesByClass(
+        AABB searchBox = this.hamster.getBoundingBox().inflate(range);
+        return this.hamster.level().getEntitiesOfClass(
                         LivingEntity.class,
                         searchBox,
                         candidate -> candidate != this.hamster
-                                && !(candidate instanceof PlayerEntity)
+                                && !(candidate instanceof Player)
                                 && isEligibleTarget(candidate)
                                 && this.isWithinRange(candidate)
                                 && this.isReachableTarget(candidate))
                 .stream()
-                .min(Comparator.comparingDouble(this.hamster::squaredDistanceTo))
+                .min(Comparator.comparingDouble(this.hamster::distanceToSqr))
                 .orElse(null);
     }
 
@@ -151,8 +151,8 @@ public final class HamsterRedstoneFeverTargetGoal extends Goal {
 
     private boolean isReachableTarget(@Nullable LivingEntity target) {
         if (target == null) return false;
-        Path path = this.hamster.getNavigation().findPathTo(target, 0);
-        return path != null && path.reachesTarget();
+        Path path = this.hamster.getNavigation().createPath(target, 0);
+        return path != null && path.canReach();
     }
 
     private void clearInvalidTarget(@Nullable LivingEntity currentTarget) {

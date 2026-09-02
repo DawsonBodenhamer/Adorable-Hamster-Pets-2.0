@@ -3,9 +3,9 @@ package net.dawson.adorablehamsterpets.integration.patchouli;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.Level;
 import vazkii.patchouli.api.IComponentProcessor;
 import vazkii.patchouli.api.IVariable;
 import vazkii.patchouli.api.IVariableProvider;
@@ -21,16 +21,16 @@ public class DynamicStringProcessor implements IComponentProcessor {
     private String processedText = "";
 
     @Override
-    public void setup(World level, IVariableProvider variables) {
+    public void setup(Level level, IVariableProvider variables) {
         // Just modifying main body text
         if (variables.has("text")) {
             // Retrieve raw translation key provided by JSON entry
-            String rawText = variables.get("text", level.getRegistryManager()).asString();
+            String rawText = variables.get("text", level.registryAccess()).asString();
 
             // Patchouli normally translates text automatically right
             // before rendering, so manually translate it here first.
-            if (I18n.hasTranslation(rawText)) {
-                rawText = I18n.translate(rawText);
+            if (net.minecraft.locale.Language.getInstance().has(rawText)) { // 26.2: I18n.exists removed
+                rawText = I18n.get(rawText);
             }
 
             // --- Genetics Token Injections ---
@@ -70,27 +70,27 @@ public class DynamicStringProcessor implements IComponentProcessor {
 
             // --- Interaction Token Injections ---
             if (rawText.contains("{LURE_ITEM}")) {
-                Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.lureItems);
+                Component lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.lureItems);
                 rawText = rawText.replace("{LURE_ITEM}", lureName.getString());
             }
 
             if (rawText.contains("{PACIFIST_ITEM}")) {
-                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.becomePacifistItems);
+                Component itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.becomePacifistItems);
                 rawText = rawText.replace("{PACIFIST_ITEM}", itemName.getString());
             }
 
             if (rawText.contains("{NEUTRAL_ITEM}")) {
-                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.becomeNeutralItems);
+                Component itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.becomeNeutralItems);
                 rawText = rawText.replace("{NEUTRAL_ITEM}", itemName.getString());
             }
 
             if (rawText.contains("{MENACE_ITEM}")) {
-                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.becomeMenaceItems);
+                Component itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.becomeMenaceItems);
                 rawText = rawText.replace("{MENACE_ITEM}", itemName.getString());
             }
 
             if (rawText.contains("{RESURRECTION_TRIBUTE}")) {
-                Text itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.resurrectionTributes);
+                Component itemName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.resurrectionTributes);
                 rawText = rawText.replace("{RESURRECTION_TRIBUTE}", itemName.getString());
             }
 
@@ -99,10 +99,10 @@ public class DynamicStringProcessor implements IComponentProcessor {
     }
 
     @Override
-    public IVariable process(World level, String key) {
+    public IVariable process(Level level, String key) {
         // Hand it my string when Patchouli asks for text variable
         if ("text".equals(key)) {
-            return IVariable.wrap(this.processedText, level.getRegistryManager());
+            return IVariable.wrap(new com.google.gson.JsonPrimitive(this.processedText), level.registryAccess()); // 26.x API: raw String is not serializable
         }
         return null;
     }

@@ -7,12 +7,12 @@ import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.client.feature.ShoulderHamsterState;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
@@ -39,7 +39,7 @@ public class ClientShoulderHamsterData {
     private static final float MAX_VERTICAL_OFFSET = 0.35f; // Maximum height a hamster can float off the shoulder
 
     // --- Replay/Flashback Mod Cache ---
-    public static final Map<UUID, NbtCompound> REPLAY_CACHE = new ConcurrentHashMap<>();
+    public static final Map<UUID, CompoundTag> REPLAY_CACHE = new ConcurrentHashMap<>();
 
     private final Map<ShoulderLocation, ShoulderHamsterState> hamsterStates = new EnumMap<>(ShoulderLocation.class);
     private final Map<ShoulderLocation, Integer> animationAges = new EnumMap<>(ShoulderLocation.class);
@@ -73,7 +73,7 @@ public class ClientShoulderHamsterData {
     /**
      * Retrieves the dummy entity for a specific shoulder location, creating it if it doesn't exist.
      */
-    public HamsterEntity getOrCreateDummy(ShoulderLocation location, World world) {
+    public HamsterEntity getOrCreateDummy(ShoulderLocation location, Level world) {
         return this.dummyHamsters.computeIfAbsent(location, loc -> {
             HamsterEntity dummy = new HamsterEntity(net.dawson.adorablehamsterpets.entity.ModEntities.HAMSTER.get(), world);
             dummy.setNoGravity(true);
@@ -88,18 +88,18 @@ public class ClientShoulderHamsterData {
      *
      * @param player The client player entity this data is attached to.
      */
-    public void clientTick(AbstractClientPlayerEntity player) {
+    public void clientTick(AbstractClientPlayer player) {
         PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
 
         // --- 1. Detect Player Jump Event ---
-        boolean playerJustStartedJumping = this.wasPlayerOnGroundLastTick && !player.isOnGround();
-        if (playerJustStartedJumping) {AdorableHamsterPets.LOGGER.trace("[PHYSICS DEBUG] Player JUMP detected at tick {}. Previous Velocity Y: {}", player.getWorld().getTime(), String.format("%.4f", this.previousPlayerVelocityY));}
+        boolean playerJustStartedJumping = this.wasPlayerOnGroundLastTick && !player.onGround();
+        if (playerJustStartedJumping) {AdorableHamsterPets.LOGGER.trace("[PHYSICS DEBUG] Player JUMP detected at tick {}. Previous Velocity Y: {}", player.level().getGameTime(), String.format("%.4f", this.previousPlayerVelocityY));}
 
         boolean playerJustLanded = false;
         if (this.landingCheckGracePeriod > 0) {
             this.landingCheckGracePeriod--;
         } else {
-            playerJustLanded = !this.wasPlayerOnGroundLastTick && player.isOnGround();
+            playerJustLanded = !this.wasPlayerOnGroundLastTick && player.onGround();
         }
         // Open the landing event window when the player lands
         if (playerJustLanded) {
@@ -116,13 +116,13 @@ public class ClientShoulderHamsterData {
         // Determine player movement state once
         boolean isSprinting = player.isSprinting();
         // Player is "walking" if they are moving but not sprinting.
-        boolean isWalking = player.getVelocity().horizontalLengthSquared() > 1.0E-7 && !isSprinting;
+        boolean isWalking = player.getDeltaMovement().horizontalDistanceSqr() > 1.0E-7 && !isSprinting;
 
         // Calculate player's vertical acceleration for this tick
-        double playerVelocityY = player.getVelocity().y;
+        double playerVelocityY = player.getDeltaMovement().y;
         // Introduce a dead zone for near-zero velocities
         // If the player is on the ground and their vertical velocity is very small, treat it as zero.
-        if (player.isOnGround() && Math.abs(playerVelocityY) < 0.1) {
+        if (player.onGround() && Math.abs(playerVelocityY) < 0.1) {
             playerVelocityY = 0.0;
         }
 
@@ -132,7 +132,7 @@ public class ClientShoulderHamsterData {
         // Iterate through all possible locations to update states
         int delay = 1; // Initialize delay counter for staggered sounds
         for (ShoulderLocation location : ShoulderLocation.values()) {
-            NbtCompound shoulderNbt;
+            CompoundTag shoulderNbt;
             try {
                 // Try to get the data safely
                 shoulderNbt = playerAccessor.getShoulderHamster(location);
@@ -148,7 +148,7 @@ public class ClientShoulderHamsterData {
                 state.tick(isSprinting, isWalking);
 
                 // Initialize age with a massive random offset so shoulder hamsters don't have the same animations
-                int currentAge = this.animationAges.computeIfAbsent(location, l -> player.getRandom().nextBetween(0, 100000));
+                int currentAge = this.animationAges.computeIfAbsent(location, l -> player.getRandom().nextIntBetweenInclusive(0, 100000));
                 this.animationAges.put(location, currentAge + 1);
 
                 // --- 3.2. Physics Simulation Ticking ---
@@ -206,7 +206,7 @@ public class ClientShoulderHamsterData {
                         physics.impactSquashFactor = Math.abs(physics.hamsterVelocityY) * IMPACT_SQUASH_INTENSITY;
                         // 2. Set Staggered Sound Delay
                         physics.soundDelayTicks = delay;
-                        delay += player.getRandom().nextBetween(1, 2);
+                        delay += player.getRandom().nextIntBetweenInclusive(1, 2);
                         // 3. Set Impact Cooldown to prevent re-triggering on small bounces
                         physics.impactCooldown = 5;
                     }
@@ -221,16 +221,16 @@ public class ClientShoulderHamsterData {
                     physics.soundDelayTicks--;
                     if (physics.soundDelayTicks == 0) {
                         // Check Config Before Playing Sound
-                        MinecraftClient client = MinecraftClient.getInstance();
-                        boolean shouldPlaySound = !(Configs.AHP_MAIN.silencePhysicsSoundsInFirstPerson && client.options.getPerspective().isFirstPerson());
+                        Minecraft client = Minecraft.getInstance();
+                        boolean shouldPlaySound = !(Configs.AHP_MAIN.silencePhysicsSoundsInFirstPerson && client.options.getCameraType().isFirstPerson());
 
                         if (shouldPlaySound) {
                             SoundEvent impactSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SHOULDER_IMPACT_SOUNDS, player.getRandom());
                             if (impactSound != null) {
                                 client.getSoundManager().play(
-                                        new net.minecraft.client.sound.PositionedSoundInstance(
+                                        new net.minecraft.client.resources.sounds.SimpleSoundInstance(
                                                 impactSound,
-                                                net.minecraft.sound.SoundCategory.PLAYERS,
+                                                net.minecraft.sounds.SoundSource.PLAYERS,
                                                 1.0f,
                                                 0.9f + player.getRandom().nextFloat() * 0.2f,
                                                 player.getRandom(),
@@ -249,7 +249,7 @@ public class ClientShoulderHamsterData {
                 // 2. Combine the acceleration scale with the impact squash.
                 float combinedTargetScale = accelScale - physics.impactSquashFactor;
                 // 3. Clamp the final combined value.
-                float clampedTargetScale = MathHelper.clamp(combinedTargetScale, 0.65f, 1.25f);
+                float clampedTargetScale = Mth.clamp(combinedTargetScale, 0.65f, 1.25f);
                 // 4. Smoothly interpolate towards the final, clamped target.
                 physics.hamsterScaleY = cosineInterpolate(physics.hamsterScaleY, clampedTargetScale, 0.6f);
 
@@ -263,7 +263,7 @@ public class ClientShoulderHamsterData {
         }
         // --- 4. Update State for Next Tick ---
         this.previousPlayerVelocityY = playerVelocityY;
-        this.wasPlayerOnGroundLastTick = player.isOnGround();
+        this.wasPlayerOnGroundLastTick = player.onGround();
     }
 
     /**

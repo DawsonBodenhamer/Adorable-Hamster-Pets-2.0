@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.command;
 
+import net.minecraft.world.entity.EntitySpawnReason;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
@@ -11,20 +12,19 @@ import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManag
 import net.dawson.adorablehamsterpets.entity.custom.genetics.PaletteDefinition;
 import net.dawson.adorablehamsterpets.util.HamsterGeneticsUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPoseUtil;
-import net.minecraft.entity.Entity;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -37,9 +37,9 @@ public class HamsterSpawnCommandUtil {
     private static class PermutationState {
         boolean active = false;
         boolean ignoreSafetyLimits = false;
-        ServerPlayerEntity player;
-        ServerWorld world;
-        Vec3d startPos;
+        ServerPlayer player;
+        ServerLevel world;
+        Vec3 startPos;
 
         List<HamsterGenome> genomesToSpawn;
         int currentIndex = 0;
@@ -59,7 +59,7 @@ public class HamsterSpawnCommandUtil {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private static int delayedPromptTicks = 0;
-    private static ServerPlayerEntity promptPlayer = null;
+    private static ServerPlayer promptPlayer = null;
 
     private static final PermutationState permState = new PermutationState();
     public static String lastSpawnBatchId = null;
@@ -73,11 +73,11 @@ public class HamsterSpawnCommandUtil {
         if (delayedPromptTicks > 0 && promptPlayer != null) {
             delayedPromptTicks--;
             if (delayedPromptTicks == 0) {
-                promptPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line1").formatted(Formatting.GOLD), false);
-                promptPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line2").formatted(Formatting.WHITE), false);
-                promptPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line3").formatted(Formatting.WHITE), false);
-                promptPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line4").formatted(Formatting.AQUA), false);
-                promptPlayer.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line5").formatted(Formatting.AQUA), false);
+                promptPlayer.sendSystemMessage(Component.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line1").withStyle(ChatFormatting.GOLD));
+                promptPlayer.sendSystemMessage(Component.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line2").withStyle(ChatFormatting.WHITE));
+                promptPlayer.sendSystemMessage(Component.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line3").withStyle(ChatFormatting.WHITE));
+                promptPlayer.sendSystemMessage(Component.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line4").withStyle(ChatFormatting.AQUA));
+                promptPlayer.sendSystemMessage(Component.translatable("message.adorablehamsterpets.breeding.genetics_visualization.instructions.line5").withStyle(ChatFormatting.AQUA));
                 promptPlayer = null;
             }
         }
@@ -94,7 +94,7 @@ public class HamsterSpawnCommandUtil {
         // Safety Limit Check (MSPT)
         if (!permState.ignoreSafetyLimits) {
             // Calculate average tick time in milliseconds
-            long[] times = server.getTickTimes();
+            long[] times = server.getTickTimesNanos();
             long sum = 0;
             for (long time : times) {
                 sum += time;
@@ -104,9 +104,9 @@ public class HamsterSpawnCommandUtil {
             if (mspt > 70.0f) {
                 permState.active = false;
                 long remaining = permState.genomesToSpawn.size() - permState.currentIndex;
-                permState.player.sendMessage(Text.literal("[Hamster Genetics] Safety limit reached. Server milliseconds per tick is " + String.format("%.1f", mspt) + " (max 70.0). Stopping spawn sequence.").formatted(Formatting.RED), false);
-                permState.player.sendMessage(Text.literal("[Hamster Genetics] Your server was able to successfully spawn: " + permState.currentIndex + " permutations before dying.").formatted(Formatting.YELLOW), false);
-                permState.player.sendMessage(Text.literal("[Hamster Genetics] Total permutations still un-spawned: " + remaining).formatted(Formatting.YELLOW), false);
+                permState.player.sendSystemMessage(Component.literal("[Hamster Genetics] Safety limit reached. Server milliseconds per tick is " + String.format("%.1f", mspt) + " (max 70.0). Stopping spawn sequence.").withStyle(ChatFormatting.RED));
+                permState.player.sendSystemMessage(Component.literal("[Hamster Genetics] Your server was able to successfully spawn: " + permState.currentIndex + " permutations before dying.").withStyle(ChatFormatting.YELLOW));
+                permState.player.sendSystemMessage(Component.literal("[Hamster Genetics] Total permutations still un-spawned: " + remaining).withStyle(ChatFormatting.YELLOW));
                 return;
             }
         }
@@ -117,7 +117,7 @@ public class HamsterSpawnCommandUtil {
         while (spawnedThisTick < 5000 && permState.active) {
             if (permState.currentIndex >= permState.genomesToSpawn.size()) {
                 permState.active = false;
-                permState.player.sendMessage(Text.literal("[Hamster Genetics] Successfully spawned all " + permState.currentIndex + " permutations. RIP your PC.").formatted(Formatting.GREEN), false);
+                permState.player.sendSystemMessage(Component.literal("[Hamster Genetics] Successfully spawned all " + permState.currentIndex + " permutations. RIP your PC.").withStyle(ChatFormatting.GREEN));
                 return;
             }
 
@@ -131,15 +131,15 @@ public class HamsterSpawnCommandUtil {
 
             float yaw = 0;
             if (permState.randomizeYaw) {
-                yaw = permState.world.random.nextFloat() * 360.0f;
+                yaw = permState.world.getRandom().nextFloat() * 360.0f;
             } else if (permState.matchPlayerYaw) {
-                yaw = permState.player.getYaw();
+                yaw = permState.player.getYRot();
             }
 
             // Use cached start pos to ensure the grid doesn't drift if player moves
             HamsterEntity hamster = spawnFrozenHamster(permState.world, permState.startPos.add(xOffset, 0, zOffset), yaw, genome, permState.randomizeSitting, permState.randomizeSleeping);
             if (hamster != null) {
-                hamster.addCommandTag("ahp_batch_" + permState.batchId);
+                hamster.addTag("ahp_batch_" + permState.batchId);
             }
 
             permState.currentIndex++;
@@ -151,7 +151,7 @@ public class HamsterSpawnCommandUtil {
             permState.delayTicks = 10;
             if (permState.currentIndex % 10000 == 0) {
                 AdorableHamsterPets.LOGGER.info("[Hamster Genetics] Spawned {} / {} permutations...", permState.currentIndex, permState.genomesToSpawn.size());
-                permState.player.sendMessage(Text.literal(String.format("[Hamster Genetics] Spawned %d / %d permutations...", permState.currentIndex, permState.genomesToSpawn.size())).formatted(Formatting.WHITE), false);
+                permState.player.sendSystemMessage(Component.literal(String.format("[Hamster Genetics] Spawned %d / %d permutations...", permState.currentIndex, permState.genomesToSpawn.size())).withStyle(ChatFormatting.WHITE));
             }
         }
     }
@@ -164,16 +164,16 @@ public class HamsterSpawnCommandUtil {
      * Undoes the very last executed spawn command by safely discarding all hamsters
      * marked with the latest batch ID.
      */
-    public static int executeUndoLastSpawn(ServerCommandSource source) {
+    public static int executeUndoLastSpawn(CommandSourceStack source) {
         if (lastSpawnBatchId == null) {
-            source.sendFeedback(() -> Text.literal("[Hamster Genetics] No recent spawn command found to undo.").formatted(Formatting.RED), false);
+            source.sendSuccess(() -> Component.literal("[Hamster Genetics] No recent spawn command found to undo.").withStyle(ChatFormatting.RED), false);
             return 0;
         }
 
         // Abort active permutation sequence if that's what is being undone
         if (permState.active && lastSpawnBatchId.equals(permState.batchId)) {
             permState.active = false;
-            source.sendFeedback(() -> Text.literal("[Hamster Genetics] Halted ongoing permutation spawn sequence.").formatted(Formatting.YELLOW), false);
+            source.sendSuccess(() -> Component.literal("[Hamster Genetics] Halted ongoing permutation spawn sequence.").withStyle(ChatFormatting.YELLOW), false);
         }
 
         String targetTag = "ahp_batch_" + lastSpawnBatchId;
@@ -182,10 +182,10 @@ public class HamsterSpawnCommandUtil {
         List<HamsterEntity> toRemove = new ArrayList<>();
 
         // Search all loaded entities for the targeted batch ID
-        for (ServerWorld world : source.getServer().getWorlds()) {
-            for (Entity entity : world.iterateEntities()) {
+        for (ServerLevel world : source.getServer().getAllLevels()) {
+            for (Entity entity : world.getAllEntities()) {
                 if (entity instanceof HamsterEntity hamster) {
-                    if (hamster.getCommandTags().contains(targetTag)) {
+                    if (hamster.entityTags().contains(targetTag)) {
                         toRemove.add(hamster);
                     }
                 }
@@ -199,7 +199,7 @@ public class HamsterSpawnCommandUtil {
         }
 
         final int finalCount = count;
-        source.sendFeedback(() -> Text.literal("[Hamster Genetics] Undid last spawn. Removed " + finalCount + " hamster(s).").formatted(Formatting.GREEN), false);
+        source.sendSuccess(() -> Component.literal("[Hamster Genetics] Undid last spawn. Removed " + finalCount + " hamster(s).").withStyle(ChatFormatting.GREEN), false);
 
         lastSpawnBatchId = null;
         return 1;
@@ -208,9 +208,9 @@ public class HamsterSpawnCommandUtil {
     /**
      * Executes the command to spawn a highly specific hamster based on exact genetic traits.
      */
-    public static int executeSpawnSpecific(ServerCommandSource source, String base, String wildPat, String wildPal, String breedPat, String breedPal, String eyes, String pose) throws CommandSyntaxException {
-        ServerPlayerEntity player = source.getPlayerOrThrow();
-        ServerWorld world = player.getServerWorld();
+    public static int executeSpawnSpecific(CommandSourceStack source, String base, String wildPat, String wildPal, String breedPat, String breedPal, String eyes, String pose) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        ServerLevel world = ((ServerLevel) player.level());
 
         // Parse human-readable strings to integers
         int wPatInt = Math.max(0, HamsterPaletteManager.OVERLAY_PATTERN_NAMES.indexOf(wildPat));
@@ -220,22 +220,22 @@ public class HamsterSpawnCommandUtil {
         String bPalStr = breedPal.equals("none") ? null : breedPal;
 
         if (!HamsterPaletteManager.PALETTE_REGISTRY.containsKey(base)) {
-            source.sendFeedback(() -> Text.literal("[Hamster Genetics] Invalid base palette: " + base), false);
+            source.sendSuccess(() -> Component.literal("[Hamster Genetics] Invalid base palette: " + base), false);
             return 0;
         }
 
         // Raycast to determine exact spawn position
-        HitResult hitResult = player.raycast(4.5, 0.0f, false);
-        Vec3d spawnPos = player.getPos();
+        HitResult hitResult = player.pick(4.5, 0.0f, false);
+        Vec3 spawnPos = player.position();
         if (hitResult.getType() == HitResult.Type.BLOCK) {
             BlockPos hitBlock = ((BlockHitResult) hitResult).getBlockPos();
-            spawnPos = new Vec3d(hitBlock.getX() + 0.5, hitBlock.getY() + 1.0, hitBlock.getZ() + 0.5);
+            spawnPos = new Vec3(hitBlock.getX() + 0.5, hitBlock.getY() + 1.0, hitBlock.getZ() + 0.5);
         }
 
         // Calculate yaw to point from spawn position toward player
         double dx = player.getX() - spawnPos.x;
         double dz = player.getZ() - spawnPos.z;
-        float yaw = (float) (MathHelper.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0F;
+        float yaw = (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0F;
 
         lastSpawnBatchId = UUID.randomUUID().toString();
 
@@ -244,31 +244,31 @@ public class HamsterSpawnCommandUtil {
         HamsterEntity hamster = spawnFrozenHamster(world, spawnPos, yaw, genome, false, false);
 
         if (hamster != null) {
-            hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
+            hamster.addTag("ahp_batch_" + lastSpawnBatchId);
 
             // Apply requested pose
-            int personality = hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+            int personality = hamster.getEntityData().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
             switch (pose.toLowerCase(Locale.ROOT)) {
                 case "sitting" -> hamster.setSitting(true, true);
                 case "sleeping" -> {
                     hamster.setSleeping(true);
                     hamster.setInSittingPose(true);
-                    hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
+                    hamster.getEntityData().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
                 }
                 case "idle", "none" -> {}
             }
         }
 
-        source.sendFeedback(() -> Text.literal("[Hamster Genetics] Spawned requested hamster."), false);
+        source.sendSuccess(() -> Component.literal("[Hamster Genetics] Spawned requested hamster."), false);
         return 1;
     }
 
     /**
      * Executes the command to spawn all base variants mapped to their 3D color space coordinates.
      */
-    public static int executeSpawnAllBases3D(ServerCommandSource source, boolean withOverlays, boolean withSampleBreeding, String author, double spacingMultiplier, boolean randomizeSitting, boolean randomizeSleeping, boolean matchPlayerYaw, boolean randomizeYaw) throws CommandSyntaxException {
-        ServerPlayerEntity player = source.getPlayerOrThrow();
-        List<HamsterGenome> genomes = getGenomesToSpawn(player.getServerWorld().getRandom(), withOverlays, withSampleBreeding, author); // Number being spawned
+    public static int executeSpawnAllBases3D(CommandSourceStack source, boolean withOverlays, boolean withSampleBreeding, String author, double spacingMultiplier, boolean randomizeSitting, boolean randomizeSleeping, boolean matchPlayerYaw, boolean randomizeYaw) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        List<HamsterGenome> genomes = getGenomesToSpawn(((ServerLevel) player.level()).getRandom(), withOverlays, withSampleBreeding, author); // Number being spawned
 
         // --- Spacing ---
         // Dynamically scale 3D cylinder based on total number
@@ -289,42 +289,42 @@ public class HamsterSpawnCommandUtil {
         for (HamsterGenome genome : genomes) {
             PaletteDefinition def = HamsterPaletteManager.PALETTE_REGISTRY.get(genome.basePaletteId());
             if (def == null) continue;
-            Vec3d hsbPos = def.colorSpacePos();
+            Vec3 hsbPos = def.colorSpacePos();
 
             // Tiered micro-scattering to prevent suffocation/overlap
             double offsetAmount = (withSampleBreeding ? 4.0 : (withOverlays ? 2.5 : 0.0)) * spacingMultiplier;
 
-            double dx = (hsbPos.x * scale) + (player.getServerWorld().random.nextDouble() - 0.5) * offsetAmount;
-            double dy = (hsbPos.z * scale) + (player.getServerWorld().random.nextDouble() - 0.5) * offsetAmount;
-            double dz = (hsbPos.y * scale) + (player.getServerWorld().random.nextDouble() - 0.5) * offsetAmount;
+            double dx = (hsbPos.x * scale) + (((ServerLevel) player.level()).getRandom().nextDouble() - 0.5) * offsetAmount;
+            double dy = (hsbPos.z * scale) + (((ServerLevel) player.level()).getRandom().nextDouble() - 0.5) * offsetAmount;
+            double dz = (hsbPos.y * scale) + (((ServerLevel) player.level()).getRandom().nextDouble() - 0.5) * offsetAmount;
 
             // Force them to look at center of cylinder or match player yaw
             float yaw;
             if (randomizeYaw) {
-                yaw = player.getServerWorld().random.nextFloat() * 360.0f;
+                yaw = ((ServerLevel) player.level()).getRandom().nextFloat() * 360.0f;
             } else if (matchPlayerYaw) {
-                yaw = player.getYaw();
+                yaw = player.getYRot();
             } else {
                 yaw = (float) Math.toDegrees(Math.atan2(-dz, -dx)) - 90.0f;
             }
 
-            HamsterEntity hamster = spawnFrozenHamster(player.getServerWorld(), player.getPos().add(dx, dy, dz), yaw, genome, randomizeSitting, randomizeSleeping);
+            HamsterEntity hamster = spawnFrozenHamster(((ServerLevel) player.level()), player.position().add(dx, dy, dz), yaw, genome, randomizeSitting, randomizeSleeping);
 
             if (hamster != null) {
-                hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
-                hamster.addCommandTag("3d_layout_member");
+                hamster.addTag("ahp_batch_" + lastSpawnBatchId);
+                hamster.addTag("3d_layout_member");
                 hamster.setGeneticsVisualizerMember(true);
 
                 // Tag center-most hamster (Pure White) so it can spawn the 3D cylinder particle visuals
                 if (def.zone() == HamsterColorZone.WHITE && !centerTagged) {
-                    hamster.addCommandTag("3d_layout_center");
-                    hamster.addCommandTag("3d_scale_" + scale);
-                    hamster.addCommandTag("3d_base_y_" + player.getBlockPos().getY());
+                    hamster.addTag("3d_layout_center");
+                    hamster.addTag("3d_scale_" + scale);
+                    hamster.addTag("3d_base_y_" + player.blockPosition().getY());
                     centerTagged = true;
                 }
             }
         }
-        source.sendFeedback(() -> Text.literal("[Hamster Genetics] Spawned " + genomes.size() + " base variants in a 3D HSB layout."), false);
+        source.sendSuccess(() -> Component.literal("[Hamster Genetics] Spawned " + genomes.size() + " base variants in a 3D HSB layout."), false);
 
         // Start delay for control instructions
         delayedPromptTicks = 80;
@@ -336,9 +336,9 @@ public class HamsterSpawnCommandUtil {
     /**
      * Executes the command to spawn all base variants mapped onto a flat 2D grid.
      */
-    public static int executeSpawnAllBases2D(ServerCommandSource source, boolean withOverlays, boolean withSampleBreeding, String author, double spacingMultiplier, boolean randomizeSitting, boolean randomizeSleeping, boolean matchPlayerYaw, boolean randomizeYaw) throws CommandSyntaxException {
-        ServerPlayerEntity player = source.getPlayerOrThrow();
-        List<HamsterGenome> genomes = getGenomesToSpawn(player.getServerWorld().getRandom(), withOverlays, withSampleBreeding, author);
+    public static int executeSpawnAllBases2D(CommandSourceStack source, boolean withOverlays, boolean withSampleBreeding, String author, double spacingMultiplier, boolean randomizeSitting, boolean randomizeSleeping, boolean matchPlayerYaw, boolean randomizeYaw) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        List<HamsterGenome> genomes = getGenomesToSpawn(((ServerLevel) player.level()).getRandom(), withOverlays, withSampleBreeding, author);
 
         // Group genomes by their genetic color zone
         Map<HamsterColorZone, List<HamsterGenome>> groupedGenomes = new EnumMap<>(HamsterColorZone.class);
@@ -398,17 +398,17 @@ public class HamsterSpawnCommandUtil {
 
                 float yaw = 0;
                 if (randomizeYaw) {
-                    yaw = player.getServerWorld().random.nextFloat() * 360.0f;
+                    yaw = ((ServerLevel) player.level()).getRandom().nextFloat() * 360.0f;
                 } else if (matchPlayerYaw) {
-                    yaw = player.getYaw();
+                    yaw = player.getYRot();
                 }
 
-                HamsterEntity hamster = spawnFrozenHamster(player.getServerWorld(),
-                        player.getPos().add(currentX + (localX * spacing), 0, currentZ + (localZ * spacing)),
+                HamsterEntity hamster = spawnFrozenHamster(((ServerLevel) player.level()),
+                        player.position().add(currentX + (localX * spacing), 0, currentZ + (localZ * spacing)),
                         yaw, zoneGenomes.get(i), randomizeSitting, randomizeSleeping);
 
                 if (hamster != null) {
-                    hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
+                    hamster.addTag("ahp_batch_" + lastSpawnBatchId);
                 }
             }
 
@@ -416,16 +416,16 @@ public class HamsterSpawnCommandUtil {
             rowMaxZ = Math.max(rowMaxZ, groupDepth);
         }
 
-        source.sendFeedback(() -> Text.literal("[Hamster Genetics] Spawned " + genomes.size() + " variants, organized by color group and diluteness."), false);
+        source.sendSuccess(() -> Component.literal("[Hamster Genetics] Spawned " + genomes.size() + " variants, organized by color group and diluteness."), false);
         return 1;
     }
 
     /**
      * Executes the command to spawn a specific number of random hamsters, or every mathematically possible permutation.
      */
-    public static int executeSpawnRandomGroup(ServerCommandSource source, String countStr, boolean ignoreSafetyLimits, double spacingMultiplier, boolean randomizeSitting, boolean randomizeSleeping, boolean matchPlayerYaw, boolean randomizeYaw, boolean useWildOverlayRulesForBreeding) throws CommandSyntaxException {
+    public static int executeSpawnRandomGroup(CommandSourceStack source, String countStr, boolean ignoreSafetyLimits, double spacingMultiplier, boolean randomizeSitting, boolean randomizeSleeping, boolean matchPlayerYaw, boolean randomizeYaw, boolean useWildOverlayRulesForBreeding) throws CommandSyntaxException {
         if (permState.active) {
-            source.sendFeedback(() -> Text.literal("[Hamster Genetics] A permutation spawn is already in progress.").formatted(Formatting.RED), false);
+            source.sendSuccess(() -> Component.literal("[Hamster Genetics] A permutation spawn is already in progress.").withStyle(ChatFormatting.RED), false);
             return 0;
         }
 
@@ -439,18 +439,18 @@ public class HamsterSpawnCommandUtil {
                 parsedCount = Integer.parseInt(countStr);
                 if (parsedCount <= 0) throw new NumberFormatException();
             } catch (NumberFormatException e) {
-                source.sendFeedback(() -> Text.literal("[Hamster Genetics] Invalid count. Must be a positive number or 'all_THIS_CAN_BREAK_YOUR_WORLD'.").formatted(Formatting.RED), false);
+                source.sendSuccess(() -> Component.literal("[Hamster Genetics] Invalid count. Must be a positive number or 'all_THIS_CAN_BREAK_YOUR_WORLD'.").withStyle(ChatFormatting.RED), false);
                 return 0;
             }
         }
 
         // Fast, synchronous path for counts <= 5,000
         if (!spawnAll && parsedCount <= 5000) {
-            ServerPlayerEntity player = source.getPlayerOrThrow();
-            ServerWorld world = player.getServerWorld();
-            Vec3d startPos = player.getPos();
+            ServerPlayer player = source.getPlayerOrException();
+            ServerLevel world = ((ServerLevel) player.level());
+            Vec3 startPos = player.position();
 
-            List<HamsterGenome> genomes = generateRandomPermutations(Random.create(), parsedCount, useWildOverlayRulesForBreeding);
+            List<HamsterGenome> genomes = generateRandomPermutations(RandomSource.create(), parsedCount, useWildOverlayRulesForBreeding);
 
             lastSpawnBatchId = UUID.randomUUID().toString();
             int maxCols = Math.max(1, (int) Math.ceil(Math.sqrt(parsedCount)));
@@ -461,9 +461,9 @@ public class HamsterSpawnCommandUtil {
 
                 float yaw = 0;
                 if (randomizeYaw) {
-                    yaw = world.random.nextFloat() * 360.0f;
+                    yaw = world.getRandom().nextFloat() * 360.0f;
                 } else if (matchPlayerYaw) {
-                    yaw = player.getYaw();
+                    yaw = player.getYRot();
                 }
 
                 double colOffset = col * spacingMultiplier;
@@ -471,17 +471,17 @@ public class HamsterSpawnCommandUtil {
 
                 HamsterEntity hamster = spawnFrozenHamster(world, startPos.add(colOffset, 0, rowOffset), yaw, genomes.get(i), randomizeSitting, randomizeSleeping);
                 if (hamster != null) {
-                    hamster.addCommandTag("ahp_batch_" + lastSpawnBatchId);
+                    hamster.addTag("ahp_batch_" + lastSpawnBatchId);
                 }
             }
 
             final int finalParsedCount = parsedCount;
-            source.sendFeedback(() -> Text.literal("[Hamster Genetics] Instantly spawned " + finalParsedCount + " random permutations.").formatted(Formatting.GREEN), true);
+            source.sendSuccess(() -> Component.literal("[Hamster Genetics] Instantly spawned " + finalParsedCount + " random permutations.").withStyle(ChatFormatting.GREEN), true);
             return 1;
         }
 
         // Async batch path for enormous generation requirements
-        source.sendFeedback(() -> Text.literal("[Hamster Genetics] Calculating permutations...").formatted(Formatting.YELLOW), true);
+        source.sendSuccess(() -> Component.literal("[Hamster Genetics] Calculating permutations...").withStyle(ChatFormatting.YELLOW), true);
 
         final boolean isAll = spawnAll;
         final int finalCount = parsedCount;
@@ -493,20 +493,20 @@ public class HamsterSpawnCommandUtil {
                 Collections.shuffle(permutations);
                 return permutations;
             } else {
-                return generateRandomPermutations(net.minecraft.util.math.random.Random.create(), finalCount, finalUseWildRules);
+                return generateRandomPermutations(net.minecraft.util.RandomSource.create(), finalCount, finalUseWildRules);
             }
         }).thenAcceptAsync(permutations -> {
             // Apply results back on main server thread
             permState.active = true;
             permState.ignoreSafetyLimits = ignoreSafetyLimits;
             try {
-                permState.player = source.getPlayerOrThrow();
+                permState.player = source.getPlayerOrException();
             } catch (CommandSyntaxException e) {
                 permState.active = false;
                 return;
             }
-            permState.world = permState.player.getServerWorld();
-            permState.startPos = permState.player.getPos();
+            permState.world = ((ServerLevel) permState.player.level());
+            permState.startPos = permState.player.position();
 
             permState.batchId = UUID.randomUUID().toString();
             lastSpawnBatchId = permState.batchId;
@@ -522,11 +522,11 @@ public class HamsterSpawnCommandUtil {
             permState.matchPlayerYaw = matchPlayerYaw;
             permState.randomizeYaw = randomizeYaw;
 
-            source.sendFeedback(() -> Text.literal("[Hamster Genetics] Starting batch-spawn of " + permutations.size() + " permutations in a " + permState.maxCols + " x " + permState.maxCols + " grid (blocks).").formatted(Formatting.GREEN), true);
+            source.sendSuccess(() -> Component.literal("[Hamster Genetics] Starting batch-spawn of " + permutations.size() + " permutations in a " + permState.maxCols + " x " + permState.maxCols + " grid (blocks).").withStyle(ChatFormatting.GREEN), true);
             if (!ignoreSafetyLimits) {
-                source.sendFeedback(() -> Text.literal("Safety limits enabled. Command will abort if server MSPT > 70.0.").formatted(Formatting.YELLOW), false);
+                source.sendSuccess(() -> Component.literal("Safety limits enabled. Command will abort if server MSPT > 70.0.").withStyle(ChatFormatting.YELLOW), false);
             } else {
-                source.sendFeedback(() -> Text.literal("Safety limits ignored. YOLO.").formatted(Formatting.RED, Formatting.BOLD), false);
+                source.sendSuccess(() -> Component.literal("Safety limits ignored. YOLO.").withStyle(ChatFormatting.RED, ChatFormatting.BOLD), false);
             }
         }, source.getServer());
 
@@ -537,7 +537,7 @@ public class HamsterSpawnCommandUtil {
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static List<HamsterGenome> generateRandomPermutations(net.minecraft.util.math.random.Random random, int count, boolean useWildOverlayRulesForBreeding) {
+    private static List<HamsterGenome> generateRandomPermutations(net.minecraft.util.RandomSource random, int count, boolean useWildOverlayRulesForBreeding) {
         List<HamsterGenome> list = new ArrayList<>(count);
         List<PaletteDefinition> allBases = new ArrayList<>(HamsterPaletteManager.PALETTE_REGISTRY.values());
         List<String> allPaletteIds = new ArrayList<>(HamsterPaletteManager.PALETTE_REGISTRY.keySet());
@@ -664,17 +664,17 @@ public class HamsterSpawnCommandUtil {
         return permutations;
     }
 
-    private static HamsterEntity spawnFrozenHamster(ServerWorld world, Vec3d pos, float yaw, HamsterGenome genome, boolean randomizeSitting, boolean randomizeSleeping) {
-        HamsterEntity hamster = ModEntities.HAMSTER.get().create(world);
+    private static HamsterEntity spawnFrozenHamster(ServerLevel world, Vec3 pos, float yaw, HamsterGenome genome, boolean randomizeSitting, boolean randomizeSleeping) {
+        HamsterEntity hamster = ModEntities.HAMSTER.get().create(world, EntitySpawnReason.LOAD);
         if (hamster != null) {
             hamster.setGenome(genome);
-            hamster.setAiDisabled(true);
+            hamster.setNoAi(true);
             hamster.setNoGravity(true);
             hamster.setInvulnerable(true);
 
             // Assign random personality
-            int personality = world.getRandom().nextBetween(1, 3);
-            hamster.getDataTracker().set(HamsterEntity.ANIMATION_PERSONALITY_ID, personality);
+            int personality = world.getRandom().nextIntBetweenInclusive(1, 3);
+            hamster.getEntityData().set(HamsterEntity.ANIMATION_PERSONALITY_ID, personality);
 
             // Pose assignment
             boolean willSleep = false;
@@ -692,21 +692,21 @@ public class HamsterSpawnCommandUtil {
             if (willSleep) {
                 hamster.setSleeping(true);
                 hamster.setInSittingPose(true);
-                hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
+                hamster.getEntityData().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
             } else if (willSit) {
                 hamster.setSitting(true, true);
             }
 
-            hamster.refreshPositionAndAngles(pos.x, pos.y, pos.z, yaw, 0);
-            hamster.setYaw(yaw);
-            hamster.setBodyYaw(yaw);
-            hamster.setHeadYaw(yaw);
-            world.spawnEntity(hamster);
+            hamster.snapTo(pos.x, pos.y, pos.z, yaw, 0);
+            hamster.setYRot(yaw);
+            hamster.setYBodyRot(yaw);
+            hamster.setYHeadRot(yaw);
+            world.addFreshEntity(hamster);
         }
         return hamster;
     }
 
-    private static List<HamsterGenome> getGenomesToSpawn(Random random, boolean withOverlays, boolean withSampleBreeding, String targetAuthor) {
+    private static List<HamsterGenome> getGenomesToSpawn(RandomSource random, boolean withOverlays, boolean withSampleBreeding, String targetAuthor) {
         List<HamsterGenome> genomes = new ArrayList<>();
         for (PaletteDefinition def : HamsterPaletteManager.PALETTE_REGISTRY.values()) {
             if (!targetAuthor.equals("all") && !def.author().equals(targetAuthor)) continue; // Filter base colors by author
@@ -750,7 +750,7 @@ public class HamsterSpawnCommandUtil {
                 for (String bPalId : samplePalettes) {
                     int bPat;
                     do {
-                        bPat = random.nextBetween(1, maxPattern);
+                        bPat = random.nextIntBetweenInclusive(1, maxPattern);
                     } while (bPat == baseGenome.wildOverlayPattern());
 
                     breedingGenomes.add(new HamsterGenome(

@@ -5,10 +5,10 @@ import net.dawson.adorablehamsterpets.client.gui.widgets.AnnouncementIconWidget;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.mixin.accessor.ScreenWidgetAdder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.TitleScreen;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,7 +23,7 @@ public abstract class TitleScreenMixin extends Screen {
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    protected TitleScreenMixin(Text title) {
+    protected TitleScreenMixin(Component title) {
         super(title);
     }
 
@@ -48,7 +48,7 @@ public abstract class TitleScreenMixin extends Screen {
 
             if (shouldShowIcon && Configs.AHP_UI.enableHudIcon.get() && !Configs.AHP_UI.serverDisableAnnouncements) {
                 // Add widget if title screen active
-                if (MinecraftClient.getInstance().currentScreen == (TitleScreen) (Object) this) {
+                if (Minecraft.getInstance().gui.screen() == (TitleScreen) (Object) this) {
                     // Use accessor to add widget for cross-loader compatibility
                     // Initial bounds controlled by animator
                     ((ScreenWidgetAdder) (Object) this).adorablehamsterpets$addWidget(new AnnouncementIconWidget(
@@ -58,6 +58,6 @@ public abstract class TitleScreenMixin extends Screen {
                     ));
                 }
             }
-        }, MinecraftClient.getInstance());
+        }, Minecraft.getInstance());
     }
 }

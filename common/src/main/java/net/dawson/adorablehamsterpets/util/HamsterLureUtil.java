@@ -8,9 +8,9 @@ import net.dawson.adorablehamsterpets.entity.AI.HamsterInterHamsterTagGoal;
 import net.dawson.adorablehamsterpets.entity.AI.HamsterPlayWithItemGoal;
 import net.dawson.adorablehamsterpets.entity.AI.HamsterTagGoal;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -46,27 +46,27 @@ public final class HamsterLureUtil {
         return isBeggingItem(stack) && ConfigDataCache.isLureItem(stack);
     }
 
-    public static boolean isHoldingTemptingItem(PlayerEntity player) {
-        return isTemptingItem(player.getMainHandStack())
-                || isTemptingItem(player.getOffHandStack());
+    public static boolean isHoldingTemptingItem(Player player) {
+        return isTemptingItem(player.getMainHandItem())
+                || isTemptingItem(player.getOffhandItem());
     }
 
-    public static boolean isHoldingBeggingItem(PlayerEntity player) {
-        return isBeggingItem(player.getMainHandStack()) || isBeggingItem(player.getOffHandStack());
+    public static boolean isHoldingBeggingItem(Player player) {
+        return isBeggingItem(player.getMainHandItem()) || isBeggingItem(player.getOffhandItem());
     }
 
     @Nullable
-    public static PlayerEntity resolveTemptingPlayer(
-            HamsterEntity hamster, @Nullable PlayerEntity nearestDietaryPlayer) {
-        if (!hamster.isTamed()) {
+    public static Player resolveTemptingPlayer(
+            HamsterEntity hamster, @Nullable Player nearestDietaryPlayer) {
+        if (!hamster.isTame()) {
             return nearestDietaryPlayer;
         }
 
         Entity owner = hamster.getOwner();
-        if (!(owner instanceof PlayerEntity ownerPlayer)
+        if (!(owner instanceof Player ownerPlayer)
                 || !ownerPlayer.isAlive()
                 || ownerPlayer.isSpectator()
-                || hamster.squaredDistanceTo(ownerPlayer) > TEMPT_RANGE_SQUARED
+                || hamster.distanceToSqr(ownerPlayer) > TEMPT_RANGE_SQUARED
                 || !isHoldingTemptingItem(ownerPlayer)) {
             return null;
         }
@@ -80,8 +80,8 @@ public final class HamsterLureUtil {
                 || hamster.isRescueSleeping()
                 || hamster.getDozingPhase() != HamsterEntity.DozingPhase.NONE
                 || hamster.isLeashed()
-                || hamster.hasVehicle()
-                || hamster.hasPassengers()
+                || hamster.isPassenger()
+                || hamster.isVehicle()
                 || hamster.isShoulderPet()) {
             return false;
         }
@@ -108,7 +108,7 @@ public final class HamsterLureUtil {
                 && !activeGoal.startsWith(HamsterTagGoal.class.getSimpleName())
                 && !activeGoal.startsWith(HamsterInterHamsterTagGoal.class.getSimpleName())
                 && !activeGoal.startsWith(HamsterHideAndSeekGoal.class.getSimpleName())
-                && !(hamster.isTouchingWater()
+                && !(hamster.isInWater()
                         && activeGoal.startsWith(HamsterFollowOwnerGoal.class.getSimpleName()));
     }
 

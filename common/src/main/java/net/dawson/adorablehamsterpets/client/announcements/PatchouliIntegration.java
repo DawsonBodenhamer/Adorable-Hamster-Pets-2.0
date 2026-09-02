@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.client.announcements;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 import vazkii.patchouli.client.base.PersistentData;
 import vazkii.patchouli.client.book.BookEntry;
 import vazkii.patchouli.common.book.Book;
@@ -43,7 +43,7 @@ public class PatchouliIntegration {
      * @param entryId The full Identifier of the entry to mark as unread.
      */
     public static boolean setEntryAsUnread(Identifier entryId) {
-        Identifier bookId = Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
+        Identifier bookId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
         Book book = BookRegistry.INSTANCE.books.get(bookId);
         if (book == null) {
             return false;
@@ -65,7 +65,7 @@ public class PatchouliIntegration {
      * Clears all virtual announcement and update entries from Patchouli's history.
      */
     public static void clearAllVirtualEntriesFromHistory() {
-        Identifier bookId = Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
+        Identifier bookId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
         Book book = BookRegistry.INSTANCE.books.get(bookId);
         if (book == null) return;
 

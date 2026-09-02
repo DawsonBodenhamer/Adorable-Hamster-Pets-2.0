@@ -1,5 +1,7 @@
 package net.dawson.adorablehamsterpets.networking;
 
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.core.UUIDUtil;
 import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
@@ -14,14 +16,14 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterInteractionUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPhysicsUtil;
 import net.dawson.adorablehamsterpets.util.HamsterRenderTracker;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 public class ModPackets {
 
@@ -49,15 +51,15 @@ public class ModPackets {
      */
     public static void registerC2SPackets() {
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, ThrowHamsterPayload.ID, ThrowHamsterPayload.CODEC,
-                (payload, context) -> context.queue(() -> HamsterEntity.tryThrowFromShoulder((ServerPlayerEntity) context.getPlayer()))
+                (payload, context) -> context.queue(() -> HamsterEntity.tryThrowFromShoulder((ServerPlayer) context.getPlayer()))
         );
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, HamsterAnimationSoundPayload.ID, HamsterAnimationSoundPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
-                    Entity entity = context.getPlayer().getWorld().getEntityById(payload.hamsterEntityId());
+                    Entity entity = context.getPlayer().level().getEntity(payload.hamsterEntityId());
                     if (entity instanceof HamsterEntity hamster) {
                         // Ensure sender is >16 blocks away (squared)
-                        if (hamster.squaredDistanceTo(context.getPlayer()) > 256.0) {
+                        if (hamster.distanceToSqr(context.getPlayer()) > 256.0) {
                             if ("hamster_thump_sound".equals(payload.soundId())) {
 
                                 // Ignore duplicate packets
@@ -80,7 +82,7 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, DismountHamsterPayload.ID, DismountHamsterPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
-                    if (context.getPlayer() instanceof ServerPlayerEntity player) {
+                    if (context.getPlayer() instanceof ServerPlayer player) {
                         ((PlayerEntityAccessor) player).adorablehamsterpets$dismountShoulderHamster(false);
                     }
                 })
@@ -88,7 +90,7 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, RequestGuidebookPayload.ID, RequestGuidebookPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
-                    ServerPlayerEntity player = (ServerPlayerEntity) context.getPlayer();
+                    ServerPlayer player = (ServerPlayer) context.getPlayer();
 
                     // Deliver guidebook: no advancement, no fallback message, play effect, close the config screen
                     AdorableHamsterPets.deliverGuidebook(player, false, false, true, true);
@@ -100,11 +102,11 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, RequestHamsterMountPayload.ID, RequestHamsterMountPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
-                    PlayerEntity player = context.getPlayer();
-                    Entity entity = player.getWorld().getEntityById(payload.entityId());
-                    if (entity instanceof HamsterEntity hamster && hamster.isOwner(player)) {
+                    Player player = context.getPlayer();
+                    Entity entity = player.level().getEntity(payload.entityId());
+                    if (entity instanceof HamsterEntity hamster && hamster.isOwnedBy(player)) {
                         // Distance check for security
-                        if (hamster.squaredDistanceTo(player) < 64.0) {
+                        if (hamster.distanceToSqr(player) < 64.0) {
                             HamsterInteractionUtil.executeShoulderMount(hamster, player, ItemStack.EMPTY); // Pass empty stack for force-mount
                         }
                     }
@@ -125,11 +127,11 @@ public class ModPackets {
                         return;
                     }
 
-                    PlayerEntity player = context.getPlayer();
-                    Entity entity = player.getWorld().getEntityById(payload.entityId());
+                    Player player = context.getPlayer();
+                    Entity entity = player.level().getEntity(payload.entityId());
 
                     if (entity instanceof HamsterEntity hamster) {
-                        if (hamster.squaredDistanceTo(player) < 64.0) {
+                        if (hamster.distanceToSqr(player) < 64.0) {
                             hamster.putPlayerOnBack(player);
                         }
                     }
@@ -160,10 +162,10 @@ public class ModPackets {
                 (payload, context) -> context.queue(() -> {
                     if (!Configs.AHP_MAIN.enableGuiRenaming) return;
 
-                    if (context.getPlayer() instanceof ServerPlayerEntity player) {
-                        Entity entity = player.getWorld().getEntityById(payload.entityId());
+                    if (context.getPlayer() instanceof ServerPlayer player) {
+                        Entity entity = player.level().getEntity(payload.entityId());
                         // Ensure player owns hamster and is close enough
-                        if (entity instanceof HamsterEntity hamster && hamster.isOwner(player) && hamster.squaredDistanceTo(player) < 64.0) {
+                        if (entity instanceof HamsterEntity hamster && hamster.isOwnedBy(player) && hamster.distanceToSqr(player) < 64.0) {
                             String newName = payload.newName().trim();
                             boolean canRename = true;
 
@@ -176,17 +178,17 @@ public class ModPackets {
                                 if (newName.isEmpty()) {
                                     hamster.setCustomName(null);
                                 } else {
-                                    hamster.setCustomName(Text.literal(newName));
+                                    hamster.setCustomName(Component.literal(newName));
 
                                     // Trigger Sweet Potato easter egg effects after GUI closes
                                     if (hamster.isSweetPotato()) {
                                         Runnable easterEggTask = new Runnable() {
                                             @Override
                                             public void run() {
-                                                if (player.currentScreenHandler != player.playerScreenHandler) {
-                                                    hamster.scheduleTask(hamster.getWorld().getTime() + 5, "sweet_potato_delay", this);
+                                                if (player.containerMenu != player.inventoryMenu) {
+                                                    hamster.scheduleTask(hamster.level().getGameTime() + 5, "sweet_potato_delay", this);
                                                 } else {
-                                                    player.server.getCommandManager().executeWithPrefix(player.getCommandSource(), "function adorablehamsterpets:technical/sweet_potato_effects");
+                                                    player.level().getServer().getCommands().performPrefixedCommand(player.createCommandSourceStack(), "function adorablehamsterpets:technical/sweet_potato_effects");
                                                 }
                                             }
                                         };
@@ -217,7 +219,7 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, StartCrownTrialPayload.ID, StartCrownTrialPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
-                    if (context.getPlayer() instanceof ServerPlayerEntity player) {
+                    if (context.getPlayer() instanceof ServerPlayer player) {
                         PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
 
                         // Prevent users from requesting multiple trials per server by checking the NBT flag
@@ -232,26 +234,26 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, AdjustGeneticsConfigPayload.ID, AdjustGeneticsConfigPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
-                    if (context.getPlayer() instanceof ServerPlayerEntity player) {
-                        if (player.hasPermissionLevel(2)) { // OP required to modify server config
+                    if (context.getPlayer() instanceof ServerPlayer player) {
+                        if (player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) { // OP required to modify server config
                             if (payload.isVariance()) {
                                 double current = Configs.AHP_MAIN.geneticVariance.get();
-                                double next = MathHelper.clamp(current + (payload.increase() ? 0.05 : -0.05), 0.0, 1.0);
+                                double next = Mth.clamp(current + (payload.increase() ? 0.05 : -0.05), 0.0, 1.0);
                                 @SuppressWarnings("unchecked")
                                 ValidatedFieldAccessor<Double> accessor = (ValidatedFieldAccessor<Double>) (Object) Configs.AHP_MAIN.geneticVariance;
                                 accessor.adorablehamsterpets$set(next);
-                                player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.genetic_variance_updated", String.format("%.2f", next)).formatted(Formatting.WHITE), true);
+                                player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.breeding.genetics_visualization.genetic_variance_updated", String.format("%.2f", next)).withStyle(ChatFormatting.WHITE));
                             } else {
                                 double current = Configs.AHP_MAIN.geneticMutationRate.get();
-                                double next = MathHelper.clamp(current + (payload.increase() ? 0.1 : -0.1), 0.0, 2.0);
+                                double next = Mth.clamp(current + (payload.increase() ? 0.1 : -0.1), 0.0, 2.0);
                                 @SuppressWarnings("unchecked")
                                 ValidatedFieldAccessor<Double> accessor = (ValidatedFieldAccessor<Double>) (Object) Configs.AHP_MAIN.geneticMutationRate;
                                 accessor.adorablehamsterpets$set(next);
-                                player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.genetics_mutation_rate_updated", String.format("%.1f", next)).formatted(Formatting.WHITE), true);
+                                player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.breeding.genetics_visualization.genetics_mutation_rate_updated", String.format("%.1f", next)).withStyle(ChatFormatting.WHITE));
                             }
                             Configs.AHP_MAIN.save();
                         } else {
-                            player.sendMessage(Text.translatable("message.adorablehamsterpets.breeding.genetics_visualization.no_permission").formatted(Formatting.RED), true);
+                            player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.breeding.genetics_visualization.no_permission").withStyle(ChatFormatting.RED));
                         }
                     }
                 })
@@ -284,13 +286,13 @@ public class ModPackets {
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, SyncHamsterStatePayload.ID, SyncHamsterStatePayload.CODEC,
                 (payload, context) -> context.queue(() -> {
                     // Client-side logic to apply the NBT
-                    MinecraftClient client = MinecraftClient.getInstance();
-                    if (client.world != null) {
-                        Entity entity = client.world.getEntityById(payload.entityId());
+                    Minecraft client = Minecraft.getInstance();
+                    if (client.level != null) {
+                        Entity entity = client.level.getEntity(payload.entityId());
                         // Check if the entity is a player and has AHP accessor
-                        if (entity instanceof PlayerEntity player && entity instanceof PlayerEntityAccessor accessor) {
+                        if (entity instanceof Player player && entity instanceof PlayerEntityAccessor accessor) {
                             accessor.adorablehamsterpets$setRawHamsterState(payload.data());
-                            ClientShoulderHamsterData.REPLAY_CACHE.put(player.getUuid(), payload.data());
+                            ClientShoulderHamsterData.REPLAY_CACHE.put(player.getUUID(), payload.data());
                         }
                     }
                 })
@@ -317,9 +319,9 @@ public class ModPackets {
 
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, PlayerKnockbackPayload.ID, PlayerKnockbackPayload.CODEC,
                 (payload, context) -> context.queue(() -> {
-                    MinecraftClient client = MinecraftClient.getInstance();
+                    Minecraft client = Minecraft.getInstance();
                     if (client.player != null) {
-                        client.player.setVelocity(payload.velocityX(), payload.velocityY(), payload.velocityZ());
+                        client.player.setDeltaMovement(payload.velocityX(), payload.velocityY(), payload.velocityZ());
                     }
                 })
         );
@@ -328,9 +330,9 @@ public class ModPackets {
     private static void handleUpdateRenderState(UpdateHamsterRenderStatePayload payload, NetworkManager.PacketContext context) {
         for (int id : payload.hamsterEntityIds()) {
             if (payload.isRendering()) {
-                HamsterRenderTracker.addPlayer(id, context.getPlayer().getUuid());
+                HamsterRenderTracker.addPlayer(id, context.getPlayer().getUUID());
             } else {
-                HamsterRenderTracker.removePlayer(id, context.getPlayer().getUuid());
+                HamsterRenderTracker.removePlayer(id, context.getPlayer().getUUID());
             }
         }
     }
@@ -338,20 +340,20 @@ public class ModPackets {
     private static void handleUpdateArmorVisibility(
             UpdateHamsterArmorVisibilityPayload payload,
             NetworkManager.PacketContext context) {
-        if (!(context.getPlayer() instanceof ServerPlayerEntity player)) {
+        if (!(context.getPlayer() instanceof ServerPlayer player)) {
             return;
         }
 
-        Entity entity = player.getWorld().getEntityById(payload.entityId());
+        Entity entity = player.level().getEntity(payload.entityId());
         if (!(entity instanceof HamsterEntity hamster)
                 || !hamster.isAlive()
                 || hamster.isRemoved()
-                || !hamster.isOwner(player)
-                || hamster.squaredDistanceTo(player) >= 64.0) {
+                || !hamster.isOwnedBy(player)
+                || hamster.distanceToSqr(player) >= 64.0) {
             return;
         }
 
-        if (!(player.currentScreenHandler instanceof HamsterInventoryScreenHandler handler)
+        if (!(player.containerMenu instanceof HamsterInventoryScreenHandler handler)
                 || handler.getHamsterEntity() != hamster) {
             return;
         }

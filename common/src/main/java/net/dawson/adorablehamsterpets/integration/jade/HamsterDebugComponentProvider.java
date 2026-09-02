@@ -1,31 +1,31 @@
 package net.dawson.adorablehamsterpets.integration.jade;
 
+import com.geckolib.animation.RawAnimation;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 import snownee.jade.api.EntityAccessor;
 import snownee.jade.api.IEntityComponentProvider;
 import snownee.jade.api.IServerDataProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.AnimationProcessor;
+import com.geckolib.animation.AnimationController;
 
-public enum HamsterDebugComponentProvider implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {
+public enum HamsterDebugComponentProvider implements IEntityComponentProvider {
     INSTANCE;
 
-    private static final Identifier UID = Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_debug_info");
+    private static final Identifier UID = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_debug_info");
 
     @Override
     public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
@@ -39,129 +39,129 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
         }
 
         // --- Animation State ---
-        tooltip.add(Text.literal("--- Current Animation ---").formatted(Formatting.GRAY));
+        tooltip.add(Component.literal("--- Current Animation ---").withStyle(ChatFormatting.GRAY));
         AnimationController<?> controller = hamster.getAnimatableInstanceCache().getManagerForId(hamster.getId()).getAnimationControllers().get("mainController");
         if (controller != null) {
             // Get the currently playing animation object from the controller
-            AnimationProcessor.QueuedAnimation currentAnim = controller.getCurrentAnimation();
+            RawAnimation currentAnim = controller.getCurrentRawAnimation();
 
             if (currentAnim != null) {
                 // Get the name from the animation record itself
-                tooltip.add(fText("Current Anim: %s", Text.literal(currentAnim.animation().name()).formatted(Formatting.AQUA)));
+                tooltip.add(fText("Current Anim: %s", Component.literal(currentAnim.getAnimationStages().stream().map(RawAnimation.Stage::animationName).collect(java.util.stream.Collectors.joining(" > "))).withStyle(ChatFormatting.AQUA)));
             } else {
-                tooltip.add(fText("Current Anim: %s", Text.literal("None").formatted(Formatting.GRAY)));
+                tooltip.add(fText("Current Anim: %s", Component.literal("None").withStyle(ChatFormatting.GRAY)));
             }
         }
 
         // --- AI Goal & Action States ---
-        tooltip.add(Text.literal("--- AI & Action States ---").formatted(Formatting.GRAY));
-        tooltip.add(fText("Sitting (Command): %s", (hamster.isSitting() ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED))));
-        tooltip.add(fText("Sitting (Vanilla Pose): %s", (hamster.isInSittingPose() ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED))));
-        tooltip.add(fText("Sleeping (Wild/General): %s", (hamster.isSleeping() ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED))));
-        tooltip.add(fText("Cleaning: %s", (hamster.isCleaning() ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED))));
+        tooltip.add(Component.literal("--- AI & Action States ---").withStyle(ChatFormatting.GRAY));
+        tooltip.add(fText("Sitting (Command): %s", (hamster.isOrderedToSit() ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED))));
+        tooltip.add(fText("Sitting (Vanilla Pose): %s", (hamster.isInSittingPose() ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED))));
+        tooltip.add(fText("Sleeping (Wild/General): %s", (hamster.isSleeping() ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED))));
+        tooltip.add(fText("Cleaning: %s", (hamster.isCleaning() ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED))));
 
         if (hamster.isKnockedOut()) {
-            tooltip.add(fText("State: %s", Text.literal("Knocked Out").formatted(Formatting.RED, Formatting.BOLD)));
+            tooltip.add(fText("State: %s", Component.literal("Knocked Out").withStyle(ChatFormatting.RED, ChatFormatting.BOLD)));
         } else if (hamster.isSulking()) {
-            tooltip.add(fText("State: %s", Text.literal("Sulking").formatted(Formatting.DARK_PURPLE, Formatting.BOLD)));
+            tooltip.add(fText("State: %s", Component.literal("Sulking").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD)));
         } else if (hamster.isCelebratingDiamond()) {
-            tooltip.add(fText("State: %s", Text.literal("Celebrating Diamond").formatted(Formatting.AQUA, Formatting.BOLD)));
+            tooltip.add(fText("State: %s", Component.literal("Celebrating Diamond").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD)));
         }
 
-        tooltip.add(fText("Is Navigating: %s", (!hamster.getNavigation().isIdle() ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED)) ));
+        tooltip.add(fText("Is Navigating: %s", (!hamster.getNavigation().isDone() ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED)) ));
         LivingEntity target = hamster.getTarget();
-        tooltip.add(fText("Has Target: %s", (target != null ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED))));
+        tooltip.add(fText("Has Target: %s", (target != null ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED))));
         if (target != null) {
-            tooltip.add(fText("  Target: %s", Text.literal(target.getName().getString()).formatted(Formatting.WHITE)));
+            tooltip.add(fText("  Target: %s", Component.literal(target.getName().getString()).withStyle(ChatFormatting.WHITE)));
         }
         String activeGoalName = hamster.getActiveCustomGoalName();
-        tooltip.add(fText("Current Custom Goal: %s", Text.literal(activeGoalName).formatted(activeGoalName.equals("None") ? Formatting.GRAY : Formatting.AQUA)));
+        tooltip.add(fText("Current Custom Goal: %s", Component.literal(activeGoalName).withStyle(activeGoalName.equals("None") ? ChatFormatting.GRAY : ChatFormatting.AQUA)));
 
         // --- Bed Link Status ---
-        tooltip.add(Text.literal("--- Bed Link ---").formatted(Formatting.GRAY));
-        NbtCompound serverData = accessor.getServerData();
-        boolean isWanderActive = serverData.getBoolean("IsWanderModeActive");
-        boolean isOnTheWayToBed = serverData.getBoolean("IsOnTheWayToBed");
-        int goToBedDelay = serverData.getInt("GoToBedDelay");
+        tooltip.add(Component.literal("--- Bed Link ---").withStyle(ChatFormatting.GRAY));
+        CompoundTag serverData = accessor.getServerData();
+        boolean isWanderActive = serverData.getBooleanOr("IsWanderModeActive", false);
+        boolean isOnTheWayToBed = serverData.getBooleanOr("IsOnTheWayToBed", false);
+        int goToBedDelay = serverData.getIntOr("GoToBedDelay", 0);
 
         // Display wander mode status
-        tooltip.add(fText("Wander Mode: %s", isWanderActive ? Text.literal("ACTIVE").formatted(Formatting.GREEN) : Text.literal("INACTIVE").formatted(Formatting.RED)));
+        tooltip.add(fText("Wander Mode: %s", isWanderActive ? Component.literal("ACTIVE").withStyle(ChatFormatting.GREEN) : Component.literal("INACTIVE").withStyle(ChatFormatting.RED)));
 
         // If wandering, show distance. If pathfinding to bed, show that instead.
         if (isWanderActive) {
             if (isOnTheWayToBed) {
                 if (goToBedDelay > 0) {
-                    tooltip.add(fText("  Status: %s", Text.literal(String.format("Waiting... (starts in %.1f s)", goToBedDelay / 20.0)).formatted(Formatting.YELLOW)));
+                    tooltip.add(fText("  Status: %s", Component.literal(String.format("Waiting... (starts in %.1f s)", goToBedDelay / 20.0)).withStyle(ChatFormatting.YELLOW)));
                 } else {
-                    tooltip.add(fText("  Status: %s", Text.literal("Pathfinding to bed...").formatted(Formatting.YELLOW)));
+                    tooltip.add(fText("  Status: %s", Component.literal("Pathfinding to bed...").withStyle(ChatFormatting.YELLOW)));
                 }
             } else if (serverData.contains("WanderDistance")) {
-                String distanceStr = serverData.getString("WanderDistance");
-                tooltip.add(fText("  Wander Distance: %s", Text.literal(distanceStr).formatted(Formatting.AQUA)));
+                String distanceStr = serverData.getStringOr("WanderDistance", "");
+                tooltip.add(fText("  Wander Distance: %s", Component.literal(distanceStr).withStyle(ChatFormatting.AQUA)));
             }
         }
 
         // --- Tamed Sleep Sequence ---
-        if (hamster.isTamed()) {
-            tooltip.add(Text.literal("--- Tamed Sleep Sequence ---").formatted(Formatting.GRAY));
+        if (hamster.isTame()) {
+            tooltip.add(Component.literal("--- Tamed Sleep Sequence ---").withStyle(ChatFormatting.GRAY));
             HamsterEntity.DozingPhase phase = hamster.getDozingPhase();
-            tooltip.add(fText("Dozing Phase: %s", Text.literal(phase.name()).formatted(phase != HamsterEntity.DozingPhase.NONE ? Formatting.AQUA : Formatting.WHITE)));
+            tooltip.add(fText("Dozing Phase: %s", Component.literal(phase.name()).withStyle(phase != HamsterEntity.DozingPhase.NONE ? ChatFormatting.AQUA : ChatFormatting.WHITE)));
             if (phase == HamsterEntity.DozingPhase.DEEP_SLEEP || phase == HamsterEntity.DozingPhase.SETTLING_INTO_SLUMBER) {
-                tooltip.add(fText("  Deep Sleep Anim: %s", Text.literal(hamster.getCurrentDeepSleepAnimationIdFromTracker()).formatted(Formatting.AQUA)));
+                tooltip.add(fText("  Deep Sleep Anim: %s", Component.literal(hamster.getCurrentDeepSleepAnimationIdFromTracker()).withStyle(ChatFormatting.AQUA)));
             }
         }
 
         // --- Ore Seeking States  ---
-        tooltip.add(Text.literal("--- Ore Seeking ---").formatted(Formatting.GRAY));
-        tooltip.add(fText("Primed to Seek: %s", hamster.isPrimedToSeekDiamonds ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED)));
+        tooltip.add(Component.literal("--- Ore Seeking ---").withStyle(ChatFormatting.GRAY));
+        tooltip.add(fText("Primed to Seek: %s", hamster.isPrimedToSeekDiamonds ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED)));
         if (hamster.currentOreTarget != null) {
-            tooltip.add(fText("  Current Ore Target: %s", Text.literal(hamster.currentOreTarget.toString()).formatted(Formatting.AQUA)));
+            tooltip.add(fText("  Current Ore Target: %s", Component.literal(hamster.currentOreTarget.toString()).withStyle(ChatFormatting.AQUA)));
         } else {
-            tooltip.add(fText("  Current Ore Target: %s", Text.literal("None").formatted(Formatting.GRAY)));
+            tooltip.add(fText("  Current Ore Target: %s", Component.literal("None").withStyle(ChatFormatting.GRAY)));
         }
-        long foundOreCooldown = hamster.foundOreCooldownEndTick - hamster.getWorld().getTime();
+        long foundOreCooldown = hamster.foundOreCooldownEndTick - hamster.level().getGameTime();
         if (Configs.AHP_MAIN.enableIndependentDiamondSeekCooldown && foundOreCooldown > 0) {
-            tooltip.add(fText("  Found Ore Cooldown: %s sec", Text.literal(String.format("%.1f", foundOreCooldown / 20.0)).formatted(Formatting.YELLOW)));
+            tooltip.add(fText("  Found Ore Cooldown: %s sec", Component.literal(String.format("%.1f", foundOreCooldown / 20.0)).withStyle(ChatFormatting.YELLOW)));
         } else if (Configs.AHP_MAIN.enableIndependentDiamondSeekCooldown) {
-            tooltip.add(fText("  Found Ore Cooldown: %s", Text.literal("Ready").formatted(Formatting.GREEN)));
+            tooltip.add(fText("  Found Ore Cooldown: %s", Component.literal("Ready").withStyle(ChatFormatting.GREEN)));
         } else {
-            tooltip.add(fText("  Found Ore Cooldown: %s", Text.literal("Disabled").formatted(Formatting.GRAY)));
+            tooltip.add(fText("  Found Ore Cooldown: %s", Component.literal("Disabled").withStyle(ChatFormatting.GRAY)));
         }
 
         // --- Stealing/Fetching States ---
-        tooltip.add(Text.literal("--- Item Stealing/Fetching ---").formatted(Formatting.GRAY));
+        tooltip.add(Component.literal("--- Item Stealing/Fetching ---").withStyle(ChatFormatting.GRAY));
         boolean isHolding = hamster.isHoldingMouthItem();
-        tooltip.add(fText("Is Interested in Item: %s", isHolding ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED)));
+        tooltip.add(fText("Is Interested in Item: %s", isHolding ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED)));
 
         if (isHolding) {
             int remainingTicks = hamster.getGenericInteractionTimer();
-            tooltip.add(fText("  Time Remaining: %s sec", Text.literal(String.format("%.1f", remainingTicks / 20.0)).formatted(Formatting.YELLOW)));
+            tooltip.add(fText("  Time Remaining: %s sec", Component.literal(String.format("%.1f", remainingTicks / 20.0)).withStyle(ChatFormatting.YELLOW)));
 
             if (hamster.isTaunting()) {
-                tooltip.add(fText("  Action: %s", Text.literal("Taunting").formatted(Formatting.GOLD)));
+                tooltip.add(fText("  Action: %s", Component.literal("Taunting").withStyle(ChatFormatting.GOLD)));
             } else if (hamster.isPresentingItem()) {
-                tooltip.add(fText("  Action: %s", Text.literal("Presenting").formatted(Formatting.AQUA)));
+                tooltip.add(fText("  Action: %s", Component.literal("Presenting").withStyle(ChatFormatting.AQUA)));
             } else {
-                tooltip.add(fText("  Action: %s", Text.literal("Moving/Fleeing").formatted(Formatting.WHITE)));
+                tooltip.add(fText("  Action: %s", Component.literal("Moving/Fleeing").withStyle(ChatFormatting.WHITE)));
             }
         }
 
         // --- Love & Interaction States ---
-        tooltip.add(Text.literal("--- Love & Interaction ---").formatted(Formatting.GRAY));
-        tooltip.add(fText("Begging: %s", (hamster.isBegging() ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED))));
-        tooltip.add(fText("Refusing Food: %s", (hamster.isRefusingFood() ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED))));
+        tooltip.add(Component.literal("--- Love & Interaction ---").withStyle(ChatFormatting.GRAY));
+        tooltip.add(fText("Begging: %s", (hamster.isBegging() ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED))));
+        tooltip.add(fText("Refusing Food: %s", (hamster.isRefusingFood() ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED))));
         boolean inLoveDataTracker = hamster.isInLove(); // Checks DataTracker IS_IN_LOVE
         boolean inLoveCustomTimer = hamster.customLoveTimer > 0; // Checks the breeding timer directly
-        tooltip.add(fText("In Love (Tracker): %s", (inLoveDataTracker ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED))));
-        tooltip.add(fText("In Love (Timer): %s (%d ticks)", (inLoveCustomTimer ? Text.literal("true").formatted(Formatting.GREEN) : Text.literal("false").formatted(Formatting.RED)), hamster.customLoveTimer));
+        tooltip.add(fText("In Love (Tracker): %s", (inLoveDataTracker ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED))));
+        tooltip.add(fText("In Love (Timer): %s (%d ticks)", (inLoveCustomTimer ? Component.literal("true").withStyle(ChatFormatting.GREEN) : Component.literal("false").withStyle(ChatFormatting.RED)), hamster.customLoveTimer));
 
-        tooltip.add(Text.literal("--- General Info ---").formatted(Formatting.GRAY));
-        tooltip.add(fText("Tamed: %s", hamster.isTamed() ? Text.literal("Yes").formatted(Formatting.GREEN) : Text.literal("No").formatted(Formatting.RED)));
-        if (hamster.isTamed() && hamster.getOwner() != null) {
-            tooltip.add(fText("  Owner: %s", Text.literal(hamster.getOwner().getName().getString()).formatted(Formatting.WHITE)));
+        tooltip.add(Component.literal("--- General Info ---").withStyle(ChatFormatting.GRAY));
+        tooltip.add(fText("Tamed: %s", hamster.isTame() ? Component.literal("Yes").withStyle(ChatFormatting.GREEN) : Component.literal("No").withStyle(ChatFormatting.RED)));
+        if (hamster.isTame() && hamster.getOwner() != null) {
+            tooltip.add(fText("  Owner: %s", Component.literal(hamster.getOwner().getName().getString()).withStyle(ChatFormatting.WHITE)));
         }
-        tooltip.add(fText("Age: %s", hamster.isBaby() ? Text.literal("Baby").formatted(Formatting.AQUA) : Text.literal("Adult").formatted(Formatting.WHITE)));
-        tooltip.add(fText("Aggression State: %s", Text.literal(hamster.getAggressionState().name()).formatted(Formatting.AQUA)));
+        tooltip.add(fText("Age: %s", hamster.isBaby() ? Component.literal("Baby").withStyle(ChatFormatting.AQUA) : Component.literal("Adult").withStyle(ChatFormatting.WHITE)));
+        tooltip.add(fText("Aggression State: %s", Component.literal(hamster.getAggressionState().name()).withStyle(ChatFormatting.AQUA)));
     }
 
     @Override
@@ -169,41 +169,20 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
         return UID;
     }
 
-    @Override
-    public void appendServerData(NbtCompound data, EntityAccessor accessor) {
-        Entity entity = accessor.getEntity();
-        if (entity instanceof HamsterEntity hamster) {
-            data.putBoolean("IsWanderModeActive", hamster.isWanderModeActive());
-            data.putBoolean("IsOnTheWayToBed", hamster.isOnTheWayToBed());
-            data.putInt("GoToBedDelay", hamster.getGoToBedDelayTicks());
-
-            if (hamster.isWanderModeActive()) {
-                hamster.getLinkedBedPos().ifPresent(globalPos -> {
-                    World world = hamster.getWorld();
-                    if (world instanceof ServerWorld serverWorld && serverWorld.getRegistryKey() == globalPos.dimension()) {
-                        if (serverWorld.getBlockEntity(globalPos.pos()) instanceof HamsterBedBlockEntity bedEntity) {
-                            data.putString("WanderDistance", bedEntity.getWanderDistance().asString());
-                        }
-                    }
-                });
-            }
-        }
-    }
-
     // Helper for formatted text
-    private Text fText(String format, Object... args) {
-        Text[] formattedArgs = new Text[args.length];
+    private Component fText(String format, Object... args) {
+        Component[] formattedArgs = new Component[args.length];
         for (int i = 0; i < args.length; i++) {
-            if (args[i] instanceof Text textComponent) {
+            if (args[i] instanceof Component textComponent) {
                 formattedArgs[i] = textComponent;
             } else {
-                formattedArgs[i] = Text.literal(String.valueOf(args[i])).formatted(Formatting.WHITE);
+                formattedArgs[i] = Component.literal(String.valueOf(args[i])).withStyle(ChatFormatting.WHITE);
             }
         }
-        MutableText result = Text.empty();
+        MutableComponent result = Component.empty();
         String[] parts = format.split("%s", -1);
         for (int i = 0; i < parts.length; i++) {
-            result.append(Text.literal(parts[i]).formatted(Formatting.GOLD));
+            result.append(Component.literal(parts[i]).withStyle(ChatFormatting.GOLD));
             if (i < formattedArgs.length) {
                 result.append(formattedArgs[i]);
             }

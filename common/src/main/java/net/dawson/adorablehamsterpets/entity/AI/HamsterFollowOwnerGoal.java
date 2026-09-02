@@ -3,12 +3,12 @@ package net.dawson.adorablehamsterpets.entity.AI;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.mixin.accessor.FollowOwnerGoalAccessor;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.FuzzyTargeting;
-import net.minecraft.entity.ai.goal.FollowOwnerGoal;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.FollowOwnerGoal;
+import net.minecraft.world.entity.ai.util.LandRandomPos;
+import net.minecraft.world.phys.Vec3;
 
 public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
 
@@ -46,16 +46,16 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         // --- Base Logic ---
-        if (!super.canStart()) {
+        if (!super.canUse()) {
             return false;
         }
 
         // --- Parent Override ---
         // Abort if baby is tracking a living parent
         if (this.hamster.isBaby() && this.hamster.getParentUuid() != null) {
-            if (this.hamster.getWorld() instanceof ServerWorld serverWorld) {
+            if (this.hamster.level() instanceof ServerLevel serverWorld) {
                 Entity parent = serverWorld.getEntity(this.hamster.getParentUuid());
                 if (parent instanceof HamsterEntity parentHamster && parentHamster.isAlive()) {
                     return false;
@@ -73,7 +73,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
         float minDist = ((FollowOwnerGoalAccessor) this).getMinDistance();
         LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
 
-        if (owner == null || this.hamster.cannotFollowOwner()) {
+        if (owner == null || this.hamster.unableToMoveToOwner()) {
             return false;
         }
 
@@ -81,11 +81,11 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
             minDist += 5.0F;
         }
 
-        return !(this.hamster.squaredDistanceTo(owner) < (double) (minDist * minDist));
+        return !(this.hamster.distanceToSqr(owner) < (double) (minDist * minDist));
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         // --- State Exclusions ---
         if (this.isFollowRescueBlocked()) {
             this.resetWaterWatchdog();
@@ -107,12 +107,12 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
             maxDist += 5.0F;
         }
 
-        double ownerDistanceSquared = this.hamster.squaredDistanceTo(owner);
+        double ownerDistanceSquared = this.hamster.distanceToSqr(owner);
         boolean ordinaryFollowContinues =
-                !this.hamster.getNavigation().isIdle()
+                !this.hamster.getNavigation().isDone()
                         && ownerDistanceSquared > (double) (maxDist * maxDist);
         boolean waterFollowContinues =
-                this.hamster.isTouchingWater()
+                this.hamster.isInWater()
                         && ownerDistanceSquared > (double) (minDist * minDist);
         return ordinaryFollowContinues || waterFollowContinues;
     }
@@ -122,7 +122,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
         super.start();
         this.resetWaterWatchdog();
         LivingEntity owner = ((FollowOwnerGoalAccessor) this).getOwner();
-        if (owner != null && this.hamster.isTouchingWater()) {
+        if (owner != null && this.hamster.isInWater()) {
             this.lastHorizontalDistance = this.getHorizontalDistance(owner);
         }
         this.hamster.setActiveCustomGoalName(
@@ -163,7 +163,7 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
         accessor.setUpdateCountdownTicks(currentTicks);
 
         if (currentTicks <= 0) {
-            accessor.setUpdateCountdownTicks(this.getTickCount(10));
+            accessor.setUpdateCountdownTicks(this.adjustedTickDelay(10));
 
             // --- Movement Execution ---
             if (shouldTeleport || waterRescueReady) {
@@ -179,13 +179,13 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
 
                 if (this.hamster.hasGreenBeanBuff()) {
                     // Zoomies erratic pathfinding
-                    Vec3d targetPos = FuzzyTargeting.findTo(this.hamster, 8, 5, Vec3d.ofCenter(owner.getBlockPos()));
+                    Vec3 targetPos = LandRandomPos.getPosTowards(this.hamster, 8, 5, Vec3.atCenterOf(owner.blockPosition()));
                     if (targetPos != null) {
-                        this.hamster.getNavigation().startMovingTo(targetPos.x, targetPos.y, targetPos.z, activeSpeed);
+                        this.hamster.getNavigation().moveTo(targetPos.x, targetPos.y, targetPos.z, activeSpeed);
                     }
                 } else {
                     // Standard pathfinding
-                    this.hamster.getNavigation().startMovingTo(owner, activeSpeed);
+                    this.hamster.getNavigation().moveTo(owner, activeSpeed);
                 }
             }
         }
@@ -194,13 +194,13 @@ public class HamsterFollowOwnerGoal extends FollowOwnerGoal {
     private boolean isFollowRescueBlocked() {
         return HamsterMovementUtil.shouldNotFollow(this.hamster)
                 || this.hamster.isLeashed()
-                || this.hamster.hasVehicle()
+                || this.hamster.isPassenger()
                 || this.hamster.isShoulderPet()
-                || this.hamster.cannotFollowOwner();
+                || this.hamster.unableToMoveToOwner();
     }
 
     private boolean tickWaterWatchdog(LivingEntity owner) {
-        if (!this.hamster.isTouchingWater() || this.isFollowRescueBlocked()) {
+        if (!this.hamster.isInWater() || this.isFollowRescueBlocked()) {
             this.resetWaterWatchdog();
             return false;
         }

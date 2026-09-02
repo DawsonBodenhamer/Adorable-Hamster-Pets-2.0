@@ -2,14 +2,7 @@
   "parent": "adorablehamsterpets:husbandry/steamy_greens",
   "display": {
     "icon": {
-      "id": "minecraft:potion",
-      "components": {
-        "minecraft:potion_contents": {
-          "potion":"minecraft:swiftness"
-        },
-        "minecraft:item_name": "{\"text\":\"Hamster Super Serum\",\"italic\":false,\"color\":\"light_purple\"}",
-        "minecraft:custom_model_data": 1
-      }
+      "id": "minecraft:potion"
     },
     "title": {
       "translate": "advancements.adorablehamsterpets.husbandry.supercharged_squeaker.title"

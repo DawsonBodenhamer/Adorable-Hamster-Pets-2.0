@@ -1,70 +1,59 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
+import com.geckolib.constant.dataticket.DataTicket;
+import com.geckolib.renderer.base.GeoRenderState;
+import com.geckolib.renderer.base.GeoRenderer;
+import com.geckolib.renderer.base.RenderPassInfo;
+import com.geckolib.renderer.layer.builtin.AutoGlowingGeoLayer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
-import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.resources.Identifier;
 
 /**
- * Renders only the Redstone Fever eye mask with vanilla's fullbright eyes render type.
+ * Renders the Redstone Fever eye mask at full brightness.
+ *
+ * <p>26.2 port: rendering no longer touches the entity. Minecraft builds a render
+ * state first and draws from that, so whether the hamster currently has the fever
+ * is captured in {@link #addRenderData} and read back through a data ticket at
+ * draw time. GeckoLib 5 also ships {@link AutoGlowingGeoLayer}, which already does
+ * the emissive pass this class used to hand-roll with {@code RenderType.eyes}.
  */
-public final class RedstoneFeverEyesRenderLayer extends GeoRenderLayer<HamsterEntity> {
+public final class RedstoneFeverEyesRenderLayer<R extends EntityRenderState & GeoRenderState>
+        extends AutoGlowingGeoLayer<HamsterEntity, Void, R> {
 
-    /* ──────────────────────────────────────────────────────────────────────────────
-     *        Constants
-     * ────────────────────────────────────────────────────────────────────────────*/
+    /** Set per-frame in {@link #addRenderData}; read at draw time when the entity is out of reach. */
+    public static final DataTicket<Boolean> SHOW_FEVER_EYES =
+            DataTicket.create("adorablehamsterpets:show_fever_eyes", Boolean.class);
 
-    private static final Identifier FEVER_EYES_TEXTURE = Identifier.of(
+    private static final Identifier FEVER_EYES_TEXTURE = Identifier.fromNamespaceAndPath(
             "adorablehamsterpets",
             "textures/entity/hamster/appearance/conditions/redstone_fever/eyes.png");
 
-    /* ──────────────────────────────────────────────────────────────────────────────
-     *        Constructors
-     * ────────────────────────────────────────────────────────────────────────────*/
-
-    public RedstoneFeverEyesRenderLayer(HamsterRenderer renderer) {
+    public RedstoneFeverEyesRenderLayer(GeoRenderer<HamsterEntity, Void, R> renderer) {
         super(renderer);
     }
 
-    /* ──────────────────────────────────────────────────────────────────────────────
-     *        Overrides
-     * ────────────────────────────────────────────────────────────────────────────*/
+    @Override
+    public void addRenderData(HamsterEntity animatable, Void relatedObject, R renderState, float partialTick) {
+        super.addRenderData(animatable, relatedObject, renderState, partialTick);
+
+        renderState.addGeckolibData(SHOW_FEVER_EYES,
+                animatable.hasRedstoneFever() && !animatable.isInvisible());
+    }
+
+    /** Fixed mask texture, rather than the emissive-variant lookup the base class does. */
+    @Override
+    protected Identifier getTextureResource(R renderState) {
+        return FEVER_EYES_TEXTURE;
+    }
 
     @Override
-    public void render(
-            MatrixStack poseStack,
-            HamsterEntity animatable,
-            BakedGeoModel bakedModel,
-            @Nullable RenderLayer renderType,
-            VertexConsumerProvider bufferSource,
-            @Nullable VertexConsumer buffer,
-            float partialTick,
-            int packedLight,
-            int packedOverlay) {
-        if (!animatable.hasRedstoneFever() || animatable.isInvisible() || buffer == null) {
+    public void submitRenderTask(RenderPassInfo<R> renderPass, SubmitNodeCollector collector) {
+        if (!renderPass.renderState().getOrDefaultGeckolibData(SHOW_FEVER_EYES, false)) {
             return;
         }
 
-        RenderLayer eyesRenderType = RenderLayer.getEyes(FEVER_EYES_TEXTURE);
-        VertexConsumer eyesBuffer = bufferSource.getBuffer(eyesRenderType);
-        int renderColor = this.renderer.getRenderColor(animatable, partialTick, packedLight).argbInt();
-
-        this.renderer.reRender(
-                bakedModel,
-                poseStack,
-                bufferSource,
-                animatable,
-                eyesRenderType,
-                eyesBuffer,
-                partialTick,
-                LightmapTextureManager.MAX_LIGHT_COORDINATE,
-                packedOverlay,
-                renderColor);
+        super.submitRenderTask(renderPass, collector);
     }
 }

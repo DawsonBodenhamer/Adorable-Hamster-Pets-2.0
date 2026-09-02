@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": "minecraft:carrot",
+    "P": "minecraft:pumpkin_seeds",
+    "S": "adorablehamsterpets:sunflower_seeds",
+    "W": "minecraft:wheat_seeds"
+  },
+  "pattern": [
+    "SSS",
+    "PCP",
+    "WWW"
+  ],
+  "result": {
+    "count": 4,
+    "id": "adorablehamsterpets:hamster_food_mix"
+  }
+}

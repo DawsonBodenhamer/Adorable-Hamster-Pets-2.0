@@ -5,14 +5,13 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.config.AhpMainConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.HitResult;
 import java.util.Optional;
 
 /**
@@ -27,9 +26,9 @@ public final class HamsterShoulderUtil {
     // --- Shoulder Restoration and Placement ---
 
     public static void spawnFromNbt(
-            ServerWorld world,
-            PlayerEntity player,
-            NbtCompound nbt,
+            ServerLevel world,
+            Player player,
+            CompoundTag nbt,
             boolean wasDiamondAlertActive,
             boolean forceStand) {
         // --- Restore Hamster State ---
@@ -52,23 +51,23 @@ public final class HamsterShoulderUtil {
         }
 
         // --- Find a Safe Placement ---
-        BlockPos fallbackPos = player.getBlockPos();
-        HitResult hitResult = player.raycast(4.5, 0.0f, false);
+        BlockPos fallbackPos = player.blockPosition();
+        HitResult hitResult = player.pick(4.5, 0.0f, false);
         BlockPos initialSearchPos =
                 hitResult.getType() == HitResult.Type.BLOCK
-                        ? ((net.minecraft.util.hit.BlockHitResult) hitResult).getBlockPos()
+                        ? ((net.minecraft.world.phys.BlockHitResult) hitResult).getBlockPos()
                         : fallbackPos;
         Optional<BlockPos> safePos =
                 HamsterPlacementUtil.findSafeSpawnPosition(initialSearchPos, world, 5, hamster);
 
         safePos.ifPresentOrElse(
                 pos -> {
-                    hamster.refreshPositionAndAngles(
+                    hamster.snapTo(
                             pos.getX() + 0.5,
                             pos.getY(),
                             pos.getZ() + 0.5,
-                            player.getYaw(),
-                            player.getPitch());
+                            player.getYRot(),
+                            player.getXRot());
                     AdorableHamsterPets.LOGGER.debug(
                             "[HamsterDismount] Found safe spawn at {} for player {}.",
                             pos,
@@ -79,16 +78,16 @@ public final class HamsterShoulderUtil {
                             "[HamsterDismount] Could not find a safe spawn position for player {}."
                                 + " Spawning at player's feet as a fallback.",
                             player.getName().getString());
-                    hamster.refreshPositionAndAngles(
+                    hamster.snapTo(
                             fallbackPos.getX() + 0.5,
                             fallbackPos.getY(),
                             fallbackPos.getZ() + 0.5,
-                            player.getYaw(),
-                            player.getPitch());
+                            player.getYRot(),
+                            player.getXRot());
                 });
 
         // --- Complete World Restoration ---
-        world.spawnEntityAndPassengers(hamster);
+        world.addFreshEntityWithPassengers(hamster);
         AdorableHamsterPets.LOGGER.debug(
                 "[HamsterEntity] Spawned Hamster ID {} from NBT data near Player {}.",
                 hamster.getId(),
@@ -97,13 +96,13 @@ public final class HamsterShoulderUtil {
 
     // --- Player-Initiated Throwing ---
 
-    public static void tryThrowFromShoulder(ServerPlayerEntity player) {
+    public static void tryThrowFromShoulder(ServerPlayer player) {
         PlayerEntityAccessor playerAccessor = (PlayerEntityAccessor) player;
         AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
 
         if (!config.enableHamsterThrowing) {
-            player.sendMessage(
-                    Text.translatable("message.adorablehamsterpets.throwing_disabled"), true);
+            player.sendOverlayMessage(
+                    Component.translatable("message.adorablehamsterpets.throwing_disabled"));
             return;
         }
 

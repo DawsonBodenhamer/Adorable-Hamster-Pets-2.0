@@ -2,11 +2,11 @@ package net.dawson.adorablehamsterpets.screen;
 
 import dev.architectury.registry.menu.ExtendedMenuProvider;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.text.Text;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,8 +26,8 @@ public class HamsterScreenHandlerFactory implements ExtendedMenuProvider {
      * This is the text that will appear at the top of the GUI.
      */
     @Override
-    public Text getDisplayName() {
-        return Text.translatable("entity.adorablehamsterpets.hamster.inventory_title");
+    public Component getDisplayName() {
+        return Component.translatable("entity.adorablehamsterpets.hamster.inventory_title");
     }
 
     /**
@@ -35,7 +35,7 @@ public class HamsterScreenHandlerFactory implements ExtendedMenuProvider {
      */
     @Nullable
     @Override
-    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
+    public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
         return new HamsterInventoryScreenHandler(syncId, playerInventory, this.hamster);
     }
 
@@ -43,7 +43,7 @@ public class HamsterScreenHandlerFactory implements ExtendedMenuProvider {
      * Writes the hamster's entity ID to the network buffer so the client can find it.
      */
     @Override
-    public void saveExtraData(PacketByteBuf buf) {
+    public void saveExtraData(FriendlyByteBuf buf) {
         buf.writeInt(this.hamster.getId());
     }
 }

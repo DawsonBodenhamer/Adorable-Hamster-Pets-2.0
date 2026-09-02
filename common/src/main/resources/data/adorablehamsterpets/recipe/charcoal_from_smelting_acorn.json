@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.15,
+  "group": "charcoal",
+  "ingredient": "adorablehamsterpets:acorn",
+  "result": {
+    "id": "minecraft:charcoal"
+  }
+}

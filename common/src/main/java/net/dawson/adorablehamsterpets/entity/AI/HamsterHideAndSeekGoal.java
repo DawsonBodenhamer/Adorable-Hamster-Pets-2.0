@@ -1,5 +1,8 @@
 package net.dawson.adorablehamsterpets.entity.AI;
 
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
@@ -11,20 +14,19 @@ import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.HamsterPhysicsUtil;
 import net.dawson.adorablehamsterpets.util.MiscUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 import java.util.*;
 
 public class HamsterHideAndSeekGoal extends Goal {
@@ -48,11 +50,11 @@ public class HamsterHideAndSeekGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private final HamsterEntity hamster;
-    private final World world;
+    private final Level world;
 
     private State currentState;
     private BlockPos targetBlock;
-    private Vec3d pounceStartPos;
+    private Vec3 pounceStartPos;
 
     private int lungeTicks = 0;
     private int moveTimeout = 0;
@@ -65,8 +67,8 @@ public class HamsterHideAndSeekGoal extends Goal {
 
     public HamsterHideAndSeekGoal(HamsterEntity hamster) {
         this.hamster = hamster;
-        this.world = hamster.getWorld();
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+        this.world = hamster.level();
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -74,13 +76,13 @@ public class HamsterHideAndSeekGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
-        if (this.world.isClient() || !Configs.AHP_MAIN.enableHideAndSeek) return false;
+    public boolean canUse() {
+        if (this.world.isClientSide() || !Configs.AHP_MAIN.enableHideAndSeek) return false;
 
         // Basic cooldown and state restrictions
-        if (this.hamster.getWorld().getTime() < this.hamster.hideAndSeekCooldownEndTick) return false;
+        if (this.hamster.level().getGameTime() < this.hamster.hideAndSeekCooldownEndTick) return false;
 
-        if (!this.hamster.isTamed()
+        if (!this.hamster.isTame()
                 || HamsterMovementUtil.shouldNotMove(this.hamster)
                 || this.hamster.isHoldingMouthItem()
                 || this.hamster.isPlayingTag()
@@ -93,7 +95,7 @@ public class HamsterHideAndSeekGoal extends Goal {
             this.checkTimer--;
             return false;
         }
-        this.checkTimer = this.getTickCount(20);
+        this.checkTimer = this.adjustedTickDelay(20);
 
         // Scale denominator to match check frequency
         int denominator = Math.max(1, Configs.AHP_MAIN.hideAndSeekChanceDenominator.get() / 20);
@@ -110,7 +112,7 @@ public class HamsterHideAndSeekGoal extends Goal {
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         if (this.isFinished) return false;
 
         if (this.targetBlock == null) return false;
@@ -119,7 +121,7 @@ public class HamsterHideAndSeekGoal extends Goal {
         // Check block validity continuously
         BlockState state = this.world.getBlockState(this.targetBlock);
         boolean isValid = ConfigDataCache.isHideAndSeekBlock(state) ||
-                (Configs.AHP_MAIN.allowInventoryHiding && this.world.getBlockEntity(this.targetBlock) instanceof Inventory);
+                (Configs.AHP_MAIN.allowInventoryHiding && this.world.getBlockEntity(this.targetBlock) instanceof Container);
 
         return isValid;
     }
@@ -136,9 +138,9 @@ public class HamsterHideAndSeekGoal extends Goal {
         this.moveTimeout = 0;
         this.isFinished = false;
 
-        Path path = this.hamster.getNavigation().findPathTo(this.targetBlock, 1);
+        Path path = this.hamster.getNavigation().createPath(this.targetBlock, 1);
         if (path != null) {
-            this.hamster.getNavigation().startMovingAlong(path, 1.5D);
+            this.hamster.getNavigation().moveTo(path, 1.5D);
         } else {
             this.isFinished = true;
         }
@@ -154,12 +156,12 @@ public class HamsterHideAndSeekGoal extends Goal {
         if (this.targetBlock != null) {
             BlockState state = this.world.getBlockState(this.targetBlock);
             blockIsValid = ConfigDataCache.isHideAndSeekBlock(state) ||
-                    (Configs.AHP_MAIN.allowInventoryHiding && this.world.getBlockEntity(this.targetBlock) instanceof Inventory);
+                    (Configs.AHP_MAIN.allowInventoryHiding && this.world.getBlockEntity(this.targetBlock) instanceof Container);
         }
 
         // Only apply cooldown if block was valid
         if (blockIsValid) {
-            this.hamster.hideAndSeekCooldownEndTick = this.world.getTime() + (Configs.AHP_MAIN.hideAndSeekCooldownSeconds.get() * 20L);
+            this.hamster.hideAndSeekCooldownEndTick = this.world.getGameTime() + (Configs.AHP_MAIN.hideAndSeekCooldownSeconds.get() * 20L);
         }
 
         if (this.targetBlock != null) {
@@ -184,17 +186,17 @@ public class HamsterHideAndSeekGoal extends Goal {
 
                 HamsterMovementUtil.facePosition(this.hamster, this.targetBlock.getX() + 0.5, this.targetBlock.getY() + 0.5, this.targetBlock.getZ() + 0.5);
 
-                if (this.hamster.getBlockPos().isWithinDistance(this.targetBlock, 1.5)) {
+                if (this.hamster.blockPosition().closerThan(this.targetBlock, 1.5)) {
                     this.currentState = State.POUNCING;
                     this.lungeTicks = LUNGE_DURATION_TICKS;
-                    this.pounceStartPos = this.hamster.getPos();
+                    this.pounceStartPos = this.hamster.position();
                     this.hamster.getNavigation().stop();
                     this.hamster.triggerAnimOnServer("mainController", "anim_hamster_pounce");
-                } else if (this.hamster.getNavigation().isIdle()) {
+                } else if (this.hamster.getNavigation().isDone()) {
                     // Try repathing if stuck, abort immediately if unreachable
-                    Path path = this.hamster.getNavigation().findPathTo(this.targetBlock, 1);
+                    Path path = this.hamster.getNavigation().createPath(this.targetBlock, 1);
                     if (path != null) {
-                        this.hamster.getNavigation().startMovingAlong(path, 1.5D);
+                        this.hamster.getNavigation().moveTo(path, 1.5D);
                     } else {
                         this.isFinished = true;
                         return;
@@ -209,30 +211,31 @@ public class HamsterHideAndSeekGoal extends Goal {
                 }
 
                 if (this.pounceStartPos != null && this.lungeTicks >= 0) {
-                    Vec3d interpolatedPos = HamsterPhysicsUtil.calculatePouncePosition(this.pounceStartPos, Vec3d.ofBottomCenter(this.targetBlock), this.lungeTicks, LUNGE_DURATION_TICKS);
-                    this.hamster.setPosition(interpolatedPos.x, interpolatedPos.y, interpolatedPos.z);
+                    Vec3 interpolatedPos = HamsterPhysicsUtil.calculatePouncePosition(this.pounceStartPos, Vec3.atBottomCenterOf(this.targetBlock), this.lungeTicks, LUNGE_DURATION_TICKS);
+                    this.hamster.setPos(interpolatedPos.x, interpolatedPos.y, interpolatedPos.z);
                 }
 
                 if (this.lungeTicks == 0) {
                     // Spawn block hider entity, transfer state
-                    if (this.world instanceof ServerWorld serverWorld) {
+                    if (this.world instanceof ServerLevel serverWorld) {
                         BlockState state = serverWorld.getBlockState(this.targetBlock);
-                        HamsterBlockHiderEntity hider = ModEntities.HAMSTER_BLOCK_HIDER.get().create(serverWorld);
+                        HamsterBlockHiderEntity hider = ModEntities.HAMSTER_BLOCK_HIDER.get().create(serverWorld, EntitySpawnReason.LOAD);
 
                         if (hider != null) {
-                            NbtCompound fullNbt = new NbtCompound();
-                            this.hamster.writeNbt(fullNbt);
+                            TagValueOutput fullNbtOut = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, this.hamster.registryAccess());
+                            this.hamster.saveWithoutId(fullNbtOut);
+                            CompoundTag fullNbt = fullNbtOut.buildResult();
 
-                            int duration = this.hamster.getRandom().nextBetween(
+                            int duration = this.hamster.getRandom().nextIntBetweenInclusive(
                                     Configs.AHP_MAIN.hideAndSeekMinDurationSeconds.get() * 20,
                                     Configs.AHP_MAIN.hideAndSeekMaxDurationSeconds.get() * 20
                             );
 
                             hider.initializeHiding(this.targetBlock, duration, fullNbt);
-                            serverWorld.spawnEntity(hider);
+                            serverWorld.addFreshEntity(hider);
 
                             // Output randomized snarky message
-                            if (this.hamster.getOwner() instanceof ServerPlayerEntity owner) {
+                            if (this.hamster.getOwner() instanceof ServerPlayer owner) {
                                 MiscUtil.MessagingUtil.sendRandomizedSequentialMessage(
                                         owner,
                                         null, // No first-time tracking needed
@@ -245,25 +248,25 @@ public class HamsterHideAndSeekGoal extends Goal {
                             // Visuals & Audio
                             ParticleEffectsUtil.spawnParticles(
                                     serverWorld,
-                                    Vec3d.ofCenter(this.targetBlock),
+                                    Vec3.atCenterOf(this.targetBlock),
                                     ParticleTypes.POOF,
                                     25,
-                                    new Vec3d(0.3, 0.3, 0.3),
+                                    new Vec3(0.3, 0.3, 0.3),
                                     0.05
                             );
 
                             // Spawn contextual block particles
                             ParticleEffectsUtil.spawnParticles(
                                     serverWorld,
-                                    Vec3d.ofCenter(this.targetBlock),
+                                    Vec3.atCenterOf(this.targetBlock),
                                     MiscUtil.BlockStateUtil.getHidingSpotParticle(state),
                                     30,
-                                    new Vec3d(0.4, 0.4, 0.4),
+                                    new Vec3(0.4, 0.4, 0.4),
                                     0.0
                             );
 
                             SoundEvent sound = ModSounds.getDynamicBlockSound(state);
-                            serverWorld.playSound(null, this.targetBlock, sound, SoundCategory.NEUTRAL, 1.0F, 0.8F);
+                            serverWorld.playSound(null, this.targetBlock, sound, SoundSource.NEUTRAL, 1.0F, 0.8F);
                         }
                     }
 
@@ -283,13 +286,13 @@ public class HamsterHideAndSeekGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private Optional<BlockPos> findHidingSpot() {
-        BlockPos center = this.hamster.getBlockPos();
+        BlockPos center = this.hamster.blockPosition();
         List<BlockPos> validSpots = new ArrayList<>();
         int occupiedCount = 0;
         int blacklistedCount = 0;
         int invalidCount = 0;
 
-        for (BlockPos pos : BlockPos.iterateOutwards(center, SEARCH_RADIUS, 3, SEARCH_RADIUS)) {
+        for (BlockPos pos : BlockPos.withinManhattan(center, SEARCH_RADIUS, 3, SEARCH_RADIUS)) {
             // Check if block is already claimed/occupied
             if (TARGETED_BLOCKS.contains(pos) || HamsterAbstractHiddenEntity.isBlockOccupied(this.world, pos)) {
                 occupiedCount++;
@@ -306,24 +309,24 @@ public class HamsterHideAndSeekGoal extends Goal {
             boolean isValid = ConfigDataCache.isHideAndSeekBlock(state);
 
             if (!isValid && Configs.AHP_MAIN.allowInventoryHiding) {
-                if (this.world.getBlockEntity(pos) instanceof Inventory) {
+                if (this.world.getBlockEntity(pos) instanceof Container) {
                     isValid = true;
                 }
             }
 
             if (isValid) {
-                validSpots.add(pos.toImmutable());
+                validSpots.add(pos.immutable());
             } else {
                 invalidCount++;
             }
         }
 
         // Sort by farthest first
-        validSpots.sort(Comparator.comparingDouble((BlockPos p) -> p.getSquaredDistance(center)).reversed());
+        validSpots.sort(Comparator.comparingDouble((BlockPos p) -> p.distSqr(center)).reversed());
 
         // Find first one with valid path
         for (BlockPos pos : validSpots) {
-            if (this.hamster.getNavigation().findPathTo(pos, 1) != null) {
+            if (this.hamster.getNavigation().createPath(pos, 1) != null) {
                 return Optional.of(pos);
             }
         }

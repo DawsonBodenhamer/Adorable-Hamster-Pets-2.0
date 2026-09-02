@@ -10,10 +10,16 @@ import net.dawson.adorablehamsterpets.block.custom.WildGreenBeanBushBlock;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricModelProvider;
-import net.minecraft.data.client.*;
-import net.minecraft.item.Item;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.data.models.*;
+import net.minecraft.data.models.BlockModelGenerators;
+import net.minecraft.data.models.ItemModelGenerators;
+import net.minecraft.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.data.models.model.ModelTemplate;
+import net.minecraft.data.models.model.ModelTemplates;
+import net.minecraft.data.models.model.TextureMapping;
+import net.minecraft.data.models.model.TextureSlot;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,45 +38,45 @@ public class ModModelProvider extends FabricModelProvider {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public void generateBlockStateModels(BlockStateModelGenerator blockStateModelGenerator) {
+    public void generateBlockStateModels(BlockModelGenerators blockStateModelGenerator) {
         // --- 1. Crops ---
         // Max age of 3
-        blockStateModelGenerator.registerCrop(ModBlocks.GREEN_BEANS_CROP.get(), GreenBeansCropBlock.AGE, 0, 1, 2, 3);
-        blockStateModelGenerator.registerCrop(ModBlocks.CUCUMBER_CROP.get(), CucumberCropBlock.AGE, 0, 1, 2, 3);
+        blockStateModelGenerator.createCropBlock(ModBlocks.GREEN_BEANS_CROP.get(), GreenBeansCropBlock.AGE, 0, 1, 2, 3);
+        blockStateModelGenerator.createCropBlock(ModBlocks.CUCUMBER_CROP.get(), CucumberCropBlock.AGE, 0, 1, 2, 3);
 
         // --- 2. Wild Bushes ---
-        Identifier wildGreenBeanSeededTexture = Identifier.of(AdorableHamsterPets.MOD_ID, "block/wild_green_bean_bush_seeded");
-        Identifier wildGreenBeanSeedlessTexture = Identifier.of(AdorableHamsterPets.MOD_ID, "block/wild_green_bean_bush_seedless");
-        Identifier wildCucumberSeededTexture = Identifier.of(AdorableHamsterPets.MOD_ID, "block/wild_cucumber_bush_seeded");
-        Identifier wildCucumberSeedlessTexture = Identifier.of(AdorableHamsterPets.MOD_ID, "block/wild_cucumber_bush_seedless");
+        Identifier wildGreenBeanSeededTexture = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_green_bean_bush_seeded");
+        Identifier wildGreenBeanSeedlessTexture = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_green_bean_bush_seedless");
+        Identifier wildCucumberSeededTexture = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_cucumber_bush_seeded");
+        Identifier wildCucumberSeedlessTexture = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_cucumber_bush_seedless");
 
-        Identifier greenBeanSeededModelId = Models.CROSS.upload(
+        Identifier greenBeanSeededModelId = ModelTemplates.CROSS.createWithSuffix(
                 ModBlocks.WILD_GREEN_BEAN_BUSH.get(), "_seeded",
-                TextureMap.cross(wildGreenBeanSeededTexture), blockStateModelGenerator.modelCollector
+                TextureMapping.cross(wildGreenBeanSeededTexture), blockStateModelGenerator.modelOutput
         );
-        Identifier greenBeanSeedlessModelId = Models.CROSS.upload(
+        Identifier greenBeanSeedlessModelId = ModelTemplates.CROSS.createWithSuffix(
                 ModBlocks.WILD_GREEN_BEAN_BUSH.get(), "_seedless",
-                TextureMap.cross(wildGreenBeanSeedlessTexture), blockStateModelGenerator.modelCollector
+                TextureMapping.cross(wildGreenBeanSeedlessTexture), blockStateModelGenerator.modelOutput
         );
-        Identifier cucumberSeededModelId = Models.CROSS.upload(
+        Identifier cucumberSeededModelId = ModelTemplates.CROSS.createWithSuffix(
                 ModBlocks.WILD_CUCUMBER_BUSH.get(), "_seeded",
-                TextureMap.cross(wildCucumberSeededTexture), blockStateModelGenerator.modelCollector
+                TextureMapping.cross(wildCucumberSeededTexture), blockStateModelGenerator.modelOutput
         );
-        Identifier cucumberSeedlessModelId = Models.CROSS.upload(
+        Identifier cucumberSeedlessModelId = ModelTemplates.CROSS.createWithSuffix(
                 ModBlocks.WILD_CUCUMBER_BUSH.get(), "_seedless",
-                TextureMap.cross(wildCucumberSeedlessTexture), blockStateModelGenerator.modelCollector
+                TextureMapping.cross(wildCucumberSeedlessTexture), blockStateModelGenerator.modelOutput
         );
 
-        blockStateModelGenerator.blockStateCollector.accept(VariantsBlockStateSupplier.create(ModBlocks.WILD_GREEN_BEAN_BUSH.get())
-                .coordinate(BlockStateModelGenerator.createBooleanModelMap(
+        blockStateModelGenerator.blockStateOutput.accept(MultiVariantGenerator.multiVariant(ModBlocks.WILD_GREEN_BEAN_BUSH.get())
+                .with(BlockModelGenerators.createBooleanModelDispatch(
                         WildGreenBeanBushBlock.SEEDED,
                         greenBeanSeededModelId,
                         greenBeanSeedlessModelId
                 ))
         );
 
-        blockStateModelGenerator.blockStateCollector.accept(VariantsBlockStateSupplier.create(ModBlocks.WILD_CUCUMBER_BUSH.get())
-                .coordinate(BlockStateModelGenerator.createBooleanModelMap(
+        blockStateModelGenerator.blockStateOutput.accept(MultiVariantGenerator.multiVariant(ModBlocks.WILD_CUCUMBER_BUSH.get())
+                .with(BlockModelGenerators.createBooleanModelDispatch(
                         WildCucumberBushBlock.SEEDED,
                         cucumberSeededModelId,
                         cucumberSeedlessModelId
@@ -81,98 +87,98 @@ public class ModModelProvider extends FabricModelProvider {
         generateHamsterBedVariantModels(blockStateModelGenerator);
 
         // --- 4. Crates ---
-        blockStateModelGenerator.blockStateCollector.accept(
-                BlockStateModelGenerator.createSingletonBlockState(
+        blockStateModelGenerator.blockStateOutput.accept(
+                BlockModelGenerators.createSimpleBlock(
                         ModBlocks.ACORN_CRATE.get(),
-                        Identifier.of(AdorableHamsterPets.MOD_ID, "block/acorn_crate")
+                        Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/acorn_crate")
                 )
         );
-        blockStateModelGenerator.blockStateCollector.accept(
-                BlockStateModelGenerator.createSingletonBlockState(
+        blockStateModelGenerator.blockStateOutput.accept(
+                BlockModelGenerators.createSimpleBlock(
                         ModBlocks.CUCUMBER_CRATE.get(),
-                        Identifier.of(AdorableHamsterPets.MOD_ID, "block/cucumber_crate")
+                        Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/cucumber_crate")
                 )
         );
-        blockStateModelGenerator.blockStateCollector.accept(
-                BlockStateModelGenerator.createSingletonBlockState(
+        blockStateModelGenerator.blockStateOutput.accept(
+                BlockModelGenerators.createSimpleBlock(
                         ModBlocks.GREEN_BEANS_CRATE.get(),
-                        Identifier.of(AdorableHamsterPets.MOD_ID, "block/green_beans_crate")
+                        Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/green_beans_crate")
                 )
         );
-        blockStateModelGenerator.blockStateCollector.accept(
-                BlockStateModelGenerator.createSingletonBlockState(
+        blockStateModelGenerator.blockStateOutput.accept(
+                BlockModelGenerators.createSimpleBlock(
                         ModBlocks.HAMSTER_FOOD_MIX_CRATE.get(),
-                        Identifier.of(AdorableHamsterPets.MOD_ID, "block/hamster_food_mix_crate")
+                        Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_food_mix_crate")
                 )
         );
     }
 
     @Override
-    public void generateItemModels(ItemModelGenerator itemModelGenerator) {
+    public void generateItemModels(ItemModelGenerators itemModelGenerator) {
         // --- 1. Core & Misc ---
-        itemModelGenerator.register(ModItems.ANNOUNCEMENT_BELL_ICON.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.HAMSTER_SPAWN_EGG.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.HAMSTER_BEDDING.get(), Models.GENERATED);
+        itemModelGenerator.generateFlatItem(ModItems.ANNOUNCEMENT_BELL_ICON.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_BEDDING.get(), ModelTemplates.FLAT_ITEM);
 
         // --- 2. Music Discs ---
-        itemModelGenerator.register(ModItems.MUSIC_DISC_CHEESE.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.MUSIC_DISC_BLUE_CHEESE.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.MUSIC_DISC_PARMESAN.get(), Models.GENERATED);
+        itemModelGenerator.generateFlatItem(ModItems.MUSIC_DISC_CHEESE.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.MUSIC_DISC_BLUE_CHEESE.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.MUSIC_DISC_PARMESAN.get(), ModelTemplates.FLAT_ITEM);
 
         // --- 3. Food & Crops ---
-        itemModelGenerator.register(ModItems.CHEESE.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.HAMSTER_FOOD_MIX.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.CUCUMBER.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.SLICED_CUCUMBER.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.GREEN_BEANS.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.STEAMED_GREEN_BEANS.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.SUNFLOWER_SEEDS.get(), Models.GENERATED);
+        itemModelGenerator.generateFlatItem(ModItems.CHEESE.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_FOOD_MIX.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.CUCUMBER.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.SLICED_CUCUMBER.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.GREEN_BEANS.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.STEAMED_GREEN_BEANS.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.SUNFLOWER_SEEDS.get(), ModelTemplates.FLAT_ITEM);
 
         // Block items
-        itemModelGenerator.register(ModBlocks.WILD_GREEN_BEAN_BUSH.get().asItem(), Models.GENERATED);
-        itemModelGenerator.register(ModBlocks.WILD_CUCUMBER_BUSH.get().asItem(), Models.GENERATED);
+        itemModelGenerator.generateFlatItem(ModBlocks.WILD_GREEN_BEAN_BUSH.get().asItem(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModBlocks.WILD_CUCUMBER_BUSH.get().asItem(), ModelTemplates.FLAT_ITEM);
 
         // --- 4. Resources & Armor ---
-        itemModelGenerator.register(ModItems.ACORN.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.ACORN_SHARD.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.ACORN_HAT.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.ACORN_RING.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_ACORN.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_IRON.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_GOLD.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_DIAMOND.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_NETHERITE.get(), Models.GENERATED);
+        itemModelGenerator.generateFlatItem(ModItems.ACORN.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.ACORN_SHARD.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.ACORN_HAT.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.ACORN_RING.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_ARMOR_ACORN.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_ARMOR_IRON.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_ARMOR_GOLD.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_ARMOR_DIAMOND.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_ARMOR_NETHERITE.get(), ModelTemplates.FLAT_ITEM);
 
         // --- 5. Smithing Templates ---
-        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_IRON.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_GOLD.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_DIAMOND.get(), Models.GENERATED);
-        itemModelGenerator.register(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_NETHERITE.get(), Models.GENERATED);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_IRON.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_GOLD.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_DIAMOND.get(), ModelTemplates.FLAT_ITEM);
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_ARMOR_TRIM_SMITHING_TEMPLATE_NETHERITE.get(), ModelTemplates.FLAT_ITEM);
 
         // --- 6. Hamster Beds ---
         // Each one uses main "hamster_bed" item model
         for (RegistrySupplier<Item> bedItemSupplier : ModItems.HAMSTER_BED_ITEMS.values()) {
-            itemModelGenerator.register(bedItemSupplier.get(), new Model(
-                    Optional.of(Identifier.of(AdorableHamsterPets.MOD_ID, "item/hamster_bed")),
+            itemModelGenerator.generateFlatItem(bedItemSupplier.get(), new ModelTemplate(
+                    Optional.of(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "item/hamster_bed")),
                     Optional.empty()
             ));
         }
 
         // --- 7. Crates ---
-        itemModelGenerator.register(ModItems.ACORN_CRATE.get(), new Model(
-                Optional.of(Identifier.of(AdorableHamsterPets.MOD_ID, "block/acorn_crate")),
+        itemModelGenerator.generateFlatItem(ModItems.ACORN_CRATE.get(), new ModelTemplate(
+                Optional.of(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/acorn_crate")),
                 Optional.empty()
         ));
-        itemModelGenerator.register(ModItems.CUCUMBER_CRATE.get(), new Model(
-                Optional.of(Identifier.of(AdorableHamsterPets.MOD_ID, "block/cucumber_crate")),
+        itemModelGenerator.generateFlatItem(ModItems.CUCUMBER_CRATE.get(), new ModelTemplate(
+                Optional.of(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/cucumber_crate")),
                 Optional.empty()
         ));
-        itemModelGenerator.register(ModItems.GREEN_BEANS_CRATE.get(), new Model(
-                Optional.of(Identifier.of(AdorableHamsterPets.MOD_ID, "block/green_beans_crate")),
+        itemModelGenerator.generateFlatItem(ModItems.GREEN_BEANS_CRATE.get(), new ModelTemplate(
+                Optional.of(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/green_beans_crate")),
                 Optional.empty()
         ));
-        itemModelGenerator.register(ModItems.HAMSTER_FOOD_MIX_CRATE.get(), new Model(
-                Optional.of(Identifier.of(AdorableHamsterPets.MOD_ID, "block/hamster_food_mix_crate")),
+        itemModelGenerator.generateFlatItem(ModItems.HAMSTER_FOOD_MIX_CRATE.get(), new ModelTemplate(
+                Optional.of(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_food_mix_crate")),
                 Optional.empty()
         ));
     }
@@ -181,27 +187,27 @@ public class ModModelProvider extends FabricModelProvider {
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private void generateHamsterBedVariantModels(BlockStateModelGenerator generator) {
+    private void generateHamsterBedVariantModels(BlockModelGenerators generator) {
         List<String> woodTypes = List.of(
                 "oak", "spruce", "birch", "jungle", "acacia",
                 "dark_oak", "mangrove", "cherry", "bamboo", "pale_oak"
         );
 
-        Identifier baseModelId = Identifier.of(AdorableHamsterPets.MOD_ID, "block/hamster_bed");
+        Identifier baseModelId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_bed");
 
         for (String wood : woodTypes) {
-            Identifier variantModelId = Identifier.of(AdorableHamsterPets.MOD_ID, "block/hamster_bed_" + wood);
-            Identifier particleTexture = Identifier.of(AdorableHamsterPets.MOD_ID, "block/hamster_bed_" + wood);
+            Identifier variantModelId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_bed_" + wood);
+            Identifier particleTexture = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_bed_" + wood);
 
-            TextureMap textureMap = new TextureMap().put(TextureKey.PARTICLE, particleTexture);
+            TextureMapping textureMap = new TextureMapping().put(TextureSlot.PARTICLE, particleTexture);
 
-            Model variantModel = new Model(
+            ModelTemplate variantModel = new ModelTemplate(
                     Optional.of(baseModelId),
                     Optional.empty(),
-                    TextureKey.PARTICLE
+                    TextureSlot.PARTICLE
             );
 
-            variantModel.upload(variantModelId, textureMap, generator.modelCollector);
+            variantModel.create(variantModelId, textureMap, generator.modelOutput);
         }
     }
 }

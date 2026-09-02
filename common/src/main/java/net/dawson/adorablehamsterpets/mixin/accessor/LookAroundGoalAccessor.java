@@ -1,19 +1,19 @@
 package net.dawson.adorablehamsterpets.mixin.accessor;
 
-import net.minecraft.entity.ai.goal.LookAroundGoal;
-import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(LookAroundGoal.class)
+@Mixin(RandomLookAroundGoal.class)
 public interface LookAroundGoalAccessor {
     @Accessor("mob")
-    MobEntity getMob();
+    Mob getMob();
 
-    @Accessor("deltaX")
+    @Accessor("relX")
     double getDeltaX();
 
-    @Accessor("deltaZ")
+    @Accessor("relZ")
     double getDeltaZ();
 
     @Accessor("lookTime")

@@ -1,5 +1,10 @@
 package net.dawson.adorablehamsterpets.item.custom;
 
+import net.dawson.adorablehamsterpets.client.ClientInputUtil;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.core.UUIDUtil;
 import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.block.client.HamsterBedItemRenderer;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
@@ -14,32 +19,32 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.render.item.BuiltinModelItemRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.Screen;
+import com.geckolib.renderer.GeoItemRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.animatable.client.GeoRenderProvider;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.util.GeckoLibUtil;
+import com.geckolib.animatable.GeoItem;
+import com.geckolib.animatable.client.GeoRenderProvider;
+import com.geckolib.animatable.instance.AnimatableInstanceCache;
+import com.geckolib.animatable.manager.AnimatableManager;
+import com.geckolib.util.GeckoLibUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -66,7 +71,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public HamsterBedItem(Block block, WoodVariant variant, Settings settings) {
+    public HamsterBedItem(Block block, WoodVariant variant, Properties settings) {
         super(block, settings);
         this.variant = variant;
         GeoItem.registerSyncedAnimatable(this);
@@ -85,24 +90,22 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        if (!world.isClient) {
-            return;
-        }
+    public void inventoryTick(ItemStack stack, ServerLevel world, Entity entity, @Nullable EquipmentSlot slot) {
+        // 26.2: inventoryTick is server-only now; the linked-name sync works fine from the server
 
         UUID linkedUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID.get());
-        if (linkedUuid != null && entity instanceof PlayerEntity) {
+        if (linkedUuid != null && entity instanceof Player) {
             // Search nearby entities for linked hamster
-            world.getEntitiesByClass(HamsterEntity.class, entity.getBoundingBox().expand(16), e -> e.getUuid().equals(linkedUuid))
+            world.getEntitiesOfClass(HamsterEntity.class, entity.getBoundingBox().inflate(16), e -> e.getUUID().equals(linkedUuid))
                     .stream().findFirst().ifPresent(hamster -> {
-                        Text newName;
+                        Component newName;
                         if (hamster.hasCustomName()) {
                             newName = hamster.getName();
                         } else {
                             newName = hamster.getDisplayName().copy().append(" " + hamster.getId());
                         }
 
-                        Text currentNameOnStack = stack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME.get());
+                        Component currentNameOnStack = stack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME.get());
                         if (currentNameOnStack == null || !currentNameOnStack.equals(newName)) {
                             stack.set(ModDataComponentTypes.LINKED_HAMSTER_NAME.get(), newName);
                         }
@@ -115,36 +118,36 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public ActionResult useOnBlock(ItemUsageContext context) {
-        ItemStack stack = context.getStack();
+    public InteractionResult useOn(UseOnContext context) {
+        ItemStack stack = context.getItemInHand();
 
         // --- Prevent placing if bed not linked & first time trying ---
-        if (!stack.contains(ModDataComponentTypes.LINKED_HAMSTER_UUID.get())) {
-            PlayerEntity player = context.getPlayer();
-            World world = context.getWorld();
+        if (!stack.has(ModDataComponentTypes.LINKED_HAMSTER_UUID.get())) {
+            Player player = context.getPlayer();
+            Level world = context.getLevel();
 
             if (player != null) {
                 AhpMainConfig config = Configs.AHP_MAIN;
 
                 // 1. Check Master Toggle
                 if (!config.warnOnUnlinkedBedPlacement) {
-                    return super.useOnBlock(context);
+                    return super.useOn(context);
                 }
 
-                String username = player.getGameProfile().getName();
+                String username = player.getGameProfile().name();
 
                 // 2. Check if player has already seen warning and waited
                 if (config.playersWhoHaveSeenUnlinkedBedWarning.contains(username)) {
-                    return super.useOnBlock(context);
+                    return super.useOn(context);
                 }
 
                 // 3. Client hand off authority to Server
-                if (world.isClient()) {
-                    return ActionResult.SUCCESS; // Swing arm, send packet to server, do not place
+                if (world.isClientSide()) {
+                    return InteractionResult.SUCCESS; // Swing arm, send packet to server, do not place
                 }
 
-                UUID uuid = player.getUuid();
-                long currentTime = world.getTime();
+                UUID uuid = player.getUUID();
+                long currentTime = world.getGameTime();
 
                 // 3. Process Cooldown
                 if (UNLINKED_WARNING_COOLDOWNS.containsKey(uuid)) {
@@ -154,41 +157,41 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                         config.playersWhoHaveSeenUnlinkedBedWarning.add(username);
                         config.save();
                         UNLINKED_WARNING_COOLDOWNS.remove(uuid);
-                        return super.useOnBlock(context); // Place block
+                        return super.useOn(context); // Place block
                     } else {
                         // Still on cooldown. Silently fail
-                        return ActionResult.FAIL;
+                        return InteractionResult.FAIL;
                     }
                 } else {
                     // 4. First time trying. Show warning, start cooldown
                     UNLINKED_WARNING_COOLDOWNS.put(uuid, currentTime);
 
-                    world.playSound(null, player.getBlockPos(), SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.PLAYERS, 1.2f, 0.5f);
+                    world.playSound(null, player.blockPosition(), SoundEvents.NOTE_BLOCK_BASS.value(), SoundSource.PLAYERS, 1.2f, 0.5f);
 
-                    MutableText msg = Text.literal("\n").append(Text.translatable("message.adorablehamsterpets.unlinked_bed_placement.1").formatted(Formatting.RED, Formatting.BOLD));
-                    msg.append("\n\n").append(Text.translatable("message.adorablehamsterpets.unlinked_bed_placement.2").formatted(Formatting.GRAY));
+                    MutableComponent msg = Component.literal("\n").append(Component.translatable("message.adorablehamsterpets.unlinked_bed_placement.1").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+                    msg.append("\n\n").append(Component.translatable("message.adorablehamsterpets.unlinked_bed_placement.2").withStyle(ChatFormatting.GRAY));
                     msg.append("\n");
 
-                    player.sendMessage(msg, false);
+                    player.sendSystemMessage(msg);
 
-                    return ActionResult.SUCCESS; // Consume action to prevent placement
+                    return InteractionResult.SUCCESS; // Consume action to prevent placement
                 }
             }
 
             // If placed by a dispenser or some other non-player entity, just fail
-            return ActionResult.FAIL;
+            return InteractionResult.FAIL;
         }
 
-        return super.useOnBlock(context);
+        return super.useOn(context);
     }
 
     @Override
-    protected boolean postPlacement(BlockPos pos, World world, @Nullable PlayerEntity player, ItemStack stack, BlockState state) {
-        if (!world.isClient) {
+    protected boolean updateCustomBlockEntityTag(BlockPos pos, Level world, @Nullable Player player, ItemStack stack, BlockState state) {
+        if (!world.isClientSide()) {
             // Sound and particle logic
             SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, world.getRandom());
             if (rustleSound != null) {
-                world.playSound(null, pos, rustleSound, SoundCategory.BLOCKS, 0.5f, 1.5f);
+                world.playSound(null, pos, rustleSound, SoundSource.BLOCKS, 0.5f, 1.5f);
             }
 
             BlockEntity be = world.getBlockEntity(pos);
@@ -208,85 +211,80 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
             }
         }
         // Set block state with correct wood variant after placement
-        return world.setBlockState(pos, state.with(HamsterBedBlock.WOOD_VARIANT, this.variant), Block.NOTIFY_ALL | Block.REDRAW_ON_MAIN_THREAD);
+        return world.setBlock(pos, state.setValue(HamsterBedBlock.WOOD_VARIANT, this.variant), Block.UPDATE_ALL | Block.UPDATE_IMMEDIATE);
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
         if (Configs.AHP_UI.enableItemTooltips) {
-            if (Screen.hasShiftDown()) {
+            if (ClientInputUtil.hasShiftDown()) {
                 // --- Expanded Tooltip ---
 
                 // Main hints
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.description1").formatted(Formatting.GOLD));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.description2").formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls1").formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.wander_controls2").formatted(Formatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.description1").withStyle(ChatFormatting.GOLD));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.description2").withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.jade.wander_controls1").withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.jade.wander_controls2").withStyle(ChatFormatting.GRAY));
 
                 // Dynamic interaction hints
-                Text lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.lureItems).copy().formatted(Formatting.GOLD, Formatting.BOLD);
-                Text repellentName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.bedAvoidanceFoods).copy().formatted(Formatting.RED, Formatting.BOLD);
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.lure_hint", lureName).formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.repellent_hint", repellentName).formatted(Formatting.GRAY));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.unlink_hint", repellentName).formatted(Formatting.GRAY));
+                Component lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.lureItems).copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+                Component repellentName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.bedAvoidanceFoods).copy().withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.jade.lure_hint", lureName).withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.jade.repellent_hint", repellentName).withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.jade.unlink_hint", repellentName).withStyle(ChatFormatting.GRAY));
 
                 // Respawn status and hint
                 boolean configEnabled = Configs.AHP_MAIN.enableRespawnInBed.get();
                 boolean freeRespawns = Configs.AHP_MAIN.freeBedRespawns.get();
 
-                Text statusText;
-                Text hintText;
+                Component statusText;
+                Component hintText;
 
                 if (!configEnabled) {
-                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.disabled_config");
-                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.disabled_config");
+                    statusText = Component.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.disabled_config");
+                    hintText = Component.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.disabled_config");
                 } else if (freeRespawns) {
-                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.active");
-                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.active_free");
+                    statusText = Component.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.active");
+                    hintText = Component.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.active_free");
                 } else {
                     // Inventory items always inactive regarding respawn state
-                    statusText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.inactive");
-                    Text tributeName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.resurrectionTributes);
-                    hintText = Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.inactive", tributeName.copy().formatted(Formatting.GOLD, Formatting.BOLD));
+                    statusText = Component.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.inactive");
+                    Component tributeName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_MAIN.resurrectionTributes);
+                    hintText = Component.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.inactive", tributeName.copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
                 }
 
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.label", statusText));
-                tooltip.add(hintText);
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.label", statusText));
+                tooltip.accept(hintText);
 
                 // Conditional linked info
                 UUID hamsterUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID.get());
-                Text hamsterName = stack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME.get());
+                Component hamsterName = stack.get(ModDataComponentTypes.LINKED_HAMSTER_NAME.get());
                 WanderDistance wanderDistance = stack.get(ModDataComponentTypes.WANDER_DISTANCE.get());
 
                 if (hamsterUuid != null && hamsterName != null) {
                     // Blank line for spacing
-                    tooltip.add(Text.literal(""));
-                    tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.linked_to", hamsterName).formatted(Formatting.GREEN));
+                    tooltip.accept(Component.literal(""));
+                    tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.linked_to", hamsterName).withStyle(ChatFormatting.GREEN));
                     if (wanderDistance != null) {
                         int radius = switch (wanderDistance) {
                             case NEAR -> Configs.AHP_MAIN.wanderDistanceNear.get();
                             case FAR -> Configs.AHP_MAIN.wanderDistanceFar.get();
                             default -> Configs.AHP_MAIN.wanderDistanceMedium.get();
                         };
-                        tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.wander_distance", Text.translatable(wanderDistance.translationKey()), radius).formatted(Formatting.AQUA));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.wander_distance", Component.translatable(wanderDistance.translationKey()), radius).withStyle(ChatFormatting.AQUA));
                     }
                 }
             } else {
                 // Default condensed tooltip
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.hamster_bed.description1").formatted(Formatting.GOLD));
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.shift_for_info").formatted(Formatting.DARK_GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.description1").withStyle(ChatFormatting.GOLD));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.shift_for_info").withStyle(ChatFormatting.DARK_GRAY));
             }
         } else if (!Platform.isModLoaded("emi")) {
-            tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
+            tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
         }
-        super.appendTooltip(stack, context, tooltip, type);
+        super.appendHoverText(stack, context, display, tooltip, type);
     }
 
-    @Override
-    public String getTranslationKey() {
-        // Forces item to use own unique translation key
-        return this.getOrCreateTranslationKey();
-    }
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
@@ -304,7 +302,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
             private HamsterBedItemRenderer renderer;
 
             @Override
-            public BuiltinModelItemRenderer getGeoItemRenderer() {
+            public GeoItemRenderer<?> getGeoItemRenderer() {
                 if (renderer == null)
                     renderer = new HamsterBedItemRenderer();
                 return renderer;

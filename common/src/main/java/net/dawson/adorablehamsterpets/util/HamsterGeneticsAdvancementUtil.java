@@ -5,10 +5,10 @@ import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
-import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.advancement.AdvancementProgress;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Handles tracking and triggering advancements related to the Hamster Genetics system.
@@ -20,7 +20,7 @@ public final class HamsterGeneticsAdvancementUtil {
     /**
      * Records a newly tamed hamster's genome for the player and checks collector milestones.
      */
-    public static void trackTamedHamster(ServerPlayerEntity player, HamsterEntity hamster) {
+    public static void trackTamedHamster(ServerPlayer player, HamsterEntity hamster) {
         int hash = hamster.getGenome().hashCode();
 
         // Try adding the hash. If it returns true, it's a new unique variant for this player.
@@ -33,7 +33,7 @@ public final class HamsterGeneticsAdvancementUtil {
     /**
      * Records a newly bred baby hamster's genome for the player and checks scientist milestones.
      */
-    public static void trackBredHamster(ServerPlayerEntity player, HamsterEntity baby) {
+    public static void trackBredHamster(ServerPlayer player, HamsterEntity baby) {
         int hash = baby.getGenome().hashCode();
 
         // Check for The Mad Scientist milestones
@@ -48,7 +48,7 @@ public final class HamsterGeneticsAdvancementUtil {
         }
     }
 
-    private static void checkTamedMilestones(ServerPlayerEntity player, int count) {
+    private static void checkTamedMilestones(ServerPlayer player, int count) {
         if (count >= 10) grantAdvancement(player, "husbandry/collector_10");
         if (count >= 50) grantAdvancement(player, "husbandry/collector_50");
         if (count >= 100) grantAdvancement(player, "husbandry/collector_100");
@@ -66,7 +66,7 @@ public final class HamsterGeneticsAdvancementUtil {
         }
     }
 
-    private static void checkBredMilestones(ServerPlayerEntity player, int count) {
+    private static void checkBredMilestones(ServerPlayer player, int count) {
         if (count >= 1) grantAdvancement(player, "husbandry/breeder_1");
         if (count >= 100) grantAdvancement(player, "husbandry/breeder_100");
         if (count >= 500) grantAdvancement(player, "husbandry/breeder_500");
@@ -77,15 +77,15 @@ public final class HamsterGeneticsAdvancementUtil {
     /**
      * Explicitly grants a specific advancement to the player by its path.
      */
-    private static void grantAdvancement(ServerPlayerEntity player, String path) {
-        Identifier id = Identifier.of(AdorableHamsterPets.MOD_ID, path);
-        AdvancementEntry entry = player.server.getAdvancementLoader().get(id);
+    private static void grantAdvancement(ServerPlayer player, String path) {
+        Identifier id = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, path);
+        AdvancementHolder entry = player.level().getServer().getAdvancements().get(id);
 
         if (entry != null) {
-            AdvancementProgress progress = player.getAdvancementTracker().getProgress(entry);
+            AdvancementProgress progress = player.getAdvancements().getOrStartProgress(entry);
             if (!progress.isDone()) {
                 for (String criterion : entry.value().criteria().keySet()) {
-                    player.getAdvancementTracker().grantCriterion(entry, criterion);
+                    player.getAdvancements().award(entry, criterion);
                 }
             }
         }

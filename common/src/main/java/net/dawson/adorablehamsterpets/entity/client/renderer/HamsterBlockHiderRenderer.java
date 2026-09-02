@@ -2,23 +2,24 @@ package net.dawson.adorablehamsterpets.entity.client.renderer;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterBlockHiderEntity;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.Identifier;
 
 /**
  * A renderer for the invisible Block Hider proxy entity.
  * It overrides shouldRender to always return false, ensuring the entity is never drawn.
  */
-public class HamsterBlockHiderRenderer extends EntityRenderer<HamsterBlockHiderEntity> {
-    public HamsterBlockHiderRenderer(EntityRendererFactory.Context ctx) {
+public class HamsterBlockHiderRenderer extends EntityRenderer<HamsterBlockHiderEntity, EntityRenderState> {
+    public HamsterBlockHiderRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
     }
 
     @Override
-    public Identifier getTexture(HamsterBlockHiderEntity entity) {
-        return Identifier.of(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
+    public EntityRenderState createRenderState() {
+        return new EntityRenderState();
     }
 
     @Override

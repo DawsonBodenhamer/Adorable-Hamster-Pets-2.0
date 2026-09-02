@@ -6,61 +6,61 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.util.MiscUtil;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Language;
+import net.minecraft.ChatFormatting;
+import net.minecraft.locale.Language;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Player;
 import snownee.jade.api.EntityAccessor;
 import snownee.jade.api.IEntityComponentProvider;
 import snownee.jade.api.IServerDataProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
 
-public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {
+public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider {
     INSTANCE;
 
-    private static final Identifier UID = Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_genetics");
+    private static final Identifier UID = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_genetics");
 
     @Override
     public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
-        NbtCompound serverData = accessor.getServerData();
-        if (!serverData.contains("HamsterGenome", NbtElement.COMPOUND_TYPE)) return;
+        CompoundTag serverData = accessor.getServerData();
+        if (!serverData.contains("HamsterGenome")) return;
 
-        PlayerEntity player = accessor.getPlayer();
+        Player player = accessor.getPlayer();
 
         // --- Sneak Check ---
-        if (Configs.AHP_UI.requireSneakForCustomJadeInfo && !player.isSneaking()) {
-            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.sneak_for_info").formatted(Formatting.GRAY));
+        if (Configs.AHP_UI.requireSneakForCustomJadeInfo && !player.isShiftKeyDown()) {
+            tooltip.add(Component.translatable("tooltip.adorablehamsterpets.sneak_for_info").withStyle(ChatFormatting.GRAY));
             return;
         }
 
-        HamsterGenome genome = HamsterGenome.readFromNbt(serverData.getCompound("HamsterGenome"));
+        HamsterGenome genome = HamsterGenome.readFromNbt(serverData.getCompoundOrEmpty("HamsterGenome"));
 
         // --- Formatted Age ---
         if (Configs.AHP_UI.showJadeAge) {
-            long ageTicks = serverData.getLong("TotalAgeTicks");
-            Text ageText = MiscUtil.TimeConversionUtil.formatAge(ageTicks);
-            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.age", ageText));
+            long ageTicks = serverData.getLongOr("TotalAgeTicks", 0L);
+            Component ageText = MiscUtil.TimeConversionUtil.formatAge(ageTicks);
+            tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.genetics.age", ageText));
         }
 
         // --- Base Coat ---
         if (Configs.AHP_UI.showJadeBaseCoat) {
-            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.base", getPaletteText(genome.basePaletteId())));
+            tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.genetics.base", getPaletteText(genome.basePaletteId())));
         }
 
         // --- Wild Overlay ---
         if (Configs.AHP_UI.showJadeWildOverlay && genome.wildOverlayPattern() > 0 && genome.wildOverlayPaletteId() != null) {
-            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.wild",
+            tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.genetics.wild",
                     getPatternText(genome.wildOverlayPattern()),
                     getPaletteText(genome.wildOverlayPaletteId())));
         }
 
         // --- Breeding Overlay ---
         if (Configs.AHP_UI.showJadeBreedingOverlay && genome.breedingOverlayPattern() > 0 && genome.breedingOverlayPaletteId() != null) {
-            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.breeding",
+            tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.genetics.breeding",
                     getPatternText(genome.breedingOverlayPattern()),
                     getPaletteText(genome.breedingOverlayPaletteId())));
         }
@@ -72,12 +72,12 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
                 case 2 -> "tooltip.adorablehamsterpets.jade.genetics.eyes.red";
                 default -> "tooltip.adorablehamsterpets.jade.genetics.eyes.black";
             };
-            tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.eyes", Text.translatable(eyeKey)));
+            tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.genetics.eyes", Component.translatable(eyeKey)));
         }
 
         // --- Aggression State ---
-        if (Configs.AHP_UI.showJadeAggressionState && serverData.contains("AggressionState", NbtElement.INT_TYPE)) {
-            int stateOrdinal = serverData.getInt("AggressionState");
+        if (Configs.AHP_UI.showJadeAggressionState && serverData.contains("AggressionState")) {
+            int stateOrdinal = serverData.getIntOr("AggressionState", 0);
 
             // Only show if not "Standard"
             if (stateOrdinal != 0) {
@@ -86,31 +86,20 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
                     case 2 -> "tooltip.adorablehamsterpets.jade.genetics.aggression.menace";
                     default -> "tooltip.adorablehamsterpets.jade.genetics.aggression.standard";
                 };
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.jade.genetics.aggression", Text.translatable(stateKey)));
+                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.genetics.aggression", Component.translatable(stateKey)));
             }
         }
 
         // --- Redstone Fever ---
-        if (Configs.AHP_UI.showJadeRedstoneFeverRecovery && serverData.getBoolean("RedstoneFevered")) {
-            String stateKey = switch (serverData.getInt("RedstoneFeverRecoveryStage")) {
+        if (Configs.AHP_UI.showJadeRedstoneFeverRecovery && serverData.getBooleanOr("RedstoneFevered", false)) {
+            String stateKey = switch (serverData.getIntOr("RedstoneFeverRecoveryStage", 0)) {
                 case 2 -> "tooltip.adorablehamsterpets.jade.redstone_fever.nearly_cured";
                 case 1 -> "tooltip.adorablehamsterpets.jade.redstone_fever.recovering";
                 default -> "tooltip.adorablehamsterpets.jade.redstone_fever.severe";
             };
-            tooltip.add(Text.translatable(
+            tooltip.add(Component.translatable(
                     "tooltip.adorablehamsterpets.jade.redstone_fever",
-                    Text.translatable(stateKey)));
-        }
-    }
-
-    @Override
-    public void appendServerData(NbtCompound data, EntityAccessor accessor) {
-        if (accessor.getEntity() instanceof HamsterEntity hamster) {
-            data.put("HamsterGenome", hamster.getGenome().saveToNbt());
-            data.putLong("TotalAgeTicks", hamster.totalAgeTicks);
-            data.putInt("AggressionState", hamster.getAggressionState().ordinal());
-            data.putBoolean("RedstoneFevered", hamster.hasRedstoneFever());
-            data.putInt("RedstoneFeverRecoveryStage", hamster.getRedstoneFeverRecoveryStage());
+                    Component.translatable(stateKey)));
         }
     }
 
@@ -123,22 +112,22 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
      * Resolves the palette name. If a translation key exists (for core palettes), it uses it.
      * Otherwise, it dynamically formats the ID (e.g., "cheesecake_mocha" -> "Cheesecake Mocha").
      */
-    private Text getPaletteText(String paletteId) {
-        if (paletteId == null) return Text.empty();
+    private Component getPaletteText(String paletteId) {
+        if (paletteId == null) return Component.empty();
         String key = "hamster.palette.adorablehamsterpets." + paletteId;
 
-        if (Language.getInstance().hasTranslation(key)) {
-            return Text.translatable(key);
+        if (Language.getInstance().has(key)) {
+            return Component.translatable(key);
         } else {
-            return Text.literal(MiscUtil.formatHumanReadableName(paletteId));
+            return Component.literal(MiscUtil.formatHumanReadableName(paletteId));
         }
     }
 
-    private Text getPatternText(int patternId) {
+    private Component getPatternText(int patternId) {
         if (patternId >= 0 && patternId < HamsterPaletteManager.OVERLAY_PATTERN_NAMES.size()) {
             String patternName = HamsterPaletteManager.OVERLAY_PATTERN_NAMES.get(patternId);
-            return Text.translatable("hamster.pattern.adorablehamsterpets." + patternName);
+            return Component.translatable("hamster.pattern.adorablehamsterpets." + patternName);
         }
-        return Text.translatable("hamster.pattern.adorablehamsterpets.unknown");
+        return Component.translatable("hamster.pattern.adorablehamsterpets.unknown");
     }
 }

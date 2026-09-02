@@ -2,13 +2,13 @@ package net.dawson.adorablehamsterpets.entity.AI;
 
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.FleeEntityGoal;
-import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
-public class HamsterFleeGoal<T extends LivingEntity> extends FleeEntityGoal<T> {
+public class HamsterFleeGoal<T extends LivingEntity> extends AvoidEntityGoal<T> {
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Static Utilities
@@ -17,32 +17,32 @@ public class HamsterFleeGoal<T extends LivingEntity> extends FleeEntityGoal<T> {
     /**
      * Determines if a player is considered safe to a wild hamster.
      */
-    public static boolean isPlayerSafe(PlayerEntity player) {
+    public static boolean isPlayerSafe(Player player) {
         // Require sneaking
-        if (!player.isSneaking()) {
+        if (!player.isShiftKeyDown()) {
             return false;
         }
 
         // Check dynamic config list for taming foods
-        ItemStack mainHand = player.getMainHandStack();
-        ItemStack offHand = player.getOffHandStack();
+        ItemStack mainHand = player.getMainHandItem();
+        ItemStack offHand = player.getOffhandItem();
 
         return ConfigDataCache.isTamingFood(mainHand) || ConfigDataCache.isTamingFood(offHand);
     }
 
     private static boolean shouldFlee(HamsterEntity hamster, LivingEntity livingToFleeFrom) {
         // Skip tamed hamsters and babies
-        if (hamster.isTamed() || hamster.isBaby()) {
+        if (hamster.isTame() || hamster.isBaby()) {
             return false;
         }
 
         // Always flee from hostile monsters
-        if (livingToFleeFrom instanceof HostileEntity) {
+        if (livingToFleeFrom instanceof Monster) {
             return true;
         }
 
         // Check if player is approaching safely with bait
-        if (livingToFleeFrom instanceof PlayerEntity player) {
+        if (livingToFleeFrom instanceof Player player) {
             return !isPlayerSafe(player);
         }
 
@@ -70,13 +70,13 @@ public class HamsterFleeGoal<T extends LivingEntity> extends FleeEntityGoal<T> {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         // Bypass for performance
-        if (this.hamster.isTamed() || this.hamster.isBaby()) {
+        if (this.hamster.isTame() || this.hamster.isBaby()) {
             return false;
         }
 
-        return super.canStart();
+        return super.canUse();
     }
 
     @Override

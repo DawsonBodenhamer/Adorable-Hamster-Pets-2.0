@@ -5,14 +5,13 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.RedstoneFeverUtil;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundEvent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.Difficulty;
-
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
 
 public final class HamsterRedstoneFeverCombatGoal extends Goal {
@@ -36,7 +35,7 @@ public final class HamsterRedstoneFeverCombatGoal extends Goal {
 
     public HamsterRedstoneFeverCombatGoal(HamsterEntity hamster) {
         this.hamster = hamster;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
     /* ─────────────────────────────────────────────────────────────────────────────
@@ -44,20 +43,20 @@ public final class HamsterRedstoneFeverCombatGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         LivingEntity target = this.hamster.getTarget();
         return this.hamster.hasRedstoneFever()
-                && this.hamster.getWorld().getDifficulty() != Difficulty.PEACEFUL
+                && this.hamster.level().getDifficulty() != Difficulty.PEACEFUL
                 && !HamsterMovementUtil.shouldNotMove(this.hamster)
                 && RedstoneFeverUtil.isEligibleFeverTarget(this.hamster, target)
                 && RedstoneFeverUtil.isWithinTargetingRange(this.hamster, target);
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         LivingEntity target = this.hamster.getTarget();
         boolean canContinue = this.hamster.hasRedstoneFever()
-                && this.hamster.getWorld().getDifficulty() != Difficulty.PEACEFUL
+                && this.hamster.level().getDifficulty() != Difficulty.PEACEFUL
                 && !HamsterMovementUtil.shouldNotMove(this.hamster)
                 && RedstoneFeverUtil.isEligibleFeverTarget(this.hamster, target)
                 && RedstoneFeverUtil.isWithinTargetingRange(this.hamster, target);
@@ -82,25 +81,25 @@ public final class HamsterRedstoneFeverCombatGoal extends Goal {
         }
 
         // --- 2. Pursue Target ---
-        this.hamster.getLookControl().lookAt(target, 30.0F, 30.0F);
-        if (!this.hamster.getNavigation().startMovingTo(target, 1.5D)) {
+        this.hamster.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        if (!this.hamster.getNavigation().moveTo(target, 1.5D)) {
             this.clearTarget();
             return;
         }
-        double reach = this.hamster.getWidth() * 2.0F + target.getWidth();
-        if (this.attackCooldown > 0 || this.hamster.squaredDistanceTo(target) > reach * reach) return;
+        double reach = this.hamster.getBbWidth() * 2.0F + target.getBbWidth();
+        if (this.attackCooldown > 0 || this.hamster.distanceToSqr(target) > reach * reach) return;
 
         // --- 3. Commit Melee Hit ---
         this.attackCooldown = ATTACK_COOLDOWN_TICKS;
         SoundEvent attackSound = ModSounds.getRandomSoundFrom(
                 ModSounds.HAMSTER_HISS_SOUNDS, this.hamster.getRandom());
         if (attackSound != null) {
-            this.hamster.playSound(attackSound, 0.7F, this.hamster.getSoundPitch());
+            this.hamster.playSound(attackSound, 0.7F, this.hamster.getVoicePitch());
         }
         this.hamster.triggerAnimOnServer("mainController", "attack");
-        DamageSource source = this.hamster.getDamageSources().mobAttack(this.hamster);
-        float amount = (float) this.hamster.getAttributeValue(EntityAttributes.GENERIC_ATTACK_DAMAGE);
-        if (target.damage(source, amount) && target instanceof ServerPlayerEntity player) {
+        DamageSource source = this.hamster.damageSources().mobAttack(this.hamster);
+        float amount = (float) this.hamster.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        if (target.hurtServer((net.minecraft.server.level.ServerLevel) target.level(), source, amount) && target instanceof ServerPlayer player) {
             ModCriteria.REDSTONE_FEVER_DISCOVERED.get().trigger(player);
         }
     }

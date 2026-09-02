@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.command;
 
+import net.minecraft.server.permissions.Permissions;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -8,12 +9,11 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.PaletteDefinition;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.EntityArgument;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,146 +26,146 @@ public class ModCommands {
      *        Suggestion Providers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static final SuggestionProvider<ServerCommandSource> COUNT_SUGGESTIONS = (context, builder) ->
-            CommandSource.suggestMatching(List.of("1", "10", "100", "1000", "all_THIS_CAN_BREAK_YOUR_WORLD"), builder);
+    private static final SuggestionProvider<CommandSourceStack> COUNT_SUGGESTIONS = (context, builder) ->
+            SharedSuggestionProvider.suggest(List.of("1", "10", "100", "1000", "all_THIS_CAN_BREAK_YOUR_WORLD"), builder);
 
-    private static final SuggestionProvider<ServerCommandSource> POSE_SUGGESTIONS = (context, builder) ->
-            CommandSource.suggestMatching(List.of("sitting", "sleeping", "idle", "none"), builder);
+    private static final SuggestionProvider<CommandSourceStack> POSE_SUGGESTIONS = (context, builder) ->
+            SharedSuggestionProvider.suggest(List.of("sitting", "sleeping", "idle", "none"), builder);
 
-    private static final SuggestionProvider<ServerCommandSource> PALETTE_SUGGESTIONS = (context, builder) -> {
+    private static final SuggestionProvider<CommandSourceStack> PALETTE_SUGGESTIONS = (context, builder) -> {
         List<String> suggestions = new ArrayList<>(HamsterPaletteManager.PALETTE_REGISTRY.keySet());
         suggestions.add("none");
-        return CommandSource.suggestMatching(suggestions, builder);
+        return SharedSuggestionProvider.suggest(suggestions, builder);
     };
 
-    private static final SuggestionProvider<ServerCommandSource> PATTERN_SUGGESTIONS = (context, builder) ->
-            CommandSource.suggestMatching(HamsterPaletteManager.OVERLAY_PATTERN_NAMES, builder);
+    private static final SuggestionProvider<CommandSourceStack> PATTERN_SUGGESTIONS = (context, builder) ->
+            SharedSuggestionProvider.suggest(HamsterPaletteManager.OVERLAY_PATTERN_NAMES, builder);
 
-    private static final SuggestionProvider<ServerCommandSource> EYE_SUGGESTIONS = (context, builder) ->
-            CommandSource.suggestMatching(HamsterPaletteManager.EYE_GENOTYPE_NAMES, builder);
+    private static final SuggestionProvider<CommandSourceStack> EYE_SUGGESTIONS = (context, builder) ->
+            SharedSuggestionProvider.suggest(HamsterPaletteManager.EYE_GENOTYPE_NAMES, builder);
 
-    private static final SuggestionProvider<ServerCommandSource> AUTHOR_SUGGESTIONS = (context, builder) -> {
+    private static final SuggestionProvider<CommandSourceStack> AUTHOR_SUGGESTIONS = (context, builder) -> {
         Set<String> authors = HamsterPaletteManager.PALETTE_REGISTRY.values().stream().map(PaletteDefinition::author).collect(Collectors.toSet());
         authors.add("all");
-        return CommandSource.suggestMatching(authors, builder);
+        return SharedSuggestionProvider.suggest(authors, builder);
     };
 
-    private static final SuggestionProvider<ServerCommandSource> TIME_UNIT_SUGGESTIONS = (context, builder) ->
-            CommandSource.suggestMatching(List.of("days", "months", "years"), builder);
+    private static final SuggestionProvider<CommandSourceStack> TIME_UNIT_SUGGESTIONS = (context, builder) ->
+            SharedSuggestionProvider.suggest(List.of("days", "months", "years"), builder);
 
-    private static final SuggestionProvider<ServerCommandSource> REPORT_OUTPUT_SUGGESTIONS = (context, builder) ->
-            CommandSource.suggestMatching(List.of("latest.log (prettier)", "chat (not recommended)"), builder);
+    private static final SuggestionProvider<CommandSourceStack> REPORT_OUTPUT_SUGGESTIONS = (context, builder) ->
+            SharedSuggestionProvider.suggest(List.of("latest.log (prettier)", "chat (not recommended)"), builder);
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Registration
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext registryAccess, Commands.CommandSelection environment) {
 
         // Create the unified root node
-        LiteralArgumentBuilder<ServerCommandSource> ahpRoot = CommandManager.literal("ahp");
+        LiteralArgumentBuilder<CommandSourceStack> ahpRoot = Commands.literal("ahp");
 
         // --- 1. Utilities ---
         // OP Required
-        ahpRoot.then(CommandManager.literal("print_genetics_report")
-                .requires(source -> source.hasPermissionLevel(2))
+        ahpRoot.then(Commands.literal("print_genetics_report")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> PlayerCommandUtil.executeGeneticsReport(context.getSource(), "log"))
-                .then(CommandManager.argument("output", StringArgumentType.word()).suggests(REPORT_OUTPUT_SUGGESTIONS)
+                .then(Commands.argument("output", StringArgumentType.word()).suggests(REPORT_OUTPUT_SUGGESTIONS)
                         .executes(context -> PlayerCommandUtil.executeGeneticsReport(context.getSource(), StringArgumentType.getString(context, "output")))
                 )
         );
 
-        ahpRoot.then(CommandManager.literal("set_age")
-                .requires(source -> source.hasPermissionLevel(2))
-                .then(CommandManager.argument("amount", DoubleArgumentType.doubleArg(0))
-                        .then(CommandManager.argument("unit", StringArgumentType.word()).suggests(TIME_UNIT_SUGGESTIONS)
+        ahpRoot.then(Commands.literal("set_age")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
+                        .then(Commands.argument("unit", StringArgumentType.word()).suggests(TIME_UNIT_SUGGESTIONS)
                                 .executes(context -> PlayerCommandUtil.executeSetAge(context.getSource(), DoubleArgumentType.getDouble(context, "amount"), StringArgumentType.getString(context, "unit"), Collections.emptyList()))
-                                .then(CommandManager.argument("targets", EntityArgumentType.entities())
-                                        .executes(context -> PlayerCommandUtil.executeSetAge(context.getSource(), DoubleArgumentType.getDouble(context, "amount"), StringArgumentType.getString(context, "unit"), EntityArgumentType.getEntities(context, "targets")))
+                                .then(Commands.argument("targets", EntityArgument.entities())
+                                        .executes(context -> PlayerCommandUtil.executeSetAge(context.getSource(), DoubleArgumentType.getDouble(context, "amount"), StringArgumentType.getString(context, "unit"), EntityArgument.getEntities(context, "targets")))
                                 )
                         )
                 )
         );
 
-        ahpRoot.then(CommandManager.literal("reset_player_breeding_history")
-                .requires(source -> source.hasPermissionLevel(2))
-                .executes(context -> PlayerCommandUtil.executeResetPlayerBreedingHistory(context.getSource(), Collections.singletonList(context.getSource().getPlayerOrThrow())))
-                .then(CommandManager.argument("players", EntityArgumentType.players())
-                        .executes(context -> PlayerCommandUtil.executeResetPlayerBreedingHistory(context.getSource(), EntityArgumentType.getPlayers(context, "players")))
+        ahpRoot.then(Commands.literal("reset_player_breeding_history")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .executes(context -> PlayerCommandUtil.executeResetPlayerBreedingHistory(context.getSource(), Collections.singletonList(context.getSource().getPlayerOrException())))
+                .then(Commands.argument("players", EntityArgument.players())
+                        .executes(context -> PlayerCommandUtil.executeResetPlayerBreedingHistory(context.getSource(), EntityArgument.getPlayers(context, "players")))
                 )
         );
 
-        ahpRoot.then(CommandManager.literal("reset_hamster_breeding_history")
-                .requires(source -> source.hasPermissionLevel(2))
+        ahpRoot.then(Commands.literal("reset_hamster_breeding_history")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> PlayerCommandUtil.executeResetHamsterBreedingHistory(context.getSource(), Collections.emptyList()))
-                .then(CommandManager.argument("hamsters", EntityArgumentType.entities())
-                        .executes(context -> PlayerCommandUtil.executeResetHamsterBreedingHistory(context.getSource(), EntityArgumentType.getEntities(context, "hamsters")))
+                .then(Commands.argument("hamsters", EntityArgument.entities())
+                        .executes(context -> PlayerCommandUtil.executeResetHamsterBreedingHistory(context.getSource(), EntityArgument.getEntities(context, "hamsters")))
                 )
         );
 
-        ahpRoot.then(CommandManager.literal("reset_hamster")
-                .requires(source -> source.hasPermissionLevel(2))
+        ahpRoot.then(Commands.literal("reset_hamster")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> HamsterResetCommandUtil.reset(
                         context.getSource(), Collections.emptyList()))
-                .then(CommandManager.argument("hamsters", EntityArgumentType.entities())
+                .then(Commands.argument("hamsters", EntityArgument.entities())
                         .executes(context -> HamsterResetCommandUtil.reset(
-                                context.getSource(), EntityArgumentType.getEntities(context, "hamsters"))))
+                                context.getSource(), EntityArgument.getEntities(context, "hamsters"))))
         );
 
-        ahpRoot.then(CommandManager.literal("unlock_all_advancements")
-                .requires(source -> source.hasPermissionLevel(2))
+        ahpRoot.then(Commands.literal("unlock_all_advancements")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> PlayerCommandUtil.executeUnlockAllModAdvancements(context.getSource()))
         );
 
-        ahpRoot.then(CommandManager.literal("reset_tree_economy")
-                .requires(source -> source.hasPermissionLevel(2))
+        ahpRoot.then(Commands.literal("reset_tree_economy")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> PlayerCommandUtil.executeResetHeistHistory(context.getSource()))
         );
 
-        ahpRoot.then(CommandManager.literal("redstone_fever")
-                .requires(source -> source.hasPermissionLevel(2))
-                .then(CommandManager.literal("apply")
+        ahpRoot.then(Commands.literal("redstone_fever")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .then(Commands.literal("apply")
                         .executes(context -> RedstoneFeverCommandUtil.apply(
                                 context.getSource(), Collections.emptyList()))
-                        .then(CommandManager.argument("hamsters", EntityArgumentType.entities())
+                        .then(Commands.argument("hamsters", EntityArgument.entities())
                                 .executes(context -> RedstoneFeverCommandUtil.apply(
-                                        context.getSource(), EntityArgumentType.getEntities(context, "hamsters")))))
-                .then(CommandManager.literal("cure")
+                                        context.getSource(), EntityArgument.getEntities(context, "hamsters")))))
+                .then(Commands.literal("cure")
                         .executes(context -> RedstoneFeverCommandUtil.cure(
                                 context.getSource(), Collections.emptyList()))
-                        .then(CommandManager.argument("hamsters", EntityArgumentType.entities())
+                        .then(Commands.argument("hamsters", EntityArgument.entities())
                                 .executes(context -> RedstoneFeverCommandUtil.cure(
-                                        context.getSource(), EntityArgumentType.getEntities(context, "hamsters")))))
+                                        context.getSource(), EntityArgument.getEntities(context, "hamsters")))))
         );
 
         // No OP required
-        ahpRoot.then(CommandManager.literal("trigger_guidebook_fx")
+        ahpRoot.then(Commands.literal("trigger_guidebook_fx")
                 .requires(source -> true)
                 .executes(context -> PlayerCommandUtil.executeTriggerBookEffects(context.getSource()))
         );
 
-        ahpRoot.then(CommandManager.literal("give_guidebook")
+        ahpRoot.then(Commands.literal("give_guidebook")
                 .requires(source -> true)
                 .executes(context -> PlayerCommandUtil.executeGiveGuidebook(context.getSource()))
         );
 
         // --- 2. Genetics & Spawning Engine ---
         // OP Required
-        ahpRoot.then(CommandManager.literal("undo_last_spawn")
-                .requires(source -> source.hasPermissionLevel(2))
+        ahpRoot.then(Commands.literal("undo_last_spawn")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> HamsterSpawnCommandUtil.executeUndoLastSpawn(context.getSource()))
         );
 
-        ahpRoot.then(CommandManager.literal("spawn_all_bases_2D")
-                .requires(source -> source.hasPermissionLevel(2))
-                .then(CommandManager.argument("with_wild_overlays", BoolArgumentType.bool())
-                        .then(CommandManager.argument("with_sample_breeding_overlays", BoolArgumentType.bool())
-                                .then(CommandManager.argument("author", StringArgumentType.word()).suggests(AUTHOR_SUGGESTIONS)
-                                        .then(CommandManager.argument("spacing_multiplier", DoubleArgumentType.doubleArg(0.1))
-                                                .then(CommandManager.argument("randomize_sitting", BoolArgumentType.bool())
-                                                        .then(CommandManager.argument("randomize_sleeping", BoolArgumentType.bool())
-                                                                .then(CommandManager.argument("match_player_yaw", BoolArgumentType.bool())
-                                                                        .then(CommandManager.argument("randomize_yaw", BoolArgumentType.bool())
+        ahpRoot.then(Commands.literal("spawn_all_bases_2D")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .then(Commands.argument("with_wild_overlays", BoolArgumentType.bool())
+                        .then(Commands.argument("with_sample_breeding_overlays", BoolArgumentType.bool())
+                                .then(Commands.argument("author", StringArgumentType.word()).suggests(AUTHOR_SUGGESTIONS)
+                                        .then(Commands.argument("spacing_multiplier", DoubleArgumentType.doubleArg(0.1))
+                                                .then(Commands.argument("randomize_sitting", BoolArgumentType.bool())
+                                                        .then(Commands.argument("randomize_sleeping", BoolArgumentType.bool())
+                                                                .then(Commands.argument("match_player_yaw", BoolArgumentType.bool())
+                                                                        .then(Commands.argument("randomize_yaw", BoolArgumentType.bool())
                                                                                 .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases2D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), BoolArgumentType.getBool(context, "with_sample_breeding_overlays"), StringArgumentType.getString(context, "author"), DoubleArgumentType.getDouble(context, "spacing_multiplier"), BoolArgumentType.getBool(context, "randomize_sitting"), BoolArgumentType.getBool(context, "randomize_sleeping"), BoolArgumentType.getBool(context, "match_player_yaw"), BoolArgumentType.getBool(context, "randomize_yaw")))
                                                                         )
                                                                         .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases2D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), BoolArgumentType.getBool(context, "with_sample_breeding_overlays"), StringArgumentType.getString(context, "author"), DoubleArgumentType.getDouble(context, "spacing_multiplier"), BoolArgumentType.getBool(context, "randomize_sitting"), BoolArgumentType.getBool(context, "randomize_sleeping"), BoolArgumentType.getBool(context, "match_player_yaw"), false))
@@ -185,16 +185,16 @@ public class ModCommands {
                 .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases2D(context.getSource(), false, false, "all", 1.0, true, true, false, false))
         );
 
-        ahpRoot.then(CommandManager.literal("spawn_all_bases_3D")
-                .requires(source -> source.hasPermissionLevel(2))
-                .then(CommandManager.argument("with_wild_overlays", BoolArgumentType.bool())
-                        .then(CommandManager.argument("with_sample_breeding_overlays", BoolArgumentType.bool())
-                                .then(CommandManager.argument("author", StringArgumentType.word()).suggests(AUTHOR_SUGGESTIONS)
-                                        .then(CommandManager.argument("spacing_multiplier", DoubleArgumentType.doubleArg(0.1))
-                                                .then(CommandManager.argument("randomize_sitting", BoolArgumentType.bool())
-                                                        .then(CommandManager.argument("randomize_sleeping", BoolArgumentType.bool())
-                                                                .then(CommandManager.argument("match_player_yaw", BoolArgumentType.bool())
-                                                                        .then(CommandManager.argument("randomize_yaw", BoolArgumentType.bool())
+        ahpRoot.then(Commands.literal("spawn_all_bases_3D")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .then(Commands.argument("with_wild_overlays", BoolArgumentType.bool())
+                        .then(Commands.argument("with_sample_breeding_overlays", BoolArgumentType.bool())
+                                .then(Commands.argument("author", StringArgumentType.word()).suggests(AUTHOR_SUGGESTIONS)
+                                        .then(Commands.argument("spacing_multiplier", DoubleArgumentType.doubleArg(0.1))
+                                                .then(Commands.argument("randomize_sitting", BoolArgumentType.bool())
+                                                        .then(Commands.argument("randomize_sleeping", BoolArgumentType.bool())
+                                                                .then(Commands.argument("match_player_yaw", BoolArgumentType.bool())
+                                                                        .then(Commands.argument("randomize_yaw", BoolArgumentType.bool())
                                                                                 .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), BoolArgumentType.getBool(context, "with_sample_breeding_overlays"), StringArgumentType.getString(context, "author"), DoubleArgumentType.getDouble(context, "spacing_multiplier"), BoolArgumentType.getBool(context, "randomize_sitting"), BoolArgumentType.getBool(context, "randomize_sleeping"), BoolArgumentType.getBool(context, "match_player_yaw"), BoolArgumentType.getBool(context, "randomize_yaw")))
                                                                         )
                                                                         .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), BoolArgumentType.getBool(context, "with_wild_overlays"), BoolArgumentType.getBool(context, "with_sample_breeding_overlays"), StringArgumentType.getString(context, "author"), DoubleArgumentType.getDouble(context, "spacing_multiplier"), BoolArgumentType.getBool(context, "randomize_sitting"), BoolArgumentType.getBool(context, "randomize_sleeping"), BoolArgumentType.getBool(context, "match_player_yaw"), false))
@@ -214,16 +214,16 @@ public class ModCommands {
                 .executes(context -> HamsterSpawnCommandUtil.executeSpawnAllBases3D(context.getSource(), false, false, "all", 1.0, true, true, false, false))
         );
 
-        ahpRoot.then(CommandManager.literal("spawn_random_group")
-                .requires(source -> source.hasPermissionLevel(2))
-                .then(CommandManager.argument("count", StringArgumentType.word()).suggests(COUNT_SUGGESTIONS)
-                        .then(CommandManager.argument("ignore_safety_limits", BoolArgumentType.bool())
-                                .then(CommandManager.argument("spacing_multiplier", DoubleArgumentType.doubleArg(0.1))
-                                        .then(CommandManager.argument("randomize_sitting", BoolArgumentType.bool())
-                                                .then(CommandManager.argument("randomize_sleeping", BoolArgumentType.bool())
-                                                        .then(CommandManager.argument("match_player_yaw", BoolArgumentType.bool())
-                                                                .then(CommandManager.argument("randomize_yaw", BoolArgumentType.bool())
-                                                                        .then(CommandManager.argument("use_wild_overlay_rules_for_breeding_overlays", BoolArgumentType.bool())
+        ahpRoot.then(Commands.literal("spawn_random_group")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .then(Commands.argument("count", StringArgumentType.word()).suggests(COUNT_SUGGESTIONS)
+                        .then(Commands.argument("ignore_safety_limits", BoolArgumentType.bool())
+                                .then(Commands.argument("spacing_multiplier", DoubleArgumentType.doubleArg(0.1))
+                                        .then(Commands.argument("randomize_sitting", BoolArgumentType.bool())
+                                                .then(Commands.argument("randomize_sleeping", BoolArgumentType.bool())
+                                                        .then(Commands.argument("match_player_yaw", BoolArgumentType.bool())
+                                                                .then(Commands.argument("randomize_yaw", BoolArgumentType.bool())
+                                                                        .then(Commands.argument("use_wild_overlay_rules_for_breeding_overlays", BoolArgumentType.bool())
                                                                                 .executes(context -> HamsterSpawnCommandUtil.executeSpawnRandomGroup(context.getSource(), StringArgumentType.getString(context, "count"), BoolArgumentType.getBool(context, "ignore_safety_limits"), DoubleArgumentType.getDouble(context, "spacing_multiplier"), BoolArgumentType.getBool(context, "randomize_sitting"), BoolArgumentType.getBool(context, "randomize_sleeping"), BoolArgumentType.getBool(context, "match_player_yaw"), BoolArgumentType.getBool(context, "randomize_yaw"), BoolArgumentType.getBool(context, "use_wild_overlay_rules_for_breeding_overlays")))
                                                                         )
                                                                         .executes(context -> HamsterSpawnCommandUtil.executeSpawnRandomGroup(context.getSource(), StringArgumentType.getString(context, "count"), BoolArgumentType.getBool(context, "ignore_safety_limits"), DoubleArgumentType.getDouble(context, "spacing_multiplier"), BoolArgumentType.getBool(context, "randomize_sitting"), BoolArgumentType.getBool(context, "randomize_sleeping"), BoolArgumentType.getBool(context, "match_player_yaw"), BoolArgumentType.getBool(context, "randomize_yaw"), false))
@@ -242,16 +242,16 @@ public class ModCommands {
                 )
         );
 
-        ahpRoot.then(CommandManager.literal("spawn")
-                .requires(source -> source.hasPermissionLevel(2))
-                .then(CommandManager.literal("hamster")
-                        .then(CommandManager.argument("basePalette", StringArgumentType.word()).suggests(PALETTE_SUGGESTIONS)
-                                .then(CommandManager.argument("wildPattern", StringArgumentType.word()).suggests(PATTERN_SUGGESTIONS)
-                                        .then(CommandManager.argument("wildPalette", StringArgumentType.word()).suggests(PALETTE_SUGGESTIONS)
-                                                .then(CommandManager.argument("breedPattern", StringArgumentType.word()).suggests(PATTERN_SUGGESTIONS)
-                                                        .then(CommandManager.argument("breedPalette", StringArgumentType.word()).suggests(PALETTE_SUGGESTIONS)
-                                                                .then(CommandManager.argument("eyes", StringArgumentType.word()).suggests(EYE_SUGGESTIONS)
-                                                                        .then(CommandManager.argument("pose", StringArgumentType.word()).suggests(POSE_SUGGESTIONS)
+        ahpRoot.then(Commands.literal("spawn")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .then(Commands.literal("hamster")
+                        .then(Commands.argument("basePalette", StringArgumentType.word()).suggests(PALETTE_SUGGESTIONS)
+                                .then(Commands.argument("wildPattern", StringArgumentType.word()).suggests(PATTERN_SUGGESTIONS)
+                                        .then(Commands.argument("wildPalette", StringArgumentType.word()).suggests(PALETTE_SUGGESTIONS)
+                                                .then(Commands.argument("breedPattern", StringArgumentType.word()).suggests(PATTERN_SUGGESTIONS)
+                                                        .then(Commands.argument("breedPalette", StringArgumentType.word()).suggests(PALETTE_SUGGESTIONS)
+                                                                .then(Commands.argument("eyes", StringArgumentType.word()).suggests(EYE_SUGGESTIONS)
+                                                                        .then(Commands.argument("pose", StringArgumentType.word()).suggests(POSE_SUGGESTIONS)
                                                                                 .executes(context -> HamsterSpawnCommandUtil.executeSpawnSpecific(
                                                                                         context.getSource(),
                                                                                         StringArgumentType.getString(context, "basePalette"),

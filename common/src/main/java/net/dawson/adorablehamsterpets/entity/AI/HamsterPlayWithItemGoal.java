@@ -7,15 +7,15 @@ import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ItemStackParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.particles.ItemParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.Vec3;
 
 public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal {
 
@@ -34,7 +34,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
      *        Instance Fields
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private PlayerEntity owner;
+    private Player owner;
     private SubState currentSubState = SubState.NONE;
     private int playAnimSettleTicks;
     private int itemInterestTimer;
@@ -53,25 +53,25 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         // Hook for resuming an interaction if already holding an item
         if (this.hamster.isHoldingMouthItem()) {
             if (HamsterMovementUtil.shouldNotMove(this.hamster)
-                    || !(this.hamster.getOwner() instanceof PlayerEntity)) {
+                    || !(this.hamster.getOwner() instanceof Player)) {
                 return false;
             }
 
-            this.owner = (PlayerEntity) this.hamster.getOwner();
+            this.owner = (Player) this.hamster.getOwner();
             return true;
         }
 
         // Run standard ground search
-        if (!super.canStart()) {
+        if (!super.canUse()) {
             return false;
         }
 
         // Apply RNG specifically for thievery items
-        ItemStack stack = this.targetItem.getStack();
+        ItemStack stack = this.targetItem.getItem();
         boolean isRetrievable = ConfigDataCache.isRetrievableItem(stack);
         boolean isStealable = ConfigDataCache.isStealableItem(stack);
         boolean hasDiamondArmor = hasDiamondArmor();
@@ -90,7 +90,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
 
     @Override
     public void start() {
-        this.hamster.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
+        this.hamster.setPathfindingMalus(PathType.WATER, 0.0F);
 
         // Resume state machine directly to post-pounce if already holding an item
         if (this.hamster.isHoldingMouthItem()) {
@@ -112,7 +112,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
         } else {
             // Standard start from scratch
             super.start();
-            this.itemInterestTimer = this.hamster.getRandom().nextBetween(
+            this.itemInterestTimer = this.hamster.getRandom().nextIntBetweenInclusive(
                     Configs.AHP_MAIN.minMiniGameFleeDurationSeconds.get() * 20,
                     Configs.AHP_MAIN.maxMiniGameFleeDurationSeconds.get() * 20
             );
@@ -140,11 +140,11 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
             return false;
         }
 
-        if (this.hamster.stealingCooldownEndTick > this.world.getTime()) {
+        if (this.hamster.stealingCooldownEndTick > this.world.getGameTime()) {
             return false;
         }
 
-        if (!(this.hamster.getOwner() instanceof PlayerEntity playerOwner)) {
+        if (!(this.hamster.getOwner() instanceof Player playerOwner)) {
             return false;
         }
 
@@ -183,24 +183,24 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
         // Audio feedback
         SoundEvent pounceSound = ModSounds.getDynamicItemSound(stackSnapshot);
         float volume = ModSounds.getDynamicSoundVolume(pounceSound);
-        this.world.playSound(null, this.hamster.getBlockPos(), pounceSound, SoundCategory.NEUTRAL, volume, 1.7F);
+        this.world.playSound(null, this.hamster.blockPosition(), pounceSound, SoundSource.NEUTRAL, volume, 1.7F);
 
         // Visual feedback
-        if (!this.world.isClient()) {
+        if (!this.world.isClientSide()) {
             ParticleEffectsUtil.spawnParticles(
                     this.world,
-                    new Vec3d(this.hamster.getX(), this.hamster.getY() + 0.5, this.hamster.getZ()),
+                    new Vec3(this.hamster.getX(), this.hamster.getY() + 0.5, this.hamster.getZ()),
                     ParticleTypes.END_ROD,
                     5,
-                    new Vec3d(0.1, 0.1, 0.1),
+                    new Vec3(0.1, 0.1, 0.1),
                     0.05
             );
             ParticleEffectsUtil.spawnParticles(
                     this.world,
-                    new Vec3d(this.hamster.getX(), this.hamster.getY() + 0.5, this.hamster.getZ()),
-                    new ItemStackParticleEffect(ParticleTypes.ITEM, stackSnapshot),
+                    new Vec3(this.hamster.getX(), this.hamster.getY() + 0.5, this.hamster.getZ()),
+                    new ItemParticleOption(ParticleTypes.ITEM, stackSnapshot.getItem()),
                     18,
-                    new Vec3d(0.2, 0.2, 0.2),
+                    new Vec3(0.2, 0.2, 0.2),
                     0.1
             );
         }
@@ -237,15 +237,15 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
                     this.currentSubState = SubState.PLAYING;
                     this.hamster.getNavigation().stop();
                 } else if (HamsterMovementUtil.shouldFlee(this.hamster, this.owner, minFleeDist)) {
-                    Vec3d fleePos = HamsterMovementUtil.findFleePosition(this.hamster, this.owner, minFleeDist, maxFleeDist);
+                    Vec3 fleePos = HamsterMovementUtil.findFleePosition(this.hamster, this.owner, minFleeDist, maxFleeDist);
                     if (fleePos != null) {
-                        this.hamster.getNavigation().startMovingTo(fleePos.x, fleePos.y, fleePos.z, 1.5D);
+                        this.hamster.getNavigation().moveTo(fleePos.x, fleePos.y, fleePos.z, 1.5D);
                     }
                 }
             }
             case RETURNING -> {
                 this.hamster.setPresentingItem(false);
-                this.hamster.getNavigation().startMovingTo(this.owner, 1.5D);
+                this.hamster.getNavigation().moveTo(this.owner, 1.5D);
 
                 if (this.hamster.distanceTo(this.owner) <= 2.5D) {
                     this.currentSubState = SubState.PLAYING;
@@ -265,7 +265,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
                 }
 
                 // Force specific animation states
-                if (this.hamster.getNavigation().isIdle() && this.playAnimSettleTicks == 0) {
+                if (this.hamster.getNavigation().isDone() && this.playAnimSettleTicks == 0) {
                     if (this.isFriendlyDelivery) {
                         this.hamster.setPresentingItem(true);
                     } else {
@@ -295,13 +295,13 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
 
     @Override
     protected void onGoalStopped() {
-        this.hamster.stealingCooldownEndTick = this.world.getTime() + Configs.AHP_MAIN.stealCooldownTicks.get();
+        this.hamster.stealingCooldownEndTick = this.world.getGameTime() + Configs.AHP_MAIN.stealCooldownTicks.get();
 
         // Safely drop item if still held when goal ends unexpectedly
         if (this.hamster.isHoldingMouthItem()) {
             ItemStack itemHeld = this.hamster.getMouthItemStack();
             if (!itemHeld.isEmpty()) {
-                this.world.spawnEntity(new ItemEntity(
+                this.world.addFreshEntity(new ItemEntity(
                         this.world, this.hamster.getX(), this.hamster.getY(), this.hamster.getZ(), itemHeld.copy()
                 ));
 
@@ -312,7 +312,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
 
                 SoundEvent pounceSound = ModSounds.getDynamicItemSound(itemHeld);
                 float volume = ModSounds.getDynamicSoundVolume(pounceSound);
-                this.world.playSound(null, this.hamster.getBlockPos(), pounceSound, SoundCategory.NEUTRAL, volume, 1.7F);
+                this.world.playSound(null, this.hamster.blockPosition(), pounceSound, SoundSource.NEUTRAL, volume, 1.7F);
             }
         }
 

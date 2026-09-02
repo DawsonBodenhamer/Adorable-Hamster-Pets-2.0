@@ -2,19 +2,19 @@ package net.dawson.adorablehamsterpets.item.custom;
 
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.stat.Stats;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.UseAction;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUseAnimation;
+import net.minecraft.world.level.Level;
 
 public class CheeseItem extends ConfigurableFoodItem {
 
-    public CheeseItem(Settings settings) {
+    public CheeseItem(Properties settings) {
         super(settings, Configs.AHP_ITEMS.cheeseNutrition, Configs.AHP_ITEMS.cheeseSaturation, "tooltip.adorablehamsterpets.cheese");
     }
 
@@ -22,40 +22,36 @@ public class CheeseItem extends ConfigurableFoodItem {
      * Color the item name gold.
      */
     @Override
-    public Text getName(ItemStack stack) {
-        return super.getName(stack).copy().formatted(Formatting.GOLD);
+    public Component getName(ItemStack stack) {
+        return super.getName(stack).copy().withStyle(ChatFormatting.GOLD);
+    }
+
+
+    @Override
+    public ItemUseAnimation getUseAnimation(ItemStack stack) {
+        return ItemUseAnimation.EAT;
     }
 
     @Override
-    public SoundEvent getEatSound() {
-        return ModSounds.CHEESE_EAT1.get();
-    }
-
-    @Override
-    public UseAction getUseAction(ItemStack stack) {
-        return UseAction.EAT;
-    }
-
-    @Override
-    public int getMaxUseTime(ItemStack stack, LivingEntity user) {
+    public int getUseDuration(ItemStack stack, LivingEntity user) {
         return 20; // Custom eating time
     }
 
     @Override
-    public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {
-        if (user instanceof PlayerEntity player) {
+    public ItemStack finishUsingItem(ItemStack stack, Level world, LivingEntity user) {
+        if (user instanceof Player player) {
             // Manually apply hunger and saturation from config
             int nutrition = Configs.AHP_ITEMS.cheeseNutrition.get();
             float saturation = Configs.AHP_ITEMS.cheeseSaturation.get();
-            player.getHungerManager().add(nutrition, saturation);
-            player.incrementStat(Stats.USED.getOrCreateStat(this));
-            SoundEvent randomEatSound = ModSounds.getRandomSoundFrom(ModSounds.CHEESE_EAT_SOUNDS, world.random);
+            player.getFoodData().eat(nutrition, saturation);
+            player.awardStat(Stats.ITEM_USED.get(this));
+            SoundEvent randomEatSound = ModSounds.getRandomSoundFrom(ModSounds.CHEESE_EAT_SOUNDS, world.getRandom());
             if (randomEatSound != null) {
-                world.playSound(null, player.getX(), player.getY(), player.getZ(), randomEatSound, player.getSoundCategory(), 1.2F, 1.0F + (world.random.nextFloat() - world.random.nextFloat()) * 0.4F);
+                world.playSound(null, player.getX(), player.getY(), player.getZ(), randomEatSound, player.getSoundSource(), 1.2F, 1.0F + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.4F);
             }
         }
-        if (!(user instanceof PlayerEntity player) || !player.getAbilities().creativeMode) {
-            stack.decrement(1);
+        if (!(user instanceof Player player) || !player.getAbilities().instabuild) {
+            stack.shrink(1);
         }
         return stack;
     }

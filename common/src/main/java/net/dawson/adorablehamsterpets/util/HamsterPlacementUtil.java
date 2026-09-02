@@ -2,13 +2,12 @@ package net.dawson.adorablehamsterpets.util;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -33,20 +32,20 @@ public class HamsterPlacementUtil {
      */
     public static void trySuffocationRescue(HamsterEntity hamster) {
         // Only run if grace period active and inside wall
-        if (hamster.suffocationGracePeriod > 0 && hamster.isInsideWall()) {
-            World world = hamster.getWorld();
-            BlockPos currentPos = hamster.getBlockPos();
+        if (hamster.suffocationGracePeriod > 0 && hamster.isInWall()) {
+            Level world = hamster.level();
+            BlockPos currentPos = hamster.blockPosition();
 
             // Small radius
             Optional<BlockPos> safePosOpt = findSafeSpawnPosition(currentPos, world, 3, hamster);
 
             safePosOpt.ifPresent(safePos -> {
                 // Found a safe spot, request teleport to sync with client
-                hamster.requestTeleport(safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5);
+                hamster.teleportTo(safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5);
 
                 // Stop momentum
-                hamster.setVelocity(0, 0, 0);
-                hamster.velocityDirty = true;
+                hamster.setDeltaMovement(0, 0, 0);
+                hamster.needsSync = true;
 
                 AdorableHamsterPets.LOGGER.debug("[HamsterSelfRescue] Hamster {} rescued from {} to safe location {}.",
                         hamster.getId(), currentPos, safePos);
@@ -55,10 +54,10 @@ public class HamsterPlacementUtil {
                 hamster.suffocationGracePeriod = 0;
 
                 // Force explicit delayed positional update to prevent Server/Client desync
-                long currentWorldTime = world.getTime();
+                long currentWorldTime = world.getGameTime();
                 hamster.scheduleTask(currentWorldTime + 5, "sledgehammer_teleport_sync", () -> {
                     if (hamster.isAlive() && !hamster.isRemoved()) {
-                        hamster.requestTeleport(hamster.getX(), hamster.getY(), hamster.getZ());
+                        hamster.teleportTo(hamster.getX(), hamster.getY(), hamster.getZ());
                     }
                 });
             });
@@ -72,32 +71,32 @@ public class HamsterPlacementUtil {
      * @return True only when direct teleportation reaches the verified destination.
      */
     public static boolean tryDrowningRescue(HamsterEntity hamster) {
-        if (hamster.getWorld().isClient()) {
+        if (hamster.level().isClientSide()) {
             return false;
         }
 
-        World world = hamster.getWorld();
-        BlockPos origin = hamster.getBlockPos();
+        Level world = hamster.level();
+        BlockPos origin = hamster.blockPosition();
         Optional<BlockPos> safePos = findDrowningRescuePosition(origin, world, hamster);
         if (safePos.isEmpty()) {
             return false;
         }
 
         BlockPos destination = safePos.get();
-        hamster.requestTeleport(
+        hamster.teleportTo(
                 destination.getX() + 0.5,
                 destination.getY(),
                 destination.getZ() + 0.5);
-        if (!hamster.getBlockPos().equals(destination)
+        if (!hamster.blockPosition().equals(destination)
                 || !isSafeDryRescueLocation(destination, world, hamster)) {
             return false;
         }
 
-        hamster.setVelocity(0.0, 0.0, 0.0);
-        hamster.velocityDirty = true;
+        hamster.setDeltaMovement(0.0, 0.0, 0.0);
+        hamster.needsSync = true;
         hamster.getNavigation().stop();
         hamster.setSwimming(false);
-        hamster.setAir(hamster.getMaxAir());
+        hamster.setAirSupply(hamster.getMaxAirSupply());
         AdorableHamsterPets.LOGGER.debug(
                 "[HamsterDrowningRescue] Hamster {} rescued from {} to dry location {}.",
                 hamster.getId(),
@@ -119,14 +118,14 @@ public class HamsterPlacementUtil {
      * @param hamster       The hamster entity (used for collision context).
      * @return An Optional containing the first safe BlockPos found.
      */
-    public static Optional<BlockPos> findSafeSpawnPosition(BlockPos initialTarget, World world, int searchRadius, HamsterEntity hamster) {
+    public static Optional<BlockPos> findSafeSpawnPosition(BlockPos initialTarget, Level world, int searchRadius, HamsterEntity hamster) {
         return findSafeSpawnPosition(initialTarget, world, searchRadius, Collections.emptySet(), hamster);
     }
 
     /**
      * Overload that accepts a set of positions to ignore.
      */
-    public static Optional<BlockPos> findSafeSpawnPosition(BlockPos initialTarget, World world, int searchRadius, Set<BlockPos> occupiedPositions, HamsterEntity hamster) {
+    public static Optional<BlockPos> findSafeSpawnPosition(BlockPos initialTarget, Level world, int searchRadius, Set<BlockPos> occupiedPositions, HamsterEntity hamster) {
         // --- Stage 1: Initial Target Check ---
         if (isSafeSpawnLocation(initialTarget, world, hamster) && !occupiedPositions.contains(initialTarget)) {
             return Optional.of(initialTarget);
@@ -134,7 +133,7 @@ public class HamsterPlacementUtil {
 
         // --- Stage 2: Vertical Vicinity Check (Upwards) ---
         for (int i = 1; i <= 3; i++) {
-            BlockPos abovePos = initialTarget.up(i);
+            BlockPos abovePos = initialTarget.above(i);
             if (isSafeSpawnLocation(abovePos, world, hamster) && !occupiedPositions.contains(abovePos)) {
                 return Optional.of(abovePos);
             }
@@ -148,7 +147,7 @@ public class HamsterPlacementUtil {
                     if (Math.abs(i) != r && Math.abs(j) != r) {
                         continue;
                     }
-                    BlockPos checkPos = initialTarget.add(i, 0, j);
+                    BlockPos checkPos = initialTarget.offset(i, 0, j);
                     if (isSafeSpawnLocation(checkPos, world, hamster) && !occupiedPositions.contains(checkPos)) {
                         return Optional.of(checkPos);
                     }
@@ -168,12 +167,12 @@ public class HamsterPlacementUtil {
      * 3. The block below has a collision shape to stand on.
      * 4. The two blocks at the spawn position (for feet and head) have no collision shape *for this specific hamster*.
      */
-    public static boolean isSafeSpawnLocation(BlockPos pos, World world, HamsterEntity hamster) {
+    public static boolean isSafeSpawnLocation(BlockPos pos, Level world, HamsterEntity hamster) {
         // --- 1. Fast Collision Checks (Cheapest) ---
-        ShapeContext entityContext = ShapeContext.of(hamster);
+        CollisionContext entityContext = CollisionContext.of(hamster);
 
         // Ensure physical surface to stand on first
-        BlockPos floorPos = pos.down();
+        BlockPos floorPos = pos.below();
         BlockState floorState = world.getBlockState(floorPos);
         if (floorState.getCollisionShape(world, floorPos).isEmpty()) {
             return false;
@@ -185,8 +184,8 @@ public class HamsterPlacementUtil {
             return false;
         }
 
-        BlockState headState = world.getBlockState(pos.up());
-        if (!headState.getCollisionShape(world, pos.up(), entityContext).isEmpty()) {
+        BlockState headState = world.getBlockState(pos.above());
+        if (!headState.getCollisionShape(world, pos.above(), entityContext).isEmpty()) {
             return false;
         }
 
@@ -212,10 +211,10 @@ public class HamsterPlacementUtil {
     }
 
     private static Optional<BlockPos> findDrowningRescuePosition(
-            BlockPos origin, World world, HamsterEntity hamster) {
+            BlockPos origin, Level world, HamsterEntity hamster) {
         int maximumY =
                 Math.min(
-                        world.getBottomY() + world.getHeight() - 2,
+                        world.getMinY() + world.getHeight() - 2,
                         origin.getY() + DROWNING_VERTICAL_RANGE);
 
         Optional<BlockPos> nearbyColumnResult =
@@ -241,7 +240,7 @@ public class HamsterPlacementUtil {
 
     private static Optional<BlockPos> searchDrowningColumns(
             BlockPos origin,
-            World world,
+            Level world,
             HamsterEntity hamster,
             int maximumY,
             int minimumRadius,
@@ -272,11 +271,11 @@ public class HamsterPlacementUtil {
     }
 
     private static boolean isSafeDryRescueLocation(
-            BlockPos pos, World world, HamsterEntity hamster) {
-        return world.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4)
-                && world.getWorldBorder().contains(pos)
+            BlockPos pos, Level world, HamsterEntity hamster) {
+        return world.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
+                && world.getWorldBorder().isWithinBounds(pos)
                 && world.getFluidState(pos).isEmpty()
-                && world.getFluidState(pos.up()).isEmpty()
+                && world.getFluidState(pos.above()).isEmpty()
                 && isSafeSpawnLocation(pos, world, hamster);
     }
 }

@@ -17,21 +17,22 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedFloat;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Translatable.Name("Visuals & UI")
 @Translatable.Desc("Client-side aesthetics, performance toggles, and HUD elements.")
 public class AhpUiConfig extends Config {
 
     public AhpUiConfig() {
-        super(Identifier.of(AdorableHamsterPets.MOD_ID, "ui"));
+        super(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ui"));
 
         // --- Two-Way Binding for Announcement Icon Toggles ---
         // This block ensures the master "Enable Announcements" toggle stays synchronized
@@ -269,34 +270,28 @@ public class AhpUiConfig extends Config {
     @NonSync
     @Translatable.Name("Mark All as Read")
     public ConfigAction markAllAsRead = new ConfigAction.Builder()
-            .title(Text.translatable("config.adorablehamsterpets.main.announcements.markAllAsRead"))
-            .desc(Text.translatable("config.adorablehamsterpets.main.announcements.markAllAsRead.desc"))
+            .title(Component.translatable("config.adorablehamsterpets.main.announcements.markAllAsRead"))
+            .desc(Component.translatable("config.adorablehamsterpets.main.announcements.markAllAsRead.desc"))
             .decoration(TextureIds.INSTANCE.getADD())
             .build(() -> {
                 // Custom runnable 'pressAction'
                 AnnouncementManager.INSTANCE.markAllAsRead();
-                if (MinecraftClient.getInstance().player != null) {
-                    MinecraftClient.getInstance().player.sendMessage(
-                            Text.translatable("message.adorablehamsterpets.announcements_marked_read").formatted(Formatting.WHITE),
-                            false
-                    );
+                if (Minecraft.getInstance().player != null) {
+                    Minecraft.getInstance().player.sendSystemMessage(Component.translatable("message.adorablehamsterpets.announcements_marked_read").withStyle(ChatFormatting.WHITE));
                 }
             });
 
     @NonSync
     @Translatable.Name("Announcement History")
     public ConfigAction resetAllAnnouncementDismissals = new ConfigAction.Builder()
-            .title(Text.translatable("config.adorablehamsterpets.main.announcements.resetAllAnnouncementDismissals"))
-            .desc(Text.translatable("config.adorablehamsterpets.main.announcements.resetAllAnnouncementDismissals.desc"))
+            .title(Component.translatable("config.adorablehamsterpets.main.announcements.resetAllAnnouncementDismissals"))
+            .desc(Component.translatable("config.adorablehamsterpets.main.announcements.resetAllAnnouncementDismissals.desc"))
             .decoration(TextureIds.INSTANCE.getRESTORE())
             .build(() -> {
                 // Custom runnable 'pressAction'
                 AnnouncementManager.INSTANCE.resetClientState();
-                if (MinecraftClient.getInstance().player != null) {
-                    MinecraftClient.getInstance().player.sendMessage(
-                            Text.translatable("message.adorablehamsterpets.announcements_reset").formatted(Formatting.WHITE),
-                            false
-                    );
+                if (Minecraft.getInstance().player != null) {
+                    Minecraft.getInstance().player.sendSystemMessage(Component.translatable("message.adorablehamsterpets.announcements_reset").withStyle(ChatFormatting.WHITE));
                 }
             });
 
@@ -324,7 +319,7 @@ public class AhpUiConfig extends Config {
             new ValidatedEnum<>(IconPositionPreset.TOP_LEFT)
                     .toCondition(
                             isHudIconEnabled,
-                            Text.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
+                            Component.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
                             () -> IconPositionPreset.TOP_LEFT
                     );
 
@@ -335,7 +330,7 @@ public class AhpUiConfig extends Config {
             new ValidatedInt(10, 500, -500)
                     .toCondition(
                             isHudIconEnabled,
-                            Text.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
+                            Component.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
                             () -> 10
                     );
 
@@ -346,7 +341,7 @@ public class AhpUiConfig extends Config {
             new ValidatedInt(10, 500, -500)
                     .toCondition(
                             isHudIconEnabled,
-                            Text.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
+                            Component.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
                             () -> 10
                     );
 
@@ -358,7 +353,7 @@ public class AhpUiConfig extends Config {
             new ValidatedFloat(1.0f, 3.0f, 0.5f)
                     .toCondition(
                             isHudIconEnabled,
-                            Text.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
+                            Component.translatable("config.adorablehamsterpets.condition.hud_icon_enabled"),
                             () -> 1.0f
                     );
 
@@ -410,7 +405,7 @@ public class AhpUiConfig extends Config {
             new ValidatedAny<>(new WidgetIconOffsets())
                     .toCondition(
                             isWidgetIconEnabled,
-                            Text.translatable("config.adorablehamsterpets.condition.widget_icon_enabled"),
+                            Component.translatable("config.adorablehamsterpets.condition.widget_icon_enabled"),
                             WidgetIconOffsets::new
                     );
 
@@ -423,7 +418,7 @@ public class AhpUiConfig extends Config {
             new ValidatedAny<>(new WidgetIconOffsets())
                     .toCondition(
                             isWidgetIconEnabled,
-                            Text.translatable("config.adorablehamsterpets.condition.widget_icon_enabled"),
+                            Component.translatable("config.adorablehamsterpets.condition.widget_icon_enabled"),
                             WidgetIconOffsets::new
                     );
 
@@ -455,7 +450,7 @@ public class AhpUiConfig extends Config {
             new ValidatedInt(0, 360, 0)
                     .toCondition(
                             isDynamicDriftDisabled,
-                            Text.translatable("config.adorablehamsterpets.condition.dynamic_drift_off"),
+                            Component.translatable("config.adorablehamsterpets.condition.dynamic_drift_off"),
                             () -> 0
                     );
 }

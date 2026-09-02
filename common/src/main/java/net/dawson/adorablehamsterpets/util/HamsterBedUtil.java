@@ -1,5 +1,10 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
@@ -10,29 +15,29 @@ import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.ai.pathing.PathNode;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.particle.ParticleTypes;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.Node;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoBlockEntity;
+import com.geckolib.animatable.GeoBlockEntity;
 
 import java.util.Optional;
 
@@ -57,10 +62,10 @@ public final class HamsterBedUtil {
         if (hamster.getLinkedBedPos().isEmpty()) return false;
 
         GlobalPos globalBedPos = hamster.getLinkedBedPos().get();
-        MinecraftServer server = hamster.getServer();
+        MinecraftServer server = hamster.level().getServer();
         if (server == null) return false;
 
-        ServerWorld bedWorld = server.getWorld(globalBedPos.dimension());
+        ServerLevel bedWorld = server.getLevel(globalBedPos.dimension());
         if (bedWorld == null) return false;
 
         BlockPos bedPos = globalBedPos.pos();
@@ -84,7 +89,7 @@ public final class HamsterBedUtil {
         }
 
         // Check occupancy to determine spawn mode
-        boolean isBedFree = !bedState.get(HamsterBedBlock.OCCUPIED);
+        boolean isBedFree = !bedState.getValue(HamsterBedBlock.OCCUPIED);
         BlockPos finalSpawnPos = null;
 
         if (!isBedFree) {
@@ -98,17 +103,18 @@ public final class HamsterBedUtil {
         }
 
         // --- Create Clone ---
-        HamsterEntity newHamster = ModEntities.HAMSTER.get().create(bedWorld);
+        HamsterEntity newHamster = ModEntities.HAMSTER.get().create(bedWorld, EntitySpawnReason.LOAD);
         if (newHamster == null) return false;
 
         // Copy NBT data
-        NbtCompound data = new NbtCompound();
-        hamster.writeCustomDataToNbt(data);
-        newHamster.readCustomDataFromNbt(data);
+        // 26.2 port: the save hooks take ValueOutput/ValueInput; round-trip through a tag
+        TagValueOutput dataOut = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, bedWorld.registryAccess());
+        hamster.addAdditionalSaveData(dataOut);
+        newHamster.readAdditionalSaveData(TagValueInput.create(ProblemReporter.DISCARDING, bedWorld.registryAccess(), dataOut.buildResult()));
 
         // Restore attributes that writeCustomDataToNbt might miss
-        newHamster.setOwnerUuid(hamster.getOwnerUuid());
-        newHamster.setTamed(hamster.isTamed(), false);
+        newHamster.setOwnerReference(((hamster.getOwnerReference() == null ? null : hamster.getOwnerReference().getUUID())) == null ? null : net.minecraft.world.entity.EntityReference.of((hamster.getOwnerReference() == null ? null : hamster.getOwnerReference().getUUID())));
+        newHamster.setTame(hamster.isTame(), false);
         newHamster.setCustomName(hamster.getCustomName());
 
         // Reset common states
@@ -118,17 +124,17 @@ public final class HamsterBedUtil {
         // --- Spawn Logic Branch ---
         if (isBedFree) {
             // Scenario A: Bed free -> Sleep in it
-            Vec3d bedCenter = Vec3d.ofCenter(bedPos).add(0, 0.1, 0);
-            newHamster.refreshPositionAndAngles(bedCenter.x, bedCenter.y, bedCenter.z, 0f, 0f);
+            Vec3 bedCenter = Vec3.atCenterOf(bedPos).add(0, 0.1, 0);
+            newHamster.snapTo(bedCenter.x, bedCenter.y, bedCenter.z, 0f, 0f);
 
             // Update block state & feedback
-            bedWorld.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
+            bedWorld.setBlock(bedPos, bedState.setValue(HamsterBedBlock.OCCUPIED, true), Block.UPDATE_ALL);
             if (bedEntity instanceof GeoBlockEntity geoBlockEntity) {
                 geoBlockEntity.triggerAnim("hamster_bed_controller", "anim_bed_becoming_occupied");
             }
         } else {
             // Scenario B: Bed occupied -> Spawn nearby
-            newHamster.refreshPositionAndAngles(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, hamster.getYaw(), 0f);
+            newHamster.snapTo(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, hamster.getYRot(), 0f);
         }
 
         // Set states
@@ -139,14 +145,14 @@ public final class HamsterBedUtil {
         newHamster.setHealth(Math.max(1.0f, newHamster.getMaxHealth() * 0.05f)); // 5% health
 
         // Select sleep pose based on personality ID
-        int personality = newHamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
-        newHamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
+        int personality = newHamster.getEntityData().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+        newHamster.getEntityData().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
 
         // --- Linkage Update & Charge Consumption ---
         // Created a new entity, so it has a new UUID. Update the bed block entity
         if (bedWorld.getBlockEntity(bedPos) instanceof HamsterBedBlockEntity finalBedEntity) {
-            Text name = newHamster.hasCustomName() ? newHamster.getCustomName() : newHamster.getDisplayName();
-            finalBedEntity.setLinkedHamster(newHamster.getUuid(), name, finalBedEntity.getWanderDistance());
+            Component name = newHamster.hasCustomName() ? newHamster.getCustomName() : newHamster.getDisplayName();
+            finalBedEntity.setLinkedHamster(newHamster.getUUID(), name, finalBedEntity.getWanderDistance());
 
             // Don't consume charge if respawns are free or infinite after tribute
             if (!Configs.AHP_MAIN.freeBedRespawns.get() && !Configs.AHP_MAIN.infiniteRespawnsAfterTribute.get()) {
@@ -155,20 +161,20 @@ public final class HamsterBedUtil {
         }
 
         // Spawn
-        bedWorld.spawnEntity(newHamster);
+        bedWorld.addFreshEntity(newHamster);
 
         // Effects
-        bedWorld.playSound(null, bedPos, SoundEvents.BLOCK_AMETHYST_BLOCK_RESONATE, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+        bedWorld.playSound(null, bedPos, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.NEUTRAL, 1.0f, 1.0f);
         ParticleEffectsUtil.spawnParticles(
                 bedWorld,
-                Vec3d.ofCenter(bedPos),
+                Vec3.atCenterOf(bedPos),
                 ParticleTypes.REVERSE_PORTAL,
                 20,
-                new Vec3d(0.3, 0.3, 0.3),
+                new Vec3(0.3, 0.3, 0.3),
                 0.1
         );
-        if (hamster.getOwner() instanceof PlayerEntity owner) {
-            owner.sendMessage(Text.translatable("message.adorablehamsterpets.respawn.success").formatted(Formatting.WHITE), true);
+        if (hamster.getOwner() instanceof Player owner) {
+            owner.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.respawn.success").withStyle(ChatFormatting.WHITE));
         }
 
         return true;
@@ -197,28 +203,28 @@ public final class HamsterBedUtil {
 
         // Set bed block to unoccupied and find a safe spot to move to
         hamster.getLinkedBedPos().ifPresent(globalPos -> {
-            if (hamster.getWorld().getRegistryKey() == globalPos.dimension()) {
+            if (hamster.level().dimension() == globalPos.dimension()) {
                 BlockPos bedPos = globalPos.pos();
-                BlockState bedState = hamster.getWorld().getBlockState(bedPos);
+                BlockState bedState = hamster.level().getBlockState(bedPos);
 
                 // If bed still exists
-                if (bedState.isOf(ModBlocks.HAMSTER_BED.get())) {
+                if (bedState.is(ModBlocks.HAMSTER_BED.get())) {
                     // Spawn wake-up particles with wood type
                     ParticleEffectsUtil.spawnParticles(
-                            hamster.getWorld(),
-                            Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
-                            ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
+                            hamster.level(),
+                            Vec3.atBottomCenterOf(bedPos).add(0, 0.3, 0),
+                            ModParticles.getForVariant(bedState.getValue(HamsterBedBlock.WOOD_VARIANT)),
                             50,
-                            new Vec3d(0.2, 0.5, 0.2),
+                            new Vec3(0.2, 0.5, 0.2),
                             0.0
                     );
 
-                    if (bedState.get(HamsterBedBlock.OCCUPIED)) {
-                        hamster.getWorld().setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, false), Block.NOTIFY_ALL);
+                    if (bedState.getValue(HamsterBedBlock.OCCUPIED)) {
+                        hamster.level().setBlock(bedPos, bedState.setValue(HamsterBedBlock.OCCUPIED, false), Block.UPDATE_ALL);
                     }
 
                     // Trigger bed animation
-                    BlockEntity be = hamster.getWorld().getBlockEntity(bedPos);
+                    BlockEntity be = hamster.level().getBlockEntity(bedPos);
                     if (be instanceof GeoBlockEntity geoBlockEntity) {
                         geoBlockEntity.triggerAnim("hamster_bed_controller", "anim_bed_becoming_unoccupied");
                     }
@@ -231,17 +237,17 @@ public final class HamsterBedUtil {
                 // Play leaf rustling sound
                 SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, hamster.getRandom());
                 if (rustleSound != null) {
-                    hamster.getWorld().playSound(null, hamster.getBlockPos(), rustleSound, SoundCategory.NEUTRAL, 0.2f, 1.8f);
+                    hamster.level().playSound(null, hamster.blockPosition(), rustleSound, SoundSource.NEUTRAL, 0.2f, 1.8f);
                 }
 
                 // Find safe egress position and pathfind
-                for (BlockPos checkPos : BlockPos.iterate(bedPos.add(-1, 0, -1), bedPos.add(1, 0, 1))) {
+                for (BlockPos checkPos : BlockPos.betweenClosed(bedPos.offset(-1, 0, -1), bedPos.offset(1, 0, 1))) {
                     // Don't move to the bed block itself
                     if (checkPos.equals(bedPos)) continue;
 
                     // Determine pos with safe spawning algorithm
-                    if (HamsterPlacementUtil.isSafeSpawnLocation(checkPos, hamster.getWorld(), hamster)) {
-                        hamster.getNavigation().startMovingTo(checkPos.getX() + 0.5, checkPos.getY(), checkPos.getZ() + 0.5, 1.2D);
+                    if (HamsterPlacementUtil.isSafeSpawnLocation(checkPos, hamster.level(), hamster)) {
+                        hamster.getNavigation().moveTo(checkPos.getX() + 0.5, checkPos.getY(), checkPos.getZ() + 0.5, 1.2D);
                         return; // Exit after finding the first safe spot
                     }
                 }
@@ -255,22 +261,22 @@ public final class HamsterBedUtil {
      * This is called by the AI goal when the hamster's state officially changes to sleeping in the bed.
      */
     public static void startBedSleepEffects(HamsterEntity hamster) {
-        if (hamster.getWorld().isClient()) return;
+        if (hamster.level().isClientSide()) return;
 
         // 1. Spawn the first burst of particles immediately
         hamster.getLinkedBedPos().ifPresent(globalPos -> {
-            if (hamster.getWorld().getRegistryKey() == globalPos.dimension()) {
+            if (hamster.level().dimension() == globalPos.dimension()) {
                 BlockPos bedPos = globalPos.pos();
-                BlockState bedState = hamster.getWorld().getBlockState(bedPos);
+                BlockState bedState = hamster.level().getBlockState(bedPos);
 
                 // If bed exists
-                if (bedState.isOf(ModBlocks.HAMSTER_BED.get())) {
+                if (bedState.is(ModBlocks.HAMSTER_BED.get())) {
                     ParticleEffectsUtil.spawnParticles(
-                            hamster.getWorld(),
-                            Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
-                            ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
+                            hamster.level(),
+                            Vec3.atBottomCenterOf(bedPos).add(0, 0.3, 0),
+                            ModParticles.getForVariant(bedState.getValue(HamsterBedBlock.WOOD_VARIANT)),
                             70,
-                            new Vec3d(0.2, 0.5, 0.2),
+                            new Vec3(0.2, 0.5, 0.2),
                             1.0
                     );
                 }
@@ -283,12 +289,12 @@ public final class HamsterBedUtil {
         // 3. Play sounds
         SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, hamster.getRandom());
         if (rustleSound != null) {
-            hamster.getWorld().playSound(null, hamster.getBlockPos(), rustleSound, SoundCategory.NEUTRAL, 0.5f, 1.0f);
+            hamster.level().playSound(null, hamster.blockPosition(), rustleSound, SoundSource.NEUTRAL, 0.5f, 1.0f);
         }
-        hamster.getWorld().playSound(null, hamster.getBlockPos(), ModSounds.HAMSTER_THUMP.get(), SoundCategory.NEUTRAL, 1.0f, 1.0f);
+        hamster.level().playSound(null, hamster.blockPosition(), ModSounds.HAMSTER_THUMP.get(), SoundSource.NEUTRAL, 1.0f, 1.0f);
 
         // 4. Trigger advancement
-        if (hamster.getOwner() instanceof ServerPlayerEntity serverPlayerOwner) {
+        if (hamster.getOwner() instanceof ServerPlayer serverPlayerOwner) {
             ModCriteria.HAMSTER_SLEPT_IN_BED.get().trigger(serverPlayerOwner);
         }
     }
@@ -306,9 +312,9 @@ public final class HamsterBedUtil {
         if (bedPosOpt.isEmpty()) return false;
 
         GlobalPos globalPos = bedPosOpt.get();
-        if (hamster.getWorld().getRegistryKey() != globalPos.dimension()) return false;
+        if (hamster.level().dimension() != globalPos.dimension()) return false;
 
-        return hamster.getBlockPos().isWithinDistance(globalPos.pos(), 2.0);
+        return hamster.blockPosition().closerThan(globalPos.pos(), 2.0);
     }
 
     /**
@@ -320,21 +326,21 @@ public final class HamsterBedUtil {
         if (bedPosOpt.isEmpty()) return;
 
         GlobalPos bedGlobalPos = bedPosOpt.get();
-        World world = hamster.getWorld();
+        Level world = hamster.level();
 
-        if (world.getRegistryKey() == bedGlobalPos.dimension()) {
+        if (world.dimension() == bedGlobalPos.dimension()) {
             BlockPos bedPos = bedGlobalPos.pos();
             // Ensure chunk is loaded to prevent loading newly generated chunks via ticks
-            if (world.isChunkLoaded(bedPos.getX() >> 4, bedPos.getZ() >> 4)) {
+            if (world.hasChunk(bedPos.getX() >> 4, bedPos.getZ() >> 4)) {
                 BlockState bedState = world.getBlockState(bedPos);
 
                 if (bedState.getBlock() instanceof HamsterBedBlock) {
-                    boolean isOccupied = bedState.get(HamsterBedBlock.OCCUPIED);
-                    boolean shouldBeOccupied = hamster.isSleeping() && !hamster.isKnockedOut() && hamster.getBlockPos().isWithinDistance(bedPos, 2.0);
+                    boolean isOccupied = bedState.getValue(HamsterBedBlock.OCCUPIED);
+                    boolean shouldBeOccupied = hamster.isSleeping() && !hamster.isKnockedOut() && hamster.blockPosition().closerThan(bedPos, 2.0);
 
                     if (shouldBeOccupied && !isOccupied) {
                         // Fix falsely unoccupied bed
-                        world.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
+                        world.setBlock(bedPos, bedState.setValue(HamsterBedBlock.OCCUPIED, true), Block.UPDATE_ALL);
                         BlockEntity be = world.getBlockEntity(bedPos);
                         if (be instanceof HamsterBedBlockEntity bedEntity) {
                             bedEntity.triggerAnim("hamster_bed_controller", "anim_bed_becoming_occupied");
@@ -342,7 +348,7 @@ public final class HamsterBedUtil {
                         AdorableHamsterPets.LOGGER.debug("[HamsterBedUtil] Auto-healed unoccupied bed block state at {}", bedPos);
                     } else if (!shouldBeOccupied && isOccupied) {
                         // Fix falsely occupied bed
-                        world.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, false), Block.NOTIFY_ALL);
+                        world.setBlock(bedPos, bedState.setValue(HamsterBedBlock.OCCUPIED, false), Block.UPDATE_ALL);
                         BlockEntity be = world.getBlockEntity(bedPos);
                         if (be instanceof HamsterBedBlockEntity bedEntity) {
                             bedEntity.triggerAnim("hamster_bed_controller", "anim_bed_becoming_unoccupied");
@@ -357,18 +363,18 @@ public final class HamsterBedUtil {
      * Teleports a hamster safely into its bed and forces it into a deep sleep state.
      * Used by various rescue protocols.
      */
-    public static void forceTeleportAndSleepInBed(HamsterEntity hamster, ServerWorld bedWorld, BlockPos bedPos, BlockState bedState) {
+    public static void forceTeleportAndSleepInBed(HamsterEntity hamster, ServerLevel bedWorld, BlockPos bedPos, BlockState bedState) {
         // Set position slightly elevated inside the bed to prevent clipping
-        Vec3d targetCenter = Vec3d.ofCenter(bedPos).add(0, 0.1, 0);
+        Vec3 targetCenter = Vec3.atCenterOf(bedPos).add(0, 0.1, 0);
 
         // Request teleport to sync with client
-        hamster.requestTeleport(targetCenter.x, targetCenter.y, targetCenter.z);
+        hamster.teleportTo(targetCenter.x, targetCenter.y, targetCenter.z);
 
         // Force delayed positional update to prevent Server/Client desync
-        long currentWorldTime = bedWorld.getTime();
+        long currentWorldTime = bedWorld.getGameTime();
         hamster.scheduleTask(currentWorldTime + 5, "sledgehammer_teleport_sync", () -> {
             if (hamster.isAlive() && !hamster.isRemoved()) {
-                hamster.requestTeleport(hamster.getX(), hamster.getY(), hamster.getZ());
+                hamster.teleportTo(hamster.getX(), hamster.getY(), hamster.getZ());
             }
         });
 
@@ -377,11 +383,11 @@ public final class HamsterBedUtil {
         hamster.setRescueSleeping(true);
         hamster.setInSittingPose(true);
 
-        bedWorld.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
+        bedWorld.setBlock(bedPos, bedState.setValue(HamsterBedBlock.OCCUPIED, true), Block.UPDATE_ALL);
 
         // Match personality pose
-        int personality = hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
-        hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
+        int personality = hamster.getEntityData().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+        hamster.getEntityData().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, HamsterPoseUtil.getDeepSleepAnimId(personality));
 
         startNapTimer(hamster);
     }
@@ -398,19 +404,19 @@ public final class HamsterBedUtil {
                 .map(GlobalPos::pos)
                 .orElse(null);
 
-        World world = hamster.getWorld();
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+        Level world = hamster.level();
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
         // Only scan the next 15 nodes
-        int startIndex = path.getCurrentNodeIndex();
-        int endIndex = Math.min(path.getLength(), startIndex + 15);
+        int startIndex = path.getNextNodeIndex();
+        int endIndex = Math.min(path.getNodeCount(), startIndex + 15);
 
         for (int i = startIndex; i < endIndex; ++i) {
-            PathNode node = path.getNode(i);
+            Node node = path.getNode(i);
             mutablePos.set(node.x, node.y, node.z);
 
             // Skip unloaded chunks
-            if (!world.isChunkLoaded(mutablePos.getX() >> 4, mutablePos.getZ() >> 4)) {
+            if (!world.hasChunk(mutablePos.getX() >> 4, mutablePos.getZ() >> 4)) {
                 continue;
             }
 
@@ -426,8 +432,8 @@ public final class HamsterBedUtil {
         return false;
     }
 
-    private static boolean isUnlinkedBed(World world, BlockPos pos, BlockPos linkedBed) {
-        if (world.getBlockState(pos).isOf(ModBlocks.HAMSTER_BED.get())) {
+    private static boolean isUnlinkedBed(Level world, BlockPos pos, BlockPos linkedBed) {
+        if (world.getBlockState(pos).is(ModBlocks.HAMSTER_BED.get())) {
             // If the node is a bed, check if it's NOT this hamster's linked bed
             // True if no linked bed, or if position doesn't match
             return linkedBed == null || !pos.equals(linkedBed);
@@ -445,7 +451,7 @@ public final class HamsterBedUtil {
      */
     public static void tickBedLeafParticles(HamsterEntity hamster) {
         if (hamster.bedLeafParticleTicks > 0) {
-            if (!hamster.getWorld().isClient()) {
+            if (!hamster.level().isClientSide()) {
                 int particleCount = 0;
                 // Check for specific moments in the 4-tick duration
                 if (hamster.bedLeafParticleTicks == 3) { // Second burst
@@ -458,16 +464,16 @@ public final class HamsterBedUtil {
 
                 if (particleCount > 0 && hamster.getLinkedBedPos().isPresent()) {
                     BlockPos bedPos = hamster.getLinkedBedPos().get().pos();
-                    BlockState bedState = hamster.getWorld().getBlockState(bedPos);
+                    BlockState bedState = hamster.level().getBlockState(bedPos);
 
                     // If bed exists
-                    if (bedState.isOf(ModBlocks.HAMSTER_BED.get())) {
+                    if (bedState.is(ModBlocks.HAMSTER_BED.get())) {
                         ParticleEffectsUtil.spawnParticles(
-                                hamster.getWorld(),
-                                Vec3d.ofBottomCenter(bedPos).add(0, 0.3, 0),
-                                ModParticles.getForVariant(bedState.get(HamsterBedBlock.WOOD_VARIANT)),
+                                hamster.level(),
+                                Vec3.atBottomCenterOf(bedPos).add(0, 0.3, 0),
+                                ModParticles.getForVariant(bedState.getValue(HamsterBedBlock.WOOD_VARIANT)),
                                 particleCount,
-                                new Vec3d(0.2, 0.3, 0.2),
+                                new Vec3(0.2, 0.3, 0.2),
                                 1.0
                         );
                     }
@@ -486,7 +492,7 @@ public final class HamsterBedUtil {
         if (Configs.AHP_MAIN.circadianChaos.get()) {
             int min = Configs.AHP_MAIN.minNapInBedIntervalSeconds.get() * 20;
             int max = Configs.AHP_MAIN.maxNapInBedIntervalSeconds.get() * 20;
-            hamster.setNapInBedDurationTimer(hamster.getRandom().nextBetween(min, max));
+            hamster.setNapInBedDurationTimer(hamster.getRandom().nextIntBetweenInclusive(min, max));
         }
     }
 }

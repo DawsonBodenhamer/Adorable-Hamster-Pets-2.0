@@ -1,13 +1,13 @@
 package net.dawson.adorablehamsterpets.mixin.accessor;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.goal.LookAtEntityGoal;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(LookAtEntityGoal.class)
+@Mixin(LookAtPlayerGoal.class)
 public interface LookAtEntityGoalAccessor {
-    @Accessor("target")
+    @Accessor("lookAt")
     Entity getTarget();
 
     @Accessor("lookTime")
@@ -16,6 +16,6 @@ public interface LookAtEntityGoalAccessor {
     @Accessor("lookTime")
     void setLookTime(int lookTime);
 
-    @Accessor("lookForward")
+    @Accessor("onlyHorizontal")
     boolean getLookForward();
 }

@@ -1,12 +1,11 @@
 package net.dawson.adorablehamsterpets.world.fabric;
 
 import net.dawson.adorablehamsterpets.world.ModSpawnPlacements;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnLocation;
-import net.minecraft.entity.SpawnRestriction;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.world.Heightmap;
-
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.SpawnPlacementType;
+import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.level.levelgen.Heightmap;
 import java.util.function.Supplier;
 
 /**
@@ -15,7 +14,7 @@ import java.util.function.Supplier;
  */
 public class ModSpawnPlacementsImpl {
     // Fabric accepts Supplier; call .get() immediately
-    public static <T extends MobEntity> void register(Supplier<? extends EntityType<T>> entityTypeSupplier, SpawnLocation location, Heightmap.Type heightmapType, SpawnRestriction.SpawnPredicate<T> predicate) {
-        SpawnRestriction.register(entityTypeSupplier.get(), location, heightmapType, predicate);
+    public static <T extends Mob> void register(Supplier<? extends EntityType<T>> entityTypeSupplier, SpawnPlacementType location, Heightmap.Types heightmapType, SpawnPlacements.SpawnPredicate<T> predicate) {
+        SpawnPlacements.register(entityTypeSupplier.get(), location, heightmapType, predicate);
     }
 }

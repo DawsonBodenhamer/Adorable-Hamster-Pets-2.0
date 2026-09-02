@@ -1,24 +1,23 @@
 package net.dawson.adorablehamsterpets.world.gen;
 
-import dev.architectury.registry.level.biome.BiomeModifications;
+import org.jetbrains.annotations.Nullable;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.biome.Biome;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -40,22 +39,7 @@ public class ModEntitySpawns {
         VALID_SPAWN_BLOCKS.add(Blocks.SAND);
         VALID_SPAWN_BLOCKS.add(Blocks.RED_SAND);
         VALID_SPAWN_BLOCKS.add(Blocks.TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.WHITE_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.ORANGE_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.MAGENTA_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.LIGHT_BLUE_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.YELLOW_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.LIME_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.PINK_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.GRAY_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.LIGHT_GRAY_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.CYAN_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.PURPLE_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.BLUE_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.BROWN_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.GREEN_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.RED_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.BLACK_TERRACOTTA);
+        Blocks.DYED_TERRACOTTA.forEach(VALID_SPAWN_BLOCKS::add); // 26.2: all colours are one block
         VALID_SPAWN_BLOCKS.add(Blocks.STONE);
         VALID_SPAWN_BLOCKS.add(Blocks.DEEPSLATE);
         VALID_SPAWN_BLOCKS.add(Blocks.ANDESITE);
@@ -95,14 +79,14 @@ public class ModEntitySpawns {
         // Parse Tags
         for (String tagStr : config.spawnBiomeTags) {
             try {
-                PARSED_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
+                PARSED_TAGS.add(TagKey.create(Registries.BIOME, Identifier.parse(tagStr)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome tag identifier in config: '{}'", tagStr);
             }
         }
         for (String tagStr : config.spawnBiomeConventionTags) {
             try {
-                PARSED_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
+                PARSED_TAGS.add(TagKey.create(Registries.BIOME, Identifier.parse(tagStr)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome tag identifier in config: '{}'", tagStr);
             }
@@ -111,7 +95,7 @@ public class ModEntitySpawns {
         // Parse Includes
         for (String biomeIdStr : config.includeBiomes) {
             try {
-                PARSED_INCLUDES.add(Identifier.of(biomeIdStr));
+                PARSED_INCLUDES.add(Identifier.parse(biomeIdStr));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeConfig] Invalid biome identifier in include list: '{}'", biomeIdStr);
             }
@@ -120,7 +104,7 @@ public class ModEntitySpawns {
         // Parse Excludes (IDs)
         for (String biomeIdStr : config.excludeBiomes) {
             try {
-                PARSED_EXCLUDES.add(Identifier.of(biomeIdStr));
+                PARSED_EXCLUDES.add(Identifier.parse(biomeIdStr));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeConfig] Invalid biome identifier in exclude list: '{}'", biomeIdStr);
             }
@@ -129,7 +113,7 @@ public class ModEntitySpawns {
         // Parse Excludes (Tags)
         for (String tagStr : config.excludeBiomeTags) {
             try {
-                PARSED_EXCLUDE_TAGS.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagStr)));
+                PARSED_EXCLUDE_TAGS.add(TagKey.create(Registries.BIOME, Identifier.parse(tagStr)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome exclusion tag identifier in config: '{}'", tagStr);
             }
@@ -147,9 +131,9 @@ public class ModEntitySpawns {
      * @param ctx The biome context provided by Architectury.
      * @return True if hamsters should spawn in this biome, false otherwise.
      */
-    public static boolean shouldAddFabricSpawn(BiomeModifications.BiomeContext ctx) {
-        Identifier biomeId = ctx.getKey().orElse(null);
-        return matchesConfiguredBiomePolicy(biomeId, ctx::hasTag);
+    public static boolean shouldAddFabricSpawn(@Nullable Identifier biomeId, Predicate<TagKey<Biome>> hasTag) {
+        // 26.2 port: called from the Fabric module with Fabric's BiomeSelectionContext
+        return matchesConfiguredBiomePolicy(biomeId, hasTag);
     }
 
     /**
@@ -158,7 +142,7 @@ public class ModEntitySpawns {
      * @param biomeEntry Biome being evaluated.
      * @return True if hamsters should spawn in this biome, false otherwise.
      */
-    public static boolean shouldAddNeoForgeSpawn(RegistryEntry<Biome> biomeEntry) {
+    public static boolean shouldAddNeoForgeSpawn(Holder<Biome> biomeEntry) {
         return isBiomeAllowed(biomeEntry);
     }
 
@@ -168,13 +152,13 @@ public class ModEntitySpawns {
      * Applies the registered hamster floor predicate to vanilla and supplemental natural spawning.
      */
     public static boolean isValidHamsterNaturalSpawn(
-            EntityType<? extends AnimalEntity> type,
-            ServerWorldAccess world,
-            SpawnReason reason,
+            EntityType<? extends Animal> type,
+            ServerLevelAccessor world,
+            EntitySpawnReason reason,
             BlockPos position,
-            Random random) {
-        return AnimalEntity.isValidNaturalSpawn(type, world, reason, position, random)
-                || VALID_SPAWN_BLOCKS.contains(world.getBlockState(position.down()).getBlock());
+            RandomSource random) {
+        return Animal.checkAnimalSpawnRules(type, world, reason, position, random)
+                || VALID_SPAWN_BLOCKS.contains(world.getBlockState(position.below()).getBlock());
     }
 
     // --- Shared Biome Policy ---
@@ -185,9 +169,9 @@ public class ModEntitySpawns {
      * @param biomeEntry Biome being evaluated.
      * @return True when the biome permits hamster spawning.
      */
-    public static boolean isBiomeAllowed(RegistryEntry<Biome> biomeEntry) {
-        Identifier biomeId = biomeEntry.getKey().map(RegistryKey::getValue).orElse(null);
-        return matchesConfiguredBiomePolicy(biomeId, biomeEntry::isIn);
+    public static boolean isBiomeAllowed(Holder<Biome> biomeEntry) {
+        Identifier biomeId = biomeEntry.unwrapKey().map(ResourceKey::identifier).orElse(null);
+        return matchesConfiguredBiomePolicy(biomeId, biomeEntry::is);
     }
 
     private static boolean matchesConfiguredBiomePolicy(

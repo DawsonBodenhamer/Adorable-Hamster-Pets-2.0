@@ -1,5 +1,7 @@
 package net.dawson.adorablehamsterpets.fabric.client;
 
+import net.dawson.adorablehamsterpets.client.render.BlockJiggleRenderer;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
@@ -7,7 +9,6 @@ import net.dawson.adorablehamsterpets.client.option.ModKeyBindings;
 import net.dawson.adorablehamsterpets.client.particle.HamsterBeddingParticle;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticle;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
-import net.dawson.adorablehamsterpets.client.render.BlockJiggleRenderer;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterBlockHiderRenderer;
@@ -15,11 +16,10 @@ import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterProjectileRe
 import net.dawson.adorablehamsterpets.entity.client.renderer.HamsterTreeSearcherRenderer;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.particle.SimpleParticleType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.particles.SimpleParticleType;
 
 public final class AdorableHamsterPetsFabricClient implements ClientModInitializer {
     @Override
@@ -48,25 +48,20 @@ public final class AdorableHamsterPetsFabricClient implements ClientModInitializ
 
         // --- Register Particle Provider ---
         for (RegistrySupplier<SimpleParticleType> particleSupplier : ModParticles.BEDDING_PARTICLES.values()) {
-            ParticleFactoryRegistry.getInstance().register(particleSupplier.get(), HamsterBeddingParticle.Factory::new);
+            ParticleProviderRegistry.getInstance().register(particleSupplier.get(), HamsterBeddingParticle.Factory::new);
         }
 
         for (PixieDustParticleTheme theme : PixieDustParticleTheme.values()) {
             RegistrySupplier<SimpleParticleType> supplier = ModParticles.PIXIE_DUST.get(theme);
-            ParticleFactoryRegistry.getInstance().register(supplier.get(), provider -> new PixieDustParticle.Factory(provider, theme));
+            ParticleProviderRegistry.getInstance().register(supplier.get(), provider -> new PixieDustParticle.Factory(provider, theme));
         }
 
-        // --- Register Block Jiggle Renderer ---
-        WorldRenderEvents.AFTER_ENTITIES.register(context -> {
-            MinecraftClient client = MinecraftClient.getInstance();
-
-            BlockJiggleRenderer.render(
-                    client,
-                    context.matrixStack(),
-                    context.consumers(),
-                    context.camera().getPos(),
-                    context.tickCounter().getTickDelta(client.isPaused())
-            );
+        // --- Block jiggle (tree heist) via the 26.2 level-render submit pass ---
+        LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
+            Minecraft client = Minecraft.getInstance();
+            float partialTick = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+            BlockJiggleRenderer.collectSubmits(client, context.poseStack(), context.submitNodeCollector(),
+                    context.levelState().cameraRenderState.pos, partialTick);
         });
     }
 }

@@ -3,15 +3,15 @@ package net.dawson.adorablehamsterpets.advancement.criterion;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.advancement.criterion.Criterion;
-import net.minecraft.registry.RegistryKeys;
+import net.minecraft.advancements.triggers.CriterionTrigger;
+import net.minecraft.core.registries.Registries;
 
 
 public class ModCriteria {
 
 
     // --- 1. DeferredRegister for Criteria ---
-    public static final DeferredRegister<Criterion<?>> CRITERIA = DeferredRegister.create(AdorableHamsterPets.MOD_ID, RegistryKeys.CRITERION);
+    public static final DeferredRegister<CriterionTrigger<?>> CRITERIA = DeferredRegister.create(AdorableHamsterPets.MOD_ID, Registries.TRIGGER_TYPE);
 
 
     // --- 2. Change all fields to RegistrySuppliers ---

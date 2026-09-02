@@ -1,5 +1,12 @@
 package net.dawson.adorablehamsterpets.mixin.server;
 
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.core.UUIDUtil;
 import com.mojang.authlib.GameProfile;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
@@ -28,48 +35,49 @@ import net.dawson.adorablehamsterpets.networking.payload.SyncPettingStatePayload
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.*;
-import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.advancement.PlayerAdvancementTracker;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.mob.CreeperEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.predicate.entity.EntityPredicates;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.Registries;
+import net.minecraft.ChatFormatting;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
+import net.minecraft.server.PlayerAdvancements;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -78,7 +86,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.*;
 
-@Mixin(PlayerEntity.class)
+@Mixin(Player.class)
 public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEntityAccessor {
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -106,7 +114,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
      * ────────────────────────────────────────────────────────────────────────────*/
 
     // --- Shoulder Data ---
-    @Unique private NbtCompound ahp$hamsterState = new NbtCompound();
+    @Unique private CompoundTag ahp$hamsterState = new CompoundTag();
     @Unique private transient ClientShoulderHamsterData adorablehamsterpets$clientHamsterState;
     @Unique private final transient ArrayDeque<ShoulderLocation> adorablehamsterpets$mountOrderQueue = new ArrayDeque<>();
 
@@ -130,13 +138,13 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private UUID ahp$geneticParent2Uuid = null;
 
     // --- Teleport Tracking ---
-    @Unique private Vec3d ahp$lastTickPos = null;
-    @Unique private RegistryKey<World> ahp$lastTickDimension = null;
-    @Unique private final List<NbtCompound> ahp$inTransitHamsters = new ArrayList<>();
+    @Unique private Vec3 ahp$lastTickPos = null;
+    @Unique private ResourceKey<Level> ahp$lastTickDimension = null;
+    @Unique private final List<CompoundTag> ahp$inTransitHamsters = new ArrayList<>();
     @Unique private int ahp$transitTimer = 0;
 
     // --- Petting Tracking ---
-    @Unique private NbtCompound ahp$pettingHamster = new NbtCompound();
+    @Unique private CompoundTag ahp$pettingHamster = new CompoundTag();
     @Unique private int ahp$pettingTimer = 0;
 
     // --- Gesture Tracking ---
@@ -152,9 +160,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique private int adorablehamsterpets$lastGoldMessageIndex = -1;
     @Unique private boolean ahp$cachedHasGuideBook = false;
     @Unique private boolean ahp$guideBookTrackingInitialized = false;
-    @Unique private static final TrackedData<Integer> AHP_CROWN_THEME = DataTracker.registerData(PlayerEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    @Unique private static final TrackedData<Boolean> AHP_HAS_USED_CROWN_TRIAL = DataTracker.registerData(PlayerEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    @Unique private static final TrackedData<Integer> AHP_CROWN_TRIAL_TICKS = DataTracker.registerData(PlayerEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    @Unique private static final EntityDataAccessor<Integer> AHP_CROWN_THEME = SynchedEntityData.defineId(Player.class, EntityDataSerializers.INT);
+    @Unique private static final EntityDataAccessor<Boolean> AHP_HAS_USED_CROWN_TRIAL = SynchedEntityData.defineId(Player.class, EntityDataSerializers.BOOLEAN);
+    @Unique private static final EntityDataAccessor<Integer> AHP_CROWN_TRIAL_TICKS = SynchedEntityData.defineId(Player.class, EntityDataSerializers.INT);
     @Unique private int ahp$crownAudioTimer = 0;
 
     // --- Collections ---
@@ -165,34 +173,49 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
      *        Constructors & Initialization
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, World world) {
+    protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, Level world) {
         super(entityType, world);
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void adorablehamsterpets$onInit(World world, BlockPos pos, float yaw, GameProfile gameProfile, CallbackInfo ci) {
+    private void adorablehamsterpets$onInit(Level world, GameProfile gameProfile, CallbackInfo ci) {
         // Client-side visual setup
-        if (world.isClient) {
+        if (world.isClientSide()) {
             this.adorablehamsterpets$clientHamsterState = new ClientShoulderHamsterData();
         }
     }
 
-    @Inject(method = "initDataTracker", at = @At("TAIL"))
-    private void adorablehamsterpets$initCrownData(DataTracker.Builder builder, CallbackInfo ci) {
-        builder.add(AHP_CROWN_THEME, -1); // Default to disabled
-        builder.add(AHP_HAS_USED_CROWN_TRIAL, false);
-        builder.add(AHP_CROWN_TRIAL_TICKS, 0);
+    @Inject(method = "defineSynchedData", at = @At("TAIL"))
+    private void adorablehamsterpets$initCrownData(SynchedEntityData.Builder builder, CallbackInfo ci) {
+        builder.define(AHP_CROWN_THEME, -1); // Default to disabled
+        builder.define(AHP_HAS_USED_CROWN_TRIAL, false);
+        builder.define(AHP_CROWN_TRIAL_TICKS, 0);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Lifecycle Hooks (Mixin Injections)
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    @Inject(method = "writeCustomDataToNbt", at = @At("TAIL"))
-    private void adorablehamsterpets$writeNbt(NbtCompound nbt, CallbackInfo ci) {
+    // 26.2 port: player data goes through ValueOutput/ValueInput; the old CompoundTag
+    // handlers are kept as helpers and bridged under one "AdorableHamsterPets" tag.
+    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
+    private void adorablehamsterpets$writeSaveData(ValueOutput out, CallbackInfo ci) {
+        CompoundTag nbt = new CompoundTag();
+        adorablehamsterpets$writeNbt(nbt);
+        if (!nbt.isEmpty()) {
+            out.store("AdorableHamsterPets", CompoundTag.CODEC, nbt);
+        }
+    }
+
+    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
+    private void adorablehamsterpets$readSaveData(ValueInput in, CallbackInfo ci) {
+        adorablehamsterpets$readNbt(in.read("AdorableHamsterPets", CompoundTag.CODEC).orElseGet(CompoundTag::new));
+    }
+
+    private void adorablehamsterpets$writeNbt(CompoundTag nbt) {
         // --- Action Bar Randomized Message History ---
         if (!this.ahp$randomMessageIndices.isEmpty()) {
-            NbtCompound msgNbt = new NbtCompound();
+            CompoundTag msgNbt = new CompoundTag();
             this.ahp$randomMessageIndices.forEach(msgNbt::putInt);
             nbt.put("AHPRandomMessageIndices", msgNbt);
         }
@@ -204,21 +227,21 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // --- Mount Queue ---
         if (!this.adorablehamsterpets$mountOrderQueue.isEmpty()) {
-            NbtList mountOrderList = new NbtList();
+            ListTag mountOrderList = new ListTag();
             for (ShoulderLocation location : this.adorablehamsterpets$mountOrderQueue) {
-                mountOrderList.add(NbtString.of(location.name()));
+                mountOrderList.add(StringTag.valueOf(location.name()));
             }
             nbt.put("MountOrderQueue", mountOrderList);
         }
 
         // --- Tree Heist ---
         if (!this.ahp$heistHistory.isEmpty()) {
-            NbtList historyList = new NbtList();
-            long currentTime = this.getWorld().getTime();
+            ListTag historyList = new ListTag();
+            long currentTime = this.level().getGameTime();
 
             for (TreeHeistUtil.HeistRecord record : this.ahp$heistHistory) {
                 if (currentTime - record.timestamp() < HEIST_MEMORY_DURATION) {
-                    NbtCompound tag = new NbtCompound();
+                    CompoundTag tag = new CompoundTag();
                     tag.putLong("x", record.pos().getX());
                     tag.putLong("y", record.pos().getY());
                     tag.putLong("z", record.pos().getZ());
@@ -240,8 +263,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             int[] bredArray = this.ahp$bredGenomes.stream().mapToInt(Integer::intValue).toArray();
             nbt.putIntArray("AHPBredGenomes", bredArray);
         }
-        if (this.ahp$geneticParent1Uuid != null) nbt.putUuid("AHPGeneticParent1", this.ahp$geneticParent1Uuid);
-        if (this.ahp$geneticParent2Uuid != null) nbt.putUuid("AHPGeneticParent2", this.ahp$geneticParent2Uuid);
+        if (this.ahp$geneticParent1Uuid != null) nbt.store("AHPGeneticParent1", UUIDUtil.CODEC, this.ahp$geneticParent1Uuid);
+        if (this.ahp$geneticParent2Uuid != null) nbt.store("AHPGeneticParent2", UUIDUtil.CODEC, this.ahp$geneticParent2Uuid);
 
         // --- Tag Game ---
         nbt.putInt("AHPTagGamesPlayed", this.ahp$tagGamesPlayedToday);
@@ -256,12 +279,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         nbt.putBoolean(AHP_NBT_GUIDEBOOK_INIT_KEY, this.ahp$guideBookTrackingInitialized);
 
         // --- Supporter Crown Trial ---
-        nbt.putBoolean("AHPHasUsedCrownTrial", this.dataTracker.get(AHP_HAS_USED_CROWN_TRIAL));
+        nbt.putBoolean("AHPHasUsedCrownTrial", this.entityData.get(AHP_HAS_USED_CROWN_TRIAL));
 
         // --- Teleport Rescue  ---
         if (!this.ahp$inTransitHamsters.isEmpty()) {
-            NbtList transitList = new NbtList();
-            for (NbtCompound transitNbt : this.ahp$inTransitHamsters) {
+            ListTag transitList = new ListTag();
+            for (CompoundTag transitNbt : this.ahp$inTransitHamsters) {
                 transitList.add(transitNbt);
             }
             nbt.put("AHPInTransitHamsters", transitList);
@@ -275,22 +298,21 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
     }
 
-    @Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
-    private void adorablehamsterpets$readNbt(NbtCompound nbt, CallbackInfo ci) {
+    private void adorablehamsterpets$readNbt(CompoundTag nbt) {
         // --- Generic Message History ---
         this.ahp$randomMessageIndices.clear();
-        if (nbt.contains("AHPRandomMessageIndices", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound msgNbt = nbt.getCompound("AHPRandomMessageIndices");
-            for (String key : msgNbt.getKeys()) {
-                this.ahp$randomMessageIndices.put(key, msgNbt.getInt(key));
+        if (nbt.contains("AHPRandomMessageIndices")) {
+            CompoundTag msgNbt = nbt.getCompoundOrEmpty("AHPRandomMessageIndices");
+            for (String key : msgNbt.keySet()) {
+                this.ahp$randomMessageIndices.put(key, msgNbt.getIntOr(key, 0));
             }
         }
 
         // --- Migrate Legacy Data ---
-        if (nbt.contains("ShoulderHamster", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound oldHamsterNbt = nbt.getCompound("ShoulderHamster");
+        if (nbt.contains("ShoulderHamster")) {
+            CompoundTag oldHamsterNbt = nbt.getCompoundOrEmpty("ShoulderHamster");
             if (!oldHamsterNbt.isEmpty()) {
-                NbtCompound newShoulderPetsNbt = new NbtCompound();
+                CompoundTag newShoulderPetsNbt = new CompoundTag();
                 newShoulderPetsNbt.put(ShoulderLocation.RIGHT_SHOULDER.name(), oldHamsterNbt);
                 this.ahp$hamsterState = newShoulderPetsNbt;
                 this.adorablehamsterpets$mountOrderQueue.clear();
@@ -298,27 +320,27 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 nbt.remove("ShoulderHamster"); // remove old tag to complete migration
                 AdorableHamsterPets.LOGGER.info("Migrated legacy shoulder hamster data for player {}.", this.getDisplayName().getString());
             }
-        } else if (nbt.contains("ShoulderHamsters", NbtElement.COMPOUND_TYPE)) {
+        } else if (nbt.contains("ShoulderHamsters")) {
             // standard Read
-            this.ahp$hamsterState = nbt.getCompound("ShoulderHamsters");
+            this.ahp$hamsterState = nbt.getCompoundOrEmpty("ShoulderHamsters");
         }
 
         // --- Queue Sanitization ---
         this.adorablehamsterpets$mountOrderQueue.clear();
-        if (nbt.contains("MountOrderQueue", NbtElement.LIST_TYPE)) {
-            NbtList mountOrderList = nbt.getList("MountOrderQueue", NbtElement.STRING_TYPE);
+        if (nbt.contains("MountOrderQueue")) {
+            ListTag mountOrderList = nbt.getListOrEmpty("MountOrderQueue");
             Set<ShoulderLocation> seenLocations = new HashSet<>();
 
-            for (NbtElement element : mountOrderList) {
+            for (Tag element : mountOrderList) {
                 try {
-                    ShoulderLocation location = ShoulderLocation.valueOf(element.asString());
+                    ShoulderLocation location = ShoulderLocation.valueOf(element.asString().orElse(""));
                     // Deduplicate and ensure data actually exists for this slot
                     if (!seenLocations.contains(location) && !this.getShoulderHamster(location).isEmpty()) {
                         this.adorablehamsterpets$mountOrderQueue.add(location);
                         seenLocations.add(location);
                     }
                 } catch (IllegalArgumentException e) {
-                    AdorableHamsterPets.LOGGER.warn("Found invalid ShoulderLocation name in NBT: {}", element.asString());
+                    AdorableHamsterPets.LOGGER.warn("Found invalid ShoulderLocation name in NBT: {}", element.asString().orElse(""));
                 }
             }
         }
@@ -336,64 +358,64 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // --- Genetics ---
         this.ahp$tamedGenomes.clear();
-        if (nbt.contains("AHPTamedGenomes", NbtElement.INT_ARRAY_TYPE)) {
-            for (int hash : nbt.getIntArray("AHPTamedGenomes")) {
+        if (nbt.contains("AHPTamedGenomes")) {
+            for (int hash : nbt.getIntArray("AHPTamedGenomes").orElse(new int[0])) {
                 this.ahp$tamedGenomes.add(hash);
             }
         }
         this.ahp$bredGenomes.clear();
-        if (nbt.contains("AHPBredGenomes", NbtElement.INT_ARRAY_TYPE)) {
-            for (int hash : nbt.getIntArray("AHPBredGenomes")) {
+        if (nbt.contains("AHPBredGenomes")) {
+            for (int hash : nbt.getIntArray("AHPBredGenomes").orElse(new int[0])) {
                 this.ahp$bredGenomes.add(hash);
             }
         }
-        if (nbt.containsUuid("AHPGeneticParent1")) this.ahp$geneticParent1Uuid = nbt.getUuid("AHPGeneticParent1");
+        if (nbt.read("AHPGeneticParent1", UUIDUtil.CODEC).isPresent()) this.ahp$geneticParent1Uuid = nbt.read("AHPGeneticParent1", UUIDUtil.CODEC).orElse(null);
         else this.ahp$geneticParent1Uuid = null;
-        if (nbt.containsUuid("AHPGeneticParent2")) this.ahp$geneticParent2Uuid = nbt.getUuid("AHPGeneticParent2");
+        if (nbt.read("AHPGeneticParent2", UUIDUtil.CODEC).isPresent()) this.ahp$geneticParent2Uuid = nbt.read("AHPGeneticParent2", UUIDUtil.CODEC).orElse(null);
         else this.ahp$geneticParent2Uuid = null;
 
         // --- Tag Game ---
-        this.ahp$tagGamesPlayedToday = nbt.getInt("AHPTagGamesPlayed");
-        this.ahp$lastTagGameDayTime = nbt.getLong("AHPLastTagTime");
+        this.ahp$tagGamesPlayedToday = nbt.getIntOr("AHPTagGamesPlayed", 0);
+        this.ahp$lastTagGameDayTime = nbt.getLongOr("AHPLastTagTime", 0L);
 
         // --- Player Breeding Limit ---
-        this.ahp$hamstersFedForBreeding = nbt.getInt("AHPHamstersFedForBreeding");
-        this.ahp$lastBreedingTime = nbt.getLong("AHPLastBreedingTime");
+        this.ahp$hamstersFedForBreeding = nbt.getIntOr("AHPHamstersFedForBreeding", 0);
+        this.ahp$lastBreedingTime = nbt.getLongOr("AHPLastBreedingTime", 0L);
 
         // --- Guidebook ---
-        if (nbt.contains(AHP_NBT_GUIDEBOOK_HAS_KEY, NbtElement.BYTE_TYPE)) {
-            this.ahp$cachedHasGuideBook = nbt.getBoolean(AHP_NBT_GUIDEBOOK_HAS_KEY);
+        if (nbt.contains(AHP_NBT_GUIDEBOOK_HAS_KEY)) {
+            this.ahp$cachedHasGuideBook = nbt.getBooleanOr(AHP_NBT_GUIDEBOOK_HAS_KEY, false);
         }
-        if (nbt.contains(AHP_NBT_GUIDEBOOK_INIT_KEY, NbtElement.BYTE_TYPE)) {
-            this.ahp$guideBookTrackingInitialized = nbt.getBoolean(AHP_NBT_GUIDEBOOK_INIT_KEY);
+        if (nbt.contains(AHP_NBT_GUIDEBOOK_INIT_KEY)) {
+            this.ahp$guideBookTrackingInitialized = nbt.getBooleanOr(AHP_NBT_GUIDEBOOK_INIT_KEY, false);
         }
 
         // --- Supporter Crown Trial ---
-        if (nbt.contains("AHPHasUsedCrownTrial", NbtElement.BYTE_TYPE)) {
-            boolean hasUsed = nbt.getBoolean("AHPHasUsedCrownTrial");
+        if (nbt.contains("AHPHasUsedCrownTrial")) {
+            boolean hasUsed = nbt.getBooleanOr("AHPHasUsedCrownTrial", false);
             // Wipe slate clean if in dev environment
             if (Platform.isDevelopmentEnvironment()) {
                 hasUsed = false;
             }
-            this.dataTracker.set(AHP_HAS_USED_CROWN_TRIAL, hasUsed);
+            this.entityData.set(AHP_HAS_USED_CROWN_TRIAL, hasUsed);
         }
 
         // --- Teleport Rescue ---
         this.ahp$inTransitHamsters.clear();
-        if (nbt.contains("AHPInTransitHamsters", NbtElement.LIST_TYPE)) {
-            NbtList transitList = nbt.getList("AHPInTransitHamsters", NbtElement.COMPOUND_TYPE);
+        if (nbt.contains("AHPInTransitHamsters")) {
+            ListTag transitList = nbt.getListOrEmpty("AHPInTransitHamsters");
             for (int i = 0; i < transitList.size(); i++) {
-                this.ahp$inTransitHamsters.add(transitList.getCompound(i));
+                this.ahp$inTransitHamsters.add(transitList.getCompoundOrEmpty(i));
             }
-            this.ahp$transitTimer = nbt.getInt("AHPTransitTimer");
+            this.ahp$transitTimer = nbt.getIntOr("AHPTransitTimer", 0);
         }
 
         // --- Petting Persistence ---
-        this.ahp$pettingHamster = new NbtCompound();
+        this.ahp$pettingHamster = new CompoundTag();
         this.ahp$pettingTimer = 0;
-        if (nbt.contains("AHPPettingHamster", NbtElement.COMPOUND_TYPE)) {
-            this.ahp$pettingHamster = nbt.getCompound("AHPPettingHamster");
-            this.ahp$pettingTimer = nbt.getInt("AHPPettingTimer");
+        if (nbt.contains("AHPPettingHamster")) {
+            this.ahp$pettingHamster = nbt.getCompoundOrEmpty("AHPPettingHamster");
+            this.ahp$pettingTimer = nbt.getIntOr("AHPPettingTimer", 0);
 
             // If logging back in with a hamster in pocket, ensure timer is at least 15 ticks
             // so it spawns safely after the client finishes loading the world
@@ -405,15 +427,15 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void ahp$checkTeleport(CallbackInfo ci) {
-        PlayerEntity self = (PlayerEntity) (Object) this;
+        Player self = (Player) (Object) this;
 
         // Only run on the server for living players
-        if (self.getWorld().isClient() || !self.isAlive()) return;
+        if (self.level().isClientSide() || !self.isAlive()) return;
 
-        Vec3d currentPos = self.getPos();
+        Vec3 currentPos = self.position();
         if (this.ahp$lastTickPos != null && this.ahp$lastTickDimension != null) {
-            boolean dimensionChanged = this.ahp$lastTickDimension != self.getWorld().getRegistryKey();
-            double distSq = this.ahp$lastTickPos.squaredDistanceTo(self.getPos());
+            boolean dimensionChanged = this.ahp$lastTickDimension != self.level().dimension();
+            double distSq = this.ahp$lastTickPos.distanceToSqr(self.position());
 
             // If dimension changed OR moved > 20 blocks in a single tick (400 sq dist)
             if (dimensionChanged || distSq > 400.0) {
@@ -424,15 +446,15 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
 
         // Update tracking variables for the next tick
-        this.ahp$lastTickPos = self.getPos();
-        this.ahp$lastTickDimension = self.getWorld().getRegistryKey();
+        this.ahp$lastTickPos = self.position();
+        this.ahp$lastTickDimension = self.level().dimension();
     }
 
-    @Inject(method = "onDeath", at = @At("HEAD"))
+    @Inject(method = "die", at = @At("HEAD"))
     private void adorablehamsterpets$onDeath(DamageSource damageSource, CallbackInfo ci) {
-        PlayerEntity self = (PlayerEntity) (Object) this;
-        if (!self.getWorld().isClient() && Configs.AHP_MAIN.enableTeleportRescue) {
-            this.ahp$pocketFollowingHamsters(self.getPos(), self.getWorld().getRegistryKey());
+        Player self = (Player) (Object) this;
+        if (!self.level().isClientSide() && Configs.AHP_MAIN.enableTeleportRescue) {
+            this.ahp$pocketFollowingHamsters(self.position(), self.level().dimension());
         }
 
         // Rescue petted hamster if player dies mid-pet
@@ -442,44 +464,44 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 this.ahp$inTransitHamsters.add(this.ahp$pettingHamster);
             } else {
                 // Fallback: Drop at the death location
-                HamsterEntity.spawnFromNbt((ServerWorld) self.getWorld(), self, this.ahp$pettingHamster, false, false);
+                HamsterEntity.spawnFromNbt((ServerLevel) self.level(), self, this.ahp$pettingHamster, false, false);
             }
-            this.ahp$pettingHamster = new NbtCompound();
+            this.ahp$pettingHamster = new CompoundTag();
             this.ahp$pettingTimer = 0;
         }
     }
 
     @Inject(method = "tick", at = @At("TAIL"))
     private void adorablehamsterpets$onTick(CallbackInfo ci) {
-        PlayerEntity self = (PlayerEntity) (Object) this;
-        World world = self.getWorld();
-        if (world.isClient) return;
+        Player self = (Player) (Object) this;
+        Level world = self.level();
+        if (world.isClientSide()) return;
 
         // --- 1. Process In-Transit Hamsters ---
         if (self.isAlive() && this.ahp$transitTimer > 0) {
-            boolean isSafeToSpawn = self.isOnGround() || self.isTouchingWater() || self.isClimbing() || self.hasVehicle();
+            boolean isSafeToSpawn = self.onGround() || self.isInWater() || self.onClimbable() || self.isPassenger();
 
             if (isSafeToSpawn) {
                 // Schedule incoming shimmer sound to play 15 ticks after arrival window
                 if (this.ahp$transitTimer == 15 && !this.ahp$inTransitHamsters.isEmpty()) {
-                    this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(world.getTime() + 10, () -> {
-                        world.playSound(null, this.getBlockPos(), ModSounds.MAGIC_SHIMMER.get(), SoundCategory.NEUTRAL, 1.5f, 1.2f);
+                    this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(world.getGameTime() + 10, () -> {
+                        world.playSound(null, this.blockPosition(), ModSounds.MAGIC_SHIMMER.get(), SoundSource.NEUTRAL, 1.5f, 1.2f);
                     }));
                 }
 
                 this.ahp$transitTimer--;
 
                 if (this.ahp$transitTimer <= 0 && !this.ahp$inTransitHamsters.isEmpty()) {
-                    ServerWorld newWorld = (ServerWorld) world;
+                    ServerLevel newWorld = (ServerLevel) world;
 
                     // Track occupied blocks
                     Set<BlockPos> occupiedPositions = new HashSet<>();
                     int soundsScheduled = 0;
-                    long currentWorldTime = newWorld.getTime();
+                    long currentWorldTime = newWorld.getGameTime();
 
-                    for (NbtCompound nbt : this.ahp$inTransitHamsters) {
+                    for (CompoundTag nbt : this.ahp$inTransitHamsters) {
                         // Stagger spawns over 1-5 ticks
-                        int delay = newWorld.getRandom().nextBetween(1, 5);
+                        int delay = newWorld.getRandom().nextIntBetweenInclusive(1, 5);
 
                         // Hard limit sound effect to 7 times per rescue event
                         boolean playSound = soundsScheduled < 7;
@@ -488,21 +510,21 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                         }
 
                         this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(currentWorldTime + delay, () -> {
-                            HamsterEntity newHamster = ModEntities.HAMSTER.get().create(newWorld);
+                            HamsterEntity newHamster = ModEntities.HAMSTER.get().create(newWorld, EntitySpawnReason.LOAD);
                             if (newHamster != null) {
-                                newHamster.readNbt(nbt);
+                                newHamster.load(TagValueInput.create(ProblemReporter.DISCARDING, newWorld.registryAccess(), nbt));
 
                                 // --- Determine Target Position ---
                                 // Default to player position
-                                Vec3d baseTargetPos = self.getPos();
-                                BlockPos baseTargetBlockPos = self.getBlockPos();
+                                Vec3 baseTargetPos = self.position();
+                                BlockPos baseTargetBlockPos = self.blockPosition();
 
                                 // If specific target saved, override default
-                                if (nbt.containsUuid("AHPTransitTargetUuid")) {
-                                    Entity transitTarget = newWorld.getEntity(nbt.getUuid("AHPTransitTargetUuid"));
+                                if (nbt.read("AHPTransitTargetUuid", UUIDUtil.CODEC).isPresent()) {
+                                    Entity transitTarget = newWorld.getEntity(nbt.read("AHPTransitTargetUuid", UUIDUtil.CODEC).orElse(null));
                                     if (transitTarget != null) {
-                                        baseTargetPos = transitTarget.getPos();
-                                        baseTargetBlockPos = transitTarget.getBlockPos();
+                                        baseTargetPos = transitTarget.position();
+                                        baseTargetBlockPos = transitTarget.blockPosition();
                                     }
                                 }
 
@@ -512,8 +534,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                                 // Reserve spot
                                 safePos.ifPresent(occupiedPositions::add);
 
-                                Vec3d finalBaseTargetPos = baseTargetPos;
-                                Vec3d targetPos = safePos.map(Vec3d::ofBottomCenter).orElseGet(() -> {
+                                Vec3 finalBaseTargetPos = baseTargetPos;
+                                Vec3 targetPos = safePos.map(Vec3::atBottomCenterOf).orElseGet(() -> {
                                     double offsetX = (newWorld.getRandom().nextDouble() - 0.5) * 3.0;
                                     double offsetZ = (newWorld.getRandom().nextDouble() - 0.5) * 3.0;
                                     return finalBaseTargetPos.add(offsetX, 0, offsetZ);
@@ -521,22 +543,22 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
                                 // --- Sledgehammer Server/Client Sync 1 ---
                                 // Drop them with downward velocity
-                                newHamster.refreshPositionAndAngles(targetPos.x, targetPos.y + 0.1, targetPos.z, newHamster.getYaw(), newHamster.getPitch());
-                                newHamster.setVelocity(0, -0.05, 0);
-                                newHamster.velocityDirty = true;
+                                newHamster.snapTo(targetPos.x, targetPos.y + 0.1, targetPos.z, newHamster.getYRot(), newHamster.getXRot());
+                                newHamster.setDeltaMovement(0, -0.05, 0);
+                                newHamster.needsSync = true;
                                 newHamster.getNavigation().stop();
-                                newHamster.setSitting(false);
+                                newHamster.setOrderedToSit(false);
 
                                 // Prevent flight animation upon spawning
                                 newHamster.setFallFlyImmunityTicks(20);
 
-                                newWorld.spawnEntity(newHamster);
+                                newWorld.addFreshEntity(newHamster);
 
                                 // --- Sledgehammer Server/Client Sync 2 ---
                                 // Force explicit delayed positional update
                                 newHamster.scheduleTask(currentWorldTime + delay + 5, "sledgehammer_teleport_sync", () -> {
                                     if (newHamster.isAlive() && !newHamster.isRemoved()) {
-                                        newHamster.requestTeleport(newHamster.getX(), newHamster.getY(), newHamster.getZ());
+                                        newHamster.teleportTo(newHamster.getX(), newHamster.getY(), newHamster.getZ());
                                     }
                                 });
 
@@ -544,9 +566,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                                 if (playSound) {
                                     newWorld.playSound(
                                             null,
-                                            BlockPos.ofFloored(targetPos),
-                                            SoundEvents.ENTITY_FOX_TELEPORT,
-                                            SoundCategory.NEUTRAL,
+                                            BlockPos.containing(targetPos),
+                                            SoundEvents.FOX_TELEPORT,
+                                            SoundSource.NEUTRAL,
                                             0.20f,
                                             1.5f + (newWorld.getRandom().nextFloat() - 0.5f) * 0.5f
                                     );
@@ -587,23 +609,23 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 // Swish sound when player places hamster back down
                 world.playSound(
                         null,
-                        self.getBlockPos(),
+                        self.blockPosition(),
                         ModSounds.HAMSTER_SWISH.get(),
-                        SoundCategory.NEUTRAL,
+                        SoundSource.NEUTRAL,
                         0.1f,
                         1.0f + world.getRandom().nextFloat() * 0.5f
                 );
 
-                HamsterEntity.spawnFromNbt((ServerWorld) world, self, this.ahp$pettingHamster, false, false);
-                this.ahp$pettingHamster = new NbtCompound();
+                HamsterEntity.spawnFromNbt((ServerLevel) world, self, this.ahp$pettingHamster, false, false);
+                this.ahp$pettingHamster = new CompoundTag();
             }
         }
 
-        Random random = world.getRandom();
+        RandomSource random = world.getRandom();
         final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
 
         // --- 3. Process Tasks & Cooldowns ---
-        long currentTime = world.getTime();
+        long currentTime = world.getGameTime();
         adorablehamsterpets$scheduledTasks.removeIf(task -> {
             if (currentTime >= task.executionTick()) {
                 task.action().run();
@@ -621,31 +643,31 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         PlayerGestureUtil.tickSneakTracking(self);
 
         // --- Supporter Crown Trial Period Tick ---
-        if (!world.isClient()) {
-            int trialTicks = this.dataTracker.get(AHP_CROWN_TRIAL_TICKS);
+        if (!world.isClientSide()) {
+            int trialTicks = this.entityData.get(AHP_CROWN_TRIAL_TICKS);
             if (trialTicks > 0) {
-                this.dataTracker.set(AHP_CROWN_TRIAL_TICKS, trialTicks - 1);
+                this.entityData.set(AHP_CROWN_TRIAL_TICKS, trialTicks - 1);
 
                 // Feedback
                 if (trialTicks - 1 == 0) {
                     this.ahp$setSupporterCrownTheme(-1);
 
-                    MutableText message = Text.literal("\n")
-                            .append(Text.translatable("message.adorablehamsterpets.crown_trial_ended").formatted(Formatting.GOLD))
+                    MutableComponent message = Component.literal("\n")
+                            .append(Component.translatable("message.adorablehamsterpets.crown_trial_ended").withStyle(ChatFormatting.GOLD))
                             .append("\n")
-                            .append(Text.translatable("message.adorablehamsterpets.crown_trial_discord")
+                            .append(Component.translatable("message.adorablehamsterpets.crown_trial_discord")
                                     .setStyle(Style.EMPTY
-                                            .withColor(Formatting.AQUA)
-                                            .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://discord.gg/w54mk5bqdf"))
+                                            .withColor(ChatFormatting.AQUA)
+                                            .withClickEvent(new ClickEvent.OpenUrl(java.net.URI.create("https://discord.gg/w54mk5bqdf")))
                                     ))
                             .append("\n");
-                    self.sendMessage(message, false);
+                    self.sendSystemMessage(message);
                 }
             }
         }
 
         // --- Periodic Shoulder Sync (For Replay/Flashback Mods) ---
-        if (!world.isClient() && this.hasAnyShoulderHamster()) {
+        if (!world.isClientSide() && this.hasAnyShoulderHamster()) {
             if (++this.ahp$shoulderSyncTimer >= 20) { // Once per second
                 this.ahp$shoulderSyncTimer = 0;
                 this.adorablehamsterpets$syncHamsterState();
@@ -657,12 +679,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         // --- Glowing Sunflower Easter Egg (Server) ---
         if (++this.ahp$sunflowerCheckTimer >= 20) {
             this.ahp$sunflowerCheckTimer = 0;
-            if (Configs.AHP_WORLDGEN.enableGlowingSunflowers && !world.isDay()) {
-                BlockPos playerPos = self.getBlockPos();
-                for (BlockPos pos : BlockPos.iterate(playerPos.add(-5, -3, -5), playerPos.add(5, 3, 5))) {
+            if (Configs.AHP_WORLDGEN.enableGlowingSunflowers && !world.isBrightOutside()) {
+                BlockPos playerPos = self.blockPosition();
+                for (BlockPos pos : BlockPos.betweenClosed(playerPos.offset(-5, -3, -5), playerPos.offset(5, 3, 5))) {
                     BlockState state = world.getBlockState(pos);
-                    if (state.isOf(ModBlocks.SUNFLOWER_BLOCK.get()) && state.get(SunflowerBlock.LIT)) {
-                        ModCriteria.WITNESS_GLOWING_SUNFLOWER.get().trigger((ServerPlayerEntity) self);
+                    if (state.is(ModBlocks.SUNFLOWER_BLOCK.get()) && state.getValue(SunflowerBlock.LIT)) {
+                        ModCriteria.WITNESS_GLOWING_SUNFLOWER.get().trigger((ServerPlayer) self);
                         break;
                     }
                 }
@@ -671,12 +693,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // --- Genetic Visualization (Server) ---
         if (this.ahp$geneticParent1Uuid != null && this.ahp$geneticParent2Uuid != null) {
-            Entity parent1 = ((ServerWorld) world).getEntity(this.ahp$geneticParent1Uuid);
-            Entity parent2 = ((ServerWorld) world).getEntity(this.ahp$geneticParent2Uuid);
+            Entity parent1 = ((ServerLevel) world).getEntity(this.ahp$geneticParent1Uuid);
+            Entity parent2 = ((ServerLevel) world).getEntity(this.ahp$geneticParent2Uuid);
 
             if (parent1 != null && parent2 != null && parent1.isAlive() && parent2.isAlive()) {
                 int countPerTick = Configs.AHP_MAIN.simulatedOffspringPerTick.get();
-                ParticleEffectsUtil.spawnGeneticProbabilityCloud(world, parent1.getPos(), parent2.getPos(), countPerTick);
+                ParticleEffectsUtil.spawnGeneticProbabilityCloud(world, parent1.position(), parent2.position(), countPerTick);
             }
         }
 
@@ -690,12 +712,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                     if (isCelebrationOreNearby(self, config.shoulderDiamondDetectionRadius.get())) {
                         this.adorablehamsterpets$isDiamondAlertConditionMet = true;
                         if (adorablehamsterpets$diamondSoundCooldownTicks == 0) {
-                            world.playSound(null, self.getBlockPos(),
+                            world.playSound(null, self.blockPosition(),
                                     ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_DIAMOND_SNIFF_SOUNDS, random),
-                                    SoundCategory.NEUTRAL, 2.5f, 1.0f);
-                            self.sendMessage(Text.translatable("message.adorablehamsterpets.diamond_nearby").formatted(Formatting.AQUA), true);
-                            adorablehamsterpets$diamondSoundCooldownTicks = random.nextBetween(140, 200);
-                            ModCriteria.HAMSTER_DIAMOND_ALERT_TRIGGERED.get().trigger((ServerPlayerEntity) self);
+                                    SoundSource.NEUTRAL, 2.5f, 1.0f);
+                            self.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.diamond_nearby").withStyle(ChatFormatting.AQUA));
+                            adorablehamsterpets$diamondSoundCooldownTicks = random.nextIntBetweenInclusive(140, 200);
+                            ModCriteria.HAMSTER_DIAMOND_ALERT_TRIGGERED.get().trigger((ServerPlayer) self);
                         }
                     } else {
                         this.adorablehamsterpets$isDiamondAlertConditionMet = false;
@@ -710,12 +732,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                     adorablehamsterpets$creeperCheckTimer = 0;
                     if (creeperSeesPlayer(self, config.shoulderCreeperDetectionRadius.get())) {
                         if (adorablehamsterpets$creeperSoundCooldownTicks == 0) {
-                            world.playSound(null, self.getBlockPos(),
+                            world.playSound(null, self.blockPosition(),
                                     ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_CREEPER_DETECT_SOUNDS, random),
-                                    SoundCategory.NEUTRAL, 1.0f, 1.0f);
-                            self.sendMessage(Text.translatable("message.adorablehamsterpets.creeper_detected").formatted(Formatting.RED), true);
-                            adorablehamsterpets$creeperSoundCooldownTicks = random.nextBetween(100, 160);
-                            ModCriteria.HAMSTER_CREEPER_ALERT_TRIGGERED.get().trigger((ServerPlayerEntity) self);
+                                    SoundSource.NEUTRAL, 1.0f, 1.0f);
+                            self.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.creeper_detected").withStyle(ChatFormatting.RED));
+                            adorablehamsterpets$creeperSoundCooldownTicks = random.nextIntBetweenInclusive(100, 160);
+                            ModCriteria.HAMSTER_CREEPER_ALERT_TRIGGERED.get().trigger((ServerPlayer) self);
                         }
                     }
                 }
@@ -723,26 +745,26 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
     }
 
-    @Inject(method = "remove(Lnet/minecraft/entity/Entity$RemovalReason;)V", at = @At("HEAD"))
+    @Inject(method = "remove(Lnet/minecraft/world/entity/Entity$RemovalReason;)V", at = @At("HEAD"))
     private void adorablehamsterpets$onRemove(Entity.RemovalReason reason, CallbackInfo ci) {
-        if (!this.getWorld().isClient()) {
-            net.dawson.adorablehamsterpets.util.HamsterRenderTracker.onPlayerDisconnect(this.getUuid());
+        if (!this.level().isClientSide()) {
+            net.dawson.adorablehamsterpets.util.HamsterRenderTracker.onPlayerDisconnect(this.getUUID());
         }
     }
 
-    @Inject(method = "wakeUp(ZZ)V", at = @At("RETURN"))
+    @Inject(method = "stopSleepInBed(ZZ)V", at = @At("RETURN"))
     private void adorablehamsterpets$onWakeUp(boolean skipSleepTimer, boolean updateSleepingPlayers, CallbackInfo ci) {
-        PlayerEntity self = (PlayerEntity) (Object) this;
+        Player self = (Player) (Object) this;
         // Server side only. skipSleepTimer is false for natural wakeup.
-        if (!self.getWorld().isClient && !skipSleepTimer) {
-            ServerWorld serverWorld = (ServerWorld) self.getWorld();
-            UUID ownerUuid = self.getUuid();
+        if (!self.level().isClientSide() && !skipSleepTimer) {
+            ServerLevel serverWorld = (ServerLevel) self.level();
+            UUID ownerUuid = self.getUUID();
 
             // --- 1. Scan for Stuck Hamsters ---
             List<HamsterEntity> stuckHamsters = new ArrayList<>();
-            for (Entity entity : serverWorld.getEntitiesByType(ModEntities.HAMSTER.get(), Entity::isAlive)) {
+            for (Entity entity : serverWorld.getEntities(ModEntities.HAMSTER.get(), Entity::isAlive)) {
                 if (entity instanceof HamsterEntity hamster) {
-                    if (hamster.isTamed() && ownerUuid.equals(hamster.getOwnerUuid()) && hamster.isStuckSearchingForBed()) {
+                    if (hamster.isTame() && ownerUuid.equals((hamster.getOwnerReference() == null ? null : hamster.getOwnerReference().getUUID())) && hamster.isStuckSearchingForBed()) {
                         stuckHamsters.add(hamster);
                     }
                 }
@@ -751,29 +773,29 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             // --- 2. Rescue Protocol ---
             for (HamsterEntity hamster : stuckHamsters) {
                 hamster.getLinkedBedPos().ifPresent(globalPos -> {
-                    if (serverWorld.getRegistryKey() == globalPos.dimension()) {
+                    if (serverWorld.dimension() == globalPos.dimension()) {
                         BlockPos bedPos = globalPos.pos();
                         BlockState bedState = serverWorld.getBlockState(bedPos);
 
                         // Validate Bed availability
-                        if (bedState.getBlock() instanceof HamsterBedBlock && !bedState.get(HamsterBedBlock.OCCUPIED)) {
+                        if (bedState.getBlock() instanceof HamsterBedBlock && !bedState.getValue(HamsterBedBlock.OCCUPIED)) {
                             // Teleport and force sleep
-                            Vec3d targetCenter = Vec3d.ofCenter(bedPos).add(0, 0.1, 0);
+                            Vec3 targetCenter = Vec3.atCenterOf(bedPos).add(0, 0.1, 0);
 
                             // Explicitly request teleport to sync with client
-                            hamster.requestTeleport(targetCenter.x, targetCenter.y, targetCenter.z);
+                            hamster.teleportTo(targetCenter.x, targetCenter.y, targetCenter.z);
 
                             hamster.setDozingPhase(HamsterEntity.DozingPhase.DEEP_SLEEP);
                             hamster.setSleeping(true);
                             hamster.setRescueSleeping(true);
                             hamster.setInSittingPose(true);
 
-                            serverWorld.setBlockState(bedPos, bedState.with(HamsterBedBlock.OCCUPIED, true), Block.NOTIFY_ALL);
+                            serverWorld.setBlock(bedPos, bedState.setValue(HamsterBedBlock.OCCUPIED, true), Block.UPDATE_ALL);
 
                             // Match personality pose
-                            int personality = hamster.getDataTracker().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
+                            int personality = hamster.getEntityData().get(HamsterEntity.ANIMATION_PERSONALITY_ID);
                             int poseIndex = (personality >= 1 && personality <= 3) ? personality : 1;
-                            hamster.getDataTracker().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, "anim_hamster_sleep_pose" + poseIndex);
+                            hamster.getEntityData().set(HamsterEntity.CURRENT_DEEP_SLEEP_ANIM_ID, "anim_hamster_sleep_pose" + poseIndex);
                             HamsterBedUtil.startNapTimer(hamster);
 
                             // Cleanup flags
@@ -804,7 +826,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     @Unique
     @Override
-    public List<NbtCompound> ahp$getInTransitHamsters() {
+    public List<CompoundTag> ahp$getInTransitHamsters() {
         return this.ahp$inTransitHamsters;
     }
 
@@ -823,13 +845,13 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public int ahp$getSupporterCrownTheme() {
-        return this.dataTracker.get(AHP_CROWN_THEME);
+        return this.entityData.get(AHP_CROWN_THEME);
     }
 
     @Unique
     @Override
     public void ahp$setSupporterCrownTheme(int theme) {
-        this.dataTracker.set(AHP_CROWN_THEME, theme);
+        this.entityData.set(AHP_CROWN_THEME, theme);
     }
 
     @Unique
@@ -847,25 +869,25 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public boolean ahp$hasUsedSupporterCrownTrial() {
-        return this.dataTracker.get(AHP_HAS_USED_CROWN_TRIAL);
+        return this.entityData.get(AHP_HAS_USED_CROWN_TRIAL);
     }
 
     @Unique
     @Override
     public void ahp$setHasUsedSupporterCrownTrial(boolean used) {
-        this.dataTracker.set(AHP_HAS_USED_CROWN_TRIAL, used);
+        this.entityData.set(AHP_HAS_USED_CROWN_TRIAL, used);
     }
 
     @Unique
     @Override
     public int ahp$getSupporterCrownTrialTicks() {
-        return this.dataTracker.get(AHP_CROWN_TRIAL_TICKS);
+        return this.entityData.get(AHP_CROWN_TRIAL_TICKS);
     }
 
     @Unique
     @Override
     public void ahp$setSupporterCrownTrialTicks(int ticks) {
-        this.dataTracker.set(AHP_CROWN_TRIAL_TICKS, ticks);
+        this.entityData.set(AHP_CROWN_TRIAL_TICKS, ticks);
     }
 
     @Unique
@@ -923,16 +945,16 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             return true;
         }
 
-        PlayerEntity self = (PlayerEntity) (Object) this;
+        Player self = (Player) (Object) this;
 
         // Whitelist check
-        if (Configs.AHP_MAIN.allowedBreeders.contains(self.getGameProfile().getName())) {
+        if (Configs.AHP_MAIN.allowedBreeders.contains(self.getGameProfile().name())) {
             return true;
         }
 
         LitterLimitType type = Configs.AHP_MAIN.playerBreedingLimitType.get();
         if (type == LitterLimitType.DAILY) {
-            long currentTime = this.getWorld().getTime();
+            long currentTime = this.level().getGameTime();
             long dayDuration = Configs.AHP_MAIN.useIrlTimeForBreedingLimit.get() ? 1728000L : 24000L;
             long currentDay = currentTime / dayDuration;
             long lastDay = this.ahp$lastBreedingTime / dayDuration;
@@ -952,22 +974,22 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Override
     public void ahp$incrementHamstersFedForBreeding() {
         this.ahp$hamstersFedForBreeding++;
-        this.ahp$lastBreedingTime = this.getWorld().getTime();
+        this.ahp$lastBreedingTime = this.level().getGameTime();
     }
 
     @Unique
     @Override
     public void ahp$resetBreedingHistory() {
         this.ahp$hamstersFedForBreeding = 0;
-        ((PlayerEntity)(Object)this).sendMessage(Text.translatable("message.adorablehamsterpets.breeding.history_reset").formatted(Formatting.GREEN), true);
+        ((Player)(Object)this).sendOverlayMessage(Component.translatable("message.adorablehamsterpets.breeding.history_reset").withStyle(ChatFormatting.GREEN));
     }
 
     @Unique
     @Override
     public void adorablehamsterpets$startPrecisionTreeHeist(BlockPos leafPos) {
-        PlayerEntity self = (PlayerEntity) (Object) this;
-        World world = self.getWorld();
-        if (world.isClient) return;
+        Player self = (Player) (Object) this;
+        Level world = self.level();
+        if (world.isClientSide()) return;
 
         // --- 1. Queue Validation & Rebuild ---
         if (this.adorablehamsterpets$mountOrderQueue.isEmpty() && this.hasAnyShoulderHamster()) {
@@ -989,7 +1011,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         if (locationToProcess == null) return;
 
-        NbtCompound shoulderNbt = this.getShoulderHamster(locationToProcess);
+        CompoundTag shoulderNbt = this.getShoulderHamster(locationToProcess);
         if (shoulderNbt.isEmpty()) {
             if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
             else this.adorablehamsterpets$mountOrderQueue.pollFirst();
@@ -997,9 +1019,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
 
         // Validate entity creation before altering state
-        HamsterEntity hamster = HamsterNbtUtil.createFromNbt((ServerWorld) world, self, shoulderNbt);
+        HamsterEntity hamster = HamsterNbtUtil.createFromNbt((ServerLevel) world, self, shoulderNbt);
         if (hamster == null) {
-            this.setShoulderHamster(locationToProcess, new NbtCompound());
+            this.setShoulderHamster(locationToProcess, new CompoundTag());
             if (config.dismountOrder.get() == DismountOrder.LIFO) this.adorablehamsterpets$mountOrderQueue.pollLast();
             else this.adorablehamsterpets$mountOrderQueue.pollFirst();
             return;
@@ -1007,7 +1029,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // --- 2. Tree Heist Trigger ---
         // If looking at valid block, check for heist start
-        HitResult hitResult = self.raycast(5.0, 0.0f, false);
+        HitResult hitResult = self.pick(5.0, 0.0f, false);
         if (hitResult.getType() == HitResult.Type.BLOCK) {
             BlockPos hitPos = ((BlockHitResult) hitResult).getBlockPos();
             BlockState hitState = world.getBlockState(hitPos);
@@ -1017,29 +1039,30 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, hitPos);
 
                 if (HamsterTreeSearcherEntity.isBlockOccupied(world, scanResult.treeId())) {
-                    self.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
+                    self.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.tree_heist_occupied").withStyle(ChatFormatting.RED));
                 } else {
                     // Start Heist
-                    HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(world);
+                    HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(world, EntitySpawnReason.LOAD);
                     if (searcher != null) {
                         hamster.triggerLeafPopEffects(hitPos, false);
-                        NbtCompound fullNbt = new NbtCompound();
-                        hamster.writeNbt(fullNbt);
+                        TagValueOutput fullNbtOut = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, hamster.registryAccess());
+                        hamster.saveWithoutId(fullNbtOut);
+                        CompoundTag fullNbt = fullNbtOut.buildResult();
 
                         searcher.initializeSearch(hitPos, scanResult, fullNbt);
                         searcher.setForcedExitPos(hitPos); // Apply Precision Exit
 
-                        world.spawnEntity(searcher);
+                        world.addFreshEntity(searcher);
 
                         // Clear Data
                         if (config.dismountOrder.get() == DismountOrder.LIFO)
                             this.adorablehamsterpets$mountOrderQueue.pollLast();
                         else this.adorablehamsterpets$mountOrderQueue.pollFirst();
-                        this.setShoulderHamster(locationToProcess, new NbtCompound());
+                        this.setShoulderHamster(locationToProcess, new CompoundTag());
 
                         // Feedback
-                        world.playSound(null, self.getBlockPos(), ModSounds.HAMSTER_DISMOUNT.get(), SoundCategory.PLAYERS, 0.7f, 1.0f + world.getRandom().nextFloat() * 0.2f);
-                        self.sendMessage(Text.translatable("message.adorablehamsterpets.precision_tree_heist_started").formatted(Formatting.GREEN), true);
+                        world.playSound(null, self.blockPosition(), ModSounds.HAMSTER_DISMOUNT.get(), SoundSource.PLAYERS, 0.7f, 1.0f + world.getRandom().nextFloat() * 0.2f);
+                        self.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.precision_tree_heist_started").withStyle(ChatFormatting.GREEN));
                     }
                 }
             }
@@ -1055,8 +1078,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
 
         // --- 2. Check Daily Limit ---
-        World world = ((PlayerEntity) (Object) this).getWorld();
-        long currentTime = world.getTime();
+        Level world = ((Player) (Object) this).level();
+        long currentTime = world.getGameTime();
 
         // Calculate days passed (24000 ticks per day)
         long currentDay = currentTime / 24000L;
@@ -1075,30 +1098,30 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Override
     public void ahp$incrementTagGameCount() {
         this.ahp$tagGamesPlayedToday++;
-        this.ahp$lastTagGameDayTime = ((PlayerEntity) (Object) this).getWorld().getTime();
+        this.ahp$lastTagGameDayTime = ((Player) (Object) this).level().getGameTime();
     }
 
     @Unique
     @Override
-    public boolean ahp$computeHasGuideBook(PlayerEntity player) {
+    public boolean ahp$computeHasGuideBook(Player player) {
         // --- 1. Check Cursor Stack ---
-        if (player.currentScreenHandler != null) {
-            ItemStack cursorStack = player.currentScreenHandler.getCursorStack();
-            if (!cursorStack.isEmpty() && cursorStack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+        if (player.containerMenu != null) {
+            ItemStack cursorStack = player.containerMenu.getCarried();
+            if (!cursorStack.isEmpty() && cursorStack.is(ModItems.HAMSTER_GUIDE_BOOK.get())) {
                 return true;
             }
         }
 
         // --- 2. Check Standard Inventory ---
         var inv = player.getInventory();
-        for (int i = 0; i < inv.size(); i++) {
-            ItemStack stack = inv.getStack(i);
-            if (!stack.isEmpty() && stack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty() && stack.is(ModItems.HAMSTER_GUIDE_BOOK.get())) {
 
                 // --- Eccentric Tomes Compat ---
                 // Don't trigger effects when morphing the Eccentric Tomes book into my guidebook
-                if (stack.contains(DataComponentTypes.CUSTOM_NAME)) {
-                    Text customName = stack.get(DataComponentTypes.CUSTOM_NAME);
+                if (stack.has(DataComponents.CUSTOM_NAME)) {
+                    Component customName = stack.get(DataComponents.CUSTOM_NAME);
                     if (customName != null && customName.getString().contains("Eccentric Tome")) {
                         continue;
                     }
@@ -1119,13 +1142,13 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     @Unique
     @Override
-    public NbtCompound getShoulderHamster(ShoulderLocation location) {
-        return this.ahp$hamsterState.getCompound(location.name());
+    public CompoundTag getShoulderHamster(ShoulderLocation location) {
+        return this.ahp$hamsterState.getCompoundOrEmpty(location.name());
     }
 
     @Unique
     @Override
-    public void setShoulderHamster(ShoulderLocation location, NbtCompound nbt) {
+    public void setShoulderHamster(ShoulderLocation location, CompoundTag nbt) {
         // Update local
         if (nbt == null || nbt.isEmpty()) {
             this.ahp$hamsterState.remove(location.name());
@@ -1134,23 +1157,23 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
 
         // Sync logic
-        if (!this.getWorld().isClient()) {
+        if (!this.level().isClientSide()) {
             this.adorablehamsterpets$syncHamsterState();
         }
     }
 
     @Unique
     @Override
-    public void adorablehamsterpets$setRawHamsterState(NbtCompound nbt) {
+    public void adorablehamsterpets$setRawHamsterState(CompoundTag nbt) {
         this.ahp$hamsterState = nbt;
 
         // Rebuild queue on client
-        if (nbt.contains("ClientSyncQueue", NbtElement.LIST_TYPE)) {
+        if (nbt.contains("ClientSyncQueue")) {
             this.adorablehamsterpets$mountOrderQueue.clear();
-            NbtList list = nbt.getList("ClientSyncQueue", NbtElement.STRING_TYPE);
-            for (NbtElement e : list) {
+            ListTag list = nbt.getListOrEmpty("ClientSyncQueue");
+            for (Tag e : list) {
                 try {
-                    this.adorablehamsterpets$mountOrderQueue.add(ShoulderLocation.valueOf(e.asString()));
+                    this.adorablehamsterpets$mountOrderQueue.add(ShoulderLocation.valueOf(e.asString().orElse("")));
                 } catch (Exception ignored) {}
             }
         }
@@ -1159,26 +1182,26 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public void adorablehamsterpets$syncHamsterState() {
-        if (!this.getWorld().isClient()) { // Always sync (even if empty) to clear client state
+        if (!this.level().isClientSide()) { // Always sync (even if empty) to clear client state
             // Pack queue into compound for client
-            NbtList mountOrderList = new NbtList();
+            ListTag mountOrderList = new ListTag();
             for (ShoulderLocation location : this.adorablehamsterpets$mountOrderQueue) {
-                mountOrderList.add(NbtString.of(location.name()));
+                mountOrderList.add(StringTag.valueOf(location.name()));
             }
             this.ahp$hamsterState.put("ClientSyncQueue", mountOrderList);
 
-            PlayerEntity self = (PlayerEntity) (Object) this;
+            Player self = (Player) (Object) this;
             SyncHamsterStatePayload packet = new SyncHamsterStatePayload(this.getId(), this.ahp$hamsterState);
 
             // Send to self
-            if (self instanceof ServerPlayerEntity serverPlayer) {
+            if (self instanceof ServerPlayer serverPlayer) {
                 NetworkManager.sendToPlayer(serverPlayer, packet);
             }
 
             // Send to watchers
-            if (self.getWorld() instanceof ServerWorld serverWorld) {
-                for (ServerPlayerEntity otherPlayer : serverWorld.getPlayers()) {
-                    if (otherPlayer != self && otherPlayer.squaredDistanceTo(self) < 4096) {
+            if (self.level() instanceof ServerLevel serverWorld) {
+                for (ServerPlayer otherPlayer : serverWorld.players()) {
+                    if (otherPlayer != self && otherPlayer.distanceToSqr(self) < 4096) {
                         NetworkManager.sendToPlayer(otherPlayer, packet);
                     }
                 }
@@ -1189,9 +1212,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public void adorablehamsterpets$dismountShoulderHamster(boolean isThrow) {
-        PlayerEntity self = (PlayerEntity) (Object) this;
-        World world = self.getWorld();
-        if (world.isClient) return;
+        Player self = (Player) (Object) this;
+        Level world = self.level();
+        if (world.isClientSide()) return;
 
         // --- 1. Queue Validation & Rebuild ---
         if (this.adorablehamsterpets$mountOrderQueue.isEmpty() && this.hasAnyShoulderHamster()) {
@@ -1207,14 +1230,14 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         final AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
         final AhpUiConfig uiConfig = AdorableHamsterPets.UI_CONFIG;
-        Random random = world.getRandom();
+        RandomSource random = world.getRandom();
 
         // Skip cooling-down hamsters only when throwing
         ShoulderLocation locationToProcess = HamsterInteractionUtil.getNextSlotToDismount(self, isThrow);
 
         if (locationToProcess == null) return;
 
-        NbtCompound shoulderNbt = this.getShoulderHamster(locationToProcess);
+        CompoundTag shoulderNbt = this.getShoulderHamster(locationToProcess);
         if (shoulderNbt.isEmpty()) {
             AdorableHamsterPets.LOGGER.warn("Dismount queue pointed to an empty slot ({}). Desync probable.", locationToProcess);
             HamsterInteractionUtil.removeSlotFromDismountQueue(self, locationToProcess);
@@ -1222,16 +1245,16 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
 
         // Validate entity creation before altering state
-        HamsterEntity hamster = HamsterNbtUtil.createFromNbt((ServerWorld) world, self, shoulderNbt);
+        HamsterEntity hamster = HamsterNbtUtil.createFromNbt((ServerLevel) world, self, shoulderNbt);
         if (hamster == null) {
-            this.setShoulderHamster(locationToProcess, new NbtCompound());
+            this.setShoulderHamster(locationToProcess, new CompoundTag());
             HamsterInteractionUtil.removeSlotFromDismountQueue(self, locationToProcess);
             return;
         }
 
         // --- 2. Tree Heist Trigger ---
         // If looking at oak leaves, check for heist start
-        HitResult hitResult = self.raycast(5.0, 0.0f, false);
+        HitResult hitResult = self.pick(5.0, 0.0f, false);
         if (hitResult.getType() == HitResult.Type.BLOCK) {
             BlockPos hitPos = ((BlockHitResult) hitResult).getBlockPos();
             BlockState hitState = world.getBlockState(hitPos);
@@ -1241,22 +1264,23 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 TreeHeistUtil.TreeScanResult scanResult = TreeHeistUtil.scanForTree(world, hitPos);
 
                 if (HamsterTreeSearcherEntity.isBlockOccupied(world, scanResult.treeId())) {
-                    self.sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_occupied").formatted(Formatting.RED), true);
+                    self.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.tree_heist_occupied").withStyle(ChatFormatting.RED));
                     return; // Abort
                 } else {
                     // Start Heist
-                    HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(world);
+                    HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(world, EntitySpawnReason.LOAD);
                     if (searcher != null) {
                         hamster.triggerLeafPopEffects(hitPos, false);
-                        NbtCompound fullNbt = new NbtCompound();
-                        hamster.writeNbt(fullNbt);
+                        TagValueOutput fullNbtOut = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, hamster.registryAccess());
+                        hamster.saveWithoutId(fullNbtOut);
+                        CompoundTag fullNbt = fullNbtOut.buildResult();
 
                         searcher.initializeSearch(hitPos, scanResult, fullNbt);
-                        world.spawnEntity(searcher);
+                        world.addFreshEntity(searcher);
 
                         // Clear Data
                         HamsterInteractionUtil.removeSlotFromDismountQueue(self, locationToProcess);
-                        this.setShoulderHamster(locationToProcess, new NbtCompound());
+                        this.setShoulderHamster(locationToProcess, new CompoundTag());
 
                         return; // Bypass standard spawn
                     }
@@ -1267,15 +1291,15 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         // --- 3. Throw Logic ---
         if (isThrow) {
             if (hamster.isBaby()) {
-                self.sendMessage(Text.translatable("message.adorablehamsterpets.baby_throw_refusal").formatted(Formatting.RED), true);
+                self.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.baby_throw_refusal").withStyle(ChatFormatting.RED));
                 return;
             }
 
-            long currentTime = world.getTime();
+            long currentTime = world.getGameTime();
             if (hamster.throwCooldownEndTick > currentTime) {
                 long remainingTicks = hamster.throwCooldownEndTick - currentTime;
                 long totalSecondsRemaining = Math.max(1, remainingTicks / 20);
-                self.sendMessage(Text.translatable("message.adorablehamsterpets.throw_cooldown", totalSecondsRemaining).formatted(Formatting.RED), true);
+                self.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.throw_cooldown", totalSecondsRemaining).withStyle(ChatFormatting.RED));
                 return;
             }
 
@@ -1291,8 +1315,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
 
             // Update Hamster timers before packaging into projectile NBT
-            boolean hasFeatherYeeting = self.hasStatusEffect(
-                    Registries.STATUS_EFFECT.getEntry(ModStatusEffects.FEATHER_YEETING.get())
+            boolean hasFeatherYeeting = self.hasEffect(
+                    BuiltInRegistries.MOB_EFFECT.wrapAsHolder(ModStatusEffects.FEATHER_YEETING.get())
             );
             long assignedCooldownDuration = FeatherYeetingStatusEffect.calculateThrowCooldownDuration(
                     config.hamsterThrowCooldown.get(),
@@ -1300,32 +1324,32 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                     config.featherYeetingCooldownReductionPercent.get()
             );
             hamster.throwCooldownEndTick = currentTime + assignedCooldownDuration;
-            NbtCompound updatedShoulderNbt = HamsterNbtUtil.saveToHamsterState(hamster).toNbt();
+            CompoundTag updatedShoulderNbt = HamsterNbtUtil.saveToHamsterState(hamster).toNbt();
 
             // Create Projectile
             HamsterProjectileEntity projectile = new HamsterProjectileEntity(world, self);
-            projectile.refreshPositionAndAngles(self.getX(), self.getEyeY() - 0.1, self.getZ(), self.getYaw(), self.getPitch());
+            projectile.snapTo(self.getX(), self.getEyeY() - 0.1, self.getZ(), self.getYRot(), self.getXRot());
             projectile.setHamsterData(updatedShoulderNbt); // Pass NBT into projectile
 
-            Vec3d lookVec = self.getRotationVec(1.0f);
-            Vec3d throwVec = new Vec3d(lookVec.x, lookVec.y + 0.1f, lookVec.z).normalize();
-            projectile.setVelocity(throwVec.multiply(throwSpeed));
+            Vec3 lookVec = self.getViewVector(1.0f);
+            Vec3 throwVec = new Vec3(lookVec.x, lookVec.y + 0.1f, lookVec.z).normalize();
+            projectile.setDeltaMovement(throwVec.scale(throwSpeed));
 
             // Clean up original NBT slot
             HamsterInteractionUtil.removeSlotFromDismountQueue(self, locationToProcess);
-            this.setShoulderHamster(locationToProcess, new NbtCompound());
+            this.setShoulderHamster(locationToProcess, new CompoundTag());
 
-            world.spawnEntity(projectile);
+            world.addFreshEntity(projectile);
 
-            world.playSound(null, self.getX(), self.getY(), self.getZ(), ModSounds.HAMSTER_THROW.get(), SoundCategory.PLAYERS, 1.0f, 1.0f);
+            world.playSound(null, self.getX(), self.getY(), self.getZ(), ModSounds.HAMSTER_THROW.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
             // Delayed celebration squeak
-            this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(world.getTime() + 3, () -> {
+            this.adorablehamsterpets$scheduledTasks.add(new ScheduledTask(world.getGameTime() + 3, () -> {
                 SoundEvent celebrationSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_FLYING_SOUNDS, random);
                 if (celebrationSound != null) {
-                    world.playSound(null, self.getX(), self.getY(), self.getZ(), celebrationSound, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                    world.playSound(null, self.getX(), self.getY(), self.getZ(), celebrationSound, SoundSource.PLAYERS, 1.0f, 1.0f);
                 }
             }));
-            ModCriteria.HAMSTER_THROWN.get().trigger((ServerPlayerEntity) self);
+            ModCriteria.HAMSTER_THROWN.get().trigger((ServerPlayer) self);
             this.adorablehamsterpets$isDiamondAlertConditionMet = false;
             return;
         }
@@ -1333,12 +1357,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         // --- 4. Finalize Dismount ---
         HamsterInteractionUtil.removeSlotFromDismountQueue(self, locationToProcess);
 
-        this.setShoulderHamster(locationToProcess, new NbtCompound());
+        this.setShoulderHamster(locationToProcess, new CompoundTag());
 
-        HamsterEntity.spawnFromNbt((ServerWorld) world, self, shoulderNbt, this.adorablehamsterpets$isDiamondAlertConditionMet, true);
+        HamsterEntity.spawnFromNbt((ServerLevel) world, self, shoulderNbt, this.adorablehamsterpets$isDiamondAlertConditionMet, true);
         this.adorablehamsterpets$isDiamondAlertConditionMet = false;
 
-        world.playSound(null, self.getBlockPos(), ModSounds.HAMSTER_DISMOUNT.get(), SoundCategory.PLAYERS, 0.7f, 1.0f + random.nextFloat() * 0.2f);
+        world.playSound(null, self.blockPosition(), ModSounds.HAMSTER_DISMOUNT.get(), SoundSource.PLAYERS, 0.7f, 1.0f + random.nextFloat() * 0.2f);
         if (uiConfig.enableShoulderDismountMessages && !DISMOUNT_MESSAGE_KEYS.isEmpty()) {
             String chosenKey;
             if (DISMOUNT_MESSAGE_KEYS.size() == 1) {
@@ -1348,7 +1372,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 availableKeys.remove(this.adorablehamsterpets$lastDismountMessageKey);
                 chosenKey = availableKeys.isEmpty() ? this.adorablehamsterpets$lastDismountMessageKey : availableKeys.get(random.nextInt(availableKeys.size()));
             }
-            self.sendMessage(Text.translatable(chosenKey), true);
+            self.sendOverlayMessage(Component.translatable(chosenKey));
             this.adorablehamsterpets$lastDismountMessageKey = chosenKey;
         }
     }
@@ -1383,7 +1407,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Override
     public ClientShoulderHamsterData adorablehamsterpets$getClientHamsterState() {
         // Lazy init for safety
-        if (this.adorablehamsterpets$clientHamsterState == null && this.getWorld().isClient) {
+        if (this.adorablehamsterpets$clientHamsterState == null && this.level().isClientSide()) {
             this.adorablehamsterpets$clientHamsterState = new ClientShoulderHamsterData();
         }
         return this.adorablehamsterpets$clientHamsterState;
@@ -1392,7 +1416,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public void ahp$registerTreeHeist(BlockPos treeId) {
-        long time = this.getWorld().getTime();
+        long time = this.level().getGameTime();
         this.ahp$heistHistory.add(new TreeHeistUtil.HeistRecord(treeId, time));
         this.ahp$heistHistory.removeIf(r -> time - r.timestamp() > HEIST_MEMORY_DURATION);
     }
@@ -1400,7 +1424,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     @Override
     public float ahp$getHeistProfitability(BlockPos treeId) {
-        long time = this.getWorld().getTime();
+        long time = this.level().getGameTime();
         int initialSize = this.ahp$heistHistory.size();
 
         // Prune expired
@@ -1450,20 +1474,20 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     public void ahp$clearHeistHistory() {
         this.ahp$heistHistory.clear();
         AdorableHamsterPets.LOGGER.info("[TreeHeist] Cleared heist history for player {}.", this.getName().getString());
-        ((PlayerEntity)(Object)this).sendMessage(Text.translatable("message.adorablehamsterpets.tree_heist_history_reset").formatted(Formatting.WHITE), true);
+        ((Player)(Object)this).sendOverlayMessage(Component.translatable("message.adorablehamsterpets.tree_heist_history_reset").withStyle(ChatFormatting.WHITE));
     }
 
     @Unique
     @Override
     public void ahp$startPettingHamster(int entityId) {
-        PlayerEntity self = (PlayerEntity) (Object) this;
-        World world = self.getWorld();
-        if (world.isClient) return;
+        Player self = (Player) (Object) this;
+        Level world = self.level();
+        if (world.isClientSide()) return;
 
         // Prevent multiple simultaneous petting animations
         if (!this.ahp$pettingHamster.isEmpty()) return;
 
-        Entity entity = world.getEntityById(entityId);
+        Entity entity = world.getEntity(entityId);
         if (entity instanceof HamsterEntity hamster) {
             // Must meet criteria
             if (!hamster.isAlive()
@@ -1472,7 +1496,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 return;
 
             // Strict distance check to prevent remote manipulation
-            if (hamster.squaredDistanceTo(self) > 64.0) return;
+            if (hamster.distanceToSqr(self) > 64.0) return;
 
             this.ahp$pettingHamster = HamsterNbtUtil.saveToHamsterState(hamster).toNbt();
             this.ahp$pettingTimer = 200; // 10 seconds for petting
@@ -1484,13 +1508,13 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                     self.getY(),
                     self.getZ(),
                     ModSounds.HAMSTER_SWISH.get(),
-                    SoundCategory.PLAYERS,
+                    SoundSource.PLAYERS,
                     0.1f,
                     1.0f + world.getRandom().nextFloat() * 0.5f);
 
             hamster.discard();
 
-            if (self instanceof ServerPlayerEntity serverPlayer) {
+            if (self instanceof ServerPlayer serverPlayer) {
                 NetworkManager.sendToPlayer(serverPlayer, new SyncPettingStatePayload(true));
             }
         }
@@ -1500,10 +1524,10 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Override
     public void ahp$cancelPettingHamster() {
         if (!this.ahp$pettingHamster.isEmpty()) {
-            PlayerEntity self = (PlayerEntity) (Object) this;
+            Player self = (Player) (Object) this;
 
             this.ahp$pettingTimer = 0; // Instantly trigger hamster respawn in next tick
-            if (self instanceof ServerPlayerEntity serverPlayer) {
+            if (self instanceof ServerPlayer serverPlayer) {
                 NetworkManager.sendToPlayer(serverPlayer, new SyncPettingStatePayload(false));
             }
         }
@@ -1514,8 +1538,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public void onStartedTrackingBy(ServerPlayerEntity player) {
-        super.onStartedTrackingBy(player);
+    public void startSeenByPlayer(ServerPlayer player) {
+        super.startSeenByPlayer(player);
 
         // Sync shoulder data to the watcher immediately
         if (!this.ahp$hamsterState.isEmpty()) {
@@ -1534,23 +1558,23 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
      * discards their bodies to prevent duplicate saving or rendering glitches.
      */
     @Unique
-    private void ahp$pocketFollowingHamsters(Vec3d oldPos, RegistryKey<World> oldDimension) {
-        MinecraftServer server = this.getServer();
+    private void ahp$pocketFollowingHamsters(Vec3 oldPos, ResourceKey<Level> oldDimension) {
+        MinecraftServer server = this.level().getServer();
         if (server == null) return;
 
-        ServerWorld oldWorld = server.getWorld(oldDimension);
-        ServerWorld newWorld = (ServerWorld) this.getWorld();
+        ServerLevel oldWorld = server.getLevel(oldDimension);
+        ServerLevel newWorld = (ServerLevel) this.level();
         if (oldWorld == null || newWorld == null) return;
 
         List<HamsterEntity> toRescue = new ArrayList<>();
 
         // Grab hamsters left behind at old location
-        Box oldSearchBox = new Box(oldPos.x - 64, oldPos.y - 64, oldPos.z - 64, oldPos.x + 64, oldPos.y + 64, oldPos.z + 64);
-        toRescue.addAll(oldWorld.getEntitiesByClass(HamsterEntity.class, oldSearchBox, this::ahp$isValidRescueTarget));
+        AABB oldSearchBox = new AABB(oldPos.x - 64, oldPos.y - 64, oldPos.z - 64, oldPos.x + 64, oldPos.y + 64, oldPos.z + 64);
+        toRescue.addAll(oldWorld.getEntitiesOfClass(HamsterEntity.class, oldSearchBox, this::ahp$isValidRescueTarget));
 
         // Grab hamsters who might have already teleported to new location
-        Box newSearchBox = new Box(this.getX() - 64, this.getY() - 64, this.getZ() - 64, this.getX() + 64, this.getY() + 64, this.getZ() + 64);
-        List<HamsterEntity> newWorldHamsters = newWorld.getEntitiesByClass(HamsterEntity.class, newSearchBox, this::ahp$isValidRescueTarget);
+        AABB newSearchBox = new AABB(this.getX() - 64, this.getY() - 64, this.getZ() - 64, this.getX() + 64, this.getY() + 64, this.getZ() + 64);
+        List<HamsterEntity> newWorldHamsters = newWorld.getEntitiesOfClass(HamsterEntity.class, newSearchBox, this::ahp$isValidRescueTarget);
 
         for (HamsterEntity hamster : newWorldHamsters) {
             if (!toRescue.contains(hamster)) {
@@ -1562,8 +1586,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // Pocket them
         for (HamsterEntity hamster : toRescue) {
-            NbtCompound nbt = new NbtCompound();
-            hamster.writeNbt(nbt); // Save complete state
+            TagValueOutput nbtOut = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, hamster.registryAccess());
+            hamster.saveWithoutId(nbtOut);
+            CompoundTag nbt = nbtOut.buildResult(); // Save complete state
             this.ahp$inTransitHamsters.add(nbt);
             hamster.discard(); // Remove from world
         }
@@ -1580,18 +1605,18 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
         // Treat babies identically if their parent is a valid rescue target
         if (hamster.isBaby() && hamster.getParentUuid() != null) {
-            MinecraftServer server = hamster.getServer();
+            MinecraftServer server = hamster.level().getServer();
             if (server != null) {
                 Entity parentEntity = null;
-                for (ServerWorld w : server.getWorlds()) {
+                for (ServerLevel w : server.getAllLevels()) {
                     parentEntity = w.getEntity(hamster.getParentUuid());
                     if (parentEntity != null) break;
                 }
 
                 boolean parentRescued = false;
                 if (parentEntity instanceof HamsterEntity parentHamster && parentHamster.isAlive()) {
-                    if (parentHamster.isTamed() && this.getUuid().equals(parentHamster.getOwnerUuid())
-                            && !parentHamster.isSitting()
+                    if (parentHamster.isTame() && this.getUUID().equals((parentHamster.getOwnerReference() == null ? null : parentHamster.getOwnerReference().getUUID()))
+                            && !parentHamster.isOrderedToSit()
                             && !parentHamster.isWanderModeActive()
                             && !parentHamster.isShoulderPet()) {
                         parentRescued = true;
@@ -1599,7 +1624,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                 } else {
                     // Parent not active in world. Check if currently mounted to shoulder
                     for (ShoulderLocation loc : ShoulderLocation.values()) {
-                        NbtCompound nbt = this.getShoulderHamster(loc);
+                        CompoundTag nbt = this.getShoulderHamster(loc);
                         if (!nbt.isEmpty()) {
                             Optional<HamsterState> state = HamsterState.fromNbt(nbt);
                             if (state.isPresent() && state.get().entityUuid().equals(hamster.getParentUuid())) {
@@ -1610,8 +1635,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
                     }
                     // Check if parent is currently in transit
                     if (!parentRescued) {
-                        for (NbtCompound nbt : this.ahp$inTransitHamsters) {
-                            if (nbt.containsUuid("UUID") && nbt.getUuid("UUID").equals(hamster.getParentUuid())) {
+                        for (CompoundTag nbt : this.ahp$inTransitHamsters) {
+                            if (nbt.read("UUID", UUIDUtil.CODEC).isPresent() && nbt.read("UUID", UUIDUtil.CODEC).orElse(null).equals(hamster.getParentUuid())) {
                                 parentRescued = true;
                                 break;
                             }
@@ -1625,12 +1650,12 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
             }
         }
 
-        if (hamster.isSitting()) {
+        if (hamster.isOrderedToSit()) {
             return false;
         }
 
         // Tamed and owned by player
-        if (hamster.isTamed() && this.getUuid().equals(hamster.getOwnerUuid())) {
+        if (hamster.isTame() && this.getUUID().equals((hamster.getOwnerReference() == null ? null : hamster.getOwnerReference().getUUID()))) {
             return true;
         }
 
@@ -1642,8 +1667,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
      */
     @Unique
     private void tickGuideBookTracking() {
-        PlayerEntity self = (PlayerEntity) (Object) this;
-        if (self.getWorld().isClient || !(self instanceof ServerPlayerEntity player)) return;
+        Player self = (Player) (Object) this;
+        if (self.level().isClientSide() || !(self instanceof ServerPlayer player)) return;
 
         // Once per second
         if (++this.ahp$guideBookCheckTimer < AHP_GUIDEBOOK_CHECK_INTERVAL_TICKS) return;
@@ -1693,22 +1718,22 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
      * Executes a visual scan for a hamster to trigger fallback guidebook delivery.
      */
     @Unique
-    private boolean ahp$tryFallbackDelivery(ServerPlayerEntity player) {
-        PlayerAdvancementTracker advancementTracker = player.getAdvancementTracker();
-        Identifier flagAdvId = Identifier.of(AdorableHamsterPets.MOD_ID, "technical/has_received_initial_guidebook");
-        AdvancementEntry flagAdvancementEntry = player.server.getAdvancementLoader().get(flagAdvId);
+    private boolean ahp$tryFallbackDelivery(ServerPlayer player) {
+        PlayerAdvancements advancementTracker = player.getAdvancements();
+        Identifier flagAdvId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "technical/has_received_initial_guidebook");
+        AdvancementHolder flagAdvancementEntry = player.level().getServer().getAdvancements().get(flagAdvId);
 
         // Abort if they've already received the initial delivery at some point
-        if (flagAdvancementEntry == null || advancementTracker.getProgress(flagAdvancementEntry).isDone()) {
+        if (flagAdvancementEntry == null || advancementTracker.getOrStartProgress(flagAdvancementEntry).isDone()) {
             return false;
         }
 
         double searchRadius = 10.0;
-        Box searchBox = player.getBoundingBox().expand(searchRadius);
-        List<HamsterEntity> nearbyHamsters = player.getWorld().getEntitiesByClass(
+        AABB searchBox = player.getBoundingBox().inflate(searchRadius);
+        List<HamsterEntity> nearbyHamsters = player.level().getEntitiesOfClass(
                 HamsterEntity.class,
                 searchBox,
-                EntityPredicates.VALID_ENTITY
+                EntitySelector.ENTITY_STILL_ALIVE
         );
 
         for (HamsterEntity hamster : nearbyHamsters) {
@@ -1728,23 +1753,23 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     // Check for yummy rocks. Prioritize exposed ones.
     @Unique
-    private boolean isCelebrationOreNearby(PlayerEntity player, double radius) {
-        World world = player.getWorld();
-        BlockPos center = player.getBlockPos();
+    private boolean isCelebrationOreNearby(Player player, double radius) {
+        Level world = player.level();
+        BlockPos center = player.blockPosition();
         int intRadius = (int) Math.ceil(radius);
 
         List<BlockPos> exposedOres = new ArrayList<>();
         List<BlockPos> buriedOres = new ArrayList<>();
 
-        for (BlockPos checkPos : BlockPos.iterate(center.add(-intRadius, -intRadius, -intRadius), center.add(intRadius, intRadius, intRadius))) {
-            if (checkPos.getSquaredDistance(center) <= radius * radius) {
+        for (BlockPos checkPos : BlockPos.betweenClosed(center.offset(-intRadius, -intRadius, -intRadius), center.offset(intRadius, intRadius, intRadius))) {
+            if (checkPos.distSqr(center) <= radius * radius) {
                 BlockState state = world.getBlockState(checkPos);
 
                 if (ConfigDataCache.isCelebrationOre(state)) {
                     if (HamsterSniffForOreGoal.isOreExposed(checkPos, world)) {
-                        exposedOres.add(checkPos.toImmutable());
+                        exposedOres.add(checkPos.immutable());
                     } else {
-                        buriedOres.add(checkPos.toImmutable());
+                        buriedOres.add(checkPos.immutable());
                     }
                 }
             }
@@ -1754,13 +1779,13 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 
     // Is green explody thing looking at player?
     @Unique
-    private boolean creeperSeesPlayer(PlayerEntity player, double radius) {
-        World world = player.getWorld();
-        Box searchBox = new Box(player.getPos().subtract(radius, radius, radius), player.getPos().add(radius, radius, radius));
-        List<CreeperEntity> nearbyCreepers = world.getEntitiesByClass(
-                CreeperEntity.class,
+    private boolean creeperSeesPlayer(Player player, double radius) {
+        Level world = player.level();
+        AABB searchBox = new AABB(player.position().subtract(radius, radius, radius), player.position().add(radius, radius, radius));
+        List<Creeper> nearbyCreepers = world.getEntitiesOfClass(
+                Creeper.class,
                 searchBox,
-                creeper -> creeper.isAlive() && creeper.getTarget() == player && EntityPredicates.VALID_ENTITY.test(creeper)
+                creeper -> creeper.isAlive() && creeper.getTarget() == player && EntitySelector.ENTITY_STILL_ALIVE.test(creeper)
         );
         return !nearbyCreepers.isEmpty();
     }

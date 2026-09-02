@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.event;
 
+import net.minecraft.world.level.block.SaplingBlock;
 import dev.architectury.event.CompoundEventResult;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.*;
@@ -25,38 +26,37 @@ import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.dawson.adorablehamsterpets.world.ModWorldGeneration;
 import net.dawson.adorablehamsterpets.world.gen.CaveHamsterSpawner;
 import net.dawson.adorablehamsterpets.world.gen.ModEntitySpawns;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.LecternBlock;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.LecternBlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.particle.BlockStateParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LecternBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.LecternBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import vazkii.patchouli.api.PatchouliAPI;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -78,8 +78,8 @@ public class AHPCommonEvents {
         InteractionEvent.LEFT_CLICK_BLOCK.register(AHPCommonEvents::onLeftClickBlock);
 
         // Catch block breaks
-        BlockEvent.BREAK.register((world, pos, state, player, xp) -> {
-            if (!world.isClient()) {
+        BlockEvent.BREAK.register((world, pos, state, player) -> {
+            if (!world.isClientSide()) {
                 HamsterAbstractHiddenEntity occupant = HamsterAbstractHiddenEntity.getOccupant(world, pos);
                 if (occupant instanceof HamsterBlockHiderEntity hider && hider.isOwnedBy(player)) {
                     hider.finishHiding(true, player);
@@ -115,48 +115,32 @@ public class AHPCommonEvents {
      *        Event Handlers / Callbacks
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static EventResult onRightClickBlock(PlayerEntity player, Hand hand, BlockPos pos, Direction face) {
-        World world = player.getWorld();
+    private static EventResult onRightClickBlock(Player player, InteractionHand hand, BlockPos pos, Direction face) {
+        Level world = player.level();
         BlockState state = world.getBlockState(pos);
 
         // --- Hide & Seek Intercept ---
-        if (!world.isClient()) {
+        if (!world.isClientSide()) {
             HamsterAbstractHiddenEntity occupant = HamsterAbstractHiddenEntity.getOccupant(world, pos);
             if (occupant instanceof HamsterBlockHiderEntity hider && hider.isOwnedBy(player)) {
                 hider.finishHiding(true, player);
-                player.swingHand(hand, true);
+                player.swing(hand, true);
                 return EventResult.interruptTrue();
             }
             // Allow non-owners normal interaction
         }
 
-        // --- Lectern Intercept ---
-        // Intercept the read action and route it through the Patchouli API
-        if (state.isOf(Blocks.LECTERN) && state.get(LecternBlock.HAS_BOOK)) {
-            // Let sneaking players take book out normally
-            if (!player.isSneaking()) {
-                BlockEntity be = world.getBlockEntity(pos);
-                if (be instanceof LecternBlockEntity lectern) {
-                    ItemStack bookStack = lectern.getBook();
-
-                    if (bookStack.isOf(ModItems.HAMSTER_GUIDE_BOOK.get())) {
-                        if (!world.isClient() && player instanceof ServerPlayerEntity serverPlayer) {
-                            PatchouliAPI.get().openBookGUI(serverPlayer, Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
-                        }
-                        // Interrupt to avoid vanilla written book UI
-                        return EventResult.interruptTrue();
-                    }
-                }
-            }
-        }
+        // 26.2 port: the lectern used to open the Patchouli guide book here.
+        // Patchouli has no 26.2 build, so the interception is dropped and the
+        // lectern behaves normally.
 
         // --- Hamster Bed Unlink ---
-        ItemStack stack = player.getStackInHand(hand);
+        ItemStack stack = player.getItemInHand(hand);
 
         // Only care about specific unlink combination: sneaking + holding repellent
-        if (player.isSneaking() && ConfigDataCache.isBedAvoidanceFood(stack)) {
+        if (player.isShiftKeyDown() && ConfigDataCache.isBedAvoidanceFood(stack)) {
             if (state.getBlock() instanceof HamsterBedBlock) {
-                if (!world.isClient()) {
+                if (!world.isClientSide()) {
                     BlockEntity be = world.getBlockEntity(pos);
                     if (be instanceof HamsterBedBlockEntity bedEntity) {
                         bedEntity.unlinkHamster(player);
@@ -169,33 +153,33 @@ public class AHPCommonEvents {
 
         // --- Precision Tree Heist ---
         if (ConfigDataCache.isLureItem(stack) && TreeHeistUtil.isValidHeistStartBlock(state)) {
-            if (!world.isClient() && player instanceof PlayerEntityAccessor accessor) {
+            if (!world.isClientSide() && player instanceof PlayerEntityAccessor accessor) {
                 if (accessor.hasAnyShoulderHamster()) {
                     accessor.adorablehamsterpets$startPrecisionTreeHeist(pos);
                     return EventResult.interruptTrue();
                 }
-            } else if (world.isClient() && ((PlayerEntityAccessor) player).hasAnyShoulderHamster()) {
+            } else if (world.isClientSide() && ((PlayerEntityAccessor) player).hasAnyShoulderHamster()) {
                 // Prevent placing item
                 return EventResult.interruptTrue();
             }
         }
 
         // --- Sapling to Dead Bush Conversion ---
-        if (stack.isOf(Items.SHEARS) && state.isIn(BlockTags.SAPLINGS)) {
-            if (!world.isClient()) {
-                world.setBlockState(pos, Blocks.DEAD_BUSH.getDefaultState(), Block.NOTIFY_ALL);
-                world.playSound(null, pos, SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.BLOCKS, 1.0f, 1.0f);
+        if (stack.is(Items.SHEARS) && state.getBlock() instanceof SaplingBlock) {
+            if (!world.isClientSide()) {
+                world.setBlock(pos, Blocks.DEAD_BUSH.defaultBlockState(), Block.UPDATE_ALL);
+                world.playSound(null, pos, SoundEvents.SHEEP_SHEAR, SoundSource.BLOCKS, 1.0f, 1.0f);
 
-                if (player instanceof ServerPlayerEntity serverPlayer && !serverPlayer.getAbilities().creativeMode) {
-                    stack.damage(1, serverPlayer, LivingEntity.getSlotForHand(hand));
+                if (player instanceof ServerPlayer serverPlayer && !serverPlayer.getAbilities().instabuild) {
+                    stack.hurtAndBreak(1, serverPlayer, (hand == net.minecraft.world.InteractionHand.MAIN_HAND ? net.minecraft.world.entity.EquipmentSlot.MAINHAND : net.minecraft.world.entity.EquipmentSlot.OFFHAND));
                 }
 
                 ParticleEffectsUtil.spawnParticles(
                         world,
-                        Vec3d.ofCenter(pos),
-                        new BlockStateParticleEffect(ParticleTypes.BLOCK, state),
+                        Vec3.atCenterOf(pos),
+                        new BlockParticleOption(ParticleTypes.BLOCK, state),
                         15,
-                        new Vec3d(0.2, 0.2, 0.2),
+                        new Vec3(0.2, 0.2, 0.2),
                         0.05
                 );
             }
@@ -206,15 +190,15 @@ public class AHPCommonEvents {
         return EventResult.pass();
     }
 
-    private static EventResult onLeftClickBlock(PlayerEntity player, Hand hand, BlockPos pos, Direction face) {
-        World world = player.getWorld();
+    private static EventResult onLeftClickBlock(Player player, InteractionHand hand, BlockPos pos, Direction face) {
+        Level world = player.level();
 
         // --- Hide & Seek Intercept ---
-        if (!world.isClient()) {
+        if (!world.isClientSide()) {
             HamsterAbstractHiddenEntity occupant = HamsterAbstractHiddenEntity.getOccupant(world, pos);
             if (occupant instanceof HamsterBlockHiderEntity hider && hider.isOwnedBy(player)) {
                 hider.finishHiding(true, player);
-                player.swingHand(hand, true);
+                player.swing(hand, true);
                 return EventResult.interruptTrue();
             }
             // Allow non-owners to break block normally
@@ -223,26 +207,26 @@ public class AHPCommonEvents {
         return EventResult.pass();
     }
 
-    private static CompoundEventResult<ItemStack> onRightClickItem(PlayerEntity player, Hand hand) {
-        ItemStack stack = player.getStackInHand(hand);
+    private static EventResult onRightClickItem(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
 
         // --- Precision Tree Heist Dynamic Exit ---
         if (ConfigDataCache.isLureItem(stack)) {
-            World world = player.getWorld();
+            Level world = player.level();
             boolean updated = false;
 
-            if (world instanceof ServerWorld serverWorld) {
-                for (Entity entity : serverWorld.iterateEntities()) {
+            if (world instanceof ServerLevel serverWorld) {
+                for (Entity entity : serverWorld.getAllEntities()) {
                     if (entity instanceof HamsterTreeSearcherEntity searcher && searcher.isOwnedBy(player)) {
-                        searcher.setForcedExitYaw(player.getYaw());
+                        searcher.setForcedExitYaw(player.getYRot());
                         updated = true;
                     }
                 }
                 if (updated) {
-                    player.sendMessage(Text.translatable("message.adorablehamsterpets.precision_tree_heist_exit_direction_set").formatted(Formatting.AQUA), true);                }
+                    player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.precision_tree_heist_exit_direction_set").withStyle(ChatFormatting.AQUA));                }
             } else {
                 // Client side prediction check
-                for (Entity entity : world.getEntitiesByClass(HamsterTreeSearcherEntity.class, player.getBoundingBox().expand(64.0), e -> true)) {
+                for (Entity entity : world.getEntitiesOfClass(HamsterTreeSearcherEntity.class, player.getBoundingBox().inflate(64.0), e -> true)) {
                     if (((HamsterTreeSearcherEntity) entity).isOwnedBy(player)) {
                         updated = true;
                         break;
@@ -252,10 +236,10 @@ public class AHPCommonEvents {
 
             if (updated) {
                 // Prevent the player from eating the cheese while configuring the heist
-                return CompoundEventResult.interruptTrue(stack);
+                return EventResult.interruptTrue();
             }
         }
-        return CompoundEventResult.pass();
+        return EventResult.pass();
     }
 
     /**
@@ -265,22 +249,22 @@ public class AHPCommonEvents {
      * @param player The player opening the menu.
      * @param menu   The menu being opened.
      */
-    private static void onOpenMenu(PlayerEntity player, ScreenHandler menu) {
-        if (player.getWorld().isClient()) {
+    private static void onOpenMenu(Player player, AbstractContainerMenu menu) {
+        if (player.level().isClientSide()) {
             return;
         }
 
         // Use a set to avoid scanning the same inventory multiple times
-        Set<Inventory> inventories = new HashSet<>();
+        Set<Container> inventories = new HashSet<>();
         for (Slot slot : menu.slots) {
-            Inventory inv = ((SlotAccessor) slot).adorablehamsterpets$getInventory();
+            Container inv = ((SlotAccessor) slot).adorablehamsterpets$getInventory();
             if (inv != null) {
                 inventories.add(inv);
             }
         }
 
         // Run the upgrade logic on each unique inventory found
-        for (Inventory inv : inventories) {
+        for (Container inv : inventories) {
             AdorableHamsterPets.replaceOldBooksInInventory(inv);
         }
     }
@@ -297,24 +281,24 @@ public class AHPCommonEvents {
      * {@link EventResult#pass()} to allow it.
      */
     private static EventResult onLivingHurt(LivingEntity victim, DamageSource source, float amount) {
-        if (victim.getWorld().isClient()) {
+        if (victim.level().isClientSide()) {
             return EventResult.pass();
         }
 
-        Entity direct = source.getSource();
-        Entity attacker = source.getAttacker();
+        Entity direct = source.getDirectEntity();
+        Entity attacker = source.getEntity();
 
         // Ring restraint covers direct normal attacks only, not projectiles or hazards.
-        if (attacker instanceof PlayerEntity player
+        if (attacker instanceof Player player
                 && direct == player
 				&& AcornRingUtil.blocksDirectPlayerAttack(player, victim)) {
             return EventResult.interruptFalse();
         }
 
         HamsterEntity hamster = null;
-        if (direct instanceof HamsterEntity h && h.isTamed()) {
+        if (direct instanceof HamsterEntity h && h.isTame()) {
             hamster = h;
-        } else if (attacker instanceof HamsterEntity h && h.isTamed()) {
+        } else if (attacker instanceof HamsterEntity h && h.isTame()) {
             hamster = h;
         }
 
@@ -327,7 +311,7 @@ public class AHPCommonEvents {
             }
         }
 
-        if (victim instanceof HamsterEntity victimHamster && victimHamster.isTamed()) {
+        if (victim instanceof HamsterEntity victimHamster && victimHamster.isTame()) {
             UUID victimOwnerUuid = PetOwnershipUtil.resolveOwnerUuid(victimHamster);
             UUID attackerOwnerUuid = attacker instanceof LivingEntity livingAttacker
                     ? PetOwnershipUtil.resolveOwnerUuid(livingAttacker)
@@ -350,8 +334,8 @@ public class AHPCommonEvents {
      *        Private Helpers
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static void popOutHiddenHamster(ServerWorld world, BlockPos pos, PlayerEntity player) {
-        for (Entity entity : world.iterateEntities()) {
+    private static void popOutHiddenHamster(ServerLevel world, BlockPos pos, Player player) {
+        for (Entity entity : world.getAllEntities()) {
             if (entity instanceof HamsterBlockHiderEntity hider) {
                 if (hider.getAnchorPos() != null && hider.getAnchorPos().equals(pos)) {
                     if (hider.isOwnedBy(player)) {

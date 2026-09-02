@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.custom.genetics;
 
 import net.dawson.adorablehamsterpets.util.ColorSpaceUtil;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Defines 12 abstract color categories used for spawning environments and overlay exclusion rules.
@@ -21,7 +21,7 @@ public enum HamsterColorZone {
     RUST("assets/adorablehamsterpets/textures/entity/hamster/jimcerberus/rust.png"),
     ORANGE(new int[]{0xedb572, 0xe0a058, 0xd99b56, 0xd49653, 0xd09251, 0xcd8d4e, 0xc9874a, 0xc08049});
 
-    private final Vec3d idealCenter;
+    private final Vec3 idealCenter;
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constructors
@@ -37,7 +37,7 @@ public enum HamsterColorZone {
         this.idealCenter = ColorSpaceUtil.analyzeImage(resourcePath).position();
     }
 
-    public Vec3d getIdealCenter() {
+    public Vec3 getIdealCenter() {
         return this.idealCenter;
     }
 }

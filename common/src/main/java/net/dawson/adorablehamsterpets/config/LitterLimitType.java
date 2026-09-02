@@ -2,16 +2,16 @@ package net.dawson.adorablehamsterpets.config;
 
 import com.mojang.serialization.Codec;
 import me.fzzyhmstrs.fzzy_config.util.EnumTranslatable;
-import net.minecraft.util.StringIdentifiable;
+import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
-public enum LitterLimitType implements StringIdentifiable, EnumTranslatable {
+public enum LitterLimitType implements StringRepresentable, EnumTranslatable {
     DAILY("Daily"),
     LIFETIME("Lifetime");
 
-    public static final Codec<LitterLimitType> CODEC = StringIdentifiable.createCodec(LitterLimitType::values);
+    public static final Codec<LitterLimitType> CODEC = StringRepresentable.fromEnum(LitterLimitType::values);
     private final String name;
 
     LitterLimitType(String name) {
@@ -19,7 +19,7 @@ public enum LitterLimitType implements StringIdentifiable, EnumTranslatable {
     }
 
     @Override
-    public String asString() {
+    public String getSerializedName() {
         return this.name;
     }
 

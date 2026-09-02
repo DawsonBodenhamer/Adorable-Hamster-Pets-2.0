@@ -6,11 +6,11 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.util.ColorSpaceUtil;
 import net.dawson.adorablehamsterpets.util.HamsterGeneticsUtil;
 import net.dawson.adorablehamsterpets.util.MiscUtil;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
@@ -226,7 +226,7 @@ public class HamsterPaletteManager {
     /**
      * Finds the closest palette to a target 3D coordinate.
      */
-    public static PaletteDefinition getClosestPalette(Vec3d targetPos, Set<String> exclusions, Set<HamsterColorZone> allowedZones, boolean requireProgrammatic) {
+    public static PaletteDefinition getClosestPalette(Vec3 targetPos, Set<String> exclusions, Set<HamsterColorZone> allowedZones, boolean requireProgrammatic) {
         PaletteDefinition closest = null;
         double minDistance = Double.MAX_VALUE;
 
@@ -253,7 +253,7 @@ public class HamsterPaletteManager {
     /**
      * Selects a random palette, filtered by zone and type constraints.
      */
-    public static PaletteDefinition getRandomPalette(Random random, Set<HamsterColorZone> allowedZones, boolean requireProgrammatic) {
+    public static PaletteDefinition getRandomPalette(RandomSource random, Set<HamsterColorZone> allowedZones, boolean requireProgrammatic) {
         List<PaletteDefinition> valid = new ArrayList<>();
         for (PaletteDefinition def : PALETTE_REGISTRY.values()) {
             if (allowedZones != null && !allowedZones.contains(def.zone())) continue;
@@ -271,7 +271,7 @@ public class HamsterPaletteManager {
      * Calculates and prints the current status of the genetics engine.
      * Can be routed to the server console or directly to a player's chat.
      */
-    public static void printGeneticsReport(@Nullable ServerCommandSource source, boolean toChat) {
+    public static void printGeneticsReport(@Nullable CommandSourceStack source, boolean toChat) {
         Consumer<String> output = line -> {
             if (toChat && source != null) {
                 // Strip ASCII box formatting and normalize dotted leaders
@@ -279,7 +279,7 @@ public class HamsterPaletteManager {
                         .replaceAll("\\.{2,}", "...");
 
                 if (!chatLine.trim().isEmpty()) {
-                    source.sendFeedback(() -> Text.literal(chatLine).formatted(Formatting.WHITE), false);
+                    source.sendSuccess(() -> Component.literal(chatLine).withStyle(ChatFormatting.WHITE), false);
                 }
             } else {
                 AdorableHamsterPets.LOGGER.info(line);

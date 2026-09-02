@@ -1,13 +1,13 @@
 package net.dawson.adorablehamsterpets.util;
 
+import java.util.function.Consumer;
 import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.config.Configs;
-import net.minecraft.component.ComponentMap;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.FoodComponent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.food.FoodProperties;
 import java.util.List;
 
 /**
@@ -21,35 +21,35 @@ public final class DynamicFoodUtil {
     /**
      * Generates a dynamic ComponentMap that overrides the base food component with live config values.
      */
-    public static ComponentMap getDynamicComponents(ComponentMap baseComponents, int nutrition, float saturation) {
-        FoodComponent dynamicFoodComponent = new FoodComponent.Builder()
+    public static DataComponentMap getDynamicComponents(DataComponentMap baseComponents, int nutrition, float saturation) {
+        FoodProperties dynamicFoodComponent = new FoodProperties.Builder()
                 .nutrition(nutrition)
                 .saturationModifier(saturation)
                 .build();
 
-        ComponentMap override = ComponentMap.builder()
-                .add(DataComponentTypes.FOOD, dynamicFoodComponent)
+        DataComponentMap override = DataComponentMap.builder()
+                .set(DataComponents.FOOD, dynamicFoodComponent)
                 .build();
 
-        return ComponentMap.of(baseComponents, override);
+        return DataComponentMap.composite(baseComponents, override);
     }
 
     /**
      * Appends standard tooltips and dynamic nutrition stats (if AppleSkin is absent).
      */
-    public static void appendTooltip(List<Text> tooltip, String tooltipBaseKey, int nutrition, float saturation) {
+    public static void appendTooltip(Consumer<Component> tooltip, String tooltipBaseKey, int nutrition, float saturation) {
         if (Configs.AHP_UI.enableItemTooltips) {
-            tooltip.add(Text.translatable(tooltipBaseKey + ".hint1").formatted(Formatting.GOLD));
-            tooltip.add(Text.translatable(tooltipBaseKey + ".hint2").formatted(Formatting.GRAY));
+            tooltip.accept(Component.translatable(tooltipBaseKey + ".hint1").withStyle(ChatFormatting.GOLD));
+            tooltip.accept(Component.translatable(tooltipBaseKey + ".hint2").withStyle(ChatFormatting.GRAY));
 
             if (!Platform.isModLoaded("appleskin")) {
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.appleskin.hint",
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.appleskin.hint",
                         nutrition,
                         String.format("%.1f", saturation * nutrition * 2.0F)
-                ).formatted(Formatting.DARK_GRAY));
+                ).withStyle(ChatFormatting.DARK_GRAY));
             }
         } else if (!Platform.isModLoaded("emi")) {
-            tooltip.add(Text.literal("Adorable Hamster Pets").formatted(Formatting.BLUE, Formatting.ITALIC));
+            tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
         }
     }
 }

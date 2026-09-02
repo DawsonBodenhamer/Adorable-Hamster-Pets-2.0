@@ -8,28 +8,27 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterProjectileEntity;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
 import net.dawson.adorablehamsterpets.networking.payload.PlayDistantSoundPayload;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.attribute.EntityAttributeInstance;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.projectile.ProjectileUtil;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.BlockStateParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,8 +36,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class HamsterPhysicsUtil {
 
-    public static final Identifier ARMOR_SPEED_BOOST_ID = Identifier.of(AdorableHamsterPets.MOD_ID, "armor_speed_boost");
-    public static final Identifier ARMOR_KNOCKBACK_RESISTANCE_ID = Identifier.of(AdorableHamsterPets.MOD_ID, "armor_knockback_resistance");
+    public static final Identifier ARMOR_SPEED_BOOST_ID = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "armor_speed_boost");
+    public static final Identifier ARMOR_KNOCKBACK_RESISTANCE_ID = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "armor_knockback_resistance");
 
     private HamsterPhysicsUtil() {}
 
@@ -52,14 +51,14 @@ public final class HamsterPhysicsUtil {
      * @param totalTicks     The total duration of the lunge sequence.
      * @return The interpolated Vec3d coordinate.
      */
-    public static Vec3d calculatePouncePosition(Vec3d startPos, Vec3d targetPos, int remainingTicks, int totalTicks) {
+    public static Vec3 calculatePouncePosition(Vec3 startPos, Vec3 targetPos, int remainingTicks, int totalTicks) {
         double progress = (double) (totalTicks - remainingTicks) / totalTicks;
         double easedProgress = progress * progress; // Quadratic ease-in
 
         double newX = startPos.x + easedProgress * (targetPos.x - startPos.x);
         double newZ = startPos.z + easedProgress * (targetPos.z - startPos.z);
 
-        return new Vec3d(newX, startPos.y, newZ);
+        return new Vec3(newX, startPos.y, newZ);
     }
 
     /**
@@ -67,47 +66,47 @@ public final class HamsterPhysicsUtil {
      * Plays the "Incoming" sound at the target location if an impact is predicted
      */
     public static void simulateTrajectoryAndCheckSound(HamsterProjectileEntity projectileDummy) {
-        Vec3d simPos = projectileDummy.getPos();
-        Vec3d simVel = projectileDummy.getVelocity();
+        Vec3 simPos = projectileDummy.position();
+        Vec3 simVel = projectileDummy.getDeltaMovement();
 
         for (int i = 1; i <= 20; i++) {
-            if (!projectileDummy.hasNoGravity()) {
+            if (!projectileDummy.isNoGravity()) {
                 simVel = simVel.add(0.0, -Configs.AHP_MAIN.hamsterThrowGravity.get(), 0.0);
             }
 
-            Vec3d nextPos = simPos.add(simVel);
+            Vec3 nextPos = simPos.add(simVel);
 
             // 1. Block Collision Check
-            HitResult blockHit = projectileDummy.getWorld().raycast(new RaycastContext(
+            HitResult blockHit = projectileDummy.level().clip(new ClipContext(
                     simPos,
                     nextPos,
-                    RaycastContext.ShapeType.COLLIDER,
-                    RaycastContext.FluidHandling.NONE,
+                    ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE,
                     projectileDummy
             ));
 
             // 2. Entity Collision Check
-            EntityHitResult entityHit = ProjectileUtil.getEntityCollision(
-                    projectileDummy.getWorld(),
+            EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
+                    projectileDummy.level(),
                     projectileDummy,
                     simPos,
                     nextPos,
-                    projectileDummy.getBoundingBox().stretch(simVel).expand(1.0),
+                    projectileDummy.getBoundingBox().expandTowards(simVel).inflate(1.0),
                     projectileDummy::isHitTargetValid
             );
 
-            Vec3d impactPos = null;
+            Vec3 impactPos = null;
 
             if (entityHit != null) {
-                impactPos = entityHit.getPos();
+                impactPos = entityHit.getLocation();
             } else if (blockHit.getType() != HitResult.Type.MISS) {
-                impactPos = blockHit.getPos();
+                impactPos = blockHit.getLocation();
             }
 
             if (impactPos != null) {
                 // Collision predicted in 'i' ticks
-                if (projectileDummy.age + i >= 20) {
-                    projectileDummy.getWorld().playSound(null, impactPos.x, impactPos.y, impactPos.z, ModSounds.HAMSTER_INCOMING.get(), SoundCategory.NEUTRAL, 1.0f, 1.0f);
+                if (projectileDummy.tickCount + i >= 20) {
+                    projectileDummy.level().playSound(null, impactPos.x, impactPos.y, impactPos.z, ModSounds.HAMSTER_INCOMING.get(), SoundSource.NEUTRAL, 1.0f, 1.0f);
                 }
                 projectileDummy.setHasPlayedIncomingSound(true);
                 return;
@@ -123,7 +122,7 @@ public final class HamsterPhysicsUtil {
      * while maintaining clarity at long ranges. Checks for non-organic armor and plays a shield block sound if present.
      */
     public static void broadcastImpactSound(HamsterEntity hamster, SoundEvent sound, float pitch) {
-        if (hamster.getWorld().isClient()) return;
+        if (hamster.level().isClientSide()) return;
 
         double impactX = hamster.getX();
         double impactY = hamster.getY();
@@ -136,14 +135,14 @@ public final class HamsterPhysicsUtil {
             ItemStack armorStack = hamster.getItems().get(HamsterInventoryUtil.ARMOR_SLOT_INDEX);
             if (!armorStack.isEmpty() && armorStack.getItem() instanceof HamsterArmorItem armorItem) {
                 if (armorItem.getMaterial() != HamsterArmorItem.HamsterArmorMaterial.ACORN) {
-                    armorSound = SoundEvents.BLOCK_BELL_USE;
+                    armorSound = SoundEvents.BELL_BLOCK;
                     armorPitch = 2.0f + hamster.getRandom().nextFloat() * 0.5f;
                 }
             }
         }
 
-        for (ServerPlayerEntity player : ((ServerWorld) hamster.getWorld()).getPlayers()) {
-            double distSq = player.squaredDistanceTo(impactX, impactY, impactZ);
+        for (ServerPlayer player : ((ServerLevel) hamster.level()).players()) {
+            double distSq = player.distanceToSqr(impactX, impactY, impactZ);
 
             if (distSq <= 2500) { // 50 blocks squared
                 double distance = Math.sqrt(distSq);
@@ -158,13 +157,13 @@ public final class HamsterPhysicsUtil {
                     volume = 0.18F - (0.08F * remainingProgress);
                 }
 
-                volume = MathHelper.clamp(volume, 0.10F, 1.0F);
+                volume = Mth.clamp(volume, 0.10F, 1.0F);
 
-                NetworkManager.sendToPlayer(player, new PlayDistantSoundPayload(sound.getId(), volume, pitch));
+                NetworkManager.sendToPlayer(player, new PlayDistantSoundPayload(sound.location(), volume, pitch));
 
                 if (armorSound != null) {
                     float armorVolume = Math.min(1.0f, volume * 0.5f);
-                    NetworkManager.sendToPlayer(player, new PlayDistantSoundPayload(armorSound.getId(), armorVolume, armorPitch));
+                    NetworkManager.sendToPlayer(player, new PlayDistantSoundPayload(armorSound.location(), armorVolume, armorPitch));
                 }
             }
         }
@@ -174,8 +173,8 @@ public final class HamsterPhysicsUtil {
      * Evaluates and updates dynamic attribute modifiers based on current armor and config
      */
     public static void updateArmorModifiers(HamsterEntity hamster, ItemStack armorStack) {
-        EntityAttributeInstance speedAttribute = hamster.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
-        EntityAttributeInstance knockbackAttribute = hamster.getAttributeInstance(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE);
+        AttributeInstance speedAttribute = hamster.getAttribute(Attributes.MOVEMENT_SPEED);
+        AttributeInstance knockbackAttribute = hamster.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
 
         boolean perksEnabled = Configs.AHP_MAIN.enableArmorPerks.get();
         boolean shouldHaveSpeed = false;
@@ -195,8 +194,8 @@ public final class HamsterPhysicsUtil {
 
             if (shouldHaveSpeed && !hasSpeed) {
                 double boost = Configs.AHP_MAIN.goldArmorSpeedBoost.get();
-                speedAttribute.addTemporaryModifier(new EntityAttributeModifier(
-                        ARMOR_SPEED_BOOST_ID, boost, EntityAttributeModifier.Operation.ADD_MULTIPLIED_BASE
+                speedAttribute.addTransientModifier(new AttributeModifier(
+                        ARMOR_SPEED_BOOST_ID, boost, AttributeModifier.Operation.ADD_MULTIPLIED_BASE
                 ));
             } else if (!shouldHaveSpeed && hasSpeed) {
                 speedAttribute.removeModifier(ARMOR_SPEED_BOOST_ID);
@@ -208,8 +207,8 @@ public final class HamsterPhysicsUtil {
 
             if (shouldHaveKnockback && !hasKnockback) {
                 double resist = Configs.AHP_MAIN.netheriteArmorKnockbackResist.get();
-                knockbackAttribute.addTemporaryModifier(new EntityAttributeModifier(
-                        ARMOR_KNOCKBACK_RESISTANCE_ID, resist, EntityAttributeModifier.Operation.ADD_VALUE
+                knockbackAttribute.addTransientModifier(new AttributeModifier(
+                        ARMOR_KNOCKBACK_RESISTANCE_ID, resist, AttributeModifier.Operation.ADD_VALUE
                 ));
             } else if (!shouldHaveKnockback && hasKnockback) {
                 knockbackAttribute.removeModifier(ARMOR_KNOCKBACK_RESISTANCE_ID);
@@ -236,76 +235,76 @@ public final class HamsterPhysicsUtil {
      * Finalizes the impact of a thrown hamster, calculating ricochet or bounce physics
      * based on the impacted surface and spawns the entity.
      */
-    public static void finalizeImpact(HamsterEntity hamster, Vec3d incomingVel, Vec3d spawnPos, @Nullable Direction hitFace, @Nullable BlockState hitState) {
+    public static void finalizeImpact(HamsterEntity hamster, Vec3 incomingVel, Vec3 spawnPos, @Nullable Direction hitFace, @Nullable BlockState hitState) {
         // --- 1. Determine Surface Modifiers ---
         // Modify bounce intensity based on block type
         double bounceMultiplier = 0.3;
         double verticalBounce = 0.3;
 
         if (hitState != null) {
-            if (hitState.isOf(Blocks.HONEY_BLOCK)) {
+            if (hitState.is(Blocks.HONEY_BLOCK)) {
                 bounceMultiplier = 0.0;
                 verticalBounce = 0.0;
-            } else if (hitState.isOf(Blocks.SLIME_BLOCK)) {
+            } else if (hitState.is(Blocks.SLIME_BLOCK)) {
                 bounceMultiplier = 0.6;
                 verticalBounce = 0.6;
             }
         }
 
         // --- 2. Calculate Velocity ---
-        Vec3d bounceVel;
+        Vec3 bounceVel;
         if (hitFace == Direction.UP) {
             // Bounce off top of block -> continue forward & bounce up
-            bounceVel = new Vec3d(incomingVel.x * bounceMultiplier, verticalBounce, incomingVel.z * bounceMultiplier);
+            bounceVel = new Vec3(incomingVel.x * bounceMultiplier, verticalBounce, incomingVel.z * bounceMultiplier);
         } else if (hitFace == Direction.DOWN) {
             // Bounce off bottom of block -> continue forward & deflect down
-            bounceVel = new Vec3d(incomingVel.x * bounceMultiplier, -verticalBounce, incomingVel.z * bounceMultiplier);
+            bounceVel = new Vec3(incomingVel.x * bounceMultiplier, -verticalBounce, incomingVel.z * bounceMultiplier);
         } else if (hitFace == Direction.NORTH || hitFace == Direction.SOUTH) {
             // Ricochet off Z-axis wall -> reverse Z, maintain X
-            bounceVel = new Vec3d(incomingVel.x * bounceMultiplier, 0.0, incomingVel.z * -bounceMultiplier);
+            bounceVel = new Vec3(incomingVel.x * bounceMultiplier, 0.0, incomingVel.z * -bounceMultiplier);
         } else if (hitFace == Direction.EAST || hitFace == Direction.WEST) {
             // Ricochet off X-axis wall -> reverse X, maintain Z
-            bounceVel = new Vec3d(incomingVel.x * -bounceMultiplier, 0.0, incomingVel.z * bounceMultiplier);
+            bounceVel = new Vec3(incomingVel.x * -bounceMultiplier, 0.0, incomingVel.z * bounceMultiplier);
         } else {
             // Ricochet off entity (hitFace is null) -> reverse horizontal & drop vertical
-            bounceVel = new Vec3d(incomingVel.x * -bounceMultiplier, 0.0, incomingVel.z * -bounceMultiplier);
+            bounceVel = new Vec3(incomingVel.x * -bounceMultiplier, 0.0, incomingVel.z * -bounceMultiplier);
         }
 
         // --- 3. Calculate Yaw ---
         float yaw;
         // If bouncing off wall, face the direction of bounce
-        if (bounceVel.horizontalLengthSquared() > 0.001) {
-            yaw = (float) (MathHelper.atan2(-bounceVel.x, bounceVel.z) * MathHelper.DEGREES_PER_RADIAN);
+        if (bounceVel.horizontalDistanceSqr() > 0.001) {
+            yaw = (float) (Mth.atan2(-bounceVel.x, bounceVel.z) * Mth.RAD_TO_DEG);
         } else {
-            yaw = (float) (MathHelper.atan2(-incomingVel.x, incomingVel.z) * MathHelper.DEGREES_PER_RADIAN);
+            yaw = (float) (Mth.atan2(-incomingVel.x, incomingVel.z) * Mth.RAD_TO_DEG);
         }
 
         // --- 4. Apply State and Spawn ---
-        hamster.refreshPositionAndAngles(spawnPos.x, spawnPos.y, spawnPos.z, yaw, 0.0f);
+        hamster.snapTo(spawnPos.x, spawnPos.y, spawnPos.z, yaw, 0.0f);
 
-        hamster.setBodyYaw(yaw);
-        hamster.setHeadYaw(yaw);
-        hamster.prevYaw = yaw;
-        hamster.prevBodyYaw = yaw;
-        hamster.prevHeadYaw = yaw;
+        hamster.setYBodyRot(yaw);
+        hamster.setYHeadRot(yaw);
+        hamster.yRotO = yaw;
+        hamster.yBodyRotO = yaw;
+        hamster.yHeadRotO = yaw;
 
-        hamster.setVelocity(bounceVel);
-        hamster.velocityDirty = true;
+        hamster.setDeltaMovement(bounceVel);
+        hamster.needsSync = true;
 
         hamster.setKnockedOut(true);
         hamster.setInSittingPose(true);
 
-        hamster.getWorld().spawnEntity(hamster);
+        hamster.level().addFreshEntity(hamster);
         hamster.triggerAnimOnServer("mainController", "crash");
 
         // --- 5. Spawn Impact Particles ---
-        if (hitState != null && !hitState.isAir() && !hamster.getWorld().isClient()) {
+        if (hitState != null && !hitState.isAir() && !hamster.level().isClientSide()) {
             ParticleEffectsUtil.spawnParticles(
-                    hamster.getWorld(),
-                    new Vec3d(hamster.getX(), hamster.getY() + hamster.getHeight() / 2.0, hamster.getZ()),
-                    new BlockStateParticleEffect(ParticleTypes.BLOCK, hitState),
+                    hamster.level(),
+                    new Vec3(hamster.getX(), hamster.getY() + hamster.getBbHeight() / 2.0, hamster.getZ()),
+                    new BlockParticleOption(ParticleTypes.BLOCK, hitState),
                     30,
-                    new Vec3d(0.3, 0.3, 0.3),
+                    new Vec3(0.3, 0.3, 0.3),
                     0.0
             );
         }

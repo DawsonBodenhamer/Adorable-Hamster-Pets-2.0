@@ -1,17 +1,17 @@
 package net.dawson.adorablehamsterpets.networking.payload;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
-public record DismountHamsterPayload() implements CustomPayload {
-    public static final CustomPayload.Id<DismountHamsterPayload> ID = new CustomPayload.Id<>(Identifier.of(AdorableHamsterPets.MOD_ID, "dismount_hamster"));
-    public static final PacketCodec<RegistryByteBuf, DismountHamsterPayload> CODEC = PacketCodec.unit(new DismountHamsterPayload());
+public record DismountHamsterPayload() implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<DismountHamsterPayload> ID = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "dismount_hamster"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, DismountHamsterPayload> CODEC = StreamCodec.unit(new DismountHamsterPayload());
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

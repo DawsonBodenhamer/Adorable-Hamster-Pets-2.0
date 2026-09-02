@@ -1,97 +1,72 @@
 package net.dawson.adorablehamsterpets.util;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
-import net.minecraft.datafixer.DataFixTypes;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.PersistentState;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Server-wide pending advancement credit for players offline when sunlight curing completes.
+ * Cure credits owed to players who were offline when their hamster was cured.
+ *
+ * <p>26.2 port: SavedData no longer has save/load hooks; persistence is a
+ * {@link SavedDataType} with a {@link Codec}. The NBT shape stays the same
+ * (a "Players" list of UUIDs), only the plumbing changed.
  */
-public final class RedstoneFeverCureCreditState extends PersistentState {
+public final class RedstoneFeverCureCreditState extends SavedData {
 
-    /* ─────────────────────────────────────────────────────────────────────────────
-     *        Constants
-     * ─────────────────────────────────────────────────────────────────────────────*/
+    private static final Codec<RedstoneFeverCureCreditState> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            UUIDUtil.CODEC_SET.fieldOf("Players").forGetter(state -> state.pendingPlayers)
+    ).apply(instance, RedstoneFeverCureCreditState::new));
 
-    private static final String STORAGE_KEY = "adorablehamsterpets_redstone_fever_cure_credit";
-    private static final Type<RedstoneFeverCureCreditState> TYPE = new Type<>(
+    private static final SavedDataType<RedstoneFeverCureCreditState> TYPE = new SavedDataType<>(
+            Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "redstone_fever_cure_credit"),
             RedstoneFeverCureCreditState::new,
-            RedstoneFeverCureCreditState::fromNbt,
+            CODEC,
             DataFixTypes.SAVED_DATA_COMMAND_STORAGE);
 
-    /* ──────────────────────────────────────────────────────────────────────────────
-     *        Instance Fields
-     * ─────────────────────────────────────────────────────────────────────────────*/
+    private final Set<UUID> pendingPlayers;
 
-    private final Set<UUID> pendingPlayers = new HashSet<>();
+    public RedstoneFeverCureCreditState() {
+        this(new HashSet<>());
+    }
 
-    /* ─────────────────────────────────────────────────────────────────────────────
-     *        Static Utilities
-     * ─────────────────────────────────────────────────────────────────────────────*/
+    private RedstoneFeverCureCreditState(Set<UUID> pendingPlayers) {
+        this.pendingPlayers = new HashSet<>(pendingPlayers);
+    }
 
-    public static void awardOrQueue(ServerWorld world, UUID playerUuid) {
-        ServerPlayerEntity player = world.getServer().getPlayerManager().getPlayer(playerUuid);
+    public static void awardOrQueue(ServerLevel world, UUID playerUuid) {
+        ServerPlayer player = world.getServer().getPlayerList().getPlayer(playerUuid);
         if (player != null) {
             // Online credit resolves immediately and never enters persistent queue
             ModCriteria.SUNSHINE_CURING.get().trigger(player);
             return;
         }
         RedstoneFeverCureCreditState state = get(world);
-        if (state.pendingPlayers.add(playerUuid)) state.markDirty();
+        if (state.pendingPlayers.add(playerUuid)) state.setDirty();
     }
 
-    public static void consume(ServerPlayerEntity player) {
+    public static void consume(ServerPlayer player) {
         // Set removal makes reconnect consumption idempotent
-        RedstoneFeverCureCreditState state = get(player.getServerWorld());
-        if (state.pendingPlayers.remove(player.getUuid())) {
+        RedstoneFeverCureCreditState state = get((ServerLevel) player.level());
+        if (state.pendingPlayers.remove(player.getUUID())) {
             ModCriteria.SUNSHINE_CURING.get().trigger(player);
-            state.markDirty();
+            state.setDirty();
         }
     }
 
-    /* ────────────────────────────────────────────────────────────────────────────
-     *        Overrides
-     * ───────────────────────────────────────────────────────────────────────────────*/
-
-    @Override
-    public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
-        NbtList players = new NbtList();
-        for (UUID uuid : this.pendingPlayers) players.add(NbtString.of(uuid.toString()));
-        nbt.put("Players", players);
-        return nbt;
-    }
-
-    /* ─────────────────────────────────────────────────────────────────────────────
-     *        Private Helpers
-     * ────────────────────────────────────────────────────────────────────────────────*/
-
-    private static RedstoneFeverCureCreditState get(ServerWorld world) {
+    private static RedstoneFeverCureCreditState get(ServerLevel world) {
         // Overworld manager shares one queue across every cure dimension
-        return world.getServer().getOverworld().getPersistentStateManager().getOrCreate(TYPE, STORAGE_KEY);
-    }
-
-    private static RedstoneFeverCureCreditState fromNbt(
-            NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
-        RedstoneFeverCureCreditState state = new RedstoneFeverCureCreditState();
-        NbtList players = nbt.getList("Players", NbtElement.STRING_TYPE);
-        for (int index = 0; index < players.size(); index++) {
-            try {
-                state.pendingPlayers.add(UUID.fromString(players.getString(index)));
-            } catch (IllegalArgumentException ignored) {
-                // Ignore malformed legacy entries without blocking remaining credits
-            }
-        }
-        return state;
+        return world.getServer().overworld().getDataStorage().computeIfAbsent(TYPE);
     }
 }

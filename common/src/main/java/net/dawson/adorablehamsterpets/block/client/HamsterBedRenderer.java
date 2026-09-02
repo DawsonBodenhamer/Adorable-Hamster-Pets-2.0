@@ -1,53 +1,60 @@
 package net.dawson.adorablehamsterpets.block.client;
 
+import com.geckolib.constant.dataticket.DataTicket;
+import com.geckolib.renderer.GeoBlockRenderer;
+import com.geckolib.renderer.base.RenderPassInfo;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.RotationAxis;
-import software.bernie.geckolib.renderer.GeoBlockRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class HamsterBedRenderer extends GeoBlockRenderer<HamsterBedBlockEntity> {
-    public HamsterBedRenderer(BlockEntityRendererFactory.Context context) {
-        super(new HamsterBedModel());
+public class HamsterBedRenderer extends GeoBlockRenderer<HamsterBedBlockEntity, HamsterBedRenderState> {
+
+    /** Captured during extraction; the pose pass cannot see the block state. */
+    private static final DataTicket<Boolean> UPSIDE_DOWN =
+            DataTicket.create("adorablehamsterpets:bed_upside_down", Boolean.class);
+
+    public HamsterBedRenderer(BlockEntityRendererProvider.Context context) {
+        super(context, new HamsterBedModel());
     }
 
     @Override
-    public RenderLayer getRenderType(HamsterBedBlockEntity animatable, Identifier texture, @org.jetbrains.annotations.Nullable VertexConsumerProvider bufferSource, float partialTick) {
-        return RenderLayer.getEntityCutout(getTextureLocation(animatable));
+    public HamsterBedRenderState createRenderState() {
+        return new HamsterBedRenderState();
+    }
+
+
+    @Override
+    protected Direction getBlockStateDirection(HamsterBedBlockEntity block) {
+        BlockState state = block.getBlockState();
+        // fall back to super if the property isn't present
+        return state.hasProperty(HamsterBedBlock.ORIENTATION)
+                ? state.getValue(HamsterBedBlock.ORIENTATION)
+                : super.getBlockStateDirection(block);
     }
 
     @Override
-    protected Direction getFacing(HamsterBedBlockEntity block) {
-        BlockState state = block.getCachedState();
-        // fall back to super if the property isn’t present
-        return state.contains(HamsterBedBlock.ORIENTATION)
-                ? state.get(HamsterBedBlock.ORIENTATION)
-                : super.getFacing(block);
+    public void addRenderData(HamsterBedBlockEntity blockEntity, Void relatedObject, HamsterBedRenderState state, float partialTick) {
+        super.addRenderData(blockEntity, relatedObject, state, partialTick);
+        BlockState blockState = blockEntity.getBlockState();
+        state.addGeckolibData(UPSIDE_DOWN,
+                blockState.hasProperty(HamsterBedBlock.UPSIDE_DOWN) && blockState.getValue(HamsterBedBlock.UPSIDE_DOWN));
     }
 
+    /** Flip the whole model when the bed is placed upside down. */
     @Override
-    public void render(HamsterBedBlockEntity blockEntity, float partialTick, MatrixStack poseStack, VertexConsumerProvider bufferSource, int packedLight, int packedOverlay) {
-        BlockState blockState = blockEntity.getCachedState();
-        if (blockState.get(HamsterBedBlock.UPSIDE_DOWN)) {
-            poseStack.push();
-            // Translate to the center of the block to rotate around it
+    public void adjustRenderPose(RenderPassInfo<HamsterBedRenderState> renderPass) {
+        super.adjustRenderPose(renderPass);
+        if (renderPass.renderState().getOrDefaultGeckolibData(UPSIDE_DOWN, false)) {
+            PoseStack poseStack = renderPass.poseStack();
+            // Rotate 180 degrees around the X-axis about the block centre
             poseStack.translate(0.5, 0.5, 0.5);
-            // Rotate 180 degrees around the X-axis
-            poseStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(180));
-            // Translate back
+            poseStack.mulPose(Axis.XP.rotationDegrees(180));
             poseStack.translate(-0.5, -0.5, -0.5);
-        }
-
-        super.render(blockEntity, partialTick, poseStack, bufferSource, packedLight, packedOverlay);
-
-        if (blockState.get(HamsterBedBlock.UPSIDE_DOWN)) {
-            poseStack.pop();
         }
     }
 }

@@ -8,9 +8,9 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.*;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.core.HolderLookup;
+import net.minecraft.resources.Identifier;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -32,12 +32,12 @@ public class EnUsGenerator extends FabricLanguageProvider {
     private static final Gson GSON = new Gson();
 
     public EnUsGenerator(FabricDataOutput output,
-                         CompletableFuture<RegistryWrapper.WrapperLookup> lookup) {
+                         CompletableFuture<HolderLookup.Provider> lookup) {
         super(output, "en_us", lookup);
     }
 
     @Override
-    public void generateTranslations(RegistryWrapper.WrapperLookup registries,
+    public void generateTranslations(HolderLookup.Provider registries,
                                      TranslationBuilder builder) {
 
         /* ------------------------------------------------------------
@@ -77,7 +77,7 @@ public class EnUsGenerator extends FabricLanguageProvider {
         // 1. Generate for Root Config
         ConfigApiJava.buildTranslations(
                 AhpRootConfig.class,
-                Identifier.of(AdorableHamsterPets.MOD_ID, "root"),
+                Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "root"),
                 "en_us",
                 false,
                 safeSingleWriter
@@ -86,7 +86,7 @@ public class EnUsGenerator extends FabricLanguageProvider {
         // 2. Generate for Supporter Perks Config
         ConfigApiJava.buildTranslations(
                 AhpSupporterConfig.class,
-                Identifier.of(AdorableHamsterPets.MOD_ID, "supporter_perks"),
+                Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "supporter_perks"),
                 "en_us",
                 false,
                 safeSingleWriter
@@ -95,7 +95,7 @@ public class EnUsGenerator extends FabricLanguageProvider {
         // 3. Generate for Main Config
         ConfigApiJava.buildTranslations(
                 AhpMainConfig.class,
-                Identifier.of(AdorableHamsterPets.MOD_ID, "main"),
+                Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "main"),
                 "en_us",
                 false,
                 safeSingleWriter
@@ -104,7 +104,7 @@ public class EnUsGenerator extends FabricLanguageProvider {
         // 4. Generate for Items Config
         ConfigApiJava.buildTranslations(
                 AhpItemConfig.class,
-                Identifier.of(AdorableHamsterPets.MOD_ID, "items"),
+                Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "items"),
                 "en_us",
                 false,
                 safeSingleWriter
@@ -113,7 +113,7 @@ public class EnUsGenerator extends FabricLanguageProvider {
         // 5. Generate for UI Config
         ConfigApiJava.buildTranslations(
                 AhpUiConfig.class,
-                Identifier.of(AdorableHamsterPets.MOD_ID, "ui"),
+                Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ui"),
                 "en_us",
                 false,
                 safeSingleWriter
@@ -122,7 +122,7 @@ public class EnUsGenerator extends FabricLanguageProvider {
         // 6. Generate for WorldGen Config
         ConfigApiJava.buildTranslations(
                 AhpWorldGenConfig.class,
-                Identifier.of(AdorableHamsterPets.MOD_ID, "worldgen"),
+                Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "worldgen"),
                 "en_us",
                 false,
                 safeSingleWriter

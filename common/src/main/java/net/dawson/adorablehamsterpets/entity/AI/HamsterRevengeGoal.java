@@ -2,9 +2,9 @@ package net.dawson.adorablehamsterpets.entity.AI;
 
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.util.HamsterCombatUtil;
-import net.minecraft.entity.ai.goal.RevengeGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 
-public class HamsterRevengeGoal extends RevengeGoal {
+public class HamsterRevengeGoal extends HurtByTargetGoal {
     private final HamsterEntity hamster;
 
     public HamsterRevengeGoal(HamsterEntity hamster) {
@@ -13,21 +13,21 @@ public class HamsterRevengeGoal extends RevengeGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return this.hamster.getAttacker() != null
-                && HamsterCombatUtil.canAcquireTarget(this.hamster, this.hamster.getAttacker())
-                && super.canStart();
+    public boolean canUse() {
+        return this.hamster.getLastHurtByMob() != null
+                && HamsterCombatUtil.canAcquireTarget(this.hamster, this.hamster.getLastHurtByMob())
+                && super.canUse();
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return HamsterCombatUtil.canContinueTarget(this.hamster, this.hamster.getTarget())
-                && super.shouldContinue();
+                && super.canContinueToUse();
     }
 
     @Override
-    public HamsterRevengeGoal setGroupRevenge(Class<?>... noHelpTypes) {
-        super.setGroupRevenge(noHelpTypes);
+    public HamsterRevengeGoal setAlertOthers(Class<?>... noHelpTypes) {
+        super.setAlertOthers(noHelpTypes);
         return this;
     }
 }

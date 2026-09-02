@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": "adorablehamsterpets:acorn",
+  "result": {
+    "count": 1,
+    "id": "adorablehamsterpets:acorn_hat"
+  }
+}

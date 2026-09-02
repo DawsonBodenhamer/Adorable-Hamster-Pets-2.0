@@ -1,17 +1,18 @@
 package net.dawson.adorablehamsterpets.mixin.client;
 
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.nbt.CompoundTag;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(AbstractClientPlayerEntity.class)
+@Mixin(AbstractClientPlayer.class)
 public abstract class AbstractClientPlayerEntityMixin {
 
     /**
@@ -22,15 +23,15 @@ public abstract class AbstractClientPlayerEntityMixin {
      */
     @Inject(method = "tick", at = @At("TAIL"))
     private void adorablehamsterpets$onTick(CallbackInfo ci) {
-        AbstractClientPlayerEntity thisPlayer = (AbstractClientPlayerEntity) (Object) this;
+        AbstractClientPlayer thisPlayer = (AbstractClientPlayer) (Object) this;
         // The tick method can be called on the integrated server thread, so we must check.
-        if (thisPlayer.getWorld().isClient) {
+        if (thisPlayer.level().isClientSide()) {
             PlayerEntityAccessor accessor = (PlayerEntityAccessor) thisPlayer;
 
             // --- Flashback Replay Rescue Logic ---
             // If local state is empty, but there is a cached state for this player, restore it
             if (!accessor.hasAnyShoulderHamster()) {
-                NbtCompound cachedState = ClientShoulderHamsterData.REPLAY_CACHE.get(thisPlayer.getUuid());
+                CompoundTag cachedState = ClientShoulderHamsterData.REPLAY_CACHE.get(thisPlayer.getUUID());
                 if (cachedState != null && !cachedState.isEmpty()) {
                     accessor.adorablehamsterpets$setRawHamsterState(cachedState);
                 }
@@ -47,7 +48,7 @@ public abstract class AbstractClientPlayerEntityMixin {
      * Modifies the FOV dynamically when queueing the hamster for a throw,
      * mimicking the vanilla bow drawback zoom effect.
      */
-    @Inject(method = "getFovMultiplier", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getFieldOfViewModifier", at = @At("RETURN"), cancellable = true)
     private void adorablehamsterpets$modifyFov(CallbackInfoReturnable<Float> cir) {
         if (AdorableHamsterPetsClient.isQueuingThrow) {
             // Mimic vanilla bow pullback math

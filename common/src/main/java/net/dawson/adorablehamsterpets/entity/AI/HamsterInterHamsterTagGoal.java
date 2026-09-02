@@ -5,14 +5,13 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.HamsterMovementUtil;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -48,7 +47,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
 
     public HamsterInterHamsterTagGoal(HamsterEntity hamster) {
         this.hamster = hamster;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -56,7 +55,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         // --- 1. Partner Activation Override ---
         // If this hamster was selected by another hamster to be the Chaser, bypass RNG roll and start immediately
         if (this.hamster.isPlayingTag() && this.hamster.isInterHamsterTagActive && this.hamster.tagGamePartner != null) {
@@ -68,16 +67,16 @@ public class HamsterInterHamsterTagGoal extends Goal {
 
         // --- 3. Restrict Roll Frequency ---
         // Only roll dice once per second for performance
-        if (this.hamster.age % 20 != 0) return false;
+        if (this.hamster.tickCount % 20 != 0) return false;
 
         // --- 4. Personal Validity Check ---
         if (!isValidForTag(this.hamster)) return false;
 
         // --- 5. Population-Independent RNG Calculation ---
         // Scan 16-block radius for other valid hamsters
-        List<HamsterEntity> validNearbyHamsters = this.hamster.getWorld().getEntitiesByClass(
+        List<HamsterEntity> validNearbyHamsters = this.hamster.level().getEntitiesOfClass(
                 HamsterEntity.class,
-                this.hamster.getBoundingBox().expand(16.0),
+                this.hamster.getBoundingBox().inflate(16.0),
                 h -> h != this.hamster && isValidForTag(h)
         );
 
@@ -114,7 +113,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         // If the player right-clicks either hamster, InteractionUtil sets isPlayingTag to false
         if (!this.hamster.isPlayingTag() || !this.hamster.isInterHamsterTagActive) return false;
 
@@ -171,7 +170,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
     @Override
     public void tick() {
         // Synchronize end of game
-        if (this.hamster.tagGameCooldownEndTick > this.hamster.getWorld().getTime() && this.gameTimerTicks > 0) {
+        if (this.hamster.tagGameCooldownEndTick > this.hamster.level().getGameTime() && this.gameTimerTicks > 0) {
             this.gameTimerTicks = 0;
         }
 
@@ -183,7 +182,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
 
         // Secure against start-of-tick race conditions and handle transition to returning
         if (this.gameTimerTicks <= 0 && this.currentState != State.RETURNING_TO_OWNER) {
-            long cooldownEnd = this.hamster.getWorld().getTime() + 100;
+            long cooldownEnd = this.hamster.level().getGameTime() + 100;
             this.hamster.tagGameCooldownEndTick = cooldownEnd;
             if (partner != null) partner.tagGameCooldownEndTick = cooldownEnd;
 
@@ -211,7 +210,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
                 // Instigator: move to partner to start game
                 if (this.pathUpdateTimer <= 0) {
                     this.pathUpdateTimer = 10;
-                    this.hamster.getNavigation().startMovingTo(partner, 1.5D);
+                    this.hamster.getNavigation().moveTo(partner, 1.5D);
                 }
                 if (this.hamster.distanceTo(partner) < 0.6) { // Distance required for "physical contact"
                     executeFakeAttack();
@@ -228,11 +227,11 @@ public class HamsterInterHamsterTagGoal extends Goal {
 
                 if (owner != null) {
                     // Instigator: run away but stay tethered to owner if tamed
-                    if (this.hamster.squaredDistanceTo(owner) > (TETHER_DISTANCE * TETHER_DISTANCE)) {
+                    if (this.hamster.distanceToSqr(owner) > (TETHER_DISTANCE * TETHER_DISTANCE)) {
                         // Too far from owner, run back towards owner instead
                         if (this.pathUpdateTimer <= 0) {
                             this.pathUpdateTimer = 10;
-                            this.hamster.getNavigation().startMovingTo(owner, 1.5D);
+                            this.hamster.getNavigation().moveTo(owner, 1.5D);
                         }
                     } else if (HamsterMovementUtil.shouldStopFleeing(this.hamster, partner, maxFleeDist)) {
                         // Safe distance reached
@@ -251,7 +250,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
                                     130,
                                     230
                             );
-                            targetOpt.ifPresent(pos -> this.hamster.getNavigation().startMovingTo(pos.getX(), pos.getY(), pos.getZ(), 1.5D));
+                            targetOpt.ifPresent(pos -> this.hamster.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 1.5D));
                         }
                     }
                 } else {
@@ -264,9 +263,9 @@ public class HamsterInterHamsterTagGoal extends Goal {
                         // Run away from Chaser
                         if (this.pathUpdateTimer <= 0) {
                             this.pathUpdateTimer = 10;
-                            Vec3d fleePos = HamsterMovementUtil.findFleePosition(this.hamster, partner, minFleeDist, maxFleeDist);
+                            Vec3 fleePos = HamsterMovementUtil.findFleePosition(this.hamster, partner, minFleeDist, maxFleeDist);
                             if (fleePos != null) {
-                                this.hamster.getNavigation().startMovingTo(fleePos.x, fleePos.y, fleePos.z, 1.5D);
+                                this.hamster.getNavigation().moveTo(fleePos.x, fleePos.y, fleePos.z, 1.5D);
                             }
                         }
                     }
@@ -276,7 +275,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
                 LivingEntity owner = this.hamster.getOwner();
                 double minFleeDist = Configs.AHP_MAIN.minMiniGameFleeDistance.get();
 
-                if (owner != null && this.hamster.squaredDistanceTo(owner) > (TETHER_DISTANCE * TETHER_DISTANCE)) {
+                if (owner != null && this.hamster.distanceToSqr(owner) > (TETHER_DISTANCE * TETHER_DISTANCE)) {
                     // Prioritize returning to owner if tether broken
                     this.currentState = State.FLEEING;
                     this.hamster.setTaunting(false);
@@ -314,7 +313,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
                 // Chaser: pursue Instigator
                 if (this.pathUpdateTimer <= 0) {
                     this.pathUpdateTimer = 10;
-                    this.hamster.getNavigation().startMovingTo(partner, 1.45D);
+                    this.hamster.getNavigation().moveTo(partner, 1.45D);
                 }
 
                 if (this.hamster.distanceTo(partner) < 0.6) { // Distance required for "physical contact"
@@ -324,13 +323,13 @@ public class HamsterInterHamsterTagGoal extends Goal {
                     if (partner != null) partner.tagGameWon = true;
 
                     // Feedback
-                    this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), ModSounds.HAMSTER_DING.get(), SoundCategory.NEUTRAL, 0.4F, this.hamster.getSoundPitch());
+                    this.hamster.level().playSound(null, this.hamster.blockPosition(), ModSounds.HAMSTER_DING.get(), SoundSource.NEUTRAL, 0.4F, this.hamster.getVoicePitch());
                     SoundEvent contactSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_SCRATCH_SOUNDS, hamster.getRandom());
                     if (contactSound != null) {
-                        hamster.playSound(contactSound, 1.0f, hamster.getSoundPitch());
+                        hamster.playSound(contactSound, 1.0f, hamster.getVoicePitch());
                     }
 
-                    if (!this.hamster.getWorld().isClient()) {
+                    if (!this.hamster.level().isClientSide()) {
                         ParticleEffectsUtil.spawnParticlesOnEntity(
                                 this.hamster,
                                 ParticleTypes.HEART,
@@ -343,7 +342,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
                     }
 
                     // Secure against race conditions
-                    long cooldownEnd = this.hamster.getWorld().getTime() + 100;
+                    long cooldownEnd = this.hamster.level().getGameTime() + 100;
                     this.hamster.tagGameCooldownEndTick = cooldownEnd;
                     if (partner != null) partner.tagGameCooldownEndTick = cooldownEnd;
                 }
@@ -355,10 +354,10 @@ public class HamsterInterHamsterTagGoal extends Goal {
                 }
 
                 LivingEntity owner = this.hamster.getOwner();
-                if (owner != null && this.hamster.squaredDistanceTo(owner) > (8.0 * 8.0)) {
+                if (owner != null && this.hamster.distanceToSqr(owner) > (8.0 * 8.0)) {
                     if (this.pathUpdateTimer <= 0) {
                         this.pathUpdateTimer = 10;
-                        this.hamster.getNavigation().startMovingTo(owner, 1.2D);
+                        this.hamster.getNavigation().moveTo(owner, 1.2D);
                     }
                 } else {
                     // Reached normal follow distance
@@ -384,7 +383,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
             return false;
         }
 
-        return hamster.getWorld().getTime() >= hamster.tagGameCooldownEndTick;
+        return hamster.level().getGameTime() >= hamster.tagGameCooldownEndTick;
     }
 
     /**
@@ -394,14 +393,14 @@ public class HamsterInterHamsterTagGoal extends Goal {
         this.hamster.triggerAnimOnServer("mainController", "attack");
 
         // Feedback
-        this.hamster.getWorld().playSound(null, this.hamster.getBlockPos(), ModSounds.HAMSTER_SLAP.get(), SoundCategory.NEUTRAL, 0.5F, 1.0F);
+        this.hamster.level().playSound(null, this.hamster.blockPosition(), ModSounds.HAMSTER_SLAP.get(), SoundSource.NEUTRAL, 0.5F, 1.0F);
 
         // Apply small physical knockback to partner
         HamsterEntity partner = this.hamster.tagGamePartner;
         if (partner != null && partner.isAlive()) {
-            Vec3d knockbackDir = partner.getPos().subtract(this.hamster.getPos()).normalize();
-            partner.setVelocity(partner.getVelocity().add(knockbackDir.x * 0.3, 0.3, knockbackDir.z * 0.3));
-            partner.velocityDirty = true;
+            Vec3 knockbackDir = partner.position().subtract(this.hamster.position()).normalize();
+            partner.setDeltaMovement(partner.getDeltaMovement().add(knockbackDir.x * 0.3, 0.3, knockbackDir.z * 0.3));
+            partner.needsSync = true;
         }
     }
 
@@ -412,7 +411,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
         HamsterEntity partner = this.hamster.tagGamePartner;
         if (partner == null || !partner.isAlive()) return;
 
-        long currentTime = this.hamster.getWorld().getTime();
+        long currentTime = this.hamster.level().getGameTime();
 
         // Apply cooldown
         long cooldownEnd = currentTime + 100;
@@ -443,7 +442,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
                 hamster1.triggerAnimOnServer("mainController", "anim_hamster_crouch_and_investigate");
                 SoundEvent affectionSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_AFFECTION_SOUNDS, hamster1.getRandom());
                 if (affectionSound != null) {
-                    hamster1.playSound(affectionSound, 1.0f, hamster1.getSoundPitch());
+                    hamster1.playSound(affectionSound, 1.0f, hamster1.getVoicePitch());
                 }
             }
         });

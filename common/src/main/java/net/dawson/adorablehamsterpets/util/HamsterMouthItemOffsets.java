@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.util;
 
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.RotationAxis;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
 
@@ -18,7 +18,7 @@ public final class HamsterMouthItemOffsets {
      *
      * @param matrices The MatrixStack currently anchored to the nose bone.
      */
-    public static void applyMouthItemTransforms(MatrixStack matrices) {
+    public static void applyMouthItemTransforms(PoseStack matrices) {
         // --- 1. Translation ---
         // X: Positive values move it to the hamster's right. Negative to the left
         // Y: Positive values move it up. Negative moves it down
@@ -33,6 +33,6 @@ public final class HamsterMouthItemOffsets {
         // Rotates the item -90 degrees on its X-axis.
         // This makes the item lay flat, as if the hamster is holding the bottom part
         // of the item in its mouth, with the top of the item sticking out forward
-        matrices.multiply(RotationAxis.NEGATIVE_X.rotationDegrees(90.0F));
+        matrices.mulPose(Axis.XN.rotationDegrees(90.0F));
     }
 }

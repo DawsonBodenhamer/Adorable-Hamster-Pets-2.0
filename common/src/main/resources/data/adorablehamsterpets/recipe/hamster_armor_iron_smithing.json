@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": "minecraft:iron_ingot",
+  "base": "#adorablehamsterpets:enchantable/hamster_armor",
+  "result": {
+    "count": 1,
+    "id": "adorablehamsterpets:hamster_armor_iron"
+  },
+  "template": "adorablehamsterpets:hamster_armor_trim_smithing_template_iron"
+}

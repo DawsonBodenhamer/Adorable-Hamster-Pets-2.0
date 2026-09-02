@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id "com.gradleup.shadow" version "9.2.2"
 }
 evaluationDependsOn ':common'
 
@@ -25,6 +25,11 @@ loom {
 
 sourceSets {
     main {
+        // 26.2 portu: datagen kodu devre disi. Uretilmis JSON'lar
+        // src/main/generated ve common/src/main/resources icinde zaten mevcut.
+        java {
+            exclude 'net/dawson/adorablehamsterpets/fabric/datagen/**'
+        }
         resources {
             srcDir file('src/main/generated')
             exclude('.cache/**')
@@ -41,34 +46,32 @@ configurations {
 }
 
 dependencies {
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}") { version { strictly rootProject.fabric_api_version } }
-    modImplementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
+    compileOnly("maven.modrinth:patchouli:AveV4Tjn") { transitive = false } // Patchouli 26.1-94 API (runtime: a 26.2 build of Patchouli)
+    implementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    implementation("net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}") { version { strictly rootProject.fabric_api_version } }
+    implementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
 
     // GeckoLib
-    modImplementation "software.bernie.geckolib:geckolib-fabric-$rootProject.minecraft_version:$rootProject.geckolib_version"
+    implementation "maven.modrinth:geckolib:${rootProject.geckolib_modrinth_id}"
 
     // Mod Menu
-    modImplementation "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
+    implementation "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
 
     // Jade
-    modImplementation "curse.maven:jade-324717:${rootProject.jade_version_fabric}"
+    implementation "maven.modrinth:jade:${rootProject.jade_modrinth_version}"
 
     // Fzzy Config and its runtime dependencies
-    modImplementation "me.fzzyhmstrs:fzzy_config:${rootProject.fzzy_config_version}"
-    modRuntimeOnly "maven.modrinth:fabric-language-kotlin:${rootProject.flk_version}"
+    implementation "me.fzzyhmstrs:fzzy_config:${rootProject.fzzy_config_version}"
+    runtimeOnly "maven.modrinth:fabric-language-kotlin:${rootProject.flk_version}"
 
     // Placeholder API (for bundling)
-    modImplementation include("maven.modrinth:placeholder-api:2.4.2+1.21")
+    implementation("maven.modrinth:placeholder-api:${rootProject.placeholder_api_version}")
 
-    // Patchouli (Fabric/Quilt) – required
-    modImplementation "vazkii.patchouli:Patchouli:${rootProject.patchouli_version}-FABRIC"
+    // 26.2 portu: Patchouli'nin 26.2 surumu yok.
 
-    // Optional player equipment APIs
-    modCompileOnly("io.wispforest:accessories-fabric:${rootProject.accessories_version}") { transitive false }
-    modCompileOnly "dev.emi:trinkets:${rootProject.trinkets_version}"
+    // 26.2 portu: accessories ve trinkets'in 26.2 surumu yok.
 
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    common(project(path: ":common")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 }
 
@@ -89,15 +92,13 @@ tasks.named("runDatagen") {
 }
 
 shadowJar {
-    dependsOn(tasks.named("runDatagen"))
 
     exclude "architectury.common.json"
     configurations = [project.configurations.shadowCommon]
     from(sourceSets.main.output)
-    archiveClassifier = "dev-shadow"
+    archiveClassifier = ""
     dependsOn project(':common').tasks.named('transformProductionFabric')
 
-    dependsOn(tasks.named("runDatagen"))
 
     // Exclude the generated hamster bed item model
     from(file('src/main/generated')) {
@@ -105,18 +106,16 @@ shadowJar {
     }
 }
 
-remapJar {
-    injectAccessWidener = true
-    input.set shadowJar.archiveFile
-    dependsOn shadowJar
-}
+// 26.2 portu: loom-no-remap'te remapJar yok (remap edilecek bir sey yok).
+// Nihai jar dogrudan shadowJar ciktisi.
+tasks.named("jar") { archiveClassifier = "slim" }
+tasks.named("assemble") { dependsOn tasks.named("shadowJar") }
 
 sourcesJar {
     def commonSources = project(":common").sourcesJar
     dependsOn commonSources
     from commonSources.archiveFile.map { zipTree(it) }
 
-    dependsOn(tasks.named("runDatagen"))
     from(file('src/main/generated'))
 }
 

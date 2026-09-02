@@ -4,14 +4,16 @@
       "trigger": "minecraft:player_interacted_with_entity",
       "conditions": {
         "item": {
-          "items": ["minecraft:name_tag"]
+          "items": [
+            "minecraft:name_tag"
+          ]
         },
         "entity": [
           {
             "condition": "minecraft:entity_properties",
             "entity": "this",
             "predicate": {
-              "type": "adorablehamsterpets:hamster"
+              "minecraft:entity_type": "adorablehamsterpets:hamster"
             }
           }
         ]

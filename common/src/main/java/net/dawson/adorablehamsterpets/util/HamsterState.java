@@ -7,13 +7,12 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.RedstoneFeverState;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.util.Uuids;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
-
+import net.minecraft.nbt.Tag;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,7 +22,7 @@ import java.util.UUID;
 public record HamsterState(
         IdentityData identityData,
         float health,
-        NbtCompound inventoryNbt,
+        CompoundTag inventoryNbt,
         LifeHistoryData lifeHistoryData,
         StatusData statusData,
         AppearanceData appearanceData,
@@ -35,10 +34,10 @@ public record HamsterState(
      *        Constants
      * ──────────────────────────────────────────────────────────────────────────────*/
 
-    public static final Codec<NbtCompound> NBT_COMPOUND_CODEC = Codec.PASSTHROUGH.comapFlatMap(
+    public static final Codec<CompoundTag> NBT_COMPOUND_CODEC = Codec.PASSTHROUGH.comapFlatMap(
             dynamic -> {
-                NbtElement element = dynamic.convert(NbtOps.INSTANCE).getValue();
-                if (element instanceof NbtCompound compound) {
+                Tag element = dynamic.convert(NbtOps.INSTANCE).getValue();
+                if (element instanceof CompoundTag compound) {
                     return DataResult.success(compound);
                 }
                 return DataResult.error(() -> "Not a compound NBT: " + element);
@@ -71,7 +70,7 @@ public record HamsterState(
         return this.identityData.entityUuid();
     }
 
-    public NbtCompound genomeNbt() {
+    public CompoundTag genomeNbt() {
         return this.identityData.genomeNbt();
     }
 
@@ -144,17 +143,17 @@ public record HamsterState(
         );
     }
 
-    public NbtCompound toNbt() {
-        return (NbtCompound) getCodec().encodeStart(NbtOps.INSTANCE, this)
+    public CompoundTag toNbt() {
+        return (CompoundTag) getCodec().encodeStart(NbtOps.INSTANCE, this)
                 .getOrThrow(error -> new IllegalStateException("Could not encode HamsterState: " + error));
     }
 
-    public static Optional<HamsterState> fromNbt(NbtCompound nbt) {
+    public static Optional<HamsterState> fromNbt(CompoundTag nbt) {
         // --- Legacy Migration Shim ---
         // Convert v3.5.0 variants to v3.6.0 genome NBT to prevent shoulder hamsters being deleted
-        if (!nbt.contains("genomeNbt", NbtElement.COMPOUND_TYPE)) {
-            int legacyId = nbt.contains("variantId", NbtElement.INT_TYPE)
-                    ? nbt.getInt("variantId")
+        if (!nbt.contains("genomeNbt")) {
+            int legacyId = nbt.contains("variantId")
+                    ? nbt.getIntOr("variantId", 0)
                     : 0;
             nbt.put("genomeNbt", HamsterGeneticsUtil.getGenomeForLegacyId(legacyId).saveToNbt());
         }
@@ -167,11 +166,11 @@ public record HamsterState(
      *        Nested Types
      * ───────────────────────────────────────────────────────────────────────────────*/
 
-    public record IdentityData(UUID entityUuid, NbtCompound genomeNbt, Optional<String> customName) {
+    public record IdentityData(UUID entityUuid, CompoundTag genomeNbt, Optional<String> customName) {
 
         private static final MapCodec<IdentityData> CODEC = RecordCodecBuilder.mapCodec(instance ->
                 instance.group(
-                        Uuids.CODEC.fieldOf("entityUuid").forGetter(IdentityData::entityUuid),
+                        UUIDUtil.AUTHLIB_CODEC.fieldOf("entityUuid").forGetter(IdentityData::entityUuid),
                         NBT_COMPOUND_CODEC.fieldOf("genomeNbt").forGetter(IdentityData::genomeNbt),
                         Codec.STRING.optionalFieldOf("customName").forGetter(IdentityData::customName)
                 ).apply(instance, IdentityData::new)
@@ -316,7 +315,7 @@ public record HamsterState(
     public record GreenBeanBuffData(
             long greenBeanBuffEndTick,
             long greenBeanBuffDuration,
-            NbtCompound activeEffectsNbt
+            CompoundTag activeEffectsNbt
     ) {
 
         public static final Codec<GreenBeanBuffData> CODEC = RecordCodecBuilder.create(instance ->
@@ -331,7 +330,7 @@ public record HamsterState(
         );
 
         public static GreenBeanBuffData empty() {
-            return new GreenBeanBuffData(0L, 0L, new NbtCompound());
+            return new GreenBeanBuffData(0L, 0L, new CompoundTag());
         }
     }
 

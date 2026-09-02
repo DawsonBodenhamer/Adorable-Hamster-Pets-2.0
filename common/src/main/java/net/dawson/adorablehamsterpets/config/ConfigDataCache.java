@@ -2,25 +2,26 @@ package net.dawson.adorablehamsterpets.config;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterColorZone;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.mob.Monster;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.biome.Biome;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup.RegistryLookup;
+import net.minecraft.core.HolderSet.Named;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import java.util.*;
 
 /**
@@ -219,10 +220,10 @@ public class ConfigDataCache {
     public static boolean isPouchAllowed(ItemStack stack) { return matchesItem(stack, pouchAllowedItems, pouchAllowedTags); }
     public static boolean isPouchDisallowed(ItemStack stack) { return matchesItem(stack, pouchDisallowedItems, pouchDisallowedTags); }
     public static boolean isResurrectionTribute(ItemStack stack) { return matchesItem(stack, resurrectionTributeItems, resurrectionTributeTags); }
-    public static Item getRandomDefaultLootItem(Random random) {if (flattenedDefaultCheekLoot.isEmpty()) return Items.AIR;return flattenedDefaultCheekLoot.get(random.nextInt(flattenedDefaultCheekLoot.size()));}
-    public static Item getRandomCustomLootItem(Random random) {if (flattenedExtraCheekLoot.isEmpty()) return Items.AIR;return flattenedExtraCheekLoot.get(random.nextInt(flattenedExtraCheekLoot.size()));}
-    public static Item getRandomCaveLootItem(Random random) {if (flattenedCaveCheekLoot.isEmpty()) return Items.AIR;return flattenedCaveCheekLoot.get(random.nextInt(flattenedCaveCheekLoot.size()));}
-    public static Item getRandomCustomMiniGameReward(Random random) {if (flattenedCustomMiniGameRewards.isEmpty()) return Items.AIR;return flattenedCustomMiniGameRewards.get(random.nextInt(flattenedCustomMiniGameRewards.size()));}
+    public static Item getRandomDefaultLootItem(RandomSource random) {if (flattenedDefaultCheekLoot.isEmpty()) return Items.AIR;return flattenedDefaultCheekLoot.get(random.nextInt(flattenedDefaultCheekLoot.size()));}
+    public static Item getRandomCustomLootItem(RandomSource random) {if (flattenedExtraCheekLoot.isEmpty()) return Items.AIR;return flattenedExtraCheekLoot.get(random.nextInt(flattenedExtraCheekLoot.size()));}
+    public static Item getRandomCaveLootItem(RandomSource random) {if (flattenedCaveCheekLoot.isEmpty()) return Items.AIR;return flattenedCaveCheekLoot.get(random.nextInt(flattenedCaveCheekLoot.size()));}
+    public static Item getRandomCustomMiniGameReward(RandomSource random) {if (flattenedCustomMiniGameRewards.isEmpty()) return Items.AIR;return flattenedCustomMiniGameRewards.get(random.nextInt(flattenedCustomMiniGameRewards.size()));}
     public static boolean isPacifistItem(ItemStack stack) { return matchesItem(stack, becomePacifistItems, becomePacifistTags); }
     public static boolean isStandardAggressionItem(ItemStack stack) { return matchesItem(stack, becomeNeutralItems, becomeNeutralTags); }
     public static boolean isMenaceItem(ItemStack stack) { return matchesItem(stack, becomeMenaceItems, becomeMenaceTags); }
@@ -239,13 +240,13 @@ public class ConfigDataCache {
 
         if (menaceTargetEntities.contains(type)) return true;
         for (TagKey<EntityType<?>> tag : menaceTargetTags) {
-            if (type.isIn(tag)) return true;
+            if (BuiltInRegistries.ENTITY_TYPE.wrapAsHolder(type).is(tag)) return true;
         }
 
         // Smart fallback: If user included custom AHP monster tag,
         // fall back to the Monster interface to ensure all hostiles are caught
         if (Configs.AHP_MAIN.menaceTargetEntities.contains("#adorablehamsterpets:monsters")) {
-            if (entity instanceof Monster) return true;
+            if (entity instanceof Enemy) return true;
         }
         return false;
     }
@@ -289,7 +290,7 @@ public class ConfigDataCache {
     /**
      * Determines which environment a biome belongs to and returns its configured zone weights.
      */
-    public static Map<HamsterColorZone, Integer> getWeightsForBiome(RegistryEntry<Biome> biomeEntry) {
+    public static Map<HamsterColorZone, Integer> getWeightsForBiome(Holder<Biome> biomeEntry) {
         for (EnvironmentDefinition env : ENVIRONMENTS) {
             if (matchesBiome(biomeEntry, env.biomes(), env.tags(), env.excludedBiomes(), env.excludedTags())) {
                 return env.weights();
@@ -307,15 +308,15 @@ public class ConfigDataCache {
         for (String entry : configList) {
             if (entry.startsWith("#")) {
                 try {
-                    Identifier tagId = Identifier.of(entry.substring(1));
-                    tagSet.add(TagKey.of(RegistryKeys.ITEM, tagId));
+                    Identifier tagId = Identifier.parse(entry.substring(1));
+                    tagSet.add(TagKey.create(Registries.ITEM, tagId));
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[ItemTagManager] Invalid item tag identifier in '{}' config list: '{}'", listName, entry);
                 }
             } else {
                 try {
-                    Identifier itemId = Identifier.of(entry);
-                    Registries.ITEM.getOrEmpty(itemId).ifPresent(itemSet::add);
+                    Identifier itemId = Identifier.parse(entry);
+                    BuiltInRegistries.ITEM.getOptional(itemId).ifPresent(itemSet::add);
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[ItemTagManager] Invalid item identifier in '{}' config list: '{}'", listName, entry);
                 }
@@ -331,21 +332,19 @@ public class ConfigDataCache {
         for (String entry : configList) {
             if (entry.startsWith("#")) {
                 try {
-                    Identifier tagId = Identifier.of(entry.substring(1));
-                    TagKey<Item> tagKey = TagKey.of(RegistryKeys.ITEM, tagId);
+                    Identifier tagId = Identifier.parse(entry.substring(1));
+                    TagKey<Item> tagKey = TagKey.create(Registries.ITEM, tagId);
 
-                    Registries.ITEM.getEntryList(tagKey).ifPresent(entries -> {
-                        for (var itemEntry : entries) {
-                            targetList.add(itemEntry.value());
-                        }
-                    });
+                    for (var itemEntry : BuiltInRegistries.ITEM.getTagOrEmpty(tagKey)) {
+                        targetList.add(itemEntry.value());
+                    }
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[LootConfig] Invalid item tag in '{}': '{}'", listName, entry);
                 }
             } else {
                 try {
-                    Identifier itemId = Identifier.of(entry);
-                    Registries.ITEM.getOrEmpty(itemId).ifPresent(targetList::add);
+                    Identifier itemId = Identifier.parse(entry);
+                    BuiltInRegistries.ITEM.getOptional(itemId).ifPresent(targetList::add);
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[LootConfig] Invalid item ID in '{}': '{}'", listName, entry);
                 }
@@ -357,15 +356,15 @@ public class ConfigDataCache {
         for (String entry : configList) {
             if (entry.startsWith("#")) {
                 try {
-                    Identifier tagId = Identifier.of(entry.substring(1));
-                    tagSet.add(TagKey.of(RegistryKeys.ENTITY_TYPE, tagId));
+                    Identifier tagId = Identifier.parse(entry.substring(1));
+                    tagSet.add(TagKey.create(Registries.ENTITY_TYPE, tagId));
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[EntityTagManager] Invalid entity tag identifier in '{}' config list: '{}'", listName, entry);
                 }
             } else {
                 try {
-                    Identifier entityId = Identifier.of(entry);
-                    Registries.ENTITY_TYPE.getOrEmpty(entityId).ifPresent(entitySet::add);
+                    Identifier entityId = Identifier.parse(entry);
+                    BuiltInRegistries.ENTITY_TYPE.getOptional(entityId).ifPresent(entitySet::add);
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[EntityTagManager] Invalid entity identifier in '{}' config list: '{}'", listName, entry);
                 }
@@ -377,15 +376,15 @@ public class ConfigDataCache {
         for (String entry : configList) {
             if (entry.startsWith("#")) {
                 try {
-                    Identifier tagId = Identifier.of(entry.substring(1));
-                    tagSet.add(TagKey.of(RegistryKeys.BLOCK, tagId));
+                    Identifier tagId = Identifier.parse(entry.substring(1));
+                    tagSet.add(TagKey.create(Registries.BLOCK, tagId));
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[BlockTagManager] Invalid block tag identifier in '{}' config list: '{}'", listName, entry);
                 }
             } else {
                 try {
-                    Identifier blockId = Identifier.of(entry);
-                    Registries.BLOCK.getOrEmpty(blockId).ifPresent(blockSet::add);
+                    Identifier blockId = Identifier.parse(entry);
+                    BuiltInRegistries.BLOCK.getOptional(blockId).ifPresent(blockSet::add);
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[BlockTagManager] Invalid block identifier in '{}' config list: '{}'", listName, entry);
                 }
@@ -429,7 +428,7 @@ public class ConfigDataCache {
     private static void parseBiomeIdList(List<String> configList, Set<Identifier> idSet, String listName) {
         for (String entry : configList) {
             try {
-                idSet.add(Identifier.of(entry));
+                idSet.add(Identifier.parse(entry));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeTagManager] Invalid biome identifier in '{}' config list: '{}'", listName, entry);
             }
@@ -440,7 +439,7 @@ public class ConfigDataCache {
         for (String entry : configList) {
             String tagName = entry.startsWith("#") ? entry.substring(1) : entry;
             try {
-                tagSet.add(TagKey.of(RegistryKeys.BIOME, Identifier.of(tagName)));
+                tagSet.add(TagKey.create(Registries.BIOME, Identifier.parse(tagName)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeTagManager] Invalid biome tag in '{}' config list: '{}'", listName, entry);
             }
@@ -451,7 +450,7 @@ public class ConfigDataCache {
         if (stack.isEmpty()) return false;
         if (itemSet.contains(stack.getItem())) return true;
         for (TagKey<Item> tag : tagSet) {
-            if (stack.isIn(tag)) return true;
+            if (stack.is(tag)) return true;
         }
         return false;
     }
@@ -462,25 +461,25 @@ public class ConfigDataCache {
         if (blockSet.contains(state.getBlock())) return true;
         // Check tags
         for (TagKey<Block> tag : tagSet) {
-            if (state.isIn(tag)) return true;
+            if (state.is(tag)) return true;
         }
         return false;
     }
 
-    private static boolean matchesBiome(RegistryEntry<Biome> biomeEntry, Set<Identifier> ids, Set<TagKey<Biome>> tags, Set<Identifier> exclusionIds, Set<TagKey<Biome>> exclusionTags) {
-        Identifier biomeId = biomeEntry.getKey().map(RegistryKey::getValue).orElse(null);
+    private static boolean matchesBiome(Holder<Biome> biomeEntry, Set<Identifier> ids, Set<TagKey<Biome>> tags, Set<Identifier> exclusionIds, Set<TagKey<Biome>> exclusionTags) {
+        Identifier biomeId = biomeEntry.unwrapKey().map(ResourceKey::identifier).orElse(null);
         if (biomeId == null) return false;
 
         // --- Exclusion Check (Highest Priority) ---
         if (exclusionIds.contains(biomeId)) return false;
         for (TagKey<Biome> tag : exclusionTags) {
-            if (biomeEntry.isIn(tag)) return false;
+            if (biomeEntry.is(tag)) return false;
         }
 
         // --- Inclusion Check ---
         if (ids.contains(biomeId)) return true;
         for (TagKey<Biome> tag : tags) {
-            if (biomeEntry.isIn(tag)) return true;
+            if (biomeEntry.is(tag)) return true;
         }
 
         return false;
@@ -561,12 +560,12 @@ public class ConfigDataCache {
      * If the first entry is a tag, it randomly selects an item from that tag to display.
      *
      * @param configList The list of strings (Item IDs or Tags) from the config.
-     * @return The formatted {@link Text} component of the item name. Returns the raw string if it is an
+     * @return The formatted {@link Component} component of the item name. Returns the raw string if it is an
      *         invalid ID. Returns "Air" if the list is empty.
      */
-    public static Text getFirstItemNameFromList(List<String> configList) {
+    public static Component getFirstItemNameFromList(List<String> configList) {
         if (configList.isEmpty()) {
-            return Text.translatable("block.minecraft.air");
+            return Component.translatable("block.minecraft.air");
         }
 
         String firstEntry = configList.get(0);
@@ -574,50 +573,50 @@ public class ConfigDataCache {
         // Check if entry starts with hash indicating tag
         if (firstEntry.startsWith("#")) {
             try {
-                Identifier tagId = Identifier.of(firstEntry.substring(1));
-                TagKey<Item> tagKey = TagKey.of(RegistryKeys.ITEM, tagId);
+                Identifier tagId = Identifier.parse(firstEntry.substring(1));
+                TagKey<Item> tagKey = TagKey.create(Registries.ITEM, tagId);
 
                 // --- 1. Client-Side Tag Resolution ---
                 // Query active world's dynamic registry manager
-                MinecraftClient client = MinecraftClient.getInstance();
-                if (client != null && client.world != null) {
-                    var registry = client.world.getRegistryManager().getWrapperOrThrow(RegistryKeys.ITEM);
-                    var entryListOpt = registry.getOptional(tagKey);
+                Minecraft client = Minecraft.getInstance();
+                if (client != null && client.level != null) {
+                    var registry = client.level.registryAccess().lookupOrThrow(Registries.ITEM);
+                    var entryListOpt = registry.get(tagKey);
 
                     if (entryListOpt.isPresent() && entryListOpt.get().size() > 0) {
                         var entryList = entryListOpt.get();
                         int randomIndex = (int) (Math.random() * entryList.size());
                         Item randomItem = entryList.get(randomIndex).value();
-                        return randomItem.getName();
+                        return Component.translatable(randomItem.getDescriptionId());
                     }
                 }
 
                 // --- 2. Server-Side / Fallback Resolution ---
-                var entryListOpt = Registries.ITEM.getEntryList(tagKey);
-                if (entryListOpt.isPresent() && entryListOpt.get().size() > 0) {
-                    var entryList = entryListOpt.get();
+                java.util.List<net.minecraft.core.Holder<Item>> entryList = new java.util.ArrayList<>();
+                BuiltInRegistries.ITEM.getTagOrEmpty(tagKey).forEach(entryList::add);
+                if (!entryList.isEmpty()) {
                     int randomIndex = (int) (Math.random() * entryList.size());
                     Item randomItem = entryList.get(randomIndex).value();
-                    return randomItem.getName();
+                    return Component.translatable(randomItem.getDescriptionId());
                 }
             } catch (Exception e) {
                 // Fallback to raw string if tag invalid
             }
-            return Text.literal(firstEntry);
+            return Component.literal(firstEntry);
         } else {
             try {
                 // Try to resolve item ID to localized name
-                Identifier itemId = Identifier.of(firstEntry);
-                Item item = Registries.ITEM.get(itemId);
+                Identifier itemId = Identifier.parse(firstEntry);
+                Item item = BuiltInRegistries.ITEM.get(itemId).map(net.minecraft.core.Holder::value).orElse(null);
 
                 // Fallback to raw string if registry returns default air
                 if (item == Items.AIR && !firstEntry.equals("minecraft:air")) {
-                    return Text.literal(firstEntry);
+                    return Component.literal(firstEntry);
                 }
-                return item.getName();
+                return Component.translatable(item.getDescriptionId());
             } catch (Exception e) {
                 // Fallback if ID malformed
-                return Text.literal(firstEntry);
+                return Component.literal(firstEntry);
             }
         }
     }

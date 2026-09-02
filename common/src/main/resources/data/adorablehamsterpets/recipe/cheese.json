@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:milk_bucket"
+  ],
+  "result": {
+    "count": 3,
+    "id": "adorablehamsterpets:cheese"
+  }
+}

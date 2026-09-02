@@ -3,43 +3,42 @@ package net.dawson.adorablehamsterpets.fabric.datagen;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
-import net.minecraft.block.Block;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
 import java.util.concurrent.CompletableFuture;
 
 public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 
-    private static final TagKey<Block> STORAGE_BLOCKS = TagKey.of(
-            RegistryKeys.BLOCK,
-            Identifier.of("c", "storage_blocks")
+    private static final TagKey<Block> STORAGE_BLOCKS = TagKey.create(
+            Registries.BLOCK,
+            Identifier.fromNamespaceAndPath("c", "storage_blocks")
     );
 
-    public ModBlockTagProvider(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> completableFuture) {
+    public ModBlockTagProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> completableFuture) {
         super(output, completableFuture);
     }
 
     @Override
-    protected void configure(RegistryWrapper.WrapperLookup arg) {
-        getOrCreateTagBuilder(BlockTags.CROPS)
+    protected void addTags(HolderLookup.Provider arg) {
+        tag(BlockTags.CROPS)
                 .add(ModBlocks.CUCUMBER_CROP.get())
                 .add(ModBlocks.GREEN_BEANS_CROP.get());
 
-        getOrCreateTagBuilder(BlockTags.MAINTAINS_FARMLAND)
+        tag(BlockTags.MAINTAINS_FARMLAND)
                 .add(ModBlocks.CUCUMBER_CROP.get())
                 .add(ModBlocks.GREEN_BEANS_CROP.get());
 
-        getOrCreateTagBuilder(BlockTags.AXE_MINEABLE)
+        tag(BlockTags.MINEABLE_WITH_AXE)
                 .add(ModBlocks.ACORN_CRATE.get())
                 .add(ModBlocks.CUCUMBER_CRATE.get())
                 .add(ModBlocks.GREEN_BEANS_CRATE.get())
                 .add(ModBlocks.HAMSTER_FOOD_MIX_CRATE.get());
 
-        getOrCreateTagBuilder(STORAGE_BLOCKS)
+        tag(STORAGE_BLOCKS)
                 .add(ModBlocks.ACORN_CRATE.get())
                 .add(ModBlocks.CUCUMBER_CRATE.get())
                 .add(ModBlocks.GREEN_BEANS_CRATE.get())

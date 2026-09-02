@@ -1,24 +1,24 @@
 package net.dawson.adorablehamsterpets.networking.payload;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
-public record PlayerKnockbackPayload(double velocityX, double velocityY, double velocityZ) implements CustomPayload {
-    public static final CustomPayload.Id<PlayerKnockbackPayload> ID = new CustomPayload.Id<>(Identifier.of(AdorableHamsterPets.MOD_ID, "player_knockback"));
+public record PlayerKnockbackPayload(double velocityX, double velocityY, double velocityZ) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<PlayerKnockbackPayload> ID = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "player_knockback"));
 
-    public static final PacketCodec<RegistryByteBuf, PlayerKnockbackPayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.DOUBLE, PlayerKnockbackPayload::velocityX,
-            PacketCodecs.DOUBLE, PlayerKnockbackPayload::velocityY,
-            PacketCodecs.DOUBLE, PlayerKnockbackPayload::velocityZ,
+    public static final StreamCodec<RegistryFriendlyByteBuf, PlayerKnockbackPayload> CODEC = StreamCodec.composite(
+            ByteBufCodecs.DOUBLE, PlayerKnockbackPayload::velocityX,
+            ByteBufCodecs.DOUBLE, PlayerKnockbackPayload::velocityY,
+            ByteBufCodecs.DOUBLE, PlayerKnockbackPayload::velocityZ,
             PlayerKnockbackPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

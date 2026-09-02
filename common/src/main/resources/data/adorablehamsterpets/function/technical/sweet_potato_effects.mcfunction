@@ -10,6 +10,6 @@ execute as @s at @s unless entity @s[advancements={adorablehamsterpets:technical
 
 execute as @s at @s unless entity @s[advancements={adorablehamsterpets:technical/sweet_potato_easter_egg_triggered_flag=true}] run particle minecraft:happy_villager ~ ~1 ~ 0.5 0.5 0.5 0.1 25 force
 
-execute as @s at @s unless entity @s[advancements={adorablehamsterpets:technical/sweet_potato_easter_egg_triggered_flag=true}] run particle minecraft:flash ~ ~1 ~ 0.1 0.1 0.1 0.0 10 force
+execute as @s at @s unless entity @s[advancements={adorablehamsterpets:technical/sweet_potato_easter_egg_triggered_flag=true}] run particle minecraft:flash{color:16777215} ~ ~1 ~ 0.1 0.1 0.1 0.0 10 force
 
 execute as @s at @s unless entity @s[advancements={adorablehamsterpets:technical/sweet_potato_easter_egg_triggered_flag=true}] run advancement grant @s only adorablehamsterpets:technical/sweet_potato_easter_egg_triggered_flag

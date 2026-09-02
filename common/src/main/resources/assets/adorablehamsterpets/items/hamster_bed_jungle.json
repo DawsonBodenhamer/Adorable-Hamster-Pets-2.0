@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "adorablehamsterpets:item/hamster_bed_jungle",
+    "model": {
+      "type": "geckolib:geckolib"
+    }
+  }
+}

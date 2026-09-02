@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": "minecraft:netherite_ingot",
+  "base": "#adorablehamsterpets:enchantable/hamster_armor",
+  "result": {
+    "count": 1,
+    "id": "adorablehamsterpets:hamster_armor_netherite"
+  },
+  "template": "adorablehamsterpets:hamster_armor_trim_smithing_template_netherite"
+}

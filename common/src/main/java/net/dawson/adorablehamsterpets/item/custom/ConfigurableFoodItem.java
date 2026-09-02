@@ -1,12 +1,13 @@
 package net.dawson.adorablehamsterpets.item.custom;
 
+import java.util.function.Consumer;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.dawson.adorablehamsterpets.util.DynamicFoodUtil;
-import net.minecraft.component.ComponentMap;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -20,11 +21,11 @@ public class ConfigurableFoodItem extends Item {
     private final String tooltipBaseKey;
 
     // Cache dynamically generated component map to preserve object identity
-    private ComponentMap cachedComponents = null;
+    private DataComponentMap cachedComponents = null;
     private int lastNutrition = -1;
     private float lastSaturation = -1.0f;
 
-    public ConfigurableFoodItem(Settings settings, Supplier<Integer> nutritionSupplier, Supplier<Float> saturationSupplier, String tooltipBaseKey) {
+    public ConfigurableFoodItem(Properties settings, Supplier<Integer> nutritionSupplier, Supplier<Float> saturationSupplier, String tooltipBaseKey) {
         super(settings);
         this.nutritionSupplier = nutritionSupplier;
         this.saturationSupplier = saturationSupplier;
@@ -32,7 +33,7 @@ public class ConfigurableFoodItem extends Item {
     }
 
     @Override
-    public ComponentMap getComponents() {
+    public DataComponentMap components() {
         int currentNutrition = this.nutritionSupplier.get();
         float currentSaturation = this.saturationSupplier.get();
 
@@ -40,15 +41,15 @@ public class ConfigurableFoodItem extends Item {
         if (this.cachedComponents == null || currentNutrition != this.lastNutrition || currentSaturation != this.lastSaturation) {
             this.lastNutrition = currentNutrition;
             this.lastSaturation = currentSaturation;
-            this.cachedComponents = DynamicFoodUtil.getDynamicComponents(super.getComponents(), currentNutrition, currentSaturation);
+            this.cachedComponents = DynamicFoodUtil.getDynamicComponents(super.components(), currentNutrition, currentSaturation);
         }
 
         return this.cachedComponents;
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
         DynamicFoodUtil.appendTooltip(tooltip, this.tooltipBaseKey, this.nutritionSupplier.get(), this.saturationSupplier.get());
-        super.appendTooltip(stack, context, tooltip, type);
+        super.appendHoverText(stack, context, display, tooltip, type);
     }
 }

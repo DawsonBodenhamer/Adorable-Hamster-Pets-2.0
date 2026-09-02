@@ -4,17 +4,17 @@ import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -31,19 +31,19 @@ public final class MinigameUtil {
      * Sends a jiggle packet and spawns sound/particles that guides the player
      * towards a specific block where an entity is hiding.
      */
-    public static void executePeriodicBlockLocationHint(Entity hiderEntity, BlockPos anchorPos, SoundEvent sound, float soundVol, float soundPitch, ParticleEffect particle, int particleCount, Vec3d particleSpread, double particleSpeed) {
-        World world = hiderEntity.getWorld();
-        if (world.isClient()) return;
+    public static void executePeriodicBlockLocationHint(Entity hiderEntity, BlockPos anchorPos, SoundEvent sound, float soundVol, float soundPitch, ParticleOptions particle, int particleCount, Vec3 particleSpread, double particleSpeed) {
+        Level world = hiderEntity.level();
+        if (world.isClientSide()) return;
 
         // Trigger client side matrix deformation
-        world.sendEntityStatus(hiderEntity, (byte) 60);
+        world.broadcastEntityEvent(hiderEntity, (byte) 60);
 
         if (anchorPos != null) {
-            world.playSound(null, anchorPos, sound, SoundCategory.NEUTRAL, soundVol, soundPitch);
+            world.playSound(null, anchorPos, sound, SoundSource.NEUTRAL, soundVol, soundPitch);
 
             ParticleEffectsUtil.spawnParticles(
                     world,
-                    Vec3d.ofCenter(anchorPos),
+                    Vec3.atCenterOf(anchorPos),
                     particle,
                     particleCount,
                     particleSpread,
@@ -55,8 +55,8 @@ public final class MinigameUtil {
     /**
      * Spawns particles directly on a hidden entity.
      */
-    public static void executeOngoingBlockLocationHint(Entity hiderEntity, ParticleEffect particle, int count, double widthScale, double heightScale, double speed, double yOffset) {
-        if (hiderEntity.getWorld().isClient()) return;
+    public static void executeOngoingBlockLocationHint(Entity hiderEntity, ParticleOptions particle, int count, double widthScale, double heightScale, double speed, double yOffset) {
+        if (hiderEntity.level().isClientSide()) return;
 
         ParticleEffectsUtil.spawnParticlesOnEntity(
                 hiderEntity,
@@ -72,11 +72,11 @@ public final class MinigameUtil {
     /**
      * Spawns particles along a path between the seeker and the hidden entity.
      */
-    public static void executeBreadcrumbHint(Entity hiderEntity, PlayerEntity seeker, double minDistanceSq, double startPercent, double percentRange, ParticleEffect particle, int count, Vec3d spread, double speed) {
-        World world = hiderEntity.getWorld();
-        if (world.isClient() || seeker == null) return;
+    public static void executeBreadcrumbHint(Entity hiderEntity, Player seeker, double minDistanceSq, double startPercent, double percentRange, ParticleOptions particle, int count, Vec3 spread, double speed) {
+        Level world = hiderEntity.level();
+        if (world.isClientSide() || seeker == null) return;
 
-        if (seeker.squaredDistanceTo(hiderEntity) < minDistanceSq) {
+        if (seeker.distanceToSqr(hiderEntity) < minDistanceSq) {
             // Pick random percentage along path, skipping portion nearest player
             double pct = startPercent + (world.getRandom().nextDouble() * percentRange);
 
@@ -87,7 +87,7 @@ public final class MinigameUtil {
 
             ParticleEffectsUtil.spawnParticles(
                     world,
-                    new Vec3d(spawnX, spawnY, spawnZ),
+                    new Vec3(spawnX, spawnY, spawnZ),
                     particle,
                     count,
                     spread.x, spread.y, spread.z,
@@ -102,18 +102,18 @@ public final class MinigameUtil {
      * 2. Item appears in mouth
      * 3. Item is spat out
      */
-    public static void executeGiftDeliverySequence(HamsterEntity hamster, ItemStack giftStack, @Nullable PlayerEntity targetPlayer) {
+    public static void executeGiftDeliverySequence(HamsterEntity hamster, ItemStack giftStack, @Nullable Player targetPlayer) {
         // Protect the sequence from being interrupted by other AI goals
         hamster.setFrozenMovement(true);
 
         // If target player provided, wait until close to them
-        if (targetPlayer != null && targetPlayer.isAlive() && hamster.squaredDistanceTo(targetPlayer) > 4.0) {
+        if (targetPlayer != null && targetPlayer.isAlive() && hamster.distanceToSqr(targetPlayer) > 4.0) {
             hamster.setCelebrationTicks(15); // Buffer until next check
-            hamster.getNavigation().startMovingTo(targetPlayer, 1.25D);
+            hamster.getNavigation().moveTo(targetPlayer, 1.25D);
             HamsterMovementUtil.faceEntity(hamster, targetPlayer);
 
             // Re-evaluate distance in 10 ticks
-            hamster.scheduleTask(hamster.getWorld().getTime() + 10, "move_to_gift_target", () -> {
+            hamster.scheduleTask(hamster.level().getGameTime() + 10, "move_to_gift_target", () -> {
                 executeGiftDeliverySequence(hamster, giftStack, targetPlayer);
             });
             return;
@@ -127,7 +127,7 @@ public final class MinigameUtil {
             HamsterMovementUtil.faceEntity(hamster, targetPlayer);
         }
 
-        long currentTime = hamster.getWorld().getTime();
+        long currentTime = hamster.level().getGameTime();
 
         // Trigger Unload Animation
         hamster.triggerAnimOnServer("mainController", "anim_hamster_cheek_unload");
@@ -146,16 +146,16 @@ public final class MinigameUtil {
         // T+33 (relative to start of gift sequence): Hamster spits out item
         hamster.scheduleTask(currentTime + 33, "gift_spit", () -> {
             if (hamster.isHoldingMouthItem() && !hamster.getMouthItemStack().isEmpty()) {
-                Vec3d look = hamster.getRotationVec(1.0f);
-                ItemEntity itemEntity = new ItemEntity(hamster.getWorld(),
+                Vec3 look = hamster.getViewVector(1.0f);
+                ItemEntity itemEntity = new ItemEntity(hamster.level(),
                         hamster.getX() + look.x * 0.5,
                         hamster.getY() + 0.3,
                         hamster.getZ() + look.z * 0.5,
                         hamster.getMouthItemStack().copy()
                 );
                 // Forward velocity to item
-                itemEntity.setVelocity(look.x * 0.2, 0.2, look.z * 0.2);
-                hamster.getWorld().spawnEntity(itemEntity);
+                itemEntity.setDeltaMovement(look.x * 0.2, 0.2, look.z * 0.2);
+                hamster.level().addFreshEntity(itemEntity);
             }
             // Cleanup
             hamster.setMouthItemStack(ItemStack.EMPTY);
@@ -167,21 +167,21 @@ public final class MinigameUtil {
      * Executes the generic failure reaction when a minigame goes wrong.
      * Causes the hamster to jump back, play a startled sound, and enter the sulking state.
      */
-    public static void executeSulkFailure(HamsterEntity hamster, @Nullable Vec3d sourceOfStartle) {
+    public static void executeSulkFailure(HamsterEntity hamster, @Nullable Vec3 sourceOfStartle) {
         // Apply small backward and upward startled jump velocity
-        Vec3d away;
+        Vec3 away;
         if (sourceOfStartle != null) {
-            away = hamster.getPos().subtract(sourceOfStartle).normalize();
+            away = hamster.position().subtract(sourceOfStartle).normalize();
         } else {
-            away = new Vec3d(0, 0, 0);
+            away = new Vec3(0, 0, 0);
         }
 
-        hamster.setVelocity(away.x * 0.1, 0.5, away.z * 0.1);
-        hamster.velocityDirty = true;
+        hamster.setDeltaMovement(away.x * 0.1, 0.5, away.z * 0.1);
+        hamster.needsSync = true;
 
         SoundEvent bounceSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BOUNCE_SOUNDS, hamster.getRandom());
         if (bounceSound != null) {
-            hamster.getWorld().playSound(null, hamster.getBlockPos(), bounceSound, SoundCategory.NEUTRAL, 0.6f, hamster.getSoundPitch());
+            hamster.level().playSound(null, hamster.blockPosition(), bounceSound, SoundSource.NEUTRAL, 0.6f, hamster.getVoicePitch());
         }
 
         hamster.setSulking(true);

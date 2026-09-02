@@ -1,5 +1,8 @@
 package net.dawson.adorablehamsterpets.client.gui;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.dawson.adorablehamsterpets.client.ClientInputUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.announcements.Announcement;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
@@ -8,26 +11,27 @@ import net.dawson.adorablehamsterpets.client.announcements.PatchouliIntegration;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.mixin.accessor.ScreenWidgetAdder;
 import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.TitleScreen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
 import net.minecraft.util.Util;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import org.joml.Matrix3x2fStack;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import vazkii.patchouli.client.book.BookEntry;
 import vazkii.patchouli.common.book.Book;
 import vazkii.patchouli.common.book.BookRegistry;
-
+import com.mojang.blaze3d.vertex.PoseStack;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
@@ -65,8 +69,8 @@ import java.util.List;
 public class AnnouncementScreen extends Screen {
 
     // --- UI Constants ---
-    private static final Identifier BACKGROUND_TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/gui/announcement_ui.png");
-    private static final Identifier SCROLLBAR_TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/gui/announcement_ui_scroll_bar.png");
+    private static final Identifier BACKGROUND_TEXTURE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/announcement_ui.png");
+    private static final Identifier SCROLLBAR_TEXTURE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/announcement_ui_scroll_bar.png");
     private static final int BACKGROUND_WIDTH = 256;
     private static final int BACKGROUND_HEIGHT = 256;
     private static final int TOTAL_GUI_HEIGHT = 283; // BG height + padding (7) + button height (20)
@@ -109,7 +113,7 @@ public class AnnouncementScreen extends Screen {
     private int scaledButtonPadding;
 
     public AnnouncementScreen(Announcement announcement, String reason, @Nullable Screen parentScreen, BookEntry virtualEntry) {
-        super(Text.literal(announcement.title()));
+        super(Component.literal(announcement.title()));
         this.announcement = announcement;
         this.reason = reason;
         this.parentScreen = parentScreen;
@@ -170,7 +174,7 @@ public class AnnouncementScreen extends Screen {
         );
 
         AnnouncementManager.INSTANCE.fetchMarkdown(announcement.markdown()).thenAccept(content -> {
-            this.client.execute(() -> {
+            this.minecraft.execute(() -> {
                 this.markdownContent = content;
                 this.markdownRenderer = new MarkdownRenderer(
                         content,
@@ -185,9 +189,9 @@ public class AnnouncementScreen extends Screen {
         int closeButtonX = this.guiLeft - 10; // Slightly overlapping the left side of the GUI
         int closeButtonY = this.guiTop + 5; // Slightly below the top of the GUI
         // Use ScreenWidgetAdder accessor to add the widget for cross-loader compatibility
-        ((ScreenWidgetAdder)(Object)this).adorablehamsterpets$addWidget(ButtonWidget.builder(Text.literal("←").formatted(Formatting.BOLD), button -> this.returnToBook())
-                .dimensions(closeButtonX, closeButtonY, 20, 16)
-                .tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.close.tooltip")))
+        ((ScreenWidgetAdder)(Object)this).adorablehamsterpets$addWidget(Button.builder(Component.literal("←").withStyle(ChatFormatting.BOLD), button -> this.returnToBook())
+                .bounds(closeButtonX, closeButtonY, 20, 16)
+                .tooltip(Tooltip.create(Component.translatable("gui.adorablehamsterpets.announcement.button.close.tooltip")))
                 .build());
 
         // --- Dynamic Button Creation ---
@@ -195,18 +199,18 @@ public class AnnouncementScreen extends Screen {
         int buttonWidth = BUTTON_WIDTH;
         int buttonPadding = this.scaledButtonPadding;
 
-        List<ButtonWidget.Builder> primaryBuilders = new ArrayList<>();
-        List<ButtonWidget.Builder> secondaryBuilders = new ArrayList<>();
+        List<Button.Builder> primaryBuilders = new ArrayList<>();
+        List<Button.Builder> secondaryBuilders = new ArrayList<>();
 
         // 1. "Mark as Read" button (primary row)
-        MutableText markAsReadTooltip = Text.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read.tooltip")
+        MutableComponent markAsReadTooltip = Component.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read.tooltip")
                 .append("\n\n")
-                .append(Text.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read.shift_tooltip").formatted(Formatting.GOLD));
+                .append(Component.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read.shift_tooltip").withStyle(ChatFormatting.GOLD));
 
-        primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read"), button -> {
-            if (Screen.hasShiftDown()) {
+        primaryBuilders.add(Button.builder(Component.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read"), button -> {
+            if (ClientInputUtil.hasShiftDown()) {
                 // --- Shift-Click Action: Mark ALL as read ---
-                Book book = BookRegistry.INSTANCE.books.get(Identifier.of(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+                Book book = BookRegistry.INSTANCE.books.get(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
                 if (book != null) {
                     AnnouncementManager.INSTANCE.getAllManifestMessages().forEach(msg -> {
                         // Mark the announcement as seen in my system
@@ -218,7 +222,7 @@ public class AnnouncementScreen extends Screen {
                         }
 
                         // Find and mark the corresponding virtual entry in Patchouli as read
-                        Identifier entryId = Identifier.of(AdorableHamsterPets.MOD_ID, "announcement_" + msg.id());
+                        Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + msg.id());
                         BookEntry entry = book.getContents().entries.get(entryId);
                         if (entry != null) {
                             PatchouliIntegration.setEntryAsRead(entry);
@@ -235,59 +239,59 @@ public class AnnouncementScreen extends Screen {
                 }
             }
             this.returnToBook();
-        }).tooltip(Tooltip.of(markAsReadTooltip)));
+        }).tooltip(Tooltip.create(markAsReadTooltip)));
 
         // 2. "Disable These" button (primary row)
-        primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.disable_icons"), button -> {
+        primaryBuilders.add(Button.builder(Component.translatable("gui.adorablehamsterpets.announcement.button.disable_icons"), button -> {
             ((ValidatedFieldAccessor<Boolean>) Configs.AHP_UI.enableNotificationIcons).adorablehamsterpets$set(false);
             Configs.AHP_UI.save();
-            this.close();
-        }).tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.disable_icons.tooltip"))));
+            this.onClose();
+        }).tooltip(Tooltip.create(Component.translatable("gui.adorablehamsterpets.announcement.button.disable_icons.tooltip"))));
 
         // 3. "Snooze (Days)" button (primary row)
-        MutableText remindLaterTooltip = Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_days.tooltip", Configs.AHP_UI.snoozeUpdateReminderDays.get());
+        MutableComponent remindLaterTooltip = Component.translatable("gui.adorablehamsterpets.announcement.button.snooze_days.tooltip", Configs.AHP_UI.snoozeUpdateReminderDays.get());
         ClientAnnouncementState state = AnnouncementManager.INSTANCE.getClientState();
         Instant snoozeUntil = state.snoozed_ids().get(announcement.id());
         if (snoozeUntil != null && snoozeUntil.isAfter(Instant.now())) {
             Duration remaining = Duration.between(Instant.now(), snoozeUntil);
             remindLaterTooltip.append("\n\n").append(formatDuration(remaining));
         }
-        primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_days"), button -> {
+        primaryBuilders.add(Button.builder(Component.translatable("gui.adorablehamsterpets.announcement.button.snooze_days"), button -> {
             AnnouncementManager.INSTANCE.setSnooze(announcement.id(), Configs.AHP_UI.snoozeUpdateReminderDays.get());
             if (this.parentScreen instanceof TitleScreen) {
-                AnnouncementManager.INSTANCE.queueDeferredReadMark(this.virtualEntry.getId());
+                // Patchouli removed in the 26.2 port: no guidebook entry to mark as read
             } else {
                 PatchouliIntegration.setEntryAsRead(this.virtualEntry);
             }
             this.returnToBook();
-        }).tooltip(Tooltip.of(remindLaterTooltip)));
+        }).tooltip(Tooltip.create(remindLaterTooltip)));
 
         // 4. "Snooze (Session)" button (primary row)
-        primaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_session"), button -> {
+        primaryBuilders.add(Button.builder(Component.translatable("gui.adorablehamsterpets.announcement.button.snooze_session"), button -> {
             // Snooze this specific announcement for the current session.
             AnnouncementManager.INSTANCE.snoozeForSession(announcement.id());
 
             // Mark the entry as read in Patchouli's data.
             if (this.parentScreen instanceof TitleScreen) {
-                AnnouncementManager.INSTANCE.queueDeferredReadMark(this.virtualEntry.getId());
+                // Patchouli removed in the 26.2 port: no guidebook entry to mark as read
             } else {
                 PatchouliIntegration.setEntryAsRead(this.virtualEntry);
             }
             this.returnToBook();
-        }).tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.snooze_session.tooltip"))));
+        }).tooltip(Tooltip.create(Component.translatable("gui.adorablehamsterpets.announcement.button.snooze_session.tooltip"))));
 
         // 5. "Changelog" button (secondary row, only if this is an update note)
         if ("update".equals(announcement.kind())) {
             String changelogUrl = String.format("https://modrinth.com/mod/adorable-hamster-pets/version/%s-1.21.1+fabric", announcement.semver());
-            secondaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.changelog"), button -> {
-                Util.getOperatingSystem().open(URI.create(changelogUrl));
-            }).tooltip(Tooltip.of(Text.translatable("gui.adorablehamsterpets.announcement.button.changelog.tooltip"))));
+            secondaryBuilders.add(Button.builder(Component.translatable("gui.adorablehamsterpets.announcement.button.changelog"), button -> {
+                Util.getPlatform().openUri(URI.create(changelogUrl));
+            }).tooltip(Tooltip.create(Component.translatable("gui.adorablehamsterpets.announcement.button.changelog.tooltip"))));
         }
 
         // 6. Discord Button (secondary row, always present)
-        secondaryBuilders.add(ButtonWidget.builder(Text.translatable("gui.adorablehamsterpets.announcement.button.discord"), button -> {
-            Util.getOperatingSystem().open(URI.create("https://discord.gg/w54mk5bqdf"));
-        }).tooltip(Tooltip.of(Text.translatable("config.adorablehamsterpets.main.helpAndResources.joinDiscord.desc"))));
+        secondaryBuilders.add(Button.builder(Component.translatable("gui.adorablehamsterpets.announcement.button.discord"), button -> {
+            Util.getPlatform().openUri(URI.create("https://discord.gg/w54mk5bqdf"));
+        }).tooltip(Tooltip.create(Component.translatable("config.adorablehamsterpets.main.helpAndResources.joinDiscord.desc"))));
 
         // --- Button Row Layout ---
         int availableWidthButtons = Math.max(0, this.width - 2 * EDGE_MARGIN);
@@ -307,18 +311,18 @@ public class AnnouncementScreen extends Screen {
         // --- Build and Add Buttons ---
         // Add primary row buttons
         for (int i = 0; i < primaryCount; i++) {
-            ButtonWidget.Builder builder = primaryBuilders.get(i);
+            Button.Builder builder = primaryBuilders.get(i);
             int currentX = startXRow1 + i * (buttonWidth + buttonPadding);
             ((ScreenWidgetAdder)(Object)this).adorablehamsterpets$addWidget(
-                    builder.dimensions(currentX, firstRowY, buttonWidth, this.scaledButtonHeight).build()
+                    builder.bounds(currentX, firstRowY, buttonWidth, this.scaledButtonHeight).build()
             );
         }
         // Add secondary row buttons
         for (int j = 0; j < secondaryCount; j++) {
-            ButtonWidget.Builder builder = secondaryBuilders.get(j);
+            Button.Builder builder = secondaryBuilders.get(j);
             int currentX = startXRow2 + j * (buttonWidth + buttonPadding);
             ((ScreenWidgetAdder)(Object)this).adorablehamsterpets$addWidget(
-                    builder.dimensions(currentX, secondRowY, buttonWidth, this.scaledButtonHeight).build()
+                    builder.bounds(currentX, secondRowY, buttonWidth, this.scaledButtonHeight).build()
             );
         }
     }
@@ -329,7 +333,7 @@ public class AnnouncementScreen extends Screen {
      * @param duration The duration to format.
      * @return A Text component representing the formatted duration.
      */
-    private Text formatDuration(Duration duration) {
+    private Component formatDuration(Duration duration) {
         long days = duration.toDays();
         long hours = duration.toHoursPart();
         long minutes = duration.toMinutesPart();
@@ -351,8 +355,8 @@ public class AnnouncementScreen extends Screen {
             formattedString = "less than a minute";
         }
 
-        return Text.translatable("tooltip.adorablehamsterpets.hud.snooze_remaining", formattedString)
-                .formatted(Formatting.GRAY);
+        return Component.translatable("tooltip.adorablehamsterpets.hud.snooze_remaining", formattedString)
+                .withStyle(ChatFormatting.GRAY);
     }
 
     /**
@@ -360,8 +364,8 @@ public class AnnouncementScreen extends Screen {
      * but not always).If the parent screen is null, it closes the screen, returning to the game.
      */
     private void returnToBook() {
-        if (this.client != null) {
-            this.client.setScreen(this.parentScreen);
+        if (this.minecraft != null) {
+            this.minecraft.gui.setScreen(this.parentScreen);
         }
     }
 
@@ -377,13 +381,13 @@ public class AnnouncementScreen extends Screen {
      * @param delta   The time elapsed since the last frame.
      */
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // --- 1. Update Hovered Style ---
-        Text textAtMouse = this.getTextAt(mouseX, mouseY);
+        Component textAtMouse = this.getTextAt(mouseX, mouseY);
         this.hoveredStyle = (textAtMouse != null && textAtMouse.getStyle().getClickEvent() != null) ? textAtMouse.getStyle() : null;
 
-        // --- 2. Call super.render() ---
-        super.render(context, mouseX, mouseY, delta);
+        // --- 2. Call super.extractRenderState() ---
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         // --- 3. Render Markdown Content ---
         // Use a scissor to clip the markdown content to the designated scrollable area.
@@ -405,16 +409,16 @@ public class AnnouncementScreen extends Screen {
             double scrollPercent = this.scrollY / maxScroll;
             int scrollbarY = this.guiTop + this.scaledScrollBarStartY + (int) (scrollPercent * scrollbarTravel);
             // Draw the scrollbar at a fixed size (4x25) regardless of scaling for consistent interaction.
-            context.drawTexture(SCROLLBAR_TEXTURE, scrollbarX, scrollbarY, 0, 0, 4, 25, 4, 25);
+            context.blit(RenderPipelines.GUI_TEXTURED, SCROLLBAR_TEXTURE, scrollbarX, scrollbarY, (float) (0), (float) (0), 4, 25, 4, 25);
         }
 
         // --- 5. Render Dynamic Title ---
-        MatrixStack matrices = context.getMatrices();
-        matrices.push();
+        Matrix3x2fStack matrices = context.pose();
+        matrices.pushMatrix();
         float defaultScale = 1.3f * this.uiScale; // Scale title proportionally with the UI.
         int maxWidth = Math.round(222 * this.uiScale); // Scale the maximum width of the title proportionally with the UI.
-        Text boldTitle = this.title.copy().formatted(Formatting.BOLD);
-        int titleWidth = MinecraftClient.getInstance().textRenderer.getWidth(boldTitle);
+        Component boldTitle = this.title.copy().withStyle(ChatFormatting.BOLD);
+        int titleWidth = Minecraft.getInstance().font.width(boldTitle);
         float finalScale = defaultScale;
 
 
@@ -423,10 +427,10 @@ public class AnnouncementScreen extends Screen {
         }
 
         // Translate down from the top of the GUI by 9 scaled pixels so the title sits within the header.
-        matrices.translate(this.width / 2.0, this.guiTop + Math.round(9 * this.uiScale), 0);
-        matrices.scale(finalScale, finalScale, 1.0f);
-        context.drawText(MinecraftClient.getInstance().textRenderer, boldTitle, -titleWidth / 2, 0, 0x323232, false);
-        matrices.pop();
+        matrices.translate((float) (this.width / 2.0), (float) (this.guiTop + Math.round(9 * this.uiScale)));
+        matrices.scale(finalScale, finalScale);
+        context.text(Minecraft.getInstance().font, boldTitle, -titleWidth / 2, 0, 0x323232, false);
+        matrices.popMatrix();
     }
 
     /**
@@ -443,21 +447,17 @@ public class AnnouncementScreen extends Screen {
      * @param delta   The time elapsed since the last frame.
      */
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.renderBackground(context, mouseX, mouseY, delta);
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractBackground(context, mouseX, mouseY, delta);
 
         // --- Render Custom Background Texture ---
         // Draw the entire texture and scale it via the matrix, not by region size, to avoid cropping.
-        context.getMatrices().push();
-        context.getMatrices().translate((float) this.guiLeft, (float) this.guiTop, 0.0F);
-        context.getMatrices().scale(this.uiScale, this.uiScale, 1.0F);
-        context.drawTexture(
-                BACKGROUND_TEXTURE,
-                0, 0, 0, 0,
-                BACKGROUND_WIDTH, BACKGROUND_HEIGHT,
-                BACKGROUND_WIDTH, BACKGROUND_HEIGHT
+        context.pose().pushMatrix();
+        context.pose().translate((float) this.guiLeft, (float) this.guiTop);
+        context.pose().scale(this.uiScale, this.uiScale);
+        context.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND_TEXTURE, 0, 0, (float) (0), (float) (0), BACKGROUND_WIDTH, BACKGROUND_HEIGHT, BACKGROUND_WIDTH, BACKGROUND_HEIGHT
         );
-        context.getMatrices().pop();
+        context.pose().popMatrix();
     }
 
     /**
@@ -469,14 +469,14 @@ public class AnnouncementScreen extends Screen {
      * @return {@code true} if the event was handled, {@code false} otherwise.
      */
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
         // Check if the inventory key was pressed
-        if (this.client != null && this.client.options.inventoryKey.matchesKey(keyCode, scanCode)) {
-            this.close(); // Close the screen
+        if (this.minecraft != null && this.minecraft.options.keyInventory.matches(event)) {
+            this.onClose(); // Close the screen
             return true;  // Mark the event as handled
         }
         // For any other key, use the default behavior (e.g., ESC key)
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     /**
@@ -490,12 +490,15 @@ public class AnnouncementScreen extends Screen {
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         int maxScroll = Math.max(0, markdownRenderer.getTotalHeight() - this.scaledContentHeight);
         double scrollStep = 10 * this.uiScale; // Scale scroll speed with UI size.
-        this.scrollY = MathHelper.clamp(this.scrollY - verticalAmount * scrollStep, 0, maxScroll);
+        this.scrollY = Mth.clamp(this.scrollY - verticalAmount * scrollStep, 0, maxScroll);
         return true;
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (button == 0) {
             // --- 1. Check for Scrollbar Drag ---
             int maxScroll = Math.max(0, markdownRenderer.getTotalHeight() - this.scaledContentHeight);
@@ -513,19 +516,23 @@ public class AnnouncementScreen extends Screen {
             }
 
             // --- 2. Check for Text Link Click ---
-            Text clickedText = this.getTextAt(mouseX, mouseY);
+            Component clickedText = this.getTextAt(mouseX, mouseY);
             if (clickedText != null) {
                 Style style = clickedText.getStyle();
-                if (this.handleTextClick(style)) {
+                if (style.getClickEvent() != null) {
+                    defaultHandleClickEvent(style.getClickEvent(), this.minecraft, this);
                     return true;
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (this.isDraggingScrollbar) {
             int maxScroll = Math.max(0, markdownRenderer.getTotalHeight() - this.scaledContentHeight);
             int scrollbarTravel = this.scaledScrollBarEndY - this.scaledScrollBarStartY;
@@ -535,43 +542,44 @@ public class AnnouncementScreen extends Screen {
             double scrollPercent = relativeMouseY / scrollbarTravel;
 
             // Set the new scrollY value and clamp it
-            this.scrollY = MathHelper.clamp(scrollPercent * maxScroll, 0, maxScroll);
+            this.scrollY = Mth.clamp(scrollPercent * maxScroll, 0, maxScroll);
 
             return true; // Consume the drag event
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(event, deltaX, deltaY);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(MouseButtonEvent event) {
+        int button = event.button();
         if (button == 0) {
             this.isDraggingScrollbar = false;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(event);
     }
 
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         return true;
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         this.returnToBook();
     }
 
     /**
-     * Performs a hit-test to find the clickable {@link Text} component at the given mouse coordinates.
+     * Performs a hit-test to find the clickable {@link Component} component at the given mouse coordinates.
      * This method accounts for the current scroll position and iterates through the pre-wrapped lines
      * of markdown content, checking the vertical and horizontal bounds of each line block to find a
      * match.
      *
      * @param x The mouse's X coordinate.
      * @param y The mouse's Y coordinate.
-     * @return The {@link Text} with a clickable style at the given position, or {@code null} if none is found.
+     * @return The {@link Component} with a clickable style at the given position, or {@code null} if none is found.
      */
     @Nullable
-    public Text getTextAt(double x, double y) {
+    public Component getTextAt(double x, double y) {
         // --- 1. Calculate Mouse Position Relative to Scrollable Content ---
         int scrollOffset = (int) (this.guiTop + this.scaledContentYOffset - this.scrollY);
         int relativeY = (int) y - scrollOffset;
@@ -591,16 +599,16 @@ public class AnnouncementScreen extends Screen {
 
             // --- 2. Calculate the Height of the Current Line Block ---
             if (trimmedLine.isEmpty()) {
-                lineHeight = textRenderer.fontHeight / 2;
+                lineHeight = font.lineHeight / 2;
             } else if (trimmedLine.startsWith("#")) {
                 int level = 0;
                 while (level < trimmedLine.length() && trimmedLine.charAt(level) == '#') level++;
                 String text = trimmedLine.substring(level).trim();
                 float scale = Math.max(1.0f, 2.0f - (level - 1) * 0.25f);
                 int scaledWidth = (int) (markdownRenderer.width / scale);
-                MutableText styledText = Text.literal(text).setStyle(Style.EMPTY.withBold(true));
-                List<OrderedText> wrappedLines = MinecraftClient.getInstance().textRenderer.wrapLines(styledText, scaledWidth);
-                int heightOfLines = wrappedLines.size() * (int) (textRenderer.fontHeight * scale);
+                MutableComponent styledText = Component.literal(text).setStyle(Style.EMPTY.withBold(true));
+                List<FormattedCharSequence> wrappedLines = Minecraft.getInstance().font.split(styledText, scaledWidth);
+                int heightOfLines = wrappedLines.size() * (int) (font.lineHeight * scale);
                 int totalSpacing = Math.max(0, wrappedLines.size() - 1) * MarkdownRenderer.LINE_SPACING;
                 lineHeight = heightOfLines + totalSpacing + MarkdownRenderer.HEADING_BOTTOM_MARGIN;
             } else if (trimmedLine.equals("---")) {
@@ -620,9 +628,9 @@ public class AnnouncementScreen extends Screen {
                     startX += indentationLevel * MarkdownRenderer.LIST_INDENT;
                     content = originalLine.substring(indentationLevel * MarkdownRenderer.SPACES_PER_INDENT_LEVEL);
                 }
-                MutableText styledText = markdownRenderer.parseLineToText(content, null);
-                List<OrderedText> wrappedLines = textRenderer.wrapLines(styledText, contentWidth);
-                lineHeight = wrappedLines.size() * (textRenderer.fontHeight + MarkdownRenderer.LINE_SPACING);
+                MutableComponent styledText = markdownRenderer.parseLineToText(content, null);
+                List<FormattedCharSequence> wrappedLines = font.split(styledText, contentWidth);
+                lineHeight = wrappedLines.size() * (font.lineHeight + MarkdownRenderer.LINE_SPACING);
             }
 
             // --- 3. Check if Mouse is Within This Line Block's Vertical Bounds ---
@@ -637,17 +645,17 @@ public class AnnouncementScreen extends Screen {
                         contentWidth = markdownRenderer.width - (indentationLevel * MarkdownRenderer.LIST_INDENT);
                     }
 
-                    MutableText styledText = markdownRenderer.parseLineToText(content, null);
-                    List<OrderedText> wrappedLines = textRenderer.wrapLines(styledText, contentWidth);
+                    MutableComponent styledText = markdownRenderer.parseLineToText(content, null);
+                    List<FormattedCharSequence> wrappedLines = font.split(styledText, contentWidth);
                     int yInBlock = relativeY - currentY;
-                    int lineIndex = yInBlock / (textRenderer.fontHeight + MarkdownRenderer.LINE_SPACING);
+                    int lineIndex = yInBlock / (font.lineHeight + MarkdownRenderer.LINE_SPACING);
 
                     if (lineIndex >= 0 && lineIndex < wrappedLines.size()) {
-                        OrderedText orderedText = wrappedLines.get(lineIndex);
+                        FormattedCharSequence orderedText = wrappedLines.get(lineIndex);
                         int relativeX = (int) x - startX;
-                        Style style = this.client.textRenderer.getTextHandler().getStyleAt(orderedText, relativeX);
+                        Style style = styleAtWidth(orderedText, relativeX);
                         if (style != null && style.getClickEvent() != null) {
-                            return Text.literal("").setStyle(style);
+                            return Component.literal("").setStyle(style);
                         }
                     }
                 }
@@ -658,5 +666,20 @@ public class AnnouncementScreen extends Screen {
             currentY += lineHeight;
         }
         return null;
+    }
+
+    /** 26.2 port: StringSplitter.componentStyleAtWidth is gone; walk the glyphs ourselves. */
+    private Style styleAtWidth(FormattedCharSequence text, int targetX) {
+        Style[] found = {null};
+        float[] width = {0.0F};
+        text.accept((index, style, codepoint) -> {
+            width[0] += this.minecraft.font.width(Component.literal(new String(Character.toChars(codepoint))).withStyle(style));
+            if (width[0] > targetX) {
+                found[0] = style;
+                return false;
+            }
+            return true;
+        });
+        return found[0];
     }
 }

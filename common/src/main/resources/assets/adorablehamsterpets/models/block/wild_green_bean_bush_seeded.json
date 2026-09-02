@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "adorablehamsterpets:block/wild_green_bean_bush_seeded"
+  }
+}

@@ -1,20 +1,21 @@
 package net.dawson.adorablehamsterpets.entity.AI.navigation;
 
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.util.HamsterBedUtil;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.pathing.MobNavigation;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.pathfinder.Path;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A custom navigation implementation for hamsters that avoids unlinked {@link HamsterBedBlock}s whenever possible.
  */
-public class HamsterNavigation extends MobNavigation {
+public class HamsterNavigation extends GroundPathNavigation {
     private final HamsterEntity hamster;
 
     // --- Detour State ---
@@ -36,10 +37,10 @@ public class HamsterNavigation extends MobNavigation {
      * @param hamster The hamster entity this navigator belongs to.
      * @param world The world the entity is in.
      */
-    public HamsterNavigation(HamsterEntity hamster, World world) {
+    public HamsterNavigation(HamsterEntity hamster, Level world) {
         super(hamster, world);
         this.hamster = hamster;
-        AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] HamsterNavigation constructed for hamster {}", hamster.getUuid());
+        AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] HamsterNavigation constructed for hamster {}", hamster.getUUID());
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -55,31 +56,31 @@ public class HamsterNavigation extends MobNavigation {
      * @return {@code true} if a path was successfully started, {@code false} otherwise.
      */
     @Override
-    public boolean startMovingTo(double x, double y, double z, double speed) {
-        BlockPos target = BlockPos.ofFloored(x, y, z);
+    public boolean moveTo(double x, double y, double z, double speed) {
+        BlockPos target = BlockPos.containing(x, y, z);
 
         // 1. Fast-Path: Use vanilla's pathfinding
-        Path direct = super.findPathTo(target, 0);
+        Path direct = super.createPath(target, 0);
 
         if (direct != null && !HamsterBedUtil.isPathThroughUnlinkedBed(this.hamster, direct)) {
             this.hamster.pathingFailures = 0;
             this.hamster.lastFailedTarget = null;
             clearWaypoint();
-            return this.startMovingAlong(direct, speed);
+            return this.moveTo(direct, speed);
         }
 
         // 2. More Complex Waypoint Check
         if (isWaypointValidForTarget(target, null)) {
-            Path currentPath = this.getCurrentPath();
+            Path currentPath = this.getPath();
             if (currentPath != null && this.avoidanceWaypoint.equals(currentPath.getTarget())) {
-                this.setSpeed(speed);
+                this.setSpeedModifier(speed);
                 return true; // Use existing path
             }
 
-            Path wp = super.findPathTo(avoidanceWaypoint, 0);
+            Path wp = super.createPath(avoidanceWaypoint, 0);
             if (wp != null) {
                 AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Using existing waypoint {} toward {}", avoidanceWaypoint, target);
-                return this.startMovingAlong(wp, speed);
+                return this.moveTo(wp, speed);
             } else {
                 AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Waypoint {} no longer pathable; clearing", avoidanceWaypoint);
                 clearWaypoint();
@@ -88,43 +89,43 @@ public class HamsterNavigation extends MobNavigation {
 
         // 3. Fallback: Plan new detour
         Path planned = planPathWithWaypoint(target, null, direct);
-        return planned != null && this.startMovingAlong(planned, speed);
+        return planned != null && this.moveTo(planned, speed);
     }
 
     /**
      * Starts the hamster moving towards a target entity, planning a path that avoids unlinked beds.
-     * This method functions similarly to {@link #startMovingTo(double, double, double, double)}, but tracks the
+     * This method functions similarly to {@link #moveTo(double, double, double, double)}, but tracks the
      * target entity's movement to invalidate the detour waypoint if the entity moves too far from its
      * original position.
      *
      * @return {@code true} if a path was successfully started, {@code false} otherwise.
      */
     @Override
-    public boolean startMovingTo(Entity entity, double speed) {
-        BlockPos target = entity.getBlockPos();
+    public boolean moveTo(Entity entity, double speed) {
+        BlockPos target = entity.blockPosition();
 
         // 1. Fast-Path: Use vanilla's entity pathfinding
-        Path direct = super.findPathTo(entity, 0);
+        Path direct = super.createPath(entity, 0);
 
         if (direct != null && !HamsterBedUtil.isPathThroughUnlinkedBed(this.hamster, direct)) {
             this.hamster.pathingFailures = 0;
             this.hamster.lastFailedTarget = null;
             clearWaypoint();
-            return this.startMovingAlong(direct, speed);
+            return this.moveTo(direct, speed);
         }
 
         // 2. More Complex Waypoint Check
         if (isWaypointValidForTarget(target, entity)) {
-            Path currentPath = this.getCurrentPath();
+            Path currentPath = this.getPath();
             if (currentPath != null && this.avoidanceWaypoint.equals(currentPath.getTarget())) {
-                this.setSpeed(speed);
+                this.setSpeedModifier(speed);
                 return true; // Use existing path
             }
 
-            Path wp = super.findPathTo(avoidanceWaypoint, 0);
+            Path wp = super.createPath(avoidanceWaypoint, 0);
             if (wp != null) {
                 AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Using existing waypoint {} toward entity {}", avoidanceWaypoint, entity.getName().getString());
-                return this.startMovingAlong(wp, speed);
+                return this.moveTo(wp, speed);
             } else {
                 AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Waypoint {} no longer pathable; clearing", avoidanceWaypoint);
                 clearWaypoint();
@@ -133,7 +134,7 @@ public class HamsterNavigation extends MobNavigation {
 
         // 3. Fallback: Plan new detour
         Path planned = planPathWithWaypoint(target, entity, direct);
-        return planned != null && this.startMovingAlong(planned, speed);
+        return planned != null && this.moveTo(planned, speed);
     }
 
     /**
@@ -145,9 +146,9 @@ public class HamsterNavigation extends MobNavigation {
      */
     @Nullable
     @Override
-    public Path findPathTo(BlockPos pos, int range) {
+    public Path createPath(BlockPos pos, int range) {
         // Delegate to parent; control planning via startMovingTo
-        return super.findPathTo(pos, range);
+        return super.createPath(pos, range);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -159,7 +160,7 @@ public class HamsterNavigation extends MobNavigation {
         super.tick();
         // Clear waypoint when reached
         if (avoidanceWaypoint != null) {
-            double d2 = this.hamster.squaredDistanceTo(
+            double d2 = this.hamster.distanceToSqr(
                     avoidanceWaypoint.getX() + 0.5,
                     avoidanceWaypoint.getY() + 0.1,
                     avoidanceWaypoint.getZ() + 0.5);
@@ -196,7 +197,7 @@ public class HamsterNavigation extends MobNavigation {
         // Increment failure count as soon as a detour is needed
         if (hamster.lastFailedTarget == null || !hamster.lastFailedTarget.equals(targetPos)) {
             hamster.pathingFailures = 1; // First failure for this target
-            hamster.lastFailedTarget = targetPos.toImmutable();
+            hamster.lastFailedTarget = targetPos.immutable();
         } else {
             hamster.pathingFailures++; // Subsequent failure for same target
         }
@@ -212,13 +213,13 @@ public class HamsterNavigation extends MobNavigation {
 
         // Try alternates around the target and pick the first safe one
         for (int i = 0; i < MAX_ALT_ATTEMPTS; i++) {
-            int dx = hamster.getRandom().nextBetween(-ALT_RADIUS, ALT_RADIUS);
-            int dz = hamster.getRandom().nextBetween(-ALT_RADIUS, ALT_RADIUS);
-            BlockPos alt = targetPos.add(dx, 0, dz);
+            int dx = hamster.getRandom().nextIntBetweenInclusive(-ALT_RADIUS, ALT_RADIUS);
+            int dz = hamster.getRandom().nextIntBetweenInclusive(-ALT_RADIUS, ALT_RADIUS);
+            BlockPos alt = targetPos.offset(dx, 0, dz);
 
-            Path altPath = super.findPathTo(alt, 0);
+            Path altPath = super.createPath(alt, 0);
             boolean altUnsafe = altPath == null || HamsterBedUtil.isPathThroughUnlinkedBed(this.hamster, altPath);
-            AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Alt attempt {}: {} → {} unsafe={}", i + 1, alt, (altPath == null ? "null" : ("len=" + altPath.getLength())), altUnsafe);
+            AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Alt attempt {}: {} → {} unsafe={}", i + 1, alt, (altPath == null ? "null" : ("len=" + altPath.getNodeCount())), altUnsafe);
 
             if (!altUnsafe) {
                 setWaypoint(alt, targetPos, targetEntity);
@@ -240,7 +241,7 @@ public class HamsterNavigation extends MobNavigation {
 
         // If target entity moved too far since choosing the waypoint, invalidate
         if (waypointEntitySnapshot != null && currentEntityTarget != null) {
-            double movedSq = currentEntityTarget.squaredDistanceTo(
+            double movedSq = currentEntityTarget.distanceToSqr(
                     waypointEntitySnapshot.getX(), waypointEntitySnapshot.getY(), waypointEntitySnapshot.getZ());
             if (movedSq > TARGET_MOVE_REPATH_DIST_SQ) {
                 AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Target entity moved too far; invalidating waypoint {}", avoidanceWaypoint);
@@ -251,7 +252,7 @@ public class HamsterNavigation extends MobNavigation {
 
         // If static target shifted too far, invalidate
         if (waypointTargetSnapshot != null) {
-            if (waypointTargetSnapshot.getSquaredDistance(currentTargetPos) > TARGET_MOVE_REPATH_DIST_SQ) {
+            if (waypointTargetSnapshot.distSqr(currentTargetPos) > TARGET_MOVE_REPATH_DIST_SQ) {
                 AdorableHamsterPets.LOGGER.trace("[AHP Nav Debug] Target position moved {}; invalidating waypoint {}",
                         waypointTargetSnapshot, avoidanceWaypoint);
                 clearWaypoint();
@@ -264,7 +265,7 @@ public class HamsterNavigation extends MobNavigation {
 
     private void setWaypoint(BlockPos waypoint, BlockPos targetSnapshot, @Nullable Entity entitySnapshot) {
         this.avoidanceWaypoint = waypoint;
-        this.waypointTargetSnapshot = targetSnapshot.toImmutable();
+        this.waypointTargetSnapshot = targetSnapshot.immutable();
         this.waypointEntitySnapshot = entitySnapshot; // lightweight reference; used only for movement delta
     }
 

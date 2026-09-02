@@ -1,25 +1,24 @@
 package net.dawson.adorablehamsterpets.networking.payload;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 
-public record UpdateHamsterRenderStatePayload(List<Integer> hamsterEntityIds, boolean isRendering) implements CustomPayload {
-    public static final CustomPayload.Id<UpdateHamsterRenderStatePayload> ID = new CustomPayload.Id<>(Identifier.of(AdorableHamsterPets.MOD_ID, "update_hamster_render_state"));
+public record UpdateHamsterRenderStatePayload(List<Integer> hamsterEntityIds, boolean isRendering) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<UpdateHamsterRenderStatePayload> ID = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "update_hamster_render_state"));
 
-    public static final PacketCodec<RegistryByteBuf, UpdateHamsterRenderStatePayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.INTEGER.collect(PacketCodecs.toList()), UpdateHamsterRenderStatePayload::hamsterEntityIds,
-            PacketCodecs.BOOL, UpdateHamsterRenderStatePayload::isRendering,
+    public static final StreamCodec<RegistryFriendlyByteBuf, UpdateHamsterRenderStatePayload> CODEC = StreamCodec.composite(
+            ByteBufCodecs.INT.apply(ByteBufCodecs.list()), UpdateHamsterRenderStatePayload::hamsterEntityIds,
+            ByteBufCodecs.BOOL, UpdateHamsterRenderStatePayload::isRendering,
             UpdateHamsterRenderStatePayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

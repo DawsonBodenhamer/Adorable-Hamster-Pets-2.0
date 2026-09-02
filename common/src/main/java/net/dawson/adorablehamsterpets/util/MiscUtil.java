@@ -8,20 +8,20 @@ import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
 import net.dawson.adorablehamsterpets.networking.payload.PlayerKnockbackPayload;
 import net.dawson.adorablehamsterpets.particles.ModParticles;
 import net.dawson.adorablehamsterpets.tag.ModBlockTags;
-import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.advancement.AdvancementProgress;
-import net.minecraft.advancement.PlayerAdvancementTracker;
-import net.minecraft.block.BlockState;
-import net.minecraft.particle.BlockStateParticleEffect;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.ChatFormatting;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.PlayerAdvancements;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -41,14 +41,14 @@ public final class MiscUtil {
     public static final class BlockStateUtil {
 
         public static boolean isBushBlock(BlockState state) {
-            return state.isIn(ModBlockTags.BUSHES) || Registries.BLOCK.getId(state.getBlock()).getPath().toLowerCase(Locale.ROOT).contains("bush");
+            return state.is(ModBlockTags.BUSHES) || BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath().toLowerCase(Locale.ROOT).contains("bush");
         }
 
-        public static ParticleEffect getHidingSpotParticle(BlockState state) {
+        public static ParticleOptions getHidingSpotParticle(BlockState state) {
             if (isBushBlock(state)) {
                 return ModParticles.getForVariant(WoodVariant.BAMBOO); // Green leaves for bushes
             } else {
-                return new BlockStateParticleEffect(ParticleTypes.BLOCK, state);
+                return new BlockParticleOption(ParticleTypes.BLOCK, state);
             }
         }
     }
@@ -70,19 +70,19 @@ public final class MiscUtil {
          * @param player    The player to knock back.
          * @param sourcePos The origin position of the knockback.
          */
-        public static void applyKnockback(ServerPlayerEntity player, Vec3d sourcePos) {
+        public static void applyKnockback(ServerPlayer player, Vec3 sourcePos) {
             // 1. Calculate direction away from source
-            Vec3d knockbackDir = player.getPos().subtract(sourcePos).normalize();
+            Vec3 knockbackDir = player.position().subtract(sourcePos).normalize();
 
             double velX = knockbackDir.x * KNOCKBACK_HORIZONTAL;
             double velY = KNOCKBACK_VERTICAL;
             double velZ = knockbackDir.z * KNOCKBACK_HORIZONTAL;
 
             // 2. Apply velocity on server
-            player.setVelocity(velX, velY, velZ);
+            player.setDeltaMovement(velX, velY, velZ);
 
             // 3. Mark velocity as dirty
-            player.velocityDirty = true;
+            player.needsSync = true;
 
             // 4. Force sync with client using packet
             NetworkManager.sendToPlayer(player, new PlayerKnockbackPayload(velX, velY, velZ));
@@ -106,26 +106,26 @@ public final class MiscUtil {
          * @param messageCount     The total number of available localized messages in the pool.
          * @param memoryContextKey The NBT dictionary key used to remember the last message shown for this specific event.
          */
-        public static void sendRandomizedSequentialMessage(ServerPlayerEntity player, @Nullable Identifier advancementId, String messageBaseKey, int messageCount, String memoryContextKey) {
-            PlayerAdvancementTracker tracker = player.getAdvancementTracker();
+        public static void sendRandomizedSequentialMessage(ServerPlayer player, @Nullable Identifier advancementId, String messageBaseKey, int messageCount, String memoryContextKey) {
+            PlayerAdvancements tracker = player.getAdvancements();
             int messageIndex;
 
             if (advancementId != null) {
-                AdvancementEntry advancement = player.server.getAdvancementLoader().get(advancementId);
+                AdvancementHolder advancement = player.level().getServer().getAdvancements().get(advancementId);
 
                 if (advancement == null) {
                     AdorableHamsterPets.LOGGER.error("[MessagingUtil] CRITICAL: Could not find advancement '{}'. Message will not be sent.", advancementId);
                     return;
                 }
 
-                AdvancementProgress progress = tracker.getProgress(advancement);
+                AdvancementProgress progress = tracker.getOrStartProgress(advancement);
 
                 if (!progress.isDone()) {
                     // First time ever for this player
                     messageIndex = 0;
                     // Grant advancement so this block doesn't run again
                     for (String criterion : advancement.value().criteria().keySet()) {
-                        tracker.grantCriterion(advancement, criterion);
+                        tracker.award(advancement, criterion);
                     }
                 } else {
                     messageIndex = getNextRandomMessageIndex(player, messageCount, memoryContextKey);
@@ -138,10 +138,10 @@ public final class MiscUtil {
             // Save new index and send message
             ((PlayerEntityAccessor) player).ahp$setLastRandomMessageIndex(memoryContextKey, messageIndex);
             String messageKey = messageBaseKey + "." + (messageIndex + 1);
-            player.sendMessage(Text.translatable(messageKey).formatted(Formatting.WHITE), true);
+            player.sendOverlayMessage(Component.translatable(messageKey).withStyle(ChatFormatting.WHITE));
         }
 
-        private static int getNextRandomMessageIndex(ServerPlayerEntity player, int messageCount, String memoryContextKey) {
+        private static int getNextRandomMessageIndex(ServerPlayer player, int messageCount, String memoryContextKey) {
             PlayerEntityAccessor accessor = (PlayerEntityAccessor) player;
             int lastIndex = accessor.ahp$getLastRandomMessageIndex(memoryContextKey);
 
@@ -150,7 +150,7 @@ public final class MiscUtil {
                 possibleIndices.remove(Integer.valueOf(lastIndex));
             }
 
-            return possibleIndices.get(player.getWorld().random.nextInt(possibleIndices.size()));
+            return possibleIndices.get(player.level().getRandom().nextInt(possibleIndices.size()));
         }
     }
 
@@ -241,7 +241,7 @@ public final class MiscUtil {
          * Converts a tick duration into a localized "X Years, Y Months, Z Days" format.
          * Zero-values are hidden to keep the string concise.
          */
-        public static Text formatAge(long ageInTicks) {
+        public static Component formatAge(long ageInTicks) {
             long ticksPerMonth = TICKS_PER_MC_DAY * DAYS_PER_MONTH;
             long ticksPerYear = TICKS_PER_MC_DAY * DAYS_PER_YEAR;
 
@@ -253,29 +253,29 @@ public final class MiscUtil {
 
             long days = remainder / TICKS_PER_MC_DAY;
 
-            List<Text> parts = new ArrayList<>();
+            List<Component> parts = new ArrayList<>();
 
             if (years > 0) {
                 String key = years == 1 ? "time.adorablehamsterpets.year" : "time.adorablehamsterpets.years";
-                parts.add(Text.translatable(key, years));
+                parts.add(Component.translatable(key, years));
             }
 
             if (months > 0) {
                 String key = months == 1 ? "time.adorablehamsterpets.month" : "time.adorablehamsterpets.months";
-                parts.add(Text.translatable(key, months));
+                parts.add(Component.translatable(key, months));
             }
 
             // Always display days if under a month old, or if there is a remainder of days.
             if (days > 0 || (years == 0 && months == 0)) {
                 String key = days == 1 ? "time.adorablehamsterpets.day" : "time.adorablehamsterpets.days";
-                parts.add(Text.translatable(key, days));
+                parts.add(Component.translatable(key, days));
             }
 
-            MutableText result = Text.empty();
+            MutableComponent result = Component.empty();
             for (int i = 0; i < parts.size(); i++) {
                 result.append(parts.get(i));
                 if (i < parts.size() - 1) {
-                    result.append(Text.literal(", "));
+                    result.append(Component.literal(", "));
                 }
             }
 

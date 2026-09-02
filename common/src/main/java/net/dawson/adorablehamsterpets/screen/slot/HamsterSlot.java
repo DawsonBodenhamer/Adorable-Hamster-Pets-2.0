@@ -1,13 +1,13 @@
 package net.dawson.adorablehamsterpets.screen.slot;
 
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public class HamsterSlot extends Slot {
 
-    public HamsterSlot(Inventory inventory, int index, int x, int y) {
+    public HamsterSlot(Container inventory, int index, int x, int y) {
         super(inventory, index, x, y);
     }
 
@@ -18,7 +18,7 @@ public class HamsterSlot extends Slot {
      * @return True if the item is allowed, false otherwise.
      */
     @Override
-    public boolean canInsert(ItemStack stack) {
-        return HamsterInventoryUtil.isValidForSlot(this.getIndex(), stack);
+    public boolean mayPlace(ItemStack stack) {
+        return HamsterInventoryUtil.isValidForSlot(this.getContainerSlot(), stack);
     }
 }

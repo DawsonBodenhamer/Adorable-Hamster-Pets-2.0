@@ -1,6 +1,6 @@
 plugins {
-    id "architectury-plugin" version "3.4.161"
-    id "dev.architectury.loom" version "1.9-SNAPSHOT" apply false
+    id "architectury-plugin" version "3.5.169"
+    id "dev.architectury.loom-no-remap" version "1.17-SNAPSHOT" apply false
 }
 
 architectury {
@@ -8,20 +8,24 @@ architectury {
 }
 
 subprojects {
-    apply plugin: "dev.architectury.loom"
+    apply plugin: "dev.architectury.loom-no-remap"
 
     dependencies {
         minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-        mappings loom.layered {
-            it.mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-            it.mappings "dev.architectury:yarn-mappings-patch-neoforge:${project.neoforge_yarn_patch}"
-        }
     }
 }
 
 allprojects {
     apply plugin: "java"
     apply plugin: "architectury-plugin"
+
+    // 26.2 portu: Minecraft 26.2 Java 25 istiyor. Gradle 8.14 kendisi JDK 21'de
+    // calisiyor, derlemeyi toolchain uzerinden JDK 25'e yaptiriyoruz.
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(25)
+        }
+    }
 
     base {
         archivesName = rootProject.archives_base_name
@@ -45,7 +49,7 @@ allprojects {
 
     tasks.withType(JavaCompile).configureEach {
         it.options.encoding = "UTF-8"
-        it.options.release = 21
+        it.options.release = 25
         it.options.compilerArgs.add("-Xlint:unchecked")
     }
 

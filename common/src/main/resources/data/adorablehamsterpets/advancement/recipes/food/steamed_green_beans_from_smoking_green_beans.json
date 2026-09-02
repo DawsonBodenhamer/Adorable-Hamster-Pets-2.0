@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_green_beans": {
+      "conditions": {
+        "items": [
+          {
+            "items": "adorablehamsterpets:green_beans"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "adorablehamsterpets:steamed_green_beans_from_smoking_green_beans"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_green_beans"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "adorablehamsterpets:steamed_green_beans_from_smoking_green_beans"
+    ]
+  }
+}

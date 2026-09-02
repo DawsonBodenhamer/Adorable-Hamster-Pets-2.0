@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_parmesan_disc": {
+      "conditions": {
+        "items": [
+          {
+            "items": "adorablehamsterpets:music_disc_parmesan"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "adorablehamsterpets:music_disc_cheese_from_parmesan"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_parmesan_disc"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "adorablehamsterpets:music_disc_cheese_from_parmesan"
+    ]
+  }
+}

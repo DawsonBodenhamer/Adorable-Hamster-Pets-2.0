@@ -1,22 +1,22 @@
 package net.dawson.adorablehamsterpets.networking.payload;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
-public record UpdateCrownThemePayload(int themeOrdinal) implements CustomPayload {
-    public static final CustomPayload.Id<UpdateCrownThemePayload> ID = new CustomPayload.Id<>(Identifier.of(AdorableHamsterPets.MOD_ID, "update_supporter_crown_theme"));
+public record UpdateCrownThemePayload(int themeOrdinal) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<UpdateCrownThemePayload> ID = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "update_supporter_crown_theme"));
 
-    public static final PacketCodec<RegistryByteBuf, UpdateCrownThemePayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.VAR_INT, UpdateCrownThemePayload::themeOrdinal,
+    public static final StreamCodec<RegistryFriendlyByteBuf, UpdateCrownThemePayload> CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, UpdateCrownThemePayload::themeOrdinal,
             UpdateCrownThemePayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

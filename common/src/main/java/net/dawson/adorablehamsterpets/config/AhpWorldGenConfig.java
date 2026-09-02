@@ -11,8 +11,8 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedDouble;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedFloat;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import java.util.List;
 public class AhpWorldGenConfig extends Config {
 
     public AhpWorldGenConfig() {
-        super(Identifier.of(AdorableHamsterPets.MOD_ID, "worldgen"));
+        super(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "worldgen"));
     }
 
     @Override
@@ -518,7 +518,7 @@ public class AhpWorldGenConfig extends Config {
     public ValidatedCondition<Float> netheriteArmorLootChance = new ValidatedFloat(0.1f, 1.0f, 0.0f)
             .toCondition(
                     isNetheriteLootEnabled,
-                    Text.translatable("config.adorablehamsterpets.condition.netherite_loot_enabled"),
+                    Component.translatable("config.adorablehamsterpets.condition.netherite_loot_enabled"),
                     () -> 0.0f
             );
 

@@ -1,6 +1,8 @@
 package net.dawson.adorablehamsterpets.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import dev.architectury.networking.NetworkManager;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
@@ -10,35 +12,35 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.networking.payload.RenameHamsterPayload;
 import net.dawson.adorablehamsterpets.networking.payload.UpdateHamsterArmorVisibilityPayload;
 import net.dawson.adorablehamsterpets.util.HamsterInventoryUtil;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.Items;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.StringHelper;
+import net.minecraft.ChatFormatting;
 import net.minecraft.util.Util;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.StringUtil;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreenHandler> {
+public class HamsterInventoryScreen extends AbstractContainerScreen<HamsterInventoryScreenHandler> {
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constants
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static final Identifier TEXTURE = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/gui/hamster_inventory_gui.png");
-    private static final Identifier PENCIL_ICON = Identifier.of(AdorableHamsterPets.MOD_ID, "textures/gui/pencil_icon_ui.png");
-    private static final Identifier ARMOR_VISIBILITY_CHECKBOX = Identifier.of(
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/hamster_inventory_gui.png");
+    private static final Identifier PENCIL_ICON = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/pencil_icon_ui.png");
+    private static final Identifier ARMOR_VISIBILITY_CHECKBOX = Identifier.fromNamespaceAndPath(
             AdorableHamsterPets.MOD_ID, "textures/gui/armor_visibility_checkbox.png");
-    private static final Identifier ARMOR_VISIBILITY_CHECK_MARK = Identifier.of(
+    private static final Identifier ARMOR_VISIBILITY_CHECK_MARK = Identifier.fromNamespaceAndPath(
             AdorableHamsterPets.MOD_ID, "textures/gui/armor_visibility_check_mark.png");
     private static final int ARMOR_VISIBILITY_TOGGLE_X = 6;
     private static final int ARMOR_VISIBILITY_TOGGLE_Y = 5;
@@ -64,10 +66,9 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public HamsterInventoryScreen(HamsterInventoryScreenHandler handler, PlayerInventory inventory, Text title) {
-        super(handler, inventory, title);
-        this.backgroundHeight = 222;
-        this.playerInventoryTitleY = 139 - 11; // Position just above player inventory
+    public HamsterInventoryScreen(HamsterInventoryScreenHandler handler, Inventory inventory, Component title) {
+        super(handler, inventory, title, 176, 222);
+        this.inventoryLabelY = 139 - 11; // Position just above player inventory
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -79,15 +80,15 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         super.init();
 
         // Restore default title centering (used as fallback if renaming is disabled)
-        this.titleX = (backgroundWidth - textRenderer.getWidth(title)) / 2;
-        this.titleY = 6;
+        this.titleLabelX = (imageWidth - font.width(title)) / 2;
+        this.titleLabelY = 6;
 
-        this.playerInventoryTitleX = 7;
+        this.inventoryLabelX = 7;
 
         // Initialize naming fields based on actual entity's data
-        HamsterEntity hamster = this.handler.getHamsterEntity();
+        HamsterEntity hamster = this.menu.getHamsterEntity();
         if (hamster != null && !this.hasUnsavedName) {
-            Text customName = hamster.getCustomName();
+            Component customName = hamster.getCustomName();
             this.currentName = customName != null ? customName.getString() : "";
             this.initialName = this.currentName;
         }
@@ -105,8 +106,11 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        HamsterEntity hamster = this.handler.getHamsterEntity();
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
+        HamsterEntity hamster = this.menu.getHamsterEntity();
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT
                 && hamster != null
                 && isArmorVisibilityToggleHovered(mouseX, mouseY)) {
@@ -117,8 +121,8 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         }
 
         if (Configs.AHP_MAIN.enableGuiRenaming) {
-            int boxX = this.x + RENAME_BOX_X;
-            int boxY = this.y + RENAME_BOX_Y;
+            int boxX = this.leftPos + RENAME_BOX_X;
+            int boxY = this.topPos + RENAME_BOX_Y;
 
             // Keep rename interaction out of the checkbox's reserved header space.
             if (mouseX >= boxX
@@ -130,8 +134,8 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
                         this.isRenaming = true;
                     } else {
                         // Play failure sound if they lack required name tag
-                        if (this.client != null && this.client.player != null) {
-                            this.client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), 1.0f, 0.5f);
+                        if (this.minecraft != null && this.minecraft.player != null) {
+                            this.minecraft.player.playSound(SoundEvents.NOTE_BLOCK_BASS.value(), 1.0f, 0.5f);
                         }
                     }
                 }
@@ -141,11 +145,14 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
                 saveAndStopRenaming();
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
         if (this.isRenaming) {
             // Unfocus keys
             if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
@@ -161,24 +168,24 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
                 return true;
             }
             // Intercept inventory key so screen doesn't close when typing 'e'
-            if (this.client != null && this.client.options.inventoryKey.matchesKey(keyCode, scanCode)) {
+            if (this.minecraft != null && this.minecraft.options.keyInventory.matches(event)) {
                 return true;
             }
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharacterEvent event) {
         if (this.isRenaming) {
             // Filter out unprintable/illegal characters
-            if (StringHelper.isValidChar(chr)) {
-                this.currentName += chr;
+            if (event.isAllowedChatCharacter()) {
+                this.currentName += event.codepointAsString();
                 this.hasUnsavedName = true;
                 return true;
             }
         }
-        return super.charTyped(chr, modifiers);
+        return super.charTyped(event);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -186,32 +193,30 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        int x = (this.width - this.backgroundWidth) / 2;
-        int y = (this.height - this.backgroundHeight) / 2;
-        context.drawTexture(TEXTURE, x, y, 0, 0, this.backgroundWidth, this.backgroundHeight);
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractBackground(context, mouseX, mouseY, delta);
+        int x = (this.width - this.imageWidth) / 2;
+        int y = (this.height - this.imageHeight) / 2;
+        context.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x, y, (float) (0), (float) (0), this.imageWidth, this.imageHeight, 256, 256);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         // --- Draw Hamster Entity ---
-        int boxX = this.x + 8;
-        int boxY = this.y + 12;
+        int boxX = this.leftPos + 8;
+        int boxY = this.topPos + 12;
         int boxWidth = 59 - 8;
         int boxHeight = 69 - 18;
         int size = 60;
 
-        HamsterEntity hamster = this.handler.getHamsterEntity();
+        HamsterEntity hamster = this.menu.getHamsterEntity();
         if (hamster != null) {
             // Flag renderer to hide nameplate during this specific draw call
             HamsterRenderer.IS_RENDERING_IN_GUI.set(true);
             try {
-                InventoryScreen.drawEntity(
+                InventoryScreen.extractEntityInInventoryFollowsMouse(
                         context,
                         boxX,
                         boxY,
@@ -233,24 +238,24 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
             renderRenameBox(context, mouseX, mouseY);
         }
 
-        drawMouseoverTooltip(context, mouseX, mouseY);
+        extractTooltip(context, mouseX, mouseY);
         renderArmorVisibilityToggle(context, mouseX, mouseY);
     }
 
     @Override
-    protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
+    protected void extractLabels(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         // Only draw standard static title if custom dynamic renaming is disabled
         if (!Configs.AHP_MAIN.enableGuiRenaming) {
-            context.drawText(this.textRenderer, this.title, this.titleX, this.titleY, 4210752, false);
+            context.text(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
         }
 
-        context.drawText(this.textRenderer, this.playerInventoryTitle, this.playerInventoryTitleX, this.playerInventoryTitleY, 4210752, false);
+        context.text(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 4210752, false);
 
         int labelColor = 4210752;
-        drawCenteredLabel(context, Text.translatable("entity.adorablehamsterpets.hamster.inventory_left_cheek_title"), 52, 80, labelColor);
-        drawCenteredLabel(context, Text.translatable("entity.adorablehamsterpets.hamster.inventory_right_cheek_title"), 124, 80, labelColor);
-        drawCenteredLabel(context, Text.translatable("entity.adorablehamsterpets.hamster.inventory_bling_title"), 90, 29, labelColor);
-        drawCenteredLabel(context, Text.translatable("entity.adorablehamsterpets.hamster.inventory_armor_title"), 142, 29, labelColor);
+        drawCenteredLabel(context, Component.translatable("entity.adorablehamsterpets.hamster.inventory_left_cheek_title"), 52, 80, labelColor);
+        drawCenteredLabel(context, Component.translatable("entity.adorablehamsterpets.hamster.inventory_right_cheek_title"), 124, 80, labelColor);
+        drawCenteredLabel(context, Component.translatable("entity.adorablehamsterpets.hamster.inventory_bling_title"), 90, 29, labelColor);
+        drawCenteredLabel(context, Component.translatable("entity.adorablehamsterpets.hamster.inventory_armor_title"), 142, 29, labelColor);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -261,9 +266,9 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
      * Renders the dynamic renaming GUI elements, handling scaling, horizontal centering,
      * the blinking cursor, hover states, and dynamic tooltips.
      */
-    private void renderRenameBox(DrawContext context, int mouseX, int mouseY) {
-        int boxX = this.x + RENAME_BOX_X;
-        int boxY = this.y + RENAME_BOX_Y;
+    private void renderRenameBox(GuiGraphicsExtractor context, int mouseX, int mouseY) {
+        int boxX = this.leftPos + RENAME_BOX_X;
+        int boxY = this.topPos + RENAME_BOX_Y;
         int boxWidth = RENAME_BOX_WIDTH;
         int boxHeight = RENAME_BOX_HEIGHT;
         boolean hovered = mouseX >= boxX
@@ -273,13 +278,13 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
                 && !isArmorVisibilityToggleHovered(mouseX, mouseY);
 
         // Base text is either custom name, or configured default if no name has been set
-        String defaultName = Text.translatable(Configs.AHP_MAIN.useHampterName ? "entity.adorablehamsterpets.hampter" : "entity.adorablehamsterpets.hamster").getString();
+        String defaultName = Component.translatable(Configs.AHP_MAIN.useHampterName ? "entity.adorablehamsterpets.hampter" : "entity.adorablehamsterpets.hamster").getString();
         String baseText = this.currentName.isEmpty() && !this.isRenaming ? defaultName : this.currentName;
 
         // Append a blinking underscore if currently actively typing
-        String displayText = baseText + (this.isRenaming && (Util.getMeasuringTimeMs() / 500 % 2 == 0) ? "_" : "");
+        String displayText = baseText + (this.isRenaming && (Util.getMillis() / 500 % 2 == 0) ? "_" : "");
 
-        int textWidth = this.textRenderer.getWidth(displayText);
+        int textWidth = this.font.width(displayText);
         int unscaledWidth = 8 + 3 + textWidth; // Icon (8) + Margin (3) + Text
 
         // Downscale before reaching the checkbox's reserved header space.
@@ -289,9 +294,9 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         // Calculate starting X to ensure always perfectly centered
         int startX = boxX + (boxWidth / 2) - (scaledWidth / 2);
 
-        context.getMatrices().push();
-        context.getMatrices().translate(startX, boxY, 0);
-        context.getMatrices().scale(scale, scale, 1.0f);
+        context.pose().pushMatrix();
+        context.pose().translate((float) (startX), (float) (boxY));
+        context.pose().scale(scale, scale);
 
         RenameIconPlacement placement = Configs.AHP_UI.renameIconPlacement.get();
         int iconX, textX;
@@ -312,25 +317,25 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         }
 
         // Draw pencil icon
-        context.drawTexture(PENCIL_ICON, iconX, 0, 0, 0, 8, 8, 8, 8);
+        context.blit(RenderPipelines.GUI_TEXTURED, PENCIL_ICON, iconX, 0, (float) (0), (float) (0), 8, 8, 8, 8);
 
         // Draw text
-        context.drawText(this.textRenderer, displayText, textX, 0, 4210752, false);
+        context.text(this.font, displayText, textX, 0, 4210752, false);
 
-        context.getMatrices().pop();
+        context.pose().popMatrix();
 
         // Render dynamic tooltips if hovered and not actively typing
         if (hovered && !this.isRenaming) {
-            List<Text> tooltip = new ArrayList<>();
+            List<Component> tooltip = new ArrayList<>();
             if (Configs.AHP_UI.consumeNameTagForGuiRename && !hasNameTag()) {
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.rename.missing_tag").formatted(Formatting.RED));
+                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.rename.missing_tag").withStyle(ChatFormatting.RED));
             } else {
-                tooltip.add(Text.translatable("tooltip.adorablehamsterpets.rename").formatted(Formatting.GOLD));
+                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.rename").withStyle(ChatFormatting.GOLD));
                 if (Configs.AHP_UI.consumeNameTagForGuiRename) {
-                    tooltip.add(Text.translatable("tooltip.adorablehamsterpets.rename.consume").formatted(Formatting.GRAY));
+                    tooltip.add(Component.translatable("tooltip.adorablehamsterpets.rename.consume").withStyle(ChatFormatting.GRAY));
                 }
             }
-            context.drawTooltip(this.textRenderer, tooltip, mouseX, mouseY);
+            context.setComponentTooltipForNextFrame(this.font, tooltip, mouseX, mouseY);
         }
     }
 
@@ -338,70 +343,52 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
      * Checks the player's inventory and the hamster's cheek pouches for a Name Tag.
      */
     private boolean hasNameTag() {
-        if (this.client == null || this.client.player == null) return false;
-        PlayerEntity player = this.client.player;
+        if (this.minecraft == null || this.minecraft.player == null) return false;
+        Player player = this.minecraft.player;
 
-        for (int i = 0; i < player.getInventory().size(); i++) {
-            if (player.getInventory().getStack(i).isOf(Items.NAME_TAG)) return true;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            if (player.getInventory().getItem(i).is(Items.NAME_TAG)) return true;
         }
 
-        HamsterEntity hamster = this.handler.getHamsterEntity();
+        HamsterEntity hamster = this.menu.getHamsterEntity();
         if (hamster != null) {
             for (int i = 0; i < HamsterInventoryUtil.CHEEK_POUCH_SIZE; i++) {
-                if (hamster.getItems().get(i).isOf(Items.NAME_TAG)) return true;
+                if (hamster.getItems().get(i).is(Items.NAME_TAG)) return true;
             }
         }
         return false;
     }
 
     private void renderArmorVisibilityToggle(
-            DrawContext context, int mouseX, int mouseY) {
-        HamsterEntity hamster = this.handler.getHamsterEntity();
+            GuiGraphicsExtractor context, int mouseX, int mouseY) {
+        HamsterEntity hamster = this.menu.getHamsterEntity();
         if (hamster == null) {
             return;
         }
 
-        context.drawTexture(
-                ARMOR_VISIBILITY_CHECKBOX,
-                this.x + ARMOR_VISIBILITY_CHECKBOX_X,
-                this.y + ARMOR_VISIBILITY_CHECKBOX_Y,
-                0,
-                0,
-                ARMOR_VISIBILITY_CHECKBOX_SIZE,
-                ARMOR_VISIBILITY_CHECKBOX_SIZE,
-                ARMOR_VISIBILITY_CHECKBOX_SIZE,
-                ARMOR_VISIBILITY_CHECKBOX_SIZE);
+        context.blit(RenderPipelines.GUI_TEXTURED, ARMOR_VISIBILITY_CHECKBOX, this.leftPos + ARMOR_VISIBILITY_CHECKBOX_X, this.topPos + ARMOR_VISIBILITY_CHECKBOX_Y, (float) (0), (float) (0), ARMOR_VISIBILITY_CHECKBOX_SIZE, ARMOR_VISIBILITY_CHECKBOX_SIZE, ARMOR_VISIBILITY_CHECKBOX_SIZE, ARMOR_VISIBILITY_CHECKBOX_SIZE);
 
         if (!hamster.isArmorVisible()) {
-            context.drawTexture(
-                    ARMOR_VISIBILITY_CHECK_MARK,
-                    this.x + ARMOR_VISIBILITY_TOGGLE_X,
-                    this.y + ARMOR_VISIBILITY_TOGGLE_Y,
-                    0,
-                    0,
-                    ARMOR_VISIBILITY_TOGGLE_SIZE,
-                    ARMOR_VISIBILITY_TOGGLE_SIZE,
-                    ARMOR_VISIBILITY_TOGGLE_SIZE,
-                    ARMOR_VISIBILITY_TOGGLE_SIZE);
+            context.blit(RenderPipelines.GUI_TEXTURED, ARMOR_VISIBILITY_CHECK_MARK, this.leftPos + ARMOR_VISIBILITY_TOGGLE_X, this.topPos + ARMOR_VISIBILITY_TOGGLE_Y, (float) (0), (float) (0), ARMOR_VISIBILITY_TOGGLE_SIZE, ARMOR_VISIBILITY_TOGGLE_SIZE, ARMOR_VISIBILITY_TOGGLE_SIZE, ARMOR_VISIBILITY_TOGGLE_SIZE);
         }
 
         if (isArmorVisibilityToggleHovered(mouseX, mouseY)) {
-            List<Text> tooltip = new ArrayList<>();
+            List<Component> tooltip = new ArrayList<>();
             String actionKey = hamster.isArmorVisible()
                     ? "tooltip.adorablehamsterpets.armor_visibility.hide"
                     : "tooltip.adorablehamsterpets.armor_visibility.show";
-            tooltip.add(Text.translatable(actionKey).formatted(Formatting.GOLD));
+            tooltip.add(Component.translatable(actionKey).withStyle(ChatFormatting.GOLD));
             String globalKey = Configs.AHP_MAIN.enableArmorVisuals
                     ? "tooltip.adorablehamsterpets.armor_visibility.global_override"
                     : "tooltip.adorablehamsterpets.armor_visibility.globally_disabled";
-            tooltip.add(Text.translatable(globalKey).formatted(Formatting.GRAY));
-            context.drawTooltip(this.textRenderer, tooltip, mouseX, mouseY);
+            tooltip.add(Component.translatable(globalKey).withStyle(ChatFormatting.GRAY));
+            context.setComponentTooltipForNextFrame(this.font, tooltip, mouseX, mouseY);
         }
     }
 
     private boolean isArmorVisibilityToggleHovered(double mouseX, double mouseY) {
-        int toggleX = this.x + ARMOR_VISIBILITY_TOGGLE_X;
-        int toggleY = this.y + ARMOR_VISIBILITY_TOGGLE_Y;
+        int toggleX = this.leftPos + ARMOR_VISIBILITY_TOGGLE_X;
+        int toggleY = this.topPos + ARMOR_VISIBILITY_TOGGLE_Y;
         return mouseX >= toggleX
                 && mouseX < toggleX + ARMOR_VISIBILITY_TOGGLE_SIZE
                 && mouseY >= toggleY
@@ -419,7 +406,7 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
      */
     private void sendRenamePacket() {
         if (this.hasUnsavedName && !this.currentName.equals(this.initialName)) {
-            HamsterEntity hamster = this.handler.getHamsterEntity();
+            HamsterEntity hamster = this.menu.getHamsterEntity();
             if (hamster != null) {
                 NetworkManager.sendToServer(new RenameHamsterPayload(hamster.getId(), this.currentName.trim()));
                 this.initialName = this.currentName; // Update initial state to prevent duplicate packets
@@ -428,8 +415,8 @@ public class HamsterInventoryScreen extends HandledScreen<HamsterInventoryScreen
         }
     }
 
-    private void drawCenteredLabel(DrawContext context, Text text, int centerX, int y, int color) {
-        int width = this.textRenderer.getWidth(text);
-        context.drawText(this.textRenderer, text, centerX - (width / 2), y, color, false);
+    private void drawCenteredLabel(GuiGraphicsExtractor context, Component text, int centerX, int y, int color) {
+        int width = this.font.width(text);
+        context.text(this.font, text, centerX - (width / 2), y, color, false);
     }
 }
