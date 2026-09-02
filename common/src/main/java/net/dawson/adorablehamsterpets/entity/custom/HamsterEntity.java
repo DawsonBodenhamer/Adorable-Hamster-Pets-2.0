@@ -179,7 +179,8 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.ATTACK_DAMAGE, Configs.AHP_MAIN.meleeDamage.get())
                 .add(Attributes.FOLLOW_RANGE, 40.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 0.0D);
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.0D)
+                .add(Attributes.TEMPT_RANGE, 10.0); // 26.2: required by TemptGoal
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
