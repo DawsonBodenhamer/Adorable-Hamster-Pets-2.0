@@ -1,5 +1,8 @@
 package net.dawson.adorablehamsterpets.mixin.client;
 
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
@@ -21,8 +24,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ItemInHandLayer.class)
 public abstract class HeldItemFeatureRendererMixin {
     @Inject(method = "submitArmWithItem", at = @At("HEAD"), cancellable = true)
-    private void adorablehamsterpets$hideAcornRingInOffhand(ArmedEntityRenderState state, Object itemRenderState,
-                                                            ItemStack stack, HumanoidArm arm, CallbackInfo ci) {
+    private void adorablehamsterpets$hideAcornRingInOffhand(ArmedEntityRenderState state, ItemStackRenderState itemRenderState,
+                                                            ItemStack stack, HumanoidArm arm, PoseStack poseStack,
+                                                            SubmitNodeCollector collector, int light, CallbackInfo ci) {
         if (state instanceof AvatarRenderState && arm != state.mainArm && stack.is(ModItems.ACORN_RING.get())) {
             ci.cancel();
         }
