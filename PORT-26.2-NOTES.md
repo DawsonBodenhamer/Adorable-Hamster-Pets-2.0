@@ -64,10 +64,16 @@ repository's LGPL v3; no textures, models, sounds or other ARR assets were alter
   the published 26.1 API and runs with an unofficial 26.2 port of Patchouli 26.1-94
   (branch `port/26.2` of a Patchouli fork; multiblock ghost rendering is disabled there).
   Without Patchouli installed the book item is inert.
-- `BlockJiggleRenderer` world-render pass (Fabric `WorldRenderEvents` removed); only the
-  transform helper remains.
-- `HamsterArmorItem.getEnchantmentValue` and `CheeseItem.getEatingSound` overrides
-  (vanilla moved these to components).
+
+## Restored on 26.2 (second pass)
+
+- Mouth item and bone-locked riders: drawn through GeckoLib 5 per-bone render tasks
+  (`RenderPassInfo.addPerBoneRender`) with `ItemStackRenderState`/entity `submit`; vanilla's own
+  rider pass is skipped by a mixin on `EntityRenderDispatcher.shouldRender`.
+- Block jiggle (tree heist): re-implemented on Fabric `LevelRenderEvents.COLLECT_SUBMITS` with
+  `SubmitNodeCollector.submitMovingBlock`.
+- Cheese chewing sound via the `Consumable` component; hamster armor enchantability via
+  `Item.Properties.enchantable`.
 
 ## Verified
 
