@@ -1,8 +1,11 @@
 # Adorable Hamster Pets — Minecraft 26.2 / Fabric port notes
 
 Branch `port/26.2` ports the mod from 1.21.1 to **Minecraft 26.2** (Fabric Loader 0.19.5,
-Fabric API 0.159.0+26.2). It was done for a private, non-commercial server; it is offered
-upstream as-is so the maintainer can pick whatever is useful. Code changes are under the
+Fabric API 0.159.0+26.2). Why: our friends' survival world already runs on 26.2 and Minecraft
+worlds cannot be downgraded, so the only way to bring hamsters into that world (a surprise for my
+girlfriend, who loves them) was to bring the mod up to 26.2 rather than the world down to 1.21.1.
+It was done for a private, non-commercial server; it is offered upstream as-is so the maintainer
+can pick whatever is useful. Code changes are under the
 repository's LGPL v3; no textures, models, sounds or other ARR assets were altered.
 
 ## Toolchain
