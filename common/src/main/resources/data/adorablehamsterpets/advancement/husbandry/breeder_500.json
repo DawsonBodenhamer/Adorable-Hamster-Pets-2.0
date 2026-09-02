@@ -2,12 +2,7 @@
   "parent": "adorablehamsterpets:husbandry/breeder_100",
   "display": {
     "icon": {
-      "id": "minecraft:potion",
-      "components": {
-        "minecraft:potion_contents": {
-          "potion": "minecraft:healing"
-        }
-      }
+      "id": "minecraft:potion"
     },
     "title": {
       "translate": "advancements.adorablehamsterpets.husbandry.breeder_500.title"

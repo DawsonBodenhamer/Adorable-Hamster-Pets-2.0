@@ -20,14 +20,16 @@
       "trigger": "minecraft:player_interacted_with_entity",
       "conditions": {
         "item": {
-          "items": ["adorablehamsterpets:acorn_hat"]
+          "items": [
+            "adorablehamsterpets:acorn_hat"
+          ]
         },
         "entity": [
           {
             "condition": "minecraft:entity_properties",
             "entity": "this",
             "predicate": {
-              "type": "adorablehamsterpets:hamster"
+              "minecraft:entity_type": "adorablehamsterpets:hamster"
             }
           }
         ]

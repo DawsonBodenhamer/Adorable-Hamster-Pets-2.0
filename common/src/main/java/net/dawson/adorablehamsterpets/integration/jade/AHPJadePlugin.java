@@ -1,5 +1,7 @@
 package net.dawson.adorablehamsterpets.integration.jade;
 
+import dev.architectury.utils.Env;
+import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.block.custom.WildCucumberBushBlock;
@@ -53,6 +55,11 @@ public final class AHPJadePlugin implements IWailaPlugin {
 
     @Override
     public void register(IWailaCommonRegistration registration) {
+        // 26.2 port: the component providers implement Jade's client-side interfaces, so
+        // touching them on a dedicated server would load client classes and crash.
+        if (Platform.getEnvironment() != Env.CLIENT) {
+            return;
+        }
         // --- Server-Side Data Providers ---
         registration.registerBlockDataProvider(HamsterBedComponentProvider.INSTANCE, HamsterBedBlockEntity.class);
         registration.registerEntityDataProvider(HamsterGeneticsComponentProvider.INSTANCE, HamsterEntity.class);

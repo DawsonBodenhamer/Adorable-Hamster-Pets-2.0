@@ -24,7 +24,7 @@
             "condition": "minecraft:entity_properties",
             "entity": "this",
             "predicate": {
-              "type": "adorablehamsterpets:hamster"
+              "minecraft:entity_type": "adorablehamsterpets:hamster"
             }
           }
         ]

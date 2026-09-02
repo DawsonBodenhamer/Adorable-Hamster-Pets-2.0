@@ -20,7 +20,7 @@
       "trigger": "minecraft:entity_killed_player",
       "conditions": {
         "entity": {
-          "type": "adorablehamsterpets:hamster"
+          "minecraft:entity_type": "adorablehamsterpets:hamster"
         }
       }
     }
