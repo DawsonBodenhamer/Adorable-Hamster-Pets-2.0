@@ -7,10 +7,10 @@ loom {
 
 dependencies {
     // Depend on Fabric Loader here to use the Fabric @Environment annotations
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    implementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
     // Architectury API
-    modCompileOnly "dev.architectury:architectury:$rootProject.architectury_api_version"
+    compileOnly "dev.architectury:architectury:$rootProject.architectury_api_version"
 
     // ── ExpectPlatform / injectables  (NEEDED FOR @ExpectPlatform) ─────
     def injectablesVer = "1.0.13"
@@ -18,19 +18,18 @@ dependencies {
     annotationProcessor "dev.architectury:architectury-injectables:$injectablesVer"
 
     // GeckoLib API
-    modCompileOnly "software.bernie.geckolib:geckolib-fabric-$rootProject.minecraft_version:$rootProject.geckolib_version"
+    compileOnly "maven.modrinth:geckolib:${rootProject.geckolib_modrinth_id}"
 
     // Fzzy Config API
-    modCompileOnly "me.fzzyhmstrs:fzzy_config:${rootProject.fzzy_config_version}"
+    compileOnly "me.fzzyhmstrs:fzzy_config:${rootProject.fzzy_config_version}"
 
-    // Jade API
-    modCompileOnly "curse.maven:jade-324717:${rootProject.jade_version_fabric}"
+    // Jade API (26.2 portu: CurseForge dosya kimligi yerine Modrinth maven)
+    compileOnly "maven.modrinth:jade:${rootProject.jade_modrinth_version}"
 
-    // Patchouli API
-    modCompileOnly "vazkii.patchouli:Patchouli:${rootProject.patchouli_version}-FABRIC"
+    // 26.2 portu: Patchouli'nin 26.2 surumu yok, rehber kitap devre disi.
 
     // Iris API (Optional, Compile-Time)
-    modCompileOnly "maven.modrinth:iris:${rootProject.iris_version}-fabric"
+    compileOnly "maven.modrinth:iris:${rootProject.iris_version}-fabric"
 
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
 }
