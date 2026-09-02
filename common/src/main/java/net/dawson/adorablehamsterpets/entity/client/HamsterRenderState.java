@@ -73,6 +73,12 @@ public class HamsterRenderState extends LivingEntityRenderState implements GeoRe
 
     /** True when something is riding the seat bone. */
     public boolean hasPassengers;
+    /** Mouth item resolved during extraction (26.2 item pipeline); null when empty. */
+    public net.minecraft.client.renderer.item.ItemStackRenderState mouthItemRenderState;
+    /** Riders extracted during extraction, drawn bone-locked to the seat bone in the post pass. */
+    public final java.util.List<Rider> riders = new java.util.ArrayList<>();
+    /** Snapshot of one rider: its own render state, the seat offset and the yaw to face. */
+    public record Rider(net.minecraft.client.renderer.entity.state.EntityRenderState state, net.minecraft.world.phys.Vec3 seatOffset, float yaw) {}
 
     /**
      * Resolved fur texture. The lookup needs the entity's genetics and mood, so it

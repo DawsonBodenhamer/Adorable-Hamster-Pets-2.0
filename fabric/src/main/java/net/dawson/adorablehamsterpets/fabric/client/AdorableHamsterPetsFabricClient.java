@@ -1,5 +1,7 @@
 package net.dawson.adorablehamsterpets.fabric.client;
 
+import net.dawson.adorablehamsterpets.client.render.BlockJiggleRenderer;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
@@ -54,7 +56,12 @@ public final class AdorableHamsterPetsFabricClient implements ClientModInitializ
             ParticleProviderRegistry.getInstance().register(supplier.get(), provider -> new PixieDustParticle.Factory(provider, theme));
         }
 
-        // 26.2 port: the old WorldRenderEvents.AFTER_ENTITIES jiggle pass is gone with the
-        // render-pipeline rework; BlockJiggleRenderer now only offers applyJiggleTransform.
+        // --- Block jiggle (tree heist) via the 26.2 level-render submit pass ---
+        LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
+            Minecraft client = Minecraft.getInstance();
+            float partialTick = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+            BlockJiggleRenderer.collectSubmits(client, context.poseStack(), context.submitNodeCollector(),
+                    context.levelState().cameraRenderState.pos, partialTick);
+        });
     }
 }

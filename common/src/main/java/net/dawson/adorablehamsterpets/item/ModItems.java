@@ -1,5 +1,9 @@
 package net.dawson.adorablehamsterpets.item;
 
+import net.dawson.adorablehamsterpets.sound.ModSounds;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.ItemUseAnimation;
+import net.minecraft.world.item.component.Consumable;
 import java.util.function.Consumer;
 import net.minecraft.world.item.component.TooltipDisplay;
 import dev.architectury.platform.Platform;
@@ -116,7 +120,7 @@ public class ModItems {
                     "tooltip.adorablehamsterpets.hamster_food_mix"));
 
     public static final RegistrySupplier<Item> CHEESE = registerItem("cheese",
-            () -> new CheeseItem(itemProps("cheese", new Item.Properties().food(ModFoodComponents.CHEESE))));
+            () -> new CheeseItem(itemProps("cheese", new Item.Properties().food(ModFoodComponents.CHEESE, Consumable.builder().consumeSeconds(1.6F).animation(ItemUseAnimation.EAT).sound(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ModSounds.CHEESE_EAT1.get())).hasConsumeParticles(true).build()))));
 
     // --- Music Discs ---
     public static final ResourceKey<JukeboxSong> CHEESE_SONG_8_BIT_KEY = ResourceKey.create(Registries.JUKEBOX_SONG, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ahp_theme_song_8_bit"));
@@ -222,7 +226,7 @@ public class ModItems {
 
     // --- Hamster Armor ---
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_ACORN = registerItem("hamster_armor_acorn",
-            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.ACORN, itemProps("hamster_armor_acorn", new Item.Properties())) {
+            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.ACORN, itemProps("hamster_armor_acorn", new Item.Properties().enchantable(HamsterArmorItem.HamsterArmorMaterial.ACORN.getEnchantability()))) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -236,7 +240,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_IRON = registerItem("hamster_armor_iron",
-            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.IRON, itemProps("hamster_armor_iron", new Item.Properties())) {
+            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.IRON, itemProps("hamster_armor_iron", new Item.Properties().enchantable(HamsterArmorItem.HamsterArmorMaterial.IRON.getEnchantability()))) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -250,7 +254,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_GOLD = registerItem("hamster_armor_gold",
-            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.GOLD, itemProps("hamster_armor_gold", new Item.Properties())) {
+            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.GOLD, itemProps("hamster_armor_gold", new Item.Properties().enchantable(HamsterArmorItem.HamsterArmorMaterial.GOLD.getEnchantability()))) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -264,7 +268,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_DIAMOND = registerItem("hamster_armor_diamond",
-            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.DIAMOND, itemProps("hamster_armor_diamond", new Item.Properties())) {
+            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.DIAMOND, itemProps("hamster_armor_diamond", new Item.Properties().enchantable(HamsterArmorItem.HamsterArmorMaterial.DIAMOND.getEnchantability()))) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -278,7 +282,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_NETHERITE = registerItem("hamster_armor_netherite",
-            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.NETHERITE, itemProps("hamster_armor_netherite", new Item.Properties())) {
+            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.NETHERITE, itemProps("hamster_armor_netherite", new Item.Properties().enchantable(HamsterArmorItem.HamsterArmorMaterial.NETHERITE.getEnchantability()))) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {

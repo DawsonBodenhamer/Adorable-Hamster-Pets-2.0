@@ -1,5 +1,8 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.core.UUIDUtil;
 import java.lang.Math;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -123,6 +126,87 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
         for (String boneName : new String[] {"left_foot", "nose", SEAT_BONE}) {
             renderPass.addBonePositionListener(boneName, (position, rotation, scale) -> state.bonePositions.put(boneName, position));
         }
+
+        // Mouth item and riders are drawn as per-bone render tasks: GeckoLib runs them
+        // with the pose stack already at the bone's transform.
+        if (state.mouthItemRenderState != null) {
+            renderPass.model().getBone("nose").ifPresent(bone -> renderPass.addPerBoneRender(bone, this::submitMouthItem));
+        }
+        if (!state.riders.isEmpty()) {
+            renderPass.model().getBone(SEAT_BONE).ifPresent(bone -> renderPass.addPerBoneRender(bone, this::submitRiders));
+        }
+    }
+
+    /** Resolves the item in the hamster's mouth into a render state (needs the entity, so runs at extraction). */
+    private static void extractMouthItem(HamsterEntity entity, HamsterRenderState state) {
+        state.mouthItemRenderState = null;
+        if (!entity.isHoldingMouthItem()) return;
+        ItemStack stack = entity.getMouthItemStack();
+        if (stack.isEmpty()) return;
+        ItemStackRenderState itemState = new ItemStackRenderState();
+        Minecraft.getInstance().getItemModelResolver().updateForLiving(itemState, stack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, entity);
+        if (!itemState.isEmpty()) state.mouthItemRenderState = itemState;
+    }
+
+    /** Snapshots every rider with its own renderer's state so the post pass can draw it on the seat bone. */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void extractRiders(HamsterEntity hamster, HamsterRenderState state, float partialTick) {
+        state.riders.clear(); // adorablehamsterpets$extractRiders
+        if (hamster.getPassengers().isEmpty()) return;
+        Minecraft client = Minecraft.getInstance();
+        EntityRenderDispatcher dispatcher = client.getEntityRenderDispatcher();
+        for (Entity passenger : hamster.getPassengers()) {
+            if (!(passenger instanceof LivingEntity living)) continue;
+            if (passenger == client.player && client.options.getCameraType().isFirstPerson()) continue;
+            EntityRenderer renderer = dispatcher.getRenderer(passenger);
+            if (renderer == null) continue;
+            EntityRenderState riderState = renderer.createRenderState();
+            renderer.extractRenderState(passenger, riderState, partialTick);
+            riderState.shadowPieces.clear(); // the hamster already casts the shadow
+            Vec3 seat = HamsterRidingUtil.HamsterSeatOffsets.visualSeatOffset(living, hamster.getScale());
+            float yaw = Mth.rotLerp(partialTick, passenger.yRotO, passenger.getYRot());
+            state.riders.add(new HamsterRenderState.Rider(riderState, seat, yaw));
+        }
+    }
+
+    /** Per-bone task on the nose: draws the carried item with the mod's mouth offsets. */
+    private void submitMouthItem(RenderPassInfo<HamsterRenderState> renderPass, GeoBone bone, SubmitNodeCollector collector) {
+        HamsterRenderState state = renderPass.renderState();
+        if (state.mouthItemRenderState == null) return;
+        PoseStack poseStack = renderPass.poseStack();
+        poseStack.pushPose();
+        HamsterMouthItemOffsets.applyMouthItemTransforms(poseStack);
+        state.mouthItemRenderState.submit(poseStack, collector, renderPass.packedLight(), renderPass.packedOverlay(), 0);
+        poseStack.popPose();
+    }
+
+    /** Per-bone task on the seat bone: draws riders locked to the animated seat. */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void submitRiders(RenderPassInfo<HamsterRenderState> renderPass, GeoBone bone, SubmitNodeCollector collector) {
+        HamsterRenderState state = renderPass.renderState();
+        HamsterEntity hamster = state.entity;
+        if (hamster == null || state.riders.isEmpty()) return;
+        EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+        PoseStack poseStack = renderPass.poseStack();
+        float mountScale = hamster.getScale();
+        for (HamsterRenderState.Rider rider : state.riders) {
+            EntityRenderer renderer = dispatcher.getRenderer(rider.state());
+            if (renderer == null) continue;
+            poseStack.pushPose();
+            if (mountScale != 1.0f) {
+                float inv = 1.0f / mountScale;
+                poseStack.scale(inv, inv, inv);
+            }
+            poseStack.translate(rider.seatOffset().x, rider.seatOffset().y, rider.seatOffset().z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(rider.yaw() - 180.0f));
+            IS_RENDERING_PASSENGER.set(true);
+            try {
+                renderer.submit(rider.state(), poseStack, collector, renderPass.cameraState());
+            } finally {
+                IS_RENDERING_PASSENGER.set(false);
+            }
+            poseStack.popPose();
+        }
     }
 
     /**
@@ -203,6 +287,8 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
         // --- 6. Data the post pass needs ---
         state.entity = entity;
         state.hasPassengers = !entity.getPassengers().isEmpty();
+        extractMouthItem(entity, state);
+        extractRiders(entity, state, partialTick);
     }
 
     /** Applies the offsets resolved during extraction. */
@@ -246,12 +332,6 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
             handleSoundKeyframes(animatable, state);
         }
 
-        // TODO(26.2 port): passengers and the mouth item still need porting.
-        // Both drew through MultiBufferSource/ItemRenderer, which 26.2 removed in
-        // favour of the submit-node pipeline; they need rewriting against
-        // SubmitNodeCollector rather than a mechanical signature swap. Until then a
-        // ridden hamster shows no rider and a carried item is not drawn -- the
-        // gameplay still works, only these two visuals are missing.
     }
 
     /**

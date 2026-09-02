@@ -30,7 +30,8 @@
     "client.accessor.InGameHudAccessor",
     "client.InGameHudMixin",
     "client.AvatarRenderStateMixin",
-    "client.AvatarRendererMixin"
+    "client.AvatarRendererMixin",
+    "client.EntityRenderDispatcherMixin"
   ],
   "injectors": {
     "defaultRequire": 1
