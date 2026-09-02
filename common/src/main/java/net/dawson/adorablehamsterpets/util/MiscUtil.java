@@ -82,7 +82,7 @@ public final class MiscUtil {
             player.setDeltaMovement(velX, velY, velZ);
 
             // 3. Mark velocity as dirty
-            player.hasImpulse = true;
+            player.needsSync = true;
 
             // 4. Force sync with client using packet
             NetworkManager.sendToPlayer(player, new PlayerKnockbackPayload(velX, velY, velZ));
@@ -111,7 +111,7 @@ public final class MiscUtil {
             int messageIndex;
 
             if (advancementId != null) {
-                AdvancementHolder advancement = player.server.getAdvancements().get(advancementId);
+                AdvancementHolder advancement = player.level().getServer().getAdvancements().get(advancementId);
 
                 if (advancement == null) {
                     AdorableHamsterPets.LOGGER.error("[MessagingUtil] CRITICAL: Could not find advancement '{}'. Message will not be sent.", advancementId);
@@ -138,7 +138,7 @@ public final class MiscUtil {
             // Save new index and send message
             ((PlayerEntityAccessor) player).ahp$setLastRandomMessageIndex(memoryContextKey, messageIndex);
             String messageKey = messageBaseKey + "." + (messageIndex + 1);
-            player.displayClientMessage(Component.translatable(messageKey).withStyle(ChatFormatting.WHITE), true);
+            player.sendOverlayMessage(Component.translatable(messageKey).withStyle(ChatFormatting.WHITE));
         }
 
         private static int getNextRandomMessageIndex(ServerPlayer player, int messageCount, String memoryContextKey) {
@@ -150,7 +150,7 @@ public final class MiscUtil {
                 possibleIndices.remove(Integer.valueOf(lastIndex));
             }
 
-            return possibleIndices.get(player.level().random.nextInt(possibleIndices.size()));
+            return possibleIndices.get(player.level().getRandom().nextInt(possibleIndices.size()));
         }
     }
 

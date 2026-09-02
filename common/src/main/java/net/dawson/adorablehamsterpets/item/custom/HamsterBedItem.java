@@ -1,5 +1,10 @@
 package net.dawson.adorablehamsterpets.item.custom;
 
+import net.dawson.adorablehamsterpets.client.ClientInputUtil;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.core.UUIDUtil;
 import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.block.client.HamsterBedItemRenderer;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
@@ -16,7 +21,7 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import com.geckolib.renderer.GeoItemRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -38,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import com.geckolib.animatable.GeoItem;
 import com.geckolib.animatable.client.GeoRenderProvider;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
-import com.geckolib.animation.AnimatableManager;
+import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.util.GeckoLibUtil;
 
 import java.util.List;
@@ -85,10 +90,8 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public void inventoryTick(ItemStack stack, Level world, Entity entity, int slot, boolean selected) {
-        if (!world.isClientSide) {
-            return;
-        }
+    public void inventoryTick(ItemStack stack, ServerLevel world, Entity entity, @Nullable EquipmentSlot slot) {
+        // 26.2: inventoryTick is server-only now; the linked-name sync works fine from the server
 
         UUID linkedUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID.get());
         if (linkedUuid != null && entity instanceof Player) {
@@ -131,7 +134,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                     return super.useOn(context);
                 }
 
-                String username = player.getGameProfile().getName();
+                String username = player.getGameProfile().name();
 
                 // 2. Check if player has already seen warning and waited
                 if (config.playersWhoHaveSeenUnlinkedBedWarning.contains(username)) {
@@ -169,7 +172,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                     msg.append("\n\n").append(Component.translatable("message.adorablehamsterpets.unlinked_bed_placement.2").withStyle(ChatFormatting.GRAY));
                     msg.append("\n");
 
-                    player.displayClientMessage(msg, false);
+                    player.sendSystemMessage(msg);
 
                     return InteractionResult.SUCCESS; // Consume action to prevent placement
                 }
@@ -184,7 +187,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
 
     @Override
     protected boolean updateCustomBlockEntityTag(BlockPos pos, Level world, @Nullable Player player, ItemStack stack, BlockState state) {
-        if (!world.isClientSide) {
+        if (!world.isClientSide()) {
             // Sound and particle logic
             SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, world.getRandom());
             if (rustleSound != null) {
@@ -212,23 +215,23 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
         if (Configs.AHP_UI.enableItemTooltips) {
-            if (Screen.hasShiftDown()) {
+            if (ClientInputUtil.hasShiftDown()) {
                 // --- Expanded Tooltip ---
 
                 // Main hints
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.description1").withStyle(ChatFormatting.GOLD));
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.description2").withStyle(ChatFormatting.GRAY));
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.wander_controls1").withStyle(ChatFormatting.GRAY));
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.wander_controls2").withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.description1").withStyle(ChatFormatting.GOLD));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.description2").withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.jade.wander_controls1").withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.jade.wander_controls2").withStyle(ChatFormatting.GRAY));
 
                 // Dynamic interaction hints
                 Component lureName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.lureItems).copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
                 Component repellentName = ConfigDataCache.getFirstItemNameFromList(Configs.AHP_ITEMS.bedAvoidanceFoods).copy().withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.lure_hint", lureName).withStyle(ChatFormatting.GRAY));
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.repellent_hint", repellentName).withStyle(ChatFormatting.GRAY));
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.unlink_hint", repellentName).withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.jade.lure_hint", lureName).withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.jade.repellent_hint", repellentName).withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.jade.unlink_hint", repellentName).withStyle(ChatFormatting.GRAY));
 
                 // Respawn status and hint
                 boolean configEnabled = Configs.AHP_MAIN.enableRespawnInBed.get();
@@ -250,8 +253,8 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
                     hintText = Component.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_hint.inactive", tributeName.copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
                 }
 
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.label", statusText));
-                tooltip.add(hintText);
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.respawn_status.label", statusText));
+                tooltip.accept(hintText);
 
                 // Conditional linked info
                 UUID hamsterUuid = stack.get(ModDataComponentTypes.LINKED_HAMSTER_UUID.get());
@@ -260,33 +263,28 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
 
                 if (hamsterUuid != null && hamsterName != null) {
                     // Blank line for spacing
-                    tooltip.add(Component.literal(""));
-                    tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.linked_to", hamsterName).withStyle(ChatFormatting.GREEN));
+                    tooltip.accept(Component.literal(""));
+                    tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.linked_to", hamsterName).withStyle(ChatFormatting.GREEN));
                     if (wanderDistance != null) {
                         int radius = switch (wanderDistance) {
                             case NEAR -> Configs.AHP_MAIN.wanderDistanceNear.get();
                             case FAR -> Configs.AHP_MAIN.wanderDistanceFar.get();
                             default -> Configs.AHP_MAIN.wanderDistanceMedium.get();
                         };
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.wander_distance", Component.translatable(wanderDistance.translationKey()), radius).withStyle(ChatFormatting.AQUA));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.wander_distance", Component.translatable(wanderDistance.translationKey()), radius).withStyle(ChatFormatting.AQUA));
                     }
                 }
             } else {
                 // Default condensed tooltip
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.description1").withStyle(ChatFormatting.GOLD));
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.shift_for_info").withStyle(ChatFormatting.DARK_GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.description1").withStyle(ChatFormatting.GOLD));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.shift_for_info").withStyle(ChatFormatting.DARK_GRAY));
             }
         } else if (!Platform.isModLoaded("emi")) {
-            tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+            tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
         }
-        super.appendHoverText(stack, context, tooltip, type);
+        super.appendHoverText(stack, context, display, tooltip, type);
     }
 
-    @Override
-    public String getDescriptionId() {
-        // Forces item to use own unique translation key
-        return this.getOrCreateDescriptionId();
-    }
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
@@ -304,7 +302,7 @@ public class HamsterBedItem extends BlockItem implements GeoItem {
             private HamsterBedItemRenderer renderer;
 
             @Override
-            public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
+            public GeoItemRenderer<?> getGeoItemRenderer() {
                 if (renderer == null)
                     renderer = new HamsterBedItemRenderer();
                 return renderer;

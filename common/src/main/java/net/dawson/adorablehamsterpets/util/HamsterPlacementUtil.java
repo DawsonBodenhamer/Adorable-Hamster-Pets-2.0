@@ -45,7 +45,7 @@ public class HamsterPlacementUtil {
 
                 // Stop momentum
                 hamster.setDeltaMovement(0, 0, 0);
-                hamster.hasImpulse = true;
+                hamster.needsSync = true;
 
                 AdorableHamsterPets.LOGGER.debug("[HamsterSelfRescue] Hamster {} rescued from {} to safe location {}.",
                         hamster.getId(), currentPos, safePos);
@@ -93,7 +93,7 @@ public class HamsterPlacementUtil {
         }
 
         hamster.setDeltaMovement(0.0, 0.0, 0.0);
-        hamster.hasImpulse = true;
+        hamster.needsSync = true;
         hamster.getNavigation().stop();
         hamster.setSwimming(false);
         hamster.setAirSupply(hamster.getMaxAirSupply());
@@ -214,7 +214,7 @@ public class HamsterPlacementUtil {
             BlockPos origin, Level world, HamsterEntity hamster) {
         int maximumY =
                 Math.min(
-                        world.getMinBuildHeight() + world.getHeight() - 2,
+                        world.getMinY() + world.getHeight() - 2,
                         origin.getY() + DROWNING_VERTICAL_RANGE);
 
         Optional<BlockPos> nearbyColumnResult =

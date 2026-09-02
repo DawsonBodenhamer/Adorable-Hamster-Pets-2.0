@@ -1,20 +1,13 @@
 package net.dawson.adorablehamsterpets.client.render;
 
+import net.minecraft.util.RandomSource;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -32,56 +25,10 @@ public class BlockJiggleRenderer {
      *        Public API Methods
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static void render(Minecraft client, PoseStack matrices, MultiBufferSource vertexConsumers, Vec3 cameraPos, float tickDelta) {
-        if (client.level == null) return;
-
-        long worldTime = client.level.getGameTime();
-        var blockRenderManager = client.getBlockRenderer();
-
-        for (var entry : BlockJiggleManager.INSTANCE.getActiveJiggles()) {
-            long posLong = entry.getLongKey();
-            BlockPos pos = BlockPos.of(posLong);
-
-            // Prevent rendering ghost blocks if player breaks it mid jiggle
-            if (!client.level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
-
-            BlockState state = client.level.getBlockState(pos);
-
-            // Mixin handles animated block entity deformation
-            if (state.getRenderShape() != RenderShape.MODEL) continue;
-
-            matrices.pushPose();
-
-            // Translate to block position relative to camera
-            matrices.translate(pos.getX() - cameraPos.x, pos.getY() - cameraPos.y, pos.getZ() - cameraPos.z);
-
-            // Apply jiggle math
-            applyJiggleTransform(matrices, pos, tickDelta, worldTime);
-
-            // Use getLightmapCoordinates to make fake block match real block's lighting
-            int light = LevelRenderer.getLightColor(client.level, state, pos);
-
-            BakedModel model = blockRenderManager.getBlockModel(state);
-            VertexConsumer buffer = vertexConsumers.getBuffer(RenderType.cutoutMipped());
-
-            // Use ModelRenderer directly so renderer can query BiomeColors
-            blockRenderManager.getModelRenderer().tesselateBlock(
-                    client.level,
-                    model,
-                    state,
-                    pos,
-                    matrices,
-                    buffer,
-                    false,
-                    RandomSource.create(),
-                    state.getSeed(pos),
-                    light
-            );
-
-            matrices.popPose();
-        }
-    }
-
+    // 26.2 port: the world-space jiggle pass that used to live here drew blocks
+    // through BakedModel/BlockRenderDispatcher/MultiBufferSource, all removed in
+    // 26.2 -- and nothing registered it, so it never ran. Only the transform
+    // helper below is used (by BlockEntityRenderDispatcherMixin).
     /**
      * Standalone jiggle transformation logic; can be shared with BlockEntityRenderers.
      * Assumes the MatrixStack is currently translated to the block's local origin (0, 0, 0).

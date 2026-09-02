@@ -65,7 +65,7 @@ public class ModRegistries {
                 }
 
                 // Play leaf sound on server
-                SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, world.random);
+                SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, world.getRandom());
                 if (rustleSound != null) {
                     world.playSound(null, pos, rustleSound, SoundSource.BLOCKS, 0.15f, 1.2f);
                 }

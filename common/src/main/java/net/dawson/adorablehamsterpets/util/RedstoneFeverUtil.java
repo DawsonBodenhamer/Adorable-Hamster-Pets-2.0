@@ -1,5 +1,7 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.minecraft.util.ARGB;
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
@@ -14,7 +16,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -54,7 +56,7 @@ public final class RedstoneFeverUtil {
 
     // --- 1. Fever Eligibility and Transitions ---
     public static void tryApplyNaturalFever(
-            HamsterEntity hamster, ServerLevel world, MobSpawnType spawnReason) {
+            HamsterEntity hamster, ServerLevel world, EntitySpawnReason spawnReason) {
         if (!Configs.AHP_MAIN.enableRedstoneFever) return;
         if (!RedstoneFeverPolicy.isEligibleFreshSpawnReason(spawnReason)) return;
         if (!Configs.AHP_WORLDGEN.enableNaturalRedstoneFeverSpawning) return;
@@ -263,7 +265,7 @@ public final class RedstoneFeverUtil {
     public static void spawnRedstoneParticles(HamsterEntity hamster, int count, float velocity) {
         ParticleEffectsUtil.spawnParticlesOnEntity(
                 hamster,
-                new DustParticleOptions(new Vector3f(0.85F, 0.05F, 0.02F), 1.0F),
+                new DustParticleOptions(ARGB.color(255, (int) ((0.85F) * 255), (int) ((0.05F) * 255), (int) ((0.02F) * 255)), 1.0F),
                 count,
                 0.5D / hamster.getBbWidth(),
                 0.4D / hamster.getBbHeight(),
@@ -389,7 +391,7 @@ public final class RedstoneFeverUtil {
         if (!Configs.AHP_MAIN.enableRedstoneFeverSunlightCuring
                 || hamster.getY() <= Configs.AHP_WORLDGEN.maximumRedstoneFeverSpawnY.get()
                 || !world.dimensionType().hasSkyLight()
-                || !world.isDay()
+                || !world.isBrightOutside()
                 || !world.canSeeSky(hamster.blockPosition())
                 || world.isRainingAt(hamster.blockPosition())) {
             return;
@@ -413,7 +415,7 @@ public final class RedstoneFeverUtil {
 
     // --- 4. Dimension Eligibility ---
     public static boolean isAllowedDimension(ServerLevel world) {
-        Identifier currentDimension = world.dimension().location();
+        Identifier currentDimension = world.dimension().identifier();
         for (String entry : Configs.AHP_WORLDGEN.allowedRedstoneFeverDimensions) {
             if (entry.startsWith("#")) {
                 Identifier tagId = Identifier.tryParse(entry.substring(1));

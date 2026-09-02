@@ -1,5 +1,8 @@
 package net.dawson.adorablehamsterpets.item.custom;
 
+import net.dawson.adorablehamsterpets.client.ClientInputUtil;
+import java.util.function.Consumer;
+import net.minecraft.world.item.component.TooltipDisplay;
 import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.custom.WoodVariant;
@@ -15,7 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -33,10 +36,10 @@ public class HamsterBeddingItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+    public InteractionResult use(Level world, Player user, InteractionHand hand) {
         ItemStack stack = user.getItemInHand(hand);
 
-        if (world.isClientSide) {
+        if (world.isClientSide()) {
             // Perform a raycast to see what the player is looking at
             BlockHitResult hitResult = getPlayerPOVHitResult(world, user, ClipContext.Fluid.NONE);
             Vec3 particlePos;
@@ -52,45 +55,45 @@ public class HamsterBeddingItem extends Item {
 
             // Spawn a puff of leaf particles
             for (int i = 0; i < 100; i++) {
-                double offsetX = world.random.nextGaussian() * 1.2;
-                double offsetY = world.random.nextGaussian() * 1.2;
-                double offsetZ = world.random.nextGaussian() * 1.2;
+                double offsetX = world.getRandom().nextGaussian() * 1.2;
+                double offsetY = world.getRandom().nextGaussian() * 1.2;
+                double offsetZ = world.getRandom().nextGaussian() * 1.2;
                 world.addParticle(ModParticles.getForVariant(WoodVariant.OAK), // Use OAK as default
                         particlePos.x + offsetX, particlePos.y + offsetY, particlePos.z + offsetZ,
                         0, HamsterBeddingParticle.BEDDING_ITEM_FLAG, 0);
             }
 
             // Play leaf sound
-            SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, world.random);
+            SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, world.getRandom());
             if (rustleSound != null) {
                 world.playSound(user, user.blockPosition(), rustleSound, SoundSource.PLAYERS, 0.2f, 1.5f);
             }
         }
 
         // Trigger advancement on server
-        if (!world.isClientSide && user instanceof ServerPlayer serverPlayer) {
+        if (!world.isClientSide() && user instanceof ServerPlayer serverPlayer) {
             ModCriteria.USED_HAMSTER_BEDDING.get().trigger(serverPlayer);
         }
 
-        return InteractionResultHolder.sidedSuccess(stack, world.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
         if (Configs.AHP_UI.enableItemTooltips) {
-            if (Screen.hasShiftDown()) {
+            if (ClientInputUtil.hasShiftDown()) {
                 // --- Expanded Tooltip (Shift) ---
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint1").withStyle(ChatFormatting.GOLD));
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint2").withStyle(ChatFormatting.GRAY));
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint3").withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint1").withStyle(ChatFormatting.GOLD));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint2").withStyle(ChatFormatting.GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint3").withStyle(ChatFormatting.GRAY));
             } else {
                 // --- Default Tooltip ---
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint1").withStyle(ChatFormatting.GOLD));
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.shift_for_info").withStyle(ChatFormatting.DARK_GRAY));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_bedding.hint1").withStyle(ChatFormatting.GOLD));
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.shift_for_info").withStyle(ChatFormatting.DARK_GRAY));
             }
         } else if (!Platform.isModLoaded("emi")) {
-            tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+            tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
         }
-        super.appendHoverText(stack, context, tooltip, type);
+        super.appendHoverText(stack, context, display, tooltip, type);
     }
 }

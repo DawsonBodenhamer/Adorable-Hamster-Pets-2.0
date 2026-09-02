@@ -1,0 +1,43 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_acorn_armor": {
+      "conditions": {
+        "items": [
+          {
+            "items": "adorablehamsterpets:hamster_armor_acorn"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_material": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:diamond"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "adorablehamsterpets:hamster_armor_diamond_smithing"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_acorn_armor",
+      "has_material"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "adorablehamsterpets:hamster_armor_diamond_smithing"
+    ]
+  }
+}

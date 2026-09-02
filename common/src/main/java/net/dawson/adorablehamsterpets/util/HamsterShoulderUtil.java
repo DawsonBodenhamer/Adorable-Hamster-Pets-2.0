@@ -62,7 +62,7 @@ public final class HamsterShoulderUtil {
 
         safePos.ifPresentOrElse(
                 pos -> {
-                    hamster.moveTo(
+                    hamster.snapTo(
                             pos.getX() + 0.5,
                             pos.getY(),
                             pos.getZ() + 0.5,
@@ -78,7 +78,7 @@ public final class HamsterShoulderUtil {
                             "[HamsterDismount] Could not find a safe spawn position for player {}."
                                 + " Spawning at player's feet as a fallback.",
                             player.getName().getString());
-                    hamster.moveTo(
+                    hamster.snapTo(
                             fallbackPos.getX() + 0.5,
                             fallbackPos.getY(),
                             fallbackPos.getZ() + 0.5,
@@ -101,8 +101,8 @@ public final class HamsterShoulderUtil {
         AhpMainConfig config = AdorableHamsterPets.MAIN_CONFIG;
 
         if (!config.enableHamsterThrowing) {
-            player.displayClientMessage(
-                    Component.translatable("message.adorablehamsterpets.throwing_disabled"), true);
+            player.sendOverlayMessage(
+                    Component.translatable("message.adorablehamsterpets.throwing_disabled"));
             return;
         }
 

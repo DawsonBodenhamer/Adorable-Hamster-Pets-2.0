@@ -20,22 +20,22 @@ public class ModBlocks {
 
     // --- 2. Change Block fields to RegistrySuppliers ---
     public static final RegistrySupplier<Block> GREEN_BEANS_CROP = registerBlock("green_beans_crop",
-            () -> new GreenBeansCropBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.WHEAT).sound(SoundType.CROP).noOcclusion().noCollission()));
+            () -> new GreenBeansCropBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.WHEAT).sound(SoundType.CROP).noOcclusion().noCollision()));
 
     public static final RegistrySupplier<Block> CUCUMBER_CROP = registerBlock("cucumber_crop",
-            () -> new CucumberCropBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.WHEAT).sound(SoundType.CROP).noOcclusion().noCollission()));
+            () -> new CucumberCropBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.WHEAT).sound(SoundType.CROP).noOcclusion().noCollision()));
 
     public static final RegistrySupplier<Block> WILD_GREEN_BEAN_BUSH = registerBlock("wild_green_bean_bush",
             () -> new WildGreenBeanBushBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SWEET_BERRY_BUSH)
                     .noOcclusion()
-                    .noCollission()
+                    .noCollision()
                     .randomTicks()
                     .sound(SoundType.SWEET_BERRY_BUSH)));
 
     public static final RegistrySupplier<Block> WILD_CUCUMBER_BUSH = registerBlock("wild_cucumber_bush",
             () -> new WildCucumberBushBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SWEET_BERRY_BUSH)
                     .noOcclusion()
-                    .noCollission()
+                    .noCollision()
                     .randomTicks()
                     .sound(SoundType.SWEET_BERRY_BUSH)));
 

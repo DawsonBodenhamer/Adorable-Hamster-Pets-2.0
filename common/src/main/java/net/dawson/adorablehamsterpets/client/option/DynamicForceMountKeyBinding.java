@@ -15,7 +15,7 @@ public class DynamicForceMountKeyBinding extends KeyMapping {
     /**
      * Constructs a new dynamic key binding.
      */
-    public DynamicForceMountKeyBinding(String translationKey, int code, String category) {
+    public DynamicForceMountKeyBinding(String translationKey, int code, KeyMapping.Category category) {
         super(translationKey, InputConstants.Type.KEYSYM, code, category);
         this.enabledTranslationKey = translationKey;
     }

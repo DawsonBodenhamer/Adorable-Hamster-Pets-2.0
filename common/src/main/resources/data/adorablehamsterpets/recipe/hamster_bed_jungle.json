@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "hamster_bed",
+  "key": {
+    "H": "adorablehamsterpets:hamster_bedding",
+    "P": "minecraft:jungle_planks"
+  },
+  "pattern": [
+    " H ",
+    "HHH",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "adorablehamsterpets:hamster_bed_jungle"
+  }
+}

@@ -99,7 +99,7 @@ public class HamsterSniffForOreGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (this.world.isClientSide || !Configs.AHP_MAIN.enableIndependentDiamondSeeking) {
+        if (this.world.isClientSide() || !Configs.AHP_MAIN.enableIndependentDiamondSeeking) {
             return false;
         }
 
@@ -295,7 +295,7 @@ public class HamsterSniffForOreGoal extends Goal {
         }
 
         // Make mistake if applicable
-        boolean targetIsSulkingOre = !buriedSulkingOres.isEmpty() && this.world.random.nextFloat() < Configs.AHP_MAIN.goldMistakeChance.get();
+        boolean targetIsSulkingOre = !buriedSulkingOres.isEmpty() && this.world.getRandom().nextFloat() < Configs.AHP_MAIN.goldMistakeChance.get();
 
         if (targetIsSulkingOre) {
             buriedSulkingOres.sort(Comparator.comparingDouble(pos -> pos.distToCenterSqr(this.hamster.position())));

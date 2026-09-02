@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": "adorablehamsterpets:cheese",
+    "D": "adorablehamsterpets:music_disc_parmesan"
+  },
+  "pattern": [
+    "CCC",
+    "CDC",
+    "CCC"
+  ],
+  "result": {
+    "count": 1,
+    "id": "adorablehamsterpets:music_disc_cheese"
+  }
+}

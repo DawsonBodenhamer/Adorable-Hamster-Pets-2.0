@@ -92,7 +92,7 @@ public class SunflowerBlock extends TallFlowerBlock implements BonemealableBlock
 
         // --- 2. Glowing Easter Egg ---
         // Only activate if enabled, at night, and currently unlit
-        if (AdorableHamsterPets.WORLD_GEN_CONFIG.enableGlowingSunflowers && !world.isDay() && !state.getValue(LIT)) {
+        if (AdorableHamsterPets.WORLD_GEN_CONFIG.enableGlowingSunflowers && !world.isBrightOutside() && !state.getValue(LIT)) {
             int chance = AdorableHamsterPets.WORLD_GEN_CONFIG.glowingSunflowerChance.get();
             if (random.nextInt(chance) == 0) {
                 world.setBlock(pos, state.setValue(LIT, true), Block.UPDATE_CLIENTS);
@@ -103,7 +103,7 @@ public class SunflowerBlock extends TallFlowerBlock implements BonemealableBlock
 
         // --- 3. Safety Cleanup ---
         // Ensure not lit during day
-        if (state.getValue(LIT) && world.isDay()) {
+        if (state.getValue(LIT) && world.isBrightOutside()) {
             world.setBlock(pos, state.setValue(LIT, false), Block.UPDATE_CLIENTS);
         }
     }
@@ -118,14 +118,12 @@ public class SunflowerBlock extends TallFlowerBlock implements BonemealableBlock
     }
 
     @Override
-    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel world, BlockPos pos, boolean moved) {
         // Prevent lighting glitches if a lit block is broken
-        if (!state.is(newState.getBlock())) {
-            if (state.getValue(LIT)) {
-                world.updateNeighborsAt(pos, this);
-            }
+        if (state.getValue(LIT)) {
+            world.updateNeighborsAt(pos, this);
         }
-        super.onRemove(state, world, pos, newState, moved);
+        super.affectNeighborsAfterRemoval(state, world, pos, moved);
     }
 
     @Override
@@ -170,15 +168,15 @@ public class SunflowerBlock extends TallFlowerBlock implements BonemealableBlock
 
         // --- 2. Harvest Seeds ---
         if (state.getValue(HAS_SEEDS)) {
-            if (!world.isClientSide) {
-                int seedAmount = world.random.nextInt(3) + 1; // 1-3 seeds
+            if (!world.isClientSide()) {
+                int seedAmount = world.getRandom().nextInt(3) + 1; // 1-3 seeds
                 ItemStack seedStack = new ItemStack(ModItems.SUNFLOWER_SEEDS.get(), seedAmount);
                 Containers.dropItemStack(world, (double) pos.getX() + 0.5, (double) pos.getY() + 0.5, (double) pos.getZ() + 0.5, seedStack);
 
                 world.setBlock(pos, state.setValue(HAS_SEEDS, false), Block.UPDATE_CLIENTS);
                 world.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0f, 1.0f);
             }
-            return InteractionResult.sidedSuccess(world.isClientSide);
+            return InteractionResult.SUCCESS;
         }
 
         return InteractionResult.PASS;
@@ -187,7 +185,7 @@ public class SunflowerBlock extends TallFlowerBlock implements BonemealableBlock
     @Override
     public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
         super.setPlacedBy(world, pos, state, placer, itemStack);
-        if (!world.isClientSide) {
+        if (!world.isClientSide()) {
             BlockPos topPos = pos.above();
             BlockState topState = world.getBlockState(topPos);
             // Newly placed sunflowers start without seeds
@@ -198,14 +196,10 @@ public class SunflowerBlock extends TallFlowerBlock implements BonemealableBlock
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state) {
-        return new ItemStack(ModItems.SUNFLOWER_BLOCK_ITEM);
+    protected ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state, boolean includeData) {
+        return new ItemStack(ModItems.SUNFLOWER_BLOCK_ITEM.get());
     }
 
-    @Override
-    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
-        return super.updateShape(state, direction, neighborState, world, pos, neighborPos);
-    }
 
     @Override
     public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state) {
@@ -221,7 +215,7 @@ public class SunflowerBlock extends TallFlowerBlock implements BonemealableBlock
     @Override
     public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
         // Vanilla behavior: drop a copy of the flower
-        popResource(world, pos, new ItemStack(ModItems.SUNFLOWER_BLOCK_ITEM));
+        popResource(world, pos, new ItemStack(ModItems.SUNFLOWER_BLOCK_ITEM.get()));
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────

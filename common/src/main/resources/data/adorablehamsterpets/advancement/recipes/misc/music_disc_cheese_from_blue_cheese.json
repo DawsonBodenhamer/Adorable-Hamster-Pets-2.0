@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_blue_cheese_disc": {
+      "conditions": {
+        "items": [
+          {
+            "items": "adorablehamsterpets:music_disc_blue_cheese"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "adorablehamsterpets:music_disc_cheese_from_blue_cheese"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_blue_cheese_disc"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "adorablehamsterpets:music_disc_cheese_from_blue_cheese"
+    ]
+  }
+}

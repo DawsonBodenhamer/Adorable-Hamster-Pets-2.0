@@ -1,5 +1,12 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
 import net.dawson.adorablehamsterpets.util.TreeHeistUtil;
 import net.minecraft.core.BlockPos;
@@ -106,8 +113,8 @@ public abstract class HamsterAbstractHiddenEntity extends Entity {
     }
 
     public boolean isOwnedBy(Player player) {
-        if (this.hamsterNbt != null && this.hamsterNbt.hasUUID("Owner")) {
-            return this.hamsterNbt.getUUID("Owner").equals(player.getUUID());
+        if (this.hamsterNbt != null && this.hamsterNbt.read("Owner", UUIDUtil.CODEC).isPresent()) {
+            return this.hamsterNbt.read("Owner", UUIDUtil.CODEC).orElse(null).equals(player.getUUID());
         }
         return false;
     }
@@ -116,8 +123,14 @@ public abstract class HamsterAbstractHiddenEntity extends Entity {
      *        Overrides
      * ────────────────────────────────────────────────────────────────────────────*/
 
+    /** Invisible proxy entities cannot be damaged. */
     @Override
-    protected void addAdditionalSaveData(CompoundTag nbt) {
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        return false;
+    }
+
+    protected void addAdditionalSaveData(ValueOutput out) {
+        CompoundTag nbt = new CompoundTag();
         nbt.put("HamsterNBT", this.hamsterNbt);
         if (this.anchorPos != null) {
             nbt.putLong("AnchorPos", this.anchorPos.asLong());
@@ -128,24 +141,26 @@ public abstract class HamsterAbstractHiddenEntity extends Entity {
         if (this.forcedExitYaw != null) {
             nbt.putFloat("ForcedExitYaw", this.forcedExitYaw);
         }
+        out.store("AdorableHamsterPets", CompoundTag.CODEC, nbt);
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag nbt) {
-        this.hamsterNbt = nbt.getCompound("HamsterNBT");
+    protected void readAdditionalSaveData(ValueInput in) {
+        CompoundTag nbt = in.read("AdorableHamsterPets", CompoundTag.CODEC).orElseGet(CompoundTag::new);
+        this.hamsterNbt = nbt.getCompoundOrEmpty("HamsterNBT");
 
         if (nbt.contains("AnchorPos")) {
-            this.anchorPos = BlockPos.of(nbt.getLong("AnchorPos"));
+            this.anchorPos = BlockPos.of(nbt.getLongOr("AnchorPos", 0L));
         } else if (nbt.contains("TreeAnchor")) {
             // Backwards compatibility for pre v3.6.1 tree heists
-            this.anchorPos = BlockPos.of(nbt.getLong("TreeAnchor"));
+            this.anchorPos = BlockPos.of(nbt.getLongOr("TreeAnchor", 0L));
         }
 
         if (nbt.contains("ForcedExitPos")) {
-            this.forcedExitPos = BlockPos.of(nbt.getLong("ForcedExitPos"));
+            this.forcedExitPos = BlockPos.of(nbt.getLongOr("ForcedExitPos", 0L));
         }
         if (nbt.contains("ForcedExitYaw")) {
-            this.forcedExitYaw = nbt.getFloat("ForcedExitYaw");
+            this.forcedExitYaw = nbt.getFloatOr("ForcedExitYaw", 0.0F);
         }
     }
 
@@ -195,9 +210,9 @@ public abstract class HamsterAbstractHiddenEntity extends Entity {
         }
 
         // Entity reconstruction
-        HamsterEntity newHamster = ModEntities.HAMSTER.get().create(serverWorld);
+        HamsterEntity newHamster = ModEntities.HAMSTER.get().create(serverWorld, EntitySpawnReason.LOAD);
         if (newHamster != null) {
-            newHamster.load(this.hamsterNbt);
+            newHamster.load(TagValueInput.create(ProblemReporter.DISCARDING, serverWorld.registryAccess(), this.hamsterNbt));
             newHamster.setFallFlyImmunityTicks(0);
 
             // Calculate exit yaw
@@ -213,7 +228,7 @@ public abstract class HamsterAbstractHiddenEntity extends Entity {
             }
 
             // Apply position
-            newHamster.moveTo(
+            newHamster.snapTo(
                     exitPos.getX() + 0.5,
                     exitPos.getY() + 0.1,
                     exitPos.getZ() + 0.5,
@@ -235,7 +250,7 @@ public abstract class HamsterAbstractHiddenEntity extends Entity {
             newHamster.setHiding(false);
             newHamster.setActiveCustomGoalName("None");
 
-            newHamster.hasImpulse = true;
+            newHamster.needsSync = true;
         }
 
         return newHamster;

@@ -14,7 +14,7 @@ public class HamsterPBRTexture extends DynamicTexture {
     private final DynamicTexture specularTexture;
 
     public HamsterPBRTexture(NativeImage image, DynamicTexture normalTexture, DynamicTexture specularTexture) {
-        super(image);
+        super(() -> "adorablehamsterpets_pbr", image); // 26.2: textures carry a debug label
         this.normalTexture = normalTexture;
         this.specularTexture = specularTexture;
     }

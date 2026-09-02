@@ -15,7 +15,7 @@ public class DynamicRideKeyBinding extends KeyMapping {
     /**
      * Constructs a new dynamic key binding.
      */
-    public DynamicRideKeyBinding(String translationKey, int code, String category) {
+    public DynamicRideKeyBinding(String translationKey, int code, KeyMapping.Category category) {
         super(translationKey, InputConstants.Type.KEYSYM, code, category);
         this.enabledTranslationKey = translationKey;
     }

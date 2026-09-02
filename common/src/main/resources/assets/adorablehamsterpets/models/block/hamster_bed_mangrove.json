@@ -1,0 +1,6 @@
+{
+  "parent": "adorablehamsterpets:block/hamster_bed",
+  "textures": {
+    "particle": "adorablehamsterpets:block/hamster_bed_mangrove"
+  }
+}

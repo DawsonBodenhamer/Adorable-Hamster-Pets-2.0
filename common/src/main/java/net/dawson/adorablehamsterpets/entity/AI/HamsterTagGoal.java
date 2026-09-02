@@ -119,11 +119,11 @@ public class HamsterTagGoal extends Goal {
         if (!this.hamster.level().isClientSide() && this.targetPlayer instanceof ServerPlayer serverPlayer) {
             // Instant feedback
             MiscUtil.PlayerPhysicsUtil.applyKnockback(serverPlayer, this.hamster.position());
-            serverPlayer.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 140, 1, false, false, false));
+            serverPlayer.addEffect(new MobEffectInstance(MobEffects.NAUSEA, 140, 1, false, false, false));
 
             // Randomly select one of 4 messages
             int msgIndex = this.hamster.getRandom().nextInt(4) + 1; // 1 to 4
-            serverPlayer.displayClientMessage(Component.translatable("message.adorablehamsterpets.tag_game_start." + msgIndex).withStyle(ChatFormatting.WHITE), true);
+            serverPlayer.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.tag_game_start." + msgIndex).withStyle(ChatFormatting.WHITE));
 
             // Delayed feedback
             this.hamster.scheduleTask(this.hamster.level().getGameTime() + 20, "tag_game_start_effects", () -> {

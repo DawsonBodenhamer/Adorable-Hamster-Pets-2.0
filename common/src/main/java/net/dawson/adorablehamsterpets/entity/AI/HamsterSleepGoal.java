@@ -58,7 +58,7 @@ public class HamsterSleepGoal extends Goal {
                 || this.hamster.isPlayingTag()) {
             return false;
         }
-        if (!this.hamster.level().isDay()) {
+        if (!this.hamster.level().isBrightOutside()) {
             return false;
         }
         if (!this.hamster.onGround()) {
@@ -89,7 +89,7 @@ public class HamsterSleepGoal extends Goal {
     public boolean canContinueToUse() {
         if (this.hamster.isTame()
                 || this.hamster.hasRedstoneFever()
-                || !this.hamster.level().isDay()) {
+                || !this.hamster.level().isBrightOutside()) {
             return false;
         }
 

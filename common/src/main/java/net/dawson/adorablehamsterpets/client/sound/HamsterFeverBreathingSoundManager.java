@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.client.sound;
 
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.client.Minecraft;

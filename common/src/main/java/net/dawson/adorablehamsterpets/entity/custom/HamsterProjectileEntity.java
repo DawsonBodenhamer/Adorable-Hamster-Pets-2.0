@@ -1,5 +1,11 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.dawson.adorablehamsterpets.entity.ModDataSerializers;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
@@ -51,7 +57,7 @@ public class HamsterProjectileEntity extends ThrowableProjectile {
      *        Constants and Static Utilities
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    public static final EntityDataAccessor<CompoundTag> HAMSTER_DATA = SynchedEntityData.defineId(HamsterProjectileEntity.class, EntityDataSerializers.COMPOUND_TAG);
+    public static final EntityDataAccessor<CompoundTag> HAMSTER_DATA = SynchedEntityData.defineId(HamsterProjectileEntity.class, ModDataSerializers.COMPOUND_TAG);
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Instance Fields
@@ -70,7 +76,10 @@ public class HamsterProjectileEntity extends ThrowableProjectile {
     }
 
     public HamsterProjectileEntity(Level world, LivingEntity owner) {
-        super(ModEntities.HAMSTER_PROJECTILE.get(), owner, world);
+        super(ModEntities.HAMSTER_PROJECTILE.get(), world);
+        // 26.2 port: the (type, owner, level) constructor is gone; replicate what it did
+        this.setOwner(owner);
+        this.setPos(owner.getX(), owner.getEyeY() - 0.1D, owner.getZ());
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -102,8 +111,8 @@ public class HamsterProjectileEntity extends ThrowableProjectile {
             boolean isBuffed = false;
             CompoundTag nbt = this.getHamsterData();
             if (!nbt.isEmpty() && nbt.contains("greenBeanBuffData")) {
-                CompoundTag buffData = nbt.getCompound("greenBeanBuffData");
-                isBuffed = buffData.getLong("greenBeanBuffDuration") > this.level().getGameTime();
+                CompoundTag buffData = nbt.getCompoundOrEmpty("greenBeanBuffData");
+                isBuffed = buffData.getLongOr("greenBeanBuffDuration", 0L) > this.level().getGameTime();
             }
 
             int particleDelay = isBuffed ? 3 : 5;
@@ -157,19 +166,22 @@ public class HamsterProjectileEntity extends ThrowableProjectile {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void addAdditionalSaveData(ValueOutput out) {
+        super.addAdditionalSaveData(out);
+        CompoundTag nbt = new CompoundTag();
         nbt.put("HamsterData", this.getHamsterData());
         nbt.putBoolean("HasPlayedIncomingSound", this.hasPlayedIncomingSound);
+        out.store("AdorableHamsterPets", CompoundTag.CODEC, nbt);
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        if (nbt.contains("HamsterData", 10)) { // 10 = Compound
-            this.setHamsterData(nbt.getCompound("HamsterData"));
+    public void readAdditionalSaveData(ValueInput in) {
+        super.readAdditionalSaveData(in);
+        CompoundTag nbt = in.read("AdorableHamsterPets", CompoundTag.CODEC).orElseGet(CompoundTag::new);
+        if (nbt.contains("HamsterData")) { // 10 = Compound
+            this.setHamsterData(nbt.getCompoundOrEmpty("HamsterData"));
         }
-        this.hasPlayedIncomingSound = nbt.getBoolean("HasPlayedIncomingSound");
+        this.hasPlayedIncomingSound = nbt.getBooleanOr("HasPlayedIncomingSound", false);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -232,7 +244,7 @@ public class HamsterProjectileEntity extends ThrowableProjectile {
                 } else if (hitEntity instanceof LivingEntity livingHit && this.getOwner() != null) {
 
                     float damageAmount = HamsterPhysicsUtil.calculateThrowDamage(hamster, hamster.getArmorStack());
-                    boolean damaged = livingHit.hurt(damageSource, damageAmount); // Hamster is damage source
+                    boolean damaged = livingHit.hurtServer((net.minecraft.server.level.ServerLevel) livingHit.level(), damageSource, damageAmount); // Hamster is damage source
 
                     if (damaged) {
                         boolean isDeath = livingHit.isDeadOrDying() || livingHit.getHealth() <= 0.0f;
@@ -244,14 +256,14 @@ public class HamsterProjectileEntity extends ThrowableProjectile {
                         }
 
                         // Apply damage
-                        livingHit.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 20, 0, false, false, false));
+                        livingHit.addEffect(new MobEffectInstance(MobEffects.NAUSEA, 20, 0, false, false, false));
 
                         // Calculate knockback direction based on velocity
                         Vec3 currentVel = this.getDeltaMovement();
                         double knockbackStrength = 0.5;
 
                         // Apply knockback
-                        livingHit.knockback(knockbackStrength, -currentVel.x, -currentVel.z);
+                        livingHit.knockback(knockbackStrength, -currentVel.x, -currentVel.z, damageSource, 1.0F); // 26.2 port: extra DamageSource + scale args
                         playEffects = true;
                     }
                 } else {
@@ -299,16 +311,17 @@ public class HamsterProjectileEntity extends ThrowableProjectile {
                     if (HamsterTreeSearcherEntity.isBlockOccupied(this.level(), scanResult.treeId())) {
                         // Tree is busy
                         if (ownerPlayer != null) {
-                            ownerPlayer.displayClientMessage(Component.translatable("message.adorablehamsterpets.tree_heist_occupied").withStyle(ChatFormatting.RED), true);
+                            ownerPlayer.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.tree_heist_occupied").withStyle(ChatFormatting.RED));
                         }
                         fallbackBlockHit(blockHitResult, hamster);
                     } else {
                         // Tree is free. Start Heist
                         hamster.triggerLeafPopEffects(hitPos, true);
-                        HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(this.level());
+                        HamsterTreeSearcherEntity searcher = ModEntities.HAMSTER_TREE_SEARCHER.get().create(this.level(), EntitySpawnReason.LOAD);
                         if (searcher != null) {
-                            CompoundTag fullNbt = new CompoundTag();
-                            hamster.saveWithoutId(fullNbt); // Use writeNbt to capture full entity state (Owner, Attributes, etc.)
+                            TagValueOutput fullNbtOut = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, hamster.registryAccess());
+                            hamster.saveWithoutId(fullNbtOut);
+                            CompoundTag fullNbt = fullNbtOut.buildResult(); // Use writeNbt to capture full entity state (Owner, Attributes, etc.)
                             // Pass already-calculated scan result
                             searcher.initializeSearch(hitPos, scanResult, fullNbt);
                             this.level().addFreshEntity(searcher);

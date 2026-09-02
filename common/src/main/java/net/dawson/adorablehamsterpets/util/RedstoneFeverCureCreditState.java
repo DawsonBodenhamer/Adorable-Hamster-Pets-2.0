@@ -1,43 +1,49 @@
 package net.dawson.adorablehamsterpets.util;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Server-wide pending advancement credit for players offline when sunlight curing completes.
+ * Cure credits owed to players who were offline when their hamster was cured.
+ *
+ * <p>26.2 port: SavedData no longer has save/load hooks; persistence is a
+ * {@link SavedDataType} with a {@link Codec}. The NBT shape stays the same
+ * (a "Players" list of UUIDs), only the plumbing changed.
  */
 public final class RedstoneFeverCureCreditState extends SavedData {
 
-    /* ─────────────────────────────────────────────────────────────────────────────
-     *        Constants
-     * ─────────────────────────────────────────────────────────────────────────────*/
+    private static final Codec<RedstoneFeverCureCreditState> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            UUIDUtil.CODEC_SET.fieldOf("Players").forGetter(state -> state.pendingPlayers)
+    ).apply(instance, RedstoneFeverCureCreditState::new));
 
-    private static final String STORAGE_KEY = "adorablehamsterpets_redstone_fever_cure_credit";
-    private static final Factory<RedstoneFeverCureCreditState> TYPE = new Factory<>(
+    private static final SavedDataType<RedstoneFeverCureCreditState> TYPE = new SavedDataType<>(
+            Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "redstone_fever_cure_credit"),
             RedstoneFeverCureCreditState::new,
-            RedstoneFeverCureCreditState::fromNbt,
+            CODEC,
             DataFixTypes.SAVED_DATA_COMMAND_STORAGE);
 
-    /* ──────────────────────────────────────────────────────────────────────────────
-     *        Instance Fields
-     * ─────────────────────────────────────────────────────────────────────────────*/
+    private final Set<UUID> pendingPlayers;
 
-    private final Set<UUID> pendingPlayers = new HashSet<>();
+    public RedstoneFeverCureCreditState() {
+        this(new HashSet<>());
+    }
 
-    /* ─────────────────────────────────────────────────────────────────────────────
-     *        Static Utilities
-     * ─────────────────────────────────────────────────────────────────────────────*/
+    private RedstoneFeverCureCreditState(Set<UUID> pendingPlayers) {
+        this.pendingPlayers = new HashSet<>(pendingPlayers);
+    }
 
     public static void awardOrQueue(ServerLevel world, UUID playerUuid) {
         ServerPlayer player = world.getServer().getPlayerList().getPlayer(playerUuid);
@@ -52,45 +58,15 @@ public final class RedstoneFeverCureCreditState extends SavedData {
 
     public static void consume(ServerPlayer player) {
         // Set removal makes reconnect consumption idempotent
-        RedstoneFeverCureCreditState state = get(player.serverLevel());
+        RedstoneFeverCureCreditState state = get((ServerLevel) player.level());
         if (state.pendingPlayers.remove(player.getUUID())) {
             ModCriteria.SUNSHINE_CURING.get().trigger(player);
             state.setDirty();
         }
     }
 
-    /* ────────────────────────────────────────────────────────────────────────────
-     *        Overrides
-     * ───────────────────────────────────────────────────────────────────────────────*/
-
-    @Override
-    public CompoundTag save(CompoundTag nbt, HolderLookup.Provider registries) {
-        ListTag players = new ListTag();
-        for (UUID uuid : this.pendingPlayers) players.add(StringTag.valueOf(uuid.toString()));
-        nbt.put("Players", players);
-        return nbt;
-    }
-
-    /* ─────────────────────────────────────────────────────────────────────────────
-     *        Private Helpers
-     * ────────────────────────────────────────────────────────────────────────────────*/
-
     private static RedstoneFeverCureCreditState get(ServerLevel world) {
         // Overworld manager shares one queue across every cure dimension
-        return world.getServer().overworld().getDataStorage().computeIfAbsent(TYPE, STORAGE_KEY);
-    }
-
-    private static RedstoneFeverCureCreditState fromNbt(
-            CompoundTag nbt, HolderLookup.Provider registries) {
-        RedstoneFeverCureCreditState state = new RedstoneFeverCureCreditState();
-        ListTag players = nbt.getList("Players", Tag.TAG_STRING);
-        for (int index = 0; index < players.size(); index++) {
-            try {
-                state.pendingPlayers.add(UUID.fromString(players.getString(index)));
-            } catch (IllegalArgumentException ignored) {
-                // Ignore malformed legacy entries without blocking remaining credits
-            }
-        }
-        return state;
+        return world.getServer().overworld().getDataStorage().computeIfAbsent(TYPE);
     }
 }

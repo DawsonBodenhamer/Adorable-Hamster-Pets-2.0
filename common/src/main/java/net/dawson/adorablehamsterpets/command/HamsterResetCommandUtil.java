@@ -9,7 +9,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import java.util.Collection;
@@ -61,10 +61,10 @@ public final class HamsterResetCommandUtil {
             preservedCheekLoot.set(slot, hamster.getItems().get(slot).copy());
         }
 
-        HamsterEntity replacement = ModEntities.HAMSTER.get().create(world);
+        HamsterEntity replacement = ModEntities.HAMSTER.get().create(world, EntitySpawnReason.LOAD);
         if (replacement == null) return false;
 
-        replacement.moveTo(
+        replacement.snapTo(
                 hamster.getX(),
                 hamster.getY(),
                 hamster.getZ(),
@@ -73,7 +73,7 @@ public final class HamsterResetCommandUtil {
         replacement.finalizeSpawn(
                 world,
                 world.getCurrentDifficultyAt(replacement.blockPosition()),
-                MobSpawnType.COMMAND,
+                EntitySpawnReason.COMMAND,
                 null);
         replacement.setGenome(preservedGenome);
         replacement.getEntityData().set(

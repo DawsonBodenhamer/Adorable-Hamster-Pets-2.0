@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.event;
 
+import net.minecraft.world.level.block.SaplingBlock;
 import dev.architectury.event.CompoundEventResult;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.*;
@@ -77,7 +78,7 @@ public class AHPCommonEvents {
         InteractionEvent.LEFT_CLICK_BLOCK.register(AHPCommonEvents::onLeftClickBlock);
 
         // Catch block breaks
-        BlockEvent.BREAK.register((world, pos, state, player, xp) -> {
+        BlockEvent.BREAK.register((world, pos, state, player) -> {
             if (!world.isClientSide()) {
                 HamsterAbstractHiddenEntity occupant = HamsterAbstractHiddenEntity.getOccupant(world, pos);
                 if (occupant instanceof HamsterBlockHiderEntity hider && hider.isOwnedBy(player)) {
@@ -164,13 +165,13 @@ public class AHPCommonEvents {
         }
 
         // --- Sapling to Dead Bush Conversion ---
-        if (stack.is(Items.SHEARS) && state.is(BlockTags.SAPLINGS)) {
+        if (stack.is(Items.SHEARS) && state.getBlock() instanceof SaplingBlock) {
             if (!world.isClientSide()) {
                 world.setBlock(pos, Blocks.DEAD_BUSH.defaultBlockState(), Block.UPDATE_ALL);
                 world.playSound(null, pos, SoundEvents.SHEEP_SHEAR, SoundSource.BLOCKS, 1.0f, 1.0f);
 
                 if (player instanceof ServerPlayer serverPlayer && !serverPlayer.getAbilities().instabuild) {
-                    stack.hurtAndBreak(1, serverPlayer, LivingEntity.getSlotForHand(hand));
+                    stack.hurtAndBreak(1, serverPlayer, (hand == net.minecraft.world.InteractionHand.MAIN_HAND ? net.minecraft.world.entity.EquipmentSlot.MAINHAND : net.minecraft.world.entity.EquipmentSlot.OFFHAND));
                 }
 
                 ParticleEffectsUtil.spawnParticles(
@@ -206,7 +207,7 @@ public class AHPCommonEvents {
         return EventResult.pass();
     }
 
-    private static CompoundEventResult<ItemStack> onRightClickItem(Player player, InteractionHand hand) {
+    private static EventResult onRightClickItem(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
         // --- Precision Tree Heist Dynamic Exit ---
@@ -222,7 +223,7 @@ public class AHPCommonEvents {
                     }
                 }
                 if (updated) {
-                    player.displayClientMessage(Component.translatable("message.adorablehamsterpets.precision_tree_heist_exit_direction_set").withStyle(ChatFormatting.AQUA), true);                }
+                    player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.precision_tree_heist_exit_direction_set").withStyle(ChatFormatting.AQUA));                }
             } else {
                 // Client side prediction check
                 for (Entity entity : world.getEntitiesOfClass(HamsterTreeSearcherEntity.class, player.getBoundingBox().inflate(64.0), e -> true)) {
@@ -235,10 +236,10 @@ public class AHPCommonEvents {
 
             if (updated) {
                 // Prevent the player from eating the cheese while configuring the heist
-                return CompoundEventResult.interruptTrue(stack);
+                return EventResult.interruptTrue();
             }
         }
-        return CompoundEventResult.pass();
+        return EventResult.pass();
     }
 
     /**

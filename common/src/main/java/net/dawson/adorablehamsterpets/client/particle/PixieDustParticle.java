@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.client.particle;
 
+import net.minecraft.util.RandomSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -8,7 +9,7 @@ import net.minecraft.core.particles.SimpleParticleType;
  * A dense, short-lived, sparkling particle that dynamically tints itself
  * based on its assigned PixieDustParticleTheme palette.
  */
-public class PixieDustParticle extends TextureSheetParticle {
+public class PixieDustParticle extends SingleQuadParticle {
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Constants and Static Utilities
@@ -35,10 +36,9 @@ public class PixieDustParticle extends TextureSheetParticle {
      *        Constructors
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    protected PixieDustParticle(ClientLevel world, double x, double y, double z, double vx, double vy, double vz, SpriteSet spriteProvider, PixieDustParticleTheme theme) {
-        super(world, x, y, z, vx, vy, vz);
+    protected PixieDustParticle(ClientLevel world, double x, double y, double z, double vx, double vy, double vz, SpriteSet spriteProvider, PixieDustParticleTheme theme, RandomSource random) {
+        super(world, x, y, z, vx, vy, vz, spriteProvider.get(random));
         this.theme = theme;
-        this.setSprite(spriteProvider.get(this.random));
 
         this.lifetime = MIN_LIFETIME + this.random.nextInt(MAX_LIFETIME - MIN_LIFETIME + 1);
         this.baseScale = BASE_SCALE_MIN + this.random.nextFloat() * BASE_SCALE_VARIANCE;
@@ -90,12 +90,12 @@ public class PixieDustParticle extends TextureSheetParticle {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+    protected SingleQuadParticle.Layer getLayer() {
+        return SingleQuadParticle.Layer.TRANSLUCENT;
     }
 
     @Override
-    public int getLightColor(float tint) {
+    protected int getLightCoords(float tint) {
         // Calculate relative brightness of current color
         float colorBrightness = Math.max(this.rCol, Math.max(this.gCol, this.bCol));
 
@@ -106,7 +106,7 @@ public class PixieDustParticle extends TextureSheetParticle {
         int dynamicBlockLight = (int) (adjustedBrightness * 240.0f);
 
         // Get the actual ambient world light
-        int worldLight = super.getLightColor(tint);
+        int worldLight = super.getLightCoords(tint);
 
         // Use the higher of the two so it doesn't artificially darken in bright areas
         int finalBlockLight = Math.max(dynamicBlockLight, worldLight & 0xFFFF);
@@ -141,8 +141,8 @@ public class PixieDustParticle extends TextureSheetParticle {
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel world,
                                        double x, double y, double z,
-                                       double vx, double vy, double vz) {
-            return new PixieDustParticle(world, x, y, z, vx, vy, vz, this.sprites, this.theme);
+                                       double vx, double vy, double vz, RandomSource random) {
+            return new PixieDustParticle(world, x, y, z, vx, vy, vz, this.sprites, this.theme, random);
         }
     }
 }

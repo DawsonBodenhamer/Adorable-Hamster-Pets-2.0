@@ -240,7 +240,7 @@ public class ConfigDataCache {
 
         if (menaceTargetEntities.contains(type)) return true;
         for (TagKey<EntityType<?>> tag : menaceTargetTags) {
-            if (type.is(tag)) return true;
+            if (BuiltInRegistries.ENTITY_TYPE.wrapAsHolder(type).is(tag)) return true;
         }
 
         // Smart fallback: If user included custom AHP monster tag,
@@ -335,11 +335,9 @@ public class ConfigDataCache {
                     Identifier tagId = Identifier.parse(entry.substring(1));
                     TagKey<Item> tagKey = TagKey.create(Registries.ITEM, tagId);
 
-                    BuiltInRegistries.ITEM.getTag(tagKey).ifPresent(entries -> {
-                        for (var itemEntry : entries) {
-                            targetList.add(itemEntry.value());
-                        }
-                    });
+                    for (var itemEntry : BuiltInRegistries.ITEM.getTagOrEmpty(tagKey)) {
+                        targetList.add(itemEntry.value());
+                    }
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[LootConfig] Invalid item tag in '{}': '{}'", listName, entry);
                 }
@@ -469,7 +467,7 @@ public class ConfigDataCache {
     }
 
     private static boolean matchesBiome(Holder<Biome> biomeEntry, Set<Identifier> ids, Set<TagKey<Biome>> tags, Set<Identifier> exclusionIds, Set<TagKey<Biome>> exclusionTags) {
-        Identifier biomeId = biomeEntry.unwrapKey().map(ResourceKey::location).orElse(null);
+        Identifier biomeId = biomeEntry.unwrapKey().map(ResourceKey::identifier).orElse(null);
         if (biomeId == null) return false;
 
         // --- Exclusion Check (Highest Priority) ---
@@ -589,17 +587,17 @@ public class ConfigDataCache {
                         var entryList = entryListOpt.get();
                         int randomIndex = (int) (Math.random() * entryList.size());
                         Item randomItem = entryList.get(randomIndex).value();
-                        return randomItem.getDescription();
+                        return Component.translatable(randomItem.getDescriptionId());
                     }
                 }
 
                 // --- 2. Server-Side / Fallback Resolution ---
-                var entryListOpt = BuiltInRegistries.ITEM.getTag(tagKey);
-                if (entryListOpt.isPresent() && entryListOpt.get().size() > 0) {
-                    var entryList = entryListOpt.get();
+                java.util.List<net.minecraft.core.Holder<Item>> entryList = new java.util.ArrayList<>();
+                BuiltInRegistries.ITEM.getTagOrEmpty(tagKey).forEach(entryList::add);
+                if (!entryList.isEmpty()) {
                     int randomIndex = (int) (Math.random() * entryList.size());
                     Item randomItem = entryList.get(randomIndex).value();
-                    return randomItem.getDescription();
+                    return Component.translatable(randomItem.getDescriptionId());
                 }
             } catch (Exception e) {
                 // Fallback to raw string if tag invalid
@@ -609,13 +607,13 @@ public class ConfigDataCache {
             try {
                 // Try to resolve item ID to localized name
                 Identifier itemId = Identifier.parse(firstEntry);
-                Item item = BuiltInRegistries.ITEM.get(itemId);
+                Item item = BuiltInRegistries.ITEM.get(itemId).map(net.minecraft.core.Holder::value).orElse(null);
 
                 // Fallback to raw string if registry returns default air
                 if (item == Items.AIR && !firstEntry.equals("minecraft:air")) {
                     return Component.literal(firstEntry);
                 }
-                return item.getDescription();
+                return Component.translatable(item.getDescriptionId());
             } catch (Exception e) {
                 // Fallback if ID malformed
                 return Component.literal(firstEntry);

@@ -3,7 +3,7 @@
   "id": "adorablehamsterpets",
   "version": "${version}",
   "name": "Adorable Hamster Pets",
-  "description": "Sure, you’ve got dragons and machines, but let’s be honest— no respectable mod pack is complete without tiny fluffy hamsters running around.",
+  "description": "Sure, you\u2019ve got dragons and machines, but let\u2019s be honest\u2014 no respectable mod pack is complete without tiny fluffy hamsters running around.",
   "authors": [
     "The Scarlet Fox"
   ],
@@ -33,19 +33,17 @@
     "adorablehamsterpets.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.16.14",
-    "minecraft": "~1.21.1",
-    "java": ">=21",
+    "fabricloader": ">=0.18.0",
+    "minecraft": "~26.2",
+    "java": ">=25",
     "fabric-api": "*",
-    "architectury": ">=13.0.8",
-    "geckolib": ">=4.8.3",
+    "architectury": ">=21.0.0",
+    "geckolib": ">=5.5.0",
     "fzzy_config": ">=0.7.6"
   },
   "suggests": {
     "modmenu": "*",
-    "jade": "*",
-    "accessories": "*",
-    "trinkets": "*"
+    "jade": "*"
   },
   "custom": {
     "fzzy_config": [

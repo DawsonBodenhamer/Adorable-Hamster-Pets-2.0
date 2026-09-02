@@ -36,7 +36,7 @@ public class HamsterMeleeAttackGoal extends MeleeAttackGoal {
             SoundEvent attackSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_ATTACK_SOUNDS, this.hamster.getRandom());
             if (attackSound != null) {
                 this.hamster.playSound(attackSound, 1.2F, this.hamster.getVoicePitch());
-                AdorableHamsterPets.LOGGER.trace("[AttackGoal {} Tick {}] Played attack sound: {}", this.hamster.getId(), this.hamster.level().getGameTime(), attackSound.getLocation());
+                AdorableHamsterPets.LOGGER.trace("[AttackGoal {} Tick {}] Played attack sound: {}", this.hamster.getId(), this.hamster.level().getGameTime(), attackSound.location());
             }
 
             // Trigger Attack Animation (Server-Side)
@@ -120,7 +120,7 @@ public class HamsterMeleeAttackGoal extends MeleeAttackGoal {
                         // Small erratic jumps to stay in bounds, pushing slightly towards owner
                         Vec3 bounceVec = owner.position().subtract(this.hamster.position()).normalize().scale(0.5);
                         this.hamster.setDeltaMovement(this.hamster.getDeltaMovement().add(bounceVec.x, 0.5, bounceVec.z));
-                        this.hamster.hasImpulse = true;
+                        this.hamster.needsSync = true;
 
                         // SFX
                         SoundEvent bounceSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BOUNCE_SOUNDS, this.hamster.getRandom());

@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.entity.AI.navigation;
 
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;

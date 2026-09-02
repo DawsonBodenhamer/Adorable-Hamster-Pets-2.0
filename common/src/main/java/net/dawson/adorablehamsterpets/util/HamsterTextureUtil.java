@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.dawson.adorablehamsterpets.util.FlowerItemUtil;
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
@@ -26,7 +27,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -87,7 +88,7 @@ public class HamsterTextureUtil {
         for (Map.Entry<String, Identifier> entry : CACHED_TEXTURES.entrySet()) {
             String cacheKey = entry.getKey();
             Identifier id = entry.getValue();
-            AbstractTexture texture = tm.getTexture(id, null);
+            AbstractTexture texture = tm.getTexture(id);
 
             if (texture instanceof HamsterPBRTexture pbrTexture) {
                 NativeImage base = pbrTexture.getPixels();
@@ -104,7 +105,7 @@ public class HamsterTextureUtil {
         // Output clickable path to player chat
         if (player != null) {
             Path debugDir = Platform.getGameFolder().resolve("ahp_printed_textures");
-            player.displayClientMessage(Component.literal("Dumped " + count + " hamster textures to: " + debugDir.toAbsolutePath()).withStyle(ChatFormatting.WHITE), false);
+            player.sendSystemMessage(Component.literal("Dumped " + count + " hamster textures to: " + debugDir.toAbsolutePath()).withStyle(ChatFormatting.WHITE));
         }
     }
 
@@ -155,8 +156,8 @@ public class HamsterTextureUtil {
         }
 
         ArmorTrim trim = armorStack.isEmpty() ? null : armorStack.get(DataComponents.TRIM);
-        String trimPattern = trim != null ? trim.pattern().unwrapKey().map(key -> key.location().getPath()).orElse("none") : "none";
-        String trimMaterialAsset = trim != null ? trim.material().value().assetName() : "none";
+        String trimPattern = trim != null ? trim.pattern().unwrapKey().map(key -> key.identifier().getPath()).orElse("none") : "none";
+        String trimMaterialAsset = trim != null ? trim.material().unwrapKey().map(key -> key.identifier().getPath()).orElse("none") : "none";
 
         boolean hasAcornHat = false;
         ItemStack accessoryStack = hamster.getAccessoryStack();
@@ -171,7 +172,7 @@ public class HamsterTextureUtil {
         }
 
         // True if they have any flower equipped AND its position tracker is > 0
-        boolean hasFlower = hamster.getEntityData().get(HamsterEntity.FLOWER_POS) > 0 && accessoryStack.is(ItemTags.FLOWERS);
+        boolean hasFlower = hamster.getEntityData().get(HamsterEntity.FLOWER_POS) > 0 && FlowerItemUtil.isFlower(accessoryStack);
         String flowerTexturePath = hasFlower ? getFlowerTexture(accessoryStack) : "";
 
         // --- Generate Cache Key ---
@@ -225,7 +226,7 @@ public class HamsterTextureUtil {
             // Flat Normals → R:127, G:127
             // 0% Ambient Occlusion → B:255
             // 0% Displacement → A:255
-            int defaultNormal = FastColor.ABGR32.color(255, 255, 127, 127);
+            int defaultNormal = ARGB.color(255, 127, 127, 255);
 
             // Specular Texture (Fur) ↓
             // Matte → R:0
@@ -233,18 +234,18 @@ public class HamsterTextureUtil {
             // Low SSS → B:80
             // No Emissiveness → A:255
             int furSss = Configs.AHP_MAIN.furSss.get();
-            int furSpecular = FastColor.ABGR32.color(255, furSss, 0, 0);
+            int furSpecular = ARGB.color(255, 0, 0, furSss);
 
             // Fill base PBR values for opaque pixels on base coat,
             // clear transparent pixels to prevent memory garbage
             for (int y = 0; y < composite.getHeight(); y++) {
                 for (int x = 0; x < composite.getWidth(); x++) {
-                    if (FastColor.ABGR32.alpha(composite.getPixelRGBA(x, y)) > 0) {
-                        specularImg.setPixelRGBA(x, y, furSpecular);
-                        normalImg.setPixelRGBA(x, y, defaultNormal);
+                    if (ARGB.alpha(composite.getPixel(x, y)) > 0) {
+                        specularImg.setPixel(x, y, furSpecular);
+                        normalImg.setPixel(x, y, defaultNormal);
                     } else {
-                        specularImg.setPixelRGBA(x, y, 0x00000000);
-                        normalImg.setPixelRGBA(x, y, 0x00000000);
+                        specularImg.setPixel(x, y, 0x00000000);
+                        normalImg.setPixel(x, y, 0x00000000);
                     }
                 }
             }
@@ -283,7 +284,7 @@ public class HamsterTextureUtil {
             // Medium SSS → B:100
             // No Emissiveness → A:255
             int skinSss = Configs.AHP_MAIN.skinSss.get();
-            int skinSpecular = FastColor.ABGR32.color(255, skinSss, 0, 120);
+            int skinSpecular = ARGB.color(255, 120, 0, skinSss);
             NativeImage skinLayer = readRawImage("textures/entity/hamster/overlays/skin/skin.png");
             if (skinLayer != null) {
                 blendLayer(composite, specularImg, normalImg, skinLayer, skinSpecular);
@@ -295,7 +296,7 @@ public class HamsterTextureUtil {
             // No Reflectance → G:0
             // No SSS → B:0
             // No Emissiveness → A:255
-            int eyeSpecular = FastColor.ABGR32.color(255, 0, 0, 0);
+            int eyeSpecular = ARGB.color(255, 0, 0, 0);
             String eyeTexture = redEyes ? "textures/entity/hamster/overlays/eyes/red_eyes.png" : "textures/entity/hamster/overlays/eyes/black_eyes.png";
             NativeImage eyeLayer = readRawImage(eyeTexture);
             if (eyeLayer != null) {
@@ -305,7 +306,7 @@ public class HamsterTextureUtil {
 
             // --- 6. Redstone Fever Skin ---
             if (isRedstoneFever) {
-                int feverSkinSpecular = FastColor.ABGR32.color(255, skinSss, 0, 120);
+                int feverSkinSpecular = ARGB.color(255, 120, 0, skinSss);
                 NativeImage feverSkinLayer = readRawImage("textures/entity/hamster/appearance/conditions/redstone_fever/skin.png");
                 if (feverSkinLayer != null) {
                     blendLayer(composite, specularImg, normalImg, feverSkinLayer, feverSkinSpecular);
@@ -325,7 +326,7 @@ public class HamsterTextureUtil {
 
                 // --- 8. Redstone Fever Eye Color ---
                 // Using dedicated render layer for emissiveness so it works without shaders
-                int feverEyeSpecular = FastColor.ABGR32.color(255, 0, 0, 0);
+                int feverEyeSpecular = ARGB.color(255, 0, 0, 0);
                 NativeImage feverEyeLayer = readRawImage("textures/entity/hamster/appearance/conditions/redstone_fever/eyes.png");
                 if (feverEyeLayer != null) {
                     blendLayer(composite, specularImg, normalImg, feverEyeLayer, feverEyeSpecular);
@@ -335,7 +336,7 @@ public class HamsterTextureUtil {
 
             // --- 9. Armor Layer ---
             if (armorTextureId != null) {
-                int armorSpecular = Configs.AHP_MAIN.enableArmorPbr.get() ? getArmorSpecular(armorMaterial) : FastColor.ABGR32.color(255, 0, 0, 0);
+                int armorSpecular = Configs.AHP_MAIN.enableArmorPbr.get() ? getArmorSpecular(armorMaterial) : ARGB.color(255, 0, 0, 0);
                 NativeImage armorLayer = readRawImage(armorTextureId.getPath());
                 if (armorLayer != null) {
                     blendLayer(composite, specularImg, normalImg, armorLayer, armorSpecular);
@@ -356,10 +357,10 @@ public class HamsterTextureUtil {
                             // High Glossy → R:220
                             // Medium Reflectance → G:50
                             // No SSS → B:0
-                            trimSpecular = FastColor.ABGR32.color(emissiveValue, 0, 50, 220);
+                            trimSpecular = ARGB.color(emissiveValue, 220, 50, 0);
                         } else {
                             // Keep emissive value but drop physical PBR traits
-                            trimSpecular = FastColor.ABGR32.color(emissiveValue, 0, 0, 0);
+                            trimSpecular = ARGB.color(emissiveValue, 0, 0, 0);
                         }
 
                         blendLayer(composite, specularImg, normalImg, trimLayer, trimSpecular);
@@ -377,7 +378,7 @@ public class HamsterTextureUtil {
             // Low SSS → B:80
             // No Emissiveness → A:255
             int accessorySss = Configs.AHP_MAIN.accessorySss.get();
-            int accessorySpecular = FastColor.ABGR32.color(255, accessorySss, 0, 50);
+            int accessorySpecular = ARGB.color(255, 50, 0, accessorySss);
 
             // --- 8. Acorn Hat Layer ---
             if (hasAcornHat) {
@@ -402,11 +403,11 @@ public class HamsterTextureUtil {
             // --- 10. Register Textures ---
             // Register PBR Maps
             Identifier specularId = Identifier.fromNamespaceAndPath(dynamicId.getNamespace(), dynamicId.getPath() + "_s");
-            DynamicTexture specularTexture = new DynamicTexture(specularImg);
+            DynamicTexture specularTexture = new DynamicTexture(specularId::toString, specularImg);
             Minecraft.getInstance().getTextureManager().register(specularId, specularTexture);
 
             Identifier normalId = Identifier.fromNamespaceAndPath(dynamicId.getNamespace(), dynamicId.getPath() + "_n");
-            DynamicTexture normalTexture = new DynamicTexture(normalImg);
+            DynamicTexture normalTexture = new DynamicTexture(normalId::toString, normalImg);
             Minecraft.getInstance().getTextureManager().register(normalId, normalTexture);
 
             // Create custom base texture wrapper and register
@@ -439,11 +440,11 @@ public class HamsterTextureUtil {
         // Evaluate only opaque pixels for this specific layer
         for (int y = 0; y < layer.getHeight(); y++) {
             for (int x = 0; x < layer.getWidth(); x++) {
-                int color = layer.getPixelRGBA(x, y);
-                if (FastColor.ABGR32.alpha(color) > 127) {
-                    int r = FastColor.ABGR32.red(color);
-                    int g = FastColor.ABGR32.green(color);
-                    int b = FastColor.ABGR32.blue(color);
+                int color = layer.getPixel(x, y);
+                if (ARGB.alpha(color) > 127) {
+                    int r = ARGB.red(color);
+                    int g = ARGB.green(color);
+                    int b = ARGB.blue(color);
                     float brightness = Math.max(r, Math.max(g, b));
 
                     if (brightness < minBrightness) minBrightness = brightness;
@@ -458,9 +459,9 @@ public class HamsterTextureUtil {
         // Map depth to the Normal Alpha channel for opaque pixels
         for (int y = 0; y < layer.getHeight(); y++) {
             for (int x = 0; x < layer.getWidth(); x++) {
-                if (FastColor.ABGR32.alpha(layer.getPixelRGBA(x, y)) > 127) {
-                    int color = layer.getPixelRGBA(x, y);
-                    float brightness = Math.max(FastColor.ABGR32.red(color), Math.max(FastColor.ABGR32.green(color), FastColor.ABGR32.blue(color)));
+                if (ARGB.alpha(layer.getPixel(x, y)) > 127) {
+                    int color = layer.getPixel(x, y);
+                    float brightness = Math.max(ARGB.red(color), Math.max(ARGB.green(color), ARGB.blue(color)));
 
                     float normalized = brightnessRange > 0.0f ? (brightness - minBrightness) / brightnessRange : 1.0f;
 
@@ -469,9 +470,9 @@ public class HamsterTextureUtil {
                     float depthFraction = (1.0f - normalized) * (Configs.AHP_MAIN.maxPomDepth.get() / 0.25f);
                     int pomAlpha = Math.max(1, 255 - (int)(depthFraction * 254));
 
-                    int normColor = normalImg.getPixelRGBA(x, y);
+                    int normColor = normalImg.getPixel(x, y);
                     int newNormColor = (normColor & 0x00FFFFFF) | (pomAlpha << 24);
-                    normalImg.setPixelRGBA(x, y, newNormColor);
+                    normalImg.setPixel(x, y, newNormColor);
                 }
             }
         }
@@ -492,15 +493,12 @@ public class HamsterTextureUtil {
         };
 
         if (pbr != null) {
-            return FastColor.ABGR32.color(
-                    pbr.emissive.get(),
-                    pbr.sss.get(),
-                    pbr.metallic.get(),
-                    pbr.smoothness.get()
-            );
+            return ARGB.color(
+                    pbr.emissive.get(), pbr.smoothness.get(), pbr.metallic.get(), pbr.sss.get())
+            ;
         }
 
-        return FastColor.ABGR32.color(255, 0, 150, 240); // Fallback
+        return ARGB.color(255, 240, 150, 0); // Fallback
     }
 
     /**
@@ -509,46 +507,46 @@ public class HamsterTextureUtil {
     private static void blendLayer(NativeImage composite, NativeImage specularImg, NativeImage normalImg, NativeImage layer, int specularAbgr) {
         int width = Math.min(composite.getWidth(), layer.getWidth());
         int height = Math.min(composite.getHeight(), layer.getHeight());
-        int defaultNormal = FastColor.ABGR32.color(255, 255, 127, 127);
+        int defaultNormal = ARGB.color(255, 127, 127, 255);
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                int topColor = layer.getPixelRGBA(x, y);
-                int topA = FastColor.ABGR32.alpha(topColor);
+                int topColor = layer.getPixel(x, y);
+                int topA = ARGB.alpha(topColor);
 
                 if (topA == 0) continue;
 
                 if (topA == 255) {
-                    composite.setPixelRGBA(x, y, topColor);
-                    specularImg.setPixelRGBA(x, y, specularAbgr);
-                    normalImg.setPixelRGBA(x, y, defaultNormal);
+                    composite.setPixel(x, y, topColor);
+                    specularImg.setPixel(x, y, specularAbgr);
+                    normalImg.setPixel(x, y, defaultNormal);
                     continue;
                 }
 
-                int bottomColor = composite.getPixelRGBA(x, y);
-                int botA = FastColor.ABGR32.alpha(bottomColor);
+                int bottomColor = composite.getPixel(x, y);
+                int botA = ARGB.alpha(bottomColor);
 
                 if (botA == 0) {
-                    composite.setPixelRGBA(x, y, topColor);
-                    specularImg.setPixelRGBA(x, y, specularAbgr);
-                    normalImg.setPixelRGBA(x, y, defaultNormal);
+                    composite.setPixel(x, y, topColor);
+                    specularImg.setPixel(x, y, specularAbgr);
+                    normalImg.setPixel(x, y, defaultNormal);
                     continue;
                 }
 
                 float alpha = topA / 255.0f;
                 float invAlpha = 1.0f - alpha;
 
-                int r = (int) (FastColor.ABGR32.red(topColor) * alpha + FastColor.ABGR32.red(bottomColor) * invAlpha);
-                int g = (int) (FastColor.ABGR32.green(topColor) * alpha + FastColor.ABGR32.green(bottomColor) * invAlpha);
-                int b = (int) (FastColor.ABGR32.blue(topColor) * alpha + FastColor.ABGR32.blue(bottomColor) * invAlpha);
+                int r = (int) (ARGB.red(topColor) * alpha + ARGB.red(bottomColor) * invAlpha);
+                int g = (int) (ARGB.green(topColor) * alpha + ARGB.green(bottomColor) * invAlpha);
+                int b = (int) (ARGB.blue(topColor) * alpha + ARGB.blue(bottomColor) * invAlpha);
                 int a = Math.max(topA, botA);
 
-                composite.setPixelRGBA(x, y, FastColor.ABGR32.color(a, b, g, r));
+                composite.setPixel(x, y, ARGB.color(a, r, g, b));
 
                 // Hard-overwrite PBR maps if the layer is mostly opaque to avoid messy material blending
                 if (topA > 127) {
-                    specularImg.setPixelRGBA(x, y, specularAbgr);
-                    normalImg.setPixelRGBA(x, y, defaultNormal);
+                    specularImg.setPixel(x, y, specularAbgr);
+                    normalImg.setPixel(x, y, defaultNormal);
                 }
             }
         }
@@ -571,11 +569,11 @@ public class HamsterTextureUtil {
             // Iterate through mask pixels and map brightness to palette hex codes
             for (int y = 0; y < maskImage.getHeight(); y++) {
                 for (int x = 0; x < maskImage.getWidth(); x++) {
-                    int color = maskImage.getPixelRGBA(x, y);
-                    int a = FastColor.ABGR32.alpha(color);
+                    int color = maskImage.getPixel(x, y);
+                    int a = ARGB.alpha(color);
                     if (a == 0) continue; // Skip transparent pixels
 
-                    int r = FastColor.ABGR32.red(color);
+                    int r = ARGB.red(color);
                     float brightness = r / 255.0f;
                     int newHexRgb;
 
@@ -589,7 +587,7 @@ public class HamsterTextureUtil {
                     else if (brightness >= 0.16f) newHexRgb = hexCodes[6]; // B7 (22%)
                     else newHexRgb = hexCodes[7]; // B8 (11%)
 
-                    maskImage.setPixelRGBA(x, y, applyHexToAbgr(a, newHexRgb));
+                    maskImage.setPixel(x, y, applyHexToAbgr(a, newHexRgb));
                 }
             }
         } else if (palette.type() == TextureType.STATIC) {
@@ -603,16 +601,16 @@ public class HamsterTextureUtil {
                 // Iterate through pixels and composite source color with mask alpha
                 for (int y = 0; y < height; y++) {
                     for (int x = 0; x < width; x++) {
-                        int maskColor = maskImage.getPixelRGBA(x, y);
-                        int maskAlpha = FastColor.ABGR32.alpha(maskColor);
+                        int maskColor = maskImage.getPixel(x, y);
+                        int maskAlpha = ARGB.alpha(maskColor);
 
                         if (maskAlpha == 0) continue;
 
-                        int sourceColor = sourceImage.getPixelRGBA(x, y);
+                        int sourceColor = sourceImage.getPixel(x, y);
 
                         // Preserve source RGB but overwrite its alpha with the mask's alpha
                         int newColor = (sourceColor & 0x00FFFFFF) | (maskAlpha << 24);
-                        maskImage.setPixelRGBA(x, y, newColor);
+                        maskImage.setPixel(x, y, newColor);
                     }
                 }
                 // Free native memory for the source image
@@ -643,11 +641,11 @@ public class HamsterTextureUtil {
         // 3. Pixel-by-pixel swap
         for (int y = 0; y < trimMask.getHeight(); y++) {
             for (int x = 0; x < trimMask.getWidth(); x++) {
-                int pixelColor = trimMask.getPixelRGBA(x, y);
-                int alpha = FastColor.ABGR32.alpha(pixelColor);
+                int pixelColor = trimMask.getPixel(x, y);
+                int alpha = ARGB.alpha(pixelColor);
 
                 if (alpha == 0) {
-                    trimMask.setPixelRGBA(x, y, 0x00000000); // Force pure transparent black
+                    trimMask.setPixel(x, y, 0x00000000); // Force pure transparent black
                     continue; // Skip transparent pixels
                 }
 
@@ -659,7 +657,7 @@ public class HamsterTextureUtil {
                     if (rgb == (basePalette[i] & 0x00FFFFFF)) {
                         // Match found, swap RGB from material palette but keep my mask's alpha
                         int newRgb = materialPalette[i] & 0x00FFFFFF;
-                        trimMask.setPixelRGBA(x, y, newRgb | (alpha << 24));
+                        trimMask.setPixel(x, y, newRgb | (alpha << 24));
                         break;
                     }
                 }
@@ -685,7 +683,7 @@ public class HamsterTextureUtil {
                         int[] colors = new int[width];
 
                         for (int i = 0; i < width; i++) {
-                            colors[i] = image.getPixelRGBA(i, 0);
+                            colors[i] = image.getPixel(i, 0);
                         }
                         return colors;
                     }
@@ -787,7 +785,7 @@ public class HamsterTextureUtil {
         int r = (hexRgb >> 16) & 0xFF;
         int g = (hexRgb >> 8) & 0xFF;
         int b = hexRgb & 0xFF;
-        return FastColor.ABGR32.color(alpha, b, g, r);
+        return ARGB.color(alpha, r, g, b);
     }
 
     private static void dumpDebugTextures(String cacheKey, NativeImage base, NativeImage specular, NativeImage normal) {

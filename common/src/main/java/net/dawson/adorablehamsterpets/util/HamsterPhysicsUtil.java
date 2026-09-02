@@ -159,11 +159,11 @@ public final class HamsterPhysicsUtil {
 
                 volume = Mth.clamp(volume, 0.10F, 1.0F);
 
-                NetworkManager.sendToPlayer(player, new PlayDistantSoundPayload(sound.getLocation(), volume, pitch));
+                NetworkManager.sendToPlayer(player, new PlayDistantSoundPayload(sound.location(), volume, pitch));
 
                 if (armorSound != null) {
                     float armorVolume = Math.min(1.0f, volume * 0.5f);
-                    NetworkManager.sendToPlayer(player, new PlayDistantSoundPayload(armorSound.getLocation(), armorVolume, armorPitch));
+                    NetworkManager.sendToPlayer(player, new PlayDistantSoundPayload(armorSound.location(), armorVolume, armorPitch));
                 }
             }
         }
@@ -280,7 +280,7 @@ public final class HamsterPhysicsUtil {
         }
 
         // --- 4. Apply State and Spawn ---
-        hamster.moveTo(spawnPos.x, spawnPos.y, spawnPos.z, yaw, 0.0f);
+        hamster.snapTo(spawnPos.x, spawnPos.y, spawnPos.z, yaw, 0.0f);
 
         hamster.setYBodyRot(yaw);
         hamster.setYHeadRot(yaw);
@@ -289,7 +289,7 @@ public final class HamsterPhysicsUtil {
         hamster.yHeadRotO = yaw;
 
         hamster.setDeltaMovement(bounceVel);
-        hamster.hasImpulse = true;
+        hamster.needsSync = true;
 
         hamster.setKnockedOut(true);
         hamster.setInSittingPose(true);

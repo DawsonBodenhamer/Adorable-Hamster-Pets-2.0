@@ -52,16 +52,4 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
         return ANIMATION_RESOURCE;
     }
 
-    // Deprecated methods required by superclass
-    @Deprecated(forRemoval = true)
-    @Override
-    public Identifier getModelResource(HamsterEntity animatable) {
-        return this.getModelResource(animatable, null);
-    }
-
-    @Deprecated(forRemoval = true)
-    @Override
-    public Identifier getTextureResource(HamsterEntity animatable) {
-        return this.getTextureResource(animatable, null);
-    }
 }

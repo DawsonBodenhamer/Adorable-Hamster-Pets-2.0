@@ -5,18 +5,17 @@ import net.dawson.adorablehamsterpets.item.custom.HamsterBedItem;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 import com.geckolib.model.GeoModel;
-import com.geckolib.renderer.GeoRenderer;
+import com.geckolib.renderer.base.GeoRenderState;
 
-@SuppressWarnings({"removal"})
 public final class HamsterBedItemModel extends GeoModel<HamsterBedItem> {
 
     @Override
-    public Identifier getModelResource(HamsterBedItem animatable, @Nullable GeoRenderer<HamsterBedItem> renderer) {
+    public Identifier getModelResource(GeoRenderState renderState) {
         return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "geo/hamster_bed.geo.json");
     }
 
     @Override
-    public Identifier getTextureResource(HamsterBedItem animatable, @Nullable GeoRenderer<HamsterBedItem> renderer) {
+    public Identifier getTextureResource(GeoRenderState renderState) {
         // This is handled by the renderer, so return a default fallback.
         return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/block/hamster_bed_oak.png");
     }
@@ -24,20 +23,5 @@ public final class HamsterBedItemModel extends GeoModel<HamsterBedItem> {
     @Override
     public Identifier getAnimationResource(HamsterBedItem animatable) {
         return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "animations/anim_hamster_bed.animation.json");
-    }
-
-    // Deprecated, Abstract Method Implementations (Required by Compiler)
-    @Deprecated(forRemoval = true)
-    @Override
-    public Identifier getModelResource(HamsterBedItem animatable) {
-        // Delegate to the new, non-deprecated method.
-        return this.getModelResource(animatable, null);
-    }
-
-    @Deprecated(forRemoval = true)
-    @Override
-    public Identifier getTextureResource(HamsterBedItem animatable) {
-        // Delegate to the new, non-deprecated method.
-        return this.getTextureResource(animatable, null);
     }
 }

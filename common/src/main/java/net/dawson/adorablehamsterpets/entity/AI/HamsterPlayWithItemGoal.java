@@ -198,7 +198,7 @@ public class HamsterPlayWithItemGoal extends HamsterAbstractItemInteractionGoal 
             ParticleEffectsUtil.spawnParticles(
                     this.world,
                     new Vec3(this.hamster.getX(), this.hamster.getY() + 0.5, this.hamster.getZ()),
-                    new ItemParticleOption(ParticleTypes.ITEM, stackSnapshot),
+                    new ItemParticleOption(ParticleTypes.ITEM, stackSnapshot.getItem()),
                     18,
                     new Vec3(0.2, 0.2, 0.2),
                     0.1

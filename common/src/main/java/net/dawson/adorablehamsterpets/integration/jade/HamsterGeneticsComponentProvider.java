@@ -27,7 +27,7 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
     @Override
     public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
         CompoundTag serverData = accessor.getServerData();
-        if (!serverData.contains("HamsterGenome", Tag.TAG_COMPOUND)) return;
+        if (!serverData.contains("HamsterGenome")) return;
 
         Player player = accessor.getPlayer();
 
@@ -37,11 +37,11 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
             return;
         }
 
-        HamsterGenome genome = HamsterGenome.readFromNbt(serverData.getCompound("HamsterGenome"));
+        HamsterGenome genome = HamsterGenome.readFromNbt(serverData.getCompoundOrEmpty("HamsterGenome"));
 
         // --- Formatted Age ---
         if (Configs.AHP_UI.showJadeAge) {
-            long ageTicks = serverData.getLong("TotalAgeTicks");
+            long ageTicks = serverData.getLongOr("TotalAgeTicks", 0L);
             Component ageText = MiscUtil.TimeConversionUtil.formatAge(ageTicks);
             tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.genetics.age", ageText));
         }
@@ -76,8 +76,8 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
         }
 
         // --- Aggression State ---
-        if (Configs.AHP_UI.showJadeAggressionState && serverData.contains("AggressionState", Tag.TAG_INT)) {
-            int stateOrdinal = serverData.getInt("AggressionState");
+        if (Configs.AHP_UI.showJadeAggressionState && serverData.contains("AggressionState")) {
+            int stateOrdinal = serverData.getIntOr("AggressionState", 0);
 
             // Only show if not "Standard"
             if (stateOrdinal != 0) {
@@ -91,8 +91,8 @@ public enum HamsterGeneticsComponentProvider implements IEntityComponentProvider
         }
 
         // --- Redstone Fever ---
-        if (Configs.AHP_UI.showJadeRedstoneFeverRecovery && serverData.getBoolean("RedstoneFevered")) {
-            String stateKey = switch (serverData.getInt("RedstoneFeverRecoveryStage")) {
+        if (Configs.AHP_UI.showJadeRedstoneFeverRecovery && serverData.getBooleanOr("RedstoneFevered", false)) {
+            String stateKey = switch (serverData.getIntOr("RedstoneFeverRecoveryStage", 0)) {
                 case 2 -> "tooltip.adorablehamsterpets.jade.redstone_fever.nearly_cured";
                 case 1 -> "tooltip.adorablehamsterpets.jade.redstone_fever.recovering";
                 default -> "tooltip.adorablehamsterpets.jade.redstone_fever.severe";

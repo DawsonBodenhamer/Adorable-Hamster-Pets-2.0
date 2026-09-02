@@ -19,7 +19,6 @@ public final class AHPJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(WildBushComponentProvider.INSTANCE, WildCucumberBushBlock.class);
         registration.registerBlockComponent(WildBushComponentProvider.INSTANCE, WildGreenBeanBushBlock.class);
         registration.registerBlockComponent(HamsterBedComponentProvider.INSTANCE, HamsterBedBlock.class);
-        registration.usePickedResult(ModBlocks.HAMSTER_BED.get());
 
         // --- Entity Components ---
         registration.registerEntityComponent(HamsterGeneticsComponentProvider.INSTANCE, HamsterEntity.class);

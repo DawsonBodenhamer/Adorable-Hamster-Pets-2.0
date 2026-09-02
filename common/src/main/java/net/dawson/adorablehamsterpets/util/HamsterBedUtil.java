@@ -1,5 +1,10 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
@@ -57,7 +62,7 @@ public final class HamsterBedUtil {
         if (hamster.getLinkedBedPos().isEmpty()) return false;
 
         GlobalPos globalBedPos = hamster.getLinkedBedPos().get();
-        MinecraftServer server = hamster.getServer();
+        MinecraftServer server = hamster.level().getServer();
         if (server == null) return false;
 
         ServerLevel bedWorld = server.getLevel(globalBedPos.dimension());
@@ -98,16 +103,17 @@ public final class HamsterBedUtil {
         }
 
         // --- Create Clone ---
-        HamsterEntity newHamster = ModEntities.HAMSTER.get().create(bedWorld);
+        HamsterEntity newHamster = ModEntities.HAMSTER.get().create(bedWorld, EntitySpawnReason.LOAD);
         if (newHamster == null) return false;
 
         // Copy NBT data
-        CompoundTag data = new CompoundTag();
-        hamster.addAdditionalSaveData(data);
-        newHamster.readAdditionalSaveData(data);
+        // 26.2 port: the save hooks take ValueOutput/ValueInput; round-trip through a tag
+        TagValueOutput dataOut = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, bedWorld.registryAccess());
+        hamster.addAdditionalSaveData(dataOut);
+        newHamster.readAdditionalSaveData(TagValueInput.create(ProblemReporter.DISCARDING, bedWorld.registryAccess(), dataOut.buildResult()));
 
         // Restore attributes that writeCustomDataToNbt might miss
-        newHamster.setOwnerUUID(hamster.getOwnerUUID());
+        newHamster.setOwnerReference(((hamster.getOwnerReference() == null ? null : hamster.getOwnerReference().getUUID())) == null ? null : net.minecraft.world.entity.EntityReference.of((hamster.getOwnerReference() == null ? null : hamster.getOwnerReference().getUUID())));
         newHamster.setTame(hamster.isTame(), false);
         newHamster.setCustomName(hamster.getCustomName());
 
@@ -119,7 +125,7 @@ public final class HamsterBedUtil {
         if (isBedFree) {
             // Scenario A: Bed free -> Sleep in it
             Vec3 bedCenter = Vec3.atCenterOf(bedPos).add(0, 0.1, 0);
-            newHamster.moveTo(bedCenter.x, bedCenter.y, bedCenter.z, 0f, 0f);
+            newHamster.snapTo(bedCenter.x, bedCenter.y, bedCenter.z, 0f, 0f);
 
             // Update block state & feedback
             bedWorld.setBlock(bedPos, bedState.setValue(HamsterBedBlock.OCCUPIED, true), Block.UPDATE_ALL);
@@ -128,7 +134,7 @@ public final class HamsterBedUtil {
             }
         } else {
             // Scenario B: Bed occupied -> Spawn nearby
-            newHamster.moveTo(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, hamster.getYRot(), 0f);
+            newHamster.snapTo(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, hamster.getYRot(), 0f);
         }
 
         // Set states
@@ -168,7 +174,7 @@ public final class HamsterBedUtil {
                 0.1
         );
         if (hamster.getOwner() instanceof Player owner) {
-            owner.displayClientMessage(Component.translatable("message.adorablehamsterpets.respawn.success").withStyle(ChatFormatting.WHITE), true);
+            owner.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.respawn.success").withStyle(ChatFormatting.WHITE));
         }
 
         return true;

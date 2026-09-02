@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_hamster_food_mix": {
+      "conditions": {
+        "items": [
+          {
+            "items": "adorablehamsterpets:hamster_food_mix"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "adorablehamsterpets:hamster_food_mix_crate"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_hamster_food_mix"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "adorablehamsterpets:hamster_food_mix_crate"
+    ]
+  }
+}

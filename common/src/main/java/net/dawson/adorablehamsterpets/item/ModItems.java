@@ -1,5 +1,7 @@
 package net.dawson.adorablehamsterpets.item;
 
+import java.util.function.Consumer;
+import net.minecraft.world.item.component.TooltipDisplay;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -17,7 +19,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.DoubleHighBlockItem;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemNameBlockItem;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.JukeboxSong;
 import net.minecraft.world.item.Rarity;
@@ -42,54 +44,49 @@ public class ModItems {
             () -> new PatchouliGuideBookItem(new Item.Properties().stacksTo(1)));
 
     public static final RegistrySupplier<Item> HAMSTER_SPAWN_EGG = registerItem("hamster_spawn_egg",
-            () -> new SpawnEggItem(net.dawson.adorablehamsterpets.entity.ModEntities.HAMSTER.get(), 0x9c631f, 0xffffff, new Item.Properties()));
+            () -> new SpawnEggItem(new Item.Properties().spawnEgg(net.dawson.adorablehamsterpets.entity.ModEntities.HAMSTER.get())));
 
     // --- Crops & Food ---
     public static final RegistrySupplier<Item> GREEN_BEAN_SEEDS = registerItem("green_bean_seeds",
-            () -> new ItemNameBlockItem(ModBlocks.GREEN_BEANS_CROP.get(), new Item.Properties()) {
+            () -> new BlockItem(ModBlocks.GREEN_BEANS_CROP.get(), new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.green_bean_seeds.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.green_bean_seeds.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.green_bean_seeds.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.green_bean_seeds.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> CUCUMBER_SEEDS = registerItem("cucumber_seeds",
-            () -> new ItemNameBlockItem(ModBlocks.CUCUMBER_CROP.get(), new Item.Properties()) {
+            () -> new BlockItem(ModBlocks.CUCUMBER_CROP.get(), new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.cucumber_seeds.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.cucumber_seeds.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.cucumber_seeds.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.cucumber_seeds.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> SUNFLOWER_SEEDS = registerItem("sunflower_seeds",
-            () -> new DoubleHighBlockItem(ModBlocks.SUNFLOWER_BLOCK.get(), new Item.Properties()) {
-                @Override
-                public String getDescriptionId() {
-                    // Force the item to use its own ID instead of the block's ID so it displays the correct item name
-                    return this.getOrCreateDescriptionId();
-                }
+            () -> new DoubleHighBlockItem(ModBlocks.SUNFLOWER_BLOCK.get(), new Item.Properties().useItemDescriptionPrefix()) {
 
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.sunflower_seeds.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.sunflower_seeds.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.sunflower_seeds.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.sunflower_seeds.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
@@ -129,101 +126,97 @@ public class ModItems {
     public static final RegistrySupplier<Item> MUSIC_DISC_CHEESE = registerItem("music_disc_cheese",
             () -> new Item(new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(CHEESE_SONG_8_BIT_KEY)) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.music_disc_cheese.hint").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.music_disc_cheese.hint").withStyle(ChatFormatting.GOLD));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> MUSIC_DISC_BLUE_CHEESE = registerItem("music_disc_blue_cheese",
             () -> new Item(new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(BLUE_CHEESE_SONG_LOW_FI_KEY)) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.music_disc_blue_cheese.hint").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.music_disc_blue_cheese.hint").withStyle(ChatFormatting.GOLD));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> MUSIC_DISC_PARMESAN = registerItem("music_disc_parmesan",
             () -> new Item(new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(PARMESAN_SONG_ORCHESTRAL_KEY)) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.music_disc_parmesan.hint").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.music_disc_parmesan.hint").withStyle(ChatFormatting.GOLD));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     // --- Acorn & Resources ---
     public static final RegistrySupplier<Item> ACORN = registerItem("acorn",
-            () -> new ItemNameBlockItem(Blocks.OAK_SAPLING, new Item.Properties()) {
+            () -> new BlockItem(Blocks.OAK_SAPLING, new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.acorn.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.acorn.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.acorn.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.acorn.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
     public static final RegistrySupplier<Item> ACORN_HAT = registerItem("acorn_hat",
             () -> new Item(new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.acorn_hat.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.acorn_hat.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.acorn_hat.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.acorn_hat.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> ACORN_RING = registerItem("acorn_ring",
             () -> new Item(new Item.Properties().stacksTo(64)) {
                 @Override
-                public void appendHoverText(
-                        ItemStack stack,
-                        TooltipContext context,
-                        List<Component> tooltip,
-                        TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.acorn_ring.hint1")
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.acorn_ring.hint1")
                                 .withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.acorn_ring.hint2")
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.acorn_ring.hint2")
                                 .withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> ACORN_SHARD = registerItem("acorn_shard",
             () -> new Item(new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.acorn_shard.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.acorn_shard.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.acorn_shard.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.acorn_shard.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
@@ -231,70 +224,70 @@ public class ModItems {
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_ACORN = registerItem("hamster_armor_acorn",
             () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.ACORN, new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_acorn.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_acorn.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_acorn.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_acorn.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_IRON = registerItem("hamster_armor_iron",
             () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.IRON, new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_iron.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_iron.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_iron.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_iron.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_GOLD = registerItem("hamster_armor_gold",
             () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.GOLD, new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_gold.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_gold.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_gold.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_gold.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_DIAMOND = registerItem("hamster_armor_diamond",
             () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.DIAMOND, new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_diamond.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_diamond.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_diamond.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_diamond.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_NETHERITE = registerItem("hamster_armor_netherite",
             () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.NETHERITE, new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_netherite.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_netherite.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_netherite.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.hamster_armor_netherite.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
@@ -317,42 +310,42 @@ public class ModItems {
     public static final RegistrySupplier<Item> WILD_GREEN_BEAN_BUSH_ITEM = registerBlockItem("wild_green_bean_bush",
             () -> new BlockItem(ModBlocks.WILD_GREEN_BEAN_BUSH.get(), new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("block.adorablehamsterpets.wild_green_bean_bush.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("block.adorablehamsterpets.wild_green_bean_bush.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("block.adorablehamsterpets.wild_green_bean_bush.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("block.adorablehamsterpets.wild_green_bean_bush.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> WILD_CUCUMBER_BUSH_ITEM = registerBlockItem("wild_cucumber_bush",
             () -> new BlockItem(ModBlocks.WILD_CUCUMBER_BUSH.get(), new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("block.adorablehamsterpets.wild_cucumber_bush.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("block.adorablehamsterpets.wild_cucumber_bush.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("block.adorablehamsterpets.wild_cucumber_bush.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("block.adorablehamsterpets.wild_cucumber_bush.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
     public static final RegistrySupplier<Item> SUNFLOWER_BLOCK_ITEM = registerBlockItem("sunflower_block",
             () -> new BlockItem(ModBlocks.SUNFLOWER_BLOCK.get(), new Item.Properties()) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
-                        tooltip.add(Component.translatable("block.adorablehamsterpets.sunflower_block.hint1").withStyle(ChatFormatting.GOLD));
-                        tooltip.add(Component.translatable("block.adorablehamsterpets.sunflower_block.hint2").withStyle(ChatFormatting.GRAY));
+                        tooltip.accept(Component.translatable("block.adorablehamsterpets.sunflower_block.hint1").withStyle(ChatFormatting.GOLD));
+                        tooltip.accept(Component.translatable("block.adorablehamsterpets.sunflower_block.hint2").withStyle(ChatFormatting.GRAY));
                     } else if (!Platform.isModLoaded("emi")) {
-                        tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                        tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                     }
-                    super.appendHoverText(stack, context, tooltip, type);
+                    super.appendHoverText(stack, context, display, tooltip, type);
                 }
             });
 
@@ -364,7 +357,7 @@ public class ModItems {
     static {
         for (WoodVariant variant : WoodVariant.values()) {
             HAMSTER_BED_ITEMS.put(variant, registerBlockItem("hamster_bed_" + variant.getSerializedName(),
-                    () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), variant, new Item.Properties().stacksTo(1))));
+                    () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), variant, new Item.Properties().stacksTo(1).useItemDescriptionPrefix())));
         }
     }
 
@@ -381,7 +374,7 @@ public class ModItems {
             () -> new BlockItem(ModBlocks.HAMSTER_FOOD_MIX_CRATE.get(), new Item.Properties()));
 
     public static final RegistrySupplier<Item> UPSIDE_DOWN_HAMSTER_BED_ICON = registerItem("upside_down_hamster_bed_icon",
-            () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), WoodVariant.OAK, new Item.Properties()));
+            () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), WoodVariant.OAK, new Item.Properties().useItemDescriptionPrefix()));
 
     // So Patchouli can display custom bell icon in its category list
     public static final RegistrySupplier<Item> ANNOUNCEMENT_BELL_ICON = registerItem("announcement_bell_icon",
@@ -408,24 +401,24 @@ public class ModItems {
         return new SmithingTemplateItem(
                 Component.translatable("item.adorablehamsterpets.hamster_armor_trim_smithing_template.applies_to").withStyle(ChatFormatting.BLUE),                       // Applies to
                 Component.translatable("item.adorablehamsterpets.hamster_armor_trim_smithing_template." + materialName + ".ingredients").withStyle(ChatFormatting.BLUE), // Ingredients
-                Component.translatable("item.adorablehamsterpets.hamster_armor_trim_smithing_template_" + materialName + ".title").withStyle(ChatFormatting.GRAY),       // Title
                 Component.translatable("item.adorablehamsterpets.hamster_armor_trim_smithing_template.base_slot_description"),                                       // Base Slot Desc
                 Component.translatable("item.adorablehamsterpets.hamster_armor_trim_smithing_template.additions_slot_description"),                                  // Additions Slot Desc
                 List.of(Identifier.fromNamespaceAndPath("minecraft", "item/empty_armor_slot_helmet")),                                                                 // Empty Base Slot Icon
-                List.of(Identifier.fromNamespaceAndPath("minecraft", "item/empty_slot_ingot"))                                                                         // Empty Additions Slot Icon
+                List.of(Identifier.fromNamespaceAndPath("minecraft", "item/empty_slot_ingot")),
+                new Item.Properties()
         ) {
             @Override
-            public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+            public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                 // Vanilla SmithingTemplateItem adds its own tooltip info first.
-                super.appendHoverText(stack, context, tooltip, type);
+                super.appendHoverText(stack, context, display, tooltip, type);
 
                 if (Configs.AHP_UI.enableItemTooltips) {
-                    tooltip.add(Component.empty()); // Spacer
+                    tooltip.accept(Component.empty()); // Spacer
                     // Use dynamic keys based on the material name (iron, gold, diamond, netherite)
-                    tooltip.add(Component.translatable("tooltip.adorablehamsterpets.smithing_template." + materialName + ".hint1").withStyle(ChatFormatting.GOLD));
-                    tooltip.add(Component.translatable("tooltip.adorablehamsterpets.smithing_template." + materialName + ".hint2").withStyle(ChatFormatting.GRAY));
+                    tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.smithing_template." + materialName + ".hint1").withStyle(ChatFormatting.GOLD));
+                    tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.smithing_template." + materialName + ".hint2").withStyle(ChatFormatting.GRAY));
                 } else if (!Platform.isModLoaded("emi")) {
-                    tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+                    tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
                 }
             }
         };

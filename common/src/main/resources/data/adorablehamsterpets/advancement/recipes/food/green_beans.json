@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_green_beans_crate": {
+      "conditions": {
+        "items": [
+          {
+            "items": "adorablehamsterpets:green_beans_crate"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "adorablehamsterpets:green_beans"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_green_beans_crate"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "adorablehamsterpets:green_beans"
+    ]
+  }
+}

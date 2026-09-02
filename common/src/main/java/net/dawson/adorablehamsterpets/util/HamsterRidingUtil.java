@@ -160,7 +160,7 @@ public final class HamsterRidingUtil {
         float finalSpeed = (float) (attributeSpeed * speedMultiplier);
 
         // Speed effects remain additive after the configured riding multiplier.
-        if (hamster.hasEffect(MobEffects.MOVEMENT_SPEED)) {
+        if (hamster.hasEffect(MobEffects.SPEED)) {
             finalSpeed += 0.1f;
         }
         hamster.setSpeed(finalSpeed);
@@ -174,7 +174,7 @@ public final class HamsterRidingUtil {
         }
 
         // --- Apply Predicted or Authoritative Travel ---
-        if (hamster.isControlledByLocalInstance()) {
+        if (hamster.isLocalInstanceAuthoritative()) {
             hamster.delegateTravel(new Vec3(sidewaysSpeed, 0.0, forwardSpeed));
         } else if (player instanceof LocalPlayer) {
             hamster.delegateTravel(new Vec3(sidewaysSpeed, 0.0, forwardSpeed));
@@ -200,7 +200,7 @@ public final class HamsterRidingUtil {
         // Override the vanilla vertical component with the configured riding impulse.
         Vec3 v = hamster.getDeltaMovement();
         hamster.setDeltaMovement(v.x, RIDER_JUMP_VELOCITY, v.z);
-        hamster.hasImpulse = true;
+        hamster.needsSync = true;
         hamster.fallDistance = 0.0F;
 
         // Attribute the bounce sound to the rider when one is still controlling the hamster.

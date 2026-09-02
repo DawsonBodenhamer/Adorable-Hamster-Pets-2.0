@@ -1,5 +1,8 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
 import net.dawson.adorablehamsterpets.client.render.BlockJiggleManager;
@@ -85,7 +88,7 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
     }
 
     public void finishHiding(boolean success, @Nullable Player finder) {
-        if (this.level().isClientSide) return;
+        if (this.level().isClientSide()) return;
         ServerLevel serverWorld = (ServerLevel) this.level();
 
         HamsterEntity newHamster = super.popOut(success);
@@ -179,7 +182,7 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
     public void tick() {
         super.tick();
 
-        if (this.level().isClientSide) return;
+        if (this.level().isClientSide()) return;
 
         if (!this.isRegistered && this.anchorPos != null) {
             registerOccupancy();
@@ -214,8 +217,8 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
         if (--this.breadcrumbTimer <= 0) {
             this.breadcrumbTimer = (int) Mth.lerp(progress, BREADCRUMB_START_INTERVAL, BREADCRUMB_END_INTERVAL);
 
-            if (this.hamsterNbt != null && this.hamsterNbt.hasUUID("Owner")) {
-                Player owner = this.level().getPlayerByUUID(this.hamsterNbt.getUUID("Owner"));
+            if (this.hamsterNbt != null && this.hamsterNbt.read("Owner", UUIDUtil.CODEC).isPresent()) {
+                Player owner = this.level().getPlayerByUUID(this.hamsterNbt.read("Owner", UUIDUtil.CODEC).orElse(null));
                 MinigameUtil.executeBreadcrumbHint(
                         this,
                         owner,
@@ -263,27 +266,30 @@ public class HamsterBlockHiderEntity extends HamsterAbstractHiddenEntity {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    protected void addAdditionalSaveData(ValueOutput out) {
+        super.addAdditionalSaveData(out);
+        CompoundTag nbt = new CompoundTag();
         nbt.putInt("HideTimer", this.hideTimer);
         nbt.putInt("MaxHideDuration", this.maxHideDuration);
         nbt.putInt("AmbientHintTimer", this.ambientHintTimer);
         nbt.putInt("BreadcrumbTimer", this.breadcrumbTimer);
+        out.store("AdorableHamsterPets.BlockHider", CompoundTag.CODEC, nbt);
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        this.hideTimer = nbt.getInt("HideTimer");
-        this.maxHideDuration = nbt.contains("MaxHideDuration", Tag.TAG_INT) ? nbt.getInt("MaxHideDuration") : Math.max(1, this.hideTimer);
+    protected void readAdditionalSaveData(ValueInput in) {
+        super.readAdditionalSaveData(in);
+        CompoundTag nbt = in.read("AdorableHamsterPets.BlockHider", CompoundTag.CODEC).orElseGet(CompoundTag::new);
+        this.hideTimer = nbt.getIntOr("HideTimer", 0);
+        this.maxHideDuration = nbt.contains("MaxHideDuration") ? nbt.getIntOr("MaxHideDuration", 0) : Math.max(1, this.hideTimer);
         this.validationTimer = VALIDATION_INTERVAL;
 
         float progress = this.maxHideDuration > 0 ? 1.0f - ((float) this.hideTimer / this.maxHideDuration) : 0.0f;
         int baseInterval = (int) Mth.lerp(progress, 220.0f, 40.0f);
         this.jiggleTimer = baseInterval + this.random.nextIntBetweenInclusive(-30, 30);
 
-        this.ambientHintTimer = nbt.contains("AmbientHintTimer", Tag.TAG_INT) ? nbt.getInt("AmbientHintTimer") : 14;
-        this.breadcrumbTimer = nbt.contains("BreadcrumbTimer", Tag.TAG_INT) ? nbt.getInt("BreadcrumbTimer") : 12;
+        this.ambientHintTimer = nbt.contains("AmbientHintTimer") ? nbt.getIntOr("AmbientHintTimer", 0) : 14;
+        this.breadcrumbTimer = nbt.contains("BreadcrumbTimer") ? nbt.getIntOr("BreadcrumbTimer", 0) : 12;
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────

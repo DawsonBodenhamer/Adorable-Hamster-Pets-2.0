@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.minecraft.core.UUIDUtil;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;

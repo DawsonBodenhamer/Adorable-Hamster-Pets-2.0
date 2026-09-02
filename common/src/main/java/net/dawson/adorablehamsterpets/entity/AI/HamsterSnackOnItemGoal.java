@@ -54,7 +54,7 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
         }
 
         // Check explicit seed refusal config
-        if (Configs.AHP_MAIN.ignoreSeeds && (stack.is(ItemTags.VILLAGER_PLANTABLE_SEEDS) || stack.getDescriptionId().contains("seed"))) {
+        if (Configs.AHP_MAIN.ignoreSeeds && (stack.is(ItemTags.VILLAGER_PLANTABLE_SEEDS) || stack.getItem().getDescriptionId().contains("seed"))) {
             return false;
         }
 
@@ -122,7 +122,7 @@ public class HamsterSnackOnItemGoal extends HamsterAbstractItemInteractionGoal {
             ParticleEffectsUtil.spawnParticles(
                     this.world,
                     new Vec3(this.hamster.getX(), this.hamster.getY() + 0.2, this.hamster.getZ()),
-                    new ItemParticleOption(ParticleTypes.ITEM, stackSnapshot),
+                    new ItemParticleOption(ParticleTypes.ITEM, stackSnapshot.getItem()),
                     15,
                     new Vec3(0.15, 0.15, 0.15),
                     0.0

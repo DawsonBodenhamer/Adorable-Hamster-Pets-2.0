@@ -57,8 +57,7 @@ public class AhpRootConfig extends Config {
             .title(Component.translatable("config.adorablehamsterpets.main.helpAndResources.reportBug"))
             .desc(Component.translatable("config.adorablehamsterpets.main.helpAndResources.reportBug.desc"))
             .decoration(TextureIds.INSTANCE.getDECO_LINK())
-            .build(new ClickEvent(ClickEvent.Action.OPEN_URL,
-                    "https://github.com/DawsonBodenhamer/AdorableHamsterPets-Public/issues"));
+            .build(new ClickEvent.OpenUrl(java.net.URI.create("https://github.com/DawsonBodenhamer/AdorableHamsterPets-Public/issues")));
 
     @NonSync
     @Translatable.Name("Join Discord")
@@ -66,8 +65,7 @@ public class AhpRootConfig extends Config {
             .title(Component.translatable("config.adorablehamsterpets.main.helpAndResources.joinDiscord"))
             .desc(Component.translatable("config.adorablehamsterpets.main.helpAndResources.joinDiscord.desc"))
             .decoration(TextureIds.INSTANCE.getDECO_BUTTON_CLICK())
-            .build(new ClickEvent(ClickEvent.Action.OPEN_URL,
-                    "https://discord.gg/w54mk5bqdf"));
+            .build(new ClickEvent.OpenUrl(java.net.URI.create("https://discord.gg/w54mk5bqdf")));
 
     @NonSync
     @ConfigGroup.Pop
@@ -76,6 +74,5 @@ public class AhpRootConfig extends Config {
             .title(Component.translatable("config.adorablehamsterpets.main.help_and_resources.support_the_mod"))
             .desc(Component.translatable("config.adorablehamsterpets.main.help_and_resources.support_the_mod.desc"))
             .decoration(TextureIds.INSTANCE.getDECO_LINK())
-            .build(new ClickEvent(ClickEvent.Action.OPEN_URL,
-                    "https://www.fortheking.design/minecraft-modding"));
+            .build(new ClickEvent.OpenUrl(java.net.URI.create("https://www.fortheking.design/minecraft-modding")));
 }

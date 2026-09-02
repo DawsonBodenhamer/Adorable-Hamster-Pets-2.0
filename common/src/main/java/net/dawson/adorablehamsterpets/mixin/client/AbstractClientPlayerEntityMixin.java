@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.mixin.client;
 
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPetsClient;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.client.state.ClientShoulderHamsterData;
@@ -24,7 +25,7 @@ public abstract class AbstractClientPlayerEntityMixin {
     private void adorablehamsterpets$onTick(CallbackInfo ci) {
         AbstractClientPlayer thisPlayer = (AbstractClientPlayer) (Object) this;
         // The tick method can be called on the integrated server thread, so we must check.
-        if (thisPlayer.level().isClientSide) {
+        if (thisPlayer.level().isClientSide()) {
             PlayerEntityAccessor accessor = (PlayerEntityAccessor) thisPlayer;
 
             // --- Flashback Replay Rescue Logic ---

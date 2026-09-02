@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "net.dawson.adorablehamsterpets.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [
     "server.RavagerEntityMixin",
     "server.SpiderEntityMixin",
@@ -26,12 +26,11 @@
     "client.AbstractClientPlayerEntityMixin",
     "client.TitleScreenMixin",
     "client.accessor.HandledScreenAccessor",
-    "client.BlockEntityRenderDispatcherMixin",
     "accessor.ScreenWidgetAdder",
-    "client.LivingEntityRendererMixin",
     "client.accessor.InGameHudAccessor",
     "client.InGameHudMixin",
-    "client.EntityRenderDispatcherMixin"
+    "client.AvatarRenderStateMixin",
+    "client.AvatarRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

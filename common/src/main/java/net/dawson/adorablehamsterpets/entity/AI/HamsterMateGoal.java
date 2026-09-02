@@ -151,7 +151,7 @@ public class HamsterMateGoal extends Goal {
                 double offsetX = (this.hamster.getRandom().nextDouble() - 0.5) * 0.5;
                 double offsetZ = (this.hamster.getRandom().nextDouble() - 0.5) * 0.5;
 
-                baby.moveTo(this.hamster.getX() + offsetX, this.hamster.getY(), this.hamster.getZ() + offsetZ, 0.0F, 0.0F);
+                baby.snapTo(this.hamster.getX() + offsetX, this.hamster.getY(), this.hamster.getZ() + offsetZ, 0.0F, 0.0F);
                 world.addFreshEntity(baby);
                 spawnedBabies.add(baby);
 

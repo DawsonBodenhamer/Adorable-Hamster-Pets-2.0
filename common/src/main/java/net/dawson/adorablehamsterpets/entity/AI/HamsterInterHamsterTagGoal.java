@@ -400,7 +400,7 @@ public class HamsterInterHamsterTagGoal extends Goal {
         if (partner != null && partner.isAlive()) {
             Vec3 knockbackDir = partner.position().subtract(this.hamster.position()).normalize();
             partner.setDeltaMovement(partner.getDeltaMovement().add(knockbackDir.x * 0.3, 0.3, knockbackDir.z * 0.3));
-            partner.hasImpulse = true;
+            partner.needsSync = true;
         }
     }
 

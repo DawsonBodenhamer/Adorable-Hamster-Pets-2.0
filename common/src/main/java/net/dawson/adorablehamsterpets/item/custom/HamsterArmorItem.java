@@ -40,10 +40,6 @@ public class HamsterArmorItem extends Item {
         return entityTexture;
     }
 
-    @Override
-    public int getEnchantmentValue() {
-        return this.material.getEnchantability();
-    }
 
     /**
      * Defines the tiers of hamster armor, their internal names, durability, and enchantability.

@@ -9,7 +9,8 @@ import net.dawson.adorablehamsterpets.config.AhpUiConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import java.util.List;
@@ -24,13 +25,13 @@ public class AnnouncementHudRenderer {
     private static final int ICON_WIDTH = 16;
     private static final int ICON_HEIGHT = 16;
 
-    public void render(GuiGraphics context, float tickDelta) {
+    public void render(GuiGraphicsExtractor context, float tickDelta) {
         Minecraft client = Minecraft.getInstance();
         final AhpUiConfig config = Configs.AHP_UI;
 
         // --- 1. Pre-render Checks ---
         // Do not render if the config disables it, a GUI is open, or there are no notifications
-        if (!config.enableHudIcon.get() || config.serverDisableAnnouncements || client.screen != null) {
+        if (!config.enableHudIcon.get() || config.serverDisableAnnouncements || client.gui.screen() != null) {
             return;
         }
         List<AnnouncementManager.PendingNotification> notifications = AdorableHamsterPetsClient.getPendingNotifications();
@@ -61,20 +62,18 @@ public class AnnouncementHudRenderer {
         double renderY = animator.getRenderY(tickDelta);
 
         // --- 5. Render the Icon ---
-        context.pose().pushPose();
+        context.pose().pushMatrix();
         // Use the interpolated renderX and renderY values
         // Translate to the icon's center for proper scaling and rotation
         try {
-            context.pose().translate(renderX + (ICON_WIDTH / 2.0), renderY + (ICON_HEIGHT / 2.0), 0);
-            context.pose().scale(finalScale, finalScale, 1.0f);
-            context.pose().mulPose(Axis.ZP.rotationDegrees(angle));
+            context.pose().translate((float) (renderX + (ICON_WIDTH / 2.0)), (float) (renderY + (ICON_HEIGHT / 2.0)));
+            context.pose().scale(finalScale, finalScale);
+            context.pose().rotate((float) Math.toRadians(angle));
             // Translate back to the top-left corner to draw the texture
-            context.pose().translate(-(ICON_WIDTH / 2.0), -(ICON_HEIGHT / 2.0), 0);
-
-            RenderSystem.enableBlend();
-            context.blit(ICON_TEXTURE, 0, 0, 0, 0, ICON_WIDTH, ICON_HEIGHT, ICON_WIDTH, ICON_HEIGHT);
+            context.pose().translate((float) (-(ICON_WIDTH / 2.0)), (float) (-(ICON_HEIGHT / 2.0)));
+            context.blit(RenderPipelines.GUI_TEXTURED, ICON_TEXTURE, 0, 0, (float) (0), (float) (0), ICON_WIDTH, ICON_HEIGHT, ICON_WIDTH, ICON_HEIGHT);
         } finally {
-            context.pose().popPose();
+            context.pose().popMatrix();
         }
 
         // --- 6. Render Tooltip on Hover ---
@@ -93,7 +92,7 @@ public class AnnouncementHudRenderer {
 
             tooltipLines.add(mainTooltipLine);
             tooltipLines.add(modNameText);
-            context.renderComponentTooltip(client.font, tooltipLines, (int)mouseX, (int)mouseY);
+            context.setComponentTooltipForNextFrame(client.font, tooltipLines, (int)mouseX, (int)mouseY);
         }
     }
 }

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": "minecraft:diamond",
+  "base": "#adorablehamsterpets:enchantable/hamster_armor",
+  "result": {
+    "count": 1,
+    "id": "adorablehamsterpets:hamster_armor_diamond"
+  },
+  "template": "adorablehamsterpets:hamster_armor_trim_smithing_template_diamond"
+}

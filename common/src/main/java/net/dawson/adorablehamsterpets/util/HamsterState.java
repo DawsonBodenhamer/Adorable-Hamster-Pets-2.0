@@ -151,9 +151,9 @@ public record HamsterState(
     public static Optional<HamsterState> fromNbt(CompoundTag nbt) {
         // --- Legacy Migration Shim ---
         // Convert v3.5.0 variants to v3.6.0 genome NBT to prevent shoulder hamsters being deleted
-        if (!nbt.contains("genomeNbt", Tag.TAG_COMPOUND)) {
-            int legacyId = nbt.contains("variantId", Tag.TAG_INT)
-                    ? nbt.getInt("variantId")
+        if (!nbt.contains("genomeNbt")) {
+            int legacyId = nbt.contains("variantId")
+                    ? nbt.getIntOr("variantId", 0)
                     : 0;
             nbt.put("genomeNbt", HamsterGeneticsUtil.getGenomeForLegacyId(legacyId).saveToNbt());
         }

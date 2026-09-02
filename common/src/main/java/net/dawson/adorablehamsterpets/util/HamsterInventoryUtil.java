@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.dawson.adorablehamsterpets.util.FlowerItemUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
@@ -54,7 +55,7 @@ public final class HamsterInventoryUtil {
 
         // --- 2. Accessory Slot ---
         if (slot == ACCESSORY_SLOT_INDEX) {
-            return stack.is(ModItems.ACORN_HAT.get()) || stack.is(ItemTags.FLOWERS);
+            return stack.is(ModItems.ACORN_HAT.get()) || FlowerItemUtil.isFlower(stack);
         }
 
         // --- 3. Armor Slot ---
@@ -215,7 +216,7 @@ public final class HamsterInventoryUtil {
         ItemStack accessory = hamster.getItems().get(ACCESSORY_SLOT_INDEX);
         int flowerPosition = hamster.getEntityData().get(HamsterEntity.FLOWER_POS);
 
-        if (accessory.is(ItemTags.FLOWERS)) {
+        if (FlowerItemUtil.isFlower(accessory)) {
             if (flowerPosition == 0) {
                 hamster.getEntityData().set(HamsterEntity.FLOWER_POS, 1);
             }

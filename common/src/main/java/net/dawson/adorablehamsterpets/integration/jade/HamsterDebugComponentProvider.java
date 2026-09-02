@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.integration.jade;
 
+import com.geckolib.animation.RawAnimation;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.Configs;
@@ -20,7 +21,6 @@ import snownee.jade.api.IServerDataProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
 import com.geckolib.animation.AnimationController;
-import com.geckolib.animation.AnimationProcessor;
 
 public enum HamsterDebugComponentProvider implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {
     INSTANCE;
@@ -43,11 +43,11 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
         AnimationController<?> controller = hamster.getAnimatableInstanceCache().getManagerForId(hamster.getId()).getAnimationControllers().get("mainController");
         if (controller != null) {
             // Get the currently playing animation object from the controller
-            AnimationProcessor.QueuedAnimation currentAnim = controller.getCurrentAnimation();
+            RawAnimation currentAnim = controller.getCurrentRawAnimation();
 
             if (currentAnim != null) {
                 // Get the name from the animation record itself
-                tooltip.add(fText("Current Anim: %s", Component.literal(currentAnim.animation().name()).withStyle(ChatFormatting.AQUA)));
+                tooltip.add(fText("Current Anim: %s", Component.literal(currentAnim.getAnimationStages().stream().map(RawAnimation.Stage::animationName).collect(java.util.stream.Collectors.joining(" > "))).withStyle(ChatFormatting.AQUA)));
             } else {
                 tooltip.add(fText("Current Anim: %s", Component.literal("None").withStyle(ChatFormatting.GRAY)));
             }
@@ -80,9 +80,9 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
         // --- Bed Link Status ---
         tooltip.add(Component.literal("--- Bed Link ---").withStyle(ChatFormatting.GRAY));
         CompoundTag serverData = accessor.getServerData();
-        boolean isWanderActive = serverData.getBoolean("IsWanderModeActive");
-        boolean isOnTheWayToBed = serverData.getBoolean("IsOnTheWayToBed");
-        int goToBedDelay = serverData.getInt("GoToBedDelay");
+        boolean isWanderActive = serverData.getBooleanOr("IsWanderModeActive", false);
+        boolean isOnTheWayToBed = serverData.getBooleanOr("IsOnTheWayToBed", false);
+        int goToBedDelay = serverData.getIntOr("GoToBedDelay", 0);
 
         // Display wander mode status
         tooltip.add(fText("Wander Mode: %s", isWanderActive ? Component.literal("ACTIVE").withStyle(ChatFormatting.GREEN) : Component.literal("INACTIVE").withStyle(ChatFormatting.RED)));
@@ -96,7 +96,7 @@ public enum HamsterDebugComponentProvider implements IEntityComponentProvider, I
                     tooltip.add(fText("  Status: %s", Component.literal("Pathfinding to bed...").withStyle(ChatFormatting.YELLOW)));
                 }
             } else if (serverData.contains("WanderDistance")) {
-                String distanceStr = serverData.getString("WanderDistance");
+                String distanceStr = serverData.getStringOr("WanderDistance", "");
                 tooltip.add(fText("  Wander Distance: %s", Component.literal(distanceStr).withStyle(ChatFormatting.AQUA)));
             }
         }

@@ -148,7 +148,7 @@ public final class HamsterAIUtil {
                             ItemStack discStack = jbe.getTheItem();
                             String songDesc = song.description().getString().toLowerCase(Locale.ROOT);
                             String itemName = discStack.getHoverName().getString().toLowerCase(Locale.ROOT);
-                            String itemKey = discStack.getDescriptionId().toLowerCase(Locale.ROOT);
+                            String itemKey = discStack.getItem().getDescriptionId().toLowerCase(Locale.ROOT);
 
                             ItemLore lore = discStack.get(DataComponents.LORE);
 

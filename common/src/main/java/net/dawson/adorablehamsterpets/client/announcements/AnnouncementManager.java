@@ -558,7 +558,7 @@ public class AnnouncementManager {
 
         activeRefreshFuture = httpClient.sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofString())
                 .thenAccept(response -> {
-                    AdorableHamsterPets.LOGGER.trace("[Announcements] Manifest fetch completed with status code {}. Current screen: {}", response.statusCode(), Minecraft.getInstance().screen);
+                    AdorableHamsterPets.LOGGER.trace("[Announcements] Manifest fetch completed with status code {}. Current screen: {}", response.statusCode(), Minecraft.getInstance().gui.screen());
                     if (response.statusCode() == 200) { // OK
                         AdorableHamsterPets.LOGGER.trace("[Announcements] Fetched new manifest.");
                         AnnouncementManifest.CODEC.parse(JsonOps.INSTANCE, GSON.fromJson(response.body(), com.google.gson.JsonElement.class))

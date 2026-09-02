@@ -139,7 +139,7 @@ public interface ImplementedInventory extends Container {
      * @see Container#startOpen(net.minecraft.world.entity.player.Player)
      */
     @Override
-    default void startOpen(net.minecraft.world.entity.player.Player player) {
+    default void startOpen(net.minecraft.world.entity.ContainerUser user) {
     }
 
     /**
@@ -148,7 +148,7 @@ public interface ImplementedInventory extends Container {
      * @see Container#stopOpen(net.minecraft.world.entity.player.Player)
      */
     @Override
-    default void stopOpen(net.minecraft.world.entity.player.Player player) {
+    default void stopOpen(net.minecraft.world.entity.ContainerUser user) {
     }
 
     /**

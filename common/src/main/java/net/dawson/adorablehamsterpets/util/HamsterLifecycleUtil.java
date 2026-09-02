@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
@@ -8,7 +9,7 @@ import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterGenome;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.AgeableMob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -36,7 +37,7 @@ public final class HamsterLifecycleUtil {
     @Nullable
     public static AgeableMob createChild(
             HamsterEntity parent, ServerLevel world, AgeableMob mate) {
-        HamsterEntity baby = ModEntities.HAMSTER.get().create(world);
+        HamsterEntity baby = ModEntities.HAMSTER.get().create(world, EntitySpawnReason.LOAD);
         if (baby == null) return null;
 
         HamsterGenome babyGenome =
@@ -44,9 +45,9 @@ public final class HamsterLifecycleUtil {
         baby.setGenome(babyGenome);
 
         if (!Configs.AHP_MAIN.babiesSpawnWild) {
-            UUID ownerUuid = parent.getOwnerUUID();
+            UUID ownerUuid = (parent.getOwnerReference() == null ? null : parent.getOwnerReference().getUUID());
             if (ownerUuid != null) {
-                baby.setOwnerUUID(ownerUuid);
+                baby.setOwnerReference(ownerUuid == null ? null : net.minecraft.world.entity.EntityReference.of(ownerUuid));
                 baby.setTame(true, true);
             }
         }
@@ -91,7 +92,7 @@ public final class HamsterLifecycleUtil {
     // --- Spawn Initialization ---
 
     public static void initializeSpawn(
-            HamsterEntity hamster, ServerLevelAccessor world, MobSpawnType spawnReason) {
+            HamsterEntity hamster, ServerLevelAccessor world, EntitySpawnReason spawnReason) {
         initializeSpawn(hamster, world, spawnReason, false);
     }
 
@@ -101,7 +102,7 @@ public final class HamsterLifecycleUtil {
     public static void initializeSpawn(
             HamsterEntity hamster,
             ServerLevelAccessor world,
-            MobSpawnType spawnReason,
+            EntitySpawnReason spawnReason,
             boolean supplementalCaveSpawn) {
         AdorableHamsterPets.LOGGER.debug(
                 "[AHP Spawn Debug] HamsterEntity.initialize called. SpawnReason: {}", spawnReason);
@@ -125,7 +126,7 @@ public final class HamsterLifecycleUtil {
             hamster.setHealth(hamster.getMaxHealth());
         }
 
-        if (spawnReason == MobSpawnType.NATURAL || spawnReason == MobSpawnType.CHUNK_GENERATION) {
+        if (spawnReason == EntitySpawnReason.NATURAL || spawnReason == EntitySpawnReason.CHUNK_GENERATION) {
             hamster.totalAgeTicks = (1L + hamster.getRandom().nextInt(30)) * 24000L;
         } else {
             hamster.totalAgeTicks = 24000L;

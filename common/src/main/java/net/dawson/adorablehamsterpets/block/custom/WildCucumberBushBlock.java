@@ -19,7 +19,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.VegetationBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -31,7 +31,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 /**
  * Represents a wild cucumber bush block that can be harvested for seeds and regrows over time.
  */
-public class WildCucumberBushBlock extends BushBlock {
+public class WildCucumberBushBlock extends VegetationBlock {
     // --- Constants and Static Fields ---
     public static final MapCodec<WildCucumberBushBlock> CODEC = simpleCodec(WildCucumberBushBlock::new);
     public static final BooleanProperty SEEDED = BooleanProperty.create("seeded");
@@ -52,7 +52,7 @@ public class WildCucumberBushBlock extends BushBlock {
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state) {
+    protected ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state, boolean includeData) {
         return new ItemStack(ModItems.CUCUMBER_SEEDS.get());
     }
 
@@ -90,11 +90,11 @@ public class WildCucumberBushBlock extends BushBlock {
     public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
         // --- Harvesting Logic ---
         if (state.getValue(SEEDED)) {
-            if (!world.isClientSide) {
-                int seedAmount = 1 + world.random.nextInt(2); // Drop 1 or 2 seeds
+            if (!world.isClientSide()) {
+                int seedAmount = 1 + world.getRandom().nextInt(2); // Drop 1 or 2 seeds
                 popResource(world, pos, new ItemStack(ModItems.CUCUMBER_SEEDS.get(), seedAmount));
 
-                world.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
+                world.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + world.getRandom().nextFloat() * 0.4F);
 
                 BlockState newState = state.setValue(SEEDED, false);
                 world.setBlock(pos, newState, Block.UPDATE_CLIENTS);
@@ -102,7 +102,7 @@ public class WildCucumberBushBlock extends BushBlock {
 
                 return InteractionResult.SUCCESS;
             }
-            return InteractionResult.sidedSuccess(world.isClientSide); // Indicate client-side success
+            return InteractionResult.SUCCESS; // Indicate client-side success
         }
         return InteractionResult.PASS; // Not seeded, pass interaction
     }

@@ -1,9 +1,11 @@
 package net.dawson.adorablehamsterpets.client.gui;
 
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import org.joml.Matrix3x2fStack;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -50,7 +52,7 @@ public class MarkdownRenderer {
     }
 
     // --- 4. Public Methods ---
-    public void render(GuiGraphics context, int scrollY, @Nullable Style hoveredStyle) {
+    public void render(GuiGraphicsExtractor context, int scrollY, @Nullable Style hoveredStyle) {
         int currentY = startY - scrollY;
 
         for (String originalLine : lines) {
@@ -90,7 +92,7 @@ public class MarkdownRenderer {
     }
 
     // --- 6. Private Rendering Helpers ---
-    private int renderHeading(GuiGraphics context, String line, int y) {
+    private int renderHeading(GuiGraphicsExtractor context, String line, int y) {
         int level = 0;
         while (level < line.length() && line.charAt(level) == '#') {
             level++;
@@ -106,13 +108,13 @@ public class MarkdownRenderer {
         int scaledWidth = (int) (this.width / scale);
         List<FormattedCharSequence> wrappedLines = this.textRenderer.split(styledText, scaledWidth);
 
-        PoseStack matrices = context.pose();
+        Matrix3x2fStack matrices = context.pose();
         for (FormattedCharSequence wrappedLine : wrappedLines) {
-            matrices.pushPose();
-            matrices.translate(x, y, 0);
-            matrices.scale(scale, scale, 1.0f);
-            context.drawString(textRenderer, wrappedLine, 0, 0, color, false);
-            matrices.popPose();
+            matrices.pushMatrix();
+            matrices.translate((float) (x), (float) (y));
+            matrices.scale(scale, scale);
+            context.text(textRenderer, wrappedLine, 0, 0, color, false);
+            matrices.popMatrix();
             y += (int)(textRenderer.lineHeight * scale) + LINE_SPACING;
         }
 
@@ -120,13 +122,13 @@ public class MarkdownRenderer {
         return y - LINE_SPACING + HEADING_BOTTOM_MARGIN;
     }
 
-    private int renderDivider(GuiGraphics context, int y) {
+    private int renderDivider(GuiGraphicsExtractor context, int y) {
         // Draw the divider 3 pixels down from the start, leaving 3px padding above.
         context.fill(x + 15, y + 3, x + width - 15, y + 4, 0xFFB3B3B3); // First two digits control the alpha.
         return y + DIVIDER_HEIGHT;
     }
 
-    private int renderListItem(GuiGraphics context, String line, int y, @Nullable Style hoveredStyle) {
+    private int renderListItem(GuiGraphicsExtractor context, String line, int y, @Nullable Style hoveredStyle) {
         int indentationLevel = getIndentationLevel(line);
         String trimmedLine = line.trim();
 
@@ -146,11 +148,11 @@ public class MarkdownRenderer {
         int contentX = bulletX + LIST_INDENT;
         int contentWidth = width - ((indentationLevel + 1) * LIST_INDENT);
 
-        context.drawString(textRenderer, bullet, bulletX, y, 0x323232, false);
+        context.text(textRenderer, bullet, bulletX, y, 0x323232, false);
         return renderParagraph(context, content, y, contentX, contentWidth, hoveredStyle);
     }
 
-    private int renderParagraph(GuiGraphics context, String line, int y, int startX, int lineWidth, @Nullable Style hoveredStyle) {
+    private int renderParagraph(GuiGraphicsExtractor context, String line, int y, int startX, int lineWidth, @Nullable Style hoveredStyle) {
         int indentationLevel = getIndentationLevel(line);
         String content = line.substring(indentationLevel * SPACES_PER_INDENT_LEVEL);
         int finalStartX = startX + (indentationLevel * LIST_INDENT);
@@ -160,7 +162,7 @@ public class MarkdownRenderer {
         List<FormattedCharSequence> wrappedLines = textRenderer.split(styledText, finalLineWidth);
 
         for (FormattedCharSequence wrappedLine : wrappedLines) {
-            context.drawString(textRenderer, wrappedLine, finalStartX, y, 0x323232, false);
+            context.text(textRenderer, wrappedLine, finalStartX, y, 0x323232, false);
             y += textRenderer.lineHeight + LINE_SPACING;
         }
         return y;
@@ -199,7 +201,7 @@ public class MarkdownRenderer {
                 } else if (nextMatcher == strikethroughMatcher) {
                     result.append(Component.literal(strikethroughMatcher.group(1)).setStyle(Style.EMPTY.withStrikethrough(true)));
                 } else if (nextMatcher == codeMatcher) {
-                    result.append(Component.literal(codeMatcher.group(1)).setStyle(Style.EMPTY.withFont(Identifier.fromNamespaceAndPath("minecraft", "uniform")).withColor(ChatFormatting.BLACK)));
+                    result.append(Component.literal(codeMatcher.group(1)).setStyle(Style.EMPTY.withFont(new FontDescription.Resource(Identifier.fromNamespaceAndPath("minecraft", "uniform"))).withColor(ChatFormatting.BLACK)));
                 } else if (nextMatcher == linkMatcher) {
                     String linkText = linkMatcher.group(1);
                     String url = linkMatcher.group(2);
@@ -207,10 +209,10 @@ public class MarkdownRenderer {
 
                     if (url.startsWith("ahp://copy ")) {
                         String command = url.substring("ahp://copy ".length());
-                        clickEvent = new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, command);
+                        clickEvent = new ClickEvent.CopyToClipboard(command);
                     } else {
                         // Default to OPEN_URL for https or any other scheme
-                        clickEvent = new ClickEvent(ClickEvent.Action.OPEN_URL, url);
+                        clickEvent = new ClickEvent.OpenUrl(java.net.URI.create(url));
                     }
 
                     // Hover logic

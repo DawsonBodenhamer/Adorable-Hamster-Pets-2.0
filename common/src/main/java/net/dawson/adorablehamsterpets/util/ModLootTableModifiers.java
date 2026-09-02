@@ -16,77 +16,77 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import java.util.List;
 
 public class ModLootTableModifiers {
-    private static final Identifier OAK_LEAVES_ID = Blocks.OAK_LEAVES.getLootTable().location();
+    private static final Identifier OAK_LEAVES_ID = Blocks.OAK_LEAVES.getLootTable().orElseThrow().identifier();
 
     // --- Loot Table Categories ---
 
     // Common Loot: Seeds
     // Locations: Basic surface structures, supply chests, low-tier village chests
     private static final List<Identifier> COMMON_LOOT_LOCATIONS = List.of(
-            BuiltInLootTables.SPAWN_BONUS_CHEST.location(),
-            BuiltInLootTables.SIMPLE_DUNGEON.location(),
-            BuiltInLootTables.ABANDONED_MINESHAFT.location(),
-            BuiltInLootTables.VILLAGE_PLAINS_HOUSE.location(),
-            BuiltInLootTables.VILLAGE_SAVANNA_HOUSE.location(),
-            BuiltInLootTables.VILLAGE_SNOWY_HOUSE.location(),
-            BuiltInLootTables.VILLAGE_TAIGA_HOUSE.location(),
-            BuiltInLootTables.VILLAGE_DESERT_HOUSE.location(),
-            BuiltInLootTables.VILLAGE_SHEPHERD.location(),
-            BuiltInLootTables.VILLAGE_BUTCHER.location(),
-            BuiltInLootTables.SHIPWRECK_SUPPLY.location(),
-            BuiltInLootTables.PILLAGER_OUTPOST.location(),
-            BuiltInLootTables.UNDERWATER_RUIN_SMALL.location(),
-            BuiltInLootTables.TRIAL_CHAMBERS_SUPPLY.location()
+            BuiltInLootTables.SPAWN_BONUS_CHEST.identifier(),
+            BuiltInLootTables.SIMPLE_DUNGEON.identifier(),
+            BuiltInLootTables.ABANDONED_MINESHAFT.identifier(),
+            BuiltInLootTables.VILLAGE_PLAINS_HOUSE.identifier(),
+            BuiltInLootTables.VILLAGE_SAVANNA_HOUSE.identifier(),
+            BuiltInLootTables.VILLAGE_SNOWY_HOUSE.identifier(),
+            BuiltInLootTables.VILLAGE_TAIGA_HOUSE.identifier(),
+            BuiltInLootTables.VILLAGE_DESERT_HOUSE.identifier(),
+            BuiltInLootTables.VILLAGE_SHEPHERD.identifier(),
+            BuiltInLootTables.VILLAGE_BUTCHER.identifier(),
+            BuiltInLootTables.SHIPWRECK_SUPPLY.identifier(),
+            BuiltInLootTables.PILLAGER_OUTPOST.identifier(),
+            BuiltInLootTables.UNDERWATER_RUIN_SMALL.identifier(),
+            BuiltInLootTables.TRIAL_CHAMBERS_SUPPLY.identifier()
     );
 
     // Standard Gear: Acorn/Iron/Gold Armor
     // Locations: Slightly better structures, specific village professions
     private static final List<Identifier> UNCOMMON_LOOT_LOCATIONS = List.of(
-            BuiltInLootTables.SIMPLE_DUNGEON.location(),
-            BuiltInLootTables.ABANDONED_MINESHAFT.location(),
-            BuiltInLootTables.DESERT_PYRAMID.location(),
-            BuiltInLootTables.JUNGLE_TEMPLE.location(),
-            BuiltInLootTables.IGLOO_CHEST.location(),
-            BuiltInLootTables.RUINED_PORTAL.location(),
-            BuiltInLootTables.SHIPWRECK_TREASURE.location(),
-            BuiltInLootTables.UNDERWATER_RUIN_BIG.location(),
-            BuiltInLootTables.VILLAGE_ARMORER.location(),
-            BuiltInLootTables.VILLAGE_WEAPONSMITH.location(),
-            BuiltInLootTables.VILLAGE_TOOLSMITH.location()
+            BuiltInLootTables.SIMPLE_DUNGEON.identifier(),
+            BuiltInLootTables.ABANDONED_MINESHAFT.identifier(),
+            BuiltInLootTables.DESERT_PYRAMID.identifier(),
+            BuiltInLootTables.JUNGLE_TEMPLE.identifier(),
+            BuiltInLootTables.IGLOO_CHEST.identifier(),
+            BuiltInLootTables.RUINED_PORTAL.identifier(),
+            BuiltInLootTables.SHIPWRECK_TREASURE.identifier(),
+            BuiltInLootTables.UNDERWATER_RUIN_BIG.identifier(),
+            BuiltInLootTables.VILLAGE_ARMORER.identifier(),
+            BuiltInLootTables.VILLAGE_WEAPONSMITH.identifier(),
+            BuiltInLootTables.VILLAGE_TOOLSMITH.identifier()
     );
 
     // High-End Gear: Diamond Armor, Netherite (if enabled), Basic Templates (Iron/Gold)
     // Locations: Nether, End, Strongholds, Major structures
     private static final List<Identifier> HIGH_TIER_LOOT_LOCATIONS = List.of(
-            BuiltInLootTables.NETHER_BRIDGE.location(),
-            BuiltInLootTables.BASTION_TREASURE.location(),
-            BuiltInLootTables.BASTION_OTHER.location(),
-            BuiltInLootTables.BASTION_BRIDGE.location(),
-            BuiltInLootTables.BASTION_HOGLIN_STABLE.location(),
-            BuiltInLootTables.END_CITY_TREASURE.location(),
-            BuiltInLootTables.STRONGHOLD_CROSSING.location(),
-            BuiltInLootTables.STRONGHOLD_CORRIDOR.location(),
-            BuiltInLootTables.ANCIENT_CITY.location(),
-            BuiltInLootTables.TRIAL_CHAMBERS_REWARD.location(),
-            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_RARE.location()
+            BuiltInLootTables.NETHER_BRIDGE.identifier(),
+            BuiltInLootTables.BASTION_TREASURE.identifier(),
+            BuiltInLootTables.BASTION_OTHER.identifier(),
+            BuiltInLootTables.BASTION_BRIDGE.identifier(),
+            BuiltInLootTables.BASTION_HOGLIN_STABLE.identifier(),
+            BuiltInLootTables.END_CITY_TREASURE.identifier(),
+            BuiltInLootTables.STRONGHOLD_CROSSING.identifier(),
+            BuiltInLootTables.STRONGHOLD_CORRIDOR.identifier(),
+            BuiltInLootTables.ANCIENT_CITY.identifier(),
+            BuiltInLootTables.TRIAL_CHAMBERS_REWARD.identifier(),
+            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_RARE.identifier()
     );
 
     // Legendary Artifacts: Accessories, Advanced Templates (Diamond/Netherite)
     // Locations: Rarest containers in the game
     private static final List<Identifier> LEGENDARY_LOOT_LOCATIONS = List.of(
-            BuiltInLootTables.ANCIENT_CITY.location(),
-            BuiltInLootTables.WOODLAND_MANSION.location(),
-            BuiltInLootTables.STRONGHOLD_LIBRARY.location(),
-            BuiltInLootTables.END_CITY_TREASURE.location(),
-            BuiltInLootTables.BURIED_TREASURE.location(),
-            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_UNIQUE.location(),
-            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_RARE.location(),
-            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_UNIQUE.location()
+            BuiltInLootTables.ANCIENT_CITY.identifier(),
+            BuiltInLootTables.WOODLAND_MANSION.identifier(),
+            BuiltInLootTables.STRONGHOLD_LIBRARY.identifier(),
+            BuiltInLootTables.END_CITY_TREASURE.identifier(),
+            BuiltInLootTables.BURIED_TREASURE.identifier(),
+            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_UNIQUE.identifier(),
+            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_RARE.identifier(),
+            BuiltInLootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_UNIQUE.identifier()
     );
 
     public static void init() {
         LootEvent.MODIFY_LOOT_TABLE.register((key, context, builtin) -> {
-            Identifier tableId = key.location();
+            Identifier tableId = key.identifier();
             final AhpWorldGenConfig config = AdorableHamsterPets.WORLD_GEN_CONFIG;
 
             // --- 1. Acorns from Oak Leaves ---

@@ -66,13 +66,13 @@ public class EndPortalBlockMixin {
     @Unique
     private void adorablehamsterpets$bounceEntity(Entity entity, Level world, BlockPos pos) {
         // Shoot back out to prevent falling back into portal
-        double vx = (world.random.nextDouble() - 0.5) * 0.5;
-        double vy = 0.5 + world.random.nextDouble() * 0.2;
-        double vz = (world.random.nextDouble() - 0.5) * 0.5;
+        double vx = (world.getRandom().nextDouble() - 0.5) * 0.5;
+        double vy = 0.5 + world.getRandom().nextDouble() * 0.2;
+        double vz = (world.getRandom().nextDouble() - 0.5) * 0.5;
 
         entity.setDeltaMovement(vx, vy, vz);
         entity.hurtMarked = true;
-        entity.hasImpulse = true;
+        entity.needsSync = true;
 
         // Visual and audio feedback
         ParticleEffectsUtil.spawnParticles(

@@ -358,7 +358,7 @@ public class AhpMainConfig extends Config {
             .decoration(TextureIds.INSTANCE.getRESTORE())
             .build(() -> {
                 if (Minecraft.getInstance().getConnection() != null) {
-                    Minecraft.getInstance().getConnection().sendUnsignedCommand("ahp reset_player_breeding_history");
+                    Minecraft.getInstance().getConnection().sendCommand("ahp reset_player_breeding_history");
                 }
             });
 

@@ -172,7 +172,7 @@ public class AdorableHamsterPets {
 		if (Configs.AHP_UI.enableAutoGuidebookDelivery) {
 			PlayerAdvancements advancementTracker = player.getAdvancements();
 			Identifier flagAdvId = Identifier.fromNamespaceAndPath(MOD_ID, "technical/has_received_initial_guidebook");
-			net.minecraft.advancements.AdvancementHolder flagAdvancementEntry = player.server.getAdvancements().get(flagAdvId);
+			net.minecraft.advancements.AdvancementHolder flagAdvancementEntry = player.level().getServer().getAdvancements().get(flagAdvId);
 
 			if (flagAdvancementEntry != null) {
 				AdvancementProgress flagProgress = advancementTracker.getOrStartProgress(flagAdvancementEntry);
@@ -249,9 +249,9 @@ public class AdorableHamsterPets {
 		}
 
 		// --- 3. Handle Spawning at Death Location (Default) ---
-		ServerLevel world = oldPlayer.serverLevel();
+		ServerLevel world = ((ServerLevel) oldPlayer.level());
 		BlockPos deathPos = oldPlayer.blockPosition();
-		boolean isVoidDeath = deathPos.getY() < world.getMinBuildHeight();
+		boolean isVoidDeath = deathPos.getY() < world.getMinY();
 		Set<BlockPos> occupiedSpawnPositions = new HashSet<>();
 
 		for (ShoulderLocation location : ShoulderLocation.values()) {
@@ -279,7 +279,7 @@ public class AdorableHamsterPets {
 				// 1. Try Linked Bed
 				if (hamster.getLinkedBedPos().isPresent()) {
 					GlobalPos linkedBed = hamster.getLinkedBedPos().get();
-					ServerLevel bedWorld = oldPlayer.getServer().getLevel(linkedBed.dimension());
+					ServerLevel bedWorld = oldPlayer.level().getServer().getLevel(linkedBed.dimension());
 					if (bedWorld != null) {
 						BlockPos bedPos = linkedBed.pos();
 						BlockState bedState = bedWorld.getBlockState(bedPos);
@@ -296,14 +296,18 @@ public class AdorableHamsterPets {
 
 				// 2. Try Player's Respawn Point
 				if (finalSpawnPos == null) {
-					ServerLevel spawnWorld = oldPlayer.getServer().getLevel(newPlayer.getRespawnDimension());
+					net.minecraft.server.level.ServerPlayer.RespawnConfig respawnConfig = newPlayer.getRespawnConfig();
+					// 26.2 port: respawn dimension/position now live on a RespawnConfig record
+					net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> respawnDimension =
+							respawnConfig != null ? respawnConfig.respawnData().dimension() : net.minecraft.world.level.Level.OVERWORLD;
+					ServerLevel spawnWorld = oldPlayer.level().getServer().getLevel(respawnDimension);
 					if (spawnWorld != null) {
 						targetWorld = spawnWorld;
-						BlockPos spawnPoint = newPlayer.getRespawnPosition();
+						BlockPos spawnPoint = respawnConfig != null ? respawnConfig.respawnData().pos() : null;
 						if (spawnPoint != null) {
 							finalSpawnPos = spawnPoint;
 						} else {
-							finalSpawnPos = targetWorld.getSharedSpawnPos();
+							finalSpawnPos = targetWorld.getRespawnData().pos();
 						}
 						// Find safe spot around the respawn point so they don't spawn inside a block
 						finalSpawnPos = HamsterPlacementUtil.findSafeSpawnPosition(finalSpawnPos, targetWorld, 5, occupiedSpawnPositions, hamster).orElse(finalSpawnPos);
@@ -320,18 +324,18 @@ public class AdorableHamsterPets {
 
 			// Set initial position if not already handled by the bed rescue
 			if (!positionAlreadySet) {
-				hamster.moveTo(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, 0, 0);
+				hamster.snapTo(finalSpawnPos.getX() + 0.5, finalSpawnPos.getY(), finalSpawnPos.getZ() + 0.5, 0, 0);
 			}
 
 			// Spawn the entity in the correct world
 			targetWorld.addFreshEntityWithPassengers(hamster);
 
 			// Randomize the Yaw so they don't all face the exact same direction
-			float randomYaw = targetWorld.random.nextFloat() * 360.0F;
+			float randomYaw = targetWorld.getRandom().nextFloat() * 360.0F;
 			hamster.setYBodyRot(randomYaw);
 			hamster.setYHeadRot(randomYaw);
 
-			AdorableHamsterPets.LOGGER.debug("Player {} died. Spawning {} hamster at {} in target world {}.", oldPlayer.getName().getString(), location, finalSpawnPos, targetWorld.dimension().location());
+			AdorableHamsterPets.LOGGER.debug("Player {} died. Spawning {} hamster at {} in target world {}.", oldPlayer.getName().getString(), location, finalSpawnPos, targetWorld.dimension().identifier());
 		}
 		// By not transferring any data to newPlayer, they will respawn with empty shoulders.
 	}
@@ -351,7 +355,7 @@ public class AdorableHamsterPets {
 		// --- 1. Create the Book ItemStack Directly ---
 		ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
 		@SuppressWarnings("unchecked")
-		DataComponentType<Identifier> bookComponent = (DataComponentType<Identifier>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("patchouli", "book"));
+		DataComponentType<Identifier> bookComponent = (DataComponentType<Identifier>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("patchouli", "book")).map(net.minecraft.core.Holder::value).orElse(null);
 		if (bookComponent != null) {
 			bookStack.set(bookComponent, Identifier.fromNamespaceAndPath(MOD_ID, "hamster_tips_guide_book"));
 		} else {
@@ -365,7 +369,7 @@ public class AdorableHamsterPets {
 		if (grantInitialAdvancement) {
 			PlayerAdvancements advancementTracker = player.getAdvancements();
 			Identifier flagAdvId = Identifier.fromNamespaceAndPath(MOD_ID, "technical/has_received_initial_guidebook");
-			net.minecraft.advancements.AdvancementHolder flagAdvancementEntry = player.server.getAdvancements().get(flagAdvId);
+			net.minecraft.advancements.AdvancementHolder flagAdvancementEntry = player.level().getServer().getAdvancements().get(flagAdvId);
 
 			if (flagAdvancementEntry != null) {
 				for (String criterion : flagAdvancementEntry.value().criteria().keySet()) {
@@ -376,7 +380,7 @@ public class AdorableHamsterPets {
 
 		// --- 4. Send Fallback Message ---
 		if (sendFallbackMessage) {
-			player.displayClientMessage(Component.translatable("message.adorablehamsterpets.guidebook_obtained_fallback").withStyle(ChatFormatting.GOLD), false);
+			player.sendSystemMessage(Component.translatable("message.adorablehamsterpets.guidebook_obtained_fallback").withStyle(ChatFormatting.GOLD));
 		}
 
 		// --- 5. Trigger Client Effects ---
@@ -395,7 +399,7 @@ public class AdorableHamsterPets {
 		// --- 1. Get the component type for Patchouli books ---
 		// Suppress the "unchecked" warning because the 'patchouli:book' component is of type ComponentType<Identifier>.
 		@SuppressWarnings("unchecked")
-		DataComponentType<Identifier> bookComponent = (DataComponentType<Identifier>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("patchouli", "book"));
+		DataComponentType<Identifier> bookComponent = (DataComponentType<Identifier>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("patchouli", "book")).map(net.minecraft.core.Holder::value).orElse(null);
 
 		if (bookComponent == null) {
 			// This can happen if Patchouli is not present, so fail gracefully.

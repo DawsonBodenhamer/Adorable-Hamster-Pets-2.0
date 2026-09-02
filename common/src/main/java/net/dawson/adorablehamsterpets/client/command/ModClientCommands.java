@@ -49,7 +49,7 @@ public class ModClientCommands {
                     );
 
                     if (Minecraft.getInstance().player != null) {
-                        Minecraft.getInstance().player.displayClientMessage(Component.translatable("message.adorablehamsterpets.throw_warning.disabled").withStyle(ChatFormatting.YELLOW), false);
+                        Minecraft.getInstance().player.sendSystemMessage(Component.translatable("message.adorablehamsterpets.throw_warning.disabled").withStyle(ChatFormatting.YELLOW));
                     }
                     return 1;
                 })

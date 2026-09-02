@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "seeded=false": {
+      "model": "adorablehamsterpets:block/wild_green_bean_bush_seedless"
+    },
+    "seeded=true": {
+      "model": "adorablehamsterpets:block/wild_green_bean_bush_seeded"
+    }
+  }
+}

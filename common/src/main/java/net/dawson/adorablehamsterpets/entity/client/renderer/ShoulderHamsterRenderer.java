@@ -1,12 +1,10 @@
 package net.dawson.adorablehamsterpets.entity.client.renderer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.dawson.adorablehamsterpets.entity.client.HamsterRenderer;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.jetbrains.annotations.Nullable;
-import com.geckolib.cache.object.BakedGeoModel;
+import com.geckolib.cache.model.BakedGeoModel;
 
 /**
  * A specialized renderer for the shoulder-mounted hamster.
@@ -20,14 +18,7 @@ public class ShoulderHamsterRenderer extends HamsterRenderer {
         super(ctx);
     }
 
-    /**
-     * Overrides the main render method to bypass logic that is not relevant
-     * for a shoulder-mounted entity, such as cleaning sounds and snow offset.
-     */
-    @Override
-    public void render(HamsterEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
-                       MultiBufferSource bufferSource, int packedLight) {
-        this.shadowRadius = entity.isBaby() ? 0.1F : 0.2F;
-        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-    }
+    // 26.2 port: the render() override only set shadowRadius by age, and
+    // HamsterRenderer.extractRenderState already does exactly that (0.2 adult,
+    // 0.1 baby), so nothing is overridden here any more.
 }

@@ -1,0 +1,65 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_birch_leaves": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:birch_leaves"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_dead_bush": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:dead_bush"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_oak_leaves": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:oak_leaves"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_podzol": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:podzol"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "adorablehamsterpets:hamster_bedding"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_oak_leaves",
+      "has_birch_leaves",
+      "has_dead_bush",
+      "has_podzol"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "adorablehamsterpets:hamster_bedding"
+    ]
+  }
+}

@@ -2,62 +2,40 @@ package net.dawson.adorablehamsterpets.world.gen.feature;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.ModBlocks;
+import net.dawson.adorablehamsterpets.block.custom.WildCucumberBushBlock;
+import net.dawson.adorablehamsterpets.block.custom.WildGreenBeanBushBlock;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
-import net.minecraft.data.worldgen.features.FeatureUtils;
-import net.minecraft.data.worldgen.placement.PlacementUtils;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.levelgen.feature.*;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 
+/**
+ * 26.2 port: {@code random_patch} no longer exists. Like vanilla's flower
+ * patches, each configured feature is now a plain {@code simple_block} and the
+ * patch spread (tries, xz/y offsets, air check) lives in the placed feature.
+ */
 public class ModConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> CUSTOM_SUNFLOWER_PATCH_KEY = registerKey("custom_sunflower_patch");
-
-    // --- Add Keys for Bushes ---
     public static final ResourceKey<ConfiguredFeature<?, ?>> WILD_GREEN_BEAN_BUSH_KEY = registerKey("wild_green_bean_bush_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> WILD_CUCUMBER_BUSH_KEY = registerKey("wild_cucumber_bush_patch");
-    // --- End Add Keys ---
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> context) {
-        // Sunflower (Existing)
-        register(context, CUSTOM_SUNFLOWER_PATCH_KEY, Feature.RANDOM_PATCH,
-                FeatureUtils.simpleRandomPatchConfiguration(
-                        64, // Tries per patch for sunflower
-                        PlacementUtils.onlyWhenEmpty(Feature.SIMPLE_BLOCK,
-                                new SimpleBlockConfiguration(BlockStateProvider.simple(ModBlocks.SUNFLOWER_BLOCK.get()))
-                        )
-                ));
-
-        // --- Register Green Bean Bush Patch ---
-        register(context, WILD_GREEN_BEAN_BUSH_KEY, Feature.RANDOM_PATCH,
-                FeatureUtils.simpleRandomPatchConfiguration(
-                        18, // Fewer tries per patch than sunflowers, adjust as needed
-                        PlacementUtils.onlyWhenEmpty(Feature.SIMPLE_BLOCK,
-                                // Ensure the bush starts seeded when generated naturally
-                                new SimpleBlockConfiguration(BlockStateProvider.simple(ModBlocks.WILD_GREEN_BEAN_BUSH.get().defaultBlockState().setValue(net.dawson.adorablehamsterpets.block.custom.WildGreenBeanBushBlock.SEEDED, true)))
-                        )
-                ));
-        // --- End Register Green Bean ---
-
-        // --- Register Cucumber Bush Patch ---
-        register(context, WILD_CUCUMBER_BUSH_KEY, Feature.RANDOM_PATCH,
-                FeatureUtils.simpleRandomPatchConfiguration(
-                        18, // Fewer tries per patch, adjust as needed
-                        PlacementUtils.onlyWhenEmpty(Feature.SIMPLE_BLOCK,
-                                // Ensure the bush starts seeded when generated naturally
-                                new SimpleBlockConfiguration(BlockStateProvider.simple(ModBlocks.WILD_CUCUMBER_BUSH.get().defaultBlockState().setValue(net.dawson.adorablehamsterpets.block.custom.WildCucumberBushBlock.SEEDED, true)))
-                        )
-                ));
-        // --- End Register Cucumber ---
+        register(context, CUSTOM_SUNFLOWER_PATCH_KEY, Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(BlockStateProvider.simple(ModBlocks.SUNFLOWER_BLOCK.get())));
+        register(context, WILD_GREEN_BEAN_BUSH_KEY, Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(BlockStateProvider.simple(
+                        ModBlocks.WILD_GREEN_BEAN_BUSH.get().defaultBlockState().setValue(WildGreenBeanBushBlock.SEEDED, true))));
+        register(context, WILD_CUCUMBER_BUSH_KEY, Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(BlockStateProvider.simple(
+                        ModBlocks.WILD_CUCUMBER_BUSH.get().defaultBlockState().setValue(WildCucumberBushBlock.SEEDED, true))));
     }
 
-    // Helper methods (Existing)
     public static ResourceKey<ConfiguredFeature<?, ?>> registerKey(String name) {
         return ResourceKey.create(Registries.CONFIGURED_FEATURE, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, name));
     }

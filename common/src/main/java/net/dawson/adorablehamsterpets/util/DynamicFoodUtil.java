@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
+import java.util.function.Consumer;
 import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.minecraft.ChatFormatting;
@@ -36,19 +37,19 @@ public final class DynamicFoodUtil {
     /**
      * Appends standard tooltips and dynamic nutrition stats (if AppleSkin is absent).
      */
-    public static void appendTooltip(List<Component> tooltip, String tooltipBaseKey, int nutrition, float saturation) {
+    public static void appendTooltip(Consumer<Component> tooltip, String tooltipBaseKey, int nutrition, float saturation) {
         if (Configs.AHP_UI.enableItemTooltips) {
-            tooltip.add(Component.translatable(tooltipBaseKey + ".hint1").withStyle(ChatFormatting.GOLD));
-            tooltip.add(Component.translatable(tooltipBaseKey + ".hint2").withStyle(ChatFormatting.GRAY));
+            tooltip.accept(Component.translatable(tooltipBaseKey + ".hint1").withStyle(ChatFormatting.GOLD));
+            tooltip.accept(Component.translatable(tooltipBaseKey + ".hint2").withStyle(ChatFormatting.GRAY));
 
             if (!Platform.isModLoaded("appleskin")) {
-                tooltip.add(Component.translatable("tooltip.adorablehamsterpets.appleskin.hint",
+                tooltip.accept(Component.translatable("tooltip.adorablehamsterpets.appleskin.hint",
                         nutrition,
                         String.format("%.1f", saturation * nutrition * 2.0F)
                 ).withStyle(ChatFormatting.DARK_GRAY));
             }
         } else if (!Platform.isModLoaded("emi")) {
-            tooltip.add(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+            tooltip.accept(Component.literal("Adorable Hamster Pets").withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
         }
     }
 }

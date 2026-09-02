@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "adorablehamsterpets:green_beans_crate"
+  ],
+  "result": {
+    "count": 9,
+    "id": "adorablehamsterpets:green_beans"
+  }
+}

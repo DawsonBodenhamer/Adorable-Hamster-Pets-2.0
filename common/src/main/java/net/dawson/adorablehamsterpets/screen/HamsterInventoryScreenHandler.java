@@ -168,7 +168,7 @@ public class HamsterInventoryScreenHandler extends AbstractContainerMenu {
                 }
 
                 // If the move was successful, manually trigger the unequip sound.
-                if ((isArmorSlot || isBlingSlot) && this.hamsterEntityInstance != null && !this.hamsterEntityInstance.level().isClientSide) {
+                if ((isArmorSlot || isBlingSlot) && this.hamsterEntityInstance != null && !this.hamsterEntityInstance.level().isClientSide()) {
                     Holder<SoundEvent> soundEntry = isArmorSlot ? SoundEvents.ARMOR_EQUIP_WOLF : SoundEvents.ARMOR_EQUIP_GENERIC;
                     // Play with unequip pitch (0.8f) and lower volume (0.4f)
                     this.hamsterEntityInstance.playSound(soundEntry.value(), 0.4f, 0.8f);

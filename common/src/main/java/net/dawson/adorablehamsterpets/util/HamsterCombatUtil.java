@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.minecraft.server.level.ServerLevel;
@@ -246,7 +247,7 @@ public final class HamsterCombatUtil {
                 || target instanceof ArmorStand) {
             return false;
         }
-        UUID ownerUuid = hamster.getOwnerUUID();
+        UUID ownerUuid = (hamster.getOwnerReference() == null ? null : hamster.getOwnerReference().getUUID());
         if (ownerUuid == null) {
             return true;
         }

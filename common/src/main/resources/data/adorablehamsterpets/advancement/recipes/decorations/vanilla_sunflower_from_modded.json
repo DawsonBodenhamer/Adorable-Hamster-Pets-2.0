@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_modded_sunflower": {
+      "conditions": {
+        "items": [
+          {
+            "items": "adorablehamsterpets:sunflower_block"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "adorablehamsterpets:vanilla_sunflower_from_modded"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_modded_sunflower"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "adorablehamsterpets:vanilla_sunflower_from_modded"
+    ]
+  }
+}

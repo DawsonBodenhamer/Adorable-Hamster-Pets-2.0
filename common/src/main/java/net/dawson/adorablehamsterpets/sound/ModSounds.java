@@ -13,8 +13,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.vehicle.AbstractMinecart;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -409,7 +409,7 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
             }
         }
         if (item.components().has(DataComponents.FOOD)) {
-            return SoundEvents.GENERIC_EAT; // "Crunch" (for food items)
+            return SoundEvents.GENERIC_EAT.value(); // "Crunch" (for food items)
         }
 
         // --- Fallback ---
@@ -424,7 +424,7 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
      * @return The normalized volume multiplier.
      */
     public static float getDynamicSoundVolume(SoundEvent sound) {
-        return (sound == SoundEvents.GENERIC_EAT) ? 0.35f : 1.0f;
+        return (sound == SoundEvents.GENERIC_EAT.value()) ? 0.35f : 1.0f;
     }
 
     /**

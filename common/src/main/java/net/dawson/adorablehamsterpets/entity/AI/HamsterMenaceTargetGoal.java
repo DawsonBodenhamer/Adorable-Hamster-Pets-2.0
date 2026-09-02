@@ -10,7 +10,7 @@ public class HamsterMenaceTargetGoal extends NearestAttackableTargetGoal<LivingE
 
     public HamsterMenaceTargetGoal(HamsterEntity hamster) {
         // Scan all LivingEntities and filter using ConfigDataCache predicate
-        super(hamster, LivingEntity.class, 10, true, false, ConfigDataCache::isMenaceTarget);  // Interval of 10 for performance
+        super(hamster, LivingEntity.class, 10, true, false, (target, level) -> ConfigDataCache.isMenaceTarget(target));  // Interval of 10 for performance
         this.hamster = hamster;
     }
 

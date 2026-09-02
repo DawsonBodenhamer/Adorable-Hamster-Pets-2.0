@@ -4,9 +4,7 @@
   "cookingtime": 100,
   "experience": 0.35,
   "group": "steamed_green_beans",
-  "ingredient": {
-    "tag": "adorablehamsterpets:green_beans"
-  },
+  "ingredient": "#adorablehamsterpets:green_beans",
   "result": {
     "id": "adorablehamsterpets:steamed_green_beans"
   }

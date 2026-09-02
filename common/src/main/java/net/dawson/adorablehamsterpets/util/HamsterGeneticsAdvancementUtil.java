@@ -79,7 +79,7 @@ public final class HamsterGeneticsAdvancementUtil {
      */
     private static void grantAdvancement(ServerPlayer player, String path) {
         Identifier id = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, path);
-        AdvancementHolder entry = player.server.getAdvancements().get(id);
+        AdvancementHolder entry = player.level().getServer().getAdvancements().get(id);
 
         if (entry != null) {
             AdvancementProgress progress = player.getAdvancements().getOrStartProgress(entry);

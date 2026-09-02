@@ -1,0 +1,43 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_acorn_hat": {
+      "conditions": {
+        "items": [
+          {
+            "items": "adorablehamsterpets:acorn_hat"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_acorn_shard": {
+      "conditions": {
+        "items": [
+          {
+            "items": "adorablehamsterpets:acorn_shard"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "adorablehamsterpets:hamster_armor_acorn"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_acorn_hat",
+      "has_acorn_shard"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "adorablehamsterpets:hamster_armor_acorn"
+    ]
+  }
+}

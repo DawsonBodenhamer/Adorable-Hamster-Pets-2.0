@@ -177,7 +177,7 @@ public final class MinigameUtil {
         }
 
         hamster.setDeltaMovement(away.x * 0.1, 0.5, away.z * 0.1);
-        hamster.hasImpulse = true;
+        hamster.needsSync = true;
 
         SoundEvent bounceSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BOUNCE_SOUNDS, hamster.getRandom());
         if (bounceSound != null) {

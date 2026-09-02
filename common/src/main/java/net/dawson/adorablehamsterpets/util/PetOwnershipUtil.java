@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.minecraft.core.UUIDUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -30,7 +31,7 @@ public final class PetOwnershipUtil {
     @Nullable
     public static UUID resolveOwnerUuid(Entity entity) {
         if (entity instanceof OwnableEntity tameable) {
-            UUID ownerUuid = tameable.getOwnerUUID();
+            UUID ownerUuid = (tameable.getOwnerReference() == null ? null : tameable.getOwnerReference().getUUID());
             if (ownerUuid != null) {
                 return ownerUuid;
             }

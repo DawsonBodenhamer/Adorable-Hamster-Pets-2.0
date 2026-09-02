@@ -132,7 +132,7 @@ public class TreeHeistUtil {
      * Helper to bridge between the Entity's stored data and the particle logic.
      */
     public static void spawnDebugParticles(Level world, BlockPos anchor, List<Long> leafLongs) {
-        if (world.isClientSide || !(world instanceof ServerLevel serverWorld)) return;
+        if (world.isClientSide() || !(world instanceof ServerLevel serverWorld)) return;
 
         // 1. Anchor Visualization
         // Spawns a rotating ring of particles around the trunk anchor
@@ -175,7 +175,7 @@ public class TreeHeistUtil {
      * Adapter for TreeScanResult object.
      */
     public static void spawnDebugParticles(Level world, TreeScanResult result) {
-        if (world.isClientSide) return;
+        if (world.isClientSide()) return;
         List<Long> longs = new ArrayList<>();
         for (BlockPos p : result.validCanopyPositions()) longs.add(p.asLong());
         spawnDebugParticles(world, result.treeId(), longs);
@@ -233,7 +233,7 @@ public class TreeHeistUtil {
                     key);
         }
 
-        player.displayClientMessage(Component.translatable(key).withStyle(color), true);
+        player.sendOverlayMessage(Component.translatable(key).withStyle(color));
     }
 
     /**

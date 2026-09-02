@@ -54,7 +54,7 @@ public final class HamsterHarvestUtil {
     public static List<ItemEntity> harvestAndReplant(ServerLevel world, BlockPos pos, BlockState state) {
         List<ItemEntity> spawnedItems = new ArrayList<>();
 
-        boolean shouldReplant = world.random.nextFloat() < AdorableHamsterPets.MAIN_CONFIG.cropReplantChance.get();
+        boolean shouldReplant = world.getRandom().nextFloat() < AdorableHamsterPets.MAIN_CONFIG.cropReplantChance.get();
 
         // --- 1. Calculate standard loot drops ---
         LootParams.Builder builder = new LootParams.Builder(world)
@@ -69,7 +69,7 @@ public final class HamsterHarvestUtil {
             // Remove one seed-like item to simulate the cost of replanting
             boolean seedRemoved = false;
             for (ItemStack stack : drops) {
-                if (stack.is(ItemTags.VILLAGER_PLANTABLE_SEEDS) || stack.getDescriptionId().contains("seed")) {
+                if (stack.is(ItemTags.VILLAGER_PLANTABLE_SEEDS) || stack.getItem().getDescriptionId().contains("seed")) {
                     stack.shrink(1);
                     seedRemoved = true;
                     break;

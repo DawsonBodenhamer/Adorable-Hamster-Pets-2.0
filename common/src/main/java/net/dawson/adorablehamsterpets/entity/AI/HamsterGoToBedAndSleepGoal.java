@@ -126,7 +126,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
             return true;
         } else {
             // Standard day/night cycle check
-            boolean isSleepTime = Configs.AHP_MAIN.sleepDuringDay.get() ? this.world.isDay() : this.world.isNight();
+            boolean isSleepTime = Configs.AHP_MAIN.sleepDuringDay.get() ? this.world.isBrightOutside() : this.world.isDarkOutside();
             return isSleepTime;
         }
     }
@@ -297,7 +297,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
 
                     // Apply initial hop velocity
                     this.hamster.setDeltaMovement(this.hamster.getDeltaMovement().x, 0.4, this.hamster.getDeltaMovement().z);
-                    this.hamster.hasImpulse = true;
+                    this.hamster.needsSync = true;
 
                     this.hamster.suffocationGracePeriod = 40;
 
@@ -335,7 +335,7 @@ public class HamsterGoToBedAndSleepGoal extends Goal {
                     Vec3 targetCenter = Vec3.atCenterOf(bedPos).add(0, 0.1, 0);
                     this.hamster.setPos(targetCenter.x, targetCenter.y, targetCenter.z);
                     this.hamster.setDeltaMovement(Vec3.ZERO);
-                    this.hamster.hasImpulse = true;
+                    this.hamster.needsSync = true;
 
                     // Update hamster state
                     this.hamster.setDozingPhase(HamsterEntity.DozingPhase.DEEP_SLEEP);

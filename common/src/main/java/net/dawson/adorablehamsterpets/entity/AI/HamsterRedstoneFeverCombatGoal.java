@@ -99,7 +99,7 @@ public final class HamsterRedstoneFeverCombatGoal extends Goal {
         this.hamster.triggerAnimOnServer("mainController", "attack");
         DamageSource source = this.hamster.damageSources().mobAttack(this.hamster);
         float amount = (float) this.hamster.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        if (target.hurt(source, amount) && target instanceof ServerPlayer player) {
+        if (target.hurtServer((net.minecraft.server.level.ServerLevel) target.level(), source, amount) && target instanceof ServerPlayer player) {
             ModCriteria.REDSTONE_FEVER_DISCOVERED.get().trigger(player);
         }
     }

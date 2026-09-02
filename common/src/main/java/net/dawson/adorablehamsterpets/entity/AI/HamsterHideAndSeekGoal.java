@@ -1,5 +1,8 @@
 package net.dawson.adorablehamsterpets.entity.AI;
 
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.ModEntities;
@@ -216,11 +219,12 @@ public class HamsterHideAndSeekGoal extends Goal {
                     // Spawn block hider entity, transfer state
                     if (this.world instanceof ServerLevel serverWorld) {
                         BlockState state = serverWorld.getBlockState(this.targetBlock);
-                        HamsterBlockHiderEntity hider = ModEntities.HAMSTER_BLOCK_HIDER.get().create(serverWorld);
+                        HamsterBlockHiderEntity hider = ModEntities.HAMSTER_BLOCK_HIDER.get().create(serverWorld, EntitySpawnReason.LOAD);
 
                         if (hider != null) {
-                            CompoundTag fullNbt = new CompoundTag();
-                            this.hamster.saveWithoutId(fullNbt);
+                            TagValueOutput fullNbtOut = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, this.hamster.registryAccess());
+                            this.hamster.saveWithoutId(fullNbtOut);
+                            CompoundTag fullNbt = fullNbtOut.buildResult();
 
                             int duration = this.hamster.getRandom().nextIntBetweenInclusive(
                                     Configs.AHP_MAIN.hideAndSeekMinDurationSeconds.get() * 20,

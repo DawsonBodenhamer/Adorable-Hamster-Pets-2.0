@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.client.gui.widgets;
 
+import net.minecraft.client.input.InputWithModifiers;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.math.Axis;
@@ -13,7 +14,8 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.mixin.client.accessor.HandledScreenAccessor;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
@@ -49,7 +51,7 @@ public class AnnouncementIconWidget extends Button {
     }
 
     @Override
-    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         AnnouncementIconAnimator animator = AnnouncementIconAnimator.INSTANCE;
 
         // --- 1. Dynamic Position Calculation ---
@@ -106,16 +108,16 @@ public class AnnouncementIconWidget extends Button {
         this.setY((int) Math.round(renderY));
 
         // --- 3. Render the Icon ---
-        context.pose().pushPose();
+        context.pose().pushMatrix();
         // Use the precise double values for rendering to avoid pixel-snapping.
-        context.pose().translate(renderX + (this.width / 2.0), renderY + (this.height / 2.0), 0);
-        context.pose().scale(finalScale, finalScale, 1.0f);
-        context.pose().mulPose(Axis.ZP.rotationDegrees(angle));
-        context.pose().translate(-(ICON_WIDTH / 2.0), -(ICON_HEIGHT / 2.0), 0);
+        context.pose().translate((float) (renderX + (this.width / 2.0)), (float) (renderY + (this.height / 2.0)));
+        context.pose().scale(finalScale, finalScale);
+        context.pose().rotate((float) Math.toRadians(angle));
+        context.pose().translate((float) (-(ICON_WIDTH / 2.0)), (float) (-(ICON_HEIGHT / 2.0)));
 
-        context.blit(ICON_TEXTURE, 0, 0, 0, 0, ICON_WIDTH, ICON_HEIGHT, ICON_WIDTH, ICON_HEIGHT);
+        context.blit(RenderPipelines.GUI_TEXTURED, ICON_TEXTURE, 0, 0, (float) (0), (float) (0), ICON_WIDTH, ICON_HEIGHT, ICON_WIDTH, ICON_HEIGHT);
 
-        context.pose().popPose();
+        context.pose().popMatrix();
 
         // --- 4. Render Tooltip ---
         if (this.isHovered()) {
@@ -139,7 +141,7 @@ public class AnnouncementIconWidget extends Button {
                 if (mainTooltipLine != null) {
                     tooltipLines.add(mainTooltipLine);
                     tooltipLines.add(modNameText);
-                    context.renderComponentTooltip(Minecraft.getInstance().font, tooltipLines, mouseX, mouseY);
+                    context.setComponentTooltipForNextFrame(Minecraft.getInstance().font, tooltipLines, mouseX, mouseY);
                 }
             }
         }
@@ -148,8 +150,13 @@ public class AnnouncementIconWidget extends Button {
     /**
      * Called when the widget is clicked.
      */
-    @Override
+    /** Convenience for callers that press the bell programmatically. */
     public void onPress() {
+        onPress(null);
+    }
+
+    @Override
+    public void onPress(InputWithModifiers input) {
         // --- 1. Trigger Visual & Audio Feedback ---
         AnnouncementIconAnimator.INSTANCE.triggerClickAnimation();
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
@@ -175,7 +182,7 @@ public class AnnouncementIconWidget extends Button {
                         Announcement announcement = notification.announcement();
                         // 26.2 port: a Patchouli virtual entry used to be built here purely
                         // to hand to the screen; without the book there is nothing to pass.
-                        client.setScreen(new AnnouncementScreen(announcement, notification.reason(), this.parentScreen, null));
+                        client.gui.setScreen(new AnnouncementScreen(announcement, notification.reason(), this.parentScreen, null));
                     });
         } else {
             if (notifications.size() == 1) {
@@ -184,13 +191,13 @@ public class AnnouncementIconWidget extends Button {
                 AnnouncementManager.PendingNotification notification = notifications.get(0);
                 Announcement announcement = notifications.get(0).announcement();
                 // Passing null as the parent tells the screen to return to the game HUD on close.
-                client.setScreen(new AnnouncementScreen(announcement, notification.reason(), null, null));
+                client.gui.setScreen(new AnnouncementScreen(announcement, notification.reason(), null, null));
             } else {
                 // --- Multiple Pending Notifications Logic ---
                 // 26.2 port: this used to open the guide book's landing page. With no
                 // book, show the most recent notification instead of dropping the click.
                 AnnouncementManager.PendingNotification latest = notifications.get(notifications.size() - 1);
-                client.setScreen(new AnnouncementScreen(latest.announcement(), latest.reason(), null, null));
+                client.gui.setScreen(new AnnouncementScreen(latest.announcement(), latest.reason(), null, null));
             }
         }
     }

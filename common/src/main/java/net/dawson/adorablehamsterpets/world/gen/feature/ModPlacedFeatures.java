@@ -1,5 +1,8 @@
 package net.dawson.adorablehamsterpets.world.gen.feature;
 
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
+import net.minecraft.util.valueproviders.TrapezoidInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.minecraft.core.Holder;
@@ -35,20 +38,14 @@ public class ModPlacedFeatures {
         // Sunflower
         register(context, CUSTOM_SUNFLOWER_PLACED_KEY,
                 configuredFeatureRegistryEntryLookup.getOrThrow(ModConfiguredFeatures.CUSTOM_SUNFLOWER_PATCH_KEY),
-                RarityFilter.onAverageOnceEvery(3),
-                InSquarePlacement.spread(),
-                PlacementUtils.HEIGHTMAP,
-                BiomeFilter.biome()
+                patch(64, RarityFilter.onAverageOnceEvery(3))
         );
 
         // --- Register Placed Green Bean Bush ---
         register(context, WILD_GREEN_BEAN_BUSH_PLACED_KEY,
                 configuredFeatureRegistryEntryLookup.getOrThrow(ModConfiguredFeatures.WILD_GREEN_BEAN_BUSH_KEY),
                 // Placement Modifiers:
-                RarityFilter.onAverageOnceEvery(config.wildGreenBeanBushRarity.get()),
-                InSquarePlacement.spread(),
-                PlacementUtils.HEIGHTMAP,
-                BiomeFilter.biome()
+                patch(18, RarityFilter.onAverageOnceEvery(config.wildGreenBeanBushRarity.get()))
         );
         // --- End Register Placed Green Bean ---
 
@@ -56,15 +53,28 @@ public class ModPlacedFeatures {
         register(context, WILD_CUCUMBER_BUSH_PLACED_KEY,
                 configuredFeatureRegistryEntryLookup.getOrThrow(ModConfiguredFeatures.WILD_CUCUMBER_BUSH_KEY),
                 // Placement Modifiers:
-                RarityFilter.onAverageOnceEvery(config.wildCucumberBushRarity.get()),
-                InSquarePlacement.spread(),
-                PlacementUtils.HEIGHTMAP,
-                BiomeFilter.biome()
+                patch(18, RarityFilter.onAverageOnceEvery(config.wildCucumberBushRarity.get()))
         );
         // --- End Register Placed Cucumber ---
     }
 
     // Helper methods (Existing)
+    /**
+     * 26.2 replacement for random_patch: pick the patch centre, then scatter
+     * {@code tries} copies around it and keep only the ones that land in air.
+     */
+    private static List<PlacementModifier> patch(int tries, PlacementModifier rarity) {
+        return List.of(
+                rarity,
+                InSquarePlacement.spread(),
+                PlacementUtils.HEIGHTMAP,
+                BiomeFilter.biome(),
+                CountPlacement.of(tries),
+                RandomOffsetPlacement.of(TrapezoidInt.of(-7, 7, 0), TrapezoidInt.of(-3, 3, 0)),
+                BlockPredicateFilter.forPredicate(BlockPredicate.matchesTag(BlockTags.AIR))
+        );
+    }
+
     public static ResourceKey<PlacedFeature> registerKey(String name) {
         return ResourceKey.create(Registries.PLACED_FEATURE, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, name));
     }

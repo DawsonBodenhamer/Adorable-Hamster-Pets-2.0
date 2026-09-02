@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "minecraft:book"
-    },
-    {
-      "item": "adorablehamsterpets:sliced_cucumber"
-    }
+    "minecraft:book",
+    "adorablehamsterpets:sliced_cucumber"
   ],
   "result": {
     "id": "adorablehamsterpets:hamster_guide_book",

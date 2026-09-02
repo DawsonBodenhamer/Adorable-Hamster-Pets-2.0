@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.block;
 
+import java.util.Set;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
@@ -13,7 +14,7 @@ public class ModBlockEntities {
 
     public static final RegistrySupplier<BlockEntityType<HamsterBedBlockEntity>> HAMSTER_BED_BLOCK_ENTITY =
             BLOCK_ENTITIES.register("hamster_bed_be", () ->
-                    BlockEntityType.Builder.of(HamsterBedBlockEntity::new, ModBlocks.HAMSTER_BED.get()).build(null));
+                    new BlockEntityType<>(HamsterBedBlockEntity::new, Set.of(ModBlocks.HAMSTER_BED.get())));
 
     public static void register() {
         BLOCK_ENTITIES.register();

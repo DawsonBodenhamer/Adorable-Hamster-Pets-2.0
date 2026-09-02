@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "H": "adorablehamsterpets:acorn_hat"
+  },
+  "pattern": [
+    " C ",
+    "CHC",
+    " C "
+  ],
+  "result": {
+    "count": 2,
+    "id": "adorablehamsterpets:acorn_ring"
+  }
+}

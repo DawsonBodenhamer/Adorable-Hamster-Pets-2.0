@@ -1,5 +1,7 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
+import net.dawson.adorablehamsterpets.entity.ModDataSerializers;
+import net.minecraft.util.ARGB;
 import static net.dawson.adorablehamsterpets.sound.ModSounds.getRandomSoundFrom;
 
 import dev.architectury.platform.Platform;
@@ -31,6 +33,8 @@ import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.*;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -56,7 +60,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -78,9 +82,8 @@ import org.spongepowered.asm.mixin.Unique;
 
 import com.geckolib.animatable.GeoEntity;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
-import com.geckolib.animation.AnimatableManager;
+import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.animation.AnimationController;
-import com.geckolib.animation.AnimationProcessor.QueuedAnimation;
 import com.geckolib.util.GeckoLibUtil;
 
 import java.util.*;
@@ -143,7 +146,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
     // --- Tracked Data ---
     public static final EntityDataAccessor<Integer> HAMSTER_FLAGS = SynchedEntityData.defineId(HamsterEntity.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> EXACT_AGE = SynchedEntityData.defineId(HamsterEntity.class, EntityDataSerializers.INT);
-    public static final EntityDataAccessor<CompoundTag> GENOME = SynchedEntityData.defineId(HamsterEntity.class, EntityDataSerializers.COMPOUND_TAG);
+    public static final EntityDataAccessor<CompoundTag> GENOME = SynchedEntityData.defineId(HamsterEntity.class, ModDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<Integer> ANIMATION_PERSONALITY_ID = SynchedEntityData.defineId(HamsterEntity.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> FLOWER_POS = SynchedEntityData.defineId(HamsterEntity.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> DOZING_PHASE = SynchedEntityData.defineId(HamsterEntity.class, EntityDataSerializers.INT);
@@ -303,8 +306,8 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
         // --- Pathfinding Penalties ---
         this.setPathfindingMalus(PathType.WATER, 16.0F);
         this.setPathfindingMalus(PathType.LAVA, -1.0F);
-        this.setPathfindingMalus(PathType.DAMAGE_FIRE, -1.0F);
-        this.setPathfindingMalus(PathType.DANGER_FIRE, -1.0F);
+        this.setPathfindingMalus(PathType.FIRE, -1.0F);
+        this.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, -1.0F);
     }
 
     /* ──────────────────────────────────────────────────────────────────────────────
@@ -376,7 +379,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
     public SpawnGroupData finalizeSpawn(
             ServerLevelAccessor world,
             DifficultyInstance difficulty,
-            MobSpawnType spawnReason,
+            EntitySpawnReason spawnReason,
             @Nullable SpawnGroupData entityData) {
         HamsterLifecycleUtil.initializeSpawn(this, world, spawnReason);
         return super.finalizeSpawn(world, difficulty, spawnReason, entityData);
@@ -387,21 +390,29 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
      */
     public SpawnGroupData initializeCaveSpawn(
             ServerLevelAccessor world, DifficultyInstance difficulty) {
-        HamsterLifecycleUtil.initializeSpawn(this, world, MobSpawnType.NATURAL, true);
-        return super.finalizeSpawn(world, difficulty, MobSpawnType.NATURAL, null);
+        HamsterLifecycleUtil.initializeSpawn(this, world, EntitySpawnReason.NATURAL, true);
+        return super.finalizeSpawn(world, difficulty, EntitySpawnReason.NATURAL, null);
     }
 
     // --- Persistence ---
+    /** Everything HamsterNbtUtil writes lives under this one key in the entity's saved data. */
+    private static final String SAVE_KEY = "AdorableHamsterPets";
+
+    // 26.2 port: entities save through ValueOutput/ValueInput now. HamsterNbtUtil
+    // still speaks CompoundTag (the item-form HamsterState needs that too), so the
+    // tag is bridged under a single codec-stored key.
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void addAdditionalSaveData(ValueOutput out) {
+        super.addAdditionalSaveData(out);
+        CompoundTag nbt = new CompoundTag();
         HamsterNbtUtil.writeCustomDataToNbt(this, nbt);
+        out.store(SAVE_KEY, CompoundTag.CODEC, nbt);
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        HamsterNbtUtil.readCustomDataFromNbt(this, nbt);
+    public void readAdditionalSaveData(ValueInput in) {
+        super.readAdditionalSaveData(in);
+        in.read(SAVE_KEY, CompoundTag.CODEC).ifPresent(nbt -> HamsterNbtUtil.readCustomDataFromNbt(this, nbt));
     }
 
     // --- Redstone Fever State ---
@@ -461,12 +472,6 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
     protected void ageBoundaryReached() {
         super.ageBoundaryReached();
         HamsterLifecycleUtil.onGrowUp(this);
-    }
-
-    @Override
-    public void setBaby(boolean baby) {
-        this.setAge(
-                baby ? -24000 : 0); // Vanilla logic for setting age based on baby status
     }
 
     // --- Tick and Cleanup ---
@@ -1318,7 +1323,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
 
     public void setCustomInLove(Player player) {
         this.customLoveTimer = CUSTOM_LOVE_TICKS;
-        if (!this.level().isClientSide) {
+        if (!this.level().isClientSide()) {
             this.level().broadcastEntityEvent(this, (byte) 18);
         }
     }
@@ -1510,7 +1515,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
 
     // --- Combat Callbacks ---
     @Override
-    public boolean hurt(DamageSource source, float amount) {
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
         // --- 1. Drowning Rescue ---
         if (source.is(DamageTypes.DROWN)
                 && !this.level().isClientSide()
@@ -1537,7 +1542,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
         this.armorRuntimeState.absorbedDamage = false;
 
         // --- 5. Vanilla Damage ---
-        boolean result = super.hurt(source, amount);
+        boolean result = super.hurtServer(level, source, amount);
 
         // --- 6. Armor Absorption ---
         // If armor absorbed damage, tell engine entity was hit so it applies knockback/SFX
@@ -1548,7 +1553,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
     }
 
     @Override
-    protected void actuallyHurt(DamageSource source, float amount) {
+    protected void actuallyHurt(ServerLevel level, DamageSource source, float amount) {
         ItemStack armorStack = this.items.get(HamsterInventoryUtil.ARMOR_SLOT_INDEX);
         if (HamsterArmorUtil.shouldAbsorbDamage(this, source, armorStack)) {
             this.armorRuntimeState.absorbedDamage = true;
@@ -1557,7 +1562,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
             }
             return;
         }
-        super.actuallyHurt(source, amount);
+        super.actuallyHurt(level, source, amount);
     }
 
     // --- Interaction Callback ---
@@ -1693,8 +1698,8 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
     }
 
     @Override
-    public boolean canBeCollidedWith() {
-        return !this.isNoAi() && super.canBeCollidedWith();
+    public boolean canBeCollidedWith(Entity other) {
+        return !this.isNoAi() && super.canBeCollidedWith(other);
     }
 
     @Override
@@ -1704,7 +1709,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
 
     @Override
     public boolean causeFallDamage(
-            float fallDistance, float damageMultiplier, DamageSource damageSource) {
+            double fallDistance, float damageMultiplier, DamageSource damageSource) {
         return false;
     }
 
@@ -1734,14 +1739,14 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
         ItemStack oldStack = this.items.get(slot).copy();
         this.getItems().set(slot, stack);
 
-        if (!this.level().isClientSide) {
+        if (!this.level().isClientSide()) {
             if (slot == HamsterInventoryUtil.ACCESSORY_SLOT_INDEX
                     || slot == HamsterInventoryUtil.ARMOR_SLOT_INDEX) {
                 HamsterInventoryUtil.syncEquipmentTrackers(this);
             }
         }
 
-        if (!this.level().isClientSide
+        if (!this.level().isClientSide()
                 && !this.inventoryRuntimeState.loadingNbt
                 && !this.inventoryRuntimeState.silentUpdate) {
             HamsterInventoryUtil.handleSlotUpdateSounds(this, slot, oldStack, stack);
@@ -1756,7 +1761,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
         ItemStack result = ImplementedInventory.super.removeItemNoUpdate(slot);
         ItemStack newStack = this.getItem(slot);
 
-        if (!this.level().isClientSide
+        if (!this.level().isClientSide()
                 && !this.inventoryRuntimeState.loadingNbt
                 && !this.inventoryRuntimeState.silentUpdate) {
             HamsterInventoryUtil.handleSlotUpdateSounds(this, slot, oldStack, newStack);
@@ -1770,7 +1775,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
         ItemStack result = ImplementedInventory.super.removeItem(slot, amount);
         ItemStack newStack = this.getItem(slot);
 
-        if (!this.level().isClientSide
+        if (!this.level().isClientSide()
                 && !this.inventoryRuntimeState.loadingNbt
                 && !this.inventoryRuntimeState.silentUpdate) {
             HamsterInventoryUtil.handleSlotUpdateSounds(this, slot, oldStack, newStack);
@@ -1794,12 +1799,6 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
             return;
         }
         super.setItemSlot(slot, stack);
-    }
-
-    @Override
-    public Iterable<ItemStack> getArmorSlots() {
-        // Only one armor piece, mapped to FEET
-        return List.of(this.items.get(HamsterInventoryUtil.ARMOR_SLOT_INDEX));
     }
 
     @Override
@@ -2086,10 +2085,10 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
         // Cache command tags for performance
         if (this.threeDimensionalLayoutState.isCenter == null) {
             this.threeDimensionalLayoutState.isCenter =
-                    this.getTags().contains("3d_layout_center");
+                    this.entityTags().contains("3d_layout_center");
             if (this.threeDimensionalLayoutState.isCenter) {
                 this.threeDimensionalLayoutState.parsedY = this.blockPosition().getY();
-                for (String tag : this.getTags()) {
+                for (String tag : this.entityTags()) {
                     if (tag.startsWith("3d_scale_")) {
                         try {
                             this.threeDimensionalLayoutState.parsedScale =
@@ -2356,7 +2355,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
         }
 
         // --- 2. Armor and Attribute Updates ---
-        if (!this.level().isClientSide) {
+        if (!this.level().isClientSide()) {
             ItemStack currentArmor = this.getArmorStack();
             if (!ItemStack.matches(currentArmor, this.armorRuntimeState.lastStack)) {
                 HamsterPhysicsUtil.updateArmorModifiers(this, currentArmor);
@@ -2381,7 +2380,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
                 // Apply an extra downward force to make it fall faster.
                 // -0.08 is the standard gravity value, so adding it again effectively doubles it.
                 this.setDeltaMovement(this.getDeltaMovement().add(0.0, -1.0, 0.0));
-                this.hasImpulse = true; // Ensure client sees the change
+                this.needsSync = true; // Ensure client sees the change
             }
         }
     }
@@ -2469,7 +2468,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
                 // If rescued, bypass time check entirely. Hamster stays asleep
                 if (!this.isRescueSleeping()) {
                     boolean isSleepTime =
-                            Configs.AHP_MAIN.sleepDuringDay.get() ? world.isDay() : world.isNight();
+                            Configs.AHP_MAIN.sleepDuringDay.get() ? world.isBrightOutside() : world.isDarkOutside();
                     if (!isSleepTime) {
                         // If it's wake-up time, and delay timer has not yet been started
                         if (this.sleepRuntimeState.wakeUpFromBedDelay == 0
@@ -2548,12 +2547,12 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
                     this.autoEatState.progressTicks = 60; // 3 seconds eating time
 
                     // Feedback
-                    this.playSound(SoundEvents.GENERIC_EAT, 0.7F, 1.3F);
+                    this.playSound(SoundEvents.GENERIC_EAT.value(), 0.7F, 1.3F);
                     ParticleEffectsUtil.spawnParticles(
                             world,
                             new Vec3(
                                     this.getX(), this.getY() + this.getBbHeight() / 2.0, this.getZ()),
-                            new ItemParticleOption(ParticleTypes.ITEM, foodToEat.split(1)),
+                            new ItemParticleOption(ParticleTypes.ITEM, foodToEat.getItem()),
                             5,
                             new Vec3(0.1, 0.1, 0.1),
                             0.02);
@@ -2753,9 +2752,10 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
             if (manager != null) {
                 var controller = manager.getAnimationControllers().get("mainController");
                 if (controller != null) {
-                    var currentAnim = controller.getCurrentAnimation();
-                    if (currentAnim != null
-                            && "anim_hamster_sitting_roll".equals(currentAnim.animation().name())) {
+                    // 26.2 port (GeckoLib 5): the queued animation is gone; inspect the raw animation's stages
+                    var currentAnim = controller.getCurrentRawAnimation();
+                    if (currentAnim != null && currentAnim.getAnimationStages().stream()
+                            .anyMatch(stage -> "anim_hamster_sitting_roll".equals(stage.animationName()))) {
                         isRolling = true;
                     }
                 }
@@ -2770,7 +2770,7 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
         }
 
         // --- 2. Zoomies Particles ---
-        if (world.isClientSide && this.hasGreenBeanBuff()) {
+        if (world.isClientSide() && this.hasGreenBeanBuff()) {
             if (this.random.nextInt(2) == 0) {
                 ParticleEffectsUtil.spawnMotionTrail(
                         this, ParticleTypes.WHITE_SMOKE,
@@ -2785,10 +2785,10 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
         }
 
         // --- 3. Redstone Fever Particles ---
-        if (world.isClientSide && this.hasRedstoneFever()
+        if (world.isClientSide() && this.hasRedstoneFever()
                 && this.getDeltaMovement().horizontalDistanceSqr() > 1.0E-6) {
             ParticleEffectsUtil.spawnMotionTrail(
-                    this, new DustParticleOptions(new Vector3f(0.85F, 0.05F, 0.02F), 1.0F),
+                    this, new DustParticleOptions(ARGB.color(255, (int) ((0.85F) * 255), (int) ((0.05F) * 255), (int) ((0.02F) * 255)), 1.0F),
                     2,
                     0.25D,
                     2.0D,
@@ -2802,12 +2802,12 @@ public class HamsterEntity extends TamableAnimal implements GeoEntity, Implement
         if (this.isTaunting()) {
             if (this.random.nextInt(7) == 0) {
                 ParticleEffectsUtil.spawnParticlesOnEntity(
-                        this, ParticleTypes.INSTANT_EFFECT, 2, 1.2, 0.5, 0.5, 0.2);
+                        this, net.minecraft.core.particles.SpellParticleOption.create(ParticleTypes.INSTANT_EFFECT, 0xFFFFFFFF, 1.0F), 2, 1.2, 0.5, 0.5, 0.2);
             }
         }
 
         // --- 5. Fall Pitch Interpolation ---
-        if (world.isClientSide) {
+        if (world.isClientSide()) {
             // Capture state for interpolation before modification
             this.prevClientFallPitchProgress = this.clientFallPitchProgress;
 

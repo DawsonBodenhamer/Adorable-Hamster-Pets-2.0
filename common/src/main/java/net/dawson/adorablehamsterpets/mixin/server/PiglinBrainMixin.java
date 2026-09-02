@@ -39,9 +39,9 @@ public class PiglinBrainMixin {
                         reward
                 );
                 itemEntity.setDeltaMovement(
-                        (piglin.level().random.nextDouble() - 0.5) * 0.2,
+                        (piglin.level().getRandom().nextDouble() - 0.5) * 0.2,
                         0.2,
-                        (piglin.level().random.nextDouble() - 0.5) * 0.2
+                        (piglin.level().getRandom().nextDouble() - 0.5) * 0.2
                 );
                 piglin.level().addFreshEntity(itemEntity);
             }

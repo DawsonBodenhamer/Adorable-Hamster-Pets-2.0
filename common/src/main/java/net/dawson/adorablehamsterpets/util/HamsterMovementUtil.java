@@ -1,5 +1,8 @@
 package net.dawson.adorablehamsterpets.util;
 
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.config.Configs;
@@ -283,11 +286,13 @@ public final class HamsterMovementUtil {
             }
 
             if (ownerPlayer instanceof PlayerEntityAccessor accessor) {
-                CompoundTag nbt = new CompoundTag();
-                hamster.saveWithoutId(nbt); // Save full state
+                // 26.2 port: saveWithoutId writes to a ValueOutput now; capture it into a tag
+                TagValueOutput savedOut = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, hamster.registryAccess());
+                hamster.saveWithoutId(savedOut); // Save full state
+                CompoundTag nbt = savedOut.buildResult();
 
                 // Save target (parent or player)
-                nbt.putUUID("AHPTransitTargetUuid", target.getUUID());
+                nbt.store("AHPTransitTargetUuid", UUIDUtil.CODEC, target.getUUID());
 
                 accessor.ahp$getInTransitHamsters().add(nbt);
                 accessor.ahp$setTransitTimer(15); // Wait 15 ticks for client to load
@@ -314,7 +319,7 @@ public final class HamsterMovementUtil {
         }
 
         BlockPos destination = safePos.get();
-        hamster.moveTo(
+        hamster.snapTo(
                 destination.getX() + 0.5,
                 destination.getY(),
                 destination.getZ() + 0.5,

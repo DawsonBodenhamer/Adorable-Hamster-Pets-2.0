@@ -127,7 +127,7 @@ public final class HamsterSleepUtil {
         if (!hamster.isOrderedToSit()) return false;
 
         Level world = hamster.level();
-        if (Configs.AHP_MAIN.requireDaytimeForTamedSleep && !world.isDay()) {
+        if (Configs.AHP_MAIN.requireDaytimeForTamedSleep && !world.isBrightOutside()) {
             return false;
         }
         if (hamster.isInLove()) return false;

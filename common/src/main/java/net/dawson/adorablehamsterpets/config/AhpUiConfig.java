@@ -277,10 +277,7 @@ public class AhpUiConfig extends Config {
                 // Custom runnable 'pressAction'
                 AnnouncementManager.INSTANCE.markAllAsRead();
                 if (Minecraft.getInstance().player != null) {
-                    Minecraft.getInstance().player.displayClientMessage(
-                            Component.translatable("message.adorablehamsterpets.announcements_marked_read").withStyle(ChatFormatting.WHITE),
-                            false
-                    );
+                    Minecraft.getInstance().player.sendSystemMessage(Component.translatable("message.adorablehamsterpets.announcements_marked_read").withStyle(ChatFormatting.WHITE));
                 }
             });
 
@@ -294,10 +291,7 @@ public class AhpUiConfig extends Config {
                 // Custom runnable 'pressAction'
                 AnnouncementManager.INSTANCE.resetClientState();
                 if (Minecraft.getInstance().player != null) {
-                    Minecraft.getInstance().player.displayClientMessage(
-                            Component.translatable("message.adorablehamsterpets.announcements_reset").withStyle(ChatFormatting.WHITE),
-                            false
-                    );
+                    Minecraft.getInstance().player.sendSystemMessage(Component.translatable("message.adorablehamsterpets.announcements_reset").withStyle(ChatFormatting.WHITE));
                 }
             });
 

@@ -1,24 +1,27 @@
 {
   "conditions": [
     {
-      "type": "forge:mod_loaded", "modid": "farmersdelight"
+      "type": "forge:mod_loaded",
+      "modid": "farmersdelight"
     }
   ],
   "neoforge:conditions": [
     {
-      "type": "neoforge:mod_loaded", "modid": "farmersdelight"
+      "type": "neoforge:mod_loaded",
+      "modid": "farmersdelight"
     }
   ],
   "fabric:load_conditions": [
     {
-      "condition": "fabric:all_mods_loaded", "values": ["farmersdelight"]
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "farmersdelight"
+      ]
     }
   ],
   "type": "farmersdelight:cutting",
   "ingredients": [
-    {
-      "item": "adorablehamsterpets:cucumber"
-    }
+    "adorablehamsterpets:cucumber"
   ],
   "result": [
     {

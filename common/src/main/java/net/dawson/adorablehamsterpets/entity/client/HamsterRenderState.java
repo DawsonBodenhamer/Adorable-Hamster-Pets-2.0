@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
+import net.minecraft.world.phys.Vec3;
 import com.geckolib.constant.dataticket.DataTicket;
 import com.geckolib.renderer.base.GeoRenderState;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
@@ -71,4 +72,7 @@ public class HamsterRenderState extends LivingEntityRenderState implements GeoRe
      * touch this field, and only on the render thread.
      */
     public HamsterEntity entity;
+
+    /** World-space bone positions captured by listeners during the render pass (left_foot, nose, seat). */
+    public final Map<String, Vec3> bonePositions = new HashMap<>();
 }

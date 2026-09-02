@@ -1,5 +1,8 @@
 package net.dawson.adorablehamsterpets.client.gui;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.dawson.adorablehamsterpets.client.ClientInputUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.announcements.Announcement;
 import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
@@ -9,9 +12,11 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.mixin.accessor.ScreenWidgetAdder;
 import net.dawson.adorablehamsterpets.mixin.accessor.ValidatedFieldAccessor;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import org.joml.Matrix3x2fStack;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
@@ -201,7 +206,7 @@ public class AnnouncementScreen extends Screen {
                 .append(Component.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read.shift_tooltip").withStyle(ChatFormatting.GOLD));
 
         primaryBuilders.add(Button.builder(Component.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read"), button -> {
-            if (Screen.hasShiftDown()) {
+            if (ClientInputUtil.hasShiftDown()) {
                 // --- Shift-Click Action: Mark ALL as read ---
                 // 26.2 port: no guide book to mirror read state into; the
                 // announcement side of this still runs.
@@ -247,7 +252,7 @@ public class AnnouncementScreen extends Screen {
         primaryBuilders.add(Button.builder(Component.translatable("gui.adorablehamsterpets.announcement.button.snooze_days"), button -> {
             AnnouncementManager.INSTANCE.setSnooze(announcement.id(), Configs.AHP_UI.snoozeUpdateReminderDays.get());
             if (this.parentScreen instanceof TitleScreen) {
-                AnnouncementManager.INSTANCE.queueDeferredReadMark(this.virtualEntry.getId());
+                // Patchouli removed in the 26.2 port: no guidebook entry to mark as read
             } else {
                 PatchouliIntegration.setEntryAsRead(this.virtualEntry);
             }
@@ -261,7 +266,7 @@ public class AnnouncementScreen extends Screen {
 
             // Mark the entry as read in Patchouli's data.
             if (this.parentScreen instanceof TitleScreen) {
-                AnnouncementManager.INSTANCE.queueDeferredReadMark(this.virtualEntry.getId());
+                // Patchouli removed in the 26.2 port: no guidebook entry to mark as read
             } else {
                 PatchouliIntegration.setEntryAsRead(this.virtualEntry);
             }
@@ -353,7 +358,7 @@ public class AnnouncementScreen extends Screen {
      */
     private void returnToBook() {
         if (this.minecraft != null) {
-            this.minecraft.setScreen(this.parentScreen);
+            this.minecraft.gui.setScreen(this.parentScreen);
         }
     }
 
@@ -369,13 +374,13 @@ public class AnnouncementScreen extends Screen {
      * @param delta   The time elapsed since the last frame.
      */
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // --- 1. Update Hovered Style ---
         Component textAtMouse = this.getTextAt(mouseX, mouseY);
         this.hoveredStyle = (textAtMouse != null && textAtMouse.getStyle().getClickEvent() != null) ? textAtMouse.getStyle() : null;
 
-        // --- 2. Call super.render() ---
-        super.render(context, mouseX, mouseY, delta);
+        // --- 2. Call super.extractRenderState() ---
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         // --- 3. Render Markdown Content ---
         // Use a scissor to clip the markdown content to the designated scrollable area.
@@ -397,12 +402,12 @@ public class AnnouncementScreen extends Screen {
             double scrollPercent = this.scrollY / maxScroll;
             int scrollbarY = this.guiTop + this.scaledScrollBarStartY + (int) (scrollPercent * scrollbarTravel);
             // Draw the scrollbar at a fixed size (4x25) regardless of scaling for consistent interaction.
-            context.blit(SCROLLBAR_TEXTURE, scrollbarX, scrollbarY, 0, 0, 4, 25, 4, 25);
+            context.blit(RenderPipelines.GUI_TEXTURED, SCROLLBAR_TEXTURE, scrollbarX, scrollbarY, (float) (0), (float) (0), 4, 25, 4, 25);
         }
 
         // --- 5. Render Dynamic Title ---
-        PoseStack matrices = context.pose();
-        matrices.pushPose();
+        Matrix3x2fStack matrices = context.pose();
+        matrices.pushMatrix();
         float defaultScale = 1.3f * this.uiScale; // Scale title proportionally with the UI.
         int maxWidth = Math.round(222 * this.uiScale); // Scale the maximum width of the title proportionally with the UI.
         Component boldTitle = this.title.copy().withStyle(ChatFormatting.BOLD);
@@ -415,10 +420,10 @@ public class AnnouncementScreen extends Screen {
         }
 
         // Translate down from the top of the GUI by 9 scaled pixels so the title sits within the header.
-        matrices.translate(this.width / 2.0, this.guiTop + Math.round(9 * this.uiScale), 0);
-        matrices.scale(finalScale, finalScale, 1.0f);
-        context.drawString(Minecraft.getInstance().font, boldTitle, -titleWidth / 2, 0, 0x323232, false);
-        matrices.popPose();
+        matrices.translate((float) (this.width / 2.0), (float) (this.guiTop + Math.round(9 * this.uiScale)));
+        matrices.scale(finalScale, finalScale);
+        context.text(Minecraft.getInstance().font, boldTitle, -titleWidth / 2, 0, 0x323232, false);
+        matrices.popMatrix();
     }
 
     /**
@@ -435,21 +440,17 @@ public class AnnouncementScreen extends Screen {
      * @param delta   The time elapsed since the last frame.
      */
     @Override
-    public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.renderBackground(context, mouseX, mouseY, delta);
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractBackground(context, mouseX, mouseY, delta);
 
         // --- Render Custom Background Texture ---
         // Draw the entire texture and scale it via the matrix, not by region size, to avoid cropping.
-        context.pose().pushPose();
-        context.pose().translate((float) this.guiLeft, (float) this.guiTop, 0.0F);
-        context.pose().scale(this.uiScale, this.uiScale, 1.0F);
-        context.blit(
-                BACKGROUND_TEXTURE,
-                0, 0, 0, 0,
-                BACKGROUND_WIDTH, BACKGROUND_HEIGHT,
-                BACKGROUND_WIDTH, BACKGROUND_HEIGHT
+        context.pose().pushMatrix();
+        context.pose().translate((float) this.guiLeft, (float) this.guiTop);
+        context.pose().scale(this.uiScale, this.uiScale);
+        context.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND_TEXTURE, 0, 0, (float) (0), (float) (0), BACKGROUND_WIDTH, BACKGROUND_HEIGHT, BACKGROUND_WIDTH, BACKGROUND_HEIGHT
         );
-        context.pose().popPose();
+        context.pose().popMatrix();
     }
 
     /**
@@ -461,14 +462,14 @@ public class AnnouncementScreen extends Screen {
      * @return {@code true} if the event was handled, {@code false} otherwise.
      */
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
         // Check if the inventory key was pressed
-        if (this.minecraft != null && this.minecraft.options.keyInventory.matches(keyCode, scanCode)) {
+        if (this.minecraft != null && this.minecraft.options.keyInventory.matches(event)) {
             this.onClose(); // Close the screen
             return true;  // Mark the event as handled
         }
         // For any other key, use the default behavior (e.g., ESC key)
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     /**
@@ -487,7 +488,10 @@ public class AnnouncementScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (button == 0) {
             // --- 1. Check for Scrollbar Drag ---
             int maxScroll = Math.max(0, markdownRenderer.getTotalHeight() - this.scaledContentHeight);
@@ -508,16 +512,20 @@ public class AnnouncementScreen extends Screen {
             Component clickedText = this.getTextAt(mouseX, mouseY);
             if (clickedText != null) {
                 Style style = clickedText.getStyle();
-                if (this.handleComponentClicked(style)) {
+                if (style.getClickEvent() != null) {
+                    defaultHandleClickEvent(style.getClickEvent(), this.minecraft, this);
                     return true;
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (this.isDraggingScrollbar) {
             int maxScroll = Math.max(0, markdownRenderer.getTotalHeight() - this.scaledContentHeight);
             int scrollbarTravel = this.scaledScrollBarEndY - this.scaledScrollBarStartY;
@@ -531,15 +539,16 @@ public class AnnouncementScreen extends Screen {
 
             return true; // Consume the drag event
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(event, deltaX, deltaY);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(MouseButtonEvent event) {
+        int button = event.button();
         if (button == 0) {
             this.isDraggingScrollbar = false;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(event);
     }
 
     @Override
@@ -637,7 +646,7 @@ public class AnnouncementScreen extends Screen {
                     if (lineIndex >= 0 && lineIndex < wrappedLines.size()) {
                         FormattedCharSequence orderedText = wrappedLines.get(lineIndex);
                         int relativeX = (int) x - startX;
-                        Style style = this.minecraft.font.getSplitter().componentStyleAtWidth(orderedText, relativeX);
+                        Style style = styleAtWidth(orderedText, relativeX);
                         if (style != null && style.getClickEvent() != null) {
                             return Component.literal("").setStyle(style);
                         }
@@ -650,5 +659,20 @@ public class AnnouncementScreen extends Screen {
             currentY += lineHeight;
         }
         return null;
+    }
+
+    /** 26.2 port: StringSplitter.componentStyleAtWidth is gone; walk the glyphs ourselves. */
+    private Style styleAtWidth(FormattedCharSequence text, int targetX) {
+        Style[] found = {null};
+        float[] width = {0.0F};
+        text.accept((index, style, codepoint) -> {
+            width[0] += this.minecraft.font.width(Component.literal(new String(Character.toChars(codepoint))).withStyle(style));
+            if (width[0] > targetX) {
+                found[0] = style;
+                return false;
+            }
+            return true;
+        });
+        return found[0];
     }
 }

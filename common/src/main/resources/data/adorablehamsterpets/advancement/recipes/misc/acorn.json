@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_acorn_crate": {
+      "conditions": {
+        "items": [
+          {
+            "items": "adorablehamsterpets:acorn_crate"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "adorablehamsterpets:acorn"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_acorn_crate"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "adorablehamsterpets:acorn"
+    ]
+  }
+}

@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import java.util.ArrayList;
@@ -113,7 +113,7 @@ public final class CaveHamsterSpawner {
         int surfaceY = world.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
         BlockPos selected = null;
         int validFloors = 0;
-        for (int y = world.getMinBuildHeight() + 1; y < surfaceY; y++) {
+        for (int y = world.getMinY() + 1; y < surfaceY; y++) {
             BlockPos position = new BlockPos(x, y, z);
             if (!isCaveEnvironment(world, position, surfaceY)) continue;
             if (!isValidSpawnPosition(world, player, position, null)) continue;
@@ -128,10 +128,10 @@ public final class CaveHamsterSpawner {
 
     private static boolean spawnAt(
             ServerLevel world, ServerPlayer player, BlockPos position, RandomSource random) {
-        HamsterEntity hamster = ModEntities.HAMSTER.get().create(world);
+        HamsterEntity hamster = ModEntities.HAMSTER.get().create(world, EntitySpawnReason.LOAD);
         if (hamster == null || !isValidSpawnPosition(world, player, position, hamster)) return false;
 
-        hamster.moveTo(
+        hamster.snapTo(
                 position.getX() + 0.5,
                 position.getY(),
                 position.getZ() + 0.5,
@@ -160,7 +160,7 @@ public final class CaveHamsterSpawner {
         if (!world.getFluidState(position).isEmpty() || !world.getFluidState(position.above()).isEmpty()) return false;
         if (!hasSpawnHeadroom(world, position)) return false;
         if (!ModEntitySpawns.isValidHamsterNaturalSpawn(
-                ModEntities.HAMSTER.get(), world, MobSpawnType.NATURAL, position, world.getRandom())) return false;
+                ModEntities.HAMSTER.get(), world, EntitySpawnReason.NATURAL, position, world.getRandom())) return false;
         if (hamster != null && !HamsterPlacementUtil.isSafeSpawnLocation(position, world, hamster)) return false;
         return isCaveEnvironment(
                 world,

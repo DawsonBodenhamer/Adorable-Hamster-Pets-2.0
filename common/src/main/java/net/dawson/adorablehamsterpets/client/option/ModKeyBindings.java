@@ -1,5 +1,7 @@
 package net.dawson.adorablehamsterpets.client.option;
 
+import net.dawson.adorablehamsterpets.AdorableHamsterPets;
+import net.minecraft.resources.Identifier;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import org.lwjgl.glfw.GLFW;
@@ -7,7 +9,7 @@ import org.lwjgl.glfw.GLFW;
 /** Holds the mod's key mappings. */
 public class ModKeyBindings {
     // --- Translation Keys ---
-    public static final String KEY_CATEGORY_AHP = "key.categories.adorablehamsterpets.main";
+    public static final KeyMapping.Category KEY_CATEGORY_AHP = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "main"));
     public static final String KEY_THROW_HAMSTER = "key.adorablehamsterpets.throw_hamster";
     public static final String KEY_TOGGLE_SUPPORTER_CROWN = "key.adorablehamsterpets.toggle_supporter_crown";
     public static final String KEY_DISMOUNT_HAMSTER = "key.adorablehamsterpets.dismount_hamster";

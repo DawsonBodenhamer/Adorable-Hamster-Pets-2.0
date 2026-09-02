@@ -28,7 +28,7 @@ public final class HamsterArmorUtil {
 
     public static boolean shouldAbsorbDamage(
             HamsterEntity hamster, DamageSource source, ItemStack armorStack) {
-        if (hamster.level().isClientSide || source.is(DamageTypeTags.BYPASSES_WOLF_ARMOR)) {
+        if (hamster.level().isClientSide() || source.is(DamageTypeTags.BYPASSES_WOLF_ARMOR)) {
             return false;
         }
         if (armorStack.isEmpty() || !(armorStack.getItem() instanceof HamsterArmorItem)) {
@@ -50,7 +50,7 @@ public final class HamsterArmorUtil {
 
         boolean armorBroke = armorStack.isEmpty();
         if (armorBroke) {
-            hamster.playSound(SoundEvents.WOLF_ARMOR_BREAK, 0.5f, 1.2f);
+            hamster.playSound(SoundEvents.WOLF_ARMOR_BREAK.value(), 0.5f, 1.2f);
             spawnArmorParticles(hamster, particleStack, 15, 0.1);
         } else {
             hamster.playSound(SoundEvents.WOLF_ARMOR_DAMAGE, 0.5f, 1.2f);
@@ -64,7 +64,7 @@ public final class HamsterArmorUtil {
         ParticleEffectsUtil.spawnParticles(
                 hamster.level(),
                 new Vec3(hamster.getX(), hamster.getY(0.5), hamster.getZ()),
-                new ItemParticleOption(ParticleTypes.ITEM, particleStack),
+                new ItemParticleOption(ParticleTypes.ITEM, particleStack.getItem()),
                 count,
                 new Vec3(0.2, 0.2, 0.2),
                 speed);

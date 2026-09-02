@@ -206,18 +206,14 @@ public final class RedstoneFeverState {
         }
 
         public static TransferData fromNbt(CompoundTag nbt) {
-            boolean fevered = nbt.getBoolean(FEVERED_KEY);
+            boolean fevered = nbt.getBooleanOr(FEVERED_KEY, false);
             return new TransferData(
                     fevered,
-                    fevered ? nbt.getInt(SCAR_KEY) : -1,
-                    nbt.getLong(SUNLIGHT_TICKS_KEY),
-                    nbt.getBoolean(COMMISSIONED_ROLL_RESOLVED_KEY),
-                    nbt.hasUUID(FIRST_LEAD_RESCUER_KEY)
-                            ? Optional.of(nbt.getUUID(FIRST_LEAD_RESCUER_KEY))
-                            : Optional.empty(),
-                    nbt.hasUUID(FIRST_SUNLIGHT_TARGET_KEY)
-                            ? Optional.of(nbt.getUUID(FIRST_SUNLIGHT_TARGET_KEY))
-                            : Optional.empty()
+                    fevered ? nbt.getIntOr(SCAR_KEY, 0) : -1,
+                    nbt.getLongOr(SUNLIGHT_TICKS_KEY, 0L),
+                    nbt.getBooleanOr(COMMISSIONED_ROLL_RESOLVED_KEY, false),
+                    nbt.read(FIRST_LEAD_RESCUER_KEY, UUIDUtil.CODEC),
+                    nbt.read(FIRST_SUNLIGHT_TARGET_KEY, UUIDUtil.CODEC)
             );
         }
 
@@ -226,8 +222,8 @@ public final class RedstoneFeverState {
             nbt.putInt(SCAR_KEY, this.scarVariant);
             nbt.putLong(SUNLIGHT_TICKS_KEY, this.sunlightTicks);
             nbt.putBoolean(COMMISSIONED_ROLL_RESOLVED_KEY, this.commissionedRollResolved);
-            this.firstLeadRescuerUuid.ifPresent(uuid -> nbt.putUUID(FIRST_LEAD_RESCUER_KEY, uuid));
-            this.firstSunlightTargetUuid.ifPresent(uuid -> nbt.putUUID(FIRST_SUNLIGHT_TARGET_KEY, uuid));
+            this.firstLeadRescuerUuid.ifPresent(uuid -> nbt.store(FIRST_LEAD_RESCUER_KEY, UUIDUtil.CODEC, uuid));
+            this.firstSunlightTargetUuid.ifPresent(uuid -> nbt.store(FIRST_SUNLIGHT_TARGET_KEY, UUIDUtil.CODEC, uuid));
         }
     }
 

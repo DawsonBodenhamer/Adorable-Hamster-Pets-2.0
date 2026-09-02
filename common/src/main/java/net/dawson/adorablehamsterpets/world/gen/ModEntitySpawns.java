@@ -1,6 +1,6 @@
 package net.dawson.adorablehamsterpets.world.gen;
 
-import dev.architectury.registry.level.biome.BiomeModifications;
+import org.jetbrains.annotations.Nullable;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.dawson.adorablehamsterpets.config.Configs;
@@ -12,7 +12,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.biome.Biome;
@@ -39,22 +39,7 @@ public class ModEntitySpawns {
         VALID_SPAWN_BLOCKS.add(Blocks.SAND);
         VALID_SPAWN_BLOCKS.add(Blocks.RED_SAND);
         VALID_SPAWN_BLOCKS.add(Blocks.TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.WHITE_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.ORANGE_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.MAGENTA_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.LIGHT_BLUE_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.YELLOW_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.LIME_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.PINK_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.GRAY_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.LIGHT_GRAY_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.CYAN_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.PURPLE_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.BLUE_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.BROWN_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.GREEN_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.RED_TERRACOTTA);
-        VALID_SPAWN_BLOCKS.add(Blocks.BLACK_TERRACOTTA);
+        Blocks.DYED_TERRACOTTA.forEach(VALID_SPAWN_BLOCKS::add); // 26.2: all colours are one block
         VALID_SPAWN_BLOCKS.add(Blocks.STONE);
         VALID_SPAWN_BLOCKS.add(Blocks.DEEPSLATE);
         VALID_SPAWN_BLOCKS.add(Blocks.ANDESITE);
@@ -146,9 +131,9 @@ public class ModEntitySpawns {
      * @param ctx The biome context provided by Architectury.
      * @return True if hamsters should spawn in this biome, false otherwise.
      */
-    public static boolean shouldAddFabricSpawn(BiomeModifications.BiomeContext ctx) {
-        Identifier biomeId = ctx.getKey().orElse(null);
-        return matchesConfiguredBiomePolicy(biomeId, ctx::hasTag);
+    public static boolean shouldAddFabricSpawn(@Nullable Identifier biomeId, Predicate<TagKey<Biome>> hasTag) {
+        // 26.2 port: called from the Fabric module with Fabric's BiomeSelectionContext
+        return matchesConfiguredBiomePolicy(biomeId, hasTag);
     }
 
     /**
@@ -169,7 +154,7 @@ public class ModEntitySpawns {
     public static boolean isValidHamsterNaturalSpawn(
             EntityType<? extends Animal> type,
             ServerLevelAccessor world,
-            MobSpawnType reason,
+            EntitySpawnReason reason,
             BlockPos position,
             RandomSource random) {
         return Animal.checkAnimalSpawnRules(type, world, reason, position, random)
@@ -185,7 +170,7 @@ public class ModEntitySpawns {
      * @return True when the biome permits hamster spawning.
      */
     public static boolean isBiomeAllowed(Holder<Biome> biomeEntry) {
-        Identifier biomeId = biomeEntry.unwrapKey().map(ResourceKey::location).orElse(null);
+        Identifier biomeId = biomeEntry.unwrapKey().map(ResourceKey::identifier).orElse(null);
         return matchesConfiguredBiomePolicy(biomeId, biomeEntry::is);
     }
 

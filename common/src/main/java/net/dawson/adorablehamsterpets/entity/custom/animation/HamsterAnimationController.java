@@ -6,7 +6,7 @@ import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.client.feature.ShoulderAnimationState;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 
-import com.geckolib.animation.AnimatableManager;
+import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.animation.AnimationController;
 import com.geckolib.animation.RawAnimation;
 
@@ -123,7 +123,6 @@ public final class HamsterAnimationController {
             HamsterEntity hamster, AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(
                 new AnimationController<>(
-                                hamster,
                                 "mainController",
                                 3,
                                 event -> {
@@ -131,11 +130,9 @@ public final class HamsterAnimationController {
 
                                     // --- 1. Controller Timing ---
                                     if (state.aiDisabled() && !state.projectileDummy()) {
-                                        event.getController().setAnimationSpeed(0);
-                                        event.getController().transitionLength(0);
+                                        event.controller().setAnimationSpeed(0);
                                     } else {
-                                        event.getController().setAnimationSpeed(1);
-                                        event.getController().transitionLength(3);
+                                        event.controller().setAnimationSpeed(1);
                                     }
 
                                     HamsterEntity.DozingPhase currentDozingPhase =
@@ -271,7 +268,7 @@ public final class HamsterAnimationController {
                                     }
 
                                     RawAnimation current =
-                                            event.getController().getCurrentRawAnimation();
+                                            event.controller().getCurrentRawAnimation();
 
                                     if (current != null
                                             && (current.equals(IDLE1_ANIM)
@@ -320,12 +317,12 @@ public final class HamsterAnimationController {
                         .setParticleKeyframeHandler(
                                 event ->
                                         hamster.particleEffectId =
-                                                event.getKeyframeData().getEffect())
+                                                event.keyframeData().getEffect())
                         .setSoundKeyframeHandler(
-                                event -> hamster.soundEffectId = event.getKeyframeData().getSound())
+                                event -> hamster.soundEffectId = event.keyframeData().getSound())
                         .setCustomInstructionKeyframeHandler(
                                 event -> {
-                                    if (event.getKeyframeData()
+                                    if (event.keyframeData()
                                             .getInstructions()
                                             .contains("trigger_jump_anim")) {
                                         hamster.triggerAnim(

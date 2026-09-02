@@ -48,7 +48,7 @@ public abstract class TitleScreenMixin extends Screen {
 
             if (shouldShowIcon && Configs.AHP_UI.enableHudIcon.get() && !Configs.AHP_UI.serverDisableAnnouncements) {
                 // Add widget if title screen active
-                if (Minecraft.getInstance().screen == (TitleScreen) (Object) this) {
+                if (Minecraft.getInstance().gui.screen() == (TitleScreen) (Object) this) {
                     // Use accessor to add widget for cross-loader compatibility
                     // Initial bounds controlled by animator
                     ((ScreenWidgetAdder) (Object) this).adorablehamsterpets$addWidget(new AnnouncementIconWidget(

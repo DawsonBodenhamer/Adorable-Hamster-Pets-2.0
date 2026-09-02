@@ -1,5 +1,10 @@
 package net.dawson.adorablehamsterpets.block.entity;
 
+import net.dawson.adorablehamsterpets.particles.ModParticles;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.block.ModBlockEntities;
 import net.dawson.adorablehamsterpets.block.custom.HamsterBedBlock;
 import net.dawson.adorablehamsterpets.config.Configs;
@@ -28,7 +33,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import com.geckolib.animatable.GeoBlockEntity;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
-import com.geckolib.animation.AnimatableManager;
+import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.animation.AnimationController;
 import com.geckolib.animation.RawAnimation;
 import com.geckolib.util.GeckoLibUtil;
@@ -53,8 +58,8 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar registrar) {
-        AnimationController<HamsterBedBlockEntity> controller = new AnimationController<>(this, "hamster_bed_controller", 5, state -> {
-            BlockState blockState = state.getAnimatable().getBlockState();
+        AnimationController<HamsterBedBlockEntity> controller = new AnimationController<>("hamster_bed_controller", 5, state -> {
+            BlockState blockState = state.animatable().getBlockState();
             if (blockState.getValue(HamsterBedBlock.OCCUPIED)) {
                 return state.setAndContinue(RawAnimation.begin().thenLoop("anim_bed_idle_waving_occupied"));
             } else {
@@ -164,7 +169,7 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
                 }
 
                 Component status = newMode ? Component.literal("ENABLED") : Component.literal("DISABLED");
-                player.displayClientMessage(Component.translatable("message.adorablehamsterpets.wander_mode_set", hamster.getName(), status), true);
+                player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.wander_mode_set", hamster.getName(), status));
                 level.playSound(null, getBlockPos(), SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.5f, newMode ? 1.2f : 0.8f);
             }
         }
@@ -175,7 +180,7 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
         this.wanderDistance = values[(this.wanderDistance.ordinal() + 1) % values.length];
         setChanged();
         if (linkedHamsterName.isPresent()) {
-            player.displayClientMessage(Component.translatable("message.adorablehamsterpets.wander_distance_set", linkedHamsterName.get(), this.wanderDistance.getSerializedName()), true);
+            player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.wander_distance_set", linkedHamsterName.get(), this.wanderDistance.getSerializedName()));
             level.playSound(null, getBlockPos(), SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.5f, 1.0f);
         }
     }
@@ -190,7 +195,7 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
                 }
 
                 if (hamster.isOrderedToSit() || hamster.isSleeping()) {
-                    player.displayClientMessage(Component.translatable("message.adorablehamsterpets.lure_to_bed_fail").withStyle(ChatFormatting.RED), true);
+                    player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.lure_to_bed_fail").withStyle(ChatFormatting.RED));
                     return false;
                 }
 
@@ -204,7 +209,7 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
                         level,
                         getBlockPos(),
                         0.7,
-                        new ItemParticleOption(ParticleTypes.ITEM, lureItem),
+                        new ItemParticleOption(ParticleTypes.ITEM, lureItem.getItem()),
                         8,
                         0.25, 0.25, 0.25, 0.05
                 );
@@ -242,16 +247,16 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
             }
 
             // Feedback
-            player.displayClientMessage(Component.translatable("message.adorablehamsterpets.bed_unlinked", hamsterNameToUnlink).withStyle(ChatFormatting.YELLOW), true);
+            player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.bed_unlinked", hamsterNameToUnlink).withStyle(ChatFormatting.YELLOW));
             level.playSound(null, getBlockPos(), SoundEvents.SHEEP_SHEAR, SoundSource.BLOCKS, 1.0f, 1.2f);
         }
     }
 
     @Override
-    protected void saveAdditional(CompoundTag nbt, HolderLookup.Provider registryLookup) {
-        super.saveAdditional(nbt, registryLookup);
-        linkedHamsterUuid.ifPresent(uuid -> nbt.putUUID("LinkedHamsterUuid", uuid));
-        linkedHamsterName.ifPresent(name -> nbt.putString("LinkedHamsterName", Component.Serializer.toJson(name, registryLookup)));
+    protected void saveAdditional(ValueOutput nbt) {
+        super.saveAdditional(nbt);
+        linkedHamsterUuid.ifPresent(uuid -> nbt.store("LinkedHamsterUuid", UUIDUtil.CODEC, uuid));
+        linkedHamsterName.ifPresent(name -> nbt.store("LinkedHamsterName", ComponentSerialization.CODEC, name));
         nbt.putString("WanderDistance", wanderDistance.getSerializedName());
         nbt.putBoolean("IsNewlyPlaced", this.isNewlyPlaced);
         nbt.putBoolean("RespawnEnabled", this.respawnEnabled);
@@ -259,30 +264,22 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
     }
 
     @Override
-    protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider registryLookup) {
-        super.loadAdditional(nbt, registryLookup);
-        if (nbt.hasUUID("LinkedHamsterUuid")) {
-            this.linkedHamsterUuid = Optional.of(nbt.getUUID("LinkedHamsterUuid"));
-        } else {
-            this.linkedHamsterUuid = Optional.empty();
-        }
+    protected void loadAdditional(ValueInput nbt) {
+        super.loadAdditional(nbt);
+        this.linkedHamsterUuid = nbt.read("LinkedHamsterUuid", UUIDUtil.CODEC);
 
-        if (nbt.contains("LinkedHamsterName")) {
-            this.linkedHamsterName = Optional.ofNullable(Component.Serializer.fromJson(nbt.getString("LinkedHamsterName"), registryLookup));
-        } else {
-            this.linkedHamsterName = Optional.empty();
-        }
+        this.linkedHamsterName = nbt.read("LinkedHamsterName", ComponentSerialization.CODEC);
 
-        String distanceStr = nbt.getString("WanderDistance").toUpperCase(Locale.ROOT);
+        String distanceStr = nbt.getStringOr("WanderDistance", "").toUpperCase(Locale.ROOT);
         try {
             this.wanderDistance = distanceStr.isEmpty() ? Configs.AHP_MAIN.defaultWanderDistance.get() : WanderDistance.valueOf(distanceStr);
         } catch (IllegalArgumentException e) {
             this.wanderDistance = Configs.AHP_MAIN.defaultWanderDistance.get();
         }
 
-        this.isNewlyPlaced = nbt.contains("IsNewlyPlaced") ? nbt.getBoolean("IsNewlyPlaced") : false;
-        this.allowSleep = !nbt.contains("AllowSleep") || nbt.getBoolean("AllowSleep");
-        this.respawnEnabled = nbt.getBoolean("RespawnEnabled");
+        this.isNewlyPlaced = nbt.getBooleanOr("IsNewlyPlaced", false);
+        this.allowSleep = nbt.getBooleanOr("AllowSleep", true);
+        this.respawnEnabled = nbt.getBooleanOr("RespawnEnabled", false);
 
         // Force sleep to false if bed is upside down
         if (this.getBlockState().hasProperty(HamsterBedBlock.UPSIDE_DOWN) && this.getBlockState().getValue(HamsterBedBlock.UPSIDE_DOWN)) {
@@ -305,5 +302,44 @@ public class HamsterBedBlockEntity extends BlockEntity implements GeoBlockEntity
                 world.playSound(null, pos, SoundEvents.NOTE_BLOCK_BASS.value(), SoundSource.BLOCKS, 1.0f, 0.2f);
             }
         }
+    }
+
+    /**
+     * 26.2 port: Block.onRemove is gone; the block entity is told before it is
+     * removed instead. Rustle, drop leaves and unlink the sleeping hamster.
+     */
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState oldState) {
+        super.preRemoveSideEffects(pos, oldState);
+        if (!(this.level instanceof ServerLevel serverWorld)) return;
+
+        SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, serverWorld.getRandom());
+        if (rustleSound != null) {
+            serverWorld.playSound(null, pos, rustleSound, SoundSource.BLOCKS, 0.3f, 1.5f);
+        }
+        ParticleEffectsUtil.spawnParticles(
+                serverWorld,
+                pos,
+                0.2,
+                ModParticles.getForVariant(oldState.getValue(HamsterBedBlock.WOOD_VARIANT)),
+                30,
+                0.1, 0.1, 0.1, 0.0
+        );
+
+        this.getLinkedHamsterUuid().ifPresent(uuid -> {
+            Entity entity = serverWorld.getEntity(uuid);
+            if (entity instanceof HamsterEntity hamster) {
+                hamster.setWanderModeActive(false);
+                hamster.setLinkedBedPos(Optional.empty());
+                if (hamster.isSleeping()) {
+                    HamsterBedUtil.wakeUpFromBed(hamster, true); // Manual wakeup
+                }
+                if (hamster.getOwner() instanceof Player owner) {
+                    if (Configs.AHP_UI.enableBedBreakMessage) {
+                        owner.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.bed_broken").withStyle(ChatFormatting.RED));
+                    }
+                }
+            }
+        });
     }
 }

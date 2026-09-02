@@ -51,7 +51,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
@@ -77,7 +77,7 @@ public class HamsterBedBlock extends BaseEntityBlock implements EntityBlock {
     // Block State Properties
     public static final BooleanProperty OCCUPIED = BooleanProperty.create("occupied");
     public static final BooleanProperty UPSIDE_DOWN = BooleanProperty.create("upside_down");
-    public static final DirectionProperty ORIENTATION = DirectionProperty.create("orientation", dir -> dir.getAxis().isHorizontal());
+    public static final EnumProperty<Direction> ORIENTATION = EnumProperty.create("orientation", Direction.class, dir -> dir.getAxis().isHorizontal());
     public static final EnumProperty<WoodVariant> WOOD_VARIANT = EnumProperty.create("wood_variant", WoodVariant.class);
 
     // Voxel Shapes
@@ -154,13 +154,13 @@ public class HamsterBedBlock extends BaseEntityBlock implements EntityBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return RenderShape.INVISIBLE; // 26.2: GeckoLib block renderer draws it
     }
 
     @Override
     public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
         super.setPlacedBy(world, pos, state, placer, itemStack);
-        if (!world.isClientSide) {
+        if (!world.isClientSide()) {
             BlockEntity be = world.getBlockEntity(pos);
             if (be instanceof HamsterBedBlockEntity bedEntity) {
                 // If placed upside down, disable sleeping for this specific bed and trigger advancement
@@ -196,7 +196,7 @@ public class HamsterBedBlock extends BaseEntityBlock implements EntityBlock {
 
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
-        if (world.isClientSide) {
+        if (world.isClientSide()) {
             // --- 1. Client-Side Validation ---
             ItemStack heldStack = player.getItemInHand(player.getUsedItemHand());
             boolean isLureItem = ConfigDataCache.isLureItem(heldStack);
@@ -252,7 +252,7 @@ public class HamsterBedBlock extends BaseEntityBlock implements EntityBlock {
 
                 // Apply repellent
                 bedEntity.applyRepellentEffect();
-                player.displayClientMessage(Component.translatable("message.adorablehamsterpets.bed_repellent_applied").withStyle(ChatFormatting.RED), true);
+                player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.bed_repellent_applied").withStyle(ChatFormatting.RED));
                 world.playSound(null, pos, SoundEvents.HONEY_BLOCK_SLIDE, SoundSource.BLOCKS, 1.2f, 0.8f);
                 ParticleEffectsUtil.spawnParticles(
                         world,
@@ -271,7 +271,7 @@ public class HamsterBedBlock extends BaseEntityBlock implements EntityBlock {
             // --- 5. Lure Item Logic ---
             if (ConfigDataCache.isLureItem(heldStack)) {
                 if (state.getValue(UPSIDE_DOWN)) {
-                    player.displayClientMessage(Component.translatable("message.adorablehamsterpets.bed_upside_down_lure_fail").withStyle(ChatFormatting.RED), true);
+                    player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.bed_upside_down_lure_fail").withStyle(ChatFormatting.RED));
                     world.playSound(null, pos, SoundEvents.DISPENSER_FAIL, SoundSource.BLOCKS, 0.5f, 1.5f);
                     return InteractionResult.SUCCESS;
                 }
@@ -284,10 +284,10 @@ public class HamsterBedBlock extends BaseEntityBlock implements EntityBlock {
                 boolean lureWasSuccessful = bedEntity.lureHamsterToBed(player, heldStack);
 
                 if (wasRepellentActive) {
-                    player.displayClientMessage(Component.translatable("message.adorablehamsterpets.bed_repellent_removed").withStyle(ChatFormatting.WHITE), true);
+                    player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.bed_repellent_removed").withStyle(ChatFormatting.WHITE));
                 } else if (lureWasSuccessful) {
                     bedEntity.getLinkedHamsterName().ifPresent(name ->
-                            player.displayClientMessage(Component.translatable("message.adorablehamsterpets.lure_to_bed_success", name), true)
+                            player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.lure_to_bed_success", name))
                     );
                 }
 
@@ -302,7 +302,7 @@ public class HamsterBedBlock extends BaseEntityBlock implements EntityBlock {
                 // A. Check Global Config
                 if (!Configs.AHP_MAIN.enableRespawnInBed.get()) {
                     bedEntity.triggerFailSound();
-                    player.displayClientMessage(Component.translatable("message.adorablehamsterpets.respawn.disabled_by_config").withStyle(ChatFormatting.RED), true);
+                    player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.respawn.disabled_by_config").withStyle(ChatFormatting.RED));
                     return InteractionResult.SUCCESS;
                 }
 
@@ -347,13 +347,13 @@ public class HamsterBedBlock extends BaseEntityBlock implements EntityBlock {
                                 world,
                                 pos,
                                 0.5,
-                                new ItemParticleOption(ParticleTypes.ITEM, particleStack),
+                                new ItemParticleOption(ParticleTypes.ITEM, particleStack.getItem()),
                                 25,
                                 0.2, 0.2, 0.2, 0.0
                         );
                     }
 
-                    player.displayClientMessage(Component.translatable("message.adorablehamsterpets.respawn.activated").withStyle(ChatFormatting.GREEN), true);
+                    player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.respawn.activated").withStyle(ChatFormatting.GREEN));
 
                 } else {
                     // Deactivate and refund
@@ -364,7 +364,7 @@ public class HamsterBedBlock extends BaseEntityBlock implements EntityBlock {
                     Containers.dropItemStack(world, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, refundStack);
 
                     world.playSound(null, pos, SoundEvents.BEACON_DEACTIVATE, SoundSource.BLOCKS, 1.0f, 1.0f);
-                    player.displayClientMessage(Component.translatable("message.adorablehamsterpets.respawn.deactivated").withStyle(ChatFormatting.YELLOW), true);
+                    player.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.respawn.deactivated").withStyle(ChatFormatting.YELLOW));
                 }
 
                 return InteractionResult.SUCCESS;
@@ -383,59 +383,16 @@ public class HamsterBedBlock extends BaseEntityBlock implements EntityBlock {
 
         return InteractionResult.FAIL;
     }
-
-    @Override
-    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
-        if (!state.is(newState.getBlock())) {
-            if (!world.isClientSide()) {
-                // Play Leaf Rustling sound, spawn particles with wood variant
-                SoundEvent rustleSound = ModSounds.getRandomSoundFrom(ModSounds.HAMSTER_BED_LEAVES_RUSTLE_SOUNDS, world.getRandom());
-                if (rustleSound != null) {
-                    world.playSound(null, pos, rustleSound, SoundSource.BLOCKS, 0.3f, 1.5f);
-                }
-                ParticleEffectsUtil.spawnParticles(
-                        world,
-                        pos,
-                        0.2,
-                        ModParticles.getForVariant(state.getValue(WOOD_VARIANT)),
-                        30,
-                        0.1, 0.1, 0.1, 0.0
-                );
-
-                BlockEntity blockEntity = world.getBlockEntity(pos);
-                if (blockEntity instanceof HamsterBedBlockEntity bedEntity) {
-                    ServerLevel serverWorld = (ServerLevel) world;
-                    bedEntity.getLinkedHamsterUuid().ifPresent(uuid -> {
-                        Entity entity = serverWorld.getEntity(uuid);
-                        if (entity instanceof HamsterEntity hamster) {
-                            hamster.setWanderModeActive(false);
-                            hamster.setLinkedBedPos(Optional.empty());
-                            if (hamster.isSleeping()) {
-                                HamsterBedUtil.wakeUpFromBed(hamster, true); // Manual wakeup
-                            }
-                            if (hamster.getOwner() instanceof Player owner) {
-                                if (Configs.AHP_UI.enableBedBreakMessage) {
-                                    owner.displayClientMessage(Component.translatable("message.adorablehamsterpets.bed_broken").withStyle(ChatFormatting.RED), true);
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-        }
-        super.onRemove(state, world, pos, newState, moved);
-    }
-
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
         if (world.isClientSide()) {
             return createTickerHelper(type, ModBlockEntities.HAMSTER_BED_BLOCK_ENTITY.get(), (world1, pos, state1, be) -> {
                 if (state1.getValue(UPSIDE_DOWN)) {
-                    if (world1.random.nextInt(35) == 0) { // Chance to spawn particles
-                        double x = pos.getX() + world1.random.nextDouble();
+                    if (world1.getRandom().nextInt(35) == 0) { // Chance to spawn particles
+                        double x = pos.getX() + world1.getRandom().nextDouble();
                         double y = pos.getY() + 0.6; // Spawn slightly below the block, offset inverted since block is inverted
-                        double z = pos.getZ() + world1.random.nextDouble();
+                        double z = pos.getZ() + world1.getRandom().nextDouble();
 
                         // Spawn Particles with wood variant
                         world1.addParticle(ModParticles.getForVariant(state1.getValue(WOOD_VARIANT)), x, y, z, 0, HamsterBeddingParticle.BEDDING_ITEM_FLAG, 0);
@@ -448,7 +405,7 @@ public class HamsterBedBlock extends BaseEntityBlock implements EntityBlock {
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state) {
+    protected ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state, boolean includeData) {
         // Called by Jade and middle-mouse-click; should return the correct item variant.
         WoodVariant variant = state.getValue(WOOD_VARIANT);
         Item item = ModItems.HAMSTER_BED_ITEMS.get(variant).get();

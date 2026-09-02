@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.client.particle;
 
+import net.minecraft.util.RandomSource;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.particles.common.HamsterBeddingParticleBehavior;
 import net.dawson.adorablehamsterpets.sound.ModSounds;
@@ -22,7 +23,7 @@ import java.util.*;
  *     or a dispenser. This includes a gentle pendulum-like sway and a deterministic, spatially-coherent
  *     wind gust model that creates realistic, synchronized movement among nearby particles.
  */
-public class HamsterBeddingParticle extends TextureSheetParticle {
+public class HamsterBeddingParticle extends SingleQuadParticle {
 
     // --- Constants ---
     /** A magic number used in the 'vy' field to signal that this particle should use the "floaty" physics simulation. */
@@ -83,8 +84,8 @@ public class HamsterBeddingParticle extends TextureSheetParticle {
     public HamsterBeddingParticle(ClientLevel world,
                                   double x, double y, double z,
                                   double vx, double vy, double vz,
-                                  SpriteSet sprites) {
-        super(world, x, y, z, vx, vy, vz);
+                                  SpriteSet sprites, RandomSource random) {
+        super(world, x, y, z, vx, vy, vz, sprites.get(random));
 
         // Set size to match leaf textures on bed
         this.quadSize *= 2.0f;
@@ -98,22 +99,22 @@ public class HamsterBeddingParticle extends TextureSheetParticle {
             this.yd = 0;
             this.gravity = 0.07f;
             this.friction = 0.92f;
-            this.lifetime = 140 + world.random.nextInt(200);
+            this.lifetime = 140 + world.getRandom().nextInt(200);
 
-            float theta = world.random.nextFloat() * Mth.TWO_PI;
+            float theta = world.getRandom().nextFloat() * Mth.TWO_PI;
             this.swayDirectionX = Mth.cos(theta);
             this.swayDirectionZ = Mth.sin(theta);
 
-            this.swayFrequency = 0.09f + world.random.nextFloat() * 0.05f; // Period ~ 2π/ω = 45–80 ticks
-            this.swayAcceleration = 0.002f + world.random.nextFloat() * 0.0025f; // Swing radius ≈ swayAcceleration / ω^2  → ~0.15–0.35 blocks
-            this.swayPhaseOffset = world.random.nextFloat() * Mth.TWO_PI;
-            this.constantRollVelocity = (world.random.nextFloat() - 0.5f) * 0.12f; // Slow constant roll
+            this.swayFrequency = 0.09f + world.getRandom().nextFloat() * 0.05f; // Period ~ 2π/ω = 45–80 ticks
+            this.swayAcceleration = 0.002f + world.getRandom().nextFloat() * 0.0025f; // Swing radius ≈ swayAcceleration / ω^2  → ~0.15–0.35 blocks
+            this.swayPhaseOffset = world.getRandom().nextFloat() * Mth.TWO_PI;
+            this.constantRollVelocity = (world.getRandom().nextFloat() - 0.5f) * 0.12f; // Slow constant roll
         } else {
             // Standard physics for bed interactions.
             this.gravity = HamsterBeddingParticleBehavior.GRAVITY;
             this.friction = HamsterBeddingParticleBehavior.FRICTION;
             this.lifetime = HamsterBeddingParticleBehavior.LIFETIME_MIN
-                    + world.random.nextInt(HamsterBeddingParticleBehavior.LIFETIME_EXTRA);
+                    + world.getRandom().nextInt(HamsterBeddingParticleBehavior.LIFETIME_EXTRA);
 
             this.swayDirectionX = 0f;
             this.swayDirectionZ = 0f;
@@ -124,7 +125,6 @@ public class HamsterBeddingParticle extends TextureSheetParticle {
         }
 
         // --- Set Visuals ---
-        this.setSprite(sprites.get(this.random));
         this.setSize(HamsterBeddingParticleBehavior.SIZE_X, HamsterBeddingParticleBehavior.SIZE_Y);
     }
 
@@ -148,7 +148,7 @@ public class HamsterBeddingParticle extends TextureSheetParticle {
             float universalDriftAngle;
             if (Configs.AHP_UI.enableDynamicDriftAngle.get()) {
                 // Dynamic, time-based rotation
-                float timeWithPartial = worldTime + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
+                float timeWithPartial = worldTime + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
                 universalDriftAngle = (timeWithPartial / DRIFT_PERIOD_TICKS) * Mth.TWO_PI;
             } else {
                 // Static angle from config
@@ -263,8 +263,8 @@ public class HamsterBeddingParticle extends TextureSheetParticle {
     }
 
     @Override
-    public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+    protected SingleQuadParticle.Layer getLayer() {
+        return SingleQuadParticle.Layer.TRANSLUCENT;
     }
 
     // --- Deterministic Wind Model ---
@@ -345,8 +345,8 @@ public class HamsterBeddingParticle extends TextureSheetParticle {
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel world,
                                        double x, double y, double z,
-                                       double vx, double vy, double vz) {
-            return new HamsterBeddingParticle(world, x, y, z, vx, vy, vz, this.sprites);
+                                       double vx, double vy, double vz, RandomSource random) {
+            return new HamsterBeddingParticle(world, x, y, z, vx, vy, vz, this.sprites, random);
         }
     }
 }

@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.command;
 
+import net.minecraft.server.permissions.Permissions;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -67,7 +68,7 @@ public class ModCommands {
         // --- 1. Utilities ---
         // OP Required
         ahpRoot.then(Commands.literal("print_genetics_report")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> PlayerCommandUtil.executeGeneticsReport(context.getSource(), "log"))
                 .then(Commands.argument("output", StringArgumentType.word()).suggests(REPORT_OUTPUT_SUGGESTIONS)
                         .executes(context -> PlayerCommandUtil.executeGeneticsReport(context.getSource(), StringArgumentType.getString(context, "output")))
@@ -75,7 +76,7 @@ public class ModCommands {
         );
 
         ahpRoot.then(Commands.literal("set_age")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
                         .then(Commands.argument("unit", StringArgumentType.word()).suggests(TIME_UNIT_SUGGESTIONS)
                                 .executes(context -> PlayerCommandUtil.executeSetAge(context.getSource(), DoubleArgumentType.getDouble(context, "amount"), StringArgumentType.getString(context, "unit"), Collections.emptyList()))
@@ -87,7 +88,7 @@ public class ModCommands {
         );
 
         ahpRoot.then(Commands.literal("reset_player_breeding_history")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> PlayerCommandUtil.executeResetPlayerBreedingHistory(context.getSource(), Collections.singletonList(context.getSource().getPlayerOrException())))
                 .then(Commands.argument("players", EntityArgument.players())
                         .executes(context -> PlayerCommandUtil.executeResetPlayerBreedingHistory(context.getSource(), EntityArgument.getPlayers(context, "players")))
@@ -95,7 +96,7 @@ public class ModCommands {
         );
 
         ahpRoot.then(Commands.literal("reset_hamster_breeding_history")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> PlayerCommandUtil.executeResetHamsterBreedingHistory(context.getSource(), Collections.emptyList()))
                 .then(Commands.argument("hamsters", EntityArgument.entities())
                         .executes(context -> PlayerCommandUtil.executeResetHamsterBreedingHistory(context.getSource(), EntityArgument.getEntities(context, "hamsters")))
@@ -103,7 +104,7 @@ public class ModCommands {
         );
 
         ahpRoot.then(Commands.literal("reset_hamster")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> HamsterResetCommandUtil.reset(
                         context.getSource(), Collections.emptyList()))
                 .then(Commands.argument("hamsters", EntityArgument.entities())
@@ -112,17 +113,17 @@ public class ModCommands {
         );
 
         ahpRoot.then(Commands.literal("unlock_all_advancements")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> PlayerCommandUtil.executeUnlockAllModAdvancements(context.getSource()))
         );
 
         ahpRoot.then(Commands.literal("reset_tree_economy")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> PlayerCommandUtil.executeResetHeistHistory(context.getSource()))
         );
 
         ahpRoot.then(Commands.literal("redstone_fever")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.literal("apply")
                         .executes(context -> RedstoneFeverCommandUtil.apply(
                                 context.getSource(), Collections.emptyList()))
@@ -151,12 +152,12 @@ public class ModCommands {
         // --- 2. Genetics & Spawning Engine ---
         // OP Required
         ahpRoot.then(Commands.literal("undo_last_spawn")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(context -> HamsterSpawnCommandUtil.executeUndoLastSpawn(context.getSource()))
         );
 
         ahpRoot.then(Commands.literal("spawn_all_bases_2D")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.argument("with_wild_overlays", BoolArgumentType.bool())
                         .then(Commands.argument("with_sample_breeding_overlays", BoolArgumentType.bool())
                                 .then(Commands.argument("author", StringArgumentType.word()).suggests(AUTHOR_SUGGESTIONS)
@@ -185,7 +186,7 @@ public class ModCommands {
         );
 
         ahpRoot.then(Commands.literal("spawn_all_bases_3D")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.argument("with_wild_overlays", BoolArgumentType.bool())
                         .then(Commands.argument("with_sample_breeding_overlays", BoolArgumentType.bool())
                                 .then(Commands.argument("author", StringArgumentType.word()).suggests(AUTHOR_SUGGESTIONS)
@@ -214,7 +215,7 @@ public class ModCommands {
         );
 
         ahpRoot.then(Commands.literal("spawn_random_group")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.argument("count", StringArgumentType.word()).suggests(COUNT_SUGGESTIONS)
                         .then(Commands.argument("ignore_safety_limits", BoolArgumentType.bool())
                                 .then(Commands.argument("spacing_multiplier", DoubleArgumentType.doubleArg(0.1))
@@ -242,7 +243,7 @@ public class ModCommands {
         );
 
         ahpRoot.then(Commands.literal("spawn")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.literal("hamster")
                         .then(Commands.argument("basePalette", StringArgumentType.word()).suggests(PALETTE_SUGGESTIONS)
                                 .then(Commands.argument("wildPattern", StringArgumentType.word()).suggests(PATTERN_SUGGESTIONS)

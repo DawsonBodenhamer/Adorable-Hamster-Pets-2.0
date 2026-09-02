@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.integration.jade;
 
+import net.minecraft.network.chat.ComponentSerialization;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.ConfigDataCache;
@@ -36,19 +37,19 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
 
         if (serverData.contains("LinkedHamsterName")) {
             // --- Linked Bed Tooltip ---
-            Component hamsterName = Component.Serializer.fromJson(serverData.getString("LinkedHamsterName"), registryLookup);
+            Component hamsterName = serverData.read("LinkedHamsterName", ComponentSerialization.CODEC).orElse(null);
             if (hamsterName != null) {
                 tooltip.add(Component.translatable("tooltip.adorablehamsterpets.hamster_bed.linked_to", hamsterName).withStyle(ChatFormatting.GREEN));
             }
 
             // --- Wander Mode Status and Distance ---
-            boolean isWanderActive = serverData.getBoolean("WanderModeActive");
+            boolean isWanderActive = serverData.getBooleanOr("WanderModeActive", false);
 
             Component wanderStatus = isWanderActive
                     ? Component.translatable("tooltip.adorablehamsterpets.jade.wander_status.active").withStyle(ChatFormatting.GREEN)
                     : Component.translatable("tooltip.adorablehamsterpets.jade.wander_status.inactive").withStyle(ChatFormatting.RED);
 
-            WanderDistance distance = WanderDistance.valueOf(serverData.getString("WanderDistance").toUpperCase());
+            WanderDistance distance = WanderDistance.valueOf(serverData.getStringOr("WanderDistance", "").toUpperCase());
             int radius = switch (distance) {
                 case NEAR -> Configs.AHP_MAIN.wanderDistanceNear.get();
                 case FAR -> Configs.AHP_MAIN.wanderDistanceFar.get();
@@ -60,16 +61,16 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
             if (player.isShiftKeyDown()) {
                 // --- Expanded Tooltip (Sneaking) ---
                 // --- 1. Sleep Status ---
-                boolean allowSleep = serverData.getBoolean("AllowSleepInBed");
+                boolean allowSleep = serverData.getBooleanOr("AllowSleepInBed", false);
                 Component sleepStatus = allowSleep
                         ? Component.translatable("tooltip.adorablehamsterpets.jade.sleep_status.allowed").withStyle(ChatFormatting.GREEN)
                         : Component.translatable("tooltip.adorablehamsterpets.jade.sleep_status.prevented").withStyle(ChatFormatting.RED);
                 tooltip.add(Component.translatable("tooltip.adorablehamsterpets.jade.sleep_status.label", sleepStatus));
 
                 // --- 2. Respawn Status & Hint ---
-                boolean isConfigRespawnEnabled = serverData.getBoolean("ConfigRespawnEnabled");
-                boolean isFreeRespawns = serverData.getBoolean("FreeBedRespawns");
-                boolean isRespawnEnabled = serverData.getBoolean("RespawnEnabled");
+                boolean isConfigRespawnEnabled = serverData.getBooleanOr("ConfigRespawnEnabled", false);
+                boolean isFreeRespawns = serverData.getBooleanOr("FreeBedRespawns", false);
+                boolean isRespawnEnabled = serverData.getBooleanOr("RespawnEnabled", false);
 
                 Component statusText;
                 Component hintText;
@@ -123,7 +124,7 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
         BlockEntity blockEntity = accessor.getBlockEntity();
         if (blockEntity instanceof HamsterBedBlockEntity bedEntity) {
             if (accessor.getPlayer() instanceof ServerPlayer player) {
-                ServerLevel serverWorld = player.serverLevel();
+                ServerLevel serverWorld = ((ServerLevel) player.level());
 
                 // Dynamic Name Resolution
                 Optional<Component> liveName = bedEntity.getLinkedHamsterUuid()
@@ -143,7 +144,7 @@ public enum HamsterBedComponentProvider implements IBlockComponentProvider, ISer
                 Component nameToShow = liveName.or(bedEntity::getLinkedHamsterName).orElse(null);
 
                 if (nameToShow != null) {
-                    data.putString("LinkedHamsterName", Component.Serializer.toJson(nameToShow, player.registryAccess()));
+                    data.store("LinkedHamsterName", ComponentSerialization.CODEC, nameToShow);
                 }
             }
 

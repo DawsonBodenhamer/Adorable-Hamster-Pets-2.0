@@ -1,5 +1,8 @@
 package net.dawson.adorablehamsterpets.entity.custom;
 
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.core.UUIDUtil;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.accessor.PlayerEntityAccessor;
 import net.dawson.adorablehamsterpets.advancement.criterion.ModCriteria;
@@ -93,8 +96,8 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
         }
 
         // --- 3. Calculate Profitability & Depletion ---
-        if (this.hamsterNbt.hasUUID("Owner")) {
-            UUID ownerUuid = this.hamsterNbt.getUUID("Owner");
+        if (this.hamsterNbt.read("Owner", UUIDUtil.CODEC).isPresent()) {
+            UUID ownerUuid = this.hamsterNbt.read("Owner", UUIDUtil.CODEC).orElse(null);
             Player player = this.level().getPlayerByUUID(ownerUuid);
 
             if (player instanceof PlayerEntityAccessor accessor) {
@@ -125,22 +128,15 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
 
         // Check for Acorn Hat in Slot 6
         this.hasAcornHat = false;
-        if (this.hamsterNbt.contains("Inventory", Tag.TAG_COMPOUND)) {
-            CompoundTag invNbt = this.hamsterNbt.getCompound("Inventory");
-            if (invNbt.contains("Items", Tag.TAG_LIST)) {
-                ListTag itemsList = invNbt.getList("Items", Tag.TAG_COMPOUND);
-                for (int i = 0; i < itemsList.size(); ++i) {
-                    CompoundTag itemTag = itemsList.getCompound(i);
-                    int slot = itemTag.getByte("Slot") & 255;
-                    if (slot == HamsterInventoryUtil.ACCESSORY_SLOT_INDEX) {
-                        ItemStack stack = ItemStack.parse(this.registryAccess(), itemTag).orElse(ItemStack.EMPTY);
-                        if (stack.is(ModItems.ACORN_HAT.get())) {
-                            this.hasAcornHat = true;
-                            break;
-                        }
-                    }
+        if (this.hamsterNbt.contains("Inventory")) {
+            CompoundTag invNbt = this.hamsterNbt.getCompoundOrEmpty("Inventory");
+            // 26.2 port: the inventory is a codec list now (see HamsterInventoryNbt), slots by index
+            invNbt.read("Items", ItemStack.OPTIONAL_CODEC.listOf()).ifPresent(items -> {
+                if (items.size() > HamsterInventoryUtil.ACCESSORY_SLOT_INDEX
+                        && items.get(HamsterInventoryUtil.ACCESSORY_SLOT_INDEX).is(ModItems.ACORN_HAT.get())) {
+                    this.hasAcornHat = true;
                 }
-            }
+            });
         }
 
         // If exhausted, drastically reduce duration (20% of normal, min 60 ticks)
@@ -181,7 +177,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
     @Override
     public void tick() {
         super.tick();
-        if (this.level().isClientSide) return;
+        if (this.level().isClientSide()) return;
 
         // 1. Ensure registration in case of server restart
         if (!this.isRegistered && this.anchorPos != null) {
@@ -355,7 +351,7 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
     }
 
     private void finishHeist(boolean success) {
-        if (this.level().isClientSide) return;
+        if (this.level().isClientSide()) return;
         ServerLevel serverWorld = (ServerLevel) this.level();
 
         BlockPos effectPos = (this.forcedExitPos != null && this.validLeafPositions.contains(this.forcedExitPos.asLong())) ? this.forcedExitPos : this.blockPosition();
@@ -387,12 +383,12 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
                 newHamster.triggerAnimOnServer("mainController", "anim_hamster_sulk");
 
                 // Send exhausted message & trigger deforestation advancement
-                if (this.isExhausted && this.hamsterNbt.hasUUID("Owner")) {
-                    UUID ownerUuid = this.hamsterNbt.getUUID("Owner");
+                if (this.isExhausted && this.hamsterNbt.read("Owner", UUIDUtil.CODEC).isPresent()) {
+                    UUID ownerUuid = this.hamsterNbt.read("Owner", UUIDUtil.CODEC).orElse(null);
                     Player owner = serverWorld.getPlayerByUUID(ownerUuid);
 
                     if (owner != null) {
-                        owner.displayClientMessage(Component.translatable("message.adorablehamsterpets.tree_heist_exhausted").withStyle(ChatFormatting.RED), true);
+                        owner.sendOverlayMessage(Component.translatable("message.adorablehamsterpets.tree_heist_exhausted").withStyle(ChatFormatting.RED));
                         if (owner instanceof ServerPlayer serverPlayer) {
                             ModCriteria.TREE_HEIST_DEPLETION.get().trigger(serverPlayer);
                         }
@@ -418,8 +414,9 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    protected void addAdditionalSaveData(ValueOutput out) {
+        super.addAdditionalSaveData(out);
+        CompoundTag nbt = new CompoundTag();
         nbt.putInt("SearchTimer", this.searchTimer);
         nbt.putInt("MaxSearchDuration", this.maxSearchDuration);
         nbt.putInt("RummageTimer", this.rummageTimer);
@@ -433,25 +430,27 @@ public class HamsterTreeSearcherEntity extends HamsterAbstractHiddenEntity {
             posList.add(LongTag.valueOf(pos));
         }
         nbt.put("ValidLeafPositions", posList);
+        out.store("AdorableHamsterPets.TreeSearcher", CompoundTag.CODEC, nbt);
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        this.searchTimer = nbt.getInt("SearchTimer");
-        this.maxSearchDuration = nbt.getInt("MaxSearchDuration");
-        this.rummageTimer = nbt.getInt("RummageTimer");
-        this.isExhausted = nbt.getBoolean("IsExhausted");
-        this.dropChanceMultiplier = nbt.getFloat("DropMultiplier");
-        this.hasAcornHat = nbt.getBoolean("HasAcornHat");
-        this.dropCooldown = nbt.getInt("DropCooldown");
+    protected void readAdditionalSaveData(ValueInput in) {
+        super.readAdditionalSaveData(in);
+        CompoundTag nbt = in.read("AdorableHamsterPets.TreeSearcher", CompoundTag.CODEC).orElseGet(CompoundTag::new);
+        this.searchTimer = nbt.getIntOr("SearchTimer", 0);
+        this.maxSearchDuration = nbt.getIntOr("MaxSearchDuration", 0);
+        this.rummageTimer = nbt.getIntOr("RummageTimer", 0);
+        this.isExhausted = nbt.getBooleanOr("IsExhausted", false);
+        this.dropChanceMultiplier = nbt.getFloatOr("DropMultiplier", 0.0F);
+        this.hasAcornHat = nbt.getBooleanOr("HasAcornHat", false);
+        this.dropCooldown = nbt.getIntOr("DropCooldown", 0);
 
         this.validLeafPositions.clear();
-        if (nbt.contains("ValidLeafPositions", Tag.TAG_LIST)) {
-            ListTag list = nbt.getList("ValidLeafPositions", Tag.TAG_LONG);
+        if (nbt.contains("ValidLeafPositions")) {
+            ListTag list = nbt.getListOrEmpty("ValidLeafPositions");
             for (Tag element : list) {
                 if (element instanceof LongTag nbtLong) {
-                    this.validLeafPositions.add(nbtLong.getAsLong());
+                    this.validLeafPositions.add(nbtLong.asLong().orElse(0L));
                 }
             }
         }

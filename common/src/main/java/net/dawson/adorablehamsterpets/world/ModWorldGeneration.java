@@ -88,8 +88,8 @@ public class ModWorldGeneration {
      * @return True if the feature should spawn in this biome according to config rules.
      */
     public static boolean shouldFeatureSpawnInBiome(Holder<PlacedFeature> feature, Holder<Biome> biome) {
-        Identifier featureId = feature.unwrapKey().map(ResourceKey::location).orElse(null);
-        Identifier biomeId = biome.unwrapKey().map(ResourceKey::location).orElse(null);
+        Identifier featureId = feature.unwrapKey().map(ResourceKey::identifier).orElse(null);
+        Identifier biomeId = biome.unwrapKey().map(ResourceKey::identifier).orElse(null);
 
         if (featureId == null || biomeId == null) {
             return false;
@@ -151,7 +151,7 @@ public class ModWorldGeneration {
             return false;
         }
 
-        String featurePath = featureKey.location().getPath();
+        String featurePath = featureKey.identifier().getPath();
 
         boolean isCandidate = switch (featurePath) {
             case "custom_sunflower_placed", "patch_sunflower" -> SUNFLOWER_IDS.contains(biomeId) ||

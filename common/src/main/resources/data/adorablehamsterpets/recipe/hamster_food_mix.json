@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "adorablehamsterpets:hamster_food_mix_crate"
+  ],
+  "result": {
+    "count": 9,
+    "id": "adorablehamsterpets:hamster_food_mix"
+  }
+}

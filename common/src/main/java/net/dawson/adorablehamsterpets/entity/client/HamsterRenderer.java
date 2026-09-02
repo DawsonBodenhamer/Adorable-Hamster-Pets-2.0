@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.entity.client;
 
+import net.minecraft.core.UUIDUtil;
 import java.lang.Math;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -48,6 +49,7 @@ import com.geckolib.renderer.GeoEntityRenderer;
 import com.geckolib.renderer.base.BoneSnapshots;
 import com.geckolib.renderer.base.RenderPassInfo;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 
 public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRenderState> {
 
@@ -56,6 +58,12 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private static final String SEAT_BONE = "body_child";
+
+    // Moved from HamsterModel with the bone logic (GeckoLib 5)
+    private static final float ADULT_SCALE = 0.8f;
+    private static final float ADULT_HEAD_SCALE = 1.0f;
+    private static final float BABY_SCALE = 0.5f;
+    private static final float BABY_HEAD_SCALE = 1.2f;
 
     // Suppresses vanilla passenger rendering
     public static final ThreadLocal<Boolean> IS_RENDERING_PASSENGER = ThreadLocal.withInitial(() -> false);
@@ -108,10 +116,13 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
 
         // Track matrices so the post pass can position passengers, the mouth item
         // and particle emitters against live bone transforms.
-        BakedGeoModel model = renderPass.model();
-        model.getBone("left_foot").ifPresent(bone -> bone.setTrackingMatrices(true));
-        model.getBone("nose").ifPresent(bone -> bone.setTrackingMatrices(true));
-        model.getBone(SEAT_BONE).ifPresent(bone -> bone.setTrackingMatrices(true));
+        // 26.2 port (GeckoLib 5): bones no longer track matrices; register listeners
+        // that hand the post pass each bone's world position instead.
+        HamsterRenderState state = renderPass.renderState();
+        state.bonePositions.clear();
+        for (String boneName : new String[] {"left_foot", "nose", SEAT_BONE}) {
+            renderPass.addBonePositionListener(boneName, (position, rotation, scale) -> state.bonePositions.put(boneName, position));
+        }
     }
 
     /**
@@ -173,20 +184,21 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
             state.groundYOffset = entity.renderedGroundYOffset;
         }
 
-        // --- 5. Iris/Shader Compatibility Hack ---
-        // Force GeckoLib to rebuild bone poses for this entity. Prevents animations
-        // from "bleeding" between different hamsters during multi-pass rendering.
-        // Multi-passes (and game pauses/server lag) show up as an unchanged render time.
-        double currentTick = entity.tickCount + partialTick;
-        AnimatableInstanceCache cache = entity.getAnimatableInstanceCache();
-        if (cache != null) {
-            AnimatableManager<?> manager = cache.getManagerForId(entity.getId());
-            if (manager != null && currentTick == entity.lastRenderTime) {
-                // Microscopic delta, so transition math does not stretch the model
-                manager.updatedAt(currentTick - 0.0000001);
-            }
+
+        // --- 5b. Rolling Shadow Offset ---
+        // 26.2 port: this used to be an EntityRenderDispatcher.renderShadow mixin.
+        // Shadows are now a list of pieces on the render state, so the roll offset
+        // is applied by shifting each piece relative to the entity instead.
+        double rollOffset = entity.getRollShadowOffset(partialTick);
+        if (rollOffset > 0.0D && !state.shadowPieces.isEmpty()) {
+            float bodyYaw = Mth.lerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+            float yawRadians = (float) Math.toRadians(bodyYaw);
+            float dx = (float) (Math.sin(yawRadians) * rollOffset);
+            float dz = (float) (-Math.cos(yawRadians) * rollOffset);
+            state.shadowPieces.replaceAll(piece -> new EntityRenderState.ShadowPiece(
+                    piece.relativeX() + dx, piece.relativeY(), piece.relativeZ() + dz,
+                    piece.shapeBelow(), piece.alpha()));
         }
-        entity.lastRenderTime = currentTick;
 
         // --- 6. Data the post pass needs ---
         state.entity = entity;
@@ -226,12 +238,12 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
 
         // --- 1. Handle Keyframe Particles ---
         if (animatable.particleEffectId != null) {
-            handleParticleKeyframes(animatable, model);
+            handleParticleKeyframes(animatable, state);
         }
 
         // --- 2. Handle Keyframe Sounds ---
         if (animatable.soundEffectId != null) {
-            handleSoundKeyframes(animatable);
+            handleSoundKeyframes(animatable, state);
         }
 
         // TODO(26.2 port): passengers and the mouth item still need porting.
@@ -262,18 +274,18 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
         if (AdorableHamsterPetsClient.isPerformanceModeEnabled) {
             // Hide everything except absolute essentials
             for (GeoBone bone : model.boneLookup().get().values()) {
-                String name = bone.getName();
+                String name = bone.name();
                 boolean keepVisible = name.equals("root")
                         || name.equals("body_parent")
                         || name.equals("body_child");
-                bone.setHidden(!keepVisible);
+                snapshots.get(bone).skipRender(!keepVisible);
             }
 
             return; // Skip all other visual calculations
         } else {
             // Restore visibility to all bones when performance mode off
             for (GeoBone bone : model.boneLookup().get().values()) {
-                bone.setHidden(false);
+                snapshots.get(bone).skipRender(false);
             }
         }
 
@@ -297,7 +309,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
         // --- Statue / AI Disabled Logic ---
         var closedEyesBone = model.getBone("closed_eyes").orElse(null);
         if (closedEyesBone != null) {
-            closedEyesBone.setHidden(entity.isNoAi()); // Ensure eyes remain open in t-pose
+            snapshots.get(closedEyesBone).skipRender(entity.isNoAi()); // Ensure eyes remain open in t-pose
         }
 
         // --- Easter Egg Logic ---
@@ -314,24 +326,24 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
         int flowerType = entity.getEntityData().get(HamsterEntity.FLOWER_POS);
         boolean useArmorFlowers = isArmorVisible && Configs.AHP_MAIN.renderFlowersWithArmor.get();
 
-        if (flowerHeadNoArmorBone != null) flowerHeadNoArmorBone.setHidden(flowerType != 1 || useArmorFlowers);
-        if (flowerSideNoArmorBone != null) flowerSideNoArmorBone.setHidden(flowerType != 2 || useArmorFlowers);
-        if (flowerBackNoArmorBone != null) flowerBackNoArmorBone.setHidden(flowerType != 3 || useArmorFlowers);
+        if (flowerHeadNoArmorBone != null) snapshots.get(flowerHeadNoArmorBone).skipRender(flowerType != 1 || useArmorFlowers);
+        if (flowerSideNoArmorBone != null) snapshots.get(flowerSideNoArmorBone).skipRender(flowerType != 2 || useArmorFlowers);
+        if (flowerBackNoArmorBone != null) snapshots.get(flowerBackNoArmorBone).skipRender(flowerType != 3 || useArmorFlowers);
 
-        if (flowerHeadWithArmorBone != null) flowerHeadWithArmorBone.setHidden(flowerType != 1 || !useArmorFlowers);
-        if (flowerSideWithArmorBone != null) flowerSideWithArmorBone.setHidden(flowerType != 2 || !useArmorFlowers);
-        if (flowerBackWithArmorBone != null) flowerBackWithArmorBone.setHidden(flowerType != 3 || !useArmorFlowers);
+        if (flowerHeadWithArmorBone != null) snapshots.get(flowerHeadWithArmorBone).skipRender(flowerType != 1 || !useArmorFlowers);
+        if (flowerSideWithArmorBone != null) snapshots.get(flowerSideWithArmorBone).skipRender(flowerType != 2 || !useArmorFlowers);
+        if (flowerBackWithArmorBone != null) snapshots.get(flowerBackWithArmorBone).skipRender(flowerType != 3 || !useArmorFlowers);
 
         // --- Cheek Pouch Logic ---
         if (leftCheekDefBone != null && leftCheekInfBone != null) {
             boolean leftFull = entity.isLeftCheekFull();
-            leftCheekDefBone.setHidden(leftFull);
-            leftCheekInfBone.setHidden(!leftFull);
+            snapshots.get(leftCheekDefBone).skipRender(leftFull);
+            snapshots.get(leftCheekInfBone).skipRender(!leftFull);
         }
         if (rightCheekDefBone != null && rightCheekInfBone != null) {
             boolean rightFull = entity.isRightCheekFull();
-            rightCheekDefBone.setHidden(rightFull);
-            rightCheekInfBone.setHidden(!rightFull);
+            snapshots.get(rightCheekDefBone).skipRender(rightFull);
+            snapshots.get(rightCheekInfBone).skipRender(!rightFull);
         }
 
         // --- Armor/Accessory Logic ---
@@ -355,10 +367,10 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
                 shouldShowHat = true;
             }
 
-            rightEarBone.setHidden(shouldHideEar);
+            snapshots.get(rightEarBone).skipRender(shouldHideEar);
 
             if (acornHatBone != null) {
-                acornHatBone.setHidden(!shouldShowHat);
+                snapshots.get(acornHatBone).skipRender(!shouldShowHat);
             }
         }
 
@@ -376,19 +388,19 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
             float currentBaseScale = Mth.lerp(ageProgress, BABY_SCALE, ADULT_SCALE);
             float currentHeadScale = Mth.lerp(ageProgress, BABY_HEAD_SCALE, ADULT_HEAD_SCALE);
 
-            rootBone.setScaleX(currentBaseScale);
-            rootBone.setScaleZ(currentBaseScale);
+            snapshots.get(rootBone).setScaleX(currentBaseScale);
+            snapshots.get(rootBone).setScaleZ(currentBaseScale);
 
             // Override y scale for dynamic squash and stretch if shoulder pet
             if (entity.isShoulderPet()) {
-                rootBone.setScaleY(currentBaseScale * entity.dynamicScaleY);
+                snapshots.get(rootBone).setScaleY(currentBaseScale * entity.dynamicScaleY);
             } else {
-                rootBone.setScaleY(currentBaseScale);
+                snapshots.get(rootBone).setScaleY(currentBaseScale);
             }
 
-            headParentBone.setScaleX(currentHeadScale);
-            headParentBone.setScaleY(currentHeadScale);
-            headParentBone.setScaleZ(currentHeadScale);
+            snapshots.get(headParentBone).setScaleX(currentHeadScale);
+            snapshots.get(headParentBone).setScaleY(currentHeadScale);
+            snapshots.get(headParentBone).setScaleZ(currentHeadScale);
 
             float pitchOffset = 0.0f;
 
@@ -404,10 +416,10 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
             } else if (entity.isInWater() || entity.isInLava()) {
                 // --- Swim Mode ---
                 // Use pre-smoothed pitch to eliminate buoyancy RNG flickering
-                float partialTick = animationState.getPartialTick();
+                float partialTick = renderPass.renderState().getPartialTick();
                 pitchOffset = Mth.lerp(partialTick, entity.prevClientSwimPitch, entity.clientSwimPitch);
             } else if (entity.clientFallPitchProgress > 0.0f || entity.prevClientFallPitchProgress > 0.0f) {
-                float partialTick = animationState.getPartialTick();
+                float partialTick = renderPass.renderState().getPartialTick();
                 float lerpedProgress = Mth.lerp(partialTick, entity.prevClientFallPitchProgress, entity.clientFallPitchProgress);
 
                 // Natural Fall Mode: Procedural Nose Dive (Cosine Interpolation)
@@ -418,13 +430,13 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
             }
 
             // Absolute assignment
-            rootBone.setRotX(pitchOffset);
+            snapshots.get(rootBone).setRotX(pitchOffset);
 
             // Easter Egg rotation if applicable
             if (isMoonwalking) {
-                rootBone.setRotY((float) Math.PI);
+                snapshots.get(rootBone).setRotY((float) Math.PI);
             } else {
-                rootBone.setRotY(0.0f);
+                snapshots.get(rootBone).setRotY(0.0f);
             }
         }
     }
@@ -433,12 +445,17 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
      *        Keyframe Effects
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private void handleParticleKeyframes(HamsterEntity animatable, BakedGeoModel model) {
+    /** Bone world position captured this pass, as the JOML vector the effect code expects. */
+    private static java.util.Optional<Vector3d> bonePos(HamsterRenderState state, String boneName) {
+        Vec3 v = state.bonePositions.get(boneName);
+        return v == null ? java.util.Optional.empty() : java.util.Optional.of(new Vector3d(v.x, v.y, v.z));
+    }
+
+    private void handleParticleKeyframes(HamsterEntity animatable, HamsterRenderState renderState) {
         RandomSource random = animatable.getRandom();
         switch (animatable.particleEffectId) {
             case "attack_poof":
-                model.getBone("left_foot").ifPresent(bone -> {
-                    Vector3d pos = bone.getWorldPosition();
+                bonePos(renderState, "left_foot").ifPresent(pos -> {
                     for (int i = 0; i < 8; ++i) {
                         double d = random.nextGaussian() * 0.1;
                         double e = random.nextGaussian() * 0.2;
@@ -452,8 +469,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
                 });
                 break;
             case "seeking_dust":
-                model.getBone("nose").ifPresent(bone -> {
-                    Vector3d pos = bone.getWorldPosition();
+                bonePos(renderState, "nose").ifPresent(pos -> {
                     BlockPos blockBelow = BlockPos.containing(pos.x, pos.y - 0.1, pos.z).below();
                     BlockState state = animatable.level().getBlockState(blockBelow);
                     if (state.isAir()) state = Blocks.DIRT.defaultBlockState();
@@ -469,14 +485,13 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
                 break;
             case "hamster_spit_particles":
                 // Spawn items and spit them out
-                model.getBone("nose").ifPresent(bone -> {
-                    Vector3d pos = bone.getWorldPosition();
+                bonePos(renderState, "nose").ifPresent(pos -> {
                     // 1. Item Particles (if holding item)
                     ItemStack mouthStack = animatable.getMouthItemStack();
                     if (!mouthStack.isEmpty()) {
                         for (int i = 0; i < 5; i++) {
                             animatable.level().addParticle(
-                                    new ItemParticleOption(ParticleTypes.ITEM, mouthStack),
+                                    new ItemParticleOption(ParticleTypes.ITEM, mouthStack.getItem()),
                                     pos.x, pos.y, pos.z,
                                     (random.nextDouble() - 0.5) * 0.3,
                                     random.nextDouble() * 0.2,
@@ -500,7 +515,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity, HamsterRen
         animatable.particleEffectId = null;
     }
 
-    private void handleSoundKeyframes(HamsterEntity animatable) {
+    private void handleSoundKeyframes(HamsterEntity animatable, HamsterRenderState renderState) {
         Minecraft client = Minecraft.getInstance();
         switch (animatable.soundEffectId) {
             case "dynamic_item_sound":
