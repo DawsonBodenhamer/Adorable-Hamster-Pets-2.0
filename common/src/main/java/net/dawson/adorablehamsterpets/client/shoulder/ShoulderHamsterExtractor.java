@@ -45,6 +45,9 @@ public final class ShoulderHamsterExtractor {
             HamsterState.fromNbt(shoulderNbt).ifPresent(hamsterState -> {
                 HamsterEntity dummy = clientData.getOrCreateDummy(location, player.level());
                 if (dummy == null) return;
+                // 26.2: Entity.getId() throws before an id is assigned and the dummy never joins the level;
+                // GeckoLib's item extraction asks for it, so give each shoulder dummy a stable negative id.
+                dummy.setId(-1000 - location.ordinal());
                 HamsterShoulderFeatureRenderer.updateDummyState(dummy, hamsterState, clientData, location, player);
                 dummy.dynamicScaleY = clientData.getRenderScaleY(location, partialTick);
                 if (!(Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(dummy) instanceof HamsterRenderer renderer)) return;
