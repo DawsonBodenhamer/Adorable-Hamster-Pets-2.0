@@ -6,9 +6,9 @@ import net.dawson.adorablehamsterpets.entity.ShoulderLocation;
 import net.dawson.adorablehamsterpets.entity.client.feature.ShoulderAnimationState;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.RawAnimation;
+import com.geckolib.animation.AnimatableManager;
+import com.geckolib.animation.AnimationController;
+import com.geckolib.animation.RawAnimation;
 
 /**
  * Owns hamster animation definitions, selection precedence, trigger registration, and the three

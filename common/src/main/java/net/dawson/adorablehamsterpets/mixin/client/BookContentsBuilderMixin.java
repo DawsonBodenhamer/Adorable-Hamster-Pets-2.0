@@ -9,7 +9,7 @@ import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
 import net.dawson.adorablehamsterpets.client.announcements.Semver;
 import net.dawson.adorablehamsterpets.mixin.accessor.BookContentsBuilderAccessor;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -69,25 +69,25 @@ public class BookContentsBuilderMixin {
         Book hamsterBook = accessor.getBook();
 
         // Only modify the Hamster Tips guide book
-        if (hamsterBook == null || !hamsterBook.id.equals(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"))) {
+        if (hamsterBook == null || !hamsterBook.id.equals(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"))) {
             return;
         }
 
         AdorableHamsterPets.LOGGER.debug("[AHP Mixin] Found target book. Starting virtual content injection.");
 
         // --- 2. Get mutable maps from the builder ---
-        Map<ResourceLocation, BookCategory> categories = accessor.getCategories();
-        Map<ResourceLocation, BookEntry> entries = accessor.getEntries();
+        Map<Identifier, BookCategory> categories = accessor.getCategories();
+        Map<Identifier, BookEntry> entries = accessor.getEntries();
         HolderLookup.Provider registries = level.registryAccess();
 
         // --- 3. Create and Add Virtual Categories ---
-        ResourceLocation updatesId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "update_notes");
+        Identifier updatesId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "update_notes");
         if (!categories.containsKey(updatesId)) {
             BookCategory updatesCategory = createVirtualCategory(hamsterBook, "book.adorablehamsterpets.category.update_notes", "minecraft:writable_book", 99, updatesId, registries);
             categories.put(updatesId, updatesCategory);
         }
 
-        ResourceLocation announcementsId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcements");
+        Identifier announcementsId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcements");
         if (!categories.containsKey(announcementsId)) {
             BookCategory announcementsCategory = createVirtualCategory(hamsterBook, "book.adorablehamsterpets.category.announcements", "adorablehamsterpets:announcement_bell_icon", 98, announcementsId, registries);
             categories.put(announcementsId, announcementsCategory);
@@ -152,12 +152,12 @@ public class BookContentsBuilderMixin {
         // Iterate using index to assign explicit sortnum
         for (int i = 0; i < sortedMessages.size(); i++) {
             Announcement announcement = sortedMessages.get(i);
-            ResourceLocation entryId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
+            Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
 
             if (!entries.containsKey(entryId)) {
                 String kind = announcement.kind();
                 boolean isUpdateRelated = "update_available".equals(kind) || "patch_notes".equals(kind);
-                ResourceLocation categoryId = isUpdateRelated ? updatesId : announcementsId;
+                Identifier categoryId = isUpdateRelated ? updatesId : announcementsId;
 
                 String icon;
                 boolean priority = false;
@@ -218,7 +218,7 @@ public class BookContentsBuilderMixin {
      * @param registries The registry wrapper passed from the main build loop.
      * @return A new {@code BookCategory} instance.
      */
-    private BookCategory createVirtualCategory(Book book, String nameKey, String icon, int sortnum, ResourceLocation id, HolderLookup.Provider registries) {
+    private BookCategory createVirtualCategory(Book book, String nameKey, String icon, int sortnum, Identifier id, HolderLookup.Provider registries) {
         JsonObject json = new JsonObject();
         json.addProperty("name", nameKey);
         json.addProperty("description", nameKey + ".desc");
@@ -242,7 +242,7 @@ public class BookContentsBuilderMixin {
      * @param registries The registry wrapper passed from the main build loop.
      * @return A new {@code BookEntry} instance.
      */
-    private BookEntry createVirtualEntry(Book book, String name, String icon, boolean priority, ResourceLocation categoryId, ResourceLocation entryId, int sortnum, HolderLookup.Provider registries) {
+    private BookEntry createVirtualEntry(Book book, String name, String icon, boolean priority, Identifier categoryId, Identifier entryId, int sortnum, HolderLookup.Provider registries) {
         JsonObject json = new JsonObject();
         json.addProperty("name", name);
         json.addProperty("icon", icon);

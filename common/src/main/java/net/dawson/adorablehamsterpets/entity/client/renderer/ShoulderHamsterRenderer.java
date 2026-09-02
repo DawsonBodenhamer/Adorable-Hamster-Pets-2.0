@@ -6,7 +6,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
+import com.geckolib.cache.object.BakedGeoModel;
 
 /**
  * A specialized renderer for the shoulder-mounted hamster.

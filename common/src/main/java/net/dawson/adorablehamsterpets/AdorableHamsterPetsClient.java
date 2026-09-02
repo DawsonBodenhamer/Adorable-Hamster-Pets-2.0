@@ -64,7 +64,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.sounds.SoundEvent;
@@ -113,7 +113,7 @@ public class AdorableHamsterPetsClient {
 
     // --- Shoulder Mount SFX State ---
     private static int mountSoundDelayTicks = 0;
-    private static ResourceLocation pendingMountSoundId = null;
+    private static Identifier pendingMountSoundId = null;
     private static float pendingMountSoundPitch = 1.0f;
 
     // --- Throw Queue State ---
@@ -1036,7 +1036,7 @@ public class AdorableHamsterPetsClient {
      * Handles the PlayMountSoundPayload packet.
      * Determines whether to delay the mount sound based on the player's active perspective.
      */
-    public static void handlePlayMountSound(ResourceLocation soundId, float pitch, int delay) {
+    public static void handlePlayMountSound(Identifier soundId, float pitch, int delay) {
         Minecraft client = Minecraft.getInstance();
 
         if (MiscUtil.ModCompatUtil.hasRequiredPunchyVersion() && client.options.getCameraType().isFirstPerson()) {

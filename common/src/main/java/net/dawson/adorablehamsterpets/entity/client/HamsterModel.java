@@ -6,16 +6,16 @@ import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.dawson.adorablehamsterpets.item.custom.HamsterArmorItem;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animation.AnimationProcessor;
-import software.bernie.geckolib.animation.AnimationState;
-import software.bernie.geckolib.cache.object.GeoBone;
-import software.bernie.geckolib.model.GeoModel;
-import software.bernie.geckolib.renderer.GeoRenderer;
+import com.geckolib.animation.AnimationProcessor;
+import com.geckolib.animation.AnimationState;
+import com.geckolib.cache.object.GeoBone;
+import com.geckolib.model.GeoModel;
+import com.geckolib.renderer.GeoRenderer;
 
 import java.util.Locale;
 
@@ -31,27 +31,27 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
     private static final float BABY_SCALE = 0.5f;
     private static final float BABY_HEAD_SCALE = 1.2f;
 
-    private static final ResourceLocation MODEL_RESOURCE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "geo/hamster.geo.json");
-    private static final ResourceLocation ANIMATION_RESOURCE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "animations/anim_hamster.animation.json");
-    private static final ResourceLocation FALLBACK_TEXTURE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
+    private static final Identifier MODEL_RESOURCE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "geo/hamster.geo.json");
+    private static final Identifier ANIMATION_RESOURCE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "animations/anim_hamster.animation.json");
+    private static final Identifier FALLBACK_TEXTURE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
 
     /* ──────────────────────────────────────────────────────────────────────────────
      *        Overrides
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public ResourceLocation getModelResource(HamsterEntity animatable, @Nullable GeoRenderer<HamsterEntity> renderer) {
+    public Identifier getModelResource(HamsterEntity animatable, @Nullable GeoRenderer<HamsterEntity> renderer) {
         return MODEL_RESOURCE;
     }
 
     @Override
-    public ResourceLocation getTextureResource(HamsterEntity animatable, @Nullable GeoRenderer<HamsterEntity> renderer) {
+    public Identifier getTextureResource(HamsterEntity animatable, @Nullable GeoRenderer<HamsterEntity> renderer) {
         // Fallback texture; actual texture handled by renderer
         return FALLBACK_TEXTURE;
     }
 
     @Override
-    public ResourceLocation getAnimationResource(HamsterEntity animatable) {
+    public Identifier getAnimationResource(HamsterEntity animatable) {
         return ANIMATION_RESOURCE;
     }
 
@@ -235,13 +235,13 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
     // Deprecated methods required by superclass
     @Deprecated(forRemoval = true)
     @Override
-    public ResourceLocation getModelResource(HamsterEntity animatable) {
+    public Identifier getModelResource(HamsterEntity animatable) {
         return this.getModelResource(animatable, null);
     }
 
     @Deprecated(forRemoval = true)
     @Override
-    public ResourceLocation getTextureResource(HamsterEntity animatable) {
+    public Identifier getTextureResource(HamsterEntity animatable) {
         return this.getTextureResource(animatable, null);
     }
 }

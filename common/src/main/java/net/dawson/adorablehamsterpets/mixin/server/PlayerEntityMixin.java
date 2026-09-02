@@ -46,7 +46,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.level.ServerLevel;
@@ -1696,7 +1696,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     @Unique
     private boolean ahp$tryFallbackDelivery(ServerPlayer player) {
         PlayerAdvancements advancementTracker = player.getAdvancements();
-        ResourceLocation flagAdvId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "technical/has_received_initial_guidebook");
+        Identifier flagAdvId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "technical/has_received_initial_guidebook");
         AdvancementHolder flagAdvancementEntry = player.server.getAdvancements().get(flagAdvId);
 
         // Abort if they've already received the initial delivery at some point

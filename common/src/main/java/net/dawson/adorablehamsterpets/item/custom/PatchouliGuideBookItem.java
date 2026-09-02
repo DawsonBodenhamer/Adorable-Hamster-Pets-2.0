@@ -4,7 +4,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -30,7 +30,7 @@ public class PatchouliGuideBookItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
         ItemStack stack = user.getItemInHand(hand);
         if (user instanceof ServerPlayer serverPlayer) {
-            PatchouliAPI.get().openBookGUI(serverPlayer, ResourceLocation.fromNamespaceAndPath("adorablehamsterpets", "hamster_tips_guide_book"));
+            PatchouliAPI.get().openBookGUI(serverPlayer, Identifier.fromNamespaceAndPath("adorablehamsterpets", "hamster_tips_guide_book"));
         }
         return InteractionResultHolder.success(stack);
     }

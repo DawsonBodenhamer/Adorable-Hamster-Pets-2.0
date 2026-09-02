@@ -19,7 +19,7 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +64,8 @@ import java.util.List;
 public class AnnouncementScreen extends Screen {
 
     // --- UI Constants ---
-    private static final ResourceLocation BACKGROUND_TEXTURE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/announcement_ui.png");
-    private static final ResourceLocation SCROLLBAR_TEXTURE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/announcement_ui_scroll_bar.png");
+    private static final Identifier BACKGROUND_TEXTURE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/announcement_ui.png");
+    private static final Identifier SCROLLBAR_TEXTURE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/announcement_ui_scroll_bar.png");
     private static final int BACKGROUND_WIDTH = 256;
     private static final int BACKGROUND_HEIGHT = 256;
     private static final int TOTAL_GUI_HEIGHT = 283; // BG height + padding (7) + button height (20)
@@ -205,7 +205,7 @@ public class AnnouncementScreen extends Screen {
         primaryBuilders.add(Button.builder(Component.translatable("gui.adorablehamsterpets.announcement.button.mark_as_read"), button -> {
             if (Screen.hasShiftDown()) {
                 // --- Shift-Click Action: Mark ALL as read ---
-                Book book = BookRegistry.INSTANCE.books.get(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+                Book book = BookRegistry.INSTANCE.books.get(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
                 if (book != null) {
                     AnnouncementManager.INSTANCE.getAllManifestMessages().forEach(msg -> {
                         // Mark the announcement as seen in my system
@@ -217,7 +217,7 @@ public class AnnouncementScreen extends Screen {
                         }
 
                         // Find and mark the corresponding virtual entry in Patchouli as read
-                        ResourceLocation entryId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + msg.id());
+                        Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + msg.id());
                         BookEntry entry = book.getContents().entries.get(entryId);
                         if (entry != null) {
                             PatchouliIntegration.setEntryAsRead(entry);

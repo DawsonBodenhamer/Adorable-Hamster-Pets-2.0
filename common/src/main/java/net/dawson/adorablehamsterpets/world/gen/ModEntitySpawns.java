@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
@@ -31,8 +31,8 @@ public class ModEntitySpawns {
 
     // --- Caches for Parsed Config Values ---
     private static final Set<TagKey<Biome>> PARSED_TAGS = new HashSet<>();
-    private static final Set<ResourceLocation> PARSED_INCLUDES = new HashSet<>();
-    private static final Set<ResourceLocation> PARSED_EXCLUDES = new HashSet<>();
+    private static final Set<Identifier> PARSED_INCLUDES = new HashSet<>();
+    private static final Set<Identifier> PARSED_EXCLUDES = new HashSet<>();
     private static final Set<TagKey<Biome>> PARSED_EXCLUDE_TAGS = new HashSet<>();
 
     static {
@@ -94,14 +94,14 @@ public class ModEntitySpawns {
         // Parse Tags
         for (String tagStr : config.spawnBiomeTags) {
             try {
-                PARSED_TAGS.add(TagKey.create(Registries.BIOME, ResourceLocation.parse(tagStr)));
+                PARSED_TAGS.add(TagKey.create(Registries.BIOME, Identifier.parse(tagStr)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome tag identifier in config: '{}'", tagStr);
             }
         }
         for (String tagStr : config.spawnBiomeConventionTags) {
             try {
-                PARSED_TAGS.add(TagKey.create(Registries.BIOME, ResourceLocation.parse(tagStr)));
+                PARSED_TAGS.add(TagKey.create(Registries.BIOME, Identifier.parse(tagStr)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome tag identifier in config: '{}'", tagStr);
             }
@@ -110,7 +110,7 @@ public class ModEntitySpawns {
         // Parse Includes
         for (String biomeIdStr : config.includeBiomes) {
             try {
-                PARSED_INCLUDES.add(ResourceLocation.parse(biomeIdStr));
+                PARSED_INCLUDES.add(Identifier.parse(biomeIdStr));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeConfig] Invalid biome identifier in include list: '{}'", biomeIdStr);
             }
@@ -119,7 +119,7 @@ public class ModEntitySpawns {
         // Parse Excludes (IDs)
         for (String biomeIdStr : config.excludeBiomes) {
             try {
-                PARSED_EXCLUDES.add(ResourceLocation.parse(biomeIdStr));
+                PARSED_EXCLUDES.add(Identifier.parse(biomeIdStr));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeConfig] Invalid biome identifier in exclude list: '{}'", biomeIdStr);
             }
@@ -128,7 +128,7 @@ public class ModEntitySpawns {
         // Parse Excludes (Tags)
         for (String tagStr : config.excludeBiomeTags) {
             try {
-                PARSED_EXCLUDE_TAGS.add(TagKey.create(Registries.BIOME, ResourceLocation.parse(tagStr)));
+                PARSED_EXCLUDE_TAGS.add(TagKey.create(Registries.BIOME, Identifier.parse(tagStr)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.info("[BiomeConfig] Invalid biome exclusion tag identifier in config: '{}'", tagStr);
             }
@@ -147,7 +147,7 @@ public class ModEntitySpawns {
      * @return True if hamsters should spawn in this biome, false otherwise.
      */
     public static boolean shouldAddFabricSpawn(BiomeModifications.BiomeContext ctx) {
-        ResourceLocation biomeId = ctx.getKey().orElse(null);
+        Identifier biomeId = ctx.getKey().orElse(null);
         return matchesConfiguredBiomePolicy(biomeId, ctx::hasTag);
     }
 
@@ -185,12 +185,12 @@ public class ModEntitySpawns {
      * @return True when the biome permits hamster spawning.
      */
     public static boolean isBiomeAllowed(Holder<Biome> biomeEntry) {
-        ResourceLocation biomeId = biomeEntry.unwrapKey().map(ResourceKey::location).orElse(null);
+        Identifier biomeId = biomeEntry.unwrapKey().map(ResourceKey::location).orElse(null);
         return matchesConfiguredBiomePolicy(biomeId, biomeEntry::is);
     }
 
     private static boolean matchesConfiguredBiomePolicy(
-            ResourceLocation biomeId, Predicate<TagKey<Biome>> matchesTag) {
+            Identifier biomeId, Predicate<TagKey<Biome>> matchesTag) {
         if (biomeId == null) return false;
 
         // 1. Exclusion check (ID) - Highest Priority

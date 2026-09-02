@@ -18,7 +18,7 @@ import net.minecraft.data.models.model.ModelTemplate;
 import net.minecraft.data.models.model.ModelTemplates;
 import net.minecraft.data.models.model.TextureMapping;
 import net.minecraft.data.models.model.TextureSlot;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import java.util.List;
 import java.util.Optional;
@@ -45,24 +45,24 @@ public class ModModelProvider extends FabricModelProvider {
         blockStateModelGenerator.createCropBlock(ModBlocks.CUCUMBER_CROP.get(), CucumberCropBlock.AGE, 0, 1, 2, 3);
 
         // --- 2. Wild Bushes ---
-        ResourceLocation wildGreenBeanSeededTexture = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_green_bean_bush_seeded");
-        ResourceLocation wildGreenBeanSeedlessTexture = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_green_bean_bush_seedless");
-        ResourceLocation wildCucumberSeededTexture = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_cucumber_bush_seeded");
-        ResourceLocation wildCucumberSeedlessTexture = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_cucumber_bush_seedless");
+        Identifier wildGreenBeanSeededTexture = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_green_bean_bush_seeded");
+        Identifier wildGreenBeanSeedlessTexture = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_green_bean_bush_seedless");
+        Identifier wildCucumberSeededTexture = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_cucumber_bush_seeded");
+        Identifier wildCucumberSeedlessTexture = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/wild_cucumber_bush_seedless");
 
-        ResourceLocation greenBeanSeededModelId = ModelTemplates.CROSS.createWithSuffix(
+        Identifier greenBeanSeededModelId = ModelTemplates.CROSS.createWithSuffix(
                 ModBlocks.WILD_GREEN_BEAN_BUSH.get(), "_seeded",
                 TextureMapping.cross(wildGreenBeanSeededTexture), blockStateModelGenerator.modelOutput
         );
-        ResourceLocation greenBeanSeedlessModelId = ModelTemplates.CROSS.createWithSuffix(
+        Identifier greenBeanSeedlessModelId = ModelTemplates.CROSS.createWithSuffix(
                 ModBlocks.WILD_GREEN_BEAN_BUSH.get(), "_seedless",
                 TextureMapping.cross(wildGreenBeanSeedlessTexture), blockStateModelGenerator.modelOutput
         );
-        ResourceLocation cucumberSeededModelId = ModelTemplates.CROSS.createWithSuffix(
+        Identifier cucumberSeededModelId = ModelTemplates.CROSS.createWithSuffix(
                 ModBlocks.WILD_CUCUMBER_BUSH.get(), "_seeded",
                 TextureMapping.cross(wildCucumberSeededTexture), blockStateModelGenerator.modelOutput
         );
-        ResourceLocation cucumberSeedlessModelId = ModelTemplates.CROSS.createWithSuffix(
+        Identifier cucumberSeedlessModelId = ModelTemplates.CROSS.createWithSuffix(
                 ModBlocks.WILD_CUCUMBER_BUSH.get(), "_seedless",
                 TextureMapping.cross(wildCucumberSeedlessTexture), blockStateModelGenerator.modelOutput
         );
@@ -90,25 +90,25 @@ public class ModModelProvider extends FabricModelProvider {
         blockStateModelGenerator.blockStateOutput.accept(
                 BlockModelGenerators.createSimpleBlock(
                         ModBlocks.ACORN_CRATE.get(),
-                        ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/acorn_crate")
+                        Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/acorn_crate")
                 )
         );
         blockStateModelGenerator.blockStateOutput.accept(
                 BlockModelGenerators.createSimpleBlock(
                         ModBlocks.CUCUMBER_CRATE.get(),
-                        ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/cucumber_crate")
+                        Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/cucumber_crate")
                 )
         );
         blockStateModelGenerator.blockStateOutput.accept(
                 BlockModelGenerators.createSimpleBlock(
                         ModBlocks.GREEN_BEANS_CRATE.get(),
-                        ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/green_beans_crate")
+                        Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/green_beans_crate")
                 )
         );
         blockStateModelGenerator.blockStateOutput.accept(
                 BlockModelGenerators.createSimpleBlock(
                         ModBlocks.HAMSTER_FOOD_MIX_CRATE.get(),
-                        ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_food_mix_crate")
+                        Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_food_mix_crate")
                 )
         );
     }
@@ -159,26 +159,26 @@ public class ModModelProvider extends FabricModelProvider {
         // Each one uses main "hamster_bed" item model
         for (RegistrySupplier<Item> bedItemSupplier : ModItems.HAMSTER_BED_ITEMS.values()) {
             itemModelGenerator.generateFlatItem(bedItemSupplier.get(), new ModelTemplate(
-                    Optional.of(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "item/hamster_bed")),
+                    Optional.of(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "item/hamster_bed")),
                     Optional.empty()
             ));
         }
 
         // --- 7. Crates ---
         itemModelGenerator.generateFlatItem(ModItems.ACORN_CRATE.get(), new ModelTemplate(
-                Optional.of(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/acorn_crate")),
+                Optional.of(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/acorn_crate")),
                 Optional.empty()
         ));
         itemModelGenerator.generateFlatItem(ModItems.CUCUMBER_CRATE.get(), new ModelTemplate(
-                Optional.of(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/cucumber_crate")),
+                Optional.of(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/cucumber_crate")),
                 Optional.empty()
         ));
         itemModelGenerator.generateFlatItem(ModItems.GREEN_BEANS_CRATE.get(), new ModelTemplate(
-                Optional.of(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/green_beans_crate")),
+                Optional.of(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/green_beans_crate")),
                 Optional.empty()
         ));
         itemModelGenerator.generateFlatItem(ModItems.HAMSTER_FOOD_MIX_CRATE.get(), new ModelTemplate(
-                Optional.of(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_food_mix_crate")),
+                Optional.of(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_food_mix_crate")),
                 Optional.empty()
         ));
     }
@@ -193,11 +193,11 @@ public class ModModelProvider extends FabricModelProvider {
                 "dark_oak", "mangrove", "cherry", "bamboo", "pale_oak"
         );
 
-        ResourceLocation baseModelId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_bed");
+        Identifier baseModelId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_bed");
 
         for (String wood : woodTypes) {
-            ResourceLocation variantModelId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_bed_" + wood);
-            ResourceLocation particleTexture = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_bed_" + wood);
+            Identifier variantModelId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_bed_" + wood);
+            Identifier particleTexture = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "block/hamster_bed_" + wood);
 
             TextureMapping textureMap = new TextureMapping().put(TextureSlot.PARTICLE, particleTexture);
 

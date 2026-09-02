@@ -7,7 +7,7 @@ import dev.architectury.platform.Platform;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import vazkii.patchouli.client.book.BookEntry;
 import vazkii.patchouli.client.book.ClientBookRegistry;
 import vazkii.patchouli.common.book.Book;
@@ -83,7 +83,7 @@ public class AnnouncementManager {
 
     // --- Session State ---
     private final Set<String> sessionSnoozedIds = new HashSet<>();
-    private final Set<ResourceLocation> deferredReadMarks = new HashSet<>();
+    private final Set<Identifier> deferredReadMarks = new HashSet<>();
     private boolean patchouliStateSynced = false;
 
     // --- File Paths ---
@@ -368,7 +368,7 @@ public class AnnouncementManager {
         ensureInitialized();
 
         // Get the book instance once
-        Book book = BookRegistry.INSTANCE.books.get(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+        Book book = BookRegistry.INSTANCE.books.get(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
         if (book == null) {
             AdorableHamsterPets.LOGGER.error("[Announcements] Could not mark all as read: Hamster Tips book not found.");
             return;
@@ -390,7 +390,7 @@ public class AnnouncementManager {
             }
 
             // Find and mark the corresponding virtual entry in Patchouli as read
-            ResourceLocation entryId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
+            Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
             BookEntry entry = book.getContents().entries.get(entryId);
             if (entry != null) {
                 PatchouliIntegration.setEntryAsRead(entry);
@@ -481,7 +481,7 @@ public class AnnouncementManager {
      *
      * @param entryId The Identifier of the virtual BookEntry.
      */
-    public void queueDeferredReadMark(ResourceLocation entryId) {
+    public void queueDeferredReadMark(Identifier entryId) {
         ensureInitialized();
         this.deferredReadMarks.add(entryId);
         AdorableHamsterPets.LOGGER.trace("[Announcements] Queued deferred read mark for entry: {}", entryId);
@@ -498,14 +498,14 @@ public class AnnouncementManager {
 
         AdorableHamsterPets.LOGGER.trace("[Announcements] Processing {} deferred read marks...", deferredReadMarks.size());
         // Get the book from the common BookRegistry's public map.
-        Book book = BookRegistry.INSTANCE.books.get(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+        Book book = BookRegistry.INSTANCE.books.get(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
         if (book == null) {
             AdorableHamsterPets.LOGGER.error("[Announcements] Could not process deferred read marks: Hamster Tips book not found.");
             return;
         }
 
         int successCount = 0;
-        for (ResourceLocation entryId : deferredReadMarks) {
+        for (Identifier entryId : deferredReadMarks) {
             // Access the public 'entries' map directly.
             BookEntry entry = book.getContents().entries.get(entryId);
             if (entry != null) {
@@ -729,7 +729,7 @@ public class AnnouncementManager {
         newSnoozedIds.entrySet().removeIf(entry -> {
             if (now.isAfter(entry.getValue())) {
                 // Snooze has expired
-                ResourceLocation entryId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + entry.getKey());
+                Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + entry.getKey());
                 PatchouliIntegration.setEntryAsUnread(entryId);
                 return true; // Remove this entry from the map
             }
@@ -755,7 +755,7 @@ public class AnnouncementManager {
         ensureInitialized();
 
         // --- See if Patchouli is ready ---
-        ResourceLocation bookId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
+        Identifier bookId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
         Book book = BookRegistry.INSTANCE.books.get(bookId);
         if (book == null) {
             // Patchouli is not ready yet. Try again on the next tick.
@@ -775,7 +775,7 @@ public class AnnouncementManager {
         AdorableHamsterPets.LOGGER.trace("[Announcements] -> Found {} pending notifications to sync.", pendingNotifications.size());
 
         for (PendingNotification notification : pendingNotifications) {
-            ResourceLocation entryId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + notification.announcement().id());
+            Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + notification.announcement().id());
             AdorableHamsterPets.LOGGER.trace("[Announcements] -> Syncing entry: {}", entryId);
             boolean success = PatchouliIntegration.setEntryAsUnread(entryId);
             if (success) {

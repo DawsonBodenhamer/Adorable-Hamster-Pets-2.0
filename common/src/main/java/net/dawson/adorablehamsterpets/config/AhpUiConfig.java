@@ -20,7 +20,7 @@ import net.dawson.adorablehamsterpets.client.announcements.AnnouncementManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 public class AhpUiConfig extends Config {
 
     public AhpUiConfig() {
-        super(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ui"));
+        super(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ui"));
 
         // --- Two-Way Binding for Announcement Icon Toggles ---
         // This block ensures the master "Enable Announcements" toggle stays synchronized

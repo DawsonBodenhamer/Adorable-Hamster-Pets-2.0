@@ -7,7 +7,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.entity.custom.genetics.HamsterPaletteManager;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -78,7 +78,7 @@ public final class HamsterGeneticsAdvancementUtil {
      * Explicitly grants a specific advancement to the player by its path.
      */
     private static void grantAdvancement(ServerPlayer player, String path) {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, path);
+        Identifier id = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, path);
         AdvancementHolder entry = player.server.getAdvancements().get(id);
 
         if (entry != null) {

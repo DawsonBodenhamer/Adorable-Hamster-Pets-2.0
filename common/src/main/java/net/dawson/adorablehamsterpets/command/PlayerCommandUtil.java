@@ -13,7 +13,7 @@ import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -32,7 +32,7 @@ public class PlayerCommandUtil {
         int count = 0;
 
         for (AdvancementHolder advancementEntry : allAdvancements) {
-            ResourceLocation id = advancementEntry.id();
+            Identifier id = advancementEntry.id();
             if (id.getNamespace().equals(AdorableHamsterPets.MOD_ID) &&
                     (id.getPath().startsWith("husbandry/"))) {
 

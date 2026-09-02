@@ -13,7 +13,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.networking.payload.RequestGuidebookPayload;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 @RootConfig
 public class AhpRootConfig extends Config {
     public AhpRootConfig() {
-        super(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "root"));
+        super(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "root"));
     }
 
     @Override

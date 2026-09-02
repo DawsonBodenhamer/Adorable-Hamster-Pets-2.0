@@ -7,7 +7,7 @@ import net.dawson.adorablehamsterpets.block.custom.WildGreenBeanBushBlock;
 import net.dawson.adorablehamsterpets.block.entity.HamsterBedBlockEntity;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import snownee.jade.api.*;
 
 @WailaPlugin
@@ -34,19 +34,19 @@ public final class AHPJadePlugin implements IWailaPlugin {
                 boolean hideDueToSneak = Configs.AHP_UI.requireSneakForDefaultJadeInfo && !playerSneaking;
 
                 if (!Configs.AHP_UI.showJadeEntityName || hideDueToSneak) {
-                    tooltip.remove(ResourceLocation.fromNamespaceAndPath("jade", "object_name"));
+                    tooltip.remove(Identifier.fromNamespaceAndPath("jade", "object_name"));
                 }
                 if (!Configs.AHP_UI.showJadeEntityHealth || hideDueToSneak) {
-                    tooltip.remove(ResourceLocation.fromNamespaceAndPath("minecraft", "entity_health"));
+                    tooltip.remove(Identifier.fromNamespaceAndPath("minecraft", "entity_health"));
                 }
                 if (!Configs.AHP_UI.showJadeGrowthTime || hideDueToSneak) {
-                    tooltip.remove(ResourceLocation.fromNamespaceAndPath("minecraft", "mob_growth"));
+                    tooltip.remove(Identifier.fromNamespaceAndPath("minecraft", "mob_growth"));
                 }
                 if (!Configs.AHP_UI.showJadeOwner || hideDueToSneak) {
-                    tooltip.remove(ResourceLocation.fromNamespaceAndPath("minecraft", "animal_owner"));
+                    tooltip.remove(Identifier.fromNamespaceAndPath("minecraft", "animal_owner"));
                 }
                 if (!Configs.AHP_UI.showJadeInventory || hideDueToSneak) {
-                    tooltip.remove(ResourceLocation.fromNamespaceAndPath("minecraft", "item_storage"));
+                    tooltip.remove(Identifier.fromNamespaceAndPath("minecraft", "item_storage"));
                 }
             }
         });

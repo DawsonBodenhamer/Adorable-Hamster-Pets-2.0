@@ -31,7 +31,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -141,7 +141,7 @@ public class AHPCommonEvents {
 
                     if (bookStack.is(ModItems.HAMSTER_GUIDE_BOOK.get())) {
                         if (!world.isClientSide() && player instanceof ServerPlayer serverPlayer) {
-                            PatchouliAPI.get().openBookGUI(serverPlayer, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+                            PatchouliAPI.get().openBookGUI(serverPlayer, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
                         }
                         // Interrupt to avoid vanilla written book UI
                         return EventResult.interruptTrue();

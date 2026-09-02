@@ -6,7 +6,7 @@ import net.dawson.adorablehamsterpets.mixin.accessor.ScreenWidgetAdder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -46,7 +46,7 @@ public abstract class GuiBookLandingMixin extends GuiBook {
      */
     private boolean isHamsterBook() {
         // The 'book' field is inherited from the parent GuiBook class.
-        return this.book != null && this.book.id.equals(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+        return this.book != null && this.book.id.equals(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
     }
 
     /**

@@ -14,7 +14,7 @@ import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
 import net.minecraft.data.recipes.SmithingTransformRecipeBuilder;
 import net.minecraft.data.recipes.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -42,7 +42,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .define('P', planks)
                 .group("hamster_bed")
                 .unlockedBy("has_hamster_bedding", has(ModItems.HAMSTER_BEDDING.get()))
-                .save(exporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_bed_" + variant.getSerializedName()));
+                .save(exporter, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_bed_" + variant.getSerializedName()));
     }
 
     // Helper for Smithing Upgrades
@@ -69,7 +69,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .define('M', material)
                 .define('S', ModItems.ACORN_SHARD.get())
                 .unlockedBy("has_template", has(template))
-                .save(exporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, getItemName(template) + "_duplication"));
+                .save(exporter, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, getItemName(template) + "_duplication"));
     }
 
     // --- 3. Public Methods ---
@@ -84,7 +84,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
         SimpleCookingRecipeBuilder.smoking(Ingredient.of(ModItems.GREEN_BEANS.get()), RecipeCategory.FOOD, ModItems.STEAMED_GREEN_BEANS.get(), 0.35f, 100)
                 .group("steamed_green_beans")
                 .unlockedBy("has_green_beans", has(ModItems.GREEN_BEANS.get()))
-                .save(recipeExporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "steamed_green_beans_from_smoking_green_beans"));
+                .save(recipeExporter, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "steamed_green_beans_from_smoking_green_beans"));
 
         // Smelting Acorns to Charcoal
         oreSmelting(recipeExporter, List.of(ModItems.ACORN.get()), RecipeCategory.MISC, Items.CHARCOAL,
@@ -113,7 +113,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .define('C', Items.CARROT)
                 .define('W', Items.WHEAT_SEEDS)
                 .unlockedBy("has_sunflower_seeds", has(ModItems.SUNFLOWER_SEEDS.get()))
-                .save(recipeExporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_food_mix_from_ingredients"));
+                .save(recipeExporter, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_food_mix_from_ingredients"));
 
         // Hamster Bedding
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.HAMSTER_BEDDING.get(), 2)
@@ -135,7 +135,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .define('C', ModItems.CHEESE.get())
                 .define('D', ModItems.MUSIC_DISC_BLUE_CHEESE.get())
                 .unlockedBy("has_blue_cheese_disc", has(ModItems.MUSIC_DISC_BLUE_CHEESE.get()))
-                .save(recipeExporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "music_disc_cheese_from_blue_cheese"));
+                .save(recipeExporter, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "music_disc_cheese_from_blue_cheese"));
 
         // Restore Parmesan Disc to Regular
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.MUSIC_DISC_CHEESE.get(), 1)
@@ -145,7 +145,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 .define('C', ModItems.CHEESE.get())
                 .define('D', ModItems.MUSIC_DISC_PARMESAN.get())
                 .unlockedBy("has_parmesan_disc", has(ModItems.MUSIC_DISC_PARMESAN.get()))
-                .save(recipeExporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "music_disc_cheese_from_parmesan"));
+                .save(recipeExporter, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "music_disc_cheese_from_parmesan"));
 
         // --- Shapeless Crafting Recipes ---
         // Sliced Cucumber
@@ -164,7 +164,7 @@ public class ModRecipeProvider extends FabricRecipeProvider {
         ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, Items.SUNFLOWER, 1)
                 .requires(ModBlocks.SUNFLOWER_BLOCK.get())
                 .unlockedBy("has_modded_sunflower", has(ModBlocks.SUNFLOWER_BLOCK.get()))
-                .save(recipeExporter, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "vanilla_sunflower_from_modded"));
+                .save(recipeExporter, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "vanilla_sunflower_from_modded"));
 
         // --- Acorn & Armor Recipes ---
 

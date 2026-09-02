@@ -7,8 +7,8 @@ import net.dawson.adorablehamsterpets.item.client.HamsterBedItemModel;
 import net.dawson.adorablehamsterpets.item.custom.HamsterBedItem;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
-import software.bernie.geckolib.renderer.GeoItemRenderer;
+import net.minecraft.resources.Identifier;
+import com.geckolib.renderer.GeoItemRenderer;
 
 public class HamsterBedItemRenderer extends GeoItemRenderer<HamsterBedItem> {
     public HamsterBedItemRenderer() {
@@ -16,13 +16,13 @@ public class HamsterBedItemRenderer extends GeoItemRenderer<HamsterBedItem> {
     }
 
     @Override
-    public RenderType getRenderType(HamsterBedItem animatable, ResourceLocation texture, @org.jetbrains.annotations.Nullable MultiBufferSource bufferSource, float partialTick) {
+    public RenderType getRenderType(HamsterBedItem animatable, Identifier texture, @org.jetbrains.annotations.Nullable MultiBufferSource bufferSource, float partialTick) {
         return RenderType.entityCutout(getTextureLocation(animatable));
     }
 
     @Override
-    public ResourceLocation getTextureLocation(HamsterBedItem animatable) {
+    public Identifier getTextureLocation(HamsterBedItem animatable) {
         WoodVariant variant = animatable.getVariant();
-        return ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/block/hamster_bed_" + variant.getSerializedName() + ".png");
+        return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/block/hamster_bed_" + variant.getSerializedName() + ".png");
     }
 }

@@ -5,7 +5,7 @@ import net.dawson.adorablehamsterpets.block.custom.WildCucumberBushBlock;
 import net.dawson.adorablehamsterpets.block.custom.WildGreenBeanBushBlock;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.ITooltip;
@@ -16,7 +16,7 @@ public enum WildBushComponentProvider implements IBlockComponentProvider {
 
     // A unique identifier for this tooltip provider.
     // Used by Jade for configuration and internal tracking.
-    private static final ResourceLocation UID = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "wild_bush_tooltips");
+    private static final Identifier UID = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "wild_bush_tooltips");
 
     @Override
     public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
@@ -38,7 +38,7 @@ public enum WildBushComponentProvider implements IBlockComponentProvider {
     }
 
     @Override
-    public ResourceLocation getUid() {
+    public Identifier getUid() {
         return UID; // Return the unique ID for this provider
     }
 }

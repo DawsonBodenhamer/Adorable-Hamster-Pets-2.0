@@ -6,7 +6,7 @@ import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -16,31 +16,31 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
 
     private static final TagKey<Item> STORAGE_BLOCKS = TagKey.create(
             Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath("c", "storage_blocks")
+            Identifier.fromNamespaceAndPath("c", "storage_blocks")
     );
 
     // --- Custom Tags ---
     public static final TagKey<Item> HAMSTER_ARMOR_ENCHANTABLE = TagKey.create(
             Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/hamster_armor")
+            Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/hamster_armor")
     );
 
     // Frost Walker (Vanilla Foot Armor + Hamster Armor)
     public static final TagKey<Item> FROST_WALKER_SUPPORTED = TagKey.create(
             Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/frost_walker_supported")
+            Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/frost_walker_supported")
     );
 
     // Fire Protection (Vanilla Armor + Hamster Armor)
     public static final TagKey<Item> FIRE_PROTECTION_SUPPORTED = TagKey.create(
             Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/fire_protection_supported")
+            Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/fire_protection_supported")
     );
 
     // Soul Speed (Vanilla Foot Armor + Hamster Armor)
     public static final TagKey<Item> SOUL_SPEED_SUPPORTED = TagKey.create(
             Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/soul_speed_supported")
+            Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "enchantable/soul_speed_supported")
     );
 
     public ModItemTagProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> completableFuture) {

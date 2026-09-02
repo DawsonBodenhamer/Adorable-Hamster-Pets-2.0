@@ -25,7 +25,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -41,11 +41,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
-import software.bernie.geckolib.cache.object.GeoBone;
-import software.bernie.geckolib.renderer.GeoEntityRenderer;
+import com.geckolib.animatable.instance.AnimatableInstanceCache;
+import com.geckolib.animation.AnimatableManager;
+import com.geckolib.cache.object.BakedGeoModel;
+import com.geckolib.cache.object.GeoBone;
+import com.geckolib.renderer.GeoEntityRenderer;
 
 public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
 
@@ -82,7 +82,7 @@ public class HamsterRenderer extends GeoEntityRenderer<HamsterEntity> {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public ResourceLocation getTextureLocation(HamsterEntity entity) {
+    public Identifier getTextureLocation(HamsterEntity entity) {
         // Defer to caching utility
         return HamsterTextureUtil.getHamsterTexture(entity);
     }

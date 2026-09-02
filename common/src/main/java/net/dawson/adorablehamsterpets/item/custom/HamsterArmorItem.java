@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.item.custom;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 
 /**
@@ -12,7 +12,7 @@ import net.minecraft.world.item.Item;
 public class HamsterArmorItem extends Item {
 
     private final HamsterArmorMaterial material;
-    private final ResourceLocation entityTexture;
+    private final Identifier entityTexture;
 
     public HamsterArmorItem(HamsterArmorMaterial material, Properties settings) {
         super(settings.durability(material.getDurability()));
@@ -29,14 +29,14 @@ public class HamsterArmorItem extends Item {
             fileName = "acorn_armor_" + material.getName();
         }
 
-        this.entityTexture = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/armor/" + fileName + ".png");
+        this.entityTexture = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/armor/" + fileName + ".png");
     }
 
     public HamsterArmorMaterial getMaterial() {
         return material;
     }
 
-    public ResourceLocation getEntityTexture() {
+    public Identifier getEntityTexture() {
         return entityTexture;
     }
 

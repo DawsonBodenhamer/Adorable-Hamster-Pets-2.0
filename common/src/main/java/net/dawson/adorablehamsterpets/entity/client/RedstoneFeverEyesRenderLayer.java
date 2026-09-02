@@ -6,10 +6,10 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
-import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
+import com.geckolib.cache.object.BakedGeoModel;
+import com.geckolib.renderer.layer.GeoRenderLayer;
 
 /**
  * Renders only the Redstone Fever eye mask with vanilla's fullbright eyes render type.
@@ -20,7 +20,7 @@ public final class RedstoneFeverEyesRenderLayer extends GeoRenderLayer<HamsterEn
      *        Constants
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static final ResourceLocation FEVER_EYES_TEXTURE = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier FEVER_EYES_TEXTURE = Identifier.fromNamespaceAndPath(
             "adorablehamsterpets",
             "textures/entity/hamster/appearance/conditions/redstone_fever/eyes.png");
 

@@ -23,7 +23,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import vazkii.patchouli.api.PatchouliAPI;
 import vazkii.patchouli.client.book.BookEntry;
@@ -39,7 +39,7 @@ import java.util.List;
  * tooltips, and click actions.
  */
 public class AnnouncementIconWidget extends Button {
-    private static final ResourceLocation ICON_TEXTURE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/item/announcement_bell_icon.png");
+    private static final Identifier ICON_TEXTURE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/item/announcement_bell_icon.png");
     private static final int ICON_WIDTH = 16;
     private static final int ICON_HEIGHT = 16;
 
@@ -166,7 +166,7 @@ public class AnnouncementIconWidget extends Button {
         }
 
         Minecraft client = Minecraft.getInstance();
-        ResourceLocation bookId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
+        Identifier bookId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
 
         if (this.parentScreen instanceof TitleScreen) {
             // --- 1. Title Screen Logic ---
@@ -179,7 +179,7 @@ public class AnnouncementIconWidget extends Button {
                         Announcement announcement = notification.announcement();
                         Book book = BookRegistry.INSTANCE.books.get(bookId);
                         if (book != null) {
-                            ResourceLocation entryId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
+                            Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
                             JsonObject json = new JsonObject();
                             json.addProperty("name", announcement.title());
                             json.addProperty("icon", "minecraft:writable_book");
@@ -206,7 +206,7 @@ public class AnnouncementIconWidget extends Button {
                 Book book = BookRegistry.INSTANCE.books.get(bookId);
                 if (book != null) {
                     // Get the "real" virtual entry from the book's contents
-                    ResourceLocation entryId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
+                    Identifier entryId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "announcement_" + announcement.id());
                     BookEntry realVirtualEntry = book.getContents().entries.get(entryId);
 
                     if (realVirtualEntry != null) {

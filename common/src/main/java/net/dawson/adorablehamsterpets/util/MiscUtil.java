@@ -17,7 +17,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.state.BlockState;
@@ -106,7 +106,7 @@ public final class MiscUtil {
          * @param messageCount     The total number of available localized messages in the pool.
          * @param memoryContextKey The NBT dictionary key used to remember the last message shown for this specific event.
          */
-        public static void sendRandomizedSequentialMessage(ServerPlayer player, @Nullable ResourceLocation advancementId, String messageBaseKey, int messageCount, String memoryContextKey) {
+        public static void sendRandomizedSequentialMessage(ServerPlayer player, @Nullable Identifier advancementId, String messageBaseKey, int messageCount, String memoryContextKey) {
             PlayerAdvancements tracker = player.getAdvancements();
             int messageIndex;
 

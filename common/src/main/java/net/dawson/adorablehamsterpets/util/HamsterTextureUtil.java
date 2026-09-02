@@ -23,14 +23,14 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.armortrim.ArmorTrim;
+import net.minecraft.world.item.equipment.trim.ArmorTrim;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -50,7 +50,7 @@ public class HamsterTextureUtil {
      *        Constants
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static final Map<String, ResourceLocation> CACHED_TEXTURES = new ConcurrentHashMap<>();
+    private static final Map<String, Identifier> CACHED_TEXTURES = new ConcurrentHashMap<>();
     private static final Map<String, int[]> TRIM_PALETTE_CACHE = new ConcurrentHashMap<>();
     private static final String[] FLOWER_TEXTURE_NAMES = {
             "overlay_allium_peony",
@@ -69,7 +69,7 @@ public class HamsterTextureUtil {
     private static final Map<String, TagKey<Item>> FLOWER_TAGS = new ConcurrentHashMap<>();
     static {
         for (String name : FLOWER_TEXTURE_NAMES) {
-            FLOWER_TAGS.put(name, TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "flower_accessories/" + name)));
+            FLOWER_TAGS.put(name, TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "flower_accessories/" + name)));
         }
     }
 
@@ -84,9 +84,9 @@ public class HamsterTextureUtil {
         TextureManager tm = Minecraft.getInstance().getTextureManager();
         int count = 0;
 
-        for (Map.Entry<String, ResourceLocation> entry : CACHED_TEXTURES.entrySet()) {
+        for (Map.Entry<String, Identifier> entry : CACHED_TEXTURES.entrySet()) {
             String cacheKey = entry.getKey();
-            ResourceLocation id = entry.getValue();
+            Identifier id = entry.getValue();
             AbstractTexture texture = tm.getTexture(id, null);
 
             if (texture instanceof HamsterPBRTexture pbrTexture) {
@@ -114,10 +114,10 @@ public class HamsterTextureUtil {
      */
     public static void clearCaches() {
         TextureManager tm = Minecraft.getInstance().getTextureManager();
-        for (ResourceLocation id : CACHED_TEXTURES.values()) {
+        for (Identifier id : CACHED_TEXTURES.values()) {
             tm.release(id);
-            tm.release(ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_s"));
-            tm.release(ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_n"));
+            tm.release(Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_s"));
+            tm.release(Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_n"));
         }
         CACHED_TEXTURES.clear();
         TRIM_PALETTE_CACHE.clear();
@@ -129,9 +129,9 @@ public class HamsterTextureUtil {
      * into a single image to reduce render layers and draw calls.
      * Supports both programmatic color replacement and static image alpha masking.
      */
-    public static ResourceLocation getHamsterTexture(HamsterEntity hamster) {
+    public static Identifier getHamsterTexture(HamsterEntity hamster) {
         if (AdorableHamsterPetsClient.isPerformanceModeEnabled) {
-            return ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/performance_mode.png");
+            return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/performance_mode.png");
         }
 
         HamsterGenome genome = hamster.getGenome();
@@ -144,7 +144,7 @@ public class HamsterTextureUtil {
         // --- Extract Equipment States ---
         ItemStack armorStack = hamster.getArmorStack();
         String armorMaterial = "none";
-        ResourceLocation armorTextureId = null;
+        Identifier armorTextureId = null;
 
         if (Configs.AHP_MAIN.enableArmorVisuals
                 && hamster.isArmorVisible()
@@ -195,12 +195,12 @@ public class HamsterTextureUtil {
                 Configs.AHP_MAIN.enableArmorPbr.get(),
                 Configs.AHP_MAIN.emissiveArmorTrims.get());
 
-        ResourceLocation cachedId = CACHED_TEXTURES.get(cacheKey);
+        Identifier cachedId = CACHED_TEXTURES.get(cacheKey);
         if (cachedId != null) {
             return cachedId;
         }
 
-        ResourceLocation dynamicId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, cacheKey);
+        Identifier dynamicId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, cacheKey);
 
         try {
             // --- 1. Base Coat ---
@@ -214,7 +214,7 @@ public class HamsterTextureUtil {
             }
 
             if (composite == null) {
-                return ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png"); // Ultimate fallback
+                return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png"); // Ultimate fallback
             }
 
             // --- PBR Setup ---
@@ -401,11 +401,11 @@ public class HamsterTextureUtil {
 
             // --- 10. Register Textures ---
             // Register PBR Maps
-            ResourceLocation specularId = ResourceLocation.fromNamespaceAndPath(dynamicId.getNamespace(), dynamicId.getPath() + "_s");
+            Identifier specularId = Identifier.fromNamespaceAndPath(dynamicId.getNamespace(), dynamicId.getPath() + "_s");
             DynamicTexture specularTexture = new DynamicTexture(specularImg);
             Minecraft.getInstance().getTextureManager().register(specularId, specularTexture);
 
-            ResourceLocation normalId = ResourceLocation.fromNamespaceAndPath(dynamicId.getNamespace(), dynamicId.getPath() + "_n");
+            Identifier normalId = Identifier.fromNamespaceAndPath(dynamicId.getNamespace(), dynamicId.getPath() + "_n");
             DynamicTexture normalTexture = new DynamicTexture(normalImg);
             Minecraft.getInstance().getTextureManager().register(normalId, normalTexture);
 
@@ -418,7 +418,7 @@ public class HamsterTextureUtil {
 
         } catch (Exception e) {
             AdorableHamsterPets.LOGGER.error("Failed to generate composite texture for " + cacheKey, e);
-            return ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
+            return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
         }
     }
 
@@ -674,7 +674,7 @@ public class HamsterTextureUtil {
      */
     private static int[] getOrLoadVanillaTrimPalette(String assetName) {
         return TRIM_PALETTE_CACHE.computeIfAbsent(assetName, key -> {
-            ResourceLocation paletteId = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/trims/color_palettes/" + key + ".png");
+            Identifier paletteId = Identifier.fromNamespaceAndPath("minecraft", "textures/trims/color_palettes/" + key + ".png");
 
             try {
                 var resource = Minecraft.getInstance().getResourceManager().getResource(paletteId);
@@ -766,7 +766,7 @@ public class HamsterTextureUtil {
      * Reads a raw PNG image directly from the resource manager.
      */
     private static NativeImage readRawImage(String path) {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, path);
+        Identifier id = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, path);
         try {
             var resource = Minecraft.getInstance().getResourceManager().getResource(id);
             if (resource.isPresent()) {

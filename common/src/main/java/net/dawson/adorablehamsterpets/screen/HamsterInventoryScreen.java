@@ -17,7 +17,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
@@ -34,11 +34,11 @@ public class HamsterInventoryScreen extends AbstractContainerScreen<HamsterInven
      *        Constants
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/hamster_inventory_gui.png");
-    private static final ResourceLocation PENCIL_ICON = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/pencil_icon_ui.png");
-    private static final ResourceLocation ARMOR_VISIBILITY_CHECKBOX = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/hamster_inventory_gui.png");
+    private static final Identifier PENCIL_ICON = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/gui/pencil_icon_ui.png");
+    private static final Identifier ARMOR_VISIBILITY_CHECKBOX = Identifier.fromNamespaceAndPath(
             AdorableHamsterPets.MOD_ID, "textures/gui/armor_visibility_checkbox.png");
-    private static final ResourceLocation ARMOR_VISIBILITY_CHECK_MARK = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier ARMOR_VISIBILITY_CHECK_MARK = Identifier.fromNamespaceAndPath(
             AdorableHamsterPets.MOD_ID, "textures/gui/armor_visibility_check_mark.png");
     private static final int ARMOR_VISIBILITY_TOGGLE_X = 6;
     private static final int ARMOR_VISIBILITY_TOGGLE_Y = 5;

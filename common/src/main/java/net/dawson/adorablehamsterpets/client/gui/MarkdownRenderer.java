@@ -8,7 +8,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.network.chat.*;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
@@ -199,7 +199,7 @@ public class MarkdownRenderer {
                 } else if (nextMatcher == strikethroughMatcher) {
                     result.append(Component.literal(strikethroughMatcher.group(1)).setStyle(Style.EMPTY.withStrikethrough(true)));
                 } else if (nextMatcher == codeMatcher) {
-                    result.append(Component.literal(codeMatcher.group(1)).setStyle(Style.EMPTY.withFont(ResourceLocation.fromNamespaceAndPath("minecraft", "uniform")).withColor(ChatFormatting.BLACK)));
+                    result.append(Component.literal(codeMatcher.group(1)).setStyle(Style.EMPTY.withFont(Identifier.fromNamespaceAndPath("minecraft", "uniform")).withColor(ChatFormatting.BLACK)));
                 } else if (nextMatcher == linkMatcher) {
                     String linkText = linkMatcher.group(1);
                     String url = linkMatcher.group(2);

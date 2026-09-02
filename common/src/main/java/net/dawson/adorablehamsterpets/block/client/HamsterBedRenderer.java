@@ -8,9 +8,9 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.state.BlockState;
-import software.bernie.geckolib.renderer.GeoBlockRenderer;
+import com.geckolib.renderer.GeoBlockRenderer;
 
 public class HamsterBedRenderer extends GeoBlockRenderer<HamsterBedBlockEntity> {
     public HamsterBedRenderer(BlockEntityRendererProvider.Context context) {
@@ -18,7 +18,7 @@ public class HamsterBedRenderer extends GeoBlockRenderer<HamsterBedBlockEntity> 
     }
 
     @Override
-    public RenderType getRenderType(HamsterBedBlockEntity animatable, ResourceLocation texture, @org.jetbrains.annotations.Nullable MultiBufferSource bufferSource, float partialTick) {
+    public RenderType getRenderType(HamsterBedBlockEntity animatable, Identifier texture, @org.jetbrains.annotations.Nullable MultiBufferSource bufferSource, float partialTick) {
         return RenderType.entityCutout(getTextureLocation(animatable));
     }
 

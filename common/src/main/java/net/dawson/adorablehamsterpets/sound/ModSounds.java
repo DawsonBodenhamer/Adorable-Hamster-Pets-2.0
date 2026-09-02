@@ -6,7 +6,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.mixin.accessor.LivingEntityInvoker;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
@@ -485,7 +485,7 @@ public record TimedSound(RegistrySupplier<SoundEvent> sound, double durationSeco
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private static RegistrySupplier<SoundEvent> registerSoundEvent(String name) {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, name);
+        Identifier id = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, name);
         return SOUND_EVENTS.register(id, () -> SoundEvent.createVariableRangeEvent(id));
     }
 }

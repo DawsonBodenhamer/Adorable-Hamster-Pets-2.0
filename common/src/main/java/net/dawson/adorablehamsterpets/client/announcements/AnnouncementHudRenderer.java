@@ -11,7 +11,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 
 /**
@@ -20,7 +20,7 @@ import java.util.List;
  * and drawing it using animation values from the central AnnouncementIconAnimator.
  */
 public class AnnouncementHudRenderer {
-    private static final ResourceLocation ICON_TEXTURE = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/item/announcement_bell_icon.png");
+    private static final Identifier ICON_TEXTURE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/item/announcement_bell_icon.png");
     private static final int ICON_WIDTH = 16;
     private static final int ICON_HEIGHT = 16;
 

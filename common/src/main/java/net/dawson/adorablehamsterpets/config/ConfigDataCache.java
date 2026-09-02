@@ -10,7 +10,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
@@ -36,9 +36,9 @@ public class ConfigDataCache {
 
     // Inner record for spawning
     public record EnvironmentDefinition(
-            Set<ResourceLocation> biomes,
+            Set<Identifier> biomes,
             Set<TagKey<Biome>> tags,
-            Set<ResourceLocation> excludedBiomes,
+            Set<Identifier> excludedBiomes,
             Set<TagKey<Biome>> excludedTags,
             Map<HamsterColorZone, Integer> weights
     ) {}
@@ -308,14 +308,14 @@ public class ConfigDataCache {
         for (String entry : configList) {
             if (entry.startsWith("#")) {
                 try {
-                    ResourceLocation tagId = ResourceLocation.parse(entry.substring(1));
+                    Identifier tagId = Identifier.parse(entry.substring(1));
                     tagSet.add(TagKey.create(Registries.ITEM, tagId));
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[ItemTagManager] Invalid item tag identifier in '{}' config list: '{}'", listName, entry);
                 }
             } else {
                 try {
-                    ResourceLocation itemId = ResourceLocation.parse(entry);
+                    Identifier itemId = Identifier.parse(entry);
                     BuiltInRegistries.ITEM.getOptional(itemId).ifPresent(itemSet::add);
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[ItemTagManager] Invalid item identifier in '{}' config list: '{}'", listName, entry);
@@ -332,7 +332,7 @@ public class ConfigDataCache {
         for (String entry : configList) {
             if (entry.startsWith("#")) {
                 try {
-                    ResourceLocation tagId = ResourceLocation.parse(entry.substring(1));
+                    Identifier tagId = Identifier.parse(entry.substring(1));
                     TagKey<Item> tagKey = TagKey.create(Registries.ITEM, tagId);
 
                     BuiltInRegistries.ITEM.getTag(tagKey).ifPresent(entries -> {
@@ -345,7 +345,7 @@ public class ConfigDataCache {
                 }
             } else {
                 try {
-                    ResourceLocation itemId = ResourceLocation.parse(entry);
+                    Identifier itemId = Identifier.parse(entry);
                     BuiltInRegistries.ITEM.getOptional(itemId).ifPresent(targetList::add);
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[LootConfig] Invalid item ID in '{}': '{}'", listName, entry);
@@ -358,14 +358,14 @@ public class ConfigDataCache {
         for (String entry : configList) {
             if (entry.startsWith("#")) {
                 try {
-                    ResourceLocation tagId = ResourceLocation.parse(entry.substring(1));
+                    Identifier tagId = Identifier.parse(entry.substring(1));
                     tagSet.add(TagKey.create(Registries.ENTITY_TYPE, tagId));
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[EntityTagManager] Invalid entity tag identifier in '{}' config list: '{}'", listName, entry);
                 }
             } else {
                 try {
-                    ResourceLocation entityId = ResourceLocation.parse(entry);
+                    Identifier entityId = Identifier.parse(entry);
                     BuiltInRegistries.ENTITY_TYPE.getOptional(entityId).ifPresent(entitySet::add);
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[EntityTagManager] Invalid entity identifier in '{}' config list: '{}'", listName, entry);
@@ -378,14 +378,14 @@ public class ConfigDataCache {
         for (String entry : configList) {
             if (entry.startsWith("#")) {
                 try {
-                    ResourceLocation tagId = ResourceLocation.parse(entry.substring(1));
+                    Identifier tagId = Identifier.parse(entry.substring(1));
                     tagSet.add(TagKey.create(Registries.BLOCK, tagId));
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[BlockTagManager] Invalid block tag identifier in '{}' config list: '{}'", listName, entry);
                 }
             } else {
                 try {
-                    ResourceLocation blockId = ResourceLocation.parse(entry);
+                    Identifier blockId = Identifier.parse(entry);
                     BuiltInRegistries.BLOCK.getOptional(blockId).ifPresent(blockSet::add);
                 } catch (Exception e) {
                     AdorableHamsterPets.LOGGER.warn("[BlockTagManager] Invalid block identifier in '{}' config list: '{}'", listName, entry);
@@ -395,9 +395,9 @@ public class ConfigDataCache {
     }
 
     private static EnvironmentDefinition parseEnvironment(List<String> biomes, List<String> tags, List<String> exBiomes, List<String> exTags, List<String> weightStrings, String name) {
-        Set<ResourceLocation> bIds = new HashSet<>();
+        Set<Identifier> bIds = new HashSet<>();
         Set<TagKey<Biome>> bTags = new HashSet<>();
-        Set<ResourceLocation> eIds = new HashSet<>();
+        Set<Identifier> eIds = new HashSet<>();
         Set<TagKey<Biome>> eTags = new HashSet<>();
 
         parseBiomeIdList(biomes, bIds, name + " Biomes");
@@ -427,10 +427,10 @@ public class ConfigDataCache {
         return weights;
     }
 
-    private static void parseBiomeIdList(List<String> configList, Set<ResourceLocation> idSet, String listName) {
+    private static void parseBiomeIdList(List<String> configList, Set<Identifier> idSet, String listName) {
         for (String entry : configList) {
             try {
-                idSet.add(ResourceLocation.parse(entry));
+                idSet.add(Identifier.parse(entry));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeTagManager] Invalid biome identifier in '{}' config list: '{}'", listName, entry);
             }
@@ -441,7 +441,7 @@ public class ConfigDataCache {
         for (String entry : configList) {
             String tagName = entry.startsWith("#") ? entry.substring(1) : entry;
             try {
-                tagSet.add(TagKey.create(Registries.BIOME, ResourceLocation.parse(tagName)));
+                tagSet.add(TagKey.create(Registries.BIOME, Identifier.parse(tagName)));
             } catch (Exception e) {
                 AdorableHamsterPets.LOGGER.warn("[BiomeTagManager] Invalid biome tag in '{}' config list: '{}'", listName, entry);
             }
@@ -468,8 +468,8 @@ public class ConfigDataCache {
         return false;
     }
 
-    private static boolean matchesBiome(Holder<Biome> biomeEntry, Set<ResourceLocation> ids, Set<TagKey<Biome>> tags, Set<ResourceLocation> exclusionIds, Set<TagKey<Biome>> exclusionTags) {
-        ResourceLocation biomeId = biomeEntry.unwrapKey().map(ResourceKey::location).orElse(null);
+    private static boolean matchesBiome(Holder<Biome> biomeEntry, Set<Identifier> ids, Set<TagKey<Biome>> tags, Set<Identifier> exclusionIds, Set<TagKey<Biome>> exclusionTags) {
+        Identifier biomeId = biomeEntry.unwrapKey().map(ResourceKey::location).orElse(null);
         if (biomeId == null) return false;
 
         // --- Exclusion Check (Highest Priority) ---
@@ -575,7 +575,7 @@ public class ConfigDataCache {
         // Check if entry starts with hash indicating tag
         if (firstEntry.startsWith("#")) {
             try {
-                ResourceLocation tagId = ResourceLocation.parse(firstEntry.substring(1));
+                Identifier tagId = Identifier.parse(firstEntry.substring(1));
                 TagKey<Item> tagKey = TagKey.create(Registries.ITEM, tagId);
 
                 // --- 1. Client-Side Tag Resolution ---
@@ -608,7 +608,7 @@ public class ConfigDataCache {
         } else {
             try {
                 // Try to resolve item ID to localized name
-                ResourceLocation itemId = ResourceLocation.parse(firstEntry);
+                Identifier itemId = Identifier.parse(firstEntry);
                 Item item = BuiltInRegistries.ITEM.get(itemId);
 
                 // Fallback to raw string if registry returns default air

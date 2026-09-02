@@ -13,7 +13,7 @@ import net.dawson.adorablehamsterpets.util.ParticleEffectsUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -370,7 +370,7 @@ public class HamsterSniffForOreGoal extends Goal {
             // Output randomized snarky message for owner and trigger advancement
             MiscUtil.MessagingUtil.sendRandomizedSequentialMessage(
                     owner,
-                    ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "technical/hamster_found_gold_first_time"),
+                    Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "technical/hamster_found_gold_first_time"),
                     "message.adorablehamsterpets.found_gold_mistake",
                     7,
                     "gold_mistake_messages"

@@ -21,7 +21,7 @@ import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.networking.payload.ResetHeistHistoryPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import java.util.List;
 public class AhpMainConfig extends Config {
 
     public AhpMainConfig() {
-        super(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "main"));
+        super(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "main"));
     }
 
     @Override

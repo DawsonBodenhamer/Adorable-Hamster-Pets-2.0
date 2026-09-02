@@ -11,7 +11,7 @@ import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedFloat;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.client.particle.PixieDustParticleTheme;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 @Translatable.Name("Supporter Perks")
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 public class AhpSupporterConfig extends Config {
 
     public AhpSupporterConfig() {
-        super(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "supporter_perks"));
+        super(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "supporter_perks"));
     }
 
     @Override

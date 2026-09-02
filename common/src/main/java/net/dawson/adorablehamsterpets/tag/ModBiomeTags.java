@@ -2,7 +2,7 @@ package net.dawson.adorablehamsterpets.tag;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 
@@ -30,6 +30,6 @@ public class ModBiomeTags {
     public static final TagKey<Biome> IS_PLAINS = of("is_plains");
 
     private static TagKey<Biome> of(String path) {
-        return TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, path));
+        return TagKey.create(Registries.BIOME, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, path));
     }
 }

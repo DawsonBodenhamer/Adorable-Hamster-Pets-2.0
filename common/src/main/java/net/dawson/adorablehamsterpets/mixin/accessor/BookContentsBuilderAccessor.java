@@ -8,7 +8,7 @@ import vazkii.patchouli.client.book.BookEntry;
 import vazkii.patchouli.common.book.Book;
 
 import java.util.Map;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 @Mixin(value = BookContentsBuilder.class, remap = false)
 public interface BookContentsBuilderAccessor {
@@ -16,8 +16,8 @@ public interface BookContentsBuilderAccessor {
     Book getBook();
 
     @Accessor("categories")
-    Map<ResourceLocation, BookCategory> getCategories();
+    Map<Identifier, BookCategory> getCategories();
 
     @Accessor("entries")
-    Map<ResourceLocation, BookEntry> getEntries();
+    Map<Identifier, BookEntry> getEntries();
 }

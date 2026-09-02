@@ -5,7 +5,7 @@ import net.dawson.adorablehamsterpets.entity.custom.HamsterBlockHiderEntity;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * A renderer for the invisible Block Hider proxy entity.
@@ -17,8 +17,8 @@ public class HamsterBlockHiderRenderer extends EntityRenderer<HamsterBlockHiderE
     }
 
     @Override
-    public ResourceLocation getTextureLocation(HamsterBlockHiderEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
+    public Identifier getTextureLocation(HamsterBlockHiderEntity entity) {
+        return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
     }
 
     @Override

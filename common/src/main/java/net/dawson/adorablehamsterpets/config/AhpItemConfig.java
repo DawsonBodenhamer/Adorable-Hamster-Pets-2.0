@@ -7,7 +7,7 @@ import me.fzzyhmstrs.fzzy_config.util.Translatable;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedFloat;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import java.util.List;
 public class AhpItemConfig extends Config {
 
     public AhpItemConfig() {
-        super(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "items"));
+        super(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "items"));
     }
 
     @Override

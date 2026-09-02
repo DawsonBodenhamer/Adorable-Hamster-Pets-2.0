@@ -1,7 +1,7 @@
 package net.dawson.adorablehamsterpets.client.announcements;
 
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import vazkii.patchouli.client.base.PersistentData;
 import vazkii.patchouli.client.book.BookEntry;
 import vazkii.patchouli.common.book.Book;
@@ -20,7 +20,7 @@ public class PatchouliIntegration {
         if (entry == null) return;
 
         PersistentData.BookData data = PersistentData.data.getBookData(entry.getBook());
-        ResourceLocation entryId = entry.getId();
+        Identifier entryId = entry.getId();
 
         // Check if the entry is already in the list before adding
         if (!data.viewedEntries.contains(entryId)) {
@@ -42,8 +42,8 @@ public class PatchouliIntegration {
      *
      * @param entryId The full Identifier of the entry to mark as unread.
      */
-    public static boolean setEntryAsUnread(ResourceLocation entryId) {
-        ResourceLocation bookId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
+    public static boolean setEntryAsUnread(Identifier entryId) {
+        Identifier bookId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
         Book book = BookRegistry.INSTANCE.books.get(bookId);
         if (book == null) {
             return false;
@@ -65,12 +65,12 @@ public class PatchouliIntegration {
      * Clears all virtual announcement and update entries from Patchouli's history.
      */
     public static void clearAllVirtualEntriesFromHistory() {
-        ResourceLocation bookId = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
+        Identifier bookId = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book");
         Book book = BookRegistry.INSTANCE.books.get(bookId);
         if (book == null) return;
 
         PersistentData.BookData data = PersistentData.data.getBookData(book);
-        List<ResourceLocation> viewed = data.viewedEntries;
+        List<Identifier> viewed = data.viewedEntries;
 
         // Use removeIf to efficiently remove all entries that match our virtual entry prefix
         boolean removed = viewed.removeIf(id ->

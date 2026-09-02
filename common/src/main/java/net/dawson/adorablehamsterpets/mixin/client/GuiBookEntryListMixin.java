@@ -8,7 +8,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.dawson.adorablehamsterpets.mixin.accessor.ScreenWidgetAdder;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -172,7 +172,7 @@ public abstract class GuiBookEntryListMixin extends GuiBook {
      * ────────────────────────────────────────────────────────────────────────────*/
 
     private boolean isHamsterBook() {
-        return this.book != null && this.book.id.equals(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
+        return this.book != null && this.book.id.equals(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_tips_guide_book"));
     }
 
     private void addWrappedEntryButtons(int x, int y, int start, int count) {

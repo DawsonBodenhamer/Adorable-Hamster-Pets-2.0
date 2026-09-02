@@ -8,7 +8,7 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
@@ -41,12 +41,12 @@ public final class RedstoneFeverUtil {
     private static final double TREMOR_WINDOW_LOWER_BOUND = 0.454D; // Clip lower part of sine wave to shorten duration by ~30%
     private static final double VISIBLE_TREMOR_SPIKE_THRESHOLD = 0.92D; // Higher threshold hides smaller spikes
     private static final double SHIVER_SOUND_ALIGNMENT_OFFSET_TICKS = -7;
-    public static final ResourceLocation FEVER_MOVEMENT_SPEED_MODIFIER_ID =
-            ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "redstone_fever_movement_speed");
+    public static final Identifier FEVER_MOVEMENT_SPEED_MODIFIER_ID =
+            Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "redstone_fever_movement_speed");
     private static final Set<String> WARNED_INVALID_DIMENSIONS = ConcurrentHashMap.newKeySet();
 
     private static final TagKey<net.minecraft.world.level.biome.Biome> CAVE_BIOMES =
-            TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "is_cave"));
+            TagKey.create(Registries.BIOME, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "is_cave"));
 
     /* ─────────────────────────────────────────────────────────────────────────────
      *        Static Utilities
@@ -413,10 +413,10 @@ public final class RedstoneFeverUtil {
 
     // --- 4. Dimension Eligibility ---
     public static boolean isAllowedDimension(ServerLevel world) {
-        ResourceLocation currentDimension = world.dimension().location();
+        Identifier currentDimension = world.dimension().location();
         for (String entry : Configs.AHP_WORLDGEN.allowedRedstoneFeverDimensions) {
             if (entry.startsWith("#")) {
-                ResourceLocation tagId = ResourceLocation.tryParse(entry.substring(1));
+                Identifier tagId = Identifier.tryParse(entry.substring(1));
                 if (tagId == null) {
                     warnInvalidDimension(entry);
                 } else if (world.dimensionTypeRegistration().is(TagKey.create(Registries.DIMENSION_TYPE, tagId))) {
@@ -424,7 +424,7 @@ public final class RedstoneFeverUtil {
                 }
                 continue;
             }
-            ResourceLocation dimensionId = ResourceLocation.tryParse(entry);
+            Identifier dimensionId = Identifier.tryParse(entry);
             if (dimensionId == null) {
                 warnInvalidDimension(entry);
                 continue;

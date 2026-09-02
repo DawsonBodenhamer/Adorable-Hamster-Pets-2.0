@@ -4,7 +4,7 @@ import dev.architectury.event.events.common.LootEvent;
 import net.dawson.adorablehamsterpets.AdorableHamsterPets;
 import net.dawson.adorablehamsterpets.config.AhpWorldGenConfig;
 import net.dawson.adorablehamsterpets.item.ModItems;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraft.world.level.storage.loot.LootPool;
@@ -16,13 +16,13 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import java.util.List;
 
 public class ModLootTableModifiers {
-    private static final ResourceLocation OAK_LEAVES_ID = Blocks.OAK_LEAVES.getLootTable().location();
+    private static final Identifier OAK_LEAVES_ID = Blocks.OAK_LEAVES.getLootTable().location();
 
     // --- Loot Table Categories ---
 
     // Common Loot: Seeds
     // Locations: Basic surface structures, supply chests, low-tier village chests
-    private static final List<ResourceLocation> COMMON_LOOT_LOCATIONS = List.of(
+    private static final List<Identifier> COMMON_LOOT_LOCATIONS = List.of(
             BuiltInLootTables.SPAWN_BONUS_CHEST.location(),
             BuiltInLootTables.SIMPLE_DUNGEON.location(),
             BuiltInLootTables.ABANDONED_MINESHAFT.location(),
@@ -41,7 +41,7 @@ public class ModLootTableModifiers {
 
     // Standard Gear: Acorn/Iron/Gold Armor
     // Locations: Slightly better structures, specific village professions
-    private static final List<ResourceLocation> UNCOMMON_LOOT_LOCATIONS = List.of(
+    private static final List<Identifier> UNCOMMON_LOOT_LOCATIONS = List.of(
             BuiltInLootTables.SIMPLE_DUNGEON.location(),
             BuiltInLootTables.ABANDONED_MINESHAFT.location(),
             BuiltInLootTables.DESERT_PYRAMID.location(),
@@ -57,7 +57,7 @@ public class ModLootTableModifiers {
 
     // High-End Gear: Diamond Armor, Netherite (if enabled), Basic Templates (Iron/Gold)
     // Locations: Nether, End, Strongholds, Major structures
-    private static final List<ResourceLocation> HIGH_TIER_LOOT_LOCATIONS = List.of(
+    private static final List<Identifier> HIGH_TIER_LOOT_LOCATIONS = List.of(
             BuiltInLootTables.NETHER_BRIDGE.location(),
             BuiltInLootTables.BASTION_TREASURE.location(),
             BuiltInLootTables.BASTION_OTHER.location(),
@@ -73,7 +73,7 @@ public class ModLootTableModifiers {
 
     // Legendary Artifacts: Accessories, Advanced Templates (Diamond/Netherite)
     // Locations: Rarest containers in the game
-    private static final List<ResourceLocation> LEGENDARY_LOOT_LOCATIONS = List.of(
+    private static final List<Identifier> LEGENDARY_LOOT_LOCATIONS = List.of(
             BuiltInLootTables.ANCIENT_CITY.location(),
             BuiltInLootTables.WOODLAND_MANSION.location(),
             BuiltInLootTables.STRONGHOLD_LIBRARY.location(),
@@ -86,7 +86,7 @@ public class ModLootTableModifiers {
 
     public static void init() {
         LootEvent.MODIFY_LOOT_TABLE.register((key, context, builtin) -> {
-            ResourceLocation tableId = key.location();
+            Identifier tableId = key.location();
             final AhpWorldGenConfig config = AdorableHamsterPets.WORLD_GEN_CONFIG;
 
             // --- 1. Acorns from Oak Leaves ---

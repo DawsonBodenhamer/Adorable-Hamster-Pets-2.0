@@ -11,7 +11,7 @@ import net.dawson.adorablehamsterpets.sound.ModSounds;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -36,8 +36,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class HamsterPhysicsUtil {
 
-    public static final ResourceLocation ARMOR_SPEED_BOOST_ID = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "armor_speed_boost");
-    public static final ResourceLocation ARMOR_KNOCKBACK_RESISTANCE_ID = ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "armor_knockback_resistance");
+    public static final Identifier ARMOR_SPEED_BOOST_ID = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "armor_speed_boost");
+    public static final Identifier ARMOR_KNOCKBACK_RESISTANCE_ID = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "armor_knockback_resistance");
 
     private HamsterPhysicsUtil() {}
 

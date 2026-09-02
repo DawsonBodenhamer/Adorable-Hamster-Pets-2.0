@@ -45,7 +45,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -171,7 +171,7 @@ public class AdorableHamsterPets {
 		RedstoneFeverCureCreditState.consume(player);
 		if (Configs.AHP_UI.enableAutoGuidebookDelivery) {
 			PlayerAdvancements advancementTracker = player.getAdvancements();
-			ResourceLocation flagAdvId = ResourceLocation.fromNamespaceAndPath(MOD_ID, "technical/has_received_initial_guidebook");
+			Identifier flagAdvId = Identifier.fromNamespaceAndPath(MOD_ID, "technical/has_received_initial_guidebook");
 			net.minecraft.advancements.AdvancementHolder flagAdvancementEntry = player.server.getAdvancements().get(flagAdvId);
 
 			if (flagAdvancementEntry != null) {
@@ -351,9 +351,9 @@ public class AdorableHamsterPets {
 		// --- 1. Create the Book ItemStack Directly ---
 		ItemStack bookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get());
 		@SuppressWarnings("unchecked")
-		DataComponentType<ResourceLocation> bookComponent = (DataComponentType<ResourceLocation>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(ResourceLocation.fromNamespaceAndPath("patchouli", "book"));
+		DataComponentType<Identifier> bookComponent = (DataComponentType<Identifier>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("patchouli", "book"));
 		if (bookComponent != null) {
-			bookStack.set(bookComponent, ResourceLocation.fromNamespaceAndPath(MOD_ID, "hamster_tips_guide_book"));
+			bookStack.set(bookComponent, Identifier.fromNamespaceAndPath(MOD_ID, "hamster_tips_guide_book"));
 		} else {
 			LOGGER.error("Could not find Patchouli's book component type! Guidebook will not be functional.");
 		}
@@ -364,7 +364,7 @@ public class AdorableHamsterPets {
 		// --- 3. Grant the Flag Advancement ---
 		if (grantInitialAdvancement) {
 			PlayerAdvancements advancementTracker = player.getAdvancements();
-			ResourceLocation flagAdvId = ResourceLocation.fromNamespaceAndPath(MOD_ID, "technical/has_received_initial_guidebook");
+			Identifier flagAdvId = Identifier.fromNamespaceAndPath(MOD_ID, "technical/has_received_initial_guidebook");
 			net.minecraft.advancements.AdvancementHolder flagAdvancementEntry = player.server.getAdvancements().get(flagAdvId);
 
 			if (flagAdvancementEntry != null) {
@@ -395,7 +395,7 @@ public class AdorableHamsterPets {
 		// --- 1. Get the component type for Patchouli books ---
 		// Suppress the "unchecked" warning because the 'patchouli:book' component is of type ComponentType<Identifier>.
 		@SuppressWarnings("unchecked")
-		DataComponentType<ResourceLocation> bookComponent = (DataComponentType<ResourceLocation>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(ResourceLocation.fromNamespaceAndPath("patchouli", "book"));
+		DataComponentType<Identifier> bookComponent = (DataComponentType<Identifier>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(Identifier.fromNamespaceAndPath("patchouli", "book"));
 
 		if (bookComponent == null) {
 			// This can happen if Patchouli is not present, so fail gracefully.
@@ -411,7 +411,7 @@ public class AdorableHamsterPets {
 			if (stack.is(ModItems.HAMSTER_GUIDE_BOOK.get()) && !stack.has(bookComponent)) {
 				// --- 4. Create the new, upgraded book stack ---
 				ItemStack newBookStack = new ItemStack(ModItems.HAMSTER_GUIDE_BOOK.get(), stack.getCount());
-				newBookStack.set(bookComponent, ResourceLocation.fromNamespaceAndPath(MOD_ID, "hamster_tips_guide_book"));
+				newBookStack.set(bookComponent, Identifier.fromNamespaceAndPath(MOD_ID, "hamster_tips_guide_book"));
 
 				// --- 5. Replace the old stack with the new one ---
 				inventory.setItem(i, newBookStack);

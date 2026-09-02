@@ -14,7 +14,7 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.phys.Vec3;
@@ -45,9 +45,9 @@ public class HamsterProjectileRenderer extends EntityRenderer<HamsterProjectileE
      * ────────────────────────────────────────────────────────────────────────────*/
 
     @Override
-    public ResourceLocation getTextureLocation(HamsterProjectileEntity entity) {
+    public Identifier getTextureLocation(HamsterProjectileEntity entity) {
         // Fallback; never actually drawn
-        return ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
+        return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
     }
 
     @Override

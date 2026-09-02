@@ -13,7 +13,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.DoubleHighBlockItem;
 import net.minecraft.world.item.Item;
@@ -122,9 +122,9 @@ public class ModItems {
             () -> new CheeseItem(new Item.Properties().food(ModFoodComponents.CHEESE)));
 
     // --- Music Discs ---
-    public static final ResourceKey<JukeboxSong> CHEESE_SONG_8_BIT_KEY = ResourceKey.create(Registries.JUKEBOX_SONG, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ahp_theme_song_8_bit"));
-    public static final ResourceKey<JukeboxSong> BLUE_CHEESE_SONG_LOW_FI_KEY = ResourceKey.create(Registries.JUKEBOX_SONG, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ahp_theme_song_low_fi"));
-    public static final ResourceKey<JukeboxSong> PARMESAN_SONG_ORCHESTRAL_KEY = ResourceKey.create(Registries.JUKEBOX_SONG, ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ahp_theme_song_orchestral"));
+    public static final ResourceKey<JukeboxSong> CHEESE_SONG_8_BIT_KEY = ResourceKey.create(Registries.JUKEBOX_SONG, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ahp_theme_song_8_bit"));
+    public static final ResourceKey<JukeboxSong> BLUE_CHEESE_SONG_LOW_FI_KEY = ResourceKey.create(Registries.JUKEBOX_SONG, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ahp_theme_song_low_fi"));
+    public static final ResourceKey<JukeboxSong> PARMESAN_SONG_ORCHESTRAL_KEY = ResourceKey.create(Registries.JUKEBOX_SONG, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ahp_theme_song_orchestral"));
 
     public static final RegistrySupplier<Item> MUSIC_DISC_CHEESE = registerItem("music_disc_cheese",
             () -> new Item(new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(CHEESE_SONG_8_BIT_KEY)) {
@@ -389,7 +389,7 @@ public class ModItems {
 
     // --- 3. Helper methods for registration ---
     private static RegistrySupplier<Item> registerItem(String name, Supplier<Item> itemSupplier) {
-        return ITEMS.register(ResourceLocation.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, name), itemSupplier);
+        return ITEMS.register(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, name), itemSupplier);
     }
 
     private static RegistrySupplier<Item> registerBlockItem(String name, Supplier<Item> itemSupplier) {
@@ -411,8 +411,8 @@ public class ModItems {
                 Component.translatable("item.adorablehamsterpets.hamster_armor_trim_smithing_template_" + materialName + ".title").withStyle(ChatFormatting.GRAY),       // Title
                 Component.translatable("item.adorablehamsterpets.hamster_armor_trim_smithing_template.base_slot_description"),                                       // Base Slot Desc
                 Component.translatable("item.adorablehamsterpets.hamster_armor_trim_smithing_template.additions_slot_description"),                                  // Additions Slot Desc
-                List.of(ResourceLocation.fromNamespaceAndPath("minecraft", "item/empty_armor_slot_helmet")),                                                                 // Empty Base Slot Icon
-                List.of(ResourceLocation.fromNamespaceAndPath("minecraft", "item/empty_slot_ingot"))                                                                         // Empty Additions Slot Icon
+                List.of(Identifier.fromNamespaceAndPath("minecraft", "item/empty_armor_slot_helmet")),                                                                 // Empty Base Slot Icon
+                List.of(Identifier.fromNamespaceAndPath("minecraft", "item/empty_slot_ingot"))                                                                         // Empty Additions Slot Icon
         ) {
             @Override
             public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
