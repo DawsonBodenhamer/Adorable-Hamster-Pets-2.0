@@ -28,8 +28,8 @@ public class HamsterModel extends GeoModel<HamsterEntity> {
     private static final float BABY_SCALE = 0.5f;
     private static final float BABY_HEAD_SCALE = 1.2f;
 
-    private static final Identifier MODEL_RESOURCE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "geo/hamster");
-    private static final Identifier ANIMATION_RESOURCE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "animations/anim_hamster");
+    private static final Identifier MODEL_RESOURCE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster");
+    private static final Identifier ANIMATION_RESOURCE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "anim_hamster");
     private static final Identifier FALLBACK_TEXTURE = Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "textures/entity/hamster/fur_base_pattern/fur_pattern.png");
 
     /* ──────────────────────────────────────────────────────────────────────────────

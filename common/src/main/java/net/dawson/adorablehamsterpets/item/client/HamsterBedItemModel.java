@@ -11,7 +11,7 @@ public final class HamsterBedItemModel extends GeoModel<HamsterBedItem> {
 
     @Override
     public Identifier getModelResource(GeoRenderState renderState) {
-        return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "geo/hamster_bed");
+        return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_bed");
     }
 
     @Override
@@ -22,6 +22,6 @@ public final class HamsterBedItemModel extends GeoModel<HamsterBedItem> {
 
     @Override
     public Identifier getAnimationResource(HamsterBedItem animatable) {
-        return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "animations/anim_hamster_bed");
+        return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "anim_hamster_bed");
     }
 }

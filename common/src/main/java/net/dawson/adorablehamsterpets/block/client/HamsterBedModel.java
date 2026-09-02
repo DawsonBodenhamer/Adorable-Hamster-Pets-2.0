@@ -29,7 +29,7 @@ public class HamsterBedModel extends GeoModel<HamsterBedBlockEntity> {
 
     @Override
     public Identifier getModelResource(GeoRenderState renderState) {
-        return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "geo/hamster_bed");
+        return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "hamster_bed");
     }
 
     @Override
@@ -40,7 +40,7 @@ public class HamsterBedModel extends GeoModel<HamsterBedBlockEntity> {
 
     @Override
     public Identifier getAnimationResource(HamsterBedBlockEntity animatable) {
-        return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "animations/anim_hamster_bed");
+        return Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "anim_hamster_bed");
     }
 
 
