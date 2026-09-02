@@ -1,15 +1,13 @@
 package net.dawson.adorablehamsterpets.entity;
 
+import dev.architectury.injectables.annotations.ExpectPlatform;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.network.syncher.EntityDataSerializers;
 
 /**
- * 26.2 port: vanilla dropped its CompoundTag synched-data serializer. The
- * hamster syncs its genome as NBT, so one is registered here. Referencing this
- * class from an entity's static initialiser is enough to register it before
- * any defineId() call runs.
+ * 26.2 port: Fabric API forbids EntityDataSerializers.registerSerializer from
+ * mods (sync-id drift), so registration goes through the platform hook.
  */
 public final class ModDataSerializers {
     private ModDataSerializers() {}
@@ -18,6 +16,11 @@ public final class ModDataSerializers {
             EntityDataSerializer.forValueType(ByteBufCodecs.COMPOUND_TAG);
 
     static {
-        EntityDataSerializers.registerSerializer(COMPOUND_TAG);
+        registerPlatform("compound_tag", COMPOUND_TAG);
+    }
+
+    @ExpectPlatform
+    public static void registerPlatform(String name, EntityDataSerializer<?> serializer) {
+        throw new AssertionError();
     }
 }

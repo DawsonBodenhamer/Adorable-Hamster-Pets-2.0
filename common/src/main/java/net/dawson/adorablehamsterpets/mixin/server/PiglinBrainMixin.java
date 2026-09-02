@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.mixin.server;
 
+import net.minecraft.server.level.ServerLevel;
 import net.dawson.adorablehamsterpets.item.ModItems;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -18,8 +19,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class PiglinBrainMixin {
 
     // --- Intercept Offhand Consumption ---
-    @Inject(method = "consumeOffHandItem", at = @At("HEAD"), cancellable = true)
-    private static void adorablehamsterpets$onConsumeOffHandItem(Piglin piglin, boolean dropLoot, CallbackInfo ci) {
+    @Inject(method = "stopHoldingOffHandItem", at = @At("HEAD"), cancellable = true)
+    private static void adorablehamsterpets$onConsumeOffHandItem(ServerLevel level, Piglin piglin, boolean dropLoot, CallbackInfo ci) {
         ItemStack offHandStack = piglin.getItemInHand(InteractionHand.OFF_HAND);
 
         if (offHandStack.is(ModItems.MUSIC_DISC_CHEESE.get()) || offHandStack.is(ModItems.MUSIC_DISC_BLUE_CHEESE.get())) {

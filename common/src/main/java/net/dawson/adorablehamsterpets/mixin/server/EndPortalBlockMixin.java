@@ -1,5 +1,6 @@
 package net.dawson.adorablehamsterpets.mixin.server;
 
+import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.dawson.adorablehamsterpets.config.Configs;
 import net.dawson.adorablehamsterpets.entity.custom.HamsterEntity;
 import net.dawson.adorablehamsterpets.item.ModItems;
@@ -30,8 +31,8 @@ public class EndPortalBlockMixin {
 
     // --- Intercept End Portal Collision ---
     // Check specifically for end dimension to ensure portal active after defeating dragon
-    @Inject(method = "onEntityCollision", at = @At("HEAD"), cancellable = true)
-    private void adorablehamsterpets$onEndPortalCollision(BlockState state, Level world, BlockPos pos, Entity entity, CallbackInfo ci) {
+    @Inject(method = "entityInside", at = @At("HEAD"), cancellable = true)
+    private void adorablehamsterpets$onEndPortalCollision(BlockState state, Level world, BlockPos pos, Entity entity, InsideBlockEffectApplier applier, boolean flag, CallbackInfo ci) {
         if (!world.isClientSide() && world.dimension() == Level.END) {
 
             // --- 1. Music Disc Logic ---

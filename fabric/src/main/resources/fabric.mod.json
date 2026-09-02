@@ -22,9 +22,6 @@
     "client": [
       "net.dawson.adorablehamsterpets.fabric.client.AdorableHamsterPetsFabricClient"
     ],
-    "fabric-datagen": [
-      "net.dawson.adorablehamsterpets.fabric.datagen.AdorableHamsterPetsDataGenerator"
-    ],
     "jade": [
       "net.dawson.adorablehamsterpets.integration.jade.AHPJadePlugin"
     ]

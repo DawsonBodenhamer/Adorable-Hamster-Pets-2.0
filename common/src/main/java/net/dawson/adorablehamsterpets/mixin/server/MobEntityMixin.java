@@ -32,12 +32,12 @@ public abstract class MobEntityMixin {
         }
     }
 
-    @Inject(method = "tickNewAi", at = @At("HEAD"))
+    @Inject(method = "serverAiStep", at = @At("HEAD"))
     private void adorablehamsterpets$clearContractTargetsBeforeAi(CallbackInfo ci) {
         adorablehamsterpets$clearContractTargets((Mob) (Object) this);
     }
 
-    @Inject(method = "tickNewAi", at = @At("RETURN"))
+    @Inject(method = "serverAiStep", at = @At("RETURN"))
     private void adorablehamsterpets$clearContractTargetsAfterAi(CallbackInfo ci) {
         adorablehamsterpets$clearContractTargets((Mob) (Object) this);
     }

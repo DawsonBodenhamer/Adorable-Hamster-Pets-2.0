@@ -48,7 +48,7 @@ public abstract class AbstractClientPlayerEntityMixin {
      * Modifies the FOV dynamically when queueing the hamster for a throw,
      * mimicking the vanilla bow drawback zoom effect.
      */
-    @Inject(method = "getFovMultiplier", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getFieldOfViewModifier", at = @At("RETURN"), cancellable = true)
     private void adorablehamsterpets$modifyFov(CallbackInfoReturnable<Float> cir) {
         if (AdorableHamsterPetsClient.isQueuingThrow) {
             // Mimic vanilla bow pullback math

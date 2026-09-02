@@ -41,14 +41,14 @@ public class ModItems {
 
     // --- Core Items ---
     public static final RegistrySupplier<Item> HAMSTER_GUIDE_BOOK = registerItem("hamster_guide_book",
-            () -> new PatchouliGuideBookItem(new Item.Properties().stacksTo(1)));
+            () -> new PatchouliGuideBookItem(itemProps("hamster_guide_book", new Item.Properties().stacksTo(1))));
 
     public static final RegistrySupplier<Item> HAMSTER_SPAWN_EGG = registerItem("hamster_spawn_egg",
-            () -> new SpawnEggItem(new Item.Properties().spawnEgg(net.dawson.adorablehamsterpets.entity.ModEntities.HAMSTER.get())));
+            () -> new SpawnEggItem(itemProps("hamster_spawn_egg", new Item.Properties().spawnEgg(net.dawson.adorablehamsterpets.entity.ModEntities.HAMSTER.get()))));
 
     // --- Crops & Food ---
     public static final RegistrySupplier<Item> GREEN_BEAN_SEEDS = registerItem("green_bean_seeds",
-            () -> new BlockItem(ModBlocks.GREEN_BEANS_CROP.get(), new Item.Properties()) {
+            () -> new BlockItem(ModBlocks.GREEN_BEANS_CROP.get(), itemProps("green_bean_seeds", new Item.Properties())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -62,7 +62,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> CUCUMBER_SEEDS = registerItem("cucumber_seeds",
-            () -> new BlockItem(ModBlocks.CUCUMBER_CROP.get(), new Item.Properties()) {
+            () -> new BlockItem(ModBlocks.CUCUMBER_CROP.get(), itemProps("cucumber_seeds", new Item.Properties())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -76,7 +76,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> SUNFLOWER_SEEDS = registerItem("sunflower_seeds",
-            () -> new DoubleHighBlockItem(ModBlocks.SUNFLOWER_BLOCK.get(), new Item.Properties().useItemDescriptionPrefix()) {
+            () -> new DoubleHighBlockItem(ModBlocks.SUNFLOWER_BLOCK.get(), itemProps("sunflower_seeds", new Item.Properties().useItemDescriptionPrefix())) {
 
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
@@ -91,32 +91,32 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> CUCUMBER = registerItem("cucumber",
-            () -> new ConfigurableFoodItem(new Item.Properties().food(ModFoodComponents.CUCUMBER),
+            () -> new ConfigurableFoodItem(itemProps("cucumber", new Item.Properties().food(ModFoodComponents.CUCUMBER)),
                     Configs.AHP_ITEMS.cucumberNutrition, Configs.AHP_ITEMS.cucumberSaturation,
                     "tooltip.adorablehamsterpets.cucumber"));
 
     public static final RegistrySupplier<Item> SLICED_CUCUMBER = registerItem("sliced_cucumber",
-            () -> new ConfigurableFoodItem(new Item.Properties().food(ModFoodComponents.SLICED_CUCUMBER),
+            () -> new ConfigurableFoodItem(itemProps("sliced_cucumber", new Item.Properties().food(ModFoodComponents.SLICED_CUCUMBER)),
                     Configs.AHP_ITEMS.slicedCucumberNutrition, Configs.AHP_ITEMS.slicedCucumberSaturation,
                     "tooltip.adorablehamsterpets.sliced_cucumber"));
 
     public static final RegistrySupplier<Item> GREEN_BEANS = registerItem("green_beans",
-            () -> new ConfigurableFoodItem(new Item.Properties().food(ModFoodComponents.GREEN_BEANS),
+            () -> new ConfigurableFoodItem(itemProps("green_beans", new Item.Properties().food(ModFoodComponents.GREEN_BEANS)),
                     Configs.AHP_ITEMS.greenBeansNutrition, Configs.AHP_ITEMS.greenBeansSaturation,
                     "tooltip.adorablehamsterpets.green_beans"));
 
     public static final RegistrySupplier<Item> STEAMED_GREEN_BEANS = registerItem("steamed_green_beans",
-            () -> new ConfigurableFoodItem(new Item.Properties().food(ModFoodComponents.STEAMED_GREEN_BEANS),
+            () -> new ConfigurableFoodItem(itemProps("steamed_green_beans", new Item.Properties().food(ModFoodComponents.STEAMED_GREEN_BEANS)),
                     Configs.AHP_ITEMS.steamedGreenBeansNutrition, Configs.AHP_ITEMS.steamedGreenBeansSaturation,
                     "tooltip.adorablehamsterpets.steamed_green_beans"));
 
     public static final RegistrySupplier<Item> HAMSTER_FOOD_MIX = registerItem("hamster_food_mix",
-            () -> new ConfigurableFoodItem(new Item.Properties().food(ModFoodComponents.HAMSTER_FOOD_MIX).stacksTo(16),
+            () -> new ConfigurableFoodItem(itemProps("hamster_food_mix", new Item.Properties().food(ModFoodComponents.HAMSTER_FOOD_MIX).stacksTo(16)),
                     Configs.AHP_ITEMS.hamsterFoodMixNutrition, Configs.AHP_ITEMS.hamsterFoodMixSaturation,
                     "tooltip.adorablehamsterpets.hamster_food_mix"));
 
     public static final RegistrySupplier<Item> CHEESE = registerItem("cheese",
-            () -> new CheeseItem(new Item.Properties().food(ModFoodComponents.CHEESE)));
+            () -> new CheeseItem(itemProps("cheese", new Item.Properties().food(ModFoodComponents.CHEESE))));
 
     // --- Music Discs ---
     public static final ResourceKey<JukeboxSong> CHEESE_SONG_8_BIT_KEY = ResourceKey.create(Registries.JUKEBOX_SONG, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ahp_theme_song_8_bit"));
@@ -124,7 +124,7 @@ public class ModItems {
     public static final ResourceKey<JukeboxSong> PARMESAN_SONG_ORCHESTRAL_KEY = ResourceKey.create(Registries.JUKEBOX_SONG, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, "ahp_theme_song_orchestral"));
 
     public static final RegistrySupplier<Item> MUSIC_DISC_CHEESE = registerItem("music_disc_cheese",
-            () -> new Item(new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(CHEESE_SONG_8_BIT_KEY)) {
+            () -> new Item(itemProps("music_disc_cheese", new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(CHEESE_SONG_8_BIT_KEY))) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -137,7 +137,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> MUSIC_DISC_BLUE_CHEESE = registerItem("music_disc_blue_cheese",
-            () -> new Item(new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(BLUE_CHEESE_SONG_LOW_FI_KEY)) {
+            () -> new Item(itemProps("music_disc_blue_cheese", new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(BLUE_CHEESE_SONG_LOW_FI_KEY))) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -150,7 +150,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> MUSIC_DISC_PARMESAN = registerItem("music_disc_parmesan",
-            () -> new Item(new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(PARMESAN_SONG_ORCHESTRAL_KEY)) {
+            () -> new Item(itemProps("music_disc_parmesan", new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(PARMESAN_SONG_ORCHESTRAL_KEY))) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -164,7 +164,7 @@ public class ModItems {
 
     // --- Acorn & Resources ---
     public static final RegistrySupplier<Item> ACORN = registerItem("acorn",
-            () -> new BlockItem(Blocks.OAK_SAPLING, new Item.Properties()) {
+            () -> new BlockItem(Blocks.OAK_SAPLING, itemProps("acorn", new Item.Properties())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -177,7 +177,7 @@ public class ModItems {
                 }
             });
     public static final RegistrySupplier<Item> ACORN_HAT = registerItem("acorn_hat",
-            () -> new Item(new Item.Properties()) {
+            () -> new Item(itemProps("acorn_hat", new Item.Properties())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -191,7 +191,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> ACORN_RING = registerItem("acorn_ring",
-            () -> new Item(new Item.Properties().stacksTo(64)) {
+            () -> new Item(itemProps("acorn_ring", new Item.Properties().stacksTo(64))) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -207,7 +207,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> ACORN_SHARD = registerItem("acorn_shard",
-            () -> new Item(new Item.Properties()) {
+            () -> new Item(itemProps("acorn_shard", new Item.Properties())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -222,7 +222,7 @@ public class ModItems {
 
     // --- Hamster Armor ---
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_ACORN = registerItem("hamster_armor_acorn",
-            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.ACORN, new Item.Properties()) {
+            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.ACORN, itemProps("hamster_armor_acorn", new Item.Properties())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -236,7 +236,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_IRON = registerItem("hamster_armor_iron",
-            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.IRON, new Item.Properties()) {
+            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.IRON, itemProps("hamster_armor_iron", new Item.Properties())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -250,7 +250,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_GOLD = registerItem("hamster_armor_gold",
-            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.GOLD, new Item.Properties()) {
+            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.GOLD, itemProps("hamster_armor_gold", new Item.Properties())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -264,7 +264,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_DIAMOND = registerItem("hamster_armor_diamond",
-            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.DIAMOND, new Item.Properties()) {
+            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.DIAMOND, itemProps("hamster_armor_diamond", new Item.Properties())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -278,7 +278,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> HAMSTER_ARMOR_NETHERITE = registerItem("hamster_armor_netherite",
-            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.NETHERITE, new Item.Properties()) {
+            () -> new HamsterArmorItem(HamsterArmorItem.HamsterArmorMaterial.NETHERITE, itemProps("hamster_armor_netherite", new Item.Properties())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -308,7 +308,7 @@ public class ModItems {
 
     // --- Block Item Registrations ---
     public static final RegistrySupplier<Item> WILD_GREEN_BEAN_BUSH_ITEM = registerBlockItem("wild_green_bean_bush",
-            () -> new BlockItem(ModBlocks.WILD_GREEN_BEAN_BUSH.get(), new Item.Properties()) {
+            () -> new BlockItem(ModBlocks.WILD_GREEN_BEAN_BUSH.get(), itemProps("wild_green_bean_bush", new Item.Properties().useBlockDescriptionPrefix())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -322,7 +322,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> WILD_CUCUMBER_BUSH_ITEM = registerBlockItem("wild_cucumber_bush",
-            () -> new BlockItem(ModBlocks.WILD_CUCUMBER_BUSH.get(), new Item.Properties()) {
+            () -> new BlockItem(ModBlocks.WILD_CUCUMBER_BUSH.get(), itemProps("wild_cucumber_bush", new Item.Properties().useBlockDescriptionPrefix())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -336,7 +336,7 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> SUNFLOWER_BLOCK_ITEM = registerBlockItem("sunflower_block",
-            () -> new BlockItem(ModBlocks.SUNFLOWER_BLOCK.get(), new Item.Properties()) {
+            () -> new BlockItem(ModBlocks.SUNFLOWER_BLOCK.get(), itemProps("sunflower_block", new Item.Properties().useBlockDescriptionPrefix())) {
                 @Override
                 public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
                     if (Configs.AHP_UI.enableItemTooltips) {
@@ -350,37 +350,42 @@ public class ModItems {
             });
 
     public static final RegistrySupplier<Item> HAMSTER_BEDDING = registerItem("hamster_bedding",
-            () -> new HamsterBeddingItem(new Item.Properties()));
+            () -> new HamsterBeddingItem(itemProps("hamster_bedding", new Item.Properties())));
 
     // Hamster Bed
     public static final Map<WoodVariant, RegistrySupplier<Item>> HAMSTER_BED_ITEMS = new EnumMap<>(WoodVariant.class);
     static {
         for (WoodVariant variant : WoodVariant.values()) {
             HAMSTER_BED_ITEMS.put(variant, registerBlockItem("hamster_bed_" + variant.getSerializedName(),
-                    () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), variant, new Item.Properties().stacksTo(1).useItemDescriptionPrefix())));
+                    () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), variant, itemProps("hamster_bed_" + variant.getSerializedName(), new Item.Properties().stacksTo(1).useItemDescriptionPrefix()))));
         }
     }
 
     public static final RegistrySupplier<Item> ACORN_CRATE = registerBlockItem("acorn_crate",
-            () -> new BlockItem(ModBlocks.ACORN_CRATE.get(), new Item.Properties()));
+            () -> new BlockItem(ModBlocks.ACORN_CRATE.get(), itemProps("acorn_crate", new Item.Properties().useBlockDescriptionPrefix())));
 
     public static final RegistrySupplier<Item> CUCUMBER_CRATE = registerBlockItem("cucumber_crate",
-            () -> new BlockItem(ModBlocks.CUCUMBER_CRATE.get(), new Item.Properties()));
+            () -> new BlockItem(ModBlocks.CUCUMBER_CRATE.get(), itemProps("cucumber_crate", new Item.Properties().useBlockDescriptionPrefix())));
 
     public static final RegistrySupplier<Item> GREEN_BEANS_CRATE = registerBlockItem("green_beans_crate",
-            () -> new BlockItem(ModBlocks.GREEN_BEANS_CRATE.get(), new Item.Properties()));
+            () -> new BlockItem(ModBlocks.GREEN_BEANS_CRATE.get(), itemProps("green_beans_crate", new Item.Properties().useBlockDescriptionPrefix())));
 
     public static final RegistrySupplier<Item> HAMSTER_FOOD_MIX_CRATE = registerBlockItem("hamster_food_mix_crate",
-            () -> new BlockItem(ModBlocks.HAMSTER_FOOD_MIX_CRATE.get(), new Item.Properties()));
+            () -> new BlockItem(ModBlocks.HAMSTER_FOOD_MIX_CRATE.get(), itemProps("hamster_food_mix_crate", new Item.Properties().useBlockDescriptionPrefix())));
 
     public static final RegistrySupplier<Item> UPSIDE_DOWN_HAMSTER_BED_ICON = registerItem("upside_down_hamster_bed_icon",
-            () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), WoodVariant.OAK, new Item.Properties().useItemDescriptionPrefix()));
+            () -> new HamsterBedItem(ModBlocks.HAMSTER_BED.get(), WoodVariant.OAK, itemProps("upside_down_hamster_bed_icon", new Item.Properties().useItemDescriptionPrefix())));
 
     // So Patchouli can display custom bell icon in its category list
     public static final RegistrySupplier<Item> ANNOUNCEMENT_BELL_ICON = registerItem("announcement_bell_icon",
-            () -> new Item(new Item.Properties()));
+            () -> new Item(itemProps("announcement_bell_icon", new Item.Properties())));
 
     // --- 3. Helper methods for registration ---
+    /** 26.2: items must know their registry key before construction. */
+    private static Item.Properties itemProps(String name, Item.Properties properties) {
+        return properties.setId(ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, name)));
+    }
+
     private static RegistrySupplier<Item> registerItem(String name, Supplier<Item> itemSupplier) {
         return ITEMS.register(Identifier.fromNamespaceAndPath(AdorableHamsterPets.MOD_ID, name), itemSupplier);
     }
@@ -405,7 +410,7 @@ public class ModItems {
                 Component.translatable("item.adorablehamsterpets.hamster_armor_trim_smithing_template.additions_slot_description"),                                  // Additions Slot Desc
                 List.of(Identifier.fromNamespaceAndPath("minecraft", "item/empty_armor_slot_helmet")),                                                                 // Empty Base Slot Icon
                 List.of(Identifier.fromNamespaceAndPath("minecraft", "item/empty_slot_ingot")),
-                new Item.Properties()
+                itemProps("hamster_armor_trim_smithing_template_" + materialName, new Item.Properties())
         ) {
             @Override
             public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {

@@ -1,5 +1,7 @@
 package net.dawson.adorablehamsterpets.mixin.server;
 
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.storage.TagValueOutput;
@@ -176,14 +178,14 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void adorablehamsterpets$onInit(Level world, BlockPos pos, float yaw, GameProfile gameProfile, CallbackInfo ci) {
+    private void adorablehamsterpets$onInit(Level world, GameProfile gameProfile, CallbackInfo ci) {
         // Client-side visual setup
         if (world.isClientSide()) {
             this.adorablehamsterpets$clientHamsterState = new ClientShoulderHamsterData();
         }
     }
 
-    @Inject(method = "initDataTracker", at = @At("TAIL"))
+    @Inject(method = "defineSynchedData", at = @At("TAIL"))
     private void adorablehamsterpets$initCrownData(SynchedEntityData.Builder builder, CallbackInfo ci) {
         builder.define(AHP_CROWN_THEME, -1); // Default to disabled
         builder.define(AHP_HAS_USED_CROWN_TRIAL, false);
@@ -194,8 +196,23 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
      *        Lifecycle Hooks (Mixin Injections)
      * ────────────────────────────────────────────────────────────────────────────*/
 
-    @Inject(method = "writeCustomDataToNbt", at = @At("TAIL"))
-    private void adorablehamsterpets$writeNbt(CompoundTag nbt, CallbackInfo ci) {
+    // 26.2 port: player data goes through ValueOutput/ValueInput; the old CompoundTag
+    // handlers are kept as helpers and bridged under one "AdorableHamsterPets" tag.
+    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
+    private void adorablehamsterpets$writeSaveData(ValueOutput out, CallbackInfo ci) {
+        CompoundTag nbt = new CompoundTag();
+        adorablehamsterpets$writeNbt(nbt);
+        if (!nbt.isEmpty()) {
+            out.store("AdorableHamsterPets", CompoundTag.CODEC, nbt);
+        }
+    }
+
+    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
+    private void adorablehamsterpets$readSaveData(ValueInput in, CallbackInfo ci) {
+        adorablehamsterpets$readNbt(in.read("AdorableHamsterPets", CompoundTag.CODEC).orElseGet(CompoundTag::new));
+    }
+
+    private void adorablehamsterpets$writeNbt(CompoundTag nbt) {
         // --- Action Bar Randomized Message History ---
         if (!this.ahp$randomMessageIndices.isEmpty()) {
             CompoundTag msgNbt = new CompoundTag();
@@ -281,8 +298,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
     }
 
-    @Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
-    private void adorablehamsterpets$readNbt(CompoundTag nbt, CallbackInfo ci) {
+    private void adorablehamsterpets$readNbt(CompoundTag nbt) {
         // --- Generic Message History ---
         this.ahp$randomMessageIndices.clear();
         if (nbt.contains("AHPRandomMessageIndices")) {
@@ -434,7 +450,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         this.ahp$lastTickDimension = self.level().dimension();
     }
 
-    @Inject(method = "onDeath", at = @At("HEAD"))
+    @Inject(method = "die", at = @At("HEAD"))
     private void adorablehamsterpets$onDeath(DamageSource damageSource, CallbackInfo ci) {
         Player self = (Player) (Object) this;
         if (!self.level().isClientSide() && Configs.AHP_MAIN.enableTeleportRescue) {
@@ -729,14 +745,14 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
         }
     }
 
-    @Inject(method = "remove(Lnet/minecraft/entity/Entity$RemovalReason;)V", at = @At("HEAD"))
+    @Inject(method = "remove(Lnet/minecraft/world/entity/Entity$RemovalReason;)V", at = @At("HEAD"))
     private void adorablehamsterpets$onRemove(Entity.RemovalReason reason, CallbackInfo ci) {
         if (!this.level().isClientSide()) {
             net.dawson.adorablehamsterpets.util.HamsterRenderTracker.onPlayerDisconnect(this.getUUID());
         }
     }
 
-    @Inject(method = "wakeUp(ZZ)V", at = @At("RETURN"))
+    @Inject(method = "stopSleepInBed(ZZ)V", at = @At("RETURN"))
     private void adorablehamsterpets$onWakeUp(boolean skipSleepTimer, boolean updateSleepingPlayers, CallbackInfo ci) {
         Player self = (Player) (Object) this;
         // Server side only. skipSleepTimer is false for natural wakeup.

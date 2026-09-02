@@ -22,7 +22,7 @@ public abstract class SpiderEntityMixin extends Monster {
         super(entityType, world);
     }
 
-    @Inject(method = "initGoals", at = @At("TAIL"))
+    @Inject(method = "registerGoals", at = @At("TAIL"))
     private void adorablehamsterpets$addFleeHamsterGoal(CallbackInfo ci) {
         // This predicate will read the live config value.
         Predicate<LivingEntity> fleeCondition = (livingEntity) -> AdorableHamsterPets.MAIN_CONFIG.enableSpiderFlee;
