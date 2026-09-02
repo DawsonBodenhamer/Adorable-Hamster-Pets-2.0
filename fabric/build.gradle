@@ -46,7 +46,7 @@ configurations {
 }
 
 dependencies {
-    compileOnly files("/Users/muratdugan/PROJECTS/NazCraft/fabric262/mods/patchouli-fabric-26.1-94.jar") // 26.2 port: Patchouli API (runtime jar = ported build)
+    compileOnly files("/Users/muratdugan/PROJECTS/PatchouliPort/src/Fabric/build/libs/patchouli-fabric-26.2-94-SNAPSHOT.jar") // 26.2 port: Patchouli API (runtime jar = ported build)
     implementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
     implementation("net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}") { version { strictly rootProject.fabric_api_version } }
     implementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
